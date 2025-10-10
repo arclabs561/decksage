@@ -1,0 +1,273 @@
+#!/usr/bin/env python3
+"""
+Experiment: Source Filtering Impact on Model Quality
+
+Hypothesis: Filtering to tournament-curated decks (mtgtop8, goldfish) will improve
+P@10 over using all decks including user-uploaded content.
+
+Test: Train separate embeddings on:
+  1. All decks (57K) - includes deckbox cubes
+  2. Tournament decks only (55K) - mtgtop8 + goldfish
+
+Compare P@10 on canonical test set.
+
+This experiment validates whether the source tracking work was worthwhile.
+"""
+
+import json
+import time
+from collections import defaultdict
+from pathlib import Path
+
+from utils.data_loading import load_decks_jsonl, load_tournament_decks
+from utils.paths import PATHS
+
+
+def _resolve_decks_path() -> Path:
+    base = Path(__file__).resolve()
+    default = base.parent.parent / "backend" / "decks_hetero.jsonl"
+    fixture = base.parent / "tests" / "fixtures" / "decks_export_hetero_small.jsonl"
+    return default if default.exists() else fixture
+
+
+def build_cooccurrence_graph(decks):
+    """Build card co-occurrence graph from deck list."""
+
+    adjacency = defaultdict(set)
+    edge_weights = defaultdict(int)
+
+    for deck in decks:
+        cards = [c["name"] for c in deck.get("cards", [])]
+
+        # Add edges for all pairs in deck
+        for i, c1 in enumerate(cards):
+            for c2 in cards[i + 1 :]:
+                # Normalize order
+                if c1 > c2:
+                    c1, c2 = c2, c1
+
+                adjacency[c1].add(c2)
+                adjacency[c2].add(c1)
+                edge_weights[(c1, c2)] += 1
+                edge_weights[(c2, c1)] += 1
+
+    return dict(adjacency), dict(edge_weights)
+
+
+def jaccard_similarity(query, adjacency, top_k=10):
+    """Compute Jaccard similarity for query card."""
+    if query not in adjacency:
+        return []
+
+    query_neighbors = adjacency[query]
+
+    # Compute similarity for all cards
+    similarities = []
+    for card in adjacency:
+        if card == query:
+            continue
+
+        card_neighbors = adjacency[card]
+
+        # Jaccard similarity
+        intersection = len(query_neighbors & card_neighbors)
+        union = len(query_neighbors | card_neighbors)
+
+        if union > 0:
+            sim = intersection / union
+            similarities.append((card, sim))
+
+    # Sort and return top k
+    similarities.sort(key=lambda x: -x[1])
+    return [card for card, _ in similarities[:top_k]]
+
+
+def evaluate_on_test_set(adjacency, test_set):
+    """Evaluate P@10 on test set."""
+    precisions = []
+
+    for query, labels in test_set["queries"].items():
+        if query not in adjacency:
+            continue
+
+        # Get predictions
+        predictions = jaccard_similarity(query, adjacency, top_k=10)
+
+        # Compute precision
+        relevant = set()
+        for label_list in labels.values():
+            if isinstance(label_list, list):
+                relevant.update(label_list)
+
+        if not relevant:
+            continue
+
+        hits = sum(1 for pred in predictions if pred in relevant)
+        precision = hits / len(predictions) if predictions else 0
+        precisions.append(precision)
+
+    return sum(precisions) / len(precisions) if precisions else 0
+
+
+def main():
+    print("=" * 80)
+    print("EXPERIMENT: SOURCE FILTERING IMPACT")
+    print("=" * 80)
+    print()
+
+    # Load test set
+    test_set_path = PATHS.test_magic
+    print(f"Loading test set: {test_set_path}")
+    with open(test_set_path) as f:
+        test_set = json.load(f)
+    print(f"✅ Loaded {test_set['num_queries']} test queries")
+
+    # Load decks
+    jsonl_path = _resolve_decks_path()
+
+    print(f"\nLoading all decks from {jsonl_path}...")
+    all_decks = load_decks_jsonl(jsonl_path)
+    print(f"✅ Loaded {len(all_decks):,} total decks")
+
+    print("\nLoading tournament decks only...")
+    tournament_decks = load_tournament_decks(jsonl_path)
+    print(f"✅ Loaded {len(tournament_decks):,} tournament decks")
+
+    delta_decks = len(all_decks) - len(tournament_decks)
+    print(
+        f"\n📊 Filtering removes: {delta_decks:,} decks ({100.0 * delta_decks / len(all_decks):.1f}%)"
+    )
+
+    # Baseline: All decks
+    print("\n" + "=" * 80)
+    print("BASELINE: All Decks (including cubes, user uploads)")
+    print("=" * 80)
+
+    start = time.time()
+    all_adj, _all_weights = build_cooccurrence_graph(all_decks)
+    build_time_all = time.time() - start
+
+    print("\nGraph built:")
+    print(f"   Cards (nodes): {len(all_adj):,}")
+    print(f"   Edges: {sum(len(v) for v in all_adj.values()) // 2:,}")
+    print(f"   Build time: {build_time_all:.2f}s")
+
+    print("\nEvaluating on test set...")
+    start = time.time()
+    p10_all = evaluate_on_test_set(all_adj, test_set)
+    eval_time_all = time.time() - start
+
+    print(f"   P@10: {p10_all:.4f}")
+    print(f"   Eval time: {eval_time_all:.2f}s")
+
+    # Filtered: Tournament only
+    print("\n" + "=" * 80)
+    print("FILTERED: Tournament Decks Only (mtgtop8 + goldfish)")
+    print("=" * 80)
+
+    start = time.time()
+    tournament_adj, _tournament_weights = build_cooccurrence_graph(tournament_decks)
+    build_time_tournament = time.time() - start
+
+    print("\nGraph built:")
+    print(f"   Cards (nodes): {len(tournament_adj):,}")
+    print(f"   Edges: {sum(len(v) for v in tournament_adj.values()) // 2:,}")
+    print(f"   Build time: {build_time_tournament:.2f}s")
+
+    print("\nEvaluating on test set...")
+    start = time.time()
+    p10_tournament = evaluate_on_test_set(tournament_adj, test_set)
+    eval_time_tournament = time.time() - start
+
+    print(f"   P@10: {p10_tournament:.4f}")
+    print(f"   Eval time: {eval_time_tournament:.2f}s")
+
+    # Comparison
+    print("\n" + "=" * 80)
+    print("COMPARISON")
+    print("=" * 80)
+
+    delta_p10 = p10_tournament - p10_all
+    pct_change = 100.0 * delta_p10 / p10_all if p10_all > 0 else 0
+
+    print("\nP@10 Results:")
+    print(f"   All decks: {p10_all:.4f}")
+    print(f"   Tournament only: {p10_tournament:.4f}")
+    print(f"   Delta: {delta_p10:+.4f} ({pct_change:+.1f}%)")
+
+    print("\nInterpretation:")
+    if abs(delta_p10) < 0.005:
+        print("   ⚠️  NEGLIGIBLE - Source filtering doesn't affect quality")
+        print("       Still useful for data provenance and transparency")
+    elif delta_p10 > 0.02:
+        print("   ✅ HELPFUL - Tournament filtering improves quality significantly")
+        print("       Use tournament-only data for training production models")
+    elif delta_p10 > 0.005:
+        print("   ℹ️  MARGINAL - Small improvement from tournament filtering")
+        print("       Consider using for production, monitor impact")
+    elif delta_p10 < -0.02:
+        print("   ⚠️  HARMFUL - Filtering actually hurts quality")
+        print("       User-uploaded decks may contain valuable signal")
+        print("       Investigate what cubes/user decks contribute")
+    else:
+        print("   ℹ️  SLIGHT NEGATIVE - Small decrease from filtering")
+        print("       More data (including cubes) slightly helps")
+
+    # Save results
+    results = {
+        "experiment": "exp_048_source_filtering",
+        "date": "2025-10-04",
+        "hypothesis": "Filtering to tournament-curated decks improves P@10",
+        "method": "Jaccard similarity on co-occurrence graph",
+        "baseline": {
+            "name": "all_decks",
+            "num_decks": len(all_decks),
+            "num_cards": len(all_adj),
+            "p_at_10": p10_all,
+            "build_time": build_time_all,
+        },
+        "filtered": {
+            "name": "tournament_only",
+            "num_decks": len(tournament_decks),
+            "num_cards": len(tournament_adj),
+            "p_at_10": p10_tournament,
+            "build_time": build_time_tournament,
+        },
+        "comparison": {
+            "delta_p10": delta_p10,
+            "pct_change": pct_change,
+            "decks_removed": delta_decks,
+        },
+        "conclusion": "TBD based on delta",
+    }
+
+    # Determine conclusion
+    if abs(delta_p10) < 0.005:
+        results["conclusion"] = "negligible_impact"
+        results["recommendation"] = "Keep source tracking for transparency, not quality"
+    elif delta_p10 > 0.02:
+        results["conclusion"] = "significant_improvement"
+        results["recommendation"] = "Use tournament filtering in production"
+    elif delta_p10 > 0:
+        results["conclusion"] = "marginal_improvement"
+        results["recommendation"] = "Consider using, monitor impact"
+    else:
+        results["conclusion"] = "no_improvement_or_harmful"
+        results["recommendation"] = "More data helps, keep all sources"
+
+    output_path = Path("../experiments/exp_048_source_filtering_results.json")
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+
+    print(f"\n💾 Results saved to: {output_path}")
+
+    # Append to experiment log
+    log_path = Path("../experiments/EXPERIMENT_LOG_CANONICAL.jsonl")
+    if log_path.exists():
+        with open(log_path, "a") as f:
+            f.write(json.dumps(results) + "\n")
+        print(f"💾 Appended to experiment log: {log_path}")
+
+
+if __name__ == "__main__":
+    main()
