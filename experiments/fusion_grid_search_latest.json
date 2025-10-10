@@ -1,0 +1,13 @@
+{
+  "embeddings": "../src/ml/vectors.kv",
+  "pairs": "../src/backend/pairs.csv",
+  "game": "magic",
+  "step": 0.1,
+  "top_k": 10,
+  "best_weights": {
+    "embed": 0.1,
+    "jaccard": 0.2,
+    "functional": 0.7
+  },
+  "best_score": 0.0881578947368421
+}
