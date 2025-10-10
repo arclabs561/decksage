@@ -1,0 +1,461 @@
+package goldfish
+
+import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
+	"net/http"
+	"net/url"
+	"path/filepath"
+	"regexp"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
+
+	"collections/blob"
+	"collections/games/magic/dataset"
+	"collections/games/magic/game"
+	"collections/logger"
+	"collections/scraper"
+
+	"github.com/PuerkitoBio/goquery"
+	"go.uber.org/ratelimit"
+)
+
+var base *url.URL
+
+func init() {
+	u, err := url.Parse("https://www.mtggoldfish.com/")
+	if err != nil {
+		panic(err)
+	}
+	base = u
+}
+
+type Dataset struct {
+	log  *logger.Logger
+	blob *blob.Bucket
+}
+
+func NewDataset(
+	log *logger.Logger,
+	blob *blob.Bucket,
+) dataset.Dataset {
+	return &Dataset{
+		log:  log,
+		blob: blob,
+	}
+}
+
+func (d *Dataset) Description() dataset.Description {
+	return dataset.Description{
+		Name: "goldfish",
+	}
+}
+
+var reCollectionURL = regexp.MustCompile(`^https://www.mtggoldfish.com/deck/`)
+
+func (d *Dataset) Extract(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	options ...dataset.UpdateOption,
+) error {
+	opts, err := dataset.ResolveUpdateOptions(options...)
+	if err != nil {
+		return err
+	}
+	for _, u := range opts.ItemOnlyURLs {
+		if !reCollectionURL.MatchString(u) {
+			return fmt.Errorf("invalid only url: %s", u)
+		}
+	}
+
+	urls := make(chan string)
+	wg := new(sync.WaitGroup)
+	for i := 0; i < opts.Parallel; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for u := range urls {
+				if err := d.parseCollection(ctx, sc, u, opts); err != nil {
+					d.log.Field("url", u).Errorf(ctx, "failed to parse collection: %v", err)
+					continue
+				}
+			}
+		}()
+	}
+
+	if len(opts.ItemOnlyURLs) > 0 {
+		for _, u := range opts.ItemOnlyURLs {
+			urls <- u
+		}
+	} else {
+		if err := d.parseRoot(ctx, sc, urls, opts); err != nil {
+			return err
+		}
+	}
+	close(urls)
+	wg.Wait()
+	return nil
+}
+
+func (d *Dataset) parseRoot(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	urls chan<- string,
+	opts dataset.ResolvedUpdateOptions,
+) error {
+	page, err := d.fetch(ctx, sc, "https://www.mtggoldfish.com/deck/custom", opts)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(page.Response.Body)
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return err
+	}
+
+	var sectionURLs []string
+	doc.Find(".subNav-menu-desktop a").
+		EachWithBreak(func(i int, sel *goquery.Selection) bool {
+			href, ok := sel.Attr("href")
+			if !ok {
+				html, _ := sel.Html()
+				err = fmt.Errorf("mising href: %s", html)
+				return false
+			}
+			var u string
+			u, err = d.resolveRef(href)
+			if err != nil {
+				return false
+			}
+			sectionURLs = append(sectionURLs, u)
+			return true
+		})
+	if err != nil {
+		return fmt.Errorf("failed to find deck type pages: %w", err)
+	}
+
+	var total int
+SECTIONS:
+	for _, sectionURL := range sectionURLs {
+		curr := sectionURL
+		page := 0
+		totalSection := 0
+		for {
+			parsed, err := d.scrollSection(ctx, sc, urls, curr, opts)
+			if err != nil {
+				return fmt.Errorf("failed to scroll section: %w", err)
+			}
+			shouldStop := func() bool {
+				limit, ok := opts.ScrollLimit.Get()
+				return ok && total > limit
+			}
+			added := 0
+			for _, u := range parsed.CollectionURLs {
+				if shouldStop() {
+					break
+				}
+				total++
+				added++
+				urls <- u
+			}
+			totalSection += added
+			d.log.Fieldf("page", "%d", page+1).
+				Field("url", curr).
+				Fieldf("newSection", "%d", added).
+				Fieldf("totalSection", "%d", totalSection).
+				Fieldf("totalAll", "%d", total).
+				Infof(ctx, "parsed section page")
+			if shouldStop() {
+				break SECTIONS
+			}
+			if !parsed.Next() {
+				break
+			}
+			page++
+			curr = parsed.NextSectionURL
+		}
+	}
+
+	return nil
+}
+
+type parsedSection struct {
+	CollectionURLs []string
+	CurrSectionURL string
+	NextSectionURL string
+}
+
+func (p parsedSection) Next() bool {
+	return p.NextSectionURL != ""
+}
+
+func (d *Dataset) scrollSection(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	urls chan<- string,
+	sectionURL string,
+	opts dataset.ResolvedUpdateOptions,
+) (*parsedSection, error) {
+	page, err := d.fetch(ctx, sc, sectionURL, opts)
+	if err != nil {
+		return nil, err
+	}
+	r := bytes.NewReader(page.Response.Body)
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return nil, err
+	}
+	var collectionURLs []string
+	doc.Find(".archetype-tile .card-image-tile-link-overlay").
+		EachWithBreak(func(i int, sel *goquery.Selection) bool {
+			href, ok := sel.Attr("href")
+			if !ok {
+				html, _ := sel.Html()
+				err = fmt.Errorf("missing href: %s", html)
+				return false
+			}
+			var u string
+			u, err = d.resolveRef(href)
+			if err != nil {
+				return false
+			}
+			collectionURLs = append(collectionURLs, u)
+			return true
+		})
+	if err != nil {
+		return nil, err
+	}
+
+	nextPageHref, ok := doc.Find(".page-item.active").Next().Find("a").Attr("href")
+	nextPageURL := ""
+	if ok {
+		nextPageURL, err = d.resolveRef(nextPageHref)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &parsedSection{
+		CollectionURLs: collectionURLs,
+		CurrSectionURL: sectionURL,
+		NextSectionURL: nextPageURL,
+	}, nil
+}
+
+var reFormat = regexp.MustCompile(`Format:\s+(.*)`)
+var reDate = regexp.MustCompile(`Deck Date:\s+(.*)`)
+
+var reDeckID = regexp.MustCompile(`^https://www.mtggoldfish.com/([^#]+)`)
+
+func (d *Dataset) parseCollection(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	u string,
+	opts dataset.ResolvedUpdateOptions,
+) error {
+	idSubmatches := reDeckID.FindStringSubmatch(u)
+	if idSubmatches == nil {
+		return fmt.Errorf("failed to extract deck id")
+	}
+	id := strings.ReplaceAll(idSubmatches[1], "/", ":")
+	bkey := d.collectionKey(id)
+
+	if !opts.Reparse && !opts.FetchReplaceAll {
+		exists, err := d.blob.Exists(ctx, bkey)
+		if err != nil {
+			return fmt.Errorf("failed to check if already parsed collection exists: %w", err)
+		}
+		if exists {
+			d.log.Field("url", u).Debugf(ctx, "parsed collection already is exists")
+			return nil
+		}
+	}
+
+	page, err := d.fetch(ctx, sc, u, opts)
+	if err != nil {
+		return err
+	}
+	r := bytes.NewReader(page.Response.Body)
+	doc, err := goquery.NewDocumentFromReader(r)
+	if err != nil {
+		return err
+	}
+
+	header := doc.Find(".header-container .title")
+	header.Find(".author").Remove()
+	deckName := strings.TrimSpace(header.Text())
+
+	infoStr := doc.Find(".deck-container-information").Text()
+	formatSubmatches := reFormat.FindStringSubmatch(infoStr)
+	if formatSubmatches == nil {
+		return fmt.Errorf("failed to extract deck format")
+	}
+	format := formatSubmatches[1]
+	dateSubmatches := reDate.FindStringSubmatch(infoStr)
+	if dateSubmatches == nil {
+		return fmt.Errorf("failed to extract deck date")
+	}
+	date, err := time.Parse("Jan _2, 2006", dateSubmatches[1])
+	if err != nil {
+		return fmt.Errorf("failed to parse deck date: %w", err)
+	}
+
+	var cards []game.CardDesc
+	
+	// DEBUG: Check what tables we can find
+	tableCount := doc.Find(".deck-view-deck-table").Length()
+	d.log.Field("url", u).Infof(ctx, "Found %d deck-view-deck-table elements", tableCount)
+	
+	// Try alternate selector - look for table with deck data
+	doc.Find("table.deck-view-deck-table tbody tr").Each(func(i int, tr *goquery.Selection) {
+		// Skip header rows
+		if tr.HasClass("deck-category-header") {
+			d.log.Debugf(ctx, "Skipping header row %d", i)
+			return
+		}
+		
+		// Debug: log the row
+		html, _ := tr.Html()
+		if i < 3 {  // Only log first 3 rows to avoid spam
+			d.log.Debugf(ctx, "Row %d HTML: %s", i, html[:min(len(html), 200)])
+		}
+		
+		// Get all td elements
+		tds := tr.Find("td")
+		if tds.Length() < 2 {
+			return
+		}
+		
+		// First td should have count
+		countStr := strings.TrimSpace(tds.Eq(0).Text())
+		if countStr == "" {
+			return
+		}
+		
+		// Second td should have card name
+		cardNameTd := tds.Eq(1)
+		cardName := strings.TrimSpace(cardNameTd.Find("a").Text())
+		if cardName == "" {
+			// Try without anchor
+			cardName = strings.TrimSpace(cardNameTd.Text())
+		}
+		if cardName == "" {
+			return
+		}
+		
+		count, parseErr := strconv.ParseInt(countStr, 10, 0)
+		if parseErr != nil {
+			d.log.Field("countStr", countStr).Warnf(ctx, "Failed to parse count: %v", parseErr)
+			err = parseErr
+			return
+		}
+		
+		cards = append(cards, game.CardDesc{
+			Name:  cardName,
+			Count: int(count),
+		})
+	})
+	
+	d.log.Field("url", u).Infof(ctx, "Parsed %d cards from deck", len(cards))
+	
+	if err != nil {
+		return fmt.Errorf("failed to parse cards: %w", err)
+	}
+	partitions := []game.Partition{{
+		Name:  "Main",
+		Cards: cards,
+	}}
+
+	t := &game.CollectionTypeDeck{
+		Name:   deckName,
+		Format: format,
+	}
+	tw := game.CollectionTypeWrapper{
+		Type:  t.Type(),
+		Inner: t,
+	}
+	collection := game.Collection{
+		Type:        tw,
+		ID:          id,
+		URL:         u,
+		ReleaseDate: date,
+		Partitions:  partitions,
+		Source:      "goldfish", // Source tracking
+	}
+	if err := collection.Canonicalize(); err != nil {
+		return fmt.Errorf("collection is invalid: %w", err)
+	}
+
+	b, err := json.Marshal(collection)
+	if err != nil {
+		return err
+	}
+	return d.blob.Write(ctx, bkey, b)
+}
+
+var prefix = filepath.Join("magic", "goldfish")
+
+func (d *Dataset) collectionKey(collectionID string) string {
+	return filepath.Join(prefix, collectionID+".json")
+}
+
+func (d *Dataset) resolveRef(ref string) (string, error) {
+	u, err := url.Parse(ref)
+	if err != nil {
+		return "", err
+	}
+	u = base.ResolveReference(u)
+	return u.String(), nil
+}
+
+var (
+	reSilentThrottle = regexp.MustCompile(`^Throttled`)
+	limiter          = ratelimit.New(100, ratelimit.Per(time.Minute))
+	defaultFetchOpts = []scraper.DoOption{
+		&scraper.OptDoSilentThrottle{
+			PageBytesRegexp: reSilentThrottle,
+		},
+		&scraper.OptDoLimiter{
+			Limiter: limiter,
+		},
+	}
+)
+
+func (d *Dataset) fetch(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	u string,
+	datasetOptions dataset.ResolvedUpdateOptions,
+) (*scraper.Page, error) {
+	opts := defaultFetchOpts
+	if datasetOptions.FetchReplaceAll {
+		opts = append(opts, &scraper.OptDoReplace{})
+	}
+	req, err := http.NewRequest("GET", u, nil)
+	if err != nil {
+		return nil, err
+	}
+	page, err := sc.Do(ctx, req, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return page, nil
+}
+
+func (d *Dataset) IterItems(
+	ctx context.Context,
+	fn func(dataset.Item) error,
+	options ...dataset.IterItemsOption,
+) error {
+	return dataset.IterItemsBlobPrefix(
+		ctx,
+		d.blob,
+		prefix,
+		dataset.DeserializeAsCollection,
+		fn,
+	)
+}
