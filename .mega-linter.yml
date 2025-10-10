@@ -1,0 +1,159 @@
+# MegaLinter Configuration for Decksage
+# Go + Python + Meta monolith project
+
+# Flavor optimization: we use specific linters rather than full image
+FLAVOR_SUGGESTIONS: false
+
+# Only enable relevant linters for this project
+ENABLE:
+  - GO
+  - PYTHON
+  - BASH
+  - MARKDOWN
+  - YAML
+  - JSON
+  - MAKEFILE
+
+# Disable linters we don't need
+DISABLE:
+  - COPYPASTE  # Too noisy for this project
+  - SPELL      # Would require custom dictionary
+
+# Apply linters to entire workspace
+APPLY_FIXES: none  # Don't auto-fix, just report
+FILEIO_REPORTER: true
+FORMATTERS_DISABLE_ERRORS: false
+
+# Exclude patterns - align with .gitignore
+EXCLUDED_DIRECTORIES:
+  - .git
+  - .venv
+  - venv
+  - __pycache__
+  - node_modules
+  - build
+  - dist
+  - .idea
+  - .vscode
+  - archive
+  - experiments/archived
+  - logs
+  - cache
+  - src/backend/data-full
+  - src/backend/build
+  - data/raw
+  - data/embeddings
+  - data/graphs
+  - data/archive
+  - integration_test_tmp
+  - .pytest_cache
+  - .ruff_cache
+
+# File patterns to exclude
+FILTER_REGEX_EXCLUDE: |
+  (\.egg-info/|\.pyc$|\.pyo$|\.so$|\.dll$|\.dylib$|\.exe$|\.test$|\.out$|\.log$|\.tmp$|\.temp$|\.swp$|\.swo$|\.DS_Store$|Thumbs\.db$|\.wv$|\.kv$|\.edg$|\.bak$|_backup\.|\.zst$|\.sst$|\.attrs$|uv\.lock$)
+
+# ─────────────────────────────────────────────────────────────
+# PYTHON Configuration
+# ─────────────────────────────────────────────────────────────
+PYTHON_DEFAULT_STYLE: ruff  # Use ruff as primary Python linter
+
+# Ruff: Fast, modern Python linter (already configured in pyproject.toml)
+PYTHON_RUFF_CONFIG_FILE: pyproject.toml
+PYTHON_RUFF_ARGUMENTS:
+  - "--config=pyproject.toml"
+PYTHON_RUFF_FILTER_REGEX_INCLUDE: "(src/ml/)"
+
+# Pylint: Additional static analysis (optional, can be heavy)
+PYTHON_PYLINT_DISABLE_ERRORS: true  # Don't fail build on pylint
+PYTHON_PYLINT_ARGUMENTS:
+  - "--max-line-length=100"
+  - "--disable=C0111,R0903,C0103"  # Disable docstring/too-few-methods/naming warnings
+
+# Black: Code formatter (Ruff handles this, but keep as fallback)
+PYTHON_BLACK_ARGUMENTS:
+  - "--line-length=100"
+  - "--target-version=py311"
+
+# ─────────────────────────────────────────────────────────────
+# GO Configuration
+# ─────────────────────────────────────────────────────────────
+GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
+
+# golangci-lint: Meta-linter that runs multiple Go linters
+GO_GOLANGCI_LINT_ARGUMENTS:
+  - "run"
+  - "--timeout=5m"
+  - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,typecheck,unused"
+  - "--enable=gofmt,goimports,misspell,revive"
+  - "./..."
+GO_GOLANGCI_LINT_CONFIG_FILE: WORKSPACE  # Will look for .golangci.yml
+
+# revive: Fast, configurable Go linter
+GO_REVIVE_ARGUMENTS:
+  - "-config"
+  - ".revive.toml"
+GO_REVIVE_DISABLE_ERRORS: true  # Don't fail build, golangci-lint is primary
+
+# ─────────────────────────────────────────────────────────────
+# BASH/SHELL Configuration
+# ─────────────────────────────────────────────────────────────
+BASH_SHELLCHECK_ARGUMENTS:
+  - "--severity=warning"
+  - "--external-sources"
+BASH_SHFMT_ARGUMENTS:
+  - "-i=2"  # 2-space indentation
+  - "-ci"   # Indent switch cases
+  - "-bn"   # Binary ops at start of line
+
+# ─────────────────────────────────────────────────────────────
+# MARKDOWN Configuration
+# ─────────────────────────────────────────────────────────────
+MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json
+MARKDOWN_MARKDOWNLINT_DISABLE_ERRORS: true  # Don't fail on markdown issues
+MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: "(archive/|experiments/|paper/)"
+
+# ─────────────────────────────────────────────────────────────
+# YAML Configuration
+# ─────────────────────────────────────────────────────────────
+YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
+YAML_YAMLLINT_ARGUMENTS:
+  - "-d"
+  - "{extends: relaxed, rules: {line-length: {max: 120}}}"
+YAML_YAMLLINT_FILTER_REGEX_INCLUDE: "(annotations/|\.github/)"
+
+# ─────────────────────────────────────────────────────────────
+# JSON Configuration
+# ─────────────────────────────────────────────────────────────
+JSON_JSONLINT_DISABLE_ERRORS: true  # Don't fail on JSON formatting
+JSON_PRETTIER_ARGUMENTS:
+  - "--print-width=100"
+  - "--tab-width=2"
+
+# ─────────────────────────────────────────────────────────────
+# MAKEFILE Configuration
+# ─────────────────────────────────────────────────────────────
+MAKEFILE_CHECKMAKE_DISABLE_ERRORS: true  # Makefiles can be flexible
+
+# ─────────────────────────────────────────────────────────────
+# Output Configuration
+# ─────────────────────────────────────────────────────────────
+# Generate useful reports
+SARIF_REPORTER: true
+TEXT_REPORTER: true
+GITHUB_COMMENT_REPORTER: false  # Enable in CI if desired
+
+# Performance
+PARALLEL: true
+SHOW_ELAPSED_TIME: true
+LOG_LEVEL: INFO
+
+# Pre-run commands (optional)
+PRE_COMMANDS:
+  - command: echo "Starting MegaLinter for Decksage monolith..."
+    cwd: "workspace"
+
+# Post-run commands (optional)
+POST_COMMANDS:
+  - command: echo "MegaLinter complete. Review megalinter-reports/ for detailed results."
+    cwd: "workspace"

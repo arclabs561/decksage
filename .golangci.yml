@@ -1,0 +1,138 @@
+# golangci-lint configuration for Decksage backend
+# Modern Go linting best practices
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+  go: '1.21'
+
+linters:
+  enable:
+    # Core linters
+    - errcheck      # Check error handling
+    - gosimple      # Simplify code
+    - govet         # Go vet
+    - ineffassign   # Detect ineffectual assignments
+    - staticcheck   # Comprehensive static analysis
+    - typecheck     # Type checking
+    - unused        # Detect unused code
+    
+    # Style & formatting
+    - gofmt         # Check formatting
+    - goimports     # Check imports
+    - misspell      # Detect misspellings
+    - revive        # Fast, configurable linter
+    
+    # Best practices
+    - gocritic      # Opinionated checks
+    - gocyclo       # Cyclomatic complexity
+    - dupl          # Duplicate code detection
+    - gosec         # Security issues
+    - unconvert     # Unnecessary type conversions
+    - unparam       # Unused function parameters
+    
+    # Performance
+    - prealloc      # Suggest slice preallocation
+    
+    # Bugs & potential issues
+    - bodyclose     # HTTP body close checks
+    - noctx         # Detect non-context functions
+    - rowserrcheck  # Check sql.Rows errors
+    - sqlclosecheck # SQL statement close checks
+
+  disable:
+    - exhaustive    # Too strict for switches
+    - funlen        # Function length is judgement call
+    - gochecknoglobals  # Globals sometimes necessary
+    - gocognit      # Cognitive complexity is subjective
+    - godox         # Allow TODOs
+    - gomnd         # Magic numbers sometimes ok
+    - lll           # Line length handled by gofmt
+    - nestif        # Nesting depth is judgement call
+    - wsl           # Whitespace rules too strict
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+    check-blank: false
+    
+  govet:
+    check-shadowing: true
+    enable-all: true
+    
+  gocyclo:
+    min-complexity: 15
+    
+  dupl:
+    threshold: 100
+    
+  gocritic:
+    enabled-tags:
+      - diagnostic
+      - style
+      - performance
+      - experimental
+    disabled-checks:
+      - whyNoLint
+      - unnamedResult
+      
+  revive:
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+        disabled: true  # Can be noisy
+      - name: if-return
+      - name: increment-decrement
+      - name: var-naming
+      - name: var-declaration
+      - name: package-comments
+        disabled: true  # Not all packages need comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unreachable-code
+      
+  misspell:
+    locale: US
+    
+  goimports:
+    local-prefixes: decksage
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - dupl
+        - gosec
+        - gocritic
+        
+    # Exclude generated files
+    - path: ".*\\.pb\\.go$"
+      linters:
+        - all
+        
+  # Maximum count of issues with same text. 0 means unlimited
+  max-same-issues: 0
+  
+  # Maximum issues count per one linter. 0 means unlimited
+  max-issues-per-linter: 0
+
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+  sort-results: true
