@@ -1,0 +1,18 @@
+# Build artifacts
+build/
+backend
+collections
+
+# Cache directories
+cache/
+
+# Test coverage
+*.out
+coverage.html
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~

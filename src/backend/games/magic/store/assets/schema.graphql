@@ -1,0 +1,4 @@
+type Card {
+  name: String! @id
+  setCooccur: [Card] @hasInverse(field: setCooccur)
+}
