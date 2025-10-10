@@ -1,0 +1,13 @@
+# Fast Node2Vec for DeckSage
+# Using fastnode2vec: https://github.com/louisabraham/fastnode2vec
+
+fastnode2vec>=0.0.5
+gensim>=4.0.0
+pandas>=2.0.0
+numpy>=1.24.0
+scikit-learn>=1.3.0
+matplotlib>=3.7.0
+numba>=0.57.0
+
+# Optional but recommended
+python-dotenv>=1.0.0
