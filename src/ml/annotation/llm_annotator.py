@@ -1,0 +1,677 @@
+#!/usr/bin/env python3
+"""
+LLM-Powered Annotation System
+
+Creates RICH ANNOTATIONS at scale:
+1. Card similarity judgments (ground truth for evaluation)
+2. Archetype descriptions (semantic understanding)
+3. Card relationships (why cards appear together)
+4. Substitution recommendations (functional equivalents)
+5. Deck quality assessments (tournament viability)
+
+Uses LLM judges to create training/eval data, not just validate.
+"""
+
+import asyncio
+import json
+from collections import Counter, defaultdict
+from datetime import datetime
+from pathlib import Path
+import os
+
+# Auto-load .env for provider keys with minimal config
+try:
+    from dotenv import load_dotenv  # type: ignore
+    load_dotenv()
+except Exception:
+    pass
+
+try:
+    from pydantic import BaseModel, Field
+    from pydantic_ai import Agent
+
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+    print("Install pydantic-ai: pip install pydantic-ai")
+
+from ..utils.paths import PATHS
+
+# ============================================================================
+# Annotation Models
+# ============================================================================
+
+
+class CardSimilarityAnnotation(BaseModel):
+    """LLM judgment of card similarity."""
+
+    card1: str
+    card2: str
+
+    similarity_score: float = Field(ge=0.0, le=1.0, description="How similar? 0-1")
+    similarity_type: str = Field(description="functional|synergy|manabase|archetype|unrelated")
+    reasoning: str = Field(description="Why this score?")
+
+    is_substitute: bool = Field(description="Can card2 replace card1?")
+    context_dependent: bool = Field(description="Only similar in specific decks?")
+    example_decks: list[str] = Field(default_factory=list, description="Where they work together")
+
+
+class ArchetypeDescription(BaseModel):
+    """LLM-generated archetype description."""
+
+    archetype_name: str
+    format: str
+
+    description: str = Field(description="What is this archetype?")
+    strategy: str = Field(description="How does it win?")
+    core_cards: list[str] = Field(description="Essential cards (appear in 70%+ decks)")
+    flex_slots: list[str] = Field(description="Common but not essential")
+    key_features: list[str] = Field(description="Characteristics (fast/slow, combo/fair)")
+
+    typical_mana_curve: str = Field(description="Low/medium/high curve")
+    interaction_level: str = Field(description="heavy/medium/light interaction")
+    budget_range: str = Field(description="budget/moderate/expensive")
+
+
+class CardSubstitution(BaseModel):
+    """LLM recommendation for card substitution."""
+
+    original_card: str
+    suggested_substitute: str
+    context: str  # Format, archetype, budget
+
+    quality_score: float = Field(ge=0.0, le=1.0, description="How good a substitute?")
+    trade_offs: list[str] = Field(description="What you gain/lose")
+    when_to_use: str = Field(description="When is substitute better?")
+    price_difference: str | None = Field(None, description="Budget consideration")
+
+
+class DeckSynergy(BaseModel):
+    """LLM assessment of card synergies."""
+
+    card: str
+    synergy_cards: list[str] = Field(description="Cards that combo/enhance this")
+    synergy_explanations: dict[str, str] = Field(description="Why each card synergizes")
+    anti_synergy: list[str] = Field(default_factory=list, description="Cards that conflict")
+
+
+class CardFunctionality(BaseModel):
+    """LLM categorization of card function."""
+
+    card_name: str
+
+    primary_function: str = Field(description="removal|threat|ramp|draw|combo|disruption|finisher")
+    secondary_functions: list[str] = Field(default_factory=list)
+
+    archetypes_suited_for: list[str] = Field(description="Which archetypes want this?")
+    replacements: list[str] = Field(description="Functionally similar cards")
+
+    power_level: str = Field(description="format_staple|strong|playable|niche|weak")
+    reasoning: str
+
+
+# ============================================================================
+# Annotation Agents
+# ============================================================================
+
+if HAS_PYDANTIC_AI:
+    from ..utils.pydantic_ai_helpers import make_agent
+
+    # Env-configurable models (bias toward higher quality defaults)
+    SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-4.5-sonnet")
+    ARCH_MODEL = os.getenv("ANNOTATOR_MODEL_ARCHETYPE", "anthropic/claude-4.5-sonnet")
+    SUB_MODEL = os.getenv("ANNOTATOR_MODEL_SUBSTITUTION", "anthropic/claude-4.5-sonnet")
+    SYN_MODEL = os.getenv("ANNOTATOR_MODEL_SYNERGY", "anthropic/claude-4.5-sonnet")
+    FUNC_MODEL = os.getenv("ANNOTATOR_MODEL_FUNCTIONALITY", "anthropic/claude-4.5-sonnet")
+
+    # Using OpenRouter for all agents
+    similarity_agent = make_agent(
+        SIM_MODEL,
+        CardSimilarityAnnotation,
+        """You are an expert Magic: The Gathering judge creating similarity annotations.
+
+Your task: Judge how similar two cards are and explain WHY.
+
+Similarity types:
+- **functional**: Same role (both are 1-mana removal)
+- **synergy**: Work well together (Thassa's Oracle + Demonic Consultation)
+- **manabase**: Both require similar mana (UU vs UUU)
+- **archetype**: Both fit same strategy (both are Burn cards)
+- **unrelated**: No meaningful relationship
+
+Scoring guide:
+- 1.0: Perfect substitutes (Snow-Covered Island vs Island)
+- 0.8-0.9: Strong functional similarity (Lightning Bolt vs Chain Lightning)
+- 0.6-0.7: Same role, different execution (Fatal Push vs Path to Exile)
+- 0.4-0.5: Same archetype, different function (Lightning Bolt vs Monastery Swiftspear)
+- 0.2-0.3: Weak connection (both are red cards)
+- 0.0-0.1: Unrelated
+
+Be precise and justify your score.""",
+    )
+
+    archetype_agent = make_agent(
+        ARCH_MODEL,
+        ArchetypeDescription,
+        """You are an expert Magic: The Gathering analyst describing archetypes.
+
+Your task: Create comprehensive archetype descriptions for similarity systems.
+
+Include:
+- **Strategy**: How the deck wins
+- **Core cards**: Cards that define the archetype (70%+ inclusion)
+- **Flex slots**: Common but varies
+- **Key features**: Speed, interaction, complexity
+
+Be specific. "Aggro" is too vague. "Red Deck Wins - fast creature aggro with burn finish" is good.
+
+Consider format context. Modern Burn ≠ Legacy Burn.""",
+    )
+
+    substitution_agent = make_agent(
+        SUB_MODEL,
+        CardSubstitution,
+        """You are an expert Magic: The Gathering player recommending substitutions.
+
+Your task: Suggest alternative cards with trade-off analysis.
+
+Consider:
+- **Function**: Does it serve same role?
+- **Power level**: Upgrade/downgrade/sidegrade?
+- **Budget**: Is it cheaper?
+- **Availability**: Is it legal in same formats?
+- **Context**: When is substitute better?
+
+Be honest about trade-offs. If substitute is strictly worse, say so.
+If it's better in specific contexts, explain when.""",
+    )
+
+    synergy_agent = make_agent(
+        SYN_MODEL,
+        DeckSynergy,
+        """You are an expert Magic: The Gathering deck builder identifying synergies.
+
+Your task: Find cards that work well together and explain WHY.
+
+Synergy types:
+- **Combo**: Cards that win together (Thassa's Oracle + Demonic Consultation)
+- **Value**: Cards that enhance each other (Brainstorm + fetch lands)
+- **Tempo**: Cards that compound advantage (Delver + cheap spells)
+- **Protection**: Cards that protect key pieces (Force of Will + combo)
+
+Also identify anti-synergies (cards that conflict).""",
+    )
+
+    functionality_agent = make_agent(
+        FUNC_MODEL,
+        CardFunctionality,
+        """You are an expert Magic: The Gathering analyst categorizing cards.
+
+Your task: Classify cards by function and suggest alternatives.
+
+Primary functions:
+- **removal**: Kills creatures/permanents
+- **threat**: Wins game if unanswered
+- **ramp**: Accelerates mana
+- **draw**: Generates card advantage
+- **combo**: Part of game-winning interaction
+- **disruption**: Stops opponent's plan
+- **finisher**: Closes out won games
+
+Power levels:
+- **format_staple**: Played in 30%+ decks
+- **strong**: Top tier option
+- **playable**: Sees competitive play
+- **niche**: Good in specific decks
+- **weak**: Rarely played
+
+Suggest functionally similar cards (not just same type).""",
+    )
+
+
+# ============================================================================
+# Annotation Pipeline
+# ============================================================================
+
+
+class LLMAnnotator:
+    """Orchestrates LLM-powered annotation at scale."""
+
+    def __init__(self, output_dir: Path | None = None):
+        if not HAS_PYDANTIC_AI:
+            raise ImportError("pydantic-ai required")
+
+        self.output_dir = output_dir or PATHS.experiments / "annotations_llm"
+        self.output_dir.mkdir(exist_ok=True, parents=True)
+
+        self.decks = self._load_decks()
+        print(f"Loaded {len(self.decks)} decks for annotation")
+
+    def _load_decks(self) -> list[dict]:
+        """Load decks with metadata.
+        Fallback order:
+        1) data/processed/decks_with_metadata.jsonl
+        2) src/backend/decks_hetero.jsonl
+        Normalizes to include: 'cards' (list of names), 'archetype' if available.
+        """
+        candidates: list[Path] = [PATHS.decks_with_metadata, PATHS.backend / "decks_hetero.jsonl"]
+        decks: list[dict] = []
+        src_path: Path | None = None
+        for p in candidates:
+            if p.exists():
+                src_path = p
+                break
+        if src_path is None:
+            raise FileNotFoundError("No deck metadata found: expected data/processed/decks_with_metadata.jsonl or src/backend/decks_hetero.jsonl")
+        with open(src_path) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    d = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                # Normalize cards
+                if "cards" not in d or not isinstance(d.get("cards"), list):
+                    cards: list[str] = []
+                    parts = d.get("partitions") or d.get("Partitions")
+                    if isinstance(parts, list):
+                        for part in parts:
+                            cs = part.get("cards") or part.get("Cards")
+                            if isinstance(cs, list):
+                                for c in cs:
+                                    name = c.get("name") or c.get("Name")
+                                    if isinstance(name, str):
+                                        cards.append(name)
+                    if cards:
+                        d["cards"] = cards
+                # Normalize archetype
+                if "archetype" not in d or not isinstance(d.get("archetype"), str):
+                    t = d.get("type") or d.get("Type")
+                    inner = t.get("inner") if isinstance(t, dict) else None
+                    if isinstance(inner, dict):
+                        arch = inner.get("archetype") or inner.get("Archetype")
+                        if isinstance(arch, str):
+                            d["archetype"] = arch
+                decks.append(d)
+        return decks
+
+    async def annotate_similarity_pairs(
+        self, num_pairs: int = 100, strategy: str = "diverse"
+    ) -> list[CardSimilarityAnnotation]:
+        """
+        Create similarity annotations for card pairs.
+
+        Args:
+            num_pairs: How many pairs to annotate
+            strategy: "diverse" (wide coverage) or "focused" (specific archetype)
+        """
+
+        print(f"\nAnnotating {num_pairs} similarity pairs ({strategy} strategy)...")
+
+        # Select pairs to annotate
+        if strategy == "diverse":
+            pairs = self._select_diverse_pairs(num_pairs)
+        else:
+            pairs = self._select_focused_pairs(num_pairs)
+
+        annotations = []
+        for i, (card1, card2, context) in enumerate(pairs, 1):
+            if i % 10 == 0:
+                print(f"  {i}/{len(pairs)}...")
+
+            prompt = f"""
+Card 1: {card1}
+Card 2: {card2}
+Context: They co-occur in {context["count"]} decks ({context["archetypes"]})
+
+How similar are these cards? Can card2 substitute for card1?
+Consider: function, power level, deckbuilding constraints.
+"""
+
+            try:
+                result = await similarity_agent.run(prompt)
+                annotations.append(result.output)
+            except Exception as e:
+                print(f"    Error on {card1} vs {card2}: {e}")
+                continue
+
+        return annotations
+
+    def _select_diverse_pairs(self, n: int) -> list[tuple]:
+        """Select diverse pairs across formats and archetypes."""
+
+        # Find cards that appear in multiple archetypes (interesting)
+        card_archetypes = defaultdict(set)
+        card_counts = Counter()
+
+        for deck in self.decks:
+            arch = deck.get("archetype", "Unknown")
+            for card in [c["name"] for c in deck.get("cards", [])]:
+                card_archetypes[card].add(arch)
+                card_counts[card] += 1
+
+        # Get cards that appear in 2-5 archetypes (not too narrow, not universal staples)
+        interesting_cards = [
+            card for card, archs in card_archetypes.items() if 2 <= len(archs) <= 5
+        ]
+
+        # Pair them
+        import random
+
+        random.shuffle(interesting_cards)
+
+        pairs = []
+        for i in range(0, min(n * 2, len(interesting_cards)), 2):
+            if i + 1 < len(interesting_cards):
+                c1, c2 = interesting_cards[i], interesting_cards[i + 1]
+                common_archs = card_archetypes[c1] & card_archetypes[c2]
+                pairs.append(
+                    (
+                        c1,
+                        c2,
+                        {
+                            "count": min(card_counts[c1], card_counts[c2]),
+                            "archetypes": ", ".join(list(common_archs)[:3])
+                            if common_archs
+                            else "none",
+                        },
+                    )
+                )
+
+        return pairs[:n]
+
+    def _select_focused_pairs(self, n: int, archetype: str | None = None) -> list[tuple]:
+        """Select pairs from specific archetype."""
+
+        if not archetype:
+            # Pick most common archetype
+            arch_counts = Counter(d.get("archetype") for d in self.decks)
+            archetype = arch_counts.most_common(1)[0][0]
+
+        print(f"  Focusing on: {archetype}")
+
+        # Get cards from this archetype
+        arch_decks = [d for d in self.decks if d.get("archetype") == archetype]
+        card_counts = Counter()
+
+        for deck in arch_decks:
+            for card in [c["name"] for c in deck.get("cards", [])]:
+                card_counts[card] += 1
+
+        # Take top N most common cards and pair them
+        common_cards = [card for card, _ in card_counts.most_common(n * 2)]
+
+        pairs = []
+        for i in range(0, min(len(common_cards), n * 2), 2):
+            if i + 1 < len(common_cards):
+                pairs.append(
+                    (
+                        common_cards[i],
+                        common_cards[i + 1],
+                        {"count": len(arch_decks), "archetypes": archetype},
+                    )
+                )
+
+        return pairs[:n]
+
+    async def annotate_archetypes(self, top_n: int = 10) -> list[ArchetypeDescription]:
+        """Create rich descriptions for top archetypes."""
+
+        print(f"\nAnnotating {top_n} archetypes...")
+
+        # Get top archetypes
+        arch_counts = Counter(d.get("archetype") for d in self.decks)
+        top_archs = arch_counts.most_common(top_n)
+
+        annotations = []
+        for i, (archetype, count) in enumerate(top_archs, 1):
+            print(f"  [{i}/{top_n}] {archetype} ({count} decks)...")
+
+            # Get representative cards
+            arch_decks = [d for d in self.decks if d.get("archetype") == archetype]
+            card_freq = Counter()
+
+            for deck in arch_decks:
+                for card in [c["name"] for c in deck.get("cards", [])]:
+                    card_freq[card] += 1
+
+            # Core cards (appear in 70%+)
+            threshold = len(arch_decks) * 0.7
+            core = [card for card, count in card_freq.items() if count >= threshold]
+
+            # Common cards (50-70%)
+            common = [
+                card for card, count in card_freq.items() if threshold * 0.7 <= count < threshold
+            ]
+
+            # Get format
+            formats = Counter(d.get("format") for d in arch_decks)
+            main_format = formats.most_common(1)[0][0] if formats else "Unknown"
+
+            prompt = f"""
+Archetype: {archetype}
+Format: {main_format}
+Number of decks: {count}
+
+Core cards (70%+ inclusion): {", ".join(core[:15])}
+Common cards: {", ".join(common[:10])}
+
+Describe this archetype comprehensively:
+- What is the strategy?
+- How does it win?
+- What are its key features?
+- Is it fast/slow, interactive/linear?
+"""
+
+            try:
+                result = await archetype_agent.run(prompt)
+                annotations.append(result.output)
+            except Exception as e:
+                print(f"    Error on {archetype}: {e}")
+                continue
+
+        return annotations
+
+    async def annotate_substitutions(
+        self, cards: list[str], format: str = "Modern"
+    ) -> list[CardSubstitution]:
+        """Generate substitution recommendations."""
+
+        print(f"\nAnnotating substitutions for {len(cards)} cards in {format}...")
+
+        annotations = []
+        for i, card in enumerate(cards, 1):
+            if i % 5 == 0:
+                print(f"  {i}/{len(cards)}...")
+
+            # Find what else appears in decks with this card
+            decks_with_card = [
+                d
+                for d in self.decks
+                if d.get("format") == format and card in [c["name"] for c in d.get("cards", [])]
+            ]
+
+            if not decks_with_card:
+                continue
+
+            # Common co-occurring cards
+            cooccur = Counter()
+            for deck in decks_with_card:
+                for c in [c["name"] for c in deck.get("cards", [])]:
+                    if c != card:
+                        cooccur[c] += 1
+
+            alternatives = [c for c, _ in cooccur.most_common(5)]
+
+            prompt = f"""
+Original card: {card}
+Format: {format}
+Common alternatives in same decks: {", ".join(alternatives)}
+
+Suggest the BEST budget substitute for {card}.
+Consider:
+- Same function?
+- Power level trade-off?
+- When is substitute better?
+- Price difference?
+"""
+
+            try:
+                result = await substitution_agent.run(prompt)
+                annotations.append(result.output)
+            except Exception as e:
+                print(f"    Error on {card}: {e}")
+                continue
+
+        return annotations
+
+    def save_annotations(
+        self,
+        similarity: list[CardSimilarityAnnotation],
+        archetypes: list[ArchetypeDescription],
+        substitutions: list[CardSubstitution],
+    ):
+        """Save all annotations to files."""
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Similarity annotations
+        sim_file = self.output_dir / f"similarity_annotations_{timestamp}.jsonl"
+        with open(sim_file, "w") as f:
+            for ann in similarity:
+                f.write(json.dumps(ann.model_dump()) + "\n")
+        print(f"\n✓ Saved {len(similarity)} similarity annotations: {sim_file}")
+
+        # Archetype descriptions
+        arch_file = self.output_dir / f"archetype_descriptions_{timestamp}.json"
+        with open(arch_file, "w") as f:
+            json.dump([a.model_dump() for a in archetypes], f, indent=2)
+        print(f"✓ Saved {len(archetypes)} archetype descriptions: {arch_file}")
+
+        # Substitutions
+        sub_file = self.output_dir / f"substitutions_{timestamp}.jsonl"
+        with open(sub_file, "w") as f:
+            for ann in substitutions:
+                f.write(json.dumps(ann.model_dump()) + "\n")
+        print(f"✓ Saved {len(substitutions)} substitutions: {sub_file}")
+
+        # Summary report
+        report = {
+            "timestamp": timestamp,
+            "annotations_created": {
+                "similarity_pairs": len(similarity),
+                "archetype_descriptions": len(archetypes),
+                "substitutions": len(substitutions),
+            },
+            "coverage": {
+                "unique_cards_in_similarity": len(
+                    set([a.card1 for a in similarity] + [a.card2 for a in similarity])
+                ),
+                "archetypes_described": [a.archetype_name for a in archetypes],
+                "substitutions_for": [a.original_card for a in substitutions],
+            },
+            "estimated_cost_usd": (
+                len(similarity) * 0.01  # $0.01 per pair
+                + len(archetypes) * 0.02  # $0.02 per archetype
+                + len(substitutions) * 0.01  # $0.01 per substitution
+            ),
+        }
+
+        report_file = self.output_dir / f"annotation_report_{timestamp}.json"
+        with open(report_file, "w") as f:
+            json.dump(report, f, indent=2)
+
+        print(f"\n{'=' * 60}")
+        print("ANNOTATION SUMMARY")
+        print("=" * 60)
+        print(f"Similarity pairs: {len(similarity)}")
+        print(f"Archetypes: {len(archetypes)}")
+        print(f"Substitutions: {len(substitutions)}")
+        print(f"Estimated cost: ${report['estimated_cost_usd']:.2f}")
+        print(f"\nReport: {report_file}")
+        print("=" * 60)
+
+
+# ============================================================================
+# CLI
+# ============================================================================
+
+
+async def main():
+    """Run annotation pipeline."""
+
+    import argparse
+    import os
+
+    parser = argparse.ArgumentParser(description="LLM Annotation System")
+    parser.add_argument("--similarity", type=int, default=100, help="Number of similarity pairs")
+    parser.add_argument("--archetypes", type=int, default=10, help="Number of archetypes")
+    parser.add_argument("--substitutions", type=int, default=20, help="Number of substitutions")
+    parser.add_argument("--strategy", choices=["diverse", "focused"], default="diverse")
+
+    args = parser.parse_args()
+
+    if not HAS_PYDANTIC_AI:
+        print("Error: pydantic-ai not installed")
+        return
+
+    # Load .env if it exists
+    from pathlib import Path as PathLib
+
+    env_file = PathLib(__file__).parent.parent.parent / ".env"
+    if env_file.exists():
+        from dotenv import load_dotenv
+
+        load_dotenv(env_file)
+
+    if not os.getenv("OPENROUTER_API_KEY"):
+        print("Error: OPENROUTER_API_KEY not set")
+        print("Set in .env file or: export OPENROUTER_API_KEY=your-key")
+        return
+
+    annotator = LLMAnnotator()
+
+    # 1. Similarity annotations
+    print("\n" + "=" * 60)
+    print("PHASE 1: Similarity Annotations")
+    print("=" * 60)
+    similarity = await annotator.annotate_similarity_pairs(
+        num_pairs=args.similarity, strategy=args.strategy
+    )
+
+    # 2. Archetype descriptions
+    print("\n" + "=" * 60)
+    print("PHASE 2: Archetype Descriptions")
+    print("=" * 60)
+    archetypes = await annotator.annotate_archetypes(top_n=args.archetypes)
+
+    # 3. Substitutions
+    print("\n" + "=" * 60)
+    print("PHASE 3: Substitution Recommendations")
+    print("=" * 60)
+
+    # Pick top cards to annotate
+    from collections import Counter
+
+    card_counts = Counter()
+    for deck in annotator.decks:
+        for card in [c["name"] for c in deck.get("cards", [])]:
+            card_counts[card] += 1
+
+    top_cards = [card for card, _ in card_counts.most_common(args.substitutions)]
+    substitutions = await annotator.annotate_substitutions(top_cards, format="Modern")
+
+    # 4. Save everything
+    print("\n" + "=" * 60)
+    print("PHASE 4: Saving Annotations")
+    print("=" * 60)
+    annotator.save_annotations(similarity, archetypes, substitutions)
+
+    print("\n✅ Annotation complete!")
+
+
+if __name__ == "__main__":
+    asyncio.run(main())
