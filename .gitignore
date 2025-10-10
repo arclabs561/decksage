@@ -4,6 +4,13 @@
 /src/backend/export-decks-only
 /src/backend/validate-data
 /src/backend/cmd/*/validate-data
+## Generated binaries (ensure not tracked)
+/src/backend/analyze-decks
+/src/backend/backfill-source
+/src/backend/export-hetero
+/src/backend/cmd/analyze-decks/analyze-decks
+/src/backend/cmd/export-hetero/export-hetero
+/src/backend/tools/cache-extract/cache-extract
 *.exe
 *.dll
 *.so
@@ -27,6 +34,8 @@
 /data/graphs/*.edg
 /data/archive/
 /integration_test_tmp/
+## Large data samples (track elsewhere)
+/src/backend/decks_hetero.jsonl
 **/*.zst
 **/*.attrs
 **/*.sst
