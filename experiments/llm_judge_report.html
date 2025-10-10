@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>LLM Judge Report</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff; --fg: #1a1a1a; --fg-muted: #666666;
+            --border: #e5e5e5; --accent: #0066cc; --code-bg: #f6f6f6;
+            --success: #16a34a; --warning: #ea580c; --error: #dc2626;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a; --fg: #e0e0e0; --fg-muted: #999999;
+                --border: #333333; --accent: #4a9eff; --code-bg: #2d2d2d;
+                --success: #22c55e; --warning: #fb923c; --error: #ef4444;
+            }
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg); color: var(--fg); line-height: 1.6;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+        .container { max-width: 1400px; margin: 0 auto; }
+        header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; }
+        h1 { font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 600; margin-bottom: 0.25rem; letter-spacing: -0.02em; }
+        h2 { font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.5rem 0; letter-spacing: -0.01em; }
+        h3 { font-size: 1rem; font-weight: 600; margin: 1rem 0 0.5rem 0; }
+        .timestamp { color: var(--fg-muted); font-size: 0.85rem; }
+        .summary {
+            background: var(--code-bg); border: 1px solid var(--border);
+            border-radius: 4px; padding: 1rem; margin: 1rem 0;
+        }
+        .quality { font-size: 2rem; font-weight: 600; }
+        .quality.excellent { color: var(--success); }
+        .quality.good { color: var(--success); }
+        .quality.fair { color: var(--warning); }
+        .quality.poor { color: var(--error); }
+        .query-eval {
+            border: 1px solid var(--border); border-radius: 4px;
+            padding: 1rem; margin: 1rem 0;
+        }
+        .query-eval h3 { margin-top: 0; }
+        table {
+            width: 100%; border-collapse: collapse;
+            margin: 0.75rem 0; font-size: 0.85rem;
+        }
+        th, td { border: 1px solid var(--border); padding: 0.4rem 0.6rem; text-align: left; }
+        th { background: var(--code-bg); font-weight: 600; }
+        tr:hover { background: var(--code-bg); }
+        .metric {
+            font-family: "SF Mono", Monaco, "Cascadia Code", monospace;
+            font-size: 0.9em;
+        }
+        .relevance-4 { color: var(--success); font-weight: 600; }
+        .relevance-3 { color: var(--success); }
+        .relevance-2 { color: var(--warning); }
+        .relevance-1 { color: var(--error); }
+        .relevance-0 { color: var(--error); font-weight: 600; }
+        ul { list-style: none; padding-left: 0; font-size: 0.9rem; line-height: 1.5; }
+        li { padding-left: 1.2em; position: relative; margin: 0.25rem 0; }
+        li::before { content: "•"; position: absolute; left: 0.3em; color: var(--fg-muted); }
+        .issues { background: rgba(220, 38, 38, 0.1); border-left: 3px solid var(--error); padding: 0.75rem; margin: 0.75rem 0; }
+        .biases { background: rgba(234, 88, 12, 0.1); border-left: 3px solid var(--warning); padding: 0.75rem; margin: 0.75rem 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>LLM Judge Evaluation Report</h1>
+            <p class="timestamp">Generated: 2025-09-30 21:50:30</p>
+        </header>
+        
+        <div class="summary">
+            <p><strong>Queries Evaluated:</strong> 3</p>
+            <p><strong>Average Quality:</strong> <span class="quality poor">0.0/10</span></p>
+        </div>
+
+        <div class="query-eval">
+            <h3>Lightning Bolt</h3>
+            <p><strong>Quality:</strong> <span class="quality poor">0/10</span></p>
+            <p><em>LLM evaluation failed: Expecting value: line 1 column 1 (char 0)</em></p>
+            
+            <h4>Predictions & LLM Ratings</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Card</th>
+                        <th>Model Score</th>
+                        <th>LLM Relevance</th>
+                        <th>Reasoning</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>1</td>
+                        <td><strong>Chain Lightning</strong></td>
+                        <td class="metric">0.8467</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>2</td>
+                        <td><strong>Kessig Flamebreather</strong></td>
+                        <td class="metric">0.8387</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>3</td>
+                        <td><strong>Fireblast</strong></td>
+                        <td class="metric">0.8315</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>4</td>
+                        <td><strong>Burning-Tree Emissary</strong></td>
+                        <td class="metric">0.8311</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>5</td>
+                        <td><strong>Clockwork Percussionist</strong></td>
+                        <td class="metric">0.8264</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>6</td>
+                        <td><strong>Lava Dart</strong></td>
+                        <td class="metric">0.8249</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>7</td>
+                        <td><strong>Guttersnipe</strong></td>
+                        <td class="metric">0.8207</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>8</td>
+                        <td><strong>Goblin Bushwhacker</strong></td>
+                        <td class="metric">0.8193</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>9</td>
+                        <td><strong>Gingerbrute</strong></td>
+                        <td class="metric">0.8181</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>10</td>
+                        <td><strong>Goblin Tomb Raider</strong></td>
+                        <td class="metric">0.8159</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                </tbody>
+            </table>
+<div class="issues"><strong>Issues:</strong><ul><li>Expecting value: line 1 column 1 (char 0)</li></ul></div></div>
+        <div class="query-eval">
+            <h3>Brainstorm</h3>
+            <p><strong>Quality:</strong> <span class="quality poor">0/10</span></p>
+            <p><em>LLM evaluation failed: Expecting value: line 1 column 1 (char 0)</em></p>
+            
+            <h4>Predictions & LLM Ratings</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Card</th>
+                        <th>Model Score</th>
+                        <th>LLM Relevance</th>
+                        <th>Reasoning</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>1</td>
+                        <td><strong>Ponder</strong></td>
+                        <td class="metric">0.8921</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>2</td>
+                        <td><strong>Scroll of Fate</strong></td>
+                        <td class="metric">0.8748</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>3</td>
+                        <td><strong>Xander's Lounge</strong></td>
+                        <td class="metric">0.8500</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>4</td>
+                        <td><strong>Necropotence</strong></td>
+                        <td class="metric">0.8457</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>5</td>
+                        <td><strong>Minor Misstep</strong></td>
+                        <td class="metric">0.8445</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>6</td>
+                        <td><strong>Doorkeeper Thrull</strong></td>
+                        <td class="metric">0.8434</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>7</td>
+                        <td><strong>Phyrexian Dreadnought</strong></td>
+                        <td class="metric">0.8363</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>8</td>
+                        <td><strong>Tundra</strong></td>
+                        <td class="metric">0.8275</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>9</td>
+                        <td><strong>Curie, Emergent Intelligence</strong></td>
+                        <td class="metric">0.8240</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>10</td>
+                        <td><strong>Tamiyo, Inquisitive Student</strong></td>
+                        <td class="metric">0.8232</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                </tbody>
+            </table>
+<div class="issues"><strong>Issues:</strong><ul><li>Expecting value: line 1 column 1 (char 0)</li></ul></div></div>
+        <div class="query-eval">
+            <h3>Dark Ritual</h3>
+            <p><strong>Quality:</strong> <span class="quality poor">0/10</span></p>
+            <p><em>LLM evaluation failed: Expecting value: line 1 column 1 (char 0)</em></p>
+            
+            <h4>Predictions & LLM Ratings</h4>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Card</th>
+                        <th>Model Score</th>
+                        <th>LLM Relevance</th>
+                        <th>Reasoning</th>
+                    </tr>
+                </thead>
+                <tbody>
+
+                    <tr>
+                        <td>1</td>
+                        <td><strong>Balustrade Spy</strong></td>
+                        <td class="metric">0.8448</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>2</td>
+                        <td><strong>Undercity Informer</strong></td>
+                        <td class="metric">0.8330</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>3</td>
+                        <td><strong>Lively Dirge</strong></td>
+                        <td class="metric">0.8258</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>4</td>
+                        <td><strong>Currency Converter</strong></td>
+                        <td class="metric">0.8192</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>5</td>
+                        <td><strong>Cabal Ritual</strong></td>
+                        <td class="metric">0.8165</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>6</td>
+                        <td><strong>Poxwalkers</strong></td>
+                        <td class="metric">0.8163</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>7</td>
+                        <td><strong>Eumidian Hatchery</strong></td>
+                        <td class="metric">0.8103</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>8</td>
+                        <td><strong>Karn's Sylex</strong></td>
+                        <td class="metric">0.8092</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>9</td>
+                        <td><strong>Jack-o'-Lantern</strong></td>
+                        <td class="metric">0.8082</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                    <tr>
+                        <td>10</td>
+                        <td><strong>Innocent Blood</strong></td>
+                        <td class="metric">0.8069</td>
+                        <td class=""><strong>?</strong></td>
+                        <td>Not evaluated</td>
+                    </tr>
+
+                </tbody>
+            </table>
+<div class="issues"><strong>Issues:</strong><ul><li>Expecting value: line 1 column 1 (char 0)</li></ul></div></div>
+    </div>
+</body>
+</html>

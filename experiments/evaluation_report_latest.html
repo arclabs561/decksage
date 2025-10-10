@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Evaluation Report - magic_500decks_pecanpy</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --fg-muted: #666666;
+            --border: #e5e5e5;
+            --accent: #0066cc;
+            --code-bg: #f6f6f6;
+            --success: #16a34a;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a;
+                --fg: #e0e0e0;
+                --fg-muted: #999999;
+                --border: #333333;
+                --accent: #4a9eff;
+                --code-bg: #2d2d2d;
+                --success: #22c55e;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+        
+        .container { max-width: 1200px; margin: 0 auto; }
+        
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .timestamp { color: var(--fg-muted); font-size: 0.85rem; }
+        
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem 0;
+            letter-spacing: -0.01em;
+        }
+        
+        .params {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .params p { margin: 0.25rem 0; }
+        .params strong { color: var(--fg); }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+        
+        th, td {
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+        }
+        
+        tr:hover { background: var(--code-bg); }
+        
+        .metric {
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+            font-size: 0.95em;
+        }
+        
+        .best { background: rgba(22, 163, 74, 0.1); }
+        
+        .improvement {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 1rem 0;
+        }
+        
+        .improvement.positive { color: var(--success); }
+        .improvement.negative { color: #dc2626; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Evaluation Report</h1>
+            <p class="timestamp">Generated: 2025-09-30 22:16:30</p>
+        </header>
+        
+        <div class="params">
+            <p><strong>Test Fraction:</strong> 0.15</p>
+            <p><strong>Random Seed:</strong> 42</p>
+            <p><strong>Embeddings:</strong> ../../data/embeddings/magic_500decks_pecanpy.wv</p>
+        </div>
+
+        <h2>Baseline Models</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>P@5</th>
+                    <th>P@10</th>
+                    <th>P@20</th>
+                    <th>MRR</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="best">
+                    <td><strong>jaccard</strong></td>
+                    <td class="metric">0.1540</td>
+                    <td class="metric">0.1450</td>
+                    <td class="metric">0.1310</td>
+                    <td class="metric">0.3453</td>
+                </tr>
+
+                <tr>
+                    <td><strong>degree</strong></td>
+                    <td class="metric">0.0340</td>
+                    <td class="metric">0.0330</td>
+                    <td class="metric">0.0290</td>
+                    <td class="metric">0.0684</td>
+                </tr>
+
+                <tr>
+                    <td><strong>random</strong></td>
+                    <td class="metric">0.0080</td>
+                    <td class="metric">0.0070</td>
+                    <td class="metric">0.0095</td>
+                    <td class="metric">0.0177</td>
+                </tr>
+
+            </tbody>
+        </table>
+
+        <h2>Embedding Model</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Model</th>
+                    <th>P@5</th>
+                    <th>P@10</th>
+                    <th>P@20</th>
+                    <th>MRR</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="best">
+                    <td><strong>Node2Vec</strong></td>
+                    <td class="metric">0.0748</td>
+                    <td class="metric">0.0696</td>
+                    <td class="metric">0.0625</td>
+                    <td class="metric">0.1713</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <h2>Improvement vs Best Baseline</h2>
+        <p>Best baseline P@10: <span class="metric">0.1450</span></p>
+        <p>Embedding P@10: <span class="metric">0.0696</span></p>
+        <p class="improvement negative">
+            -52.0%
+        </p>
+
+    </div>
+</body>
+</html>

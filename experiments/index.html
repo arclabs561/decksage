@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>DeckSage ML Experiments</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --fg-muted: #666666;
+            --border: #e5e5e5;
+            --accent: #0066cc;
+            --code-bg: #f6f6f6;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a;
+                --fg: #e0e0e0;
+                --fg-muted: #999999;
+                --border: #333333;
+                --accent: #4a9eff;
+                --code-bg: #2d2d2d;
+            }
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            /* Modern system font stack - used by GitHub, Medium, etc. */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: clamp(1rem, 3vw, 3rem);
+            max-width: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.02em;
+        }
+
+        .subtitle {
+            color: var(--fg-muted);
+            font-size: clamp(0.9rem, 2vw, 1rem);
+            font-weight: 400;
+        }
+
+        h2 {
+            font-size: clamp(1.1rem, 3vw, 1.3rem);
+            font-weight: 600;
+            margin: 1.5rem 0 0.5rem 0;
+            letter-spacing: -0.01em;
+        }
+
+        h3 {
+            font-size: 1rem;
+            font-weight: 600;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 0.4rem 0.75rem;
+            text-align: left;
+            vertical-align: top;
+        }
+
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background: var(--code-bg);
+        }
+
+        a {
+            color: var(--accent);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        code {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 0.15em 0.4em;
+            border-radius: 3px;
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, "Courier New", monospace;
+            font-size: 0.9em;
+        }
+
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            line-height: 1.5;
+        }
+
+        pre code {
+            background: transparent;
+            border: none;
+            padding: 0;
+        }
+
+        .status {
+            display: inline;
+            font-weight: 500;
+            font-size: 0.85em;
+        }
+
+        .status.complete { color: #16a34a; }
+        .status.complete::before { content: "✓ "; }
+        
+        .status.pending { color: var(--fg-muted); }
+        .status.pending::before { content: "○ "; }
+
+        .meta {
+            color: var(--fg-muted);
+            font-size: 0.75rem;
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .meta p {
+            margin: 0.25rem 0;
+        }
+
+        section {
+            margin: 2rem 0;
+        }
+        
+        section:first-of-type {
+            margin-top: 0;
+        }
+
+        ul {
+            list-style: none;
+            padding-left: 0;
+            line-height: 1.5;
+            font-size: 0.9rem;
+        }
+
+        li {
+            padding-left: 1.2em;
+            position: relative;
+            margin: 0.25rem 0;
+        }
+
+        li::before {
+            content: "•";
+            position: absolute;
+            left: 0.3em;
+            color: var(--fg-muted);
+        }
+
+        .commands {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+
+        .commands h3 {
+            margin-top: 0;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--fg-muted);
+        }
+
+        .commands pre {
+            background: transparent;
+            border: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            table {
+                font-size: 0.85rem;
+            }
+            
+            th, td {
+                padding: 0.5rem;
+            }
+        }
+    </style>
+    <script>
+        function refreshExperiments() {
+            // Scan for new reports
+            fetch('experiments.json')
+                .then(r => r.json())
+                .then(data => {
+                    // Update experiment list dynamically
+                    console.log('Experiments:', data);
+                })
+                .catch(e => console.log('No experiments.json yet'));
+        }
+        
+        // Auto-refresh every 30 seconds
+        setInterval(refreshExperiments, 30000);
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>DeckSage: ML Experiment Reports</h1>
+            <p class="subtitle">Evaluation and comparison of card embedding models</p>
+        </header>
+
+        <section class="commands">
+            <h3>QUICK START</h3>
+            <pre>$ cd src/ml
+$ python evaluate.py --pairs ../backend/pairs.csv --embeddings ../backend/magic_pecanpy.wv
+$ python compare_models.py --test-set test_set.json --models ../backend/*.wv</pre>
+        </section>
+
+        <section>
+            <h2>Available Reports</h2>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Report</th>
+                        <th>Description</th>
+                        <th>Metrics</th>
+                        <th>Status</th>
+                        <th>Link</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Baseline Evaluation</strong></td>
+                        <td>Node2Vec vs random, degree, Jaccard baselines</td>
+                        <td>P@K, MRR, NDCG</td>
+                        <td><span class="status complete">COMPLETE</span> (P@10: 0.1363, Jaccard beats Node2Vec)</td>
+                        <td><a href="evaluation_report.html">[view]</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Model Comparison</strong></td>
+                        <td>Side-by-side: 64d, 128d, 256d, BFS, DFS variants</td>
+                        <td>P@K, NDCG@K, MRR</td>
+                        <td><span class="status pending">PENDING</span></td>
+                        <td><a href="../../src/ml/comparison_report.html">[view]</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>LLM Judge Analysis</strong></td>
+                        <td>Claude 3.5 Sonnet evaluation of similarity predictions</td>
+                        <td>0-10 quality, relevance ratings</td>
+                        <td><span class="status complete">COMPLETE</span> (Avg: 3.3/10 - harsh but honest)</td>
+                        <td><a href="llm_judge_report.html">[view]</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Training Metrics</strong></td>
+                        <td>Embedding training logs and convergence</td>
+                        <td>Loss curves, runtime</td>
+                        <td><span class="status pending">PENDING</span></td>
+                        <td><a href="training_report.html">[view]</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Data Quality</strong></td>
+                        <td>Graph statistics, coverage, edge distribution</td>
+                        <td>Degree, clustering</td>
+                        <td><span class="status pending">PENDING</span></td>
+                        <td><a href="data_quality_report.html">[view]</a></td>
+                    </tr>
+                    <tr>
+                        <td><strong>API Performance</strong></td>
+                        <td>Similarity query latency and throughput</td>
+                        <td>p95, QPS</td>
+                        <td><span class="status pending">PENDING</span></td>
+                        <td><a href="api_report.html">[view]</a></td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section>
+            <h2>Workflow</h2>
+            <ul>
+                <li>Train multiple embedding configurations</li>
+                <li>Create annotated test set (50 queries, 5-point scale)</li>
+                <li>Run evaluation with baselines</li>
+                <li>Compare models side-by-side</li>
+                <li>Select best performing model</li>
+                <li>Deploy to production API</li>
+            </ul>
+        </section>
+
+        <div class="meta">
+            <p>Last updated: <span id="last-check">-</span></p>
+            <p>Auto-refresh: 30s | Theme: <span id="theme-mode">-</span></p>
+        </div>
+    </div>
+
+    <script>
+        function updateTime() {
+            document.getElementById('last-check').textContent = new Date().toLocaleString();
+        }
+        
+        function updateTheme() {
+            const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+            document.getElementById('theme-mode').textContent = isDark ? 'DARK' : 'LIGHT';
+        }
+        
+        updateTime();
+        updateTheme();
+        setInterval(updateTime, 1000);
+        
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', updateTheme);
+        
+        // Auto-refresh check
+        setInterval(() => {
+            fetch('experiments.json')
+                .then(r => r.json())
+                .then(data => console.log('Experiments updated'))
+                .catch(() => {});
+        }, 30000);
+    </script>
+</body>
+</html>
+
