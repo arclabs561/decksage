@@ -1,0 +1,176 @@
+{
+  "version": "1.0",
+  "created": "2025-10-01",
+  "game": "yugioh",
+  "description": "Canonical test set for Yu-Gi-Oh! - ALL YGO experiments must use this",
+  "num_queries": 13,
+  "queries": {
+    "Blue-Eyes White Dragon": {
+      "highly_relevant": [
+        "Blue-Eyes Alternative White Dragon",
+        "Blue-Eyes Abyss Dragon"
+      ],
+      "relevant": [
+        "Azure-Eyes Silver Dragon",
+        "Deep-Eyes White Dragon"
+      ],
+      "somewhat_relevant": [
+        "Dragon Spirit of White"
+      ],
+      "marginally_relevant": [
+        "Maiden with Eyes of Blue"
+      ],
+      "irrelevant": [
+        "Dark Magician",
+        "Monster Reborn"
+      ]
+    },
+    "Ash Blossom & Joyous Spring": {
+      "highly_relevant": [
+        "Effect Veiler",
+        "Ghost Ogre & Snow Rabbit"
+      ],
+      "relevant": [
+        "D.D. Crow",
+        "Ghost Belle & Haunted Mansion"
+      ],
+      "somewhat_relevant": [
+        "Skull Meister"
+      ],
+      "marginally_relevant": [
+        "Droll & Lock Bird"
+      ],
+      "irrelevant": [
+        "Pot of Greed"
+      ]
+    },
+    "Dark Magician": {
+      "highly_relevant": [
+        "Dark Magician Girl",
+        "Magician of Black Chaos"
+      ],
+      "relevant": [
+        "Dark Magician the Dragon Knight"
+      ],
+      "somewhat_relevant": [
+        "Illusion Magic"
+      ],
+      "marginally_relevant": [
+        "Eternal Soul"
+      ],
+      "irrelevant": [
+        "Blue-Eyes White Dragon"
+      ]
+    },
+    "Pot of Greed": {
+      "highly_relevant": [
+        "Pot of Avarice",
+        "Pot of Desires"
+      ],
+      "relevant": [
+        "Pot of Extravagance",
+        "Pot of Prosperity"
+      ],
+      "somewhat_relevant": [
+        "Upstart Goblin"
+      ],
+      "marginally_relevant": [
+        "Into the Void"
+      ],
+      "irrelevant": [
+        "Monster Reborn"
+      ]
+    },
+    "Monster Reborn": {
+      "highly_relevant": [
+        "Call of the Haunted",
+        "Premature Burial"
+      ],
+      "relevant": [
+        "Back to the Front",
+        "World Legacy Succession"
+      ],
+      "somewhat_relevant": [
+        "Oasis of Dragon Souls"
+      ],
+      "marginally_relevant": [
+        "Rope of Life"
+      ],
+      "irrelevant": [
+        "Pot of Greed"
+      ]
+    },
+    "Raigeki": {
+      "highly_relevant": [
+        "Dark Hole",
+        "Lightning Storm"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Harpie's Feather Duster": {
+      "highly_relevant": [
+        "Heavy Storm"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mystical Space Typhoon": {
+      "highly_relevant": [
+        "Cosmic Cyclone"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Solemn Judgment": {
+      "highly_relevant": [
+        "Solemn Warning"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Maxx \"C\"": {
+      "highly_relevant": [
+        "Ash Blossom"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Called by the Grave": {
+      "highly_relevant": [
+        "Crossout Designator"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Infinite Impermanence": {
+      "highly_relevant": [
+        "Effect Veiler"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Nibiru, the Primal Being": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  },
+  "note": "Limited to 5 queries initially - need YGO deck data to expand"
+}

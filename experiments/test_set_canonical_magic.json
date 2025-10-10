@@ -1,0 +1,542 @@
+{
+  "version": "merged",
+  "queries": {
+    "Lightning Bolt": {
+      "highly_relevant": [
+        "Chain Lightning",
+        "Lava Spike"
+      ],
+      "relevant": [
+        "Fireblast",
+        "Lava Dart"
+      ],
+      "somewhat_relevant": [
+        "Needle Drop",
+        "Rift Bolt"
+      ],
+      "marginally_relevant": [
+        "Skewer the Critics"
+      ],
+      "irrelevant": [
+        "Monastery Swiftspear",
+        "Mountain",
+        "Counterspell"
+      ]
+    },
+    "Brainstorm": {
+      "highly_relevant": [
+        "Ponder",
+        "Preordain"
+      ],
+      "relevant": [
+        "Gitaxian Probe"
+      ],
+      "somewhat_relevant": [
+        "Serum Visions"
+      ],
+      "marginally_relevant": [
+        "Opt"
+      ],
+      "irrelevant": [
+        "Force of Will",
+        "Island"
+      ]
+    },
+    "Sol Ring": {
+      "highly_relevant": [
+        "Mana Crypt",
+        "Mox Diamond"
+      ],
+      "relevant": [
+        "Chrome Mox",
+        "Mox Opal",
+        "Lotus Petal"
+      ],
+      "somewhat_relevant": [
+        "Ancient Tomb",
+        "Mana Vault"
+      ],
+      "marginally_relevant": [
+        "Arcane Signet"
+      ],
+      "irrelevant": [
+        "Hedron Crab",
+        "Command Tower"
+      ]
+    },
+    "Counterspell": {
+      "highly_relevant": [
+        "Mana Leak",
+        "Remand"
+      ],
+      "relevant": [
+        "Spell Snare",
+        "Spell Pierce"
+      ],
+      "somewhat_relevant": [
+        "Memory Lapse"
+      ],
+      "marginally_relevant": [
+        "Force Spike"
+      ],
+      "irrelevant": [
+        "Thought Scour",
+        "Faerie Miscreant"
+      ]
+    },
+    "Dark Ritual": {
+      "highly_relevant": [
+        "Cabal Ritual",
+        "Culling the Weak"
+      ],
+      "relevant": [
+        "Lion's Eye Diamond",
+        "Lotus Petal"
+      ],
+      "somewhat_relevant": [
+        "Dark Petition"
+      ],
+      "marginally_relevant": [
+        "Songs of the Damned"
+      ],
+      "irrelevant": [
+        "Vampiric Tutor",
+        "Swamp"
+      ]
+    },
+    "Tarmogoyf": {
+      "highly_relevant": [
+        "Scavenging Ooze",
+        "Hooting Mandrills"
+      ],
+      "relevant": [
+        "Gurmag Angler"
+      ],
+      "somewhat_relevant": [
+        "Cankerbloom"
+      ],
+      "marginally_relevant": [
+        "Wild Nacatl"
+      ],
+      "irrelevant": [
+        "Blooming Marsh"
+      ]
+    },
+    "Force of Will": {
+      "highly_relevant": [
+        "Force of Negation",
+        "Pact of Negation"
+      ],
+      "relevant": [
+        "Daze",
+        "Flusterstorm"
+      ],
+      "somewhat_relevant": [
+        "Misdirection"
+      ],
+      "marginally_relevant": [
+        "Disrupting Shoal"
+      ],
+      "irrelevant": [
+        "Brainstorm"
+      ]
+    },
+    "Delver of Secrets": {
+      "highly_relevant": [
+        "Monastery Swiftspear",
+        "Dragon's Rage Channeler"
+      ],
+      "relevant": [
+        "Ragavan, Nimble Pilferer"
+      ],
+      "somewhat_relevant": [
+        "Pteramander"
+      ],
+      "marginally_relevant": [
+        "Sprite Dragon"
+      ],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Swords to Plowshares": {
+      "highly_relevant": [
+        "Path to Exile"
+      ],
+      "relevant": [
+        "Generous Gift"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Accumulated Knowledge": {
+      "highly_relevant": [],
+      "relevant": [
+        "Mystic Speculation",
+        "Think Twice"
+      ],
+      "somewhat_relevant": [
+        "Curate"
+      ],
+      "marginally_relevant": [
+        "Deep Analysis"
+      ],
+      "irrelevant": [
+        "Brainstorm"
+      ]
+    },
+    "Arcane Signet": {
+      "highly_relevant": [
+        "Fellwar Stone",
+        "Talisman of Progress"
+      ],
+      "relevant": [
+        "Signets (all)",
+        "Mind Stone"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Lotus Petal": {
+      "highly_relevant": [
+        "Lotus Bloom",
+        "Lion's Eye Diamond"
+      ],
+      "relevant": [
+        "Chrome Mox",
+        "Mox Diamond"
+      ],
+      "somewhat_relevant": [
+        "Dark Ritual"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Sol Ring"
+      ]
+    },
+    "Ancient Tomb": {
+      "highly_relevant": [
+        "City of Traitors"
+      ],
+      "relevant": [
+        "Crystal Vein"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring",
+        "Mana Vault"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Plains"
+      ]
+    },
+    "Demonic Tutor": {
+      "highly_relevant": [
+        "Vampiric Tutor",
+        "Imperial Seal"
+      ],
+      "relevant": [
+        "Diabolic Intent",
+        "Grim Tutor"
+      ],
+      "somewhat_relevant": [
+        "Dark Petition"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Urza's Saga": {
+      "highly_relevant": [
+        "Mishra's Workshop"
+      ],
+      "relevant": [
+        "Inventors' Fair"
+      ],
+      "somewhat_relevant": [
+        "Ancient Tomb"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Island"
+      ]
+    },
+    "Chrome Mox": {
+      "highly_relevant": [
+        "Mox Diamond",
+        "Lotus Petal",
+        "Mox Opal"
+      ],
+      "relevant": [
+        "Lion's Eye Diamond"
+      ],
+      "somewhat_relevant": [
+        "Simian Spirit Guide"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Sol Ring"
+      ]
+    },
+    "Mental Misstep": {
+      "highly_relevant": [
+        "Spell Pierce",
+        "Spell Snare"
+      ],
+      "relevant": [
+        "Flusterstorm"
+      ],
+      "somewhat_relevant": [
+        "Force of Will"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Boseiju, Who Endures": {
+      "highly_relevant": [
+        "Otawara, Soaring City",
+        "Eiganjo, Seat of the Empire"
+      ],
+      "relevant": [
+        "The Mycosynth Gardens"
+      ],
+      "somewhat_relevant": [
+        "Strip Mine"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Forest"
+      ]
+    },
+    "Mana Vault": {
+      "highly_relevant": [
+        "Grim Monolith",
+        "Sol Ring"
+      ],
+      "relevant": [
+        "Ancient Tomb",
+        "Mana Crypt"
+      ],
+      "somewhat_relevant": [
+        "Basalt Monolith"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Fellwar Stone": {
+      "highly_relevant": [
+        "Mind Stone",
+        "Arcane Signet"
+      ],
+      "relevant": [
+        "Thought Vessel"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Tarmogoyf"
+      ]
+    },
+    "Orcish Bowmasters": {
+      "highly_relevant": [
+        "Brazen Borrower"
+      ],
+      "relevant": [
+        "Subtlety"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Pyroblast": {
+      "highly_relevant": [
+        "Red Elemental Blast",
+        "Hydroblast"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Expressive Iteration": {
+      "highly_relevant": [
+        "Consider",
+        "Impulse"
+      ],
+      "relevant": [
+        "See Beyond"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ledger Shredder": {
+      "highly_relevant": [
+        "Suspicious Stowaway"
+      ],
+      "relevant": [
+        "Search for Azcanta"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fatal Push": {
+      "highly_relevant": [
+        "Terminate",
+        "Go for the Throat"
+      ],
+      "relevant": [
+        "Dismember"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ragavan, Nimble Pilferer": {
+      "highly_relevant": [
+        "Dragon's Rage Channeler"
+      ],
+      "relevant": [
+        "Monastery Swiftspear"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wrenn and Six": {
+      "highly_relevant": [],
+      "relevant": [
+        "Life from the Loam"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Surgical Extraction": {
+      "highly_relevant": [
+        "Extirpate"
+      ],
+      "relevant": [
+        "Leyline of the Void"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Chalice of the Void": {
+      "highly_relevant": [
+        "Trinisphere"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Show and Tell": {
+      "highly_relevant": [
+        "Sneak Attack"
+      ],
+      "relevant": [
+        "Through the Breach"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tendrils of Agony": {
+      "highly_relevant": [
+        "Grapeshot"
+      ],
+      "relevant": [
+        "Empty the Warrens"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Teferi, Time Raveler": {
+      "highly_relevant": [],
+      "relevant": [
+        "Supreme Verdict"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Thoughtseize": {
+      "highly_relevant": [
+        "Inquisition of Kozilek"
+      ],
+      "relevant": [
+        "Duress"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Aether Vial": {
+      "highly_relevant": [],
+      "relevant": [
+        "Collected Company"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wasteland": {
+      "highly_relevant": [
+        "Strip Mine"
+      ],
+      "relevant": [
+        "Ghost Quarter"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Leyline of Sanctity": {
+      "highly_relevant": [
+        "Leyline of the Void"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Flusterstorm": {
+      "highly_relevant": [
+        "Spell Pierce",
+        "Dispel"
+      ],
+      "relevant": [
+        "Force of Will"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Explore": {
+      "highly_relevant": [
+        "Growth Spiral"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  }
+}

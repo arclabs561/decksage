@@ -1,0 +1,215 @@
+{
+  "version": "llm_batch_002_draft",
+  "queries": {
+    "Thoughtseize": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Chrome Mox": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tendrils of Agony": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wrenn and Six": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ancient Tomb": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Surgical Extraction": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Orcish Bowmasters": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Swords to Plowshares": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wasteland": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Lotus Petal": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Counterspell": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Accumulated Knowledge": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mana Vault": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Teferi, Time Raveler": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Explore": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Boseiju, Who Endures": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Expressive Iteration": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Dark Ritual": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Chalice of the Void": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Flusterstorm": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Demonic Tutor": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Show and Tell": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Force of Will": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tarmogoyf": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fatal Push": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Leyline of Sanctity": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Arcane Signet": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fellwar Stone": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Aether Vial": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Lightning Bolt": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  }
+}

@@ -1,0 +1,178 @@
+{
+  "model": "anthropic/claude-sonnet-4.5",
+  "timestamp": "2025-09-30T21:50:30.992966",
+  "results": [
+    {
+      "query": "Lightning Bolt",
+      "predictions": [
+        [
+          "Chain Lightning",
+          0.8467332124710083
+        ],
+        [
+          "Kessig Flamebreather",
+          0.8387044668197632
+        ],
+        [
+          "Fireblast",
+          0.8314688801765442
+        ],
+        [
+          "Burning-Tree Emissary",
+          0.8310662508010864
+        ],
+        [
+          "Clockwork Percussionist",
+          0.8264440894126892
+        ],
+        [
+          "Lava Dart",
+          0.8248906135559082
+        ],
+        [
+          "Guttersnipe",
+          0.8206935524940491
+        ],
+        [
+          "Goblin Bushwhacker",
+          0.8192505240440369
+        ],
+        [
+          "Gingerbrute",
+          0.8180974125862122
+        ],
+        [
+          "Goblin Tomb Raider",
+          0.8158968091011047
+        ]
+      ],
+      "evaluation": {
+        "overall_quality": null,
+        "analysis": "LLM evaluation failed: Expecting value: line 1 column 1 (char 0)",
+        "card_ratings": [],
+        "issues": [
+          "Expecting value: line 1 column 1 (char 0)"
+        ],
+        "missing_cards": [],
+        "biases_detected": [],
+        "suggestions": []
+      }
+    },
+    {
+      "query": "Brainstorm",
+      "predictions": [
+        [
+          "Ponder",
+          0.8920918107032776
+        ],
+        [
+          "Scroll of Fate",
+          0.8748300075531006
+        ],
+        [
+          "Xander's Lounge",
+          0.8499695658683777
+        ],
+        [
+          "Necropotence",
+          0.8456963300704956
+        ],
+        [
+          "Minor Misstep",
+          0.8445348739624023
+        ],
+        [
+          "Doorkeeper Thrull",
+          0.8433860540390015
+        ],
+        [
+          "Phyrexian Dreadnought",
+          0.8363074064254761
+        ],
+        [
+          "Tundra",
+          0.8275452852249146
+        ],
+        [
+          "Curie, Emergent Intelligence",
+          0.82396399974823
+        ],
+        [
+          "Tamiyo, Inquisitive Student",
+          0.8231500387191772
+        ]
+      ],
+      "evaluation": {
+        "overall_quality": null,
+        "analysis": "LLM evaluation failed: Expecting value: line 1 column 1 (char 0)",
+        "card_ratings": [],
+        "issues": [
+          "Expecting value: line 1 column 1 (char 0)"
+        ],
+        "missing_cards": [],
+        "biases_detected": [],
+        "suggestions": []
+      }
+    },
+    {
+      "query": "Dark Ritual",
+      "predictions": [
+        [
+          "Balustrade Spy",
+          0.8447579741477966
+        ],
+        [
+          "Undercity Informer",
+          0.8329744338989258
+        ],
+        [
+          "Lively Dirge",
+          0.8257546424865723
+        ],
+        [
+          "Currency Converter",
+          0.8191516399383545
+        ],
+        [
+          "Cabal Ritual",
+          0.8165366649627686
+        ],
+        [
+          "Poxwalkers",
+          0.8162831664085388
+        ],
+        [
+          "Eumidian Hatchery",
+          0.8102842569351196
+        ],
+        [
+          "Karn's Sylex",
+          0.809169590473175
+        ],
+        [
+          "Jack-o'-Lantern",
+          0.8082326650619507
+        ],
+        [
+          "Innocent Blood",
+          0.8069071769714355
+        ]
+      ],
+      "evaluation": {
+        "overall_quality": null,
+        "analysis": "LLM evaluation failed: Expecting value: line 1 column 1 (char 0)",
+        "card_ratings": [],
+        "issues": [
+          "Expecting value: line 1 column 1 (char 0)"
+        ],
+        "missing_cards": [],
+        "biases_detected": [],
+        "suggestions": []
+      }
+    }
+  ],
+  "summary": {
+    "avg_quality": 0.0,
+    "num_queries": 3
+  }
+}

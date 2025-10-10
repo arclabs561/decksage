@@ -1,0 +1,31 @@
+{
+  "games": {
+    "magic": {
+      "p@10": 0.08357142857142856,
+      "ndcg@10": 0.18746819725227665,
+      "mrr@10": 0.20746031746031746,
+      "num_queries": 38,
+      "num_evaluated": 35,
+      "num_skipped": 3
+    },
+    "yugioh": {
+      "p@10": 0.0,
+      "ndcg@10": 0.0,
+      "mrr@10": 0.0,
+      "num_queries": 13,
+      "num_evaluated": 0,
+      "num_skipped": 13
+    },
+    "pokemon": {
+      "p@10": 0.02,
+      "ndcg@10": 0.02552894011737162,
+      "mrr@10": 0.02857142857142857,
+      "num_queries": 10,
+      "num_evaluated": 5,
+      "num_skipped": 5
+    }
+  },
+  "weighted": {
+    "p@10": 0.075625
+  }
+}
