@@ -1,0 +1,87 @@
+# Build artifacts
+/src/backend/build/
+/src/backend/dataset
+/src/backend/export-decks-only
+/src/backend/validate-data
+/src/backend/cmd/*/validate-data
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output of the go coverage tool
+*.out
+
+# Cache directories
+/src/backend/cache/
+/data/cache/
+
+# Data directories - large datasets
+/src/backend/data-full/
+/data/raw/
+/data/embeddings/*.wv
+/data/embeddings/*.kv
+/data/graphs/*.edg
+/data/archive/
+/integration_test_tmp/
+**/*.zst
+**/*.attrs
+**/*.sst
+
+# Data files in wrong locations (should be in /data)
+/src/backend/*.csv
+/src/backend/*.edg
+
+# Keep processed CSVs but ignore backups
+/data/processed/*.bak
+/data/processed/*_backup.*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Frontend
+/src/frontend/*/node_modules/
+/src/frontend/*/build/
+/src/frontend/*/dist/
+/src/frontend/*/.next/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+.venv/
+venv/
+*.egg-info/
+/src/ml/vectors.kv
+
+# Environment files (keep .env.example)
+.env
+.env.local
+.env.*.local
+
+# Logs
+*.log
+*.log.*
+/logs/
+
+# Temporary files
+*.tmp
+*.temp
+*~
+
+# MegaLinter reports
+megalinter-reports/
+report/
