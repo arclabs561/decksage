@@ -16,12 +16,14 @@ Env vars:
 """
 
 from __future__ import annotations
+
 import json
 import os
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from hashlib import sha256
 from pathlib import Path
-from typing import Any, Awaitable, Callable, Optional, TypeVar
+from typing import Any, TypeVar
 
 try:
     from diskcache import Cache  # type: ignore
@@ -80,7 +82,7 @@ def load_config() -> LLMCacheConfig:
 
 
 class LLMCache:
-    def __init__(self, config: Optional[LLMCacheConfig] = None, *, scope: str = "default") -> None:
+    def __init__(self, config: LLMCacheConfig | None = None, *, scope: str = "default") -> None:
         self.config = config or load_config()
         cache_path = self.config.cache_dir / scope
         cache_path.parent.mkdir(parents=True, exist_ok=True)
@@ -98,7 +100,7 @@ class LLMCache:
         except Exception:
             return None
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> None:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> None:
         if self.config.bypass:
             return
         try:
@@ -109,10 +111,10 @@ class LLMCache:
             pass
 
     def clear(self) -> None:
-        try:
+        from contextlib import suppress
+
+        with suppress(Exception):
             self._cache.clear()
-        except Exception:
-            pass
 
     def stats(self) -> dict:
         try:
@@ -134,7 +136,7 @@ def cached_call(
     payload: dict,
     compute: Callable[[], T],
     *,
-    ttl: Optional[int] = None,
+    ttl: int | None = None,
     encoder: Callable[[T], Any] | None = None,
     decoder: Callable[[Any], T] | None = None,
 ) -> T:
@@ -155,7 +157,7 @@ async def async_cached_call(
     payload: dict,
     compute_async: Callable[[], Awaitable[T]],
     *,
-    ttl: Optional[int] = None,
+    ttl: int | None = None,
     encoder: Callable[[T], Any] | None = None,
     decoder: Callable[[Any], T] | None = None,
 ) -> T:

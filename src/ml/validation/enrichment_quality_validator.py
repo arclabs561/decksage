@@ -11,91 +11,91 @@ Validates the quality of enriched card data:
 """
 
 import json
-from pathlib import Path
 from dataclasses import dataclass
+from pathlib import Path
 
 
 @dataclass
 class QualityMetrics:
     """Quality metrics for enriched dataset"""
     total_cards: int
-    
+
     # Rule-based coverage
     functional_tags_present: int
     avg_tags_per_card: float
-    
+
     # LLM coverage
     llm_enriched: int
     llm_confidence_avg: float
     llm_confidence_min: float
     llm_confidence_max: float
     low_confidence_count: int  # < 0.5
-    
+
     # Vision coverage
     vision_enriched: int
-    
+
     # Quality issues
     missing_names: int
     empty_strategies: int  # LLM returned empty strategy
     zero_tags: int  # No functional tags triggered
-    
+
     # Game-specific
     game: str
-    
+
     def quality_score(self) -> float:
         """Overall quality score 0-100"""
         score = 0.0
-        
+
         # Rule-based coverage (30 points)
         if self.total_cards > 0:
             score += 30 * (self.functional_tags_present / self.total_cards)
-        
+
         # LLM quality (40 points)
         if self.llm_enriched > 0:
             llm_pct = self.llm_enriched / self.total_cards
             conf_quality = (self.llm_confidence_avg - 0.5) / 0.5  # Normalize 0.5-1.0 to 0-1
             score += 40 * llm_pct * max(0, min(1, conf_quality))
-        
+
         # Data quality (30 points)
         error_rate = (self.missing_names + self.empty_strategies + self.zero_tags) / max(1, self.total_cards)
         score += 30 * (1 - error_rate)
-        
+
         return min(100.0, max(0.0, score))
 
 
 class EnrichmentQualityValidator:
     """Validates enriched card data quality"""
-    
+
     def validate_enriched_file(self, enriched_path: Path) -> QualityMetrics:
         """Validate an enriched dataset file"""
-        
+
         print(f"Validating {enriched_path.name}...")
-        
+
         with open(enriched_path) as f:
             enriched_data = json.load(f)
-        
+
         if not enriched_data:
             raise ValueError(f"Empty enrichment file: {enriched_path}")
-        
+
         # Collect metrics
         total = len(enriched_data)
         game = enriched_data[0].get("game", "unknown") if enriched_data else "unknown"
-        
+
         functional_present = 0
         total_tags = 0
         llm_enriched = 0
         llm_confidences = []
         vision_enriched = 0
-        
+
         missing_names = 0
         empty_strategies = 0
         zero_tags = 0
-        
+
         for card in enriched_data:
             name = card.get("card_name", "")
             if not name:
                 missing_names += 1
-            
+
             # Check functional tags
             func_tags = card.get("functional_tags", {})
             if func_tags:
@@ -105,30 +105,30 @@ class EnrichmentQualityValidator:
                 total_tags += tag_count
                 if tag_count == 0:
                     zero_tags += 1
-            
+
             # Check LLM features
             llm_features = card.get("semantic_features")
             if llm_features:
                 llm_enriched += 1
                 conf = llm_features.get("llm_confidence", 0.0)
                 llm_confidences.append(conf)
-                
+
                 strategy = llm_features.get("strategy_summary", "")
                 if not strategy or len(strategy) < 10:
                     empty_strategies += 1
-            
+
             # Check vision features
             if card.get("vision_features"):
                 vision_enriched += 1
-        
+
         # Compute stats
         avg_tags = total_tags / functional_present if functional_present > 0 else 0
-        
+
         llm_conf_avg = sum(llm_confidences) / len(llm_confidences) if llm_confidences else 0
         llm_conf_min = min(llm_confidences) if llm_confidences else 0
         llm_conf_max = max(llm_confidences) if llm_confidences else 0
         low_conf = sum(1 for c in llm_confidences if c < 0.5)
-        
+
         metrics = QualityMetrics(
             total_cards=total,
             functional_tags_present=functional_present,
@@ -144,41 +144,41 @@ class EnrichmentQualityValidator:
             zero_tags=zero_tags,
             game=game
         )
-        
+
         return metrics
-    
+
     def print_quality_report(self, metrics: QualityMetrics):
         """Print human-readable quality report"""
-        
+
         print("\n" + "="*60)
         print(f"QUALITY REPORT - {metrics.game.upper()}")
         print("="*60)
-        
+
         print("\n📊 Coverage:")
         print(f"  Total cards: {metrics.total_cards}")
         print(f"  With functional tags: {metrics.functional_tags_present} ({100*metrics.functional_tags_present/metrics.total_cards:.1f}%)")
         print(f"  With LLM enrichment: {metrics.llm_enriched} ({100*metrics.llm_enriched/metrics.total_cards:.1f}%)")
         print(f"  With vision enrichment: {metrics.vision_enriched} ({100*metrics.vision_enriched/metrics.total_cards:.1f}%)")
-        
+
         print("\n🏷️  Functional Tags:")
         print(f"  Average tags per card: {metrics.avg_tags_per_card:.1f}")
         print(f"  Cards with zero tags: {metrics.zero_tags}")
-        
+
         if metrics.llm_enriched > 0:
             print("\n🤖 LLM Quality:")
             print(f"  Avg confidence: {metrics.llm_confidence_avg:.3f}")
             print(f"  Min confidence: {metrics.llm_confidence_min:.3f}")
             print(f"  Max confidence: {metrics.llm_confidence_max:.3f}")
             print(f"  Low confidence (<0.5): {metrics.low_confidence_count}")
-        
+
         print("\n⚠️  Quality Issues:")
         print(f"  Missing names: {metrics.missing_names}")
         print(f"  Empty strategies: {metrics.empty_strategies}")
         print(f"  Zero tags: {metrics.zero_tags}")
-        
+
         quality_score = metrics.quality_score()
         print(f"\n🎯 Overall Quality Score: {quality_score:.1f}/100")
-        
+
         if quality_score >= 80:
             print("   ✅ EXCELLENT quality")
         elif quality_score >= 60:
@@ -187,15 +187,15 @@ class EnrichmentQualityValidator:
             print("   ⚠️  FAIR quality - consider improvements")
         else:
             print("   ❌ POOR quality - needs attention")
-        
+
         print("="*60 + "\n")
-        
+
         return quality_score
 
 
 if __name__ == "__main__":
     validator = EnrichmentQualityValidator()
-    
+
     # Example: Validate an enriched file
     print("Enrichment Quality Validator")
     print("\nUsage:")
