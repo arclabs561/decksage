@@ -139,7 +139,7 @@ def check_which_queries_work():
     print("=" * 80)
 
     # Load results
-    results_path = Path("../experiments/exp_048_source_filtering_results.json")
+    results_path = PATHS.experiments / "exp_048_source_filtering_results.json"
     with open(results_path) as f:
         json.load(f)
 
