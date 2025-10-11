@@ -41,6 +41,13 @@ jobs:
           PYTHONUNBUFFERED: '1'
         run: uv run pytest -q -m "not llm and not integration" -k "not slow" --maxfail=1 --cov=src/ml --cov-report=xml --cov-report=term-missing
 
+      - name: Upload evaluation report (if present)
+        if: ${{ hashFiles('experiments/evaluation_report_latest.html') != '' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: evaluation-report
+          path: experiments/evaluation_report_latest.html
+
       - name: Upload coverage
         uses: actions/upload-artifact@v4
         with:
