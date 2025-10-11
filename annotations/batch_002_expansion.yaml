@@ -1,0 +1,2627 @@
+batch_metadata:
+  batch_id: '002'
+  created_date: '2025-10-05'
+  status: draft
+  num_queries: 30
+  annotators:
+  - llm_draft
+  notes: LLM-bootstrapped candidates; human verification required
+annotations:
+- query_id: q_Thoughtseize
+  query_card: Thoughtseize
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Inquisition of Kozilek
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Nearly identical 1-mana discard spell, limited to CMC 3 or less but
+      no life loss
+  - card: Duress
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana discard spell limited to noncreature spells, budget alternative
+  - card: Despise
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana discard spell limited to creatures or planeswalkers
+  - card: Unmask
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Alternative cost discard spell, can be cast for card disadvantage instead
+      of mana
+  - card: Cabal Therapy
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Targeted discard that synergizes with Thoughtseize's information gathering
+  - card: Collective Brutality
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flexible discard spell with additional modes, common in same decks
+  - card: Grief
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Creature-based targeted discard, fits similar disruptive strategies
+  - card: Liliana of the Veil
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Premium discard-focused planeswalker, staple in same archetypes
+  - card: Hymn to Tourach
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Classic 2-mana random discard spell, different approach to hand disruption
+  - card: Raven's Crime
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Repeatable discard spell, grindy alternative for attrition decks
+  - card: Wrench Mind
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: 2-mana discard spell, significantly weaker but similar role
+  - card: Dark Confidant
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Card advantage engine commonly paired with Thoughtseize in Jund/BGx
+  - card: Fatal Push
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Efficient removal spell, staple alongside Thoughtseize in black midrange
+  - card: Agonizing Remorse
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana version with exile clause, strictly worse rate but similar effect
+  - card: Mind Twist
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Scalable mass discard, different use case but same disruption theme
+  - card: Llanowar Elves
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Mana dork, completely unrelated to discard strategy
+- query_id: q_Chrome_Mox
+  query_card: Chrome Mox
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Mox Diamond
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0-mana fast mana, pitches land instead of card with imprint
+  - card: Lotus Petal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0-mana fast mana artifact, one-time use vs repeatable
+  - card: Mox Opal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0-mana Mox requiring metalcraft instead of imprint
+  - card: Mox Amber
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0-mana Mox requiring legendary permanent condition
+  - card: Simian Spirit Guide
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast mana via exile from hand, one-time red mana
+  - card: Gemstone Caverns
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast mana land with exile mechanic, T0 acceleration
+  - card: Grim Monolith
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast colorless mana rock, 2 CMC vs 0 but taps for 3
+  - card: Mana Vault
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 CMC fast mana artifact producing 3, different cost structure
+  - card: Sol Ring
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 CMC fast mana staple, colorless vs colored mana
+  - card: Lion's Eye Diamond
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0-mana ritual effect, combo enabler with card disadvantage
+  - card: Ancient Tomb
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Fast mana from land slot, colorless with life cost
+  - card: Chalice of the Void
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 0-mana artifact for artifact-count decks, prison synergy
+  - card: Pithing Needle
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: 0-mana artifact with imprint-like naming mechanic
+  - card: Carpet of Flowers
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1 CMC conditional fast mana enchantment
+  - card: Mishra's Workshop
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Fast artifact mana source, artifact deck synergy
+  - card: Storm Crow
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Irrelevant creature for calibration
+- query_id: q_Tendrils_of_Agony
+  query_card: Tendrils of Agony
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Grapeshot
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Storm finisher that deals damage, main alternative win condition in
+      storm decks
+  - card: Mind's Desire
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Premium storm payoff, generates massive card advantage with high storm
+      count
+  - card: Brain Freeze
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Storm win condition via mill, alternative finisher in similar combo
+      decks
+  - card: Empty the Warrens
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Storm finisher creating tokens, more resilient but slower kill
+  - card: Bitter Triumph
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Black ritual-style spell that builds storm count while advancing combo
+  - card: Dark Ritual
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Essential storm enabler, generates mana and storm count
+  - card: Cabal Ritual
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Black mana ritual that scales with threshold, core storm enabler
+  - card: Past in Flames
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Enables double storm count by replaying spells from graveyard
+  - card: Lion's Eye Diamond
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Fast mana that enables storm combos, cornerstone of storm strategies
+  - card: Infernal Tutor
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Finds Tendrils while adding storm count in hellbent storm combos
+  - card: Ad Nauseam
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Card draw engine that fuels storm turns by drawing entire deck
+  - card: Aetherflux Reservoir
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Alternative storm-like life gain win condition in spell-heavy decks
+  - card: Dragonstorm
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Different storm payoff for creature-based combo finish
+  - card: Exsanguinate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Mana-scaling life drain finisher, similar outcome but different mechanic
+  - card: Gray Merchant of Asphodel
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Life drain creature with devotion, completely different speed and strategy
+  - card: Drannith Magistrate
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Hate bear that prevents storm combo, calibration irrelevant
+- query_id: q_Wrenn_and_Six
+  query_card: Wrenn and Six
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Life from the Loam
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Perfect synergy with +1 ability; enables land recursion engine
+  - card: Wrenn and Seven
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same character, higher CMC version with different power level
+  - card: Ramunap Excavator
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Enables land recursion similar to -1 ability
+  - card: Crucible of Worlds
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Artifact version of land recursion effect
+  - card: Liliana of the Veil
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 3-mana planeswalker staple with +1 discard, similar power level
+  - card: Oko, Thief of Crowns
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Similarly broken 3-mana planeswalker in Simic colors
+  - card: Faithless Looting
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Alternative card selection/filtering in red, flashback synergy
+  - card: Punishing Fire
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Classic combo with W6; infinite pings with land triggers
+  - card: Wasteland
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Recurring land destruction with -1 ability
+  - card: Strip Mine
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Stronger land destruction recurrable with -1
+  - card: Eternal Witness
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Alternative recursion engine in green, creature-based
+  - card: Kroxa, Titan of Death's Hunger
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: RG/Jund staple with graveyard synergy and attrition
+  - card: Wrenn and Realmbreaker
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Latest Wrenn iteration with different abilities and higher cost
+  - card: Chandra, Torch of Defiance
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 4-mana red planeswalker alternative with different utility
+  - card: Gitaxian Probe
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Unrelated cantrip; wrong card type and function
+  - card: Tarmogoyf
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: RG midrange staple, same formats and archetypes
+- query_id: q_Ancient_Tomb
+  query_card: Ancient Tomb
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: City of Traitors
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Another fast mana land that sacrifices consistency for speed, produces
+      2 colorless
+  - card: Crystal Vein
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Similar fast mana land concept, limited charges but no life loss
+  - card: Temple of the False God
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Colorless mana accelerant land, but conditional and slower
+  - card: Mishra's Workshop
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Conditional 3 mana land, similar role in artifact-focused fast mana
+  - card: Gaea's Cradle
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Legendary land producing multiple mana, banned/restricted fast mana
+      land
+  - card: Tolarian Academy
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Legendary fast mana land, similar power level and restriction status
+  - card: Mana Vault
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast colorless mana with drawback, similar acceleration role
+  - card: Sol Ring
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Colorless fast mana accelerant, common pairing in fast decks
+  - card: Mana Crypt
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0-cost fast mana with damage drawback, similar risk/reward profile
+  - card: Cavern of Souls
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Utility land with conditional acceleration, similar legacy staple status
+  - card: Eldrazi Temple
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Conditional 2-mana land for Eldrazi, often used alongside Ancient Tomb
+  - card: Eye of Ugin
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Colorless utility land for Eldrazi decks where Ancient Tomb sees play
+  - card: Cloudpost
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Scalable colorless mana land, similar big mana strategy enabler
+  - card: Karakas
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Legendary utility land, similar format staple but different function
+  - card: Terramorphic Expanse
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Basic land fetcher with no acceleration, irrelevant for calibration
+  - card: Chalice of the Void
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Colorless artifact often in same decks but functionally unrelated
+- query_id: q_Surgical_Extraction
+  query_card: Surgical Extraction
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Extirpate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Split second version, same graveyard exile effect for 1B
+  - card: Leyline of the Void
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Prevents graveyard strategies entirely, complementary hate
+  - card: Thoughtseize
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Discard spell that reveals hand, sets up Extraction targets
+  - card: Slaughter Pact
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Another free phyrexian/pact-style instant with life cost
+  - card: Memoricide
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Sorcery speed name-and-exile but doesn't require graveyard
+  - card: Cranial Extraction
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Sorcery version with hand reveal, 3B cost
+  - card: Infinite Obliteration
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 3-mana sorcery, creature-only version
+  - card: Relic of Progenitus
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheaper graveyard hate artifact, mass exile option
+  - card: Inquisition of Kozilek
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Discard that reveals and enables extraction targeting
+  - card: Unmoored Ego
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Multicolor sorcery with name-and-exile, includes hand
+  - card: Lost Legacy
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 3-mana sorcery exile all copies, includes hand
+  - card: Tormod's Crypt
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Free graveyard hate artifact, exiles entire yard
+  - card: Ravenous Trap
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Free graveyard exile, targets opponent's whole yard
+  - card: Praetor's Grasp
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Exile from library but steals instead of all copies
+  - card: Faerie Macabre
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Free graveyard exile but only 2 cards
+  - card: Colossal Dreadmaw
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla creature, no graveyard interaction
+- query_id: q_Orcish_Bowmasters
+  query_card: Orcish Bowmasters
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Notion Thief
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Punishes opponent card draw, similar anti-draw strategy, flash instant
+      speed disruption
+  - card: Bowmasters of Gondor
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Similar name and creature type theme, both create tokens
+  - card: Spellstutter Sprite
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flash creature with ETB disruption, efficient tribal staple
+  - card: Endurance
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Flash hate bear that punishes specific strategies, similar role as
+      instant-speed disruption
+  - card: Subtlety
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flash pitch elemental with ETB disruption effect
+  - card: Opposition Agent
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Flash hate bear punishing common game actions, similar disruptive role
+  - card: Brainstorm
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Enables Bowmasters triggers on opponent's turn, format staple combo
+      piece
+  - card: Leovold, Emissary of Trest
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Punishes extra card draw, banned for similar oppressive effects
+  - card: Sheoldred, the Apocalypse
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Punishes opponent card draw with damage, similar anti-draw strategy
+  - card: Hullbreacher
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Flash creature punishing card draw, banned for oppressive power level
+  - card: Vendilion Clique
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flash disruption creature, efficient instant-speed interaction
+  - card: Snapcaster Mage
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flash ETB value creature, format-defining staple at similar cost
+  - card: Pyroblast
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Efficient red instant speed interaction/disruption
+  - card: Narset, Parter of Veils
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Prevents extra card draw, combo piece with wheel effects
+  - card: Lightning Bolt
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Basic red removal spell, lacks triggered ability and anti-draw strategy
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla 2/2 creature with no abilities, completely different function
+- query_id: q_Swords_to_Plowshares
+  query_card: Swords to Plowshares
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Path to Exile
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 'Nearly identical: 1W instant exile creature, opponent gains basic
+      land instead of life'
+  - card: Generous Gift
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3W instant exile any permanent, opponent gets 3/3 elephant; flexible
+      but costlier
+  - card: Dispatch
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: W instant exile creature with metalcraft; conditional but same efficiency
+  - card: Condemn
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: W instant puts attacking creature into library; similar cost, narrower
+      application
+  - card: Unexpectedly Absent
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: XW instant puts nonland permanent X from top; scalable white removal
+  - card: Oblation
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2W instant exile any nonland permanent, controller draws 2; costlier,
+      more drawback
+  - card: Oust
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: W sorcery puts creature on top and gains 3 life; slower, temporary
+      removal
+  - card: Prismatic Ending
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: XW sorcery exile permanent CMC X; versatile but sorcery speed and mana-limited
+  - card: Fateful Absence
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1W instant destroy creature/planeswalker, opponent investigates; similar
+      cost, destroy not exile
+  - card: Council's Judgment
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1WW sorcery vote to exile permanent; flexible but slower and political
+  - card: Rapid Hybridization
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: U instant destroy creature, opponent gets 3/3; blue color-shifted with
+      token drawback
+  - card: Pongify
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: U instant destroy creature, opponent gets 3/3 ape; blue equivalent
+      with token
+  - card: Terminus
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 4WW sorcery puts all creatures in libraries; mass version, synergizes
+      in control
+  - card: Lightning Bolt
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Iconic 1-mana instant removal in red; similar efficiency paradigm,
+      different color
+  - card: Fatal Push
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: "B instant destroy creature CMC\u22642/4; premium 1-mana removal in\
+      \ black, CMC-limited"
+  - card: Storm Crow
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: 1U 1/2 flyer; completely unrelated creature, calibration card
+- query_id: q_Wasteland
+  query_card: Wasteland
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Strip Mine
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Unconditional land destruction; strictly better but banned in many
+      formats
+  - card: Ghost Quarter
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Similar nonbasic land destruction with basic land replacement compensation
+  - card: Tectonic Edge
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Destroys nonbasic lands but requires opponent to have 4+ lands
+  - card: Field of Ruin
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Destroys any nonbasic land, both players search for basics
+  - card: Dust Bowl
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Repeatable nonbasic land destruction requiring mana investment
+  - card: Encroaching Wastes
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Destroys nonbasic lands for 4 mana; enters untapped
+  - card: Rishadan Port
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Land disruption through tapping; iconic pairing with Wasteland
+  - card: Stifle
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Counters fetchland activations; complementary LD strategy
+  - card: Blood Moon
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Punishes nonbasic lands; synergistic mana denial strategy
+  - card: Crucible of Worlds
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Recurs Wasteland from graveyard for repeated land destruction
+  - card: Life from the Loam
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Returns Wasteland to hand for recurring land destruction
+  - card: Flagstones of Trokair
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Legendary land that benefits from being destroyed
+  - card: Mishra's Workshop
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Powerful utility land in Vintage; shares format context
+  - card: Terramorphic Expanse
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Common land with no interaction with Wasteland's strategy
+  - card: Path to Exile
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Removal with similar compensation drawback philosophy
+  - card: Sinkhole
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Spell-based land destruction; different card type but similar goal
+- query_id: q_Lotus_Petal
+  query_card: Lotus Petal
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Lion's Eye Diamond
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Sac for 3 mana of any color, requires discard but stronger in combo
+  - card: Black Lotus
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 'Direct upgrade: 0 mana artifact that sacs for 3 mana'
+  - card: Mox Diamond
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Reusable mana source requiring land discard, similar fast mana role
+  - card: Chrome Mox
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0 mana artifact with imprint for repeated mana, similar role
+  - card: Lotus Bloom
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Delayed Lotus effect via suspend 3, same mana output
+  - card: Mana Crypt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0 mana fast mana artifact, reusable but with downside
+  - card: Mox Opal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0 mana artifact mana source requiring metalcraft
+  - card: Sol Ring
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 mana for repeated colorless fast mana, format staple
+  - card: Simian Spirit Guide
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: One-shot red mana acceleration from hand/exile
+  - card: Elvish Spirit Guide
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: One-shot green mana acceleration from hand/exile
+  - card: Dark Ritual
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1 mana spell for net 2 black, ritual effect comparison
+  - card: Jeweled Lotus
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Commander-only Lotus variant, sacs for 3 mana for commander
+  - card: Lotus Ring
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Equipment Lotus variant, taps for 3 mana once per game
+  - card: Sacrifice
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Enables Petal reuse with recursion strategies
+  - card: Blinkmoth Urn
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Artifact mana generation but completely different speed/function
+  - card: Giant Growth
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: 1 mana instant with no relation to fast mana acceleration
+- query_id: q_Counterspell
+  query_card: Counterspell
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Mana Drain
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same cost counter, adds mana upside
+  - card: Arcane Denial
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: UU counter with card draw downside
+  - card: Cancel
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Strictly worse at 1UU
+  - card: Absorb
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UUW counter with life gain
+  - card: Negate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: UU counter, noncreature restriction
+  - card: Dovin's Veto
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: WU uncounterable counter for noncreatures
+  - card: Force of Will
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free alternative, different mana flexibility
+  - card: Force of Negation
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free noncreature counter on opponent's turn
+  - card: Swan Song
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: U instant/sorcery/enchantment counter, bird token downside
+  - card: Mana Leak
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: UU conditional counter, weaker late game
+  - card: Prohibit
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UU kicker alternative for creatures/instants/sorceries
+  - card: Render Silent
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: UUW counter with silence effect
+  - card: Dissolve
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1UU counter with scry 1
+  - card: Snapcaster Mage
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flashback enabler for counters
+  - card: Remand
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UU tempo counter with cantrip
+  - card: Lightning Bolt
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Iconic red removal, different color/function
+- query_id: q_Accumulated_Knowledge
+  query_card: Accumulated Knowledge
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Whispers of the Muse
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Repeatable card draw at instant speed, similar scaling potential via
+      buyback
+  - card: Opt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana instant cantrip with selection, efficient card filtering
+  - card: Brainstorm
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Iconic 1-mana instant draw spell, better card quality but no scaling
+  - card: Ponder
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana sorcery cantrip with deep selection, similar role in combo decks
+  - card: Preordain
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana sorcery scry 2 + draw, efficient filtering
+  - card: Think Twice
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Instant draw with flashback, similar graveyard synergy and card advantage
+  - card: Deep Analysis
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flashback draw spell that self-mills, fills graveyard for AK count
+  - card: Gifts Ungiven
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Can tutor multiple AK copies to graveyard, enables scaling
+  - card: Frantic Search
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Instant draw that self-mills, helps fill yard while digging
+  - card: Mental Note
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana instant cantrip that mills self, enables graveyard count
+  - card: Careful Study
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana draw with discard, helps stock graveyard with AK copies
+  - card: Increasing Confusion
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Scales based on graveyard count like AK, similar self-referential mechanic
+  - card: Treasure Cruise
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Graveyard-matters draw spell for blue, different mechanic but similar
+      payoff
+  - card: Psychic Puppetry
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Splice onto Arcane with self-reference, scaling instant but very different
+  - card: Divination
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Basic 3-mana sorcery draw 2, baseline comparison for card draw
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla creature, no relation to instant-speed card draw
+- query_id: q_Mana_Vault
+  query_card: Mana Vault
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Sol Ring
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Iconic fast mana artifact, 1 CMC producing 2 colorless, no downside
+  - card: Mana Crypt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 0 CMC fast mana producing 2 colorless, coin flip damage downside
+  - card: Grim Monolith
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2 CMC artifact producing 3 colorless, doesn't untap naturally
+  - card: Chrome Mox
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0 CMC fast mana via imprint, produces 1 colored mana
+  - card: Mox Diamond
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0 CMC fast mana requiring land discard, produces 1 colored mana
+  - card: Lotus Petal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0 CMC one-shot mana burst, sacrifice for any color
+  - card: Basalt Monolith
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3 CMC producing 3 colorless, pays 3 to untap, infinite combo potential
+  - card: Voltaic Key
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Untaps Mana Vault for repeated use, classic combo enabler
+  - card: Manifold Key
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Untaps Mana Vault, also grants unblockable
+  - card: Power Artifact
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Reduces Vault untap cost to U, enables infinite mana combo
+  - card: Unwinding Clock
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Untaps Mana Vault on each opponent's turn
+  - card: Karn, the Great Creator
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Can turn off Vault's downside or retrieve from exile
+  - card: Tinker
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Can sacrifice Vault to search for bigger artifact threats
+  - card: Ancient Tomb
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Land-based fast mana with damage downside, similar risk/reward
+  - card: Mindstone
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2 CMC mana rock producing 1, cantrips, much slower
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla 2/2 creature, completely unrelated to fast mana artifacts
+- query_id: q_Teferi,_Time_Raveler
+  query_card: Teferi, Time Raveler
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Narset, Parter of Veils
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 3-mana planeswalker that shuts down opponent interaction; similar static
+      ability control strategy
+  - card: Dovin's Veto
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: UW instant-speed interaction that protects against countermagic, synergizes
+      with sorcery-speed meta
+  - card: Supreme Verdict
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Uncounterable wrath pairs perfectly with Teferi's instant denial ability
+  - card: Teferi, Hero of Dominaria
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: UW control finisher Teferi; same deck archetype, higher curve slot
+  - card: Lavinia, Azorius Renegade
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UW hatebear that restricts opponent plays; similar tempo-control philosophy
+  - card: Teferi, Master of Time
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 4-mana control Teferi with card selection and flash; different cost
+      but similar role
+  - card: Deputy of Detention
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UW tempo play that bounces permanents; curves into Teferi nicely
+  - card: Mystical Dispute
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UW sideboard counter that works in sorcery-speed environment Teferi
+      creates
+  - card: Vryn Wingmare
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Hatebear that taxes instants/sorceries; similar to instant denial but
+      weaker effect
+  - card: Thalia, Heretic Cathar
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: White hatebear that disrupts opponent timing; similar lockdown philosophy
+      different colors
+  - card: Absorb
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UW counterspell with lifegain; staple in same control shells
+  - card: Ral, Storm Conduit
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: UR planeswalker from same era; combo finisher in similar spell-based
+      decks
+  - card: Deafening Silence
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: White enchantment restricting casting; complementary lockdown piece
+  - card: Teferi's Protection
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: White instant Teferi-themed protection; thematic link but different
+      function
+  - card: Jace, the Mind Sculptor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 4-mana control planeswalker with bounce; gold standard comparison point
+  - card: Lightning Bolt
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Iconic red removal spell; completely different function and color
+- query_id: q_Explore
+  query_card: Explore
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Growth Spiral
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana instant that draws and puts land from hand, direct functional
+      upgrade
+  - card: Coiling Oracle
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana creature with Explore effect on ETB, similar card advantage
+  - card: Commune with Dinosaurs
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana card selection that finds lands or creatures, cheaper alternative
+  - card: Grisly Salvage
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Similar 2-mana card selection for land or creature, mills instead
+  - card: Urban Evolution
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 5-mana sorcery, draws 3 and plays extra land, scaled-up version
+  - card: Elvish Visionary
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana cantrip creature, simpler card draw without land option
+  - card: Scout the Borders
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3-mana version that reveals 5 cards, land or creature to hand
+  - card: Mulch
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana reveals 4, puts lands to hand, better land finding
+  - card: Risen Reef
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Elemental that repeatedly Explores, strong synergy in tribal decks
+  - card: Jadelight Ranger
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 3-mana creature that Explores twice, premium Explore payoff
+  - card: Merfolk Branchwalker
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana creature with Explore, exact same effect on a body
+  - card: Wildgrowth Walker
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Gains life when you Explore, key Explore deck synergy piece
+  - card: Enter the Unknown
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana draws and plays land, also buffs creature, variant effect
+  - card: Adventurous Impulse
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana looks at top 3 for creature or land, cheaper selection
+  - card: Cultivate
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Ramp spell that searches lands, different archetype focus
+  - card: Lightning Bolt
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Iconic red removal spell, completely unrelated effect
+- query_id: q_Boseiju,_Who_Endures
+  query_card: Boseiju, Who Endures
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Otawara, Soaring City
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same cycle - channel land that bounces nonland permanent
+  - card: Eiganjo, Seat of the Empire
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same cycle - channel land that exiles attacker/blocker
+  - card: Sokenzan, Crucible of Defiance
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same cycle - channel land that creates haste spirits
+  - card: Takenuma, Abandoned Mire
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Same cycle - channel land that mills/returns creature
+  - card: Demolition Field
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Utility land that destroys nonbasic lands
+  - card: Boseiju, Who Shelters All
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Original Boseiju - legendary land with spell protection
+  - card: Force of Vigor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free/efficient artifact/enchantment removal in green
+  - card: Outland Liberator
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Green creature with artifact/enchantment destruction
+  - card: Reclamation Sage
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Classic green naturalize on creature body
+  - card: Field of Ruin
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Colorless land destruction utility land
+  - card: Ghost Quarter
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Utility land that destroys target land
+  - card: Wasteland
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Premium utility land for destroying nonbasic lands
+  - card: Strip Mine
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Unrestricted land destruction utility land
+  - card: Krosan Grip
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Green instant speed artifact/enchantment removal
+  - card: Nature's Claim
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Efficient 1-mana artifact/enchantment removal
+  - card: Dryad Arbor
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Land creature - shares legendary land type but totally different function
+- query_id: q_Expressive_Iteration
+  query_card: Expressive Iteration
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Impulse
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Classic instant-speed dig 4 pick 1, trades sorcery restriction for
+      instant flexibility
+  - card: Consider
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Cheaper card selection at instant speed, less selection depth but more
+      mana efficient
+  - card: Preordain
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 mana cantrip with scry 2, similar card selection role but less card
+      advantage
+  - card: Opt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Instant cantrip with scry, much weaker selection but 1 mana and instant
+  - card: Chart a Course
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2 mana draw 2 with conditional discard, similar cost and card advantage
+      potential
+  - card: Pieces of the Puzzle
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Digs deeper for instants/sorceries specifically, similar selection
+      philosophy but 4 mana
+  - card: Dragon's Rage Channeler
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Perfect pairing in UR tempo, fills graveyard while EI digs for threats
+  - card: Murktide Regent
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Delve payoff in UR tempo decks where EI provides card selection and
+      GY fuel
+  - card: Ledger Shredder
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Benefits from casting noncreature spells like EI while providing card
+      selection
+  - card: Faithless Looting
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: UR graveyard enabler with card selection, similar role but enables
+      different strategies
+  - card: Brainstorm
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Superior card selection at 1 mana instant, the gold standard but format
+      restricted
+  - card: Ponder
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: More powerful 1 mana selection, but often banned where EI sees play
+  - card: Steam Vents
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Mana base enabler for UR decks running EI
+  - card: Fire // Ice
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Flexible UR instant that pairs well in tempo shells using EI
+  - card: Growth Spiral
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Similar multicolor 2-drop card advantage spell but UG ramp strategy
+  - card: Storm Crow
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Irrelevant meme creature, no functional similarity to card selection
+      sorcery
+- query_id: q_Dark_Ritual
+  query_card: Dark Ritual
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Cabal Ritual
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Nearly identical fast mana ritual with threshold upside
+  - card: Culling the Weak
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Black ritual requiring creature sacrifice, nets BB more
+  - card: Rain of Filth
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Black ritual sacrificing lands, scalable mana burst
+  - card: Sacrifice
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2 mana black ritual, less efficient but similar effect
+  - card: Songs of the Damned
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Black ritual scaling with graveyard creature count
+  - card: Burnt Offering
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Red/black ritual requiring creature sacrifice
+  - card: Bubbling Muck
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: High Tide for swamps, ritual effect in mono-black
+  - card: Lotus Petal
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Fast mana enabler for storm/combo alongside rituals
+  - card: Lion's Eye Diamond
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Explosive mana for storm combo with Dark Ritual
+  - card: Tendrils of Agony
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Storm finisher enabled by ritual chains
+  - card: Ad Nauseam
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Classic ritual target for fast combo wins
+  - card: Necropotence
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Turn 1 target via Dark Ritual in legacy/vintage
+  - card: Hypnotic Specter
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Classic T1 Dark Ritual target from early Magic
+  - card: Seething Song
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Red ritual variant, nets 2 mana like Dark Ritual
+  - card: Pyretic Ritual
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Red ritual netting 1 mana, smaller version
+  - card: Swords to Plowshares
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: White removal spell, completely different function
+- query_id: q_Chalice_of_the_Void
+  query_card: Chalice of the Void
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Trinisphere
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Prison artifact that taxes/restricts spells, similarly warps early
+      game
+  - card: Sphere of Resistance
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Tax artifact that slows opponent's spells, prison synergy
+  - card: Thorn of Amethyst
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Taxing artifact that punishes noncreature spells
+  - card: Lodestone Golem
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Creature that taxes nonartifact spells, prison strategy overlap
+  - card: Null Rod
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Iconic prison artifact that shuts down strategy type
+  - card: Engineered Explosives
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Flexible artifact with XX cost targeting specific CMC permanents
+  - card: Ratchet Bomb
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Scalable artifact that destroys permanents at chosen CMC
+  - card: Ensnaring Bridge
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Classic prison artifact lock piece in similar strategies
+  - card: Blood Moon
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Prison enchantment that locks opponents out of resources
+  - card: Ancient Tomb
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast mana to deploy Chalice early on key CMC values
+  - card: City of Traitors
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fast mana enabling early Chalice deployment
+  - card: Mox Opal
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Zero-cost artifact enabling T1 Chalice on 1
+  - card: Simian Spirit Guide
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Fast mana enabler for early Chalice locks
+  - card: Pithing Needle
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheap prison artifact that shuts down activated abilities
+  - card: Grafdigger's Cage
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: One-mana artifact hate piece with prison function
+  - card: Llanowar Elves
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Mana dork, completely different function and purpose
+- query_id: q_Flusterstorm
+  query_card: Flusterstorm
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Spell Pierce
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 1-mana counterspell for noncreatures, similar role protecting combo/countering
+      answers
+  - card: Swan Song
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 1-mana hard counter for instants/sorceries/enchantments, similar anti-spell
+      role
+  - card: Dispel
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 1-mana hard counter for instants only, classic counter-war tool
+  - card: Mental Misstep
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free 1-mana counter, similar role in Legacy/Vintage counter wars
+  - card: Pyroblast
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana counter for blue spells, similar sideboard anti-control role
+  - card: Red Elemental Blast
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Pyroblast twin, 1-mana counter vs blue in counter wars
+  - card: Mindbreak Trap
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Exiles stacks of spells, excellent in storm/counter wars like Flusterstorm
+  - card: Mystical Dispute
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana counter for blue spells, similar anti-control sideboard card
+  - card: Force of Will
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Free counter to protect Flusterstorm itself or backup in counter wars
+  - card: Force of Negation
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free counter on opponent's turn, pairs with Flusterstorm in blue control
+  - card: Brainstorm
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Cantrip that finds Flusterstorm when needed, blue staple pairing
+  - card: Grapeshot
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Storm card Flusterstorm counters, opposite side of storm matchup
+  - card: Past in Flames
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Storm enabler that Flusterstorm answers, hate vs storm decks
+  - card: Tendrils of Agony
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Storm finisher Flusterstorm specifically counters
+  - card: Counterspell
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Classic 2-mana hard counter, less efficient but unconditional
+  - card: Colossal Dreadmaw
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla creature, completely unrelated to stack interaction
+- query_id: q_Demonic_Tutor
+  query_card: Demonic Tutor
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Vampiric Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Instant-speed tutor to top of library for 1 mana, closest functional
+      equivalent
+  - card: Mystical Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 mana instant tutor but restricted to instants/sorceries, to top
+  - card: Worldly Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 mana instant tutor but restricted to creatures, to top
+  - card: Enlightened Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1 mana instant tutor but restricted to artifacts/enchantments, to top
+  - card: Imperial Seal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 'Nearly identical: sorcery speed tutor to top for B, trades hand for
+      delayed access'
+  - card: Diabolic Tutor
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Strictly worse version at 4 mana, same effect otherwise
+  - card: Grim Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 3 mana version with life payment, direct functional alternative
+  - card: Diabolic Intent
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2 mana with sacrifice cost, conditional but efficient tutor
+  - card: Cruel Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2 mana sorcery tutor to top, middle ground between Demonic and Imperial
+  - card: Dark Petition
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 5 mana tutor to hand with spell mastery upside, expensive alternative
+  - card: Beseech the Mirror
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 4 mana bargain tutor that casts for free, different axis
+  - card: Personal Tutor
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1 mana sorcery tutor restricted to sorceries, to top
+  - card: Scheming Symmetry
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1 mana tutor with symmetrical downside, niche competitive use
+  - card: Beseech the Queen
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: CMC-restricted tutor at 6 mana, flexible but slow
+  - card: "Lim-D\xFBl's Vault"
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Card selection via library manipulation, not true tutoring
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla 2/2 creature, completely unrelated for calibration
+- query_id: q_Show_and_Tell
+  query_card: Show and Tell
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Sneak Attack
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Alternative cheating permanents into play, recurring but requires haste
+      creatures
+  - card: Eureka
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Direct predecessor, symmetrical cheat effect, banned in Legacy
+  - card: Omniscience
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Classic combo target, enables free spells once in play
+  - card: Griselbrand
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Premier creature target for cheating into play
+  - card: Emrakul, the Aeons Torn
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Iconic high-cost creature to cheat in, wins immediately
+  - card: Cunning Wish
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Tutors Show and Tell from sideboard in combo decks
+  - card: Through the Breach
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Red variant, creature-only, temporary but instant speed
+  - card: Brainstorm
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Sets up Show and Tell hands, staple in same decks
+  - card: Force of Will
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Protects the combo, essential in competitive Show and Tell decks
+  - card: Hypergenesis
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Cascade variant, symmetrical cheat, suspended
+  - card: Natural Order
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheats creatures only, requires sacrifice, not symmetrical
+  - card: Reanimate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheats creatures from graveyard, cheaper but different setup
+  - card: Tinker
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheats artifacts only, requires sacrifice, asymmetric advantage
+  - card: Karakas
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Answers opponent's creature from Show and Tell trigger
+  - card: Defense Grid
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Protects Show and Tell from countermagic
+  - card: Colossal Dreadmaw
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla creature, no synergy with cheating into play strategies
+- query_id: q_Force_of_Will
+  query_card: Force of Will
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Pact of Negation
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Free counterspell, protects combo wins like Force
+  - card: Mana Drain
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana unconditional counter with upside, vintage staple
+  - card: Force of Negation
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Direct successor, free counter on opponent's turn
+  - card: Fierce Guardianship
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free counter with commander, conditional free spell
+  - card: Counterspell
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Classic 2-mana unconditional counter, baseline comparison
+  - card: Mental Misstep
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free counter via Phyrexian mana, narrow but format-defining
+  - card: Flusterstorm
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana counter for storm/combo matchups
+  - card: Disrupting Shoal
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free counterspell pitching blue card, similar pitch mechanic
+  - card: Foil
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Older pitch counterspell, requires island discard
+  - card: Misdirection
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Free pitch spell for control, redirects not counters
+  - card: Brainstorm
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Blue staple, helps find Force or set up pitches
+  - card: Daze
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Free tempo counter early game, returns island
+  - card: Subtlety
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Free pitch blue spell, bounces instead of counters
+  - card: Commandeer
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Pitch spell mechanic but steals, high CMC
+  - card: Swan Song
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: 1-mana counter for noncreatures, cheap but not free
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla creature, no relation to free counterspells
+- query_id: q_Tarmogoyf
+  query_card: Tarmogoyf
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Scavenging Ooze
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Efficient green creature that grows and interacts with graveyards,
+      common green beater
+  - card: Hooting Mandrills
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Delve makes it cheap efficient beater that leverages graveyard like
+      Goyf
+  - card: Gurmag Angler
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Delve creature, efficient beater using graveyard resources, similar
+      role
+  - card: Murktide Regent
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Modern graveyard-scaling efficient threat, direct successor to Goyf's
+      role
+  - card: Dragon's Rage Channeler
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Cheap efficient creature that cares about card types like Goyf, similar
+      deckbuilding
+  - card: Lhurgoyf
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Original lhurgoyf creature, direct ancestor, same graveyard-scaling
+      mechanic
+  - card: Quirion Beastcaller
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Cheap green growing threat, similar curve slot and growth pattern
+  - card: Wild Mongrel
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fills graveyard to grow Goyf, classic combo in tempo decks
+  - card: Deathrite Shaman
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Graveyard interaction staple in same decks, manipulates Goyf size
+  - card: Mishra's Bauble
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Cheap artifact to boost Goyf, cantrips, classic inclusion in Goyf decks
+  - card: Seal of Fire
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Enchantment for graveyard to boost Goyf while providing removal
+  - card: Thought Scour
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Mills card types to grow Goyf quickly, often paired together
+  - card: Tarmogoyf Nest
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Creates Tarmogoyf tokens, directly references the card
+  - card: Primeval Titan
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Green creature but expensive, completely different role and strategy
+  - card: Toski, Bearer of Secrets
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Small green creature but focused on card advantage, different use case
+  - card: Grim Flayer
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Delirium mechanic synergizes with Goyf strategy, similar card type
+      focus
+- query_id: q_Fatal_Push
+  query_card: Fatal Push
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Path to Exile
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Premium 1-mana removal in white; unconditional but ramps opponent
+  - card: Swords to Plowshares
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Best 1-mana removal ever; unconditional, gives life instead
+  - card: Terminate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana BR unconditional creature removal; no revolt needed
+  - card: Murderous Cut
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana black removal with delve; often cheaper than Push late game
+  - card: Drown in the Loch
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana conditional removal/counter; targets based on graveyard
+  - card: Unholy Heat
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 1-mana red removal; conditional 6 damage with delirium
+  - card: Dismember
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana (phyrexian) unconditional -5/-5; life cost for flexibility
+  - card: Go for the Throat
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana black removal; destroys non-artifact creatures
+  - card: Bloodchief's Thirst
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana scalable black removal; CMC 2 or less early, kicker for PW/bigger
+  - card: Heartless Act
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana black removal; destroy non-counters creature or remove counters
+  - card: Fabled Passage
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Fetchland enables revolt for Fatal Push consistently
+  - card: Evolving Wilds
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Budget fetchland to trigger revolt
+  - card: Aether Revolt
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Set theme around revolt mechanic; thematic connection only
+  - card: Abrupt Decay
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana BG uncounterable removal; CMC 3 or less restriction similar
+  - card: Lightning Bolt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1-mana red removal staple; 3 damage kills many creatures
+  - card: Colossal Dreadmaw
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: 6-mana vanilla creature; completely irrelevant to cheap removal
+- query_id: q_Leyline_of_Sanctity
+  query_card: Leyline of Sanctity
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Leyline of the Void
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Same leyline cycle, different protective effect (graveyard hate vs
+      targeting protection)
+  - card: Witchbane Orb
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Grants hexproof to player, preventing targeting like Leyline but costs
+      4 mana
+  - card: True Believer
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana creature granting player hexproof, more vulnerable but cheaper
+      if not in opening hand
+  - card: Orbs of Warding
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 5-mana artifact giving hexproof plus damage prevention, more expensive
+      but resilient
+  - card: Aegis of the Gods
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana enchantment creature granting hexproof, fragile but permanent
+  - card: Ivory Mask
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 4-mana enchantment with shroud effect (older version of player hexproof)
+  - card: Leyline of Anticipation
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Same leyline cycle, flash-granting ability, different strategic use
+  - card: Leyline of Abundance
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Leyline cycle member, mana acceleration instead of protection
+  - card: Solitary Confinement
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Prevents all damage/targeting, synergizes with discard strategies alongside
+      Leyline
+  - card: Grand Abolisher
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Prevents interaction during your turn, complementary protection strategy
+  - card: Sigarda, Host of Herons
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Grants sacrifice protection, combines with Leyline for comprehensive
+      targeting defense
+  - card: Teferi's Protection
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Instant-speed protection effect, different timing but similar defensive
+      goal
+  - card: Silence
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: Prevents opponent's spells temporarily, complementary disruption in
+      white
+  - card: Torpor Orb
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Similar hate-bear artifact role, different axis (ETBs vs targeting)
+  - card: Suppression Field
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 1
+    llm_notes: White hate enchantment taxing activated abilities, different disruption
+      angle
+  - card: Raging Goblin
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Basic aggressive creature, no connection to protection or leyline effects
+- query_id: q_Arcane_Signet
+  query_card: Arcane Signet
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Sol Ring
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana rock producing colorless; format staple alternative
+  - card: Fellwar Stone
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana rock with conditional color fixing; similar role
+  - card: Mind Stone
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana rock with card draw option; curve replacement
+  - card: Talisman of Progress
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock with dual color fixing; ping drawback
+  - card: Signet of the Empty Throne
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Shares 'Signet' name only; completely different card type and function
+  - card: Commander's Sphere
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3-mana version with commander color identity fixing and draw
+  - card: Chromatic Lantern
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3-mana perfect fixing for all lands; upgrade in multicolor
+  - card: Mana Crypt
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0-mana fast mana; upgraded speed but colorless
+  - card: Thought Vessel
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock with no max hand size; similar slot
+  - card: Azorius Signet
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana signet cycle; fixed dual colors vs identity
+  - card: Worn Powerstone
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 3-mana rock producing 2 colorless; slower curve
+  - card: Prismatic Lens
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock with flexible color filtering
+  - card: Coldsteel Heart
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock choosing one color; ETB tapped drawback
+  - card: Gilded Lotus
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 5-mana rock producing 3 of any color; late-game upgrade
+  - card: Wayfarer's Bauble
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana ramp alternative; fetches land instead of artifact mana
+  - card: Everflowing Chalice
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Scalable colorless rock; different flexibility approach
+- query_id: q_Fellwar_Stone
+  query_card: Fellwar Stone
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Mind Stone
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: 2-mana rock with utility, similar role in most decks
+  - card: Prismatic Lens
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana mana fixer, less efficient but guarantees colors
+  - card: Talisman of Progress
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock for WU decks, more reliable colors
+  - card: Coldsteel Heart
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock that fixes, enters tapped but chooses color
+  - card: Arcane Signet
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Commander staple 2-mana rock, strictly better in Commander
+  - card: Thought Vessel
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 2-mana rock with no max hand size upside
+  - card: Sky Diamond
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana rock but enters tapped, slower
+  - card: Simic Signet
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 2-mana rock requiring colored input for fixing
+  - card: Sol Ring
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Best 1-mana rock, strict upgrade in power level
+  - card: Mana Crypt
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 0-mana rock, massive upgrade with downside
+  - card: Chromatic Lantern
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 3-mana but fixes all lands, multicolor ramp
+  - card: Commander's Sphere
+    similarity_type: downgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 3-mana rock with card draw, slower ramp
+  - card: Everflowing Chalice
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Scalable colorless ramp, different flexibility
+  - card: Birds of Paradise
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1-mana dork that adds any color, vulnerable creature
+  - card: Mox Diamond
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 0-mana rock with land discard cost, extreme fast mana
+  - card: Grizzly Bears
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla 2/2 creature, completely unrelated to ramp
+- query_id: q_Aether_Vial
+  query_card: Aether Vial
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Cavern of Souls
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Both enable tribal strategies with uncounterable creatures, staples
+      in same decks
+  - card: Collected Company
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Alternative instant-speed creature deployment, CMC 3 limitation overlap
+  - card: Chalice of the Void
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Similar artifact prison/tempo piece, charge counter mechanic, Modern
+      staple
+  - card: Ancient Ziggurat
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Creature-focused mana acceleration for tribal decks alongside Vial
+  - card: Nettle Sentinel
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Elf combo piece maximizing Vial triggers, classic Modern Elves synergy
+  - card: Flickerwisp
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Premium Vial target at 3 counters for instant-speed ETB value
+  - card: Thalia, Guardian of Thraben
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Death & Taxes staple with Vial, asymmetric tax advantage
+  - card: Chrome Mox
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Fast artifact mana acceleration but requires card disadvantage, different
+      timing
+  - card: Mox Opal
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Artifact-based acceleration but generates mana not cheating costs
+  - card: Stoneforge Mystic
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Similar cheating-cost mechanic for equipment, comparable Modern impact
+  - card: Umezawa's Jitte
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Artifact with charge counters, staple in same creature-based strategies
+  - card: Chord of Calling
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Alternative instant-speed creature tutoring, convoke vs Vial tempo
+  - card: Birthing Pod
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Artifact creature-cheating engine but requires sac, toolbox vs tempo
+  - card: Snapcaster Mage
+    similarity_type: archetype
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: Premium instant-speed creature flash enabler, control vs aggro context
+  - card: Rishadan Port
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Death & Taxes staple alongside Vial for tempo advantage
+  - card: Storm Crow
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Vanilla flier, no functional or strategic relationship to Vial
+- query_id: q_Lightning_Bolt
+  query_card: Lightning Bolt
+  annotator: llm_bootstrap
+  annotation_date: '2025-10-05'
+  candidates:
+  - card: Chain Lightning
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: R instant, 3 damage, slight drawback with copy option
+  - card: Lava Spike
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: R sorcery, 3 damage to player only, Burn staple
+  - card: Shock
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: R instant, 2 damage any target, strict downgrade
+  - card: Skewer the Critics
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: R sorcery, 3 damage with spectacle for R, conditional Bolt
+  - card: Rift Bolt
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 3 damage sorcery with suspend 1, delayed Bolt
+  - card: Shard Volley
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: R instant, 3 damage, sac land cost, Burn option
+  - card: Lightning Strike
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: 1R instant, 3 damage any target, mana cost downgrade
+  - card: Galvanic Blast
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: R instant, 2-4 damage with metalcraft, artifact synergy
+  - card: Monastery Swiftspear
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Prowess creature, perfect Burn/tempo enabler
+  - card: Eidolon of the Great Revel
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 4
+    llm_notes: Burn deck staple, punishes low CMC spells
+  - card: Boros Charm
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: RW instant, 4 damage or utility, Burn archetype
+  - card: Price of Progress
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Burn spell punishing nonbasics, same archetype
+  - card: Fireblast
+    similarity_type: synergy
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: Free 4 damage with land sac, Burn finisher
+  - card: Lightning Helix
+    similarity_type: upgrade
+    relevance: null
+    llm_relevance_draft: 3
+    llm_notes: RW instant, 3 damage + lifegain, multicolor upgrade
+  - card: Incinerate
+    similarity_type: substitute
+    relevance: null
+    llm_relevance_draft: 2
+    llm_notes: 1R instant, 3 damage with regen clause, vintage substitute
+  - card: Storm Crow
+    similarity_type: unrelated
+    relevance: null
+    llm_relevance_draft: 0
+    llm_notes: Meme card, no functional similarity to efficient burn
