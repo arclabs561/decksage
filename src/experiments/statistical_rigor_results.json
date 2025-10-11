@@ -1,0 +1,20 @@
+{
+  "bootstrap": {
+    "all_mean": 0.0,
+    "all_ci": [
+      0.0,
+      0.0
+    ],
+    "tournament_mean": 0.0,
+    "tournament_ci": [
+      0.0,
+      0.0
+    ],
+    "decision_changes": true
+  },
+  "independent_possible": false,
+  "sensitivity": {
+    "skip": true,
+    "reason": "No meaningful parameter to vary"
+  }
+}
