@@ -12,7 +12,6 @@ Validates the quality of enriched card data:
 
 import json
 from pathlib import Path
-from typing import Dict, List
 from dataclasses import dataclass
 
 
@@ -155,24 +154,24 @@ class EnrichmentQualityValidator:
         print(f"QUALITY REPORT - {metrics.game.upper()}")
         print("="*60)
         
-        print(f"\n📊 Coverage:")
+        print("\n📊 Coverage:")
         print(f"  Total cards: {metrics.total_cards}")
         print(f"  With functional tags: {metrics.functional_tags_present} ({100*metrics.functional_tags_present/metrics.total_cards:.1f}%)")
         print(f"  With LLM enrichment: {metrics.llm_enriched} ({100*metrics.llm_enriched/metrics.total_cards:.1f}%)")
         print(f"  With vision enrichment: {metrics.vision_enriched} ({100*metrics.vision_enriched/metrics.total_cards:.1f}%)")
         
-        print(f"\n🏷️  Functional Tags:")
+        print("\n🏷️  Functional Tags:")
         print(f"  Average tags per card: {metrics.avg_tags_per_card:.1f}")
         print(f"  Cards with zero tags: {metrics.zero_tags}")
         
         if metrics.llm_enriched > 0:
-            print(f"\n🤖 LLM Quality:")
+            print("\n🤖 LLM Quality:")
             print(f"  Avg confidence: {metrics.llm_confidence_avg:.3f}")
             print(f"  Min confidence: {metrics.llm_confidence_min:.3f}")
             print(f"  Max confidence: {metrics.llm_confidence_max:.3f}")
             print(f"  Low confidence (<0.5): {metrics.low_confidence_count}")
         
-        print(f"\n⚠️  Quality Issues:")
+        print("\n⚠️  Quality Issues:")
         print(f"  Missing names: {metrics.missing_names}")
         print(f"  Empty strategies: {metrics.empty_strategies}")
         print(f"  Zero tags: {metrics.zero_tags}")
