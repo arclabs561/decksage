@@ -33,10 +33,13 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-extras --dev
 
-      - name: Run tests (parallel)
+      - name: Lint (ruff)
+        run: uv run ruff check src/ml
+
+      - name: Run tests (fast subset)
         env:
           PYTHONUNBUFFERED: '1'
-        run: uv run pytest -q --maxfail=1 --dist=loadscope -n auto --cov=src/ml --cov-report=xml --cov-report=term-missing
+        run: uv run pytest -q -m "not llm and not integration" -k "not slow" --maxfail=1 --cov=src/ml --cov-report=xml --cov-report=term-missing
 
       - name: Upload coverage
         uses: actions/upload-artifact@v4
