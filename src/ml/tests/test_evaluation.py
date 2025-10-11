@@ -75,6 +75,22 @@ def test_jaccard_similarity_empty():
     assert jaccard_similarity(set(), {"a"}) == 0.0
 
 
+def test_evaluate_similarity_small_set():
+    test_set = {
+        "Lightning Bolt": {
+            "highly_relevant": ["Chain Lightning"],
+            "relevant": ["Lava Spike"],
+        }
+    }
+
+    def sim_fn(q, k):
+        return [("Chain Lightning", 0.9), ("Lava Spike", 0.8)][:k]
+
+    res = evaluate_similarity(test_set, sim_fn, top_k=2)
+    assert res["p@2"] > 0
+    assert res["ndcg@2"] > 0
+    assert res["mrr@2"] == 1.0
+
 def test_evaluate_similarity_basic():
     """Basic evaluation loop works."""
     test_set = {"query1": {"highly_relevant": ["result1", "result2"], "relevant": ["result3"]}}

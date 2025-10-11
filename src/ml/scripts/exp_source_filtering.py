@@ -255,14 +255,14 @@ def main():
         results["conclusion"] = "no_improvement_or_harmful"
         results["recommendation"] = "More data helps, keep all sources"
 
-    output_path = Path("../experiments/exp_048_source_filtering_results.json")
+    output_path = PATHS.experiments / "exp_048_source_filtering_results.json"
     with open(output_path, "w") as f:
         json.dump(results, f, indent=2)
 
     print(f"\n💾 Results saved to: {output_path}")
 
     # Append to experiment log
-    log_path = Path("../experiments/EXPERIMENT_LOG_CANONICAL.jsonl")
+    log_path = PATHS.experiments / "EXPERIMENT_LOG_CANONICAL.jsonl"
     if log_path.exists():
         with open(log_path, "a") as f:
             f.write(json.dumps(results) + "\n")
