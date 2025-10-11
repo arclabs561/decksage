@@ -241,6 +241,10 @@ src/
   - `experiments/audit.html` (images, per‑game sections, averages; no emojis)
   - Linked from `debug/index.html` → “Unified Audit”
 
+Illustration:
+
+![Embeddings analysis](experiments/embeddings_analysis.png)
+
 These map directly to the two primary goals in `README_SCRATCH.md`:
 - Similarity: canonical test sets + audit page visualize relevance buckets with images.
 - Deck recommend: `experiments/audit_deck_completion.html` (before/after + steps); summarized on the unified audit page.
