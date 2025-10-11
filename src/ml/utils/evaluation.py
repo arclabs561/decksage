@@ -1,8 +1,8 @@
 """Shared evaluation utilities."""
 
 from collections.abc import Callable
-from typing import Any
 from math import log2
+from typing import Any
 
 from .constants import RELEVANCE_WEIGHTS
 
@@ -110,7 +110,7 @@ def evaluate_similarity(
             ndcg = (dcg(pred_cards) / idcg) if idcg > 0 else 0.0
             ndcgs.append(ndcg)
 
-            # Compute MRR@k (first hit in highly_relevant ∪ relevant)
+            # Compute MRR@k (first hit in highly_relevant or relevant)
             target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
             rr = 0.0
             for i, c in enumerate(pred_cards[:top_k], 1):
