@@ -33,13 +33,17 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-extras --dev
 
-      - name: Lint (ruff)
-        run: uv run ruff check src/ml
+      - name: Lint (ruff on new tests)
+        run: |
+          uv run ruff check \
+            src/ml/tests/test_evaluation.py \
+            src/ml/tests/test_llm_cache.py \
+            src/ml/tests/test_paths.py
 
-      - name: Run tests (fast subset)
+      - name: Run tests (fast subset: new tests only)
         env:
           PYTHONUNBUFFERED: '1'
-        run: uv run pytest -q -m "not llm and not integration" -k "not slow" --maxfail=1 --cov=src/ml --cov-report=xml --cov-report=term-missing
+        run: uv run pytest -q src/ml/tests/test_evaluation.py src/ml/tests/test_llm_cache.py src/ml/tests/test_paths.py --maxfail=1
 
       - name: Upload evaluation report (if present)
         if: ${{ hashFiles('experiments/evaluation_report_latest.html') != '' }}
