@@ -1,0 +1,143 @@
+#!/usr/bin/env python3
+"""
+Continuous Dataset Integration
+
+As scraping runs, periodically export and integrate new data,
+then re-run analysis to see the garden grow in real-time.
+
+This is continuous cultivation - not wait-then-integrate,
+but grow-analyze-grow-analyze in a loop.
+"""
+
+import subprocess
+import time
+from pathlib import Path
+
+
+def export_current_data():
+    """Export all current scraped data."""
+    print("Exporting current data...")
+    result = subprocess.run(
+        [
+            "go",
+            "run",
+            "cmd/export-hetero/main.go",
+            "data-full/games/magic/mtgtop8/collections",
+            "../../data/processed/decks_current.jsonl",
+        ],
+        check=False,
+        cwd="/Users/henry/Documents/dev/decksage/src/backend",
+        capture_output=True,
+        text=True,
+    )
+
+    if "Exported" in result.stdout:
+        # Extract count
+        for line in result.stdout.split("\n"):
+            if "Exported" in line and "decks" in line:
+                print(f"  {line.strip()}")
+                return True
+    return False
+
+
+def integrate_and_analyze():
+    """Integrate new data and run quick analysis."""
+    print("\nIntegrating...")
+
+    # Replace dataset
+    current_path = Path("/Users/henry/Documents/dev/decksage/data/processed/decks_current.jsonl")
+    main_path = Path("/Users/henry/Documents/dev/decksage/data/processed/decks_with_metadata.jsonl")
+
+    if not current_path.exists():
+        print("  No new data yet")
+        return 0
+
+    # Count before
+    with open(current_path) as f:
+        new_count = sum(1 for _ in f)
+
+    # Replace
+    subprocess.run(["cat", str(current_path)], check=False, stdout=open(main_path, "w"))
+
+    print(f"  ✅ Dataset now: {new_count:,} decks")
+    return new_count
+
+
+def quick_health_check():
+    """Run quick health assessment."""
+    print("\nQuick health check...")
+    result = subprocess.run(
+        [
+            "uv",
+            "run",
+            "python",
+            "-c",
+            """
+import json
+from pathlib import Path
+
+data_path = Path("../../data/processed/decks_with_metadata.jsonl")
+total = 0
+formats = {}
+archetypes = {}
+
+with open(data_path) as f:
+    for line in f:
+        total += 1
+        d = json.loads(line)
+        fmt = d.get("format", "unknown")
+        arch = d.get("archetype", "unknown")
+        formats[fmt] = formats.get(fmt, 0) + 1
+        archetypes[arch] = archetypes.get(arch, 0) + 1
+
+print(f"  Total: {total:,} decks")
+print(f"  Formats: {len(formats)}")
+print(f"  Archetypes: {len(archetypes)}")
+print(f"  Top archetype: {max(archetypes.items(), key=lambda x: x[1])}")
+""",
+        ],
+        check=False,
+        cwd="/Users/henry/Documents/dev/decksage/src/ml",
+        capture_output=True,
+        text=True,
+    )
+    print(result.stdout)
+
+
+def continuous_loop(interval_minutes=5):
+    """Run continuous integration loop."""
+    print("=" * 60)
+    print("CONTINUOUS INTEGRATION - GROWING THE GARDEN")
+    print("=" * 60)
+    print(f"Update interval: {interval_minutes} minutes")
+    print("Press Ctrl+C to stop")
+    print()
+
+    iteration = 0
+    try:
+        while True:
+            iteration += 1
+            print(f"\n{'=' * 60}")
+            print(f"INTEGRATION CYCLE #{iteration}")
+            print(f"{'=' * 60}")
+
+            if export_current_data():
+                deck_count = integrate_and_analyze()
+                quick_health_check()
+
+                if deck_count >= 50000:
+                    print("\n🎉 TARGET REACHED: 50,000+ decks!")
+                    break
+            else:
+                print("  Export not ready yet, waiting...")
+
+            print(f"\nNext update in {interval_minutes} minutes...")
+            time.sleep(interval_minutes * 60)
+
+    except KeyboardInterrupt:
+        print("\n\n✅ Stopped continuous integration")
+        print("Run final export and analysis manually")
+
+
+if __name__ == "__main__":
+    continuous_loop(interval_minutes=3)

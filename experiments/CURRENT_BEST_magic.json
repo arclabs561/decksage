@@ -1,0 +1,23 @@
+{
+  "game": "magic",
+  "method": "Jaccard with land filtering",
+  "experiment_id": "exp_053",
+  "p10": 0.089,
+  "test_set_version": "38_labeled_queries",
+  "date": "2025-10-01",
+  "note": "Cleaned test set: removed 38 unlabeled queries. Honest baseline.",
+  "test_set_evolution": [
+    "10 queries: P@10 = 0.14",
+    "20 queries: P@10 = 0.12",
+    "76 queries (38 unlabeled): P@10 = 0.046 (unfair)",
+    "38 queries (all labeled): P@10 = 0.089 (honest)"
+  ],
+  "status": "verified_with_consolidated_code",
+  "artifacts": {
+    "code": "src/ml/similarity_methods.py (consolidated)",
+    "data": "data/processed/pairs_large.csv"
+  },
+  "competitors_on_same_test": {
+    "Note": "Need to re-run all on 38-query test for fair comparison"
+  }
+}

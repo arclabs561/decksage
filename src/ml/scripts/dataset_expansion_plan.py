@@ -1,0 +1,222 @@
+#!/usr/bin/env python3
+"""
+Strategic Dataset Expansion
+
+Garden Philosophy: Don't just collect more data blindly.
+Target gaps, maintain balance, cultivate quality.
+
+Current Health: 99.9/100
+Gaps Identified:
+- 140+ underrepresented archetypes (<20 decks)
+- Pioneer, Peasant formats underrepresented
+- Many Commander variants at 1-2 decks
+
+Strategy: Target scraping for specific gaps.
+"""
+
+import json
+from collections import Counter
+from pathlib import Path
+
+
+def analyze_expansion_priorities(jsonl_path):
+    """Identify what to expand and why."""
+
+    format_arch_counts = Counter()
+    format_totals = Counter()
+
+    with open(jsonl_path) as f:
+        for line in f:
+            deck = json.loads(line)
+            fmt = deck.get("format", "unknown")
+            arch = deck.get("archetype", "unknown")
+
+            if fmt != "unknown" and arch != "unknown":
+                key = f"{fmt}::{arch}"
+                format_arch_counts[key] += 1
+                format_totals[fmt] += 1
+
+    priorities = []
+
+    # Priority 1: Archetypes with 1-10 decks (need more samples)
+    critical = [(k, v) for k, v in format_arch_counts.items() if 1 <= v <= 10]
+    priorities.append(
+        {
+            "priority": "CRITICAL",
+            "reason": "Too few samples (1-10 decks) - need 20+",
+            "targets": critical,
+            "action": "Target scraping for these specific archetypes",
+        }
+    )
+
+    # Priority 2: Archetypes with 11-29 decks (approaching minimum)
+    moderate = [(k, v) for k, v in format_arch_counts.items() if 11 <= v <= 29]
+    priorities.append(
+        {
+            "priority": "MODERATE",
+            "reason": "Below threshold (11-29 decks) - target 30+",
+            "targets": moderate,
+            "action": "Opportunistic collection when scraping",
+        }
+    )
+
+    # Priority 3: Format balance
+    avg_per_format = sum(format_totals.values()) / len(format_totals)
+    underrep_formats = [(f, c) for f, c in format_totals.items() if c < avg_per_format * 0.5]
+    priorities.append(
+        {
+            "priority": "LOW",
+            "reason": "Format balance",
+            "targets": underrep_formats,
+            "action": "General scraping for these formats",
+        }
+    )
+
+    return priorities, format_totals
+
+
+def print_expansion_plan(priorities, format_totals):
+    """Print strategic expansion plan."""
+
+    print("=" * 60)
+    print("DATASET EXPANSION PLAN")
+    print("=" * 60)
+    print("Philosophy: Target gaps, maintain quality")
+    print()
+
+    for priority in priorities:
+        print(f"\n{priority['priority']} PRIORITY")
+        print("-" * 60)
+        print(f"Reason: {priority['reason']}")
+        print(f"Targets: {len(priority['targets'])}")
+        print(f"Action: {priority['action']}")
+
+        if priority["priority"] == "CRITICAL":
+            print("\nTop 20 critical targets:")
+            for target, count in sorted(priority["targets"], key=lambda x: x[1])[:20]:
+                print(f"  {target:50s} {count:2d} decks")
+
+    print(f"\n{'=' * 60}")
+    print("EXPANSION STRATEGY")
+    print(f"{'=' * 60}")
+    print("Phase 1: Critical Archetypes (1-10 decks → 20+)")
+    print("  - Focus: Top 50 underrepresented archetypes")
+    print("  - Method: Targeted scraping by archetype name")
+    print("  - Goal: Get each to minimum viable sample size")
+    print()
+    print("Phase 2: Moderate Archetypes (11-29 → 30+)")
+    print("  - Focus: Opportunistic collection")
+    print("  - Method: General scraping with filtering")
+    print("  - Goal: Strengthen existing archetypes")
+    print()
+    print("Phase 3: Format Balance")
+    print("  - Focus: Underrepresented formats")
+    print("  - Method: Format-specific scraping")
+    print("  - Goal: Balanced dataset across formats")
+
+
+def create_scraping_targets(jsonl_path, output_path):
+    """Create targeted scraping list."""
+
+    format_arch_counts = Counter()
+
+    with open(jsonl_path) as f:
+        for line in f:
+            deck = json.loads(line)
+            fmt = deck.get("format", "unknown")
+            arch = deck.get("archetype", "unknown")
+
+            if fmt != "unknown" and arch != "unknown":
+                key = f"{fmt}::{arch}"
+                format_arch_counts[key] += 1
+
+    # Critical targets (need 20+ decks)
+    critical = []
+    for key, count in format_arch_counts.items():
+        if 1 <= count <= 19:
+            fmt, arch = key.split("::", 1)
+            needed = 20 - count
+            critical.append(
+                {
+                    "format": fmt,
+                    "archetype": arch,
+                    "current": count,
+                    "needed": needed,
+                    "priority": "critical" if count < 10 else "moderate",
+                }
+            )
+
+    # Sort by priority
+    critical.sort(key=lambda x: (x["priority"] != "critical", x["current"]))
+
+    # Save
+    with open(output_path, "w") as f:
+        json.dump(critical, f, indent=2)
+
+    print(f"\n{'=' * 60}")
+    print("SCRAPING TARGETS CREATED")
+    print(f"{'=' * 60}")
+    print(f"Total targets: {len(critical)}")
+    print(f"Critical (1-9 decks): {len([x for x in critical if x['priority'] == 'critical'])}")
+    print(f"Moderate (10-19 decks): {len([x for x in critical if x['priority'] == 'moderate'])}")
+    print(f"Saved to: {output_path}")
+
+    return critical
+
+
+def estimate_expansion_effort(targets):
+    """Estimate what it takes to fill gaps."""
+
+    total_needed = sum(t["needed"] for t in targets)
+    critical_needed = sum(t["needed"] for t in targets if t["priority"] == "critical")
+
+    print(f"\n{'=' * 60}")
+    print("EFFORT ESTIMATION")
+    print(f"{'=' * 60}")
+    print(f"Total decks needed: {total_needed}")
+    print(f"Critical priority:  {critical_needed}")
+    print()
+    print("Estimated effort:")
+    print(f"  - If scraping 100 decks/hour: {total_needed / 100:.1f} hours")
+    print(f"  - Critical targets only: {critical_needed / 100:.1f} hours")
+    print()
+    print("Recommended approach:")
+    print(
+        f"  1. Start with top 20 critical targets ({sum(t['needed'] for t in targets[:20])} decks)"
+    )
+    print("  2. Scrape broad + filter for targets")
+    print("  3. Monitor and adjust")
+
+
+def main():
+    data_path = Path("../../data/processed/decks_with_metadata.jsonl")
+    targets_path = Path("../../data/scraping_targets.json")
+
+    print("STRATEGIC DATASET EXPANSION PLANNING")
+    print("=" * 60)
+    print("Growing the garden thoughtfully")
+    print()
+
+    # Analyze priorities
+    priorities, format_totals = analyze_expansion_priorities(data_path)
+    print_expansion_plan(priorities, format_totals)
+
+    # Create targeted scraping list
+    print("\n🎯 Creating targeted scraping list...")
+    targets = create_scraping_targets(data_path, targets_path)
+
+    # Estimate effort
+    estimate_expansion_effort(targets)
+
+    print(f"\n{'=' * 60}")
+    print("NEXT STEPS")
+    print(f"{'=' * 60}")
+    print("1. Review scraping_targets.json")
+    print("2. Configure scraper for targeted collection")
+    print("3. Run batch scraping for critical targets")
+    print("4. Validate new data quality")
+    print("5. Re-assess garden health")
+
+
+if __name__ == "__main__":
+    main()

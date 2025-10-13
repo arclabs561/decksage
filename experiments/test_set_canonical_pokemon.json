@@ -1,0 +1,146 @@
+{
+  "version": "1.0",
+  "created": "2025-10-01",
+  "game": "pokemon",
+  "description": "Canonical test set for Pokemon TCG - ALL Pokemon experiments must use this",
+  "num_queries": 10,
+  "queries": {
+    "Pikachu": {
+      "highly_relevant": [
+        "Pikachu V",
+        "Pikachu VMAX"
+      ],
+      "relevant": [
+        "Raichu",
+        "Raichu GX"
+      ],
+      "somewhat_relevant": [
+        "Pikachu-EX"
+      ],
+      "marginally_relevant": [
+        "Alolan Raichu"
+      ],
+      "irrelevant": [
+        "Charizard",
+        "Professor's Research"
+      ]
+    },
+    "Professor's Research": {
+      "highly_relevant": [
+        "Professor Juniper",
+        "Professor Oak's Research"
+      ],
+      "relevant": [
+        "Marnie",
+        "N"
+      ],
+      "somewhat_relevant": [
+        "Cynthia"
+      ],
+      "marginally_relevant": [
+        "Hop"
+      ],
+      "irrelevant": [
+        "Pikachu"
+      ]
+    },
+    "Charizard": {
+      "highly_relevant": [
+        "Charizard V",
+        "Charizard VMAX"
+      ],
+      "relevant": [
+        "Charizard-EX",
+        "Charizard GX"
+      ],
+      "somewhat_relevant": [
+        "Reshiram"
+      ],
+      "marginally_relevant": [
+        "Volcarona"
+      ],
+      "irrelevant": [
+        "Pikachu"
+      ]
+    },
+    "Ultra Ball": {
+      "highly_relevant": [
+        "Quick Ball",
+        "Nest Ball"
+      ],
+      "relevant": [
+        "Great Ball",
+        "Level Ball"
+      ],
+      "somewhat_relevant": [
+        "Timer Ball"
+      ],
+      "marginally_relevant": [
+        "Dive Ball"
+      ],
+      "irrelevant": [
+        "Charizard"
+      ]
+    },
+    "Switch": {
+      "highly_relevant": [
+        "Escape Rope",
+        "Guzma"
+      ],
+      "relevant": [
+        "Boss's Orders"
+      ],
+      "somewhat_relevant": [
+        "Float Stone"
+      ],
+      "marginally_relevant": [
+        "Rope Trick"
+      ],
+      "irrelevant": [
+        "Professor's Research"
+      ]
+    },
+    "Boss's Orders": {
+      "highly_relevant": [
+        "Guzma"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Quick Ball": {
+      "highly_relevant": [
+        "Ultra Ball"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Rare Candy": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Double Turbo Energy": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Lumineon V": {
+      "highly_relevant": [
+        "Tapu Lele-GX"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  },
+  "note": "Limited to 5 queries - need Pokemon deck data to expand and validate"
+}

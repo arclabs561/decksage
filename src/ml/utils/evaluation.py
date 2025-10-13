@@ -1,10 +1,10 @@
 """Shared evaluation utilities."""
 
 from collections.abc import Callable
+from math import log2
 from typing import Any
 
 from .constants import RELEVANCE_WEIGHTS
-from math import log2
 
 
 def compute_precision_at_k(
@@ -81,15 +81,15 @@ def evaluate_similarity(
             scores.append(score)
 
             # Compute nDCG@k
-            def rel_gain(card: str) -> float:
+            def rel_gain(card: str, _labels=labels) -> float:
                 # Map relevance levels to weights; fall back to RELEVANCE_WEIGHTS
-                if card in labels.get("highly_relevant", []):
+                if card in _labels.get("highly_relevant", []):
                     return RELEVANCE_WEIGHTS["highly_relevant"]
-                if card in labels.get("relevant", []):
+                if card in _labels.get("relevant", []):
                     return RELEVANCE_WEIGHTS["relevant"]
-                if card in labels.get("somewhat_relevant", []):
+                if card in _labels.get("somewhat_relevant", []):
                     return RELEVANCE_WEIGHTS["somewhat_relevant"]
-                if card in labels.get("marginally_relevant", []):
+                if card in _labels.get("marginally_relevant", []):
                     return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
                 return 0.0
 
@@ -110,7 +110,7 @@ def evaluate_similarity(
             ndcg = (dcg(pred_cards) / idcg) if idcg > 0 else 0.0
             ndcgs.append(ndcg)
 
-            # Compute MRR@k (first hit in highly_relevant ∪ relevant)
+            # Compute MRR@k (first hit in highly_relevant or relevant)
             target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
             rr = 0.0
             for i, c in enumerate(pred_cards[:top_k], 1):
