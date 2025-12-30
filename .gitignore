@@ -113,3 +113,9 @@ report/
 # Frontend dependencies
 /src/frontend/*/node_modules/
 src/frontend/*/node_modules/
+# Frontend lock files
+package-lock.json
+yarn.lock
+# Experiment artifacts
+experiments/*.png
+experiments/*.html
