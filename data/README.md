@@ -66,14 +66,24 @@ data/
 ## Gitignore Policy
 
 **Tracked** (committed to git):
-- `processed/*.csv` - Processed datasets
+- Small metadata files (JSON configs, READMEs)
+- Small processed CSVs (<10MB)
 - This README
 
-**Ignored** (local only):
+**Ignored** (local only, synced to S3):
 - `raw/` - Large scraped data
+- `processed/pairs_multi_game.csv` - 1.5GB multi-game pairs
+- `processed/pairs_large.csv` - 266MB large pairs
+- `processed/decks_all_*.jsonl` - Large deck files (241-292MB)
+- `decks/*.jsonl` - Large deck exports (94-147MB)
 - `graphs/*.edg` - Generated graphs
+- `graphs/node_features*.json` - Large graph node features (10MB+)
 - `embeddings/*.wv` - Trained models
+- `embeddings/*.pkl` - Pickled embeddings (39MB+)
+- `embeddings/backups/*.wv` - Backup embeddings
 - `archive/` - Deprecated files
+
+**All large data files are synced to S3:** `s3://games-collections/`
 
 ## Usage
 
