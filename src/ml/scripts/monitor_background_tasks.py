@@ -1,0 +1,112 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+Monitor background tasks (training, test set expansion).
+
+Checks progress and provides status updates.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import time
+from pathlib import Path
+from typing import Any
+
+
+def check_process(process_name: str) -> bool:
+    """Check if a process is running."""
+    try:
+        result = subprocess.run(
+            ["pgrep", "-f", process_name],
+            capture_output=True,
+            text=True,
+        )
+        return result.returncode == 0 and result.stdout.strip() != ""
+    except Exception:
+        return False
+
+
+def check_file_progress(file_path: Path, initial_size: int = 0) -> dict[str, Any]:
+    """Check file progress."""
+    if not file_path.exists():
+        return {"exists": False, "size": 0}
+    
+    current_size = file_path.stat().st_size
+    return {
+        "exists": True,
+        "size": current_size,
+        "size_mb": current_size / (1024 * 1024),
+        "growth": current_size - initial_size,
+    }
+
+
+def main() -> int:
+    """Monitor background tasks."""
+    print("=" * 70)
+    print("BACKGROUND TASK MONITOR")
+    print("=" * 70)
+    print()
+    
+    # Check multi-game training
+    print("📊 Multi-Game Training:")
+    training_running = check_process("train_multi_game_validated")
+    embed_path = Path("data/embeddings/multi_game_validated.wv")
+    
+    if training_running:
+        print("   ⏳ Running...")
+    elif embed_path.exists():
+        size_mb = embed_path.stat().st_size / (1024 * 1024)
+        print(f"   ✅ Complete: {size_mb:.1f} MB")
+    else:
+        print("   ⏸️  Not started or failed")
+    
+    print()
+    
+    # Check test set expansion
+    print("📊 Test Set Expansion:")
+    expansion_running = check_process("expand_test_set_multi_game")
+    
+    games = ["pokemon", "yugioh"]
+    for game in games:
+        expanded_path = Path(f"experiments/test_set_expanded_{game}.json")
+        canonical_path = Path(f"experiments/test_set_canonical_{game}.json")
+        
+        if expanded_path.exists():
+            with open(expanded_path) as f:
+                data = json.load(f)
+            queries = data.get("queries", data) if isinstance(data, dict) else data
+            size = len(queries) if isinstance(queries, dict) else 0
+            print(f"   ✅ {game}: {size} queries")
+        elif canonical_path.exists():
+            if expansion_running:
+                print(f"   ⏳ {game}: expanding...")
+            else:
+                with open(canonical_path) as f:
+                    data = json.load(f)
+                queries = data.get("queries", data) if isinstance(data, dict) else data
+                size = len(queries) if isinstance(queries, dict) else 0
+                print(f"   ⏸️  {game}: {size} queries (canonical, not expanded)")
+        else:
+            print(f"   ❌ {game}: not found")
+    
+    print()
+    
+    # Summary
+    if training_running or expansion_running:
+        print("⏳ Background tasks still running")
+        print("   Run this script again to check progress")
+    else:
+        print("✅ All background tasks complete")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

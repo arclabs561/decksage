@@ -1,0 +1,45 @@
+DNS Records for decksage.cards
+==============================
+
+Add these records to your Route 53 hosted zone for decksage.cards:
+
+A Record (IPv4):
+-----------------
+Record name: (leave blank for apex domain)
+Record type: A
+Value: 188.93.147.85
+TTL: 300
+
+AAAA Record (IPv6):
+--------------------
+Record name: (leave blank for apex domain)
+Record type: AAAA
+Value: 2a09:8280:1::ae:4a43:0
+TTL: 300
+
+Optional: DNS Challenge (for pre-traffic certificate generation)
+-----------------------------------------------------------------
+Record name: _acme-challenge
+Record type: CNAME
+Value: decksage.cards.qx990qe.flydns.net
+TTL: 300
+
+Steps:
+1. Register decksage.cards with AWS Route 53 (if not already done)
+2. Go to Route 53 → Hosted zones → decksage.cards
+3. Create the A and AAAA records above
+4. Wait for DNS propagation (5-60 minutes)
+5. Check certificate: fly certs check decksage.cards -a decksage
+
+
+
+
+
+
+
+
+
+
+
+
+

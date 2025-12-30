@@ -5,16 +5,44 @@ from .data_loading import build_adjacency_dict, load_embeddings, load_pairs, loa
 from .evaluation import compute_precision_at_k, evaluate_similarity, jaccard_similarity
 from .paths import PATHS
 
-__all__ = [
-    "GAME_FILTERS",
-    "PATHS",
-    "RELEVANCE_WEIGHTS",
-    "build_adjacency_dict",
-    "compute_precision_at_k",
-    "evaluate_similarity",
-    "get_filter_set",
-    "jaccard_similarity",
-    "load_embeddings",
-    "load_pairs",
-    "load_test_set",
-]
+# AimStack helpers (optional)
+try:
+    from .aim_helpers import (
+        create_training_run,
+        track_artifact,
+        track_evaluation_metrics,
+        track_hyperparameter_result,
+        track_training_metrics,
+    )
+    __all__ = [
+        "GAME_FILTERS",
+        "PATHS",
+        "RELEVANCE_WEIGHTS",
+        "build_adjacency_dict",
+        "compute_precision_at_k",
+        "evaluate_similarity",
+        "get_filter_set",
+        "jaccard_similarity",
+        "load_embeddings",
+        "load_pairs",
+        "load_test_set",
+        "create_training_run",
+        "track_artifact",
+        "track_evaluation_metrics",
+        "track_hyperparameter_result",
+        "track_training_metrics",
+    ]
+except ImportError:
+    __all__ = [
+        "GAME_FILTERS",
+        "PATHS",
+        "RELEVANCE_WEIGHTS",
+        "build_adjacency_dict",
+        "compute_precision_at_k",
+        "evaluate_similarity",
+        "get_filter_set",
+        "jaccard_similarity",
+        "load_embeddings",
+        "load_pairs",
+        "load_test_set",
+    ]

@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/validators/legality.py
+# hypothesis_version: 6.140.3
+
+[100, 120, 250, '.cache', 'Expanded', 'Legal', 'OCG', 'Standard', 'TCG', 'Unlimited', '_', 'ban_lists', 'banned', 'data', 'default_cards', 'download_uri', 'expanded', 'legalities', 'limited', 'misc', 'misc_info', 'mtg_legality', 'name', 'not_legal', 'ocg_date', 'page', 'pageSize', 'pokemon_legality', 'restricted', 'semi-limited', 'standard', 'tcg_date', 'type', 'unlimited', 'w', 'yes', 'yugioh_banlist']

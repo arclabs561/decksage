@@ -1,0 +1,445 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Generate high-quality evaluation data based on research best practices.
+
+Implements:
+1. Stratified sampling across all dimensions
+2. Edge case coverage
+3. Difficulty distribution
+4. Game-specific considerations
+5. Quality validation
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import random
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+
+def stratified_sample_queries(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    num_queries: int = 200,
+) -> dict[str, list[str]]:
+    """
+    Stratified sampling across multiple dimensions.
+    
+    Returns: Dict mapping dimension -> list of queries
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Stratified sampling for {game}...")
+    
+    df = pd.read_csv(pairs_csv, nrows=50000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Build card frequency (proxy for popularity)
+    card_freq = Counter()
+    for _, row in df.iterrows():
+        card_freq[row[name1_col]] += row[count_col]
+        card_freq[row[name2_col]] += row[count_col]
+    
+    # Stratify by popularity (power level proxy)
+    sorted_cards = sorted(card_freq.items(), key=lambda x: x[1], reverse=True)
+    total_cards = len(sorted_cards)
+    
+    # Divide into tiers
+    tier_size = total_cards // 5
+    tiers = {
+        "tier_1_very_popular": [c for c, _ in sorted_cards[:tier_size]],
+        "tier_2_popular": [c for c, _ in sorted_cards[tier_size:2*tier_size]],
+        "tier_3_medium": [c for c, _ in sorted_cards[2*tier_size:3*tier_size]],
+        "tier_4_uncommon": [c for c, _ in sorted_cards[3*tier_size:4*tier_size]],
+        "tier_5_rare": [c for c, _ in sorted_cards[4*tier_size:5*tier_size]],
+    }
+    
+    # Sample from each tier
+    queries_by_tier = {}
+    queries_per_tier = num_queries // 5
+    
+    for tier_name, tier_cards in tiers.items():
+        sample_size = min(queries_per_tier, len(tier_cards))
+        if sample_size > 0:
+            queries_by_tier[tier_name] = random.sample(tier_cards, sample_size)
+    
+    print(f"  ✅ Sampled {sum(len(v) for v in queries_by_tier.values())} queries across {len(queries_by_tier)} tiers")
+    return queries_by_tier
+
+
+def generate_edge_case_queries(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    num_queries: int = 50,
+) -> list[dict[str, Any]]:
+    """
+    Generate edge case queries (rare combos, ambiguous mechanics, adversarial pairs).
+    """
+    if not HAS_DEPS:
+        return []
+    
+    print(f"📊 Generating edge case queries for {game}...")
+    
+    df = pd.read_csv(pairs_csv, nrows=10000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Find low co-occurrence pairs (rare combos)
+    df_low = df[df[count_col] <= 3]  # Low co-occurrence
+    df_low = df_low.sort_values(count_col, ascending=True)
+    
+    edge_cases = []
+    
+    # Sample rare co-occurrence pairs
+    for _, row in df_low.head(num_queries).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        
+        # Check if they have similar neighbor sets (potential edge case)
+        neighbors1 = set()
+        neighbors2 = set()
+        
+        for _, r in df[df[name1_col] == card1].iterrows():
+            neighbors1.add(r[name2_col])
+        for _, r in df[df[name2_col] == card1].iterrows():
+            neighbors1.add(r[name1_col])
+        
+        for _, r in df[df[name1_col] == card2].iterrows():
+            neighbors2.add(r[name2_col])
+        for _, r in df[df[name2_col] == card2].iterrows():
+            neighbors2.add(r[name1_col])
+        
+        # If similar neighbors but low direct co-occurrence = edge case
+        jaccard = len(neighbors1 & neighbors2) / len(neighbors1 | neighbors2) if (neighbors1 | neighbors2) else 0.0
+        
+        if jaccard > 0.3:  # Similar context but rare together
+            edge_cases.append({
+                "query": card1,
+                "type": "edge_case_rare_combo",
+                "highly_relevant": [card2],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "difficulty": "hard",
+            })
+    
+    print(f"  ✅ Generated {len(edge_cases)} edge case queries")
+    return edge_cases[:num_queries]
+
+
+def generate_difficulty_distributed_queries(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    easy_num: int = 50,
+    medium_num: int = 50,
+    hard_num: int = 50,
+) -> dict[str, list[dict[str, Any]]]:
+    """
+    Generate queries distributed by difficulty.
+    
+    Easy: Obvious similarities (high co-occurrence, same function)
+    Medium: Similar function, different execution
+    Hard: Nuanced similarities, edge cases
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Generating difficulty-distributed queries for {game}...")
+    
+    df = pd.read_csv(pairs_csv, nrows=20000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Easy: High co-occurrence pairs
+    df_easy = df[df[count_col] >= 50].sort_values(count_col, ascending=False)
+    easy_queries = []
+    
+    for _, row in df_easy.head(easy_num * 2).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        if card1 not in [q["query"] for q in easy_queries]:
+            easy_queries.append({
+                "query": card1,
+                "type": "difficulty_easy",
+                "highly_relevant": [card2],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "difficulty": "easy",
+            })
+        if len(easy_queries) >= easy_num:
+            break
+    
+    # Medium: Medium co-occurrence pairs
+    df_medium = df[(df[count_col] >= 10) & (df[count_col] < 50)].sort_values(count_col, ascending=False)
+    medium_queries = []
+    
+    for _, row in df_medium.head(medium_num * 2).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        if card1 not in [q["query"] for q in medium_queries]:
+            medium_queries.append({
+                "query": card1,
+                "type": "difficulty_medium",
+                "highly_relevant": [],
+                "relevant": [card2],
+                "somewhat_relevant": [],
+                "difficulty": "medium",
+            })
+        if len(medium_queries) >= medium_num:
+            break
+    
+    # Hard: Low co-occurrence but similar context (from edge cases)
+    hard_queries = generate_edge_case_queries(pairs_csv, embedding_path, game, hard_num)
+    
+    result = {
+        "easy": easy_queries[:easy_num],
+        "medium": medium_queries[:medium_num],
+        "hard": hard_queries[:hard_num],
+    }
+    
+    print(f"  ✅ Generated {len(easy_queries)} easy, {len(medium_queries)} medium, {len(hard_queries)} hard queries")
+    return result
+
+
+def validate_test_set_quality(
+    test_set: dict[str, Any],
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+) -> dict[str, Any]:
+    """
+    Validate test set quality based on research criteria.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Validating test set quality...")
+    
+    queries = test_set.get("queries", {})
+    
+    # Load training data for coverage check
+    df = pd.read_csv(pairs_csv, nrows=10000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    all_cards = set(df[name1_col].unique()) | set(df[name2_col].unique())
+    
+    validation = {
+        "total_queries": len(queries),
+        "coverage": {
+            "in_training_data": sum(1 for q in queries.keys() if q in all_cards),
+            "not_in_training_data": sum(1 for q in queries.keys() if q not in all_cards),
+            "coverage_percentage": 0.0,
+        },
+        "label_distribution": {
+            "avg_highly_relevant": 0.0,
+            "avg_relevant": 0.0,
+            "avg_somewhat_relevant": 0.0,
+        },
+        "difficulty_distribution": Counter(),
+        "type_distribution": Counter(),
+    }
+    
+    # Calculate coverage
+    if validation["total_queries"] > 0:
+        validation["coverage"]["coverage_percentage"] = (
+            validation["coverage"]["in_training_data"] / validation["total_queries"] * 100
+        )
+    
+    # Calculate label distribution
+    total_highly = 0
+    total_relevant = 0
+    total_somewhat = 0
+    queries_with_labels = 0
+    
+    for query, labels in queries.items():
+        query_type = labels.get("type", "unknown")
+        validation["type_distribution"][query_type] += 1
+        
+        difficulty = labels.get("difficulty", "unknown")
+        validation["difficulty_distribution"][difficulty] += 1
+        
+        highly = len(labels.get("highly_relevant", []))
+        relevant = len(labels.get("relevant", []))
+        somewhat = len(labels.get("somewhat_relevant", []))
+        
+        if highly + relevant + somewhat > 0:
+            queries_with_labels += 1
+            total_highly += highly
+            total_relevant += relevant
+            total_somewhat += somewhat
+    
+    if queries_with_labels > 0:
+        validation["label_distribution"]["avg_highly_relevant"] = total_highly / queries_with_labels
+        validation["label_distribution"]["avg_relevant"] = total_relevant / queries_with_labels
+        validation["label_distribution"]["avg_somewhat_relevant"] = total_somewhat / queries_with_labels
+    
+    # Convert Counters to dicts for JSON serialization
+    validation["difficulty_distribution"] = dict(validation["difficulty_distribution"])
+    validation["type_distribution"] = dict(validation["type_distribution"])
+    
+    print(f"  ✅ Validation complete:")
+    print(f"     Coverage: {validation['coverage']['coverage_percentage']:.1f}%")
+    print(f"     Difficulty: {validation['difficulty_distribution']}")
+    print(f"     Types: {len(validation['type_distribution'])} types")
+    
+    return validation
+
+
+def main() -> int:
+    """Generate high-quality evaluation data."""
+    parser = argparse.ArgumentParser(
+        description="Generate high-quality evaluation data based on research best practices"
+    )
+    parser.add_argument("--game", type=str, default="magic",
+                       choices=["magic", "pokemon", "yugioh"],
+                       help="Game to generate data for")
+    parser.add_argument("--pairs-csv", type=str, required=True,
+                       help="Pairs CSV file")
+    parser.add_argument("--embedding", type=str, help="Embedding file (.wv)")
+    parser.add_argument("--output", type=str,
+                       default="experiments/test_set_quality_{game}.json",
+                       help="Output test set JSON")
+    parser.add_argument("--num-queries", type=int, default=200,
+                       help="Total number of queries to generate")
+    parser.add_argument("--easy-num", type=int, default=50,
+                       help="Number of easy queries")
+    parser.add_argument("--medium-num", type=int, default=50,
+                       help="Number of medium queries")
+    parser.add_argument("--hard-num", type=int, default=50,
+                       help="Number of hard queries")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    pairs_csv = Path(args.pairs_csv)
+    if not pairs_csv.exists():
+        print(f"❌ Pairs CSV not found: {pairs_csv}")
+        return 1
+    
+    embedding_path = Path(args.embedding) if args.embedding else None
+    if args.embedding and embedding_path and not embedding_path.exists():
+        print(f"⚠️  Embedding not found: {embedding_path}, continuing without it")
+        embedding_path = None
+    
+    output_path = Path(args.output.replace("{game}", args.game))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    print("=" * 70)
+    print("Generate Quality Evaluation Data")
+    print("=" * 70)
+    print(f"\nGame: {args.game}")
+    print(f"Pairs CSV: {pairs_csv}")
+    if embedding_path:
+        print(f"Embedding: {embedding_path}")
+    print(f"Output: {output_path}\n")
+    
+    # Generate stratified queries
+    stratified = stratified_sample_queries(
+        pairs_csv,
+        embedding_path=embedding_path,
+        game=args.game,
+        num_queries=args.num_queries,
+    )
+    
+    # Generate difficulty-distributed queries
+    difficulty_queries = generate_difficulty_distributed_queries(
+        pairs_csv,
+        embedding_path=embedding_path,
+        game=args.game,
+        easy_num=args.easy_num,
+        medium_num=args.medium_num,
+        hard_num=args.hard_num,
+    )
+    
+    # Combine all queries
+    all_queries = {}
+    
+    # Add stratified queries
+    for tier, queries in stratified.items():
+        for query in queries:
+            if query not in all_queries:
+                all_queries[query] = {
+                    "type": f"stratified_{tier}",
+                    "highly_relevant": [],
+                    "relevant": [],
+                    "somewhat_relevant": [],
+                }
+    
+    # Add difficulty queries
+    for difficulty, queries in difficulty_queries.items():
+        for query_data in queries:
+            query = query_data["query"]
+            if query not in all_queries:
+                all_queries[query] = {
+                    "type": query_data["type"],
+                    "highly_relevant": query_data.get("highly_relevant", []),
+                    "relevant": query_data.get("relevant", []),
+                    "somewhat_relevant": query_data.get("somewhat_relevant", []),
+                    "difficulty": query_data.get("difficulty", "medium"),
+                }
+            else:
+                # Merge labels
+                all_queries[query]["highly_relevant"].extend(query_data.get("highly_relevant", []))
+                all_queries[query]["relevant"].extend(query_data.get("relevant", []))
+                all_queries[query]["somewhat_relevant"].extend(query_data.get("somewhat_relevant", []))
+                all_queries[query]["difficulty"] = query_data.get("difficulty", "medium")
+    
+    # Deduplicate labels
+    for query in all_queries:
+        for level in ["highly_relevant", "relevant", "somewhat_relevant"]:
+            all_queries[query][level] = list(set(all_queries[query][level]))
+    
+    # Create test set
+    test_set = {
+        "game": args.game,
+        "sources": {
+            "stratified_sampling": sum(len(v) for v in stratified.values()),
+            "difficulty_distributed": sum(len(v) for v in difficulty_queries.values()),
+        },
+        "queries": all_queries,
+    }
+    
+    # Validate quality
+    validation = validate_test_set_quality(test_set, pairs_csv, embedding_path)
+    test_set["quality_validation"] = validation
+    
+    # Save
+    with open(output_path, "w") as f:
+        json.dump(test_set, f, indent=2)
+    
+    print(f"\n✅ Quality test set created: {output_path}")
+    print(f"   Total queries: {len(all_queries)}")
+    print(f"   Coverage: {validation['coverage']['coverage_percentage']:.1f}%")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

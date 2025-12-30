@@ -1,0 +1,579 @@
+#!/usr/bin/env python3
+"""
+LLM-as-Judge for Deck Modification System
+
+Uses LLM to evaluate deck modification suggestions and generate ground truth annotations.
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic import BaseModel, Field
+    from pydantic_ai import Agent
+    from ..utils.pydantic_ai_helpers import get_default_model
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+    BaseModel = None
+    Field = None
+
+# Import PATHS directly to avoid pandas dependency
+import sys
+from pathlib import Path
+
+try:
+    from ..utils.paths import PATHS
+except (ImportError, ModuleNotFoundError):
+    # Fallback: import directly
+    _utils_path = Path(__file__).parent.parent / "utils" / "paths.py"
+    if _utils_path.exists():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("paths", _utils_path)
+        paths_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(paths_module)
+        PATHS = paths_module.PATHS
+    else:
+        # Last resort: define minimal PATHS
+        _project_root = Path(__file__).parent.parent.parent.parent
+        class PATHS:
+            experiments = _project_root / "experiments"
+
+
+@dataclass
+class DeckModificationJudgment:
+    """A judgment about a deck modification suggestion (expanded with all dimensions)."""
+    query_card: str | None  # For add: None, for replace: card to replace
+    suggested_card: str
+    operation: str  # add|remove|replace
+    relevance: int  # 0-4: 0=irrelevant, 1=weak, 2=moderate, 3=strong, 4=perfect
+    reasoning: str
+    explanation_quality: int  # 0-4: quality of the explanation provided
+    archetype_match: int | None  # 0-4: how well it matches archetype (if provided)
+    role_fit: int | None  # 0-4: how well it fits the role gap (if applicable)
+    
+    # Expanded dimensions
+    deck_balance_impact: int | None = None  # 0-4: impact on deck balance
+    power_level_match: int | None = None  # 0-4: matches deck's power level
+    card_availability: int | None = None  # 0-4: is card actually available
+    cost_effectiveness: int | None = None  # 0-4: power per dollar (if budget provided)
+    meta_positioning: int | None = None  # 0-4: improves meta position (if competitive)
+    consistency_improvement: int | None = None  # 0-4: reduces variance (if competitive)
+    sideboard_appropriateness: int | None = None  # 0-4: good sideboard card (if applicable)
+    theme_consistency: int | None = None  # 0-4: maintains theme (if theme deck)
+    
+    # Temporal dimensions (first-class)
+    temporal_context_appropriateness: int | None = None  # 0-4: appropriate for its time
+    meta_shift_awareness: int | None = None  # 0-4: accounts for meta shifts
+    price_volatility_awareness: int | None = None  # 0-4: accounts for price changes
+    ban_timeline_awareness: int | None = None  # 0-4: accounts for ban list changes
+    format_rotation_awareness: int | None = None  # 0-4: accounts for rotation
+    
+    def to_dict(self) -> dict:
+        """Convert to dict for JSON serialization."""
+        return {
+            "query_card": self.query_card,
+            "suggested_card": self.suggested_card,
+            "operation": self.operation,
+            "relevance": self.relevance,
+            "reasoning": self.reasoning,
+            "explanation_quality": self.explanation_quality,
+            "archetype_match": self.archetype_match,
+            "role_fit": self.role_fit,
+            "deck_balance_impact": self.deck_balance_impact,
+            "power_level_match": self.power_level_match,
+            "card_availability": self.card_availability,
+            "cost_effectiveness": self.cost_effectiveness,
+            "meta_positioning": self.meta_positioning,
+            "consistency_improvement": self.consistency_improvement,
+            "sideboard_appropriateness": self.sideboard_appropriateness,
+            "theme_consistency": self.theme_consistency,
+            "temporal_context_appropriateness": self.temporal_context_appropriateness,
+            "meta_shift_awareness": self.meta_shift_awareness,
+            "price_volatility_awareness": self.price_volatility_awareness,
+            "ban_timeline_awareness": self.ban_timeline_awareness,
+            "format_rotation_awareness": self.format_rotation_awareness,
+        }
+
+
+@dataclass
+class ContextualJudgment:
+    """A judgment about a contextual discovery result (expanded with synergy strength, combo piece, and upgrade path coherence)."""
+    query_card: str
+    suggested_card: str
+    category: str  # synergy|alternative|upgrade|downgrade
+    relevance: int  # 0-4
+    reasoning: str
+    price_accuracy: int | None  # 0-4: if upgrade/downgrade, is price delta accurate?
+    synergy_strength: int | None = None  # 0-4: if synergy, rate synergy strength
+    combo_piece_identification: int | None = None  # 0-4: if combo-related, rate how essential
+    upgrade_path_coherence: int | None = None  # 0-4: if upgrade/downgrade, rate path coherence
+    
+    def to_dict(self) -> dict:
+        """Convert to dict for JSON serialization."""
+        return {
+            "query_card": self.query_card,
+            "suggested_card": self.suggested_card,
+            "category": self.category,
+            "relevance": self.relevance,
+            "reasoning": self.reasoning,
+            "price_accuracy": self.price_accuracy,
+            "synergy_strength": self.synergy_strength,
+            "combo_piece_identification": self.combo_piece_identification,
+            "upgrade_path_coherence": self.upgrade_path_coherence,
+        }
+
+
+def make_deck_modification_judge_agent() -> Agent | None:
+    """Create an LLM agent for judging deck modifications."""
+    if not HAS_PYDANTIC_AI:
+        return None
+    
+    from ..utils.pydantic_ai_helpers import make_agent as _make_agent
+    from .improved_judge_prompts import DECK_MODIFICATION_JUDGE_PROMPT
+    
+    model = get_default_model("judge")
+    
+    class JudgmentModel(BaseModel):
+        """Structured judgment output (expanded with all dimensions)."""
+        relevance: int = Field(ge=0, le=4, description="0-4: How appropriate is this suggestion?")
+        reasoning: str = Field(description="Why this relevance score?")
+        explanation_quality: int = Field(ge=0, le=4, description="0-4: Quality of the provided explanation")
+        archetype_match: int | None = Field(None, ge=0, le=4, description="0-4: How well it matches archetype (if provided)")
+        role_fit: int | None = Field(None, ge=0, le=4, description="0-4: How well it fills role gap (if applicable)")
+        
+        # Expanded dimensions
+        deck_balance_impact: int | None = Field(None, ge=0, le=4, description="0-4: Impact on deck balance")
+        power_level_match: int | None = Field(None, ge=0, le=4, description="0-4: Matches deck's power level")
+        card_availability: int | None = Field(None, ge=0, le=4, description="0-4: Is card actually available")
+        cost_effectiveness: int | None = Field(None, ge=0, le=4, description="0-4: Power per dollar (if budget provided)")
+        meta_positioning: int | None = Field(None, ge=0, le=4, description="0-4: Improves meta position (if competitive)")
+        consistency_improvement: int | None = Field(None, ge=0, le=4, description="0-4: Reduces variance (if competitive)")
+        sideboard_appropriateness: int | None = Field(None, ge=0, le=4, description="0-4: Good sideboard card (if applicable)")
+        theme_consistency: int | None = Field(None, ge=0, le=4, description="0-4: Maintains theme (if theme deck)")
+        
+        # Temporal dimensions (first-class)
+        temporal_context_appropriateness: int | None = Field(None, ge=0, le=4, description="0-4: Appropriate for its time")
+        meta_shift_awareness: int | None = Field(None, ge=0, le=4, description="0-4: Accounts for meta shifts")
+        price_volatility_awareness: int | None = Field(None, ge=0, le=4, description="0-4: Accounts for price changes")
+        ban_timeline_awareness: int | None = Field(None, ge=0, le=4, description="0-4: Accounts for ban list changes")
+        format_rotation_awareness: int | None = Field(None, ge=0, le=4, description="0-4: Accounts for rotation")
+    
+    # Use improved prompt (based on meta-evaluation)
+    system_prompt = DECK_MODIFICATION_JUDGE_PROMPT
+    
+    return _make_agent(model, JudgmentModel, system_prompt)
+
+
+def judge_add_suggestion(
+    agent: Agent,
+    deck: dict[str, Any],
+    suggested_card: str,
+    explanation: str,
+    archetype: str | None = None,
+    format: str | None = None,
+    role_gap: str | None = None,
+) -> DeckModificationJudgment:
+    """Judge an add suggestion."""
+    deck_str = json.dumps(deck, indent=2)
+    
+    prompt = f"""Evaluate this deck modification suggestion:
+
+Deck:
+{deck_str}
+
+Suggested Addition: {suggested_card}
+Explanation: {explanation}
+Archetype: {archetype or "Not specified"}
+Format: {format or "Not specified"}
+Role Gap: {role_gap or "Not specified"}
+
+Provide your judgment with all required fields."""
+
+    try:
+        result = agent.run_sync(prompt)
+        judgment_data = result.data if hasattr(result, 'data') else {}
+        
+        return DeckModificationJudgment(
+            query_card=None,
+            suggested_card=suggested_card,
+            operation="add",
+            relevance=judgment_data.get("relevance", 2),
+            reasoning=judgment_data.get("reasoning", ""),
+            explanation_quality=judgment_data.get("explanation_quality", 2),
+            archetype_match=judgment_data.get("archetype_match") if archetype else None,
+            role_fit=judgment_data.get("role_fit") if role_gap else None,
+            deck_balance_impact=judgment_data.get("deck_balance_impact"),
+            power_level_match=judgment_data.get("power_level_match"),
+            card_availability=judgment_data.get("card_availability"),
+            cost_effectiveness=judgment_data.get("cost_effectiveness"),
+            meta_positioning=judgment_data.get("meta_positioning"),
+            consistency_improvement=judgment_data.get("consistency_improvement"),
+            sideboard_appropriateness=judgment_data.get("sideboard_appropriateness"),
+            theme_consistency=judgment_data.get("theme_consistency"),
+            temporal_context_appropriateness=judgment_data.get("temporal_context_appropriateness"),
+            meta_shift_awareness=judgment_data.get("meta_shift_awareness"),
+            price_volatility_awareness=judgment_data.get("price_volatility_awareness"),
+            ban_timeline_awareness=judgment_data.get("ban_timeline_awareness"),
+            format_rotation_awareness=judgment_data.get("format_rotation_awareness"),
+        )
+    except Exception as e:
+        # Fallback on error
+        return DeckModificationJudgment(
+            query_card=None,
+            suggested_card=suggested_card,
+            operation="add",
+            relevance=2,
+            reasoning=f"Error during judgment: {e}",
+            explanation_quality=2,
+            archetype_match=2 if archetype else None,
+            role_fit=2 if role_gap else None,
+            # Other dimensions default to None on error
+        )
+
+
+def judge_contextual_discovery(
+    agent: Agent,
+    query_card: str,
+    suggested_card: str,
+    category: str,
+    explanation: str,
+    format: str | None = None,
+    archetype: str | None = None,
+) -> ContextualJudgment:
+    """Judge a contextual discovery result."""
+    prompt = f"""Evaluate this contextual card discovery:
+
+Query Card: {query_card}
+Suggested Card: {suggested_card}
+Category: {category}
+Explanation: {explanation}
+Format: {format or "Not specified"}
+Archetype: {archetype or "Not specified"}
+
+Provide your judgment with all required fields."""
+
+    try:
+        result = agent.run_sync(prompt)
+        judgment_data = result.data if hasattr(result, 'data') else {}
+        
+        return ContextualJudgment(
+            query_card=query_card,
+            suggested_card=suggested_card,
+            category=category,
+            relevance=judgment_data.get("relevance", 2),
+            reasoning=judgment_data.get("reasoning", ""),
+            price_accuracy=judgment_data.get("price_accuracy") if category in ("upgrade", "downgrade") else None,
+            synergy_strength=judgment_data.get("synergy_strength") if category == "synergy" else None,
+            combo_piece_identification=judgment_data.get("combo_piece_identification") if category == "synergy" else None,
+            upgrade_path_coherence=judgment_data.get("upgrade_path_coherence") if category in ("upgrade", "downgrade") else None,
+        )
+    except Exception as e:
+        # Fallback on error
+        return ContextualJudgment(
+            query_card=query_card,
+            suggested_card=suggested_card,
+            category=category,
+            relevance=2,
+            reasoning=f"Error during judgment: {e}",
+            price_accuracy=2 if category in ("upgrade", "downgrade") else None,
+            synergy_strength=None,
+            combo_piece_identification=None,
+            upgrade_path_coherence=None,
+        )
+
+
+def generate_ground_truth_annotations(
+    test_cases: list[dict[str, Any]],
+    output_path: Path,
+    api_url: str | None = None,
+    verbose: bool = True,
+) -> None:
+    """
+    Generate ground truth annotations using LLM-as-Judge.
+    
+    For each test case:
+    1. Call the actual API to get suggestions
+    2. Judge each suggestion using LLM
+    3. Store judgments as ground truth
+    """
+    if not HAS_PYDANTIC_AI:
+        print("⚠ pydantic-ai not available, skipping LLM judgment")
+        return
+    
+    agent = make_deck_modification_judge_agent()
+    if not agent:
+        print("⚠ Could not create judge agent")
+        return
+    
+    import requests
+    
+    annotations = []
+    
+    for i, case in enumerate(test_cases, 1):
+        if verbose:
+            print(f"[{i}/{len(test_cases)}] Processing {case['name']}...")
+        
+        annotation = {
+            "test_case": case["name"],
+            "game": case["game"],
+            "deck": case["deck"],
+            "archetype": case.get("archetype"),
+            "format": case.get("format"),
+            "expected_additions": case.get("expected_additions", []),
+            "expected_removals": case.get("expected_removals", []),
+            "expected_replacements": case.get("expected_replacements", {}),
+            "judgments": {
+                "add": [],
+                "remove": [],
+                "replace": [],
+            },
+        }
+        
+        # Call API if URL provided
+        if api_url:
+            try:
+                # Test add suggestions
+                response = requests.post(
+                    f"{api_url}/v1/deck/suggest_actions",
+                    json={
+                        "game": case["game"],
+                        "deck": case["deck"],
+                        "action_type": "add",
+                        "archetype": case.get("archetype"),
+                        "format": case.get("format"),
+                        "top_k": 10,
+                    },
+                    timeout=30,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    for action in data.get("actions", []):
+                        if action["op"] == "add_card":
+                            judgment = judge_add_suggestion(
+                                agent,
+                                case["deck"],
+                                action["card"],
+                                action.get("reason", ""),
+                                case.get("archetype"),
+                                case.get("format"),
+                                role_gap=None,  # Would extract from metrics
+                            )
+                            annotation["judgments"]["add"].append(judgment.to_dict())
+                
+                # Test remove suggestions
+                response = requests.post(
+                    f"{api_url}/v1/deck/suggest_actions",
+                    json={
+                        "game": case["game"],
+                        "deck": case["deck"],
+                        "action_type": "remove",
+                        "archetype": case.get("archetype"),
+                        "top_k": 10,
+                    },
+                    timeout=30,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    for action in data.get("actions", []):
+                        if action["op"] == "remove_card":
+                            # Similar judgment for remove
+                            annotation["judgments"]["remove"].append({
+                                "card": action["card"],
+                                "score": action["score"],
+                                "reason": action.get("reason", ""),
+                            })
+            except Exception as e:
+                if verbose:
+                    print(f"  ⚠ API call failed: {e}")
+        
+        annotations.append(annotation)
+    
+    with open(output_path, "w") as f:
+        json.dump(annotations, f, indent=2)
+    
+    print(f"✓ Generated {len(annotations)} annotation records")
+    print(f"✓ Saved to {output_path}")
+
+
+def generate_annotations_for_all_tasks(
+    critique_path: Path | None = None,
+    output_path: Path | None = None,
+    api_url: str | None = None,
+    verbose: bool = True,
+) -> None:
+    """
+    Generate annotations for all deck modification tasks.
+    
+    This includes:
+    1. Add suggestions (with role awareness, archetype matching)
+    2. Remove suggestions (weak cards, redundancy)
+    3. Replace suggestions (alternatives, upgrades, downgrades)
+    4. Contextual discovery (synergies, alternatives, upgrades, downgrades)
+    """
+    if critique_path is None:
+        critique_path = PATHS.experiments / "deck_modification_critique.json"
+    
+    if output_path is None:
+        output_path = PATHS.experiments / "deck_modification_annotations.json"
+    
+    if not critique_path.exists():
+        print(f"⚠ Critique file not found: {critique_path}")
+        print("  Run deck_modification_evaluation.py first")
+        return
+    
+    with open(critique_path) as f:
+        critique_data = json.load(f)
+    
+    test_cases = critique_data.get("test_cases", [])
+    contextual_test_cases = critique_data.get("contextual_test_cases", [])
+    
+    if verbose:
+        print(f"📊 Generating annotations for {len(test_cases)} deck modification test cases")
+        print(f"📊 Generating annotations for {len(contextual_test_cases)} contextual discovery test cases")
+    
+    # Generate deck modification annotations
+    generate_ground_truth_annotations(
+        test_cases,
+        output_path,
+        api_url=api_url,
+        verbose=verbose,
+    )
+    
+    # Generate contextual discovery annotations
+    contextual_output = PATHS.experiments / "contextual_discovery_annotations.json"
+    generate_contextual_annotations(
+        contextual_test_cases,
+        contextual_output,
+        api_url=api_url,
+        verbose=verbose,
+    )
+
+
+def generate_contextual_annotations(
+    test_cases: list[dict[str, Any]],
+    output_path: Path,
+    api_url: str | None = None,
+    verbose: bool = True,
+) -> None:
+    """Generate annotations for contextual discovery test cases."""
+    if not HAS_PYDANTIC_AI:
+        print("⚠ pydantic-ai not available, skipping contextual annotations")
+        return
+    
+    agent = make_deck_modification_judge_agent()
+    if not agent:
+        print("⚠ Could not create judge agent")
+        return
+    
+    import requests
+    
+    annotations = []
+    
+    for i, case in enumerate(test_cases, 1):
+        if verbose:
+            print(f"[{i}/{len(test_cases)}] Processing contextual: {case['name']}...")
+        
+        annotation = {
+            "test_case": case["name"],
+            "game": case["game"],
+            "card": case["card"],
+            "format": case.get("format"),
+            "archetype": case.get("archetype"),
+            "expected_synergies": case.get("expected_synergies", []),
+            "expected_alternatives": case.get("expected_alternatives", []),
+            "expected_upgrades": case.get("expected_upgrades", []),
+            "expected_downgrades": case.get("expected_downgrades", []),
+            "judgments": {
+                "synergies": [],
+                "alternatives": [],
+                "upgrades": [],
+                "downgrades": [],
+            },
+        }
+        
+        # Call API if URL provided
+        if api_url:
+            try:
+                params = {
+                    "game": case["game"],
+                    "top_k": 10,
+                }
+                if case.get("format"):
+                    params["format"] = case["format"]
+                if case.get("archetype"):
+                    params["archetype"] = case["archetype"]
+                
+                response = requests.get(
+                    f"{api_url}/v1/cards/{case['card']}/contextual",
+                    params=params,
+                    timeout=30,
+                )
+                if response.status_code == 200:
+                    data = response.json()
+                    
+                    # Judge synergies
+                    for synergy in data.get("synergies", []):
+                        judgment = judge_contextual_discovery(
+                            agent,
+                            case["card"],
+                            synergy["card"],
+                            "synergy",
+                            synergy.get("reasoning", ""),
+                            case.get("format"),
+                            case.get("archetype"),
+                        )
+                        annotation["judgments"]["synergies"].append(judgment.to_dict())
+                    
+                    # Similar for alternatives, upgrades, downgrades
+                    for alt in data.get("alternatives", []):
+                        judgment = judge_contextual_discovery(
+                            agent,
+                            case["card"],
+                            alt["card"],
+                            "alternative",
+                            alt.get("reasoning", ""),
+                            case.get("format"),
+                            case.get("archetype"),
+                        )
+                        annotation["judgments"]["alternatives"].append(judgment.to_dict())
+            except Exception as e:
+                if verbose:
+                    print(f"  ⚠ API call failed: {e}")
+        
+        annotations.append(annotation)
+    
+    with open(output_path, "w") as f:
+        json.dump(annotations, f, indent=2)
+    
+    print(f"✓ Generated {len(annotations)} contextual annotation records")
+    print(f"✓ Saved to {output_path}")
+
+
+def main():
+    """Generate ground truth annotations for all tasks."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Generate deck modification annotations")
+    parser.add_argument("--api-url", type=str, help="API URL for testing (e.g., http://localhost:8000)")
+    parser.add_argument("--critique-path", type=str, help="Path to critique JSON file")
+    parser.add_argument("--output-path", type=str, help="Output path for annotations")
+    parser.add_argument("--verbose", action="store_true", default=True, help="Print progress")
+    
+    args = parser.parse_args()
+    
+    generate_annotations_for_all_tasks(
+        critique_path=Path(args.critique_path) if args.critique_path else None,
+        output_path=Path(args.output_path) if args.output_path else None,
+        api_url=args.api_url,
+        verbose=args.verbose,
+    )
+
+
+if __name__ == "__main__":
+    main()
+

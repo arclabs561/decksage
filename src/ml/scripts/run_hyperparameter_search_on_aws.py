@@ -1,0 +1,394 @@
+#!/usr/bin/env python3
+"""
+Run hyperparameter search on AWS EC2 instance.
+
+This script uploads the hyperparameter search script and data to S3, then executes it on an EC2 instance
+via SSM to find the best embedding configuration.
+"""
+
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "boto3>=1.34.0",
+# ]
+# ///
+
+import json
+import sys
+import time
+from pathlib import Path
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+    print("❌ boto3 not available", file=sys.stderr)
+
+
+def upload_file_to_s3(local_path: Path, s3_key: str, bucket: str = "games-collections") -> bool:
+    """Upload file to S3."""
+    s3 = boto3.client("s3")
+    try:
+        s3.upload_file(str(local_path), bucket, s3_key)
+        print(f"✅ Uploaded {local_path.name} to s3://{bucket}/{s3_key}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to upload {local_path.name}: {e}", file=sys.stderr)
+        return False
+
+
+def create_ec2_instance(
+    instance_type: str = "t3.medium",
+    use_spot: bool = True,
+    spot_max_price: str | None = "0.10",
+    fallback_to_ondemand: bool = True,
+) -> str | None:
+    """Create EC2 instance for computation."""
+    ec2 = boto3.client("ec2")
+    
+    # AMI for Amazon Linux 2023 (us-east-1)
+    ami_id = "ami-08fa3ed5577079e64"
+    
+    # User data to install Python and dependencies
+    user_data = """#!/bin/bash
+yum update -y
+yum install -y python3 python3-pip git
+python3 -m pip install --upgrade pip || pip3 install --upgrade pip || true
+python3 -m pip install pandas numpy gensim boto3 pecanpy || pip3 install pandas numpy gensim boto3 pecanpy || true
+"""
+    
+    launch_spec = {
+        "ImageId": ami_id,
+        "InstanceType": instance_type,
+        "MinCount": 1,
+        "MaxCount": 1,
+        "UserData": user_data,
+        "IamInstanceProfile": {"Name": "EC2-SSM-InstanceProfile"},
+    }
+    
+    if use_spot and spot_max_price:
+        launch_spec["InstanceMarketOptions"] = {
+            "MarketType": "spot",
+            "SpotOptions": {
+                "MaxPrice": spot_max_price,
+                "SpotInstanceType": "one-time",
+                "InstanceInterruptionBehavior": "terminate",
+            },
+        }
+    
+    try:
+        if use_spot:
+            print(f"Creating spot instance ({instance_type}, max ${spot_max_price or 'on-demand'}/hr)...")
+            response = ec2.run_instances(**launch_spec)
+        else:
+            print(f"Creating on-demand instance ({instance_type})...")
+            response = ec2.run_instances(**launch_spec)
+        
+        instance_id = response["Instances"][0]["InstanceId"]
+        print(f"✅ Created instance: {instance_id}")
+        return instance_id
+        
+    except Exception as e:
+        if use_spot and fallback_to_ondemand:
+            print(f"⚠️  Spot instance failed: {e}")
+            print("Falling back to on-demand...")
+            launch_spec.pop("InstanceMarketOptions", None)
+            try:
+                response = ec2.run_instances(**launch_spec)
+                instance_id = response["Instances"][0]["InstanceId"]
+                print(f"✅ Created on-demand instance: {instance_id}")
+                return instance_id
+            except Exception as e2:
+                print(f"❌ On-demand instance also failed: {e2}", file=sys.stderr)
+                return None
+        else:
+            print(f"❌ Failed to create instance: {e}", file=sys.stderr)
+            return None
+
+
+def wait_for_ssm_ready(instance_id: str, timeout: int = 300) -> bool:
+    """Wait for SSM to be ready on instance."""
+    ssm = boto3.client("ssm")
+    print(f"Waiting for SSM to be ready on {instance_id}...")
+    
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = ssm.describe_instance_information(
+                Filters=[{"Key": "InstanceIds", "Values": [instance_id]}]
+            )
+            if response.get("InstanceInformationList"):
+                print("✅ SSM is ready")
+                return True
+        except Exception:
+            pass
+        
+        time.sleep(5)
+        print(".", end="", flush=True)
+    
+    print(f"\n⚠️  SSM timeout")
+    return False
+
+
+def run_command_on_instance(instance_id: str, command: str, timeout: int = 7200) -> tuple[int, str, str]:
+    """Run command on EC2 instance via SSM."""
+    ssm = boto3.client("ssm")
+    
+    print(f"Running command on {instance_id}...")
+    print(f"  Command: {command[:100]}...")
+    
+    try:
+        # Split multi-line commands
+        commands = [cmd.strip() for cmd in command.strip().split("\n") if cmd.strip()]
+        
+        response = ssm.send_command(
+            InstanceIds=[instance_id],
+            DocumentName="AWS-RunShellScript",
+            Parameters={"commands": commands},
+            TimeoutSeconds=timeout,
+        )
+        
+        command_id = response["Command"]["CommandId"]
+        print(f"  Command ID: {command_id}")
+        
+        # Wait for command to complete
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                result = ssm.get_command_invocation(
+                    CommandId=command_id,
+                    InstanceId=instance_id,
+                )
+                
+                status = result["Status"]
+                if status in ["Success", "Failed", "Cancelled", "TimedOut"]:
+                    stdout = result.get("StandardOutputContent", "")
+                    stderr = result.get("StandardErrorContent", "")
+                    return (
+                        0 if status == "Success" else 1,
+                        stdout,
+                        stderr,
+                    )
+            except ssm.exceptions.InvocationDoesNotExist:
+                time.sleep(2)
+                continue
+            
+            time.sleep(10)
+            print(".", end="", flush=True)
+        
+        return 1, "", f"Command timed out after {timeout}s"
+            
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def download_from_s3(s3_key: str, local_path: Path, bucket: str = "games-collections") -> bool:
+    """Download file from S3."""
+    s3 = boto3.client("s3")
+    try:
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        s3.download_file(bucket, s3_key, str(local_path))
+        print(f"✅ Downloaded {s3_key} to {local_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to download: {e}", file=sys.stderr)
+        return False
+
+
+def terminate_instance(instance_id: str) -> None:
+    """Terminate EC2 instance."""
+    ec2 = boto3.client("ec2")
+    try:
+        ec2.terminate_instances(InstanceIds=[instance_id])
+        print(f"✅ Terminated instance {instance_id}")
+    except Exception as e:
+        print(f"⚠️  Could not terminate instance: {e}")
+
+
+def main() -> int:
+    """Run hyperparameter search on AWS EC2."""
+    if not HAS_BOTO3:
+        print("❌ boto3 not available", file=sys.stderr)
+        return 1
+    
+    bucket = "games-collections"
+    
+    # Paths - use standalone script
+    script_path = Path("src/ml/scripts/hyperparameter_search_standalone.py")
+    s3_script_key = "scripts/hyperparameter_search_standalone.py"
+    
+    # Upload script to S3
+    print("=" * 70)
+    print("Step 1: Upload hyperparameter search script to S3")
+    print("=" * 70)
+    if not upload_file_to_s3(script_path, s3_script_key, bucket):
+        return 1
+    
+    # Upload name_normalizer if available
+    name_normalizer_path = Path("src/ml/utils/name_normalizer.py")
+    s3_normalizer_key = "scripts/name_normalizer.py"
+    if name_normalizer_path.exists():
+        upload_file_to_s3(name_normalizer_path, s3_normalizer_key, bucket)
+    
+    # Upload download script
+    download_script_path = Path("src/ml/scripts/download_for_hyperparam_search.py")
+    s3_download_key = "scripts/download_for_hyperparam_search.py"
+    if download_script_path.exists():
+        upload_file_to_s3(download_script_path, s3_download_key, bucket)
+    
+    # Create EC2 instance
+    print("\n" + "=" * 70)
+    print("Step 2: Create EC2 instance")
+    print("=" * 70)
+    
+    instance_id = create_ec2_instance(
+        instance_type="t3.medium",
+        use_spot=True,
+        spot_max_price="0.10",
+        fallback_to_ondemand=True,
+    )
+    
+    if not instance_id:
+        return 1
+    
+    # Wait for SSM
+    if not wait_for_ssm_ready(instance_id):
+        print("⚠️  Continuing anyway...")
+    
+    # Wait for user_data to complete
+    print("\n" + "=" * 70)
+    print("Step 3: Wait for Python installation")
+    print("=" * 70)
+    wait_cmd = "while ! command -v python3 &> /dev/null; do sleep 5; done && echo 'Python ready'"
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, wait_cmd, timeout=300)
+    if exit_code == 0:
+        print("✅ Python is ready")
+    
+    # Verify dependencies
+    print("\n" + "=" * 70)
+    print("Step 4: Verify dependencies")
+    print("=" * 70)
+    verify_cmd = "python3 -c 'import pandas, numpy, gensim, boto3; print(\"All dependencies available\")' 2>&1 || echo 'Need to install'"
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, verify_cmd, timeout=300)
+    
+    if "Need to install" in stdout or exit_code != 0:
+        print("Installing dependencies...")
+        install_cmd = "python3 -m pip install pandas numpy gensim boto3 pecanpy 2>&1 || pip3 install pandas numpy gensim boto3 pecanpy 2>&1 || python3 -m ensurepip --upgrade && python3 -m pip install pandas numpy gensim boto3 pecanpy"
+        exit_code, stdout, stderr = run_command_on_instance(instance_id, install_cmd, timeout=600)
+        print(stdout[-500:] if len(stdout) > 500 else stdout)
+    
+    # Download script and data
+    print("\n" + "=" * 70)
+    print("Step 5: Download script and data on instance")
+    print("=" * 70)
+    
+    # Download using inline Python (avoid heredoc issues)
+    download_script = f"""python3 -c "import boto3, os; s3=boto3.client('s3'); os.makedirs('/tmp/hyperparam_search', exist_ok=True); [s3.download_file('{bucket}', k, p) or print(f'✅ {{k}}') if True else None for k,p in [('{s3_script_key}', '/tmp/hyperparam_search/hyperparameter_search_standalone.py'), ('processed/pairs_large.csv', '/tmp/hyperparam_search/pairs_large.csv'), ('processed/test_set_canonical_magic.json', '/tmp/hyperparam_search/test_set.json'), ('processed/name_mapping.json', '/tmp/hyperparam_search/name_mapping.json')]]; print('Download complete')"
+"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, download_script, timeout=1800)
+    print(stdout)
+    if exit_code != 0:
+        print(f"⚠️  Download warning: {stderr}")
+    
+    # Create standalone script
+    print("\n" + "=" * 70)
+    print("Step 6: Create standalone hyperparameter search script")
+    print("=" * 70)
+    
+    # No wrapper needed - standalone script is self-contained
+    wrapper_script = """chmod +x /tmp/hyperparam_search/hyperparameter_search_standalone.py"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, wrapper_script, timeout=60)
+    
+    # Run hyperparameter search
+    print("\n" + "=" * 70)
+    print("Step 7: Run hyperparameter search")
+    print("=" * 70)
+    print("⏳ This will take 2-4 hours (testing up to 50 configurations)...")
+    
+    run_cmd = """
+cd /tmp/hyperparam_search
+python3 hyperparameter_search_standalone.py \
+  --input pairs_large.csv \
+  --test-set test_set.json \
+  --name-mapping name_mapping.json \
+  --output results.json \
+  --max-configs 50
+"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, run_cmd, timeout=14400)  # 4 hours
+    
+    print("\n" + "=" * 70)
+    print("Hyperparameter Search Results")
+    print("=" * 70)
+    print(stdout[-2000:] if len(stdout) > 2000 else stdout)
+    
+    if exit_code != 0:
+        print(f"\n⚠️  Search had errors: {stderr[-500:]}")
+    
+    # Download results
+    print("\n" + "=" * 70)
+    print("Step 8: Download results")
+    print("=" * 70)
+    
+    download_results_script = """python3 << 'PYUPLOAD'
+import boto3
+import json
+
+s3 = boto3.client('s3')
+bucket = 'games-collections'
+
+# Read results
+try:
+    with open('/tmp/hyperparam_search/results.json') as f:
+        results = json.load(f)
+    
+    # Upload to S3
+    s3.put_object(
+        Bucket=bucket,
+        Key='experiments/hyperparameter_search_results.json',
+        Body=json.dumps(results, indent=2),
+        ContentType='application/json'
+    )
+    print('✅ Uploaded results to S3')
+    
+    # Also print summary
+    if 'best_config' in results:
+        print('\\n🏆 Best Configuration:')
+        for key, value in results['best_config'].items():
+            print(f'  {key}: {value}')
+        if 'best_metrics' in results:
+            print(f'\\n📈 Best Metrics:')
+            print(f'  P@10: {results["best_metrics"]["p@10"]:.4f}')
+            print(f'  MRR: {results["best_metrics"]["mrr"]:.4f}')
+except Exception as e:
+    print(f'❌ Error: {e}')
+PYUPLOAD
+"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, download_results_script, timeout=300)
+    print(stdout)
+    
+    # Download locally
+    local_results = Path("experiments/hyperparameter_search_results.json")
+    if download_from_s3("experiments/hyperparameter_search_results.json", local_results, bucket):
+        print(f"✅ Results saved to {local_results}")
+    
+    # Terminate instance
+    print("\n" + "=" * 70)
+    print("Step 9: Terminate instance")
+    print("=" * 70)
+    terminate_instance(instance_id)
+    
+    print("\n" + "=" * 70)
+    print("✅ Hyperparameter search complete!")
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

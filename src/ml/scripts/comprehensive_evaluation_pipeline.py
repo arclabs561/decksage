@@ -1,0 +1,190 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Comprehensive evaluation pipeline for all games and downstream tasks.
+
+Evaluates:
+1. Similarity task (P@10, MRR) for all games
+2. Deck completion performance
+3. Card substitution performance
+4. Contextual discovery performance
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Import evaluation modules
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.scripts.evaluate_all_embeddings import load_test_set, evaluate_embedding
+    from ml.scripts.evaluate_downstream_tasks import (
+        evaluate_deck_completion,
+        evaluate_card_substitution,
+        evaluate_contextual_discovery,
+    )
+    HAS_EVAL = True
+except ImportError:
+    HAS_EVAL = False
+
+
+GAMES = ["magic", "pokemon", "yugioh"]
+
+
+def evaluate_similarity_all_games(
+    embedding: KeyedVectors,
+    test_sets: dict[str, Path],
+    name_mappings: dict[str, Path] | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Evaluate similarity task for all games."""
+    results = {}
+    
+    for game in GAMES:
+        test_set_path = test_sets.get(game)
+        if not test_set_path or not test_set_path.exists():
+            continue
+        
+        print(f"\n📊 Evaluating {game} similarity...")
+        
+        test_set = load_test_set(test_set_path)
+        
+        # Load name mapping if available
+        name_mapper = None
+        if name_mappings and game in name_mappings:
+            mapping_path = name_mappings[game]
+            if mapping_path.exists():
+                try:
+                    from ml.utils.name_normalizer import NameMapper
+                    name_mapper = NameMapper.load_from_file(mapping_path)
+                except Exception:
+                    pass
+        
+        metrics = evaluate_embedding(
+            embedding,
+            test_set,
+            top_k=10,
+            name_mapper=name_mapper,
+        )
+        
+        results[game] = metrics
+        print(f"  P@10: {metrics.get('p@10', 0):.4f}, MRR: {metrics.get('mrr', 0):.4f}, Queries: {metrics.get('num_queries', 0)}")
+    
+    return results
+
+
+def main() -> int:
+    """Run comprehensive evaluation."""
+    parser = argparse.ArgumentParser(description="Comprehensive evaluation pipeline")
+    parser.add_argument("--embedding", type=str, required=True, help="Embedding file (.wv)")
+    parser.add_argument("--output", type=str, required=True, help="Output JSON")
+    parser.add_argument("--test-sets", type=str, nargs="+", 
+                       default=["experiments/test_set_expanded_magic.json"],
+                       help="Test set JSON files (game:path format or just paths)")
+    parser.add_argument("--name-mappings", type=str, nargs="*",
+                       help="Name mapping JSON files (game:path format)")
+    parser.add_argument("--downstream", action="store_true",
+                       help="Also evaluate downstream tasks")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    # Load embedding
+    embed_path = Path(args.embedding)
+    if not embed_path.exists():
+        print(f"❌ Embedding not found: {embed_path}")
+        return 1
+    
+    print(f"Loading embedding: {embed_path}")
+    embedding = KeyedVectors.load(str(embed_path))
+    print(f"  Vocabulary: {len(embedding)} cards")
+    
+    # Parse test sets
+    test_sets = {}
+    for item in args.test_sets:
+        if ":" in item:
+            game, path = item.split(":", 1)
+            test_sets[game] = Path(path)
+        else:
+            # Infer game from path
+            path = Path(item)
+            for game in GAMES:
+                if game in str(path):
+                    test_sets[game] = path
+                    break
+    
+    # Parse name mappings
+    name_mappings = {}
+    if args.name_mappings:
+        for item in args.name_mappings:
+            if ":" in item:
+                game, path = item.split(":", 1)
+                name_mappings[game] = Path(path)
+    
+    results = {
+        "embedding": str(embed_path),
+        "similarity": {},
+        "downstream": {},
+    }
+    
+    # Evaluate similarity for all games
+    similarity_results = evaluate_similarity_all_games(
+        embedding=embedding,
+        test_sets=test_sets,
+        name_mappings=name_mappings,
+    )
+    results["similarity"] = similarity_results
+    
+    # Evaluate downstream tasks if requested
+    if args.downstream and HAS_EVAL:
+        print("\n📊 Evaluating downstream tasks...")
+        # TODO: Load test data for downstream tasks
+        # results["downstream"] = evaluate_downstream_tasks(...)
+        pass
+    
+    # Save results
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\n✅ Results saved to {output_path}")
+    
+    # Summary
+    print("\n" + "="*70)
+    print("EVALUATION SUMMARY")
+    print("="*70)
+    for game, metrics in similarity_results.items():
+        print(f"{game.upper()}: P@10={metrics.get('p@10', 0):.4f}, MRR={metrics.get('mrr', 0):.4f}, Queries={metrics.get('num_queries', 0)}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

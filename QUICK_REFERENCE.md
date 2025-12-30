@@ -100,6 +100,8 @@ make enrich-yugioh     # YGO functional tags (free)
 - `src/ml/utils/llm_cache.py` (144 lines) - 30-day TTL, 1GB limit, concurrent-safe
 - `src/ml/utils/paths.py` - Centralized path configuration
 - `Makefile` - 14 documented workflow targets
+- `scripts/verify_training_status.py` - Training instance verification
+- `scripts/analyze_idle_instances.py` - Idle instance analysis
 
 ---
 
@@ -132,6 +134,24 @@ Historical:
 
 ---
 
+## Training on AWS
+
+```bash
+# Create training instance (defaults to g4dn.xlarge)
+just train-aws-create
+
+# Check training status (excludes personal infrastructure)
+uv run --script scripts/verify_training_status.py
+
+# Analyze idle instances
+uv run --script scripts/analyze_idle_instances.py
+
+# Monitor specific instance
+just train-aws-monitor <instance-id>
+```
+
+**Note**: Training instances default to `g4dn.xlarge` (GPU-enabled). Personal infrastructure (gyarados, alakazam) is automatically excluded from training management scripts.
+
 ## Getting Help
 
 **If confused about**: Read this first:
@@ -140,6 +160,7 @@ Historical:
 - Performance plateau → `experimental/REALITY_FINDINGS.md`
 - Next steps → `DEEP_REVIEW_TRIAGED_ACTIONS.md`
 - Architecture → `README.md` (architecture section)
+- Training management → `README.md` (training section)
 
 **Common Issues**:
 - `uv run pytest` hangs → Use `make test` instead

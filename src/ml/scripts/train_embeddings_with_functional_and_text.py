@@ -1,0 +1,440 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+#     "pecanpy>=2.0.0",
+#     "sentence-transformers>=2.2.0",
+# ]
+# ///
+"""
+Train embeddings combining functional tags and Oracle text similarity.
+
+Strategy:
+1. Add functional edges (tag Jaccard weighted)
+2. Add Oracle text similarity edges (cosine similarity threshold)
+3. Train Node2Vec on augmented graph
+
+Research Basis:
+- Combining multiple signals (functional tags + text) improves embeddings
+- Semantic embeddings (Oracle text) capture long-tail relationships
+- Multi-modal fusion outperforms single-signal approaches
+- Graph augmentation with semantic edges bridges co-occurrence gaps
+
+References:
+- Semantic embeddings: Research on text embeddings for recommendation
+- Multi-modal fusion: Combining graph structure with semantic information
+- Functional similarity: Research on learning substitutable items
+- Graph augmentation: Adding semantic edges to co-occurrence graphs
+"""
+
+from __future__ import annotations
+
+import argparse
+import logging
+import tempfile
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import Word2Vec, KeyedVectors
+    from pecanpy.pecanpy import SparseOTF
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.enrichment.card_functional_tagger_unified import UnifiedFunctionalTagger
+    HAS_TAGGER = True
+except ImportError:
+    HAS_TAGGER = False
+
+try:
+    from ml.similarity.text_embeddings import CardTextEmbedder
+    HAS_TEXT_EMBEDDER = True
+except ImportError:
+    HAS_TEXT_EMBEDDER = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def create_functional_edges(
+    pairs_csv: Path,
+    tagger: Any,
+    functional_weight: float = 1.0,
+    tag_threshold: float = 0.2,
+) -> list[tuple[str, str, float]]:
+    """Create functional edges with tag Jaccard weighting."""
+    if not HAS_TAGGER:
+        return []
+    
+    logger.info("Creating functional edges...")
+    
+    # Load pairs to get card names
+    logger.info(f"Loading pairs from {pairs_csv}...")
+    try:
+        df = pd.read_csv(pairs_csv)
+        logger.info(f"  Loaded {len(df):,} pairs")
+    except Exception as e:
+        logger.warning(f"Could not load full CSV, trying limited: {e}")
+        df = pd.read_csv(pairs_csv, nrows=50000)
+    
+    all_cards = set(df["NAME_1"].unique()) | set(df["NAME_2"].unique())
+    
+    functional_edges = []
+    card_tags: dict[str, set[str]] = {}
+    
+    for card in all_cards:
+        try:
+            tags = tagger.tag_card(card)
+            if not tags:
+                continue
+            
+            from dataclasses import asdict
+            tag_dict = asdict(tags)
+            active_tags = {k for k, v in tag_dict.items() if isinstance(v, bool) and v}
+            
+            if not active_tags:
+                continue
+            
+            card_tags[card] = active_tags
+        except Exception:
+            continue
+    
+    # Create edges with tag Jaccard weighting
+    logger.info(f"  Computing functional similarity for {len(card_tags)} cards...")
+    cards_list = list(card_tags.keys())
+    
+    for i, card1 in enumerate(cards_list):
+        if i % 1000 == 0 and i > 0:
+            logger.info(f"    Processed {i}/{len(cards_list)} cards...")
+        
+        tags1 = card_tags[card1]
+        
+        for card2 in cards_list[i+1:]:
+            tags2 = card_tags.get(card2, set())
+            
+            if not tags2:
+                continue
+            
+            intersection = len(tags1 & tags2)
+            union = len(tags1 | tags2)
+            
+            if union == 0:
+                continue
+            
+            jaccard = intersection / union
+            
+            if jaccard >= tag_threshold:
+                weight = functional_weight * jaccard
+                functional_edges.append((card1, card2, weight))
+    
+    logger.info(f"  Created {len(functional_edges)} functional edges")
+    return functional_edges
+
+
+def create_text_similarity_edges(
+    pairs_csv: Path,
+    text_embedder: Any,
+    text_threshold: float = 0.7,
+    text_weight: float = 0.5,
+    max_edges: int = 100000,
+) -> list[tuple[str, str, float]]:
+    """Create edges based on Oracle text similarity."""
+    if not HAS_TEXT_EMBEDDER:
+        return []
+    
+    logger.info("Creating Oracle text similarity edges...")
+    
+    # Load card data
+    card_attrs = Path("data/processed/card_attributes_enriched.csv")
+    if not card_attrs.exists():
+        logger.warning("Card attributes not found, skipping text edges")
+        return []
+    
+    df = pd.read_csv(card_attrs)
+    card_data = {row["name"]: row.to_dict() for _, row in df.iterrows()}
+    
+    # Get all cards from pairs
+    pairs_df = pd.read_csv(pairs_csv, nrows=50000)  # Limit for efficiency
+    all_cards = set(pairs_df["NAME_1"].unique()) | set(pairs_df["NAME_2"].unique())
+    
+    # Filter cards with Oracle text
+    cards_with_text = [c for c in all_cards if c in card_data and card_data[c].get("oracle_text")]
+    
+    logger.info(f"  Computing text similarity for {len(cards_with_text)} cards...")
+    
+    text_edges = []
+    processed = 0
+    
+    for i, card1 in enumerate(cards_with_text):
+        if i % 100 == 0 and i > 0:
+            logger.info(f"    Processed {i}/{len(cards_with_text)} cards...")
+        
+        if processed >= max_edges:
+            break
+        
+        text1 = card_data[card1].get("oracle_text", "")
+        if not text1:
+            continue
+        
+        for card2 in cards_with_text[i+1:]:
+            if processed >= max_edges:
+                break
+            
+            text2 = card_data[card2].get("oracle_text", "")
+            if not text2:
+                continue
+            
+            try:
+                similarity = text_embedder.similarity(card1, card2)
+                
+                if similarity >= text_threshold:
+                    weight = text_weight * similarity
+                    text_edges.append((card1, card2, weight))
+                    processed += 1
+            except Exception:
+                continue
+    
+    logger.info(f"  Created {len(text_edges)} text similarity edges")
+    return text_edges
+
+
+def train_with_functional_and_text(
+    pairs_csv: Path,
+    output_path: Path,
+    dimensions: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window_size: int = 10,
+    epochs: int = 10,
+    p: float = 1.0,
+    q: float = 1.0,
+    functional_weight: float = 1.0,
+    tag_threshold: float = 0.2,
+    text_weight: float = 0.5,
+    text_threshold: float = 0.7,
+) -> KeyedVectors:
+    """Train embeddings with functional and text objectives."""
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return None
+    
+    # Load base graph
+    logger.info(f"Loading base graph from {pairs_csv}...")
+    df = pd.read_csv(pairs_csv)
+    
+    name_cols = [c for c in df.columns if "NAME" in c.upper()]
+    if len(name_cols) < 2:
+        logger.error("Could not find name columns")
+        return None
+    
+    card1_col, card2_col = name_cols[0], name_cols[1]
+    count_col = None
+    for c in df.columns:
+        if "COUNT" in c.upper():
+            count_col = c
+            break
+    
+    # Create base edgelist
+    base_edges = []
+    for _, row in df.iterrows():
+        card1 = str(row[card1_col]).strip()
+        card2 = str(row[card2_col]).strip()
+        
+        if not card1 or not card2 or card1 == card2:
+            continue
+        
+        if card1 > card2:
+            card1, card2 = card2, card1
+        
+        weight = int(row[count_col]) if count_col and pd.notna(row[count_col]) else 1
+        base_edges.append((card1, card2, weight))
+    
+    logger.info(f"  Base edges: {len(base_edges):,}")
+    
+    # Add functional edges
+    functional_edges = []
+    if HAS_TAGGER:
+        try:
+            tagger = UnifiedFunctionalTagger()
+            # Note: Functional tagger is primarily for Pokemon/Yu-Gi-Oh
+            # For Magic, we'll rely on text similarity
+            functional_edges = create_functional_edges(
+                pairs_csv, tagger, functional_weight, tag_threshold
+            )
+            if len(functional_edges) == 0:
+                logger.info("  No functional edges created (tagger may not support this game)")
+        except Exception as e:
+            logger.warning(f"Could not create functional edges: {e}")
+    
+    # Add text similarity edges
+    text_edges = []
+    if HAS_TEXT_EMBEDDER:
+        try:
+            text_embed_path = Path("data/embeddings/oracle_text_embeddings.pkl")
+            if text_embed_path.exists():
+                import pickle
+                with open(text_embed_path, "rb") as f:
+                    text_embedder = pickle.load(f)
+                text_edges = create_text_similarity_edges(
+                    pairs_csv, text_embedder, text_threshold, text_weight
+                )
+        except Exception as e:
+            logger.warning(f"Could not create text edges: {e}")
+    
+    # Combine all edges
+    all_edges = base_edges + functional_edges + text_edges
+    logger.info(f"  Total edges: {len(all_edges):,} (base: {len(base_edges)}, functional: {len(functional_edges)}, text: {len(text_edges)})")
+    
+    # Write edgelist
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.edg', delete=False) as tmp:
+        edgelist_path = Path(tmp.name)
+        for card1, card2, weight in all_edges:
+            tmp.write(f"{card1}\t{card2}\t{weight}\n")
+    
+    try:
+        # Create PecanPy graph
+        logger.info("Creating PecanPy graph...")
+        graph = SparseOTF(p=p, q=q, workers=1, verbose=False, extend=True)
+        graph.read_edg(str(edgelist_path), weighted=True, directed=False)
+        
+        # Generate walks
+        logger.info("Generating random walks...")
+        walks = graph.simulate_walks(
+            num_walks=num_walks,
+            walk_length=walk_length,
+        )
+    finally:
+        edgelist_path.unlink()
+    
+    logger.info(f"  Generated {len(walks)} walks")
+    
+    # Train Word2Vec
+    logger.info("Training Word2Vec...")
+    model = Word2Vec(
+        sentences=walks,
+        vector_size=dimensions,
+        window=window_size,
+        min_count=1,
+        workers=1,
+        epochs=epochs,
+    )
+    
+    # Save
+    wv = model.wv
+    wv.save(str(output_path))
+    logger.info(f"✅ Saved embeddings to {output_path}")
+    
+    return wv
+
+
+def filter_pairs_by_game(pairs_csv: Path, game: str) -> Path:
+    """Filter pairs CSV to only include cards from specified game."""
+    import tempfile
+    
+    logger.info(f"Filtering pairs for {game}...")
+    
+    # Read in chunks
+    chunk_size = 100000
+    filtered_chunks = []
+    total_read = 0
+    total_filtered = 0
+    
+    # Check for game columns
+    df_sample = pd.read_csv(pairs_csv, nrows=100)
+    game_cols = [col for col in df_sample.columns if "GAME" in col.upper()]
+    
+    for chunk in pd.read_csv(pairs_csv, chunksize=chunk_size):
+        total_read += len(chunk)
+        
+        if game_cols:
+            if len(game_cols) >= 2:
+                game1_col, game2_col = game_cols[0], game_cols[1]
+                mask = (chunk[game1_col].str.upper() == game.upper()) & (chunk[game2_col].str.upper() == game.upper())
+                chunk = chunk[mask]
+            elif len(game_cols) == 1:
+                mask = chunk[game_cols[0]].str.upper() == game.upper()
+                chunk = chunk[mask]
+        
+        if len(chunk) > 0:
+            filtered_chunks.append(chunk)
+            total_filtered += len(chunk)
+    
+    if not filtered_chunks:
+        logger.warning(f"No pairs found for {game}")
+        return pairs_csv  # Return original if no filtering possible
+    
+    # Combine and save to temp file
+    filtered_df = pd.concat(filtered_chunks, ignore_index=True)
+    logger.info(f"Filtered to {len(filtered_df)} pairs for {game}")
+    
+    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.csv', delete=False)
+    filtered_df.to_csv(temp_file.name, index=False)
+    temp_file.close()
+    
+    return Path(temp_file.name)
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Train embeddings with functional and text")
+    parser.add_argument("--input", type=Path, required=True, help="Input pairs CSV")
+    parser.add_argument("--output", type=Path, required=True, help="Output embedding file")
+    parser.add_argument("--dimensions", type=int, default=128, help="Embedding dimensions")
+    parser.add_argument("--walk-length", type=int, default=80, help="Walk length")
+    parser.add_argument("--num-walks", type=int, default=10, help="Number of walks per node")
+    parser.add_argument("--window-size", type=int, default=10, help="Word2Vec window size")
+    parser.add_argument("--epochs", type=int, default=10, help="Training epochs")
+    parser.add_argument("--p", type=float, default=1.0, help="Node2Vec parameter p")
+    parser.add_argument("--q", type=float, default=1.0, help="Node2Vec parameter q")
+    parser.add_argument("--functional-weight", type=float, default=1.0, help="Weight for functional edges")
+    parser.add_argument("--tag-threshold", type=float, default=0.2, help="Minimum tag Jaccard for functional edges")
+    parser.add_argument("--text-weight", type=float, default=0.5, help="Weight for text similarity edges")
+    parser.add_argument("--text-threshold", type=float, default=0.7, help="Minimum text similarity for edges")
+    parser.add_argument("--game", type=str, default=None, help="Filter to specific game (MTG, PKM, YGO)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Filter pairs by game if specified
+    pairs_csv = args.input
+    if args.game:
+        pairs_csv = filter_pairs_by_game(args.input, args.game)
+        logger.info(f"Filtered pairs for {args.game}: {pairs_csv}")
+    
+    train_with_functional_and_text(
+        pairs_csv=pairs_csv,
+        output_path=args.output,
+        dimensions=args.dimensions,
+        walk_length=args.walk_length,
+        num_walks=args.num_walks,
+        window_size=args.window_size,
+        epochs=args.epochs,
+        p=args.p,
+        q=args.q,
+        functional_weight=args.functional_weight,
+        tag_threshold=args.tag_threshold,
+        text_weight=args.text_weight,
+        text_threshold=args.text_threshold,
+    )
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

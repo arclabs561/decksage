@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Generate comprehensive evaluation data for embeddings.
+
+Combines:
+1. Explicit queries (from existing test sets)
+2. Implicit queries (high-co-occurrence pairs)
+3. Substitution pairs (functionally similar cards)
+4. Synthetic queries (generated from embeddings)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def load_explicit_queries(test_set_path: Path) -> dict[str, dict[str, Any]]:
+    """Load explicit queries from existing test set."""
+    if not test_set_path.exists():
+        return {}
+    
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    if isinstance(queries, list):
+        # Convert list format to dict
+        return {q.get("query", str(i)): q for i, q in enumerate(queries)}
+    
+    return queries if isinstance(queries, dict) else {}
+
+
+def generate_implicit_queries(
+    pairs_csv: Path,
+    top_n: int = 100,
+) -> dict[str, dict[str, Any]]:
+    """Generate implicit queries from high co-occurrence pairs."""
+    logger.info(f"Generating {top_n} implicit queries from co-occurrence...")
+    
+    df = pd.read_csv(pairs_csv, nrows=100000)
+    
+    # Get top co-occurring pairs
+    count_col = None
+    for c in df.columns:
+        if "COUNT" in c.upper():
+            count_col = c
+            break
+    
+    if not count_col:
+        logger.warning("No count column found, using all pairs")
+        top_pairs = df.head(top_n)
+    else:
+        top_pairs = df.nlargest(top_n, count_col)
+    
+    queries = {}
+    for _, row in top_pairs.iterrows():
+        card1 = str(row["NAME_1"])
+        card2 = str(row["NAME_2"])
+        
+        # Use card1 as query, card2 as highly relevant
+        if card1 not in queries:
+            queries[card1] = {
+                "highly_relevant": [],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "marginally_relevant": [],
+            }
+        queries[card1]["highly_relevant"].append(card2)
+    
+    logger.info(f"  Generated {len(queries)} implicit queries")
+    return queries
+
+
+def load_substitution_queries(
+    substitution_path: Path,
+    top_n: int = 150,
+) -> dict[str, dict[str, Any]]:
+    """Load substitution pairs as queries."""
+    if not substitution_path.exists():
+        return {}
+    
+    logger.info(f"Loading {top_n} substitution queries...")
+    
+    with open(substitution_path) as f:
+        data = json.load(f)
+    
+    pairs = []
+    if isinstance(data, list):
+        pairs = data[:top_n]
+    elif isinstance(data, dict):
+        pairs = data.get("pairs", [])[:top_n]
+    
+    queries = {}
+    for pair in pairs:
+        if isinstance(pair, list) and len(pair) >= 2:
+            query = str(pair[0])
+            target = str(pair[1])
+        elif isinstance(pair, dict):
+            query = pair.get("query", pair.get("original", ""))
+            target = pair.get("target", pair.get("substitute", ""))
+        else:
+            continue
+        
+        if not query or not target:
+            continue
+        
+        if query not in queries:
+            queries[query] = {
+                "highly_relevant": [],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "marginally_relevant": [],
+            }
+        queries[query]["highly_relevant"].append(target)
+    
+    logger.info(f"  Loaded {len(queries)} substitution queries")
+    return queries
+
+
+def generate_synthetic_queries(
+    embedding_path: Path | None,
+    pairs_csv: Path,
+    num_queries: int = 50,
+) -> dict[str, dict[str, Any]]:
+    """Generate synthetic queries using embeddings."""
+    logger.info(f"Generating {num_queries} synthetic queries...")
+    
+    if not embedding_path or not embedding_path.exists():
+        logger.warning("  No embedding provided, skipping synthetic queries")
+        return {}
+    
+    try:
+        wv = KeyedVectors.load(str(embedding_path))
+        logger.info(f"  Loaded embeddings: {len(wv)} cards")
+    except Exception as e:
+        logger.warning(f"  Could not load embeddings: {e}")
+        return {}
+    
+    # Load pairs to get card names
+    df = pd.read_csv(pairs_csv, nrows=50000)
+    all_cards = set(df["NAME_1"].unique()) | set(df["NAME_2"].unique())
+    
+    # Filter to cards in embedding vocabulary
+    vocab_cards = [c for c in all_cards if c in wv]
+    logger.info(f"  {len(vocab_cards)} cards in vocabulary")
+    
+    if len(vocab_cards) < num_queries:
+        logger.warning(f"  Not enough cards for {num_queries} queries")
+        return {}
+    
+    # Sample random cards as queries
+    import random
+    query_cards = random.sample(vocab_cards, min(num_queries, len(vocab_cards)))
+    
+    queries = {}
+    for query in query_cards:
+        try:
+            # Get top 10 similar cards
+            similar = wv.most_similar(query, topn=10)
+            similar_cards = [card for card, _ in similar]
+            
+            queries[query] = {
+                "highly_relevant": similar_cards[:3],
+                "relevant": similar_cards[3:6],
+                "somewhat_relevant": similar_cards[6:8],
+                "marginally_relevant": similar_cards[8:10],
+            }
+        except Exception:
+            continue
+    
+    logger.info(f"  Generated {len(queries)} synthetic queries")
+    return queries
+
+
+def generate_comprehensive_eval_data(
+    pairs_csv: Path,
+    game: str,
+    output_path: Path,
+    explicit_test_set: Path | None = None,
+    substitution_test_set: Path | None = None,
+    embedding_path: Path | None = None,
+    explicit_top_n: int = 200,
+    implicit_top_n: int = 100,
+    substitution_top_n: int = 150,
+    synthetic_num: int = 50,
+) -> dict[str, Any]:
+    """Generate comprehensive evaluation data."""
+    logger.info("=" * 70)
+    logger.info("GENERATING COMPREHENSIVE EVALUATION DATA")
+    logger.info("=" * 70)
+    logger.info("")
+    
+    all_queries = {}
+    
+    # 1. Explicit queries
+    if explicit_test_set:
+        logger.info("1. Loading explicit queries...")
+        explicit = load_explicit_queries(explicit_test_set)
+        # Take top N by some criteria (e.g., most labels)
+        explicit_items = sorted(
+            explicit.items(),
+            key=lambda x: sum(len(v) for v in x[1].values() if isinstance(v, list)),
+            reverse=True,
+        )[:explicit_top_n]
+        all_queries.update(dict(explicit_items))
+        logger.info(f"   Loaded {len(explicit_items)} explicit queries")
+    
+    # 2. Implicit queries
+    logger.info("\n2. Generating implicit queries...")
+    implicit = generate_implicit_queries(pairs_csv, top_n=implicit_top_n)
+    all_queries.update(implicit)
+    
+    # 3. Substitution queries
+    if substitution_test_set:
+        logger.info("\n3. Loading substitution queries...")
+        substitution = load_substitution_queries(substitution_test_set, top_n=substitution_top_n)
+        all_queries.update(substitution)
+    
+    # 4. Synthetic queries
+    if synthetic_num > 0:
+        logger.info("\n4. Generating synthetic queries...")
+        synthetic = generate_synthetic_queries(embedding_path, pairs_csv, num_queries=synthetic_num)
+        all_queries.update(synthetic)
+    
+    # Save
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump({"queries": all_queries}, f, indent=2)
+    
+    logger.info("\n" + "=" * 70)
+    logger.info("SUMMARY")
+    logger.info("=" * 70)
+    logger.info(f"Total queries: {len(all_queries)}")
+    logger.info(f"  - Explicit: {len(explicit) if explicit_test_set else 0}")
+    logger.info(f"  - Implicit: {len(implicit)}")
+    logger.info(f"  - Substitution: {len(substitution) if substitution_test_set else 0}")
+    logger.info(f"  - Synthetic: {len(synthetic) if synthetic_num > 0 else 0}")
+    logger.info(f"\n✅ Saved to {output_path}")
+    
+    return {"queries": all_queries}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate comprehensive evaluation data")
+    parser.add_argument("--pairs-csv", "--pairs", type=str, required=True, dest="pairs_csv", help="Pairs CSV file")
+    parser.add_argument("--game", type=str, required=True, help="Game name")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    parser.add_argument("--explicit-test-set", type=Path, help="Existing test set for explicit queries")
+    parser.add_argument("--substitution-test-set", type=Path, help="Substitution test pairs")
+    parser.add_argument("--embedding", type=Path, help="Embedding file for synthetic queries")
+    parser.add_argument("--explicit-top-n", type=int, default=200, help="Top N explicit queries")
+    parser.add_argument("--implicit-top-n", type=int, default=100, help="Top N implicit queries")
+    parser.add_argument("--substitution-top-n", type=int, default=150, help="Top N substitution queries")
+    parser.add_argument("--synthetic-num", type=int, default=50, help="Number of synthetic queries")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Auto-detect test sets if not provided
+    if not args.explicit_test_set:
+        explicit_path = Path(f"experiments/test_set_expanded_{args.game}.json")
+        if explicit_path.exists():
+            args.explicit_test_set = explicit_path
+    
+    if not args.substitution_test_set:
+        sub_path = Path(f"experiments/downstream_tests/substitution_{args.game}.json")
+        if sub_path.exists():
+            args.substitution_test_set = sub_path
+    
+    generate_comprehensive_eval_data(
+        pairs_csv=Path(args.pairs_csv),
+        game=args.game,
+        output_path=args.output,
+        explicit_test_set=args.explicit_test_set,
+        substitution_test_set=args.substitution_test_set,
+        embedding_path=args.embedding,
+        explicit_top_n=args.explicit_top_n,
+        implicit_top_n=args.implicit_top_n,
+        substitution_top_n=args.substitution_top_n,
+        synthetic_num=args.synthetic_num,
+    )
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

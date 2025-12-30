@@ -1,0 +1,48 @@
+#!/usr/bin/env bash
+# Validate multi-task embedding deployment
+
+set -euo pipefail
+
+PROD_MODEL="${1:-data/embeddings/production.wv}"
+
+echo "╔══════════════════════════════════════════════════════════════════════╗"
+echo "║              DEPLOYMENT VALIDATION                                   ║"
+echo "╚══════════════════════════════════════════════════════════════════════╝"
+echo ""
+
+if [[ ! -f "$PROD_MODEL" ]]; then
+    echo "❌ Production model not found: $PROD_MODEL"
+    exit 1
+fi
+
+echo "✅ Model file exists: $PROD_MODEL"
+echo "   Size: $(du -h "$PROD_MODEL" | cut -f1)"
+echo ""
+
+echo "🔍 Validating model..."
+uv run python3 << PYEOF
+from gensim.models import KeyedVectors
+import sys
+
+try:
+    wv = KeyedVectors.load("$PROD_MODEL")
+    
+    print(f"   Vocabulary: {len(wv)} cards")
+    print(f"   Dimension: {wv.vector_size}")
+    
+    # Test queries
+    if len(wv) > 0:
+        test_cards = list(wv.index_to_key)[:3]
+        for card in test_cards:
+            similar = wv.most_similar(card, topn=1)
+            print(f"   Test: {card} → {similar[0][0]} ({similar[0][1]:.4f})")
+    
+    print("   ✅ Model validation passed")
+    
+except Exception as e:
+    print(f"   ❌ Validation failed: {e}")
+    sys.exit(1)
+PYEOF
+
+echo ""
+echo "✅ Deployment validation complete"

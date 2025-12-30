@@ -1,0 +1,108 @@
+#!/usr/bin/env python3
+"""
+exp_056: VERIFY BASELINE CLAIM
+
+Run plain Jaccard on pairs_large.csv (the file that allegedly got 0.12).
+This tests if the "baseline" claim is accurate.
+"""
+
+import json
+from collections import defaultdict
+
+import pandas as pd
+from utils.constants import get_filter_set
+from utils.evaluation import compute_precision_at_k
+from utils.paths import PATHS
+
+
+def build_graph_from_pairs():
+    """Build graph from pairs_large.csv."""
+
+    print("Loading pairs_large.csv...")
+    df = pd.read_csv(PATHS.pairs_large)
+    print(f"  Pairs: {len(df):,}")
+
+    # Filter lands
+    lands = get_filter_set("magic", "basic")
+    df = df[~df["NAME_1"].isin(lands)]
+    df = df[~df["NAME_2"].isin(lands)]
+    print(f"  After land filter: {len(df):,}")
+
+    # Build adjacency
+    adj = defaultdict(set)
+    for _, row in df.iterrows():
+        c1, c2 = row["NAME_1"], row["NAME_2"]
+        adj[c1].add(c2)
+        adj[c2].add(c1)
+
+    print(f"  Unique cards: {len(adj):,}")
+    return dict(adj)
+
+
+def jaccard_similarity(set1, set2):
+    if not set1 or not set2:
+        return 0.0
+    return len(set1 & set2) / len(set1 | set2)
+
+
+def evaluate():
+    """Evaluate on canonical test set."""
+
+    # Load test set
+    with open(PATHS.test_magic) as f:
+        data = json.load(f)
+        test_set = data.get("queries", data)
+    print(f"Test queries: {len(test_set)}\n")
+
+    # Build graph
+    adj = build_graph_from_pairs()
+    print()
+
+    # Evaluate
+    print("Evaluating...")
+    scores = []
+
+    for query, labels in test_set.items():
+        if not isinstance(labels, dict):
+            continue
+
+        if query not in adj:
+            scores.append(0.0)
+            continue
+
+        query_neighbors = adj[query]
+        candidates = []
+
+        for card in adj:
+            if card == query:
+                continue
+            sim = jaccard_similarity(query_neighbors, adj[card])
+            if sim > 0:
+                candidates.append((card, sim))
+
+        candidates.sort(key=lambda x: x[1], reverse=True)
+        top_10 = [c for c, _ in candidates[:10]]
+
+        p = compute_precision_at_k(top_10, labels, k=10)
+        scores.append(p)
+
+    avg = sum(scores) / len(scores)
+
+    print("\n" + "=" * 60)
+    print("Jaccard on pairs_large.csv (claimed baseline):")
+    print(f"  P@10: {avg:.4f}")
+    print(f"  Queries: {len(scores)}")
+    print()
+
+    if avg >= 0.10:
+        if avg >= 0.12:
+            print(f"✅ MATCHES CLAIM: {avg:.4f} ~= 0.12")
+        else:
+            print(f"⚠️  CLOSE: {avg:.4f} < 0.12 but reasonable")
+    else:
+        print(f"❌ WAY OFF: {avg:.4f} << 0.12")
+        print("   Baseline claim might be wrong OR test set changed")
+
+
+if __name__ == "__main__":
+    evaluate()

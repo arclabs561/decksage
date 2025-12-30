@@ -1,0 +1,161 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+Expand test sets to 100+ queries per game using multiple strategies.
+
+Combines:
+1. Existing canonical test set
+2. Synthetic data from graph properties
+3. Implicit data from co-occurrence
+4. LLM-generated queries (if available)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
+
+
+def load_existing_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
+    """Load existing test set."""
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    return data.get("queries", data)
+
+
+def merge_test_sets(*test_sets: dict[str, dict[str, Any]]) -> dict[str, dict[str, Any]]:
+    """Merge multiple test sets."""
+    merged = {}
+    
+    for test_set in test_sets:
+        for query, labels in test_set.items():
+            if query not in merged:
+                merged[query] = {
+                    "highly_relevant": [],
+                    "relevant": [],
+                    "somewhat_relevant": [],
+                    "marginally_relevant": [],
+                    "irrelevant": [],
+                }
+            
+            # Merge labels, avoiding duplicates
+            for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+                for card in labels.get(level, []):
+                    if card not in merged[query][level] and card != query:
+                        merged[query][level].append(card)
+    
+    return merged
+
+
+def main() -> int:
+    """Expand test set comprehensively."""
+    parser = argparse.ArgumentParser(description="Expand test set to 100+ queries")
+    parser.add_argument("--existing", type=Path, required=True, help="Existing test set JSON")
+    parser.add_argument("--pairs", type=Path, help="Pairs CSV for generating synthetic data")
+    parser.add_argument("--synthetic", type=Path, help="Synthetic test set JSON (from generate_comprehensive_eval_data.py)")
+    parser.add_argument("--output", type=Path, required=True, help="Output expanded test set JSON")
+    parser.add_argument("--target", type=int, default=100, help="Target number of queries")
+    
+    args = parser.parse_args()
+    
+    print(f"Loading existing test set from {args.existing}...")
+    existing = load_existing_test_set(args.existing)
+    print(f"  Existing queries: {len(existing)}")
+    
+    test_sets = [existing]
+    
+    # Load synthetic data if provided
+    if args.synthetic and args.synthetic.exists():
+        print(f"\nLoading synthetic test set from {args.synthetic}...")
+        with open(args.synthetic) as f:
+            synthetic_data = json.load(f)
+        synthetic = synthetic_data.get("queries", {})
+        print(f"  Synthetic queries: {len(synthetic)}")
+        test_sets.append(synthetic)
+    
+    # Generate from pairs if provided
+    if args.pairs and args.pairs.exists() and HAS_PANDAS:
+        print(f"\nGenerating additional queries from pairs...")
+        try:
+            from ml.scripts.generate_comprehensive_eval_data import (
+                generate_implicit_from_cooccurrence,
+                generate_synthetic_from_graph_properties,
+            )
+            
+            pairs_df = pd.read_csv(args.pairs)
+            
+            # Generate implicit from co-occurrence
+            cooccurrence = generate_implicit_from_cooccurrence(
+                pairs_df,
+                max_queries=args.target - len(existing),
+            )
+            print(f"  Co-occurrence queries: {len(cooccurrence)}")
+            test_sets.append(cooccurrence)
+            
+            # Generate from graph properties
+            graph = generate_synthetic_from_graph_properties(
+                pairs_df,
+                max_queries=(args.target - len(existing)) // 2,
+            )
+            print(f"  Graph property queries: {len(graph)}")
+            test_sets.append(graph)
+        except Exception as e:
+            print(f"  Warning: Could not generate from pairs: {e}")
+    
+    # Merge all test sets
+    print(f"\nMerging test sets...")
+    merged = merge_test_sets(*test_sets)
+    print(f"  Total unique queries: {len(merged)}")
+    
+    # Filter queries with sufficient labels
+    filtered = {
+        query: labels
+        for query, labels in merged.items()
+        if len(labels.get("highly_relevant", [])) + len(labels.get("relevant", [])) >= 3
+    }
+    print(f"  Queries with >= 3 relevant items: {len(filtered)}")
+    
+    # Save
+    output_data = {
+        "version": "expanded_comprehensive",
+        "source": {
+            "existing": str(args.existing),
+            "synthetic": str(args.synthetic) if args.synthetic else None,
+            "pairs": str(args.pairs) if args.pairs else None,
+        },
+        "queries": filtered,
+    }
+    
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    print(f"\n✅ Saved {len(filtered)} queries to {args.output}")
+    
+    if len(filtered) < args.target:
+        print(f"\n⚠️  Warning: Only {len(filtered)} queries, target was {args.target}")
+        print("   Consider:")
+        print("   1. Running generate_comprehensive_eval_data.py first")
+        print("   2. Using LLM to generate more queries")
+        print("   3. Hand-annotating additional queries")
+    else:
+        print(f"\n✓ Successfully expanded to {len(filtered)} queries (target: {args.target})")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+

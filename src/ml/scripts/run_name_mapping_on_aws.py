@@ -1,0 +1,400 @@
+#!/usr/bin/env python3
+"""
+Run name mapping generation on AWS EC2 instance.
+
+This script uploads the name mapping script to S3, then executes it on an EC2 instance
+via SSM to avoid local scipy build issues.
+"""
+
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "boto3>=1.34.0",
+# ]
+# ///
+
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+    print("❌ boto3 not available", file=sys.stderr)
+
+
+def upload_script_to_s3(script_path: Path, s3_key: str) -> bool:
+    """Upload script to S3."""
+    s3 = boto3.client("s3")
+    bucket = "games-collections"
+    
+    try:
+        s3.upload_file(str(script_path), bucket, s3_key)
+        print(f"✅ Uploaded {script_path.name} to s3://{bucket}/{s3_key}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to upload script: {e}", file=sys.stderr)
+        return False
+
+
+def create_ec2_instance(
+    instance_type: str = "t3.medium",
+    use_spot: bool = True,
+    spot_max_price: str | None = None,
+    fallback_to_ondemand: bool = True,
+) -> str | None:
+    """Create EC2 instance for computation."""
+    ec2 = boto3.client("ec2")
+    
+    # AMI for Amazon Linux 2023 (us-east-1)
+    ami_id = "ami-08fa3ed5577079e64"
+    
+    # User data to install Python and dependencies
+    user_data = """#!/bin/bash
+yum update -y
+yum install -y python3 python3-pip git
+pip3 install --upgrade pip
+pip3 install pandas numpy gensim boto3
+"""
+    
+    launch_spec = {
+        "ImageId": ami_id,
+        "InstanceType": instance_type,
+        "MinCount": 1,
+        "MaxCount": 1,
+        "UserData": user_data,
+        "IamInstanceProfile": {"Name": "EC2-SSM-InstanceProfile"},
+    }
+    
+    if use_spot and spot_max_price:
+        launch_spec["InstanceMarketOptions"] = {
+            "MarketType": "spot",
+            "SpotOptions": {
+                "MaxPrice": spot_max_price,
+                "SpotInstanceType": "one-time",
+                "InstanceInterruptionBehavior": "terminate",
+            },
+        }
+    
+    try:
+        if use_spot:
+            print(f"Creating spot instance ({instance_type}, max ${spot_max_price or 'on-demand'}/hr)...")
+            response = ec2.run_instances(**launch_spec)
+        else:
+            print(f"Creating on-demand instance ({instance_type})...")
+            response = ec2.run_instances(**launch_spec)
+        
+        instance_id = response["Instances"][0]["InstanceId"]
+        print(f"✅ Created instance: {instance_id}")
+        return instance_id
+        
+    except Exception as e:
+        if use_spot and fallback_to_ondemand:
+            print(f"⚠️  Spot instance failed: {e}")
+            print("Falling back to on-demand...")
+            launch_spec.pop("InstanceMarketOptions", None)
+            try:
+                response = ec2.run_instances(**launch_spec)
+                instance_id = response["Instances"][0]["InstanceId"]
+                print(f"✅ Created on-demand instance: {instance_id}")
+                return instance_id
+            except Exception as e2:
+                print(f"❌ On-demand also failed: {e2}", file=sys.stderr)
+                return None
+        else:
+            print(f"❌ Failed to create instance: {e}", file=sys.stderr)
+            return None
+
+
+def wait_for_ssm_ready(instance_id: str, timeout: int = 300) -> bool:
+    """Wait for SSM to be ready."""
+    ssm = boto3.client("ssm")
+    
+    print(f"Waiting for SSM to be ready on {instance_id}...")
+    start_time = time.time()
+    
+    while time.time() - start_time < timeout:
+        try:
+            response = ssm.describe_instance_information(
+                Filters=[{"Key": "InstanceIds", "Values": [instance_id]}]
+            )
+            if response.get("InstanceInformationList"):
+                # Wait a bit more for SSM agent to fully initialize
+                time.sleep(10)
+                print("✅ SSM is ready")
+                return True
+        except Exception:
+            pass
+        
+        time.sleep(5)
+        print(".", end="", flush=True)
+    
+    print(f"\n⚠️  SSM not ready after {timeout}s")
+    return False
+
+
+def run_command_on_instance(instance_id: str, command: str, timeout: int = 600) -> tuple[int, str, str]:
+    """Run command on EC2 instance via SSM."""
+    ssm = boto3.client("ssm")
+    
+    print(f"Running command on {instance_id}...")
+    print(f"  Command: {command[:100]}...")
+    
+    try:
+        # Split multi-line commands
+        commands = [cmd.strip() for cmd in command.strip().split("\n") if cmd.strip()]
+        
+        response = ssm.send_command(
+            InstanceIds=[instance_id],
+            DocumentName="AWS-RunShellScript",
+            Parameters={"commands": commands},
+            TimeoutSeconds=timeout,
+        )
+        
+        command_id = response["Command"]["CommandId"]
+        print(f"  Command ID: {command_id}")
+        
+        # Wait for command to complete
+        start_time = time.time()
+        while time.time() - start_time < timeout:
+            try:
+                result = ssm.get_command_invocation(
+                    CommandId=command_id,
+                    InstanceId=instance_id,
+                )
+                
+                status = result["Status"]
+                if status in ["Success", "Failed", "Cancelled", "TimedOut"]:
+                    stdout = result.get("StandardOutputContent", "")
+                    stderr = result.get("StandardErrorContent", "")
+                    return (
+                        0 if status == "Success" else 1,
+                        stdout,
+                        stderr,
+                    )
+            except ssm.exceptions.InvocationDoesNotExist:
+                # Command not registered yet, wait a bit
+                time.sleep(2)
+                continue
+            
+            time.sleep(3)
+            print(".", end="", flush=True)
+        
+        # Timeout
+        return 1, "", f"Command timed out after {timeout}s"
+            
+    except Exception as e:
+        return 1, "", str(e)
+
+
+def download_from_s3(s3_key: str, local_path: Path) -> bool:
+    """Download file from S3."""
+    s3 = boto3.client("s3")
+    bucket = "games-collections"
+    
+    try:
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        s3.download_file(bucket, s3_key, str(local_path))
+        print(f"✅ Downloaded {s3_key} to {local_path}")
+        return True
+    except Exception as e:
+        print(f"❌ Failed to download: {e}", file=sys.stderr)
+        return False
+
+
+def main() -> int:
+    """Run name mapping on AWS EC2."""
+    if not HAS_BOTO3:
+        print("❌ boto3 not available", file=sys.stderr)
+        return 1
+    
+    # Paths
+    script_path = Path("src/ml/scripts/fix_name_normalization_standalone.py")
+    s3_script_key = "scripts/fix_name_normalization_standalone.py"
+    
+    # Upload script to S3
+    print("=" * 70)
+    print("Step 1: Upload script to S3")
+    print("=" * 70)
+    if not upload_script_to_s3(script_path, s3_script_key):
+        return 1
+    
+    # Upload data files to S3 (if not already there)
+    print("\n" + "=" * 70)
+    print("Step 2: Ensure data files are on S3")
+    print("=" * 70)
+    
+    s3 = boto3.client("s3")
+    bucket = "games-collections"
+    
+    # Check if embeddings are on S3
+    embeddings_s3 = "embeddings/magic_128d_test_pecanpy.wv"
+    pairs_s3 = "processed/pairs_large.csv"
+    test_set_s3 = "processed/test_set_canonical_magic.json"
+    
+    # Upload test set if not on S3
+    test_set_local = Path("experiments/test_set_canonical_magic.json")
+    if test_set_local.exists():
+        try:
+            s3.upload_file(str(test_set_local), bucket, test_set_s3)
+            print(f"✅ Uploaded test set to s3://{bucket}/{test_set_s3}")
+        except Exception as e:
+            print(f"⚠️  Could not upload test set: {e}")
+    
+    # Create EC2 instance
+    print("\n" + "=" * 70)
+    print("Step 3: Create EC2 instance")
+    print("=" * 70)
+    
+    instance_id = create_ec2_instance(
+        instance_type="t3.medium",
+        use_spot=True,
+        spot_max_price="0.10",
+        fallback_to_ondemand=True,
+    )
+    
+    if not instance_id:
+        return 1
+    
+    # Wait for SSM
+    if not wait_for_ssm_ready(instance_id):
+        print("⚠️  Continuing anyway...")
+    
+    # Wait for user_data to complete (install Python and dependencies)
+    print("\n" + "=" * 70)
+    print("Step 3.5: Wait for user_data to complete")
+    print("=" * 70)
+    print("Waiting for Python installation to complete...")
+    wait_cmd = "while ! command -v python3 &> /dev/null; do sleep 5; done && echo 'Python ready'"
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, wait_cmd, timeout=300)
+    if exit_code == 0:
+        print("✅ Python is ready")
+    else:
+        print("⚠️  Python check failed, continuing anyway...")
+    
+    # Download script and data
+    print("\n" + "=" * 70)
+    print("Step 4: Download script and data on instance")
+    print("=" * 70)
+    
+    download_cmd = f"""
+aws s3 cp s3://{bucket}/{s3_script_key} /tmp/fix_name_normalization.py
+aws s3 cp s3://{bucket}/{embeddings_s3} /tmp/embeddings.wv
+aws s3 cp s3://{bucket}/{pairs_s3} /tmp/pairs.csv
+aws s3 cp s3://{bucket}/{test_set_s3} /tmp/test_set.json
+"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, download_cmd)
+    if exit_code != 0:
+        print(f"❌ Download failed: {stderr}", file=sys.stderr)
+        return 1
+    
+    print(stdout)
+    
+    # Install dependencies
+    print("\n" + "=" * 70)
+    print("Step 5: Install dependencies")
+    print("=" * 70)
+    
+    # Check if dependencies are already installed (from user_data)
+    check_cmd = "python3 -c 'import pandas, numpy, gensim, boto3; print(\"All dependencies available\")' 2>&1 || echo 'Need to install'"
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, check_cmd)
+    print(stdout)
+    
+    if "Need to install" in stdout or exit_code != 0:
+        print("Installing dependencies...")
+        install_cmd = "pip3 install pandas numpy gensim boto3"
+        exit_code, stdout, stderr = run_command_on_instance(instance_id, install_cmd, timeout=600)
+        if exit_code != 0:
+            print(f"⚠️  Install warning: {stderr}")
+        print(stdout)
+        
+        # Verify installation completed
+        print("Verifying installation...")
+        verify_cmd = "python3 -c 'import pandas, numpy, gensim, boto3; print(\"All dependencies available\")'"
+        exit_code, stdout, stderr = run_command_on_instance(instance_id, verify_cmd, timeout=60)
+        if exit_code != 0:
+            print(f"❌ Verification failed: {stderr}", file=sys.stderr)
+            return 1
+        print("✅ Dependencies verified")
+    else:
+        print("✅ Dependencies already installed")
+    
+    # Run name mapping script
+    print("\n" + "=" * 70)
+    print("Step 6: Run name mapping script")
+    print("=" * 70)
+    
+    run_cmd = """
+cd /tmp
+python3 fix_name_normalization.py \
+  --embeddings embeddings.wv \
+  --test-set test_set.json \
+  --pairs-csv pairs.csv \
+  --output name_mapping.json
+"""
+    
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, run_cmd)
+    print(stdout)
+    if stderr:
+        print("STDERR:", stderr, file=sys.stderr)
+    
+    if exit_code != 0:
+        print(f"❌ Script failed: {stderr}", file=sys.stderr)
+        return 1
+    
+    # Download file content directly from instance
+    print("\n" + "=" * 70)
+    print("Step 7: Download results locally")
+    print("=" * 70)
+    
+    download_cmd = "cat /tmp/name_mapping.json"
+    exit_code, stdout, stderr = run_command_on_instance(instance_id, download_cmd)
+    
+    if exit_code == 0 and stdout:
+        local_output = Path("experiments/name_mapping.json")
+        local_output.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_output, "w") as f:
+            f.write(stdout)
+        print(f"✅ Name mapping saved to {local_output}")
+        
+        # Also upload to S3 from local machine
+        print("\n" + "=" * 70)
+        print("Step 8: Upload results to S3")
+        print("=" * 70)
+        try:
+            s3 = boto3.client("s3")
+            s3.upload_file(str(local_output), bucket, "processed/name_mapping.json")
+            print(f"✅ Uploaded to s3://{bucket}/processed/name_mapping.json")
+        except Exception as e:
+            print(f"⚠️  Could not upload to S3: {e}")
+    else:
+        print(f"❌ Failed to download: {stderr}", file=sys.stderr)
+        return 1
+    
+    # Terminate instance
+    print("\n" + "=" * 70)
+    print("Step 9: Terminate instance")
+    print("=" * 70)
+    
+    ec2 = boto3.client("ec2")
+    try:
+        ec2.terminate_instances(InstanceIds=[instance_id])
+        print(f"✅ Terminated instance {instance_id}")
+    except Exception as e:
+        print(f"⚠️  Could not terminate: {e}")
+    
+    print("\n" + "=" * 70)
+    print("✅ Name mapping generation complete!")
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

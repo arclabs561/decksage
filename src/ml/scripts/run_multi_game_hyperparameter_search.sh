@@ -1,0 +1,53 @@
+#!/bin/bash
+# Run hyperparameter search for multi-game embeddings
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
+
+echo "🚀 Starting multi-game hyperparameter search on AWS..."
+
+# Check for existing instance or create new
+AVAILABLE_INSTANCE=$(aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running" "Name=instance-type,Values=g4dn.xlarge" \
+    --query 'Reservations[*].Instances[*].InstanceId' \
+    --output text 2>/dev/null | head -1)
+
+INSTANCE_ID=""
+
+if [ -n "$AVAILABLE_INSTANCE" ] && [ "$AVAILABLE_INSTANCE" != "None" ]; then
+    INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids "$AVAILABLE_INSTANCE" --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null || echo "unknown")
+    if [ "$INSTANCE_STATE" = "running" ]; then
+        echo "✅ Using existing instance: $AVAILABLE_INSTANCE"
+        INSTANCE_ID="$AVAILABLE_INSTANCE"
+    fi
+fi
+
+if [ -z "$INSTANCE_ID" ]; then
+    echo "⏳ Creating new instance..."
+    INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot g4dn.xlarge 2>&1)
+    INSTANCE_ID=$(echo "$INSTANCE_OUTPUT" | grep -o 'i-[a-z0-9]*' | head -1)
+    
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "❌ Failed to create instance"
+        exit 1
+    fi
+    
+    echo "✅ Instance created: $INSTANCE_ID"
+    sleep 30
+fi
+
+# Run multi-game training
+echo "Starting multi-game hyperparameter search..."
+$RUNCTL_BIN aws train "$INSTANCE_ID" \
+    src/ml/scripts/train_multi_game_embeddings.py \
+    --output-s3 s3://games-collections/embeddings/ \
+    -- \
+    --input s3://games-collections/processed/pairs_multi_game.csv \
+    --output s3://games-collections/embeddings/multi_game_unified.wv \
+    --mode unified
+
+echo "✅ Multi-game training started. Monitoring..."
+$RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow
+

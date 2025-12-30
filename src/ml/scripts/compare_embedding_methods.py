@@ -1,0 +1,341 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "pecanpy>=2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Compare Graph Embedding Methods: Node2Vec, DeepWalk, and Modern Alternatives
+
+Current state (2024-2025):
+- Node2Vec: Still competitive, widely used
+- DeepWalk: Simpler baseline (Node2Vec with p=q=1)
+- Graph NE: Newer, simpler, outperforms Node2Vec in some tasks
+- Meta Node2Vec/Metapath2Vec: For heterogeneous graphs (we have format/archetype metadata)
+
+Uses PEP 723 inline dependencies for easy execution with uv.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import Word2Vec, KeyedVectors
+    from pecanpy.pecanpy import SparseOTF, PreComp, DenseOTF
+    
+    HAS_DEPS = True
+except ImportError as e:
+    HAS_DEPS = False
+    print(f"Missing dependencies: {e}")
+    print("Install with: uv run --script src/ml/scripts/compare_embedding_methods.py")
+
+
+def prepare_edgelist(csv_file: Path, output_edg: Path, min_cooccurrence: int = 2) -> tuple[int, int]:
+    """Convert pairs CSV to edgelist format."""
+    print(f"📊 Loading graph from {csv_file}...")
+    df = pd.read_csv(csv_file)
+    
+    # Filter by minimum co-occurrence
+    df = df[df["COUNT_SET"] >= min_cooccurrence]
+    print(f"   Filtered to {len(df):,} pairs (min co-occurrence: {min_cooccurrence})")
+    
+    # Write edgelist: node1 node2 weight
+    with open(output_edg, "w") as f:
+        for _, row in df.iterrows():
+            f.write(f"{row['NAME_1']}\t{row['NAME_2']}\t{row['COUNT_MULTISET']}\n")
+    
+    num_nodes = len(set(df["NAME_1"]) | set(df["NAME_2"]))
+    print(f"   Graph: {num_nodes:,} nodes, {len(df):,} edges")
+    
+    return num_nodes, len(df)
+
+
+def train_deepwalk(
+    edgelist_file: Path,
+    output_file: Path,
+    dim: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window_size: int = 10,
+    workers: int = 4,
+) -> KeyedVectors:
+    """Train DeepWalk (Node2Vec with p=q=1)."""
+    print(f"\n🚶 Training DeepWalk...")
+    print(f"   (Node2Vec with p=1, q=1)")
+    
+    g = SparseOTF(p=1.0, q=1.0, workers=workers, verbose=True, extend=True)
+    g.read_edg(str(edgelist_file), weighted=True, directed=False)
+    
+    walks = g.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+    
+    model = Word2Vec(
+        walks,
+        vector_size=dim,
+        window=window_size,
+        min_count=0,
+        sg=1,  # Skip-gram
+        workers=workers,
+        epochs=1,
+    )
+    
+    model.wv.save(str(output_file))
+    print(f"✓ Saved to {output_file}")
+    return model.wv
+
+
+def train_node2vec(
+    edgelist_file: Path,
+    output_file: Path,
+    dim: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window_size: int = 10,
+    p: float = 1.0,
+    q: float = 1.0,
+    workers: int = 4,
+    mode: str = "SparseOTF",
+) -> KeyedVectors:
+    """Train Node2Vec with configurable p, q parameters."""
+    print(f"\n🚀 Training Node2Vec (p={p}, q={q})...")
+    
+    if mode == "PreComp":
+        g = PreComp(p=p, q=q, workers=workers, verbose=True, extend=True)
+    elif mode == "SparseOTF":
+        g = SparseOTF(p=p, q=q, workers=workers, verbose=True, extend=True)
+    elif mode == "DenseOTF":
+        g = DenseOTF(p=p, q=q, workers=workers, verbose=True, extend=True)
+    else:
+        raise ValueError(f"Unknown mode: {mode}")
+    
+    g.read_edg(str(edgelist_file), weighted=True, directed=False)
+    walks = g.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+    
+    model = Word2Vec(
+        walks,
+        vector_size=dim,
+        window=window_size,
+        min_count=0,
+        sg=1,
+        workers=workers,
+        epochs=1,
+    )
+    
+    model.wv.save(str(output_file))
+    print(f"✓ Saved to {output_file}")
+    return model.wv
+
+
+def train_node2vec_bfs(
+    edgelist_file: Path,
+    output_file: Path,
+    dim: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window_size: int = 10,
+    workers: int = 4,
+) -> KeyedVectors:
+    """Train Node2Vec with BFS bias (p=2, q=0.5) - explores local structure."""
+    return train_node2vec(
+        edgelist_file, output_file, dim, walk_length, num_walks, window_size,
+        p=2.0, q=0.5, workers=workers
+    )
+
+
+def train_node2vec_dfs(
+    edgelist_file: Path,
+    output_file: Path,
+    dim: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window_size: int = 10,
+    workers: int = 4,
+) -> KeyedVectors:
+    """Train Node2Vec with DFS bias (p=0.5, q=2) - explores communities."""
+    return train_node2vec(
+        edgelist_file, output_file, dim, walk_length, num_walks, window_size,
+        p=0.5, q=2.0, workers=workers
+    )
+
+
+def main() -> int:
+    """Compare multiple embedding methods."""
+    parser = argparse.ArgumentParser(
+        description="Compare graph embedding methods (DeepWalk, Node2Vec variants)",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    
+    parser.add_argument(
+        "--input",
+        type=str,
+        required=True,
+        help="Path to pairs.csv",
+    )
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="data/embeddings",
+        help="Output directory for embeddings",
+    )
+    parser.add_argument(
+        "--dim",
+        type=int,
+        default=128,
+        help="Embedding dimension",
+    )
+    parser.add_argument(
+        "--walk-length",
+        type=int,
+        default=80,
+        help="Random walk length",
+    )
+    parser.add_argument(
+        "--num-walks",
+        type=int,
+        default=10,
+        help="Number of walks per node",
+    )
+    parser.add_argument(
+        "--window",
+        type=int,
+        default=10,
+        help="Context window size",
+    )
+    parser.add_argument(
+        "--workers",
+        type=int,
+        default=4,
+        help="Number of workers",
+    )
+    parser.add_argument(
+        "--methods",
+        type=str,
+        nargs="+",
+        default=["deepwalk", "node2vec", "node2vec_bfs", "node2vec_dfs"],
+        choices=["deepwalk", "node2vec", "node2vec_bfs", "node2vec_dfs"],
+        help="Methods to train",
+    )
+    parser.add_argument(
+        "--min-cooccur",
+        type=int,
+        default=2,
+        help="Minimum co-occurrence count",
+    )
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    # Setup paths
+    input_path = Path(args.input)
+    output_dir = Path(args.output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    
+    graphs_dir = output_dir.parent / "graphs"
+    graphs_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Prepare edgelist
+    edg_file = graphs_dir / f"{input_path.stem}.edg"
+    num_nodes, num_edges = prepare_edgelist(input_path, edg_file, args.min_cooccur)
+    
+    # Train each method
+    results = {}
+    
+    if "deepwalk" in args.methods:
+        output_file = output_dir / "deepwalk.wv"
+        if not output_file.exists():
+            wv = train_deepwalk(
+                edg_file, output_file,
+                dim=args.dim, walk_length=args.walk_length,
+                num_walks=args.num_walks, window_size=args.window,
+                workers=args.workers,
+            )
+            results["deepwalk"] = {"file": str(output_file), "num_nodes": len(wv)}
+        else:
+            print(f"✓ DeepWalk already exists: {output_file}")
+            results["deepwalk"] = {"file": str(output_file)}
+    
+    if "node2vec" in args.methods:
+        output_file = output_dir / "node2vec_default.wv"
+        if not output_file.exists():
+            wv = train_node2vec(
+                edg_file, output_file,
+                dim=args.dim, walk_length=args.walk_length,
+                num_walks=args.num_walks, window_size=args.window,
+                p=1.0, q=1.0, workers=args.workers,
+            )
+            results["node2vec"] = {"file": str(output_file), "num_nodes": len(wv)}
+        else:
+            print(f"✓ Node2Vec already exists: {output_file}")
+            results["node2vec"] = {"file": str(output_file)}
+    
+    if "node2vec_bfs" in args.methods:
+        output_file = output_dir / "node2vec_bfs.wv"
+        if not output_file.exists():
+            wv = train_node2vec_bfs(
+                edg_file, output_file,
+                dim=args.dim, walk_length=args.walk_length,
+                num_walks=args.num_walks, window_size=args.window,
+                workers=args.workers,
+            )
+            results["node2vec_bfs"] = {"file": str(output_file), "num_nodes": len(wv)}
+        else:
+            print(f"✓ Node2Vec-BFS already exists: {output_file}")
+            results["node2vec_bfs"] = {"file": str(output_file)}
+    
+    if "node2vec_dfs" in args.methods:
+        output_file = output_dir / "node2vec_dfs.wv"
+        if not output_file.exists():
+            wv = train_node2vec_dfs(
+                edg_file, output_file,
+                dim=args.dim, walk_length=args.walk_length,
+                num_walks=args.num_walks, window_size=args.window,
+                workers=args.workers,
+            )
+            results["node2vec_dfs"] = {"file": str(output_file), "num_nodes": len(wv)}
+        else:
+            print(f"✓ Node2Vec-DFS already exists: {output_file}")
+            results["node2vec_dfs"] = {"file": str(output_file)}
+    
+    # Save summary
+    summary_file = output_dir / "embedding_methods_summary.json"
+    with open(summary_file, "w") as f:
+        json.dump({
+            "graph": {
+                "nodes": num_nodes,
+                "edges": num_edges,
+                "edgelist": str(edg_file),
+            },
+            "methods": results,
+            "config": {
+                "dim": args.dim,
+                "walk_length": args.walk_length,
+                "num_walks": args.num_walks,
+                "window_size": args.window,
+            },
+        }, f, indent=2)
+    
+    print(f"\n✅ Training complete!")
+    print(f"📊 Summary saved to {summary_file}")
+    print(f"\n📚 Methods trained:")
+    for method, info in results.items():
+        print(f"  - {method}: {info['file']}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

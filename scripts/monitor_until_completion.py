@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""Comprehensive monitoring until completion."""
+import json
+import time
+from pathlib import Path
+
+def check_test_sets():
+    """Check test set expansion progress."""
+    test_sets = {
+        "magic": {"path": "experiments/test_set_expanded_magic.json", "target": 200},
+        "pokemon": {"path": "experiments/test_set_expanded_pokemon.json", "target": 100},
+        "yugioh": {"path": "experiments/test_set_expanded_yugioh.json", "target": 100},
+    }
+    
+    results = {}
+    all_complete = True
+    
+    for game, info in test_sets.items():
+        p = Path(info["path"])
+        current = 0
+        if p.exists():
+            with open(p) as f:
+                data = json.load(f)
+            queries = data.get("queries", data) if isinstance(data, dict) else data
+            current = len(queries) if isinstance(queries, dict) else len(queries)
+        
+        needed = max(0, info["target"] - current)
+        results[game] = {"current": current, "target": info["target"], "needed": needed, "complete": needed == 0}
+        if needed > 0:
+            all_complete = False
+    
+    return results, all_complete
+
+def check_multi_game_training():
+    """Check multi-game training status."""
+    emb_path = Path("data/embeddings/multi_game_unified.wv")
+    if emb_path.exists():
+        size_mb = emb_path.stat().st_size / (1024 * 1024)
+        mtime = emb_path.stat().st_mtime
+        age_min = (time.time() - mtime) / 60
+        return {"exists": True, "size_mb": size_mb, "age_min": age_min}
+    else:
+        # Check log file
+        log_path = Path("multigame_training.log")
+        if log_path.exists():
+            mtime = log_path.stat().st_mtime
+            age_min = (time.time() - mtime) / 60
+            size_kb = log_path.stat().st_size / 1024
+            return {"exists": False, "log_exists": True, "log_age_min": age_min, "log_size_kb": size_kb}
+        return {"exists": False, "log_exists": False}
+
+def monitor_loop():
+    """Main monitoring loop."""
+    print("=" * 70)
+    print("COMPREHENSIVE MONITORING")
+    print("=" * 70)
+    print()
+    
+    iteration = 0
+    while True:
+        iteration += 1
+        print(f"\n[{iteration}] Status check at {time.strftime('%H:%M:%S')}")
+        print("-" * 70)
+        
+        # Test sets
+        test_results, test_complete = check_test_sets()
+        print("\n📊 TEST SETS:")
+        for game, stats in test_results.items():
+            status = "✅" if stats["complete"] else "⏳"
+            print(f"  {status} {game:10s}: {stats['current']:3d}/{stats['target']:3d} (need {stats['needed']})")
+        
+        # Multi-game training
+        mg_status = check_multi_game_training()
+        print("\n📊 MULTI-GAME TRAINING:")
+        if mg_status.get("exists"):
+            print(f"  ✅ Complete: {mg_status['size_mb']:.1f} MB ({mg_status['age_min']:.1f} min ago)")
+        elif mg_status.get("log_exists"):
+            print(f"  ⏳ Running: Log {mg_status['log_size_kb']:.1f} KB ({mg_status['log_age_min']:.1f} min ago)")
+        else:
+            print(f"  ⏳ Not started")
+        
+        # Check if all complete
+        if test_complete and mg_status.get("exists"):
+            print("\n" + "=" * 70)
+            print("✅ ALL TASKS COMPLETE!")
+            print("=" * 70)
+            break
+        
+        # Wait before next check
+        print("\n⏳ Waiting 60 seconds before next check...")
+        time.sleep(60)
+
+if __name__ == "__main__":
+    try:
+        monitor_loop()
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Monitoring stopped by user")

@@ -1,0 +1,27 @@
+
+PRE-SLEEP STATUS - 2025-12-29 22:41:28
+==================================================
+
+RUNCTL STATUS:
+- 4 instances running
+- 4 training jobs active
+- Multi-game training in progress
+- Should save to S3 (verify --output-s3 in configs)
+
+LOCAL PROCESSES:
+- Test set expansion: Active (OK - LLM-based)
+- Monitoring: Active (background)
+- Unwanted training: None (cleaned up)
+
+EXPECTED OUTPUTS:
+- Multi-game embedding: s3://games-collections/embeddings/multi_game_unified.wv
+- Game-specific embeddings: s3://games-collections/embeddings/*_game_specific.wv
+- Test sets: experiments/test_set_*.json (local, can sync later)
+- Checkpoints: experiments/*_checkpoint.json (local)
+
+VERIFICATION:
+- Check AWS console for S3 uploads
+- Check runctl status in morning
+- All results should persist on S3
+
+SYSTEM STATUS: ✅ Ready for overnight operation

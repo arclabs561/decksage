@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/llm_data_validator.py
+# hypothesis_version: 6.140.3
+
+[0.0, 0.2, 1.0, '\nCard Relationships:', '\nDeck Coherence:', '%Y%m%d_%H%M%S', '.env', '=', 'Cards work together?', 'Coherence problems', 'Confidence 0-1', 'DATA QUALITY REPORT', 'DataQualityValidator', 'HAS_PYDANTIC_AI', 'OPENROUTER_API_KEY', 'Overall quality 0-1', 'Problems found', '__main__', 'archetype', 'archetype_validation', 'auto', 'avg_confidence', 'card_relationships', 'cards', 'coherent', 'consistent', 'critical_issues', 'data_quality', 'data_quality_score', 'dataset', 'deck_coherence', 'deck_id', 'decks_validated', 'incoherent', 'inconsistent', 'issues', 'issues_by_archetype', 'makes_sense', 'name', 'note', 'problems', 'pydantic-ai required', 'reason', 'recommendations', 'suggested', 'summary', 'suspicious', 'suspicious_pairs', 'timestamp', 'total', 'total_decks', 'total_pairs', 'w']

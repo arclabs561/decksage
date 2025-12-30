@@ -1,0 +1,54 @@
+
+from pathlib import Path
+import subprocess
+import json
+import time
+from datetime import datetime
+
+def monitor():
+    print(f"\n[{datetime.now().strftime('%H:%M:%S')}] Status Check")
+    print("-" * 70)
+    
+    # Quick checks
+    magic_ft = Path("data/embeddings/trained_functional_text_magic.wv")
+    if magic_ft.exists():
+        size_mb = magic_ft.stat().st_size / (1024 * 1024)
+        print(f"✅ Magic FT: {size_mb:.1f} MB")
+    else:
+        print("⏳ Magic FT: Training...")
+    
+    # Test expansion
+    test_sets = {
+        "magic": Path("experiments/test_set_expanded_magic.json"),
+        "pokemon": Path("experiments/test_set_canonical_pokemon.json"),
+        "yugioh": Path("experiments/test_set_canonical_yugioh.json"),
+    }
+    
+    total = 0
+    for game, path in test_sets.items():
+        if path.exists():
+            try:
+                with open(path) as f:
+                    data = json.load(f)
+                    queries = data.get("queries", data) if isinstance(data, dict) else data
+                    total += len(queries)
+            except:
+                pass
+    
+    print(f"📊 Test sets: {total}/400 queries ({total/400*100:.1f}%)")
+    
+    # Runctl status
+    try:
+        result = subprocess.run(
+            ["../runctl/target/release/runctl", "status"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+        )
+        if result.returncode == 0:
+            print(f"📊 {result.stdout.strip()}")
+    except:
+        pass
+
+# Run once
+monitor()

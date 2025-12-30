@@ -1,0 +1,96 @@
+#!/bin/bash
+# Use existing AWS instance for hyperparameter search if available
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
+
+echo "🔍 Checking for existing AWS instances..."
+
+# Find available g4dn.xlarge instances
+AVAILABLE_INSTANCE=$(aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running" "Name=instance-type,Values=g4dn.xlarge" \
+    --query 'Reservations[*].Instances[*].InstanceId' \
+    --output text 2>/dev/null | head -1)
+
+INSTANCE_ID=""
+
+if [ -n "$AVAILABLE_INSTANCE" ] && [ "$AVAILABLE_INSTANCE" != "None" ] && [ "$AVAILABLE_INSTANCE" != "" ]; then
+    echo "✅ Found existing instance: $AVAILABLE_INSTANCE"
+    
+    # Verify instance is accessible
+    INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids "$AVAILABLE_INSTANCE" --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null || echo "unknown")
+    if [ "$INSTANCE_STATE" = "running" ]; then
+        echo "🚀 Using existing instance for hyperparameter search..."
+        INSTANCE_ID="$AVAILABLE_INSTANCE"
+    else
+        echo "⚠️  Instance $AVAILABLE_INSTANCE is not running (state: $INSTANCE_STATE), creating new one..."
+    fi
+fi
+
+if [ -z "$INSTANCE_ID" ] || [ "$INSTANCE_ID" = "" ]; then
+    echo "⏳ No suitable existing instance found, creating new one..."
+    
+    # Try creating with better error handling
+    INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot g4dn.xlarge 2>&1)
+    EXIT_CODE=$?
+    
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "⚠️  Failed to create g4dn.xlarge, trying t3.large..."
+        INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot t3.large 2>&1)
+        EXIT_CODE=$?
+    fi
+    
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "❌ Failed to create instance"
+        echo "Output: $INSTANCE_OUTPUT"
+        echo ""
+        echo "Troubleshooting:"
+        echo "  1. Check instance limits: aws service-quotas get-service-quota --service-code ec2 --quota-code L-34B43A08"
+        echo "  2. Check running instances: aws ec2 describe-instances --filters 'Name=instance-state-name,Values=running'"
+        exit 1
+    fi
+    
+    INSTANCE_ID=$(echo "$INSTANCE_OUTPUT" | grep -o 'i-[a-z0-9]*' | head -1)
+    
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "❌ Failed to extract instance ID"
+        echo "Output: $INSTANCE_OUTPUT"
+        exit 1
+    fi
+    
+    echo "✅ Instance created: $INSTANCE_ID"
+    echo "Waiting for instance to initialize..."
+    sleep 30
+fi
+
+# Run training (using SSM if SSH key not available)
+echo "Starting hyperparameter search..."
+
+# Try with SSM first (no SSH key needed)
+if $RUNCTL_BIN aws train "$INSTANCE_ID" \
+    src/ml/scripts/improve_embeddings_hyperparameter_search.py \
+    --output-s3 s3://games-collections/experiments/ \
+    --sync-code false \
+    -- \
+    --input s3://games-collections/processed/pairs_large.csv \
+    --output s3://games-collections/experiments/hyperparameter_results.json \
+    --test-set s3://games-collections/processed/test_set_canonical_magic.json 2>&1; then
+    echo "✅ Training started via SSM. Monitoring..."
+    $RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow
+else
+    echo "⚠️  SSM failed, trying with SSH..."
+    # Fallback to SSH if SSM doesn't work
+    export SSH_KEY_PATH="${SSH_KEY_PATH:-~/.ssh/id_rsa}"
+    $RUNCTL_BIN aws train "$INSTANCE_ID" \
+        src/ml/scripts/improve_embeddings_hyperparameter_search.py \
+        --output-s3 s3://games-collections/experiments/ \
+        -- \
+        --input s3://games-collections/processed/pairs_large.csv \
+        --output s3://games-collections/experiments/hyperparameter_results.json \
+        --test-set s3://games-collections/processed/test_set_canonical_magic.json
+    
+    echo "✅ Training started. Monitoring..."
+    $RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow
+fi

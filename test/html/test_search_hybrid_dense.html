@@ -1,0 +1,797 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>DeckSage Card Search - Hybrid Dense (High Info Density)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        body.dark-theme {
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+        body.dark-theme header {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .result-row {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .result-row:hover {
+            border-color: #3b82f6;
+        }
+        body.dark-theme input {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e5e7eb;
+        }
+        body.dark-theme .suggestions {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        body.dark-theme .theme-toggle {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e5e7eb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            padding: 32px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.01em;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        .search-box {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1a1a1a;
+        }
+        input::placeholder {
+            color: #9ca3af;
+        }
+        input:focus {
+            border-color: #3b82f6;
+        }
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+        .suggestion {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+        }
+        .suggestion:last-child {
+            border-bottom: none;
+        }
+        .suggestion:hover,
+        .suggestion.selected {
+            background: #f9fafb;
+        }
+        .suggestion img {
+            width: 60px;
+            height: 84px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+        }
+        .search-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .results {
+            margin-top: 32px;
+        }
+        .search-results-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .search-results-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        .zone-counts {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .zone-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #374151;
+        }
+        .zone-count strong {
+            font-weight: 600;
+        }
+        .result-zone {
+            margin-bottom: 32px;
+        }
+        .zone-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .zone-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        .zone-count-badge {
+            margin-left: auto;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .result-row {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            display: flex;
+            gap: 20px;
+        }
+        .result-row:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        .result-row.expanded {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+        }
+        .result-image-wrapper {
+            flex-shrink: 0;
+            position: relative;
+        }
+        .result-image {
+            width: 120px;
+            height: 168px;
+            object-fit: cover;
+            border-radius: 4px;
+            border: 1px solid #e5e7eb;
+            cursor: pointer;
+        }
+        .result-image:hover {
+            border-color: #3b82f6;
+        }
+        .result-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .result-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 2px;
+        }
+        .result-name strong {
+            color: #3b82f6;
+            font-weight: 700;
+        }
+        .result-explanation {
+            font-size: 12px;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .source-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid;
+        }
+        .source-badge.hybrid {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        .source-badge.keyword {
+            background: #dbeafe;
+            color: #1e40af;
+            border-color: #60a5fa;
+        }
+        .source-badge.semantic {
+            background: #ede9fe;
+            color: #5b21b6;
+            border-color: #a78bfa;
+        }
+        .score-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        .score-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        .expanded-content {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .detail-item {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .detail-item strong {
+            color: #1a1a1a;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .loading {
+            text-align: center;
+            padding: 48px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .card-preview {
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card-preview.visible {
+            opacity: 1;
+        }
+        .card-preview img {
+            width: 280px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        .card-zoom-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .card-zoom-modal img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+            cursor: default;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    <div class="container">
+        <header>
+            <h1>Deck Building Recommender</h1>
+            <p class="subtitle">Search for cards using type-ahead with images</p>
+        </header>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Type to search for cards (try: lightning, bolt, fire, etc.)..."
+                autocomplete="off"
+            />
+            <div class="suggestions" id="suggestions"></div>
+            <div class="search-hint">Use ↑↓ to navigate, Enter to select, Esc to close</div>
+        </div>
+        
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const resultsDiv = document.getElementById('results');
+        
+        let currentSuggestions = [];
+        let selectedSuggestionIndex = -1;
+        let expandedIndex = null;
+        let searchError = null;
+
+        function getImageUrl(cardName) {
+            const encoded = encodeURIComponent(cardName);
+            return `https://api.scryfall.com/cards/named?exact=${encoded}&format=image`;
+        }
+
+        function highlightQuery(text, query) {
+            if (!query || query.length < 2) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            const parts = text.split(regex);
+            return parts.map((part, i) => 
+                regex.test(part) ? `<strong>${part}</strong>` : part
+            ).join('');
+        }
+
+        function getSourceBadge(source) {
+            const badges = {
+                'hybrid': { text: 'HYBRID', class: 'hybrid' },
+                'meilisearch': { text: 'KEYWORD', class: 'keyword' },
+                'qdrant': { text: 'SEMANTIC', class: 'semantic' }
+            };
+            const badge = badges[source] || badges['hybrid'];
+            return `<span class="source-badge ${badge.class}">${badge.text}</span>`;
+        }
+
+        // Mock search function
+        async function mockSearch(query, limit = 20) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const mockResults = [
+                { card_name: 'Lightning Bolt', score: 0.95, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Deal 3 damage to any target.' } },
+                { card_name: 'Lightning Strike', score: 0.87, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Lightning Strike deals 3 damage to any target.' } },
+                { card_name: 'Shock', score: 0.82, source: 'meilisearch', metadata: { type_line: 'Instant', text: 'Shock deals 2 damage to any target.' } },
+                { card_name: 'Bolt of Keranos', score: 0.78, source: 'qdrant', metadata: { type_line: 'Instant', text: 'Bolt of Keranos deals 3 damage to target creature or player.' } },
+                { card_name: 'Chain Lightning', score: 0.75, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Chain Lightning deals 3 damage to any target.' } },
+                { card_name: 'Lava Spike', score: 0.72, source: 'meilisearch', metadata: { type_line: 'Sorcery', text: 'Lava Spike deals 3 damage to target player.' } },
+                { card_name: 'Rift Bolt', score: 0.68, source: 'qdrant', metadata: { type_line: 'Sorcery', text: 'Rift Bolt deals 3 damage to any target.' } },
+                { card_name: 'Burst Lightning', score: 0.65, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Burst Lightning deals 2 damage to any target.' } },
+            ];
+            
+            return {
+                query: query,
+                results: mockResults.slice(0, limit).map(r => ({
+                    ...r,
+                    score: r.score * (0.8 + Math.random() * 0.2)
+                }))
+            };
+        }
+
+        async function fetchSuggestions(query) {
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                currentSuggestions = [];
+                return;
+            }
+
+            try {
+                const data = await mockSearch(query, 8);
+                currentSuggestions = data.results;
+                renderSuggestions();
+            } catch (error) {
+                console.error('Suggestions error:', error);
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+
+        function renderSuggestions() {
+            if (currentSuggestions.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.style.display = 'block';
+            suggestionsDiv.innerHTML = currentSuggestions.map((result, index) => {
+                const escapedName = result.card_name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const highlightedName = highlightQuery(result.card_name, searchInput.value);
+                return `
+                    <div class="suggestion ${index === selectedSuggestionIndex ? 'selected' : ''}" 
+                         data-index="${index}"
+                         onclick="selectSuggestion('${escapedName}')"
+                         onmouseenter="highlightSuggestion(${index})">
+                        <img src="${getImageUrl(result.card_name)}" 
+                             alt="${result.card_name}"
+                             onerror="this.style.display='none'">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px;">${highlightedName}</div>
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 12px;">
+                                ${getSourceBadge(result.source)}
+                                <span style="color: #6b7280;">Score: ${result.score.toFixed(3)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function highlightSuggestion(index) {
+            if (index >= 0 && index < currentSuggestions.length) {
+                selectedSuggestionIndex = index;
+                renderSuggestions();
+            }
+        }
+
+        function selectSuggestion(cardName) {
+            searchInput.value = cardName;
+            suggestionsDiv.style.display = 'none';
+            selectedSuggestionIndex = -1;
+            currentSuggestions = [];
+            performSearch(cardName);
+        }
+
+        async function performSearch(query) {
+            if (!resultsDiv) return;
+            
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+            searchError = null;
+            
+            try {
+                const data = await mockSearch(query, 20);
+                
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="loading">
+                            <div style="font-size: 18px; margin-bottom: 16px; color: #1a1a1a;">No results found for "${query}"</div>
+                            <div style="font-size: 14px; color: #6b7280;">Try a different search term</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group results by source type
+                const groupedResults = {
+                    hybrid: data.results.filter(r => r.source === 'hybrid'),
+                    meilisearch: data.results.filter(r => r.source === 'meilisearch'),
+                    qdrant: data.results.filter(r => r.source === 'qdrant')
+                };
+                
+                const zoneLabels = {
+                    hybrid: { name: 'Hybrid Matches', icon: '⚡' },
+                    meilisearch: { name: 'Keyword Matches', icon: '🔍' },
+                    qdrant: { name: 'Semantic Matches', icon: '🧠' }
+                };
+                
+                const header = `
+                    <div class="search-results-header">
+                        <h2>Search Results for "${query}"</h2>
+                        <div class="zone-counts">
+                            <span class="zone-count">Total: <strong>${data.results.length}</strong></span>
+                            ${Object.entries(groupedResults).map(([key, results]) => 
+                                results.length > 0 ? `
+                                    <span class="zone-count">
+                                        ${zoneLabels[key].icon} ${zoneLabels[key].name}: <strong>${results.length}</strong>
+                                    </span>
+                                ` : ''
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // Render results grouped by zone
+                let resultsHtml = '';
+                Object.entries(groupedResults).forEach(([sourceKey, results]) => {
+                    if (results.length === 0) return;
+                    
+                    const zone = zoneLabels[sourceKey];
+                    resultsHtml += `
+                        <div class="result-zone">
+                            <div class="zone-header">
+                                <h3>${zone.icon} ${zone.name}</h3>
+                                <span class="zone-count-badge">${results.length} ${results.length === 1 ? 'card' : 'cards'}</span>
+                            </div>
+                            ${results.map((result, zoneIndex) => {
+                                const index = data.results.indexOf(result);
+                                const highlightedName = highlightQuery(result.card_name, query.toLowerCase());
+                                const explanation = result.source === 'hybrid' 
+                                    ? 'Found via both text and semantic search'
+                                    : result.source === 'meilisearch'
+                                    ? 'Matched by text/keyword search'
+                                    : 'Matched by semantic similarity';
+                                
+                                return `
+                                    <div class="result-row ${expandedIndex === index ? 'expanded' : ''}" 
+                                         onclick="toggleExpand(${index})">
+                                        <div class="result-image-wrapper" 
+                                             onmouseenter="showCardPreview(event, '${result.card_name.replace(/'/g, "\\'")}', '${getImageUrl(result.card_name).replace(/'/g, "\\'")}')"
+                                             onmouseleave="hideCardPreview()">
+                                            <img src="${getImageUrl(result.card_name)}" 
+                                                 class="result-image"
+                                                 alt="${result.card_name}"
+                                                 onclick="event.stopPropagation(); showCardZoom('${getImageUrl(result.card_name).replace(/'/g, "\\'")}', '${result.card_name.replace(/'/g, "\\'")}')"
+                                                 onerror="if(this.src !== 'https://via.placeholder.com/200x280?text=No+Image') this.src='https://via.placeholder.com/200x280?text=No+Image';">
+                                        </div>
+                                        <div class="result-content">
+                                            <div class="result-name">${highlightedName}</div>
+                                            <div class="result-explanation">${explanation}</div>
+                                            <div class="result-meta">
+                                                ${getSourceBadge(result.source)}
+                                                <div class="score-display">
+                                                    <span class="score-label">Score</span>
+                                                    <span class="score-value">${result.score.toFixed(3)}</span>
+                                                </div>
+                                                ${result.metadata?.type_line ? `
+                                                    <div style="font-size: 13px; color: #6b7280;">
+                                                        Type: ${result.metadata.type_line}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                            ${expandedIndex === index ? `
+                                                <div class="expanded-content">
+                                                    <div class="detail-item"><strong>Card Name:</strong> ${result.card_name}</div>
+                                                    <div class="detail-item"><strong>Relevance Score:</strong> ${result.score.toFixed(4)}</div>
+                                                    <div class="detail-item"><strong>Search Source:</strong> ${result.source}</div>
+                                                    ${result.metadata?.type_line ? `<div class="detail-item"><strong>Type:</strong> ${result.metadata.type_line}</div>` : ''}
+                                                    ${result.metadata?.text ? `<div class="detail-item"><strong>Text:</strong> ${result.metadata.text}</div>` : ''}
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = header + resultsHtml;
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="loading">
+                        <div style="color: #dc2626;">Error: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleExpand(index) {
+            expandedIndex = expandedIndex === index ? null : index;
+            performSearch(searchInput.value);
+        }
+
+        // Card preview on hover
+        let previewTimeout;
+        let cardPreview = null;
+
+        function showCardPreview(event, cardName, imageUrl) {
+            clearTimeout(previewTimeout);
+            
+            if (!cardPreview) {
+                cardPreview = document.createElement('div');
+                cardPreview.className = 'card-preview';
+                cardPreview.innerHTML = `<img src="${imageUrl}" alt="${cardName}" />`;
+                document.body.appendChild(cardPreview);
+            }
+            
+            previewTimeout = setTimeout(() => {
+                if (cardPreview) {
+                    const rect = event.target.getBoundingClientRect();
+                    let left = rect.right + 20;
+                    let top = rect.top;
+                    
+                    if (left + 280 > window.innerWidth) {
+                        left = rect.left - 300;
+                    }
+                    if (top + 400 > window.innerHeight) {
+                        top = window.innerHeight - 400 - 20;
+                    }
+                    if (top < 20) {
+                        top = 20;
+                    }
+                    
+                    cardPreview.style.left = left + 'px';
+                    cardPreview.style.top = top + 'px';
+                    cardPreview.querySelector('img').src = imageUrl;
+                    cardPreview.classList.add('visible');
+                }
+            }, 300);
+        }
+
+        function hideCardPreview() {
+            clearTimeout(previewTimeout);
+            if (cardPreview) {
+                cardPreview.classList.remove('visible');
+            }
+        }
+
+        // Card zoom modal
+        let zoomModal = null;
+        
+        function showCardZoom(imageUrl, cardName) {
+            if (!zoomModal) {
+                zoomModal = document.createElement('div');
+                zoomModal.className = 'card-zoom-modal';
+                zoomModal.innerHTML = `<img src="${imageUrl}" alt="${cardName}" />`;
+                zoomModal.onclick = () => hideCardZoom();
+                document.body.appendChild(zoomModal);
+            }
+            
+            zoomModal.querySelector('img').src = imageUrl;
+            zoomModal.querySelector('img').alt = cardName;
+            document.body.style.overflow = 'hidden';
+            
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    hideCardZoom();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        function hideCardZoom() {
+            if (zoomModal) {
+                zoomModal.remove();
+                zoomModal = null;
+            }
+            document.body.style.overflow = '';
+        }
+
+        // Event listeners
+        let debounceTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                fetchSuggestions(e.target.value);
+            }, 200);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            const isSuggestionsVisible = suggestionsDiv.style.display === 'block';
+            
+            if (isSuggestionsVisible && currentSuggestions.length > 0) {
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, currentSuggestions.length - 1);
+                        renderSuggestions();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                        renderSuggestions();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < currentSuggestions.length) {
+                            selectSuggestion(currentSuggestions[selectedSuggestionIndex].card_name);
+                        } else {
+                            performSearch(searchInput.value);
+                        }
+                        break;
+                    case 'Escape':
+                        suggestionsDiv.style.display = 'none';
+                        selectedSuggestionIndex = -1;
+                        break;
+                }
+            } else if (e.key === 'Enter') {
+                performSearch(searchInput.value);
+            }
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (currentSuggestions.length > 0) {
+                suggestionsDiv.style.display = 'block';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (suggestionsDiv && searchInput && 
+                !suggestionsDiv.contains(e.target) && 
+                e.target !== searchInput) {
+                suggestionsDiv.style.display = 'none';
+                selectedSuggestionIndex = -1;
+            }
+        });
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>
+

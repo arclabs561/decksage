@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <title>Model Comparison Report</title>
+    <style>
+        :root {
+            color-scheme: light dark;
+            --bg: #ffffff;
+            --fg: #1a1a1a;
+            --fg-muted: #666666;
+            --border: #e5e5e5;
+            --accent: #0066cc;
+            --code-bg: #f6f6f6;
+            --success: #16a34a;
+        }
+        
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg: #1a1a1a;
+                --fg: #e0e0e0;
+                --fg-muted: #999999;
+                --border: #333333;
+                --accent: #4a9eff;
+                --code-bg: #2d2d2d;
+                --success: #22c55e;
+            }
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            color: var(--fg);
+            line-height: 1.6;
+            padding: clamp(1rem, 3vw, 2rem);
+        }
+        
+        .container { max-width: 1400px; margin: 0 auto; }
+        
+        header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        h1 {
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            letter-spacing: -0.02em;
+        }
+        
+        .timestamp { color: var(--fg-muted); font-size: 0.85rem; }
+        
+        h2 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin: 2rem 0 0.75rem 0;
+            letter-spacing: -0.01em;
+        }
+        
+        .winner {
+            background: var(--code-bg);
+            border: 2px solid var(--success);
+            border-radius: 4px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+        }
+        
+        .winner h2 { margin-top: 0; color: var(--success); font-size: 1.2rem; }
+        .winner p { margin: 0.5rem 0 0 0; }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.85rem;
+        }
+        
+        th, td {
+            padding: 0.5rem;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+        }
+        
+        tr:hover { background: var(--code-bg); }
+        
+        .metric {
+            font-family: "SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace;
+            font-size: 0.95em;
+        }
+        
+        .best { background: rgba(22, 163, 74, 0.1); }
+        
+        .viz { margin: 1.5rem 0; }
+        .viz p { margin: 0.25rem 0; }
+        .bar { background: var(--accent); height: 18px; border-radius: 2px; display: inline-block; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Model Comparison Report</h1>
+            <p class="timestamp">Generated: 2025-09-30 22:20:52</p>
+        </header>
+        
+        <div class="winner">
+            <h2>Winner: magic_500decks_pecanpy (cosine)</h2>
+            <p><span class="metric">P@10: 0.5000</span> | <span class="metric">NDCG@10: 0.8913</span> | <span class="metric">MRR: 0.8400</span></p>
+        </div>
+        
+        <h2>Full Results</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Rank</th>
+                    <th>Model</th>
+                    <th>Similarity</th>
+                    <th>P@5</th>
+                    <th>P@10</th>
+                    <th>P@20</th>
+                    <th>NDCG@5</th>
+                    <th>NDCG@10</th>
+                    <th>NDCG@20</th>
+                    <th>MRR</th>
+                </tr>
+            </thead>
+            <tbody>
+
+                <tr class="best">
+                    <td>1</td>
+                    <td><strong>magic_500decks_pecanpy</strong></td>
+                    <td>cosine</td>
+                    <td class="metric">0.6400</td>
+                    <td class="metric">0.5000</td>
+                    <td class="metric">0.4858</td>
+                    <td class="metric">0.7873</td>
+                    <td class="metric">0.8913</td>
+                    <td class="metric">0.8958</td>
+                    <td class="metric">0.8400</td>
+                </tr>
+
+            </tbody>
+        </table>
+        
+        <h2>P@10 Comparison (Visual)</h2>
+        <div class="viz">
+
+            <p>
+                <strong style="display: inline-block; width: 180px; font-size: 0.9em;">magic_500decks_pecanpy</strong>
+                <span class="bar" style="width: 300px;"></span>
+                <span class="metric" style="margin-left: 8px;">0.5000</span>
+            </p>
+</div>
+    </div>
+</body>
+</html>

@@ -1,10 +1,36 @@
-"""Test evaluation utilities."""
+"""Unit tests for evaluation metrics on a small deterministic set."""
 
 from ..utils.evaluation import (
     compute_precision_at_k,
     evaluate_similarity,
     jaccard_similarity,
 )
+
+
+def test_small_set_metrics_positive_and_mrr_is_one():
+    """Ensure P@K and nDCG are > 0 and MRR equals 1.0 on crafted data.
+
+    We construct a tiny test set and a similarity function that always ranks
+    a relevant item first for each query, guaranteeing MRR=1.0 while keeping
+    other metrics strictly positive.
+    """
+    test_set = {
+        "Q1": {"highly_relevant": ["A"], "relevant": ["B"]},
+        "Q2": {"highly_relevant": ["C"]},
+    }
+
+    def similarity_func(query: str, k: int):
+        if query == "Q1":
+            return [("A", 1.0), ("X", 0.5), ("B", 0.4)][:k]
+        if query == "Q2":
+            return [("C", 1.0), ("Z", 0.1), ("Y", 0.05)][:k]
+        return []
+
+    results = evaluate_similarity(test_set, similarity_func, top_k=3, verbose=False)
+
+    assert results["p@3"] > 0.0
+    assert results["ndcg@3"] > 0.0
+    assert results["mrr@3"] == 1.0
 
 
 def test_compute_precision_at_k_perfect():
@@ -73,6 +99,23 @@ def test_jaccard_similarity_empty():
     assert jaccard_similarity(set(), set()) == 0.0
     assert jaccard_similarity({"a"}, set()) == 0.0
     assert jaccard_similarity(set(), {"a"}) == 0.0
+
+
+def test_evaluate_similarity_small_set():
+    test_set = {
+        "Lightning Bolt": {
+            "highly_relevant": ["Chain Lightning"],
+            "relevant": ["Lava Spike"],
+        }
+    }
+
+    def sim_fn(q, k):
+        return [("Chain Lightning", 0.9), ("Lava Spike", 0.8)][:k]
+
+    res = evaluate_similarity(test_set, sim_fn, top_k=2)
+    assert res["p@2"] > 0
+    assert res["ndcg@2"] > 0
+    assert res["mrr@2"] == 1.0
 
 
 def test_evaluate_similarity_basic():

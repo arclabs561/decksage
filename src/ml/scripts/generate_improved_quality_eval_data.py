@@ -1,0 +1,605 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Generate improved quality evaluation data with game-specific filters and better edge case detection.
+
+Improvements:
+1. Game-specific filters (basic lands, energy cards, etc.)
+2. Better edge case detection (adversarial pairs, format-specific)
+3. Functional role clustering
+4. Archetype-aware sampling
+5. Quality validation with detailed metrics
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import random
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Import game filters (inline to avoid module issues)
+GAME_FILTERS = {
+    "magic": {
+        "basic_lands": {"Plains", "Island", "Swamp", "Mountain", "Forest"},
+        "common_lands": {
+            "Plains", "Island", "Swamp", "Mountain", "Forest",
+            "Snow-Covered Plains", "Snow-Covered Island", "Snow-Covered Swamp",
+            "Snow-Covered Mountain", "Snow-Covered Forest", "Wastes",
+        },
+        "staples": {"Command Tower", "Evolving Wilds", "Terramorphic Expanse", "Sol Ring", "Arcane Signet"},
+    },
+    "yugioh": {"staples": set()},
+    "pokemon": {
+        "basic_energy": {
+            "Grass Energy", "Fire Energy", "Water Energy", "Lightning Energy",
+            "Psychic Energy", "Fighting Energy", "Darkness Energy", "Metal Energy", "Fairy Energy",
+        },
+        "special_energy": set(),
+    },
+}
+
+def get_filter_set(game: str, level: str = "basic") -> set:
+    """Get filter set for a game."""
+    game_lower = game.lower()
+    if game_lower == "magic":
+        if level == "basic":
+            return GAME_FILTERS["magic"]["basic_lands"]
+        elif level == "common":
+            return GAME_FILTERS["magic"]["common_lands"]
+        elif level == "all":
+            return GAME_FILTERS["magic"]["common_lands"] | GAME_FILTERS["magic"]["staples"]
+    elif game_lower == "pokemon":
+        if level in ("basic", "energy"):
+            return GAME_FILTERS["pokemon"]["basic_energy"]
+        elif level == "all":
+            return GAME_FILTERS["pokemon"]["basic_energy"] | GAME_FILTERS["pokemon"]["special_energy"]
+    elif game_lower == "yugioh":
+        return GAME_FILTERS["yugioh"]["staples"]
+    return set()
+
+
+def filter_game_specific_cards(
+    cards: list[str],
+    game: str,
+    filter_level: str = "basic",
+) -> list[str]:
+    """Filter out game-specific common cards (basic lands, energy, etc.)."""
+    filter_set = get_filter_set(game, filter_level)
+    return [c for c in cards if c not in filter_set]
+
+
+def generate_functional_role_queries(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    num_queries: int = 50,
+) -> list[dict[str, Any]]:
+    """
+    Generate queries based on functional roles (removal, card draw, ramp, etc.).
+    Uses co-occurrence patterns to identify functional groups.
+    """
+    if not HAS_DEPS:
+        return []
+    
+    print(f"📊 Generating functional role queries for {game}...")
+    
+    df = pd.read_csv(pairs_csv, nrows=20000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Build card -> neighbors mapping
+    card_neighbors = defaultdict(set)
+    card_freq = Counter()
+    
+    for _, row in df.iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        count = row[count_col]
+        
+        card_neighbors[card1].add(card2)
+        card_neighbors[card2].add(card1)
+        card_freq[card1] += count
+        card_freq[card2] += count
+    
+    # Filter game-specific cards
+    all_cards = list(card_freq.keys())
+    filtered_cards = filter_game_specific_cards(all_cards, game, "basic")
+    
+    # Sample high-frequency cards as functional role seeds
+    filtered_freq = {c: card_freq[c] for c in filtered_cards}
+    top_cards = sorted(filtered_freq.items(), key=lambda x: x[1], reverse=True)[:num_queries * 3]
+    
+    queries = []
+    seen_queries = set()
+    
+    for card, _ in top_cards:
+        if card in seen_queries:
+            continue
+        
+        neighbors = card_neighbors[card]
+        if len(neighbors) < 5:
+            continue
+        
+        # Filter neighbors
+        filtered_neighbors = filter_game_specific_cards(list(neighbors), game, "basic")
+        
+        if len(filtered_neighbors) >= 5:
+            queries.append({
+                "query": card,
+                "type": "functional_role",
+                "highly_relevant": filtered_neighbors[:5],
+                "relevant": filtered_neighbors[5:10] if len(filtered_neighbors) >= 10 else [],
+                "somewhat_relevant": filtered_neighbors[10:15] if len(filtered_neighbors) >= 15 else [],
+                "difficulty": "medium",
+            })
+            seen_queries.add(card)
+        
+        if len(queries) >= num_queries:
+            break
+    
+    print(f"  ✅ Generated {len(queries)} functional role queries")
+    return queries
+
+
+def generate_archetype_aware_queries(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    num_queries: int = 50,
+) -> list[dict[str, Any]]:
+    """
+    Generate queries that are archetype-aware.
+    Cards that appear together in many decks = archetype staples.
+    """
+    if not HAS_DEPS:
+        return []
+    
+    print(f"📊 Generating archetype-aware queries for {game}...")
+    
+    df = pd.read_csv(pairs_csv, nrows=20000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Find high co-occurrence pairs (archetype staples)
+    df_high = df[df[count_col] >= 20].sort_values(count_col, ascending=False)
+    
+    queries = []
+    seen_queries = set()
+    
+    for _, row in df_high.head(num_queries * 2).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        count = row[count_col]
+        
+        # Filter game-specific cards
+        if card1 in get_filter_set(game, "basic") or card2 in get_filter_set(game, "basic"):
+            continue
+        
+        if card1 not in seen_queries:
+            # Find other cards that co-occur with card1
+            cooccurring = set()
+            for _, r in df[df[name1_col] == card1].iterrows():
+                cooccurring.add(r[name2_col])
+            for _, r in df[df[name2_col] == card1].iterrows():
+                cooccurring.add(r[name1_col])
+            
+            filtered_cooccurring = filter_game_specific_cards(list(cooccurring), game, "basic")
+            
+            if len(filtered_cooccurring) >= 5:
+                queries.append({
+                    "query": card1,
+                    "type": "archetype_aware",
+                    "highly_relevant": filtered_cooccurring[:5],
+                    "relevant": filtered_cooccurring[5:10] if len(filtered_cooccurring) >= 10 else [],
+                    "somewhat_relevant": filtered_cooccurring[10:15] if len(filtered_cooccurring) >= 15 else [],
+                    "difficulty": "easy" if count >= 50 else "medium",
+                })
+                seen_queries.add(card1)
+        
+        if len(queries) >= num_queries:
+            break
+    
+    print(f"  ✅ Generated {len(queries)} archetype-aware queries")
+    return queries
+
+
+def generate_adversarial_pairs(
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+    num_queries: int = 30,
+) -> list[dict[str, Any]]:
+    """
+    Generate adversarial pairs: cards with high embedding similarity but different functions.
+    These test whether embeddings capture functional similarity vs. just statistical patterns.
+    """
+    if not HAS_DEPS:
+        return []
+    
+    print(f"📊 Generating adversarial pairs for {game}...")
+    
+    if not embedding_path or not embedding_path.exists():
+        print(f"  ⚠️  Embedding not available, skipping adversarial pairs")
+        return []
+    
+    try:
+        wv = KeyedVectors.load(str(embedding_path))
+    except Exception as e:
+        print(f"  ⚠️  Could not load embeddings: {e}")
+        return []
+    
+    df = pd.read_csv(pairs_csv, nrows=10000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # Find cards with low co-occurrence but potentially high embedding similarity
+    df_low = df[df[count_col] <= 5].sort_values(count_col, ascending=True)
+    
+    adversarial = []
+    vocab_cards = set(wv.key_to_index.keys())
+    
+    for _, row in df_low.head(num_queries * 10).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        
+        # Both must be in vocabulary
+        if card1 not in vocab_cards or card2 not in vocab_cards:
+            continue
+        
+        # Filter game-specific cards
+        if card1 in get_filter_set(game, "basic") or card2 in get_filter_set(game, "basic"):
+            continue
+        
+        try:
+            # Check embedding similarity
+            similarity = wv.similarity(card1, card2)
+            
+            # High embedding similarity but low co-occurrence = adversarial pair
+            if similarity > 0.5:  # High embedding similarity
+                adversarial.append({
+                    "query": card1,
+                    "type": "adversarial_pair",
+                    "highly_relevant": [],
+                    "relevant": [],
+                    "somewhat_relevant": [card2],  # Should NOT be similar (adversarial)
+                    "difficulty": "hard",
+                    "embedding_similarity": float(similarity),
+                    "cooccurrence": int(row[count_col]),
+                })
+        except KeyError:
+            continue
+        
+        if len(adversarial) >= num_queries:
+            break
+    
+    print(f"  ✅ Generated {len(adversarial)} adversarial pairs")
+    return adversarial
+
+
+def generate_format_specific_queries(
+    pairs_csv: Path,
+    game: str = "magic",
+    num_queries: int = 30,
+) -> list[dict[str, Any]]:
+    """
+    Generate format-specific queries.
+    For Magic: Modern, Legacy, Commander, etc.
+    For Pokemon: Standard, Expanded
+    For Yu-Gi-Oh: Advanced, Traditional
+    """
+    if not HAS_DEPS:
+        return []
+    
+    print(f"📊 Generating format-specific queries for {game}...")
+    
+    # For now, use high co-occurrence as proxy for format staples
+    # In production, would parse deck JSONL for format metadata
+    df = pd.read_csv(pairs_csv, nrows=10000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    count_col = df.columns[2] if len(df.columns) > 2 else df.columns[-1]
+    
+    # High co-occurrence = format staples together
+    df_sorted = df.sort_values(count_col, ascending=False)
+    
+    queries = []
+    seen_queries = set()
+    
+    for _, row in df_sorted.head(num_queries * 3).iterrows():
+        card1, card2 = row[name1_col], row[name2_col]
+        count = row[count_col]
+        
+        # Filter game-specific cards
+        if card1 in get_filter_set(game, "basic") or card2 in get_filter_set(game, "basic"):
+            continue
+        
+        if count >= 30 and card1 not in seen_queries:  # High co-occurrence threshold
+            queries.append({
+                "query": card1,
+                "type": "format_specific",
+                "highly_relevant": [card2],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "difficulty": "medium",
+            })
+            seen_queries.add(card1)
+        
+        if len(queries) >= num_queries:
+            break
+    
+    print(f"  ✅ Generated {len(queries)} format-specific queries")
+    return queries
+
+
+def comprehensive_quality_validation(
+    test_set: dict[str, Any],
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    game: str = "magic",
+) -> dict[str, Any]:
+    """
+    Comprehensive quality validation with detailed metrics.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Comprehensive quality validation for {game}...")
+    
+    queries = test_set.get("queries", {})
+    
+    # Load training data
+    df = pd.read_csv(pairs_csv, nrows=20000)
+    name1_col = df.columns[0]
+    name2_col = df.columns[1]
+    all_cards = set(df[name1_col].unique()) | set(df[name2_col].unique())
+    
+    # Filter set
+    filter_set = get_filter_set(game, "basic")
+    
+    validation = {
+        "total_queries": len(queries),
+        "coverage": {
+            "in_training_data": 0,
+            "not_in_training_data": 0,
+            "coverage_percentage": 0.0,
+            "filtered_cards": 0,
+        },
+        "label_statistics": {
+            "queries_with_labels": 0,
+            "avg_highly_relevant": 0.0,
+            "avg_relevant": 0.0,
+            "avg_somewhat_relevant": 0.0,
+        },
+        "difficulty_distribution": Counter(),
+        "type_distribution": Counter(),
+        "quality_metrics": {
+            "diversity_score": 0.0,  # Based on type distribution entropy
+            "edge_case_coverage": 0,
+            "adversarial_pairs": 0,
+        },
+    }
+    
+    # Calculate coverage
+    for query in queries.keys():
+        if query in filter_set:
+            validation["coverage"]["filtered_cards"] += 1
+        elif query in all_cards:
+            validation["coverage"]["in_training_data"] += 1
+        else:
+            validation["coverage"]["not_in_training_data"] += 1
+    
+    if validation["total_queries"] > 0:
+        validation["coverage"]["coverage_percentage"] = (
+            validation["coverage"]["in_training_data"] / validation["total_queries"] * 100
+        )
+    
+    # Calculate label statistics
+    total_highly = 0
+    total_relevant = 0
+    total_somewhat = 0
+    
+    for query, labels in queries.items():
+        query_type = labels.get("type", "unknown")
+        validation["type_distribution"][query_type] += 1
+        
+        difficulty = labels.get("difficulty", "unknown")
+        validation["difficulty_distribution"][difficulty] += 1
+        
+        highly = len(labels.get("highly_relevant", []))
+        relevant = len(labels.get("relevant", []))
+        somewhat = len(labels.get("somewhat_relevant", []))
+        
+        if highly + relevant + somewhat > 0:
+            validation["label_statistics"]["queries_with_labels"] += 1
+            total_highly += highly
+            total_relevant += relevant
+            total_somewhat += somewhat
+        
+        # Count edge cases and adversarial pairs
+        if "edge_case" in query_type or "adversarial" in query_type:
+            validation["quality_metrics"]["edge_case_coverage"] += 1
+        if "adversarial" in query_type:
+            validation["quality_metrics"]["adversarial_pairs"] += 1
+    
+    # Calculate averages
+    if validation["label_statistics"]["queries_with_labels"] > 0:
+        n = validation["label_statistics"]["queries_with_labels"]
+        validation["label_statistics"]["avg_highly_relevant"] = total_highly / n
+        validation["label_statistics"]["avg_relevant"] = total_relevant / n
+        validation["label_statistics"]["avg_somewhat_relevant"] = total_somewhat / n
+    
+    # Calculate diversity score (entropy of type distribution)
+    type_counts = list(validation["type_distribution"].values())
+    if type_counts:
+        total = sum(type_counts)
+        probs = [c / total for c in type_counts if c > 0]
+        entropy = -sum(p * np.log2(p) for p in probs if p > 0)
+        max_entropy = np.log2(len(type_counts)) if len(type_counts) > 1 else 1.0
+        validation["quality_metrics"]["diversity_score"] = entropy / max_entropy if max_entropy > 0 else 0.0
+    
+    # Convert Counters to dicts
+    validation["difficulty_distribution"] = dict(validation["difficulty_distribution"])
+    validation["type_distribution"] = dict(validation["type_distribution"])
+    
+    print(f"  ✅ Validation complete:")
+    print(f"     Coverage: {validation['coverage']['coverage_percentage']:.1f}%")
+    print(f"     Diversity: {validation['quality_metrics']['diversity_score']:.3f}")
+    print(f"     Edge cases: {validation['quality_metrics']['edge_case_coverage']}")
+    print(f"     Adversarial pairs: {validation['quality_metrics']['adversarial_pairs']}")
+    
+    return validation
+
+
+def main() -> int:
+    """Generate improved quality evaluation data."""
+    parser = argparse.ArgumentParser(
+        description="Generate improved quality evaluation data with game-specific filters"
+    )
+    parser.add_argument("--game", type=str, default="magic",
+                       choices=["magic", "pokemon", "yugioh"],
+                       help="Game to generate data for")
+    parser.add_argument("--pairs-csv", type=str, required=True,
+                       help="Pairs CSV file")
+    parser.add_argument("--embedding", type=str, help="Embedding file (.wv)")
+    parser.add_argument("--output", type=str,
+                       default="experiments/test_set_improved_quality_{game}.json",
+                       help="Output test set JSON")
+    parser.add_argument("--functional-num", type=int, default=50,
+                       help="Number of functional role queries")
+    parser.add_argument("--archetype-num", type=int, default=50,
+                       help="Number of archetype-aware queries")
+    parser.add_argument("--adversarial-num", type=int, default=30,
+                       help="Number of adversarial pairs")
+    parser.add_argument("--format-num", type=int, default=30,
+                       help="Number of format-specific queries")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    pairs_csv = Path(args.pairs_csv)
+    if not pairs_csv.exists():
+        print(f"❌ Pairs CSV not found: {pairs_csv}")
+        return 1
+    
+    embedding_path = Path(args.embedding) if args.embedding else None
+    if args.embedding and embedding_path and not embedding_path.exists():
+        print(f"⚠️  Embedding not found: {embedding_path}, continuing without adversarial pairs")
+        embedding_path = None
+    
+    output_path = Path(args.output.replace("{game}", args.game))
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    print("=" * 70)
+    print("Generate Improved Quality Evaluation Data")
+    print("=" * 70)
+    print(f"\nGame: {args.game}")
+    print(f"Pairs CSV: {pairs_csv}")
+    if embedding_path:
+        print(f"Embedding: {embedding_path}")
+    print(f"Output: {output_path}\n")
+    
+    # Generate all query types
+    functional_queries = generate_functional_role_queries(
+        pairs_csv,
+        embedding_path=embedding_path,
+        game=args.game,
+        num_queries=args.functional_num,
+    )
+    
+    archetype_queries = generate_archetype_aware_queries(
+        pairs_csv,
+        embedding_path=embedding_path,
+        game=args.game,
+        num_queries=args.archetype_num,
+    )
+    
+    adversarial_queries = generate_adversarial_pairs(
+        pairs_csv,
+        embedding_path=embedding_path,
+        game=args.game,
+        num_queries=args.adversarial_num,
+    )
+    
+    format_queries = generate_format_specific_queries(
+        pairs_csv,
+        game=args.game,
+        num_queries=args.format_num,
+    )
+    
+    # Combine all queries
+    all_queries = {}
+    
+    for query_data in functional_queries + archetype_queries + adversarial_queries + format_queries:
+        query = query_data["query"]
+        if query not in all_queries:
+            all_queries[query] = {
+                "type": query_data["type"],
+                "highly_relevant": [],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "difficulty": query_data.get("difficulty", "medium"),
+            }
+        
+        # Merge labels
+        for level in ["highly_relevant", "relevant", "somewhat_relevant"]:
+            all_queries[query][level].extend(query_data.get(level, []))
+    
+    # Deduplicate labels
+    for query in all_queries:
+        for level in ["highly_relevant", "relevant", "somewhat_relevant"]:
+            all_queries[query][level] = list(set(all_queries[query][level]))
+    
+    # Create test set
+    test_set = {
+        "game": args.game,
+        "sources": {
+            "functional_role": len(functional_queries),
+            "archetype_aware": len(archetype_queries),
+            "adversarial_pairs": len(adversarial_queries),
+            "format_specific": len(format_queries),
+        },
+        "queries": all_queries,
+    }
+    
+    # Comprehensive validation
+    validation = comprehensive_quality_validation(test_set, pairs_csv, embedding_path, args.game)
+    test_set["quality_validation"] = validation
+    
+    # Save
+    with open(output_path, "w") as f:
+        json.dump(test_set, f, indent=2)
+    
+    print(f"\n✅ Improved quality test set created: {output_path}")
+    print(f"   Total queries: {len(all_queries)}")
+    print(f"   Coverage: {validation['coverage']['coverage_percentage']:.1f}%")
+    print(f"   Diversity: {validation['quality_metrics']['diversity_score']:.3f}")
+    print(f"   Edge cases: {validation['quality_metrics']['edge_case_coverage']}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

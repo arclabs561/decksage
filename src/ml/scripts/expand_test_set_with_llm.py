@@ -1,0 +1,429 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Expand test set using LLM to generate queries and labels.
+
+Uses multi-judge system for high-quality labels with IAA tracking.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import random
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic_ai import Agent
+    from pydantic import BaseModel, Field
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import existing components with enhanced versions
+import sys
+from pathlib import Path as P
+
+script_dir = P(__file__).parent
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
+# Try enhanced versions first
+try:
+    from generate_queries_enhanced import (
+        EnhancedTestQuery as TestQuery,
+        EnhancedTestQueryBatch as TestQueryBatch,
+        make_enhanced_query_agent as make_query_generation_agent,
+        generate_enhanced_queries as generate_queries,
+    )
+    HAS_ENHANCED_QUERIES = True
+except ImportError:
+    HAS_ENHANCED_QUERIES = False
+    try:
+        from improve_labeling_expand_test_set import (
+            TestQuery,
+            TestQueryBatch,
+            make_query_generation_agent,
+            generate_queries,
+        )
+    except ImportError:
+        HAS_QUERY_GEN = False
+        TestQuery = None
+        TestQueryBatch = None
+        make_query_generation_agent = None
+        generate_queries = None
+
+try:
+    from generate_labels_multi_judge import generate_labels_multi_judge
+    HAS_MULTI_JUDGE = True
+    # Check if parallel is available
+    try:
+        import concurrent.futures
+        USE_PARALLEL = True
+    except ImportError:
+        USE_PARALLEL = False
+except ImportError:
+    HAS_MULTI_JUDGE = False
+    generate_labels_multi_judge = None
+    USE_PARALLEL = False
+
+HAS_QUERY_GEN = make_query_generation_agent is not None
+
+
+def expand_test_set(
+    existing_test_set_path: Path,
+    output_path: Path,
+    num_new_queries: int = 50,
+    num_judges: int = 3,
+    batch_size: int = 10,
+    parallel_judges: bool = True,  # Use parallel execution for multi-judge
+    game: str | None = None,  # Game name - will be detected from test set if not provided
+) -> dict[str, Any]:
+    """
+    Expand test set with new queries and labels.
+    
+    Strategy:
+    1. Generate new query candidates using LLM
+    2. Filter out queries already in test set
+    3. Generate labels using multi-judge system
+    4. Merge with existing test set
+    """
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required")
+        return {}
+    
+    if not HAS_MULTI_JUDGE or not HAS_QUERY_GEN:
+        logger.error("Required components not available")
+        return {}
+    
+    # Load existing test set
+    existing_queries = set()
+    existing_data = {}
+    
+    if existing_test_set_path.exists():
+        with open(existing_test_set_path) as f:
+            data = json.load(f)
+        
+        # Detect game from metadata if not provided
+        if not game:
+            if isinstance(data, dict) and "game" in data:
+                game = data["game"]
+            else:
+                # Try to infer from path
+                path_str = str(existing_test_set_path).lower()
+                if "pokemon" in path_str or "pkm" in path_str:
+                    game = "pokemon"
+                elif "yugioh" in path_str or "ygo" in path_str:
+                    game = "yugioh"
+                else:
+                    game = "magic"  # Default
+            logger.info(f"Detected game from test set: {game}")
+        
+        existing_data = data.get("queries", data) if isinstance(data, dict) else data
+        existing_queries = set(existing_data.keys())
+        logger.info(f"Loaded {len(existing_queries)} existing queries")
+    else:
+        logger.info("No existing test set, creating new one")
+        if not game:
+            game = "magic"  # Default
+            logger.warning(f"No game specified, defaulting to {game}")
+    
+    # Generate new query candidates (with enhanced model if available)
+    logger.info(f"Generating {num_new_queries} new query candidates for {game} using frontier models...")
+    use_enhanced = False
+    try:
+        # Try enhanced version first (uses frontier models, game-aware)
+        if HAS_ENHANCED_QUERIES:
+            try:
+                from generate_queries_enhanced import generate_enhanced_queries, make_enhanced_query_agent
+                query_agent = make_enhanced_query_agent(use_best_model=True)
+                use_enhanced = True
+            except Exception as e:
+                logger.warning(f"Could not use enhanced queries: {e}, falling back")
+                query_agent = make_query_generation_agent()
+                use_enhanced = False
+        else:
+            query_agent = make_query_generation_agent()
+            use_enhanced = False
+    except TypeError:
+        # Fallback if enhanced version has different signature
+        try:
+            query_agent = make_query_generation_agent(use_best_model=True)
+            use_enhanced = False
+        except TypeError:
+            query_agent = make_query_generation_agent()
+            use_enhanced = False
+    
+    if not query_agent:
+        logger.error("Could not create query generation agent")
+        return {}
+    
+    logger.info(f"Using model: {query_agent.model if hasattr(query_agent, 'model') else 'unknown'}")
+    
+    # Generate queries in batches
+    all_new_queries = []
+    attempts = 0
+    max_attempts = (num_new_queries // 10) + 5  # Generate extra to account for duplicates
+    
+    while len(all_new_queries) < num_new_queries and attempts < max_attempts:
+        if use_enhanced:
+            # Use game-aware enhanced query generation
+            try:
+                from generate_queries_enhanced import generate_enhanced_queries
+                batch = generate_enhanced_queries(
+                    query_agent,
+                    num_queries=min(20, num_new_queries - len(all_new_queries) + 10),
+                    existing_queries=existing_queries | {q.query for q in all_new_queries},
+                    game_name=game,
+                )
+            except Exception as e:
+                logger.warning(f"Enhanced query generation failed: {e}, falling back")
+                batch = generate_queries(
+                    query_agent,
+                    num_queries=min(20, num_new_queries - len(all_new_queries) + 10),
+                    existing_queries=existing_queries | {q.query for q in all_new_queries},
+                )
+        else:
+            batch = generate_queries(
+                query_agent,
+                num_queries=min(20, num_new_queries - len(all_new_queries) + 10),  # Generate extra
+                existing_queries=existing_queries | {q.query for q in all_new_queries},
+            )
+        
+        # Filter out duplicates
+        for query in batch:
+            if query.query not in existing_queries and query.query not in {q.query for q in all_new_queries}:
+                all_new_queries.append(query)
+        
+        attempts += 1
+        logger.info(f"  Generated {len(batch)} queries, {len(all_new_queries)} unique new queries so far")
+    
+    if len(all_new_queries) < num_new_queries:
+        logger.warning(f"Only generated {len(all_new_queries)} unique queries (requested {num_new_queries})")
+    
+    # Take only what we need
+    new_queries = all_new_queries[:num_new_queries]
+    logger.info(f"Selected {len(new_queries)} queries for labeling")
+    
+    # Generate labels with multi-judge system (parallelized across queries)
+    logger.info(f"Generating labels with {num_judges} judges per query (parallelized)...")
+    updated_data = existing_data.copy()
+    processed = 0
+    
+    # Process queries in parallel batches
+    def process_single_query(query_obj, idx, total):
+        """Process a single query with parallel judges."""
+        query_name = query_obj.query
+        use_case = query_obj.use_case
+        
+        logger.info(f"[{idx}/{total}] Processing {query_name}...")
+        
+        # Generate labels with multi-judge (use parallel if available and enabled)
+        if parallel_judges:
+            try:
+                from parallel_multi_judge import generate_labels_parallel
+                result = generate_labels_parallel(
+                    query_name,
+                    num_judges=num_judges,
+                    use_case=use_case,
+                    game=game,
+                    max_workers=num_judges,
+                    timeout=120.0,
+                )
+            except (ImportError, Exception) as e:
+                logger.warning(f"Parallel labeling failed for {query_name}, falling back to sequential: {e}")
+                result = generate_labels_multi_judge(
+                    query_name,
+                    num_judges=num_judges,
+                    use_case=use_case,
+                    game=game,
+                )
+        else:
+            result = generate_labels_multi_judge(
+                query_name,
+                num_judges=num_judges,
+                use_case=use_case,
+                game=game,
+            )
+        
+        if result and any(result.get(level, []) for level in ["highly_relevant", "relevant", "somewhat_relevant"]):
+            query_data = {
+                "use_case": use_case,
+                **{k: v for k, v in result.items() if k != "iaa"},
+                "iaa": result.get("iaa", {}),
+            }
+            
+            iaa = result.get("iaa", {})
+            agreement = iaa.get("agreement_rate", 0.0)
+            num_labels = sum(len(result.get(level, [])) for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"])
+            logger.info(f"  ✅ {query_name}: {num_labels} labels, agreement: {agreement:.2f}")
+            return (query_name, query_data, True)
+        else:
+            logger.warning(f"  ⚠️  {query_name}: No valid labels generated")
+            return (query_name, None, False)
+    
+    # Process queries in parallel batches
+    max_query_workers = min(batch_size, 10)  # Process up to 10 queries concurrently
+    logger.info(f"Processing {len(new_queries)} queries with {max_query_workers} concurrent workers...")
+    
+    try:
+        with ThreadPoolExecutor(max_workers=max_query_workers) as executor:
+            futures = {
+                executor.submit(process_single_query, query_obj, i+1, len(new_queries)): query_obj
+                for i, query_obj in enumerate(new_queries)
+            }
+            
+            completed = 0
+            for future in as_completed(futures):
+                try:
+                    query_name, query_data, success = future.result(timeout=300.0)  # 5 min per query
+                    if success and query_data:
+                        updated_data[query_name] = query_data
+                        processed += 1
+                    
+                    completed += 1
+                    # Checkpoint and validate every batch_size queries
+                    if completed % batch_size == 0:
+                        logger.info(f"  💾 Checkpoint: {completed}/{len(new_queries)} queries processed")
+                        checkpoint_path = output_path.parent / f"{output_path.stem}_checkpoint.json"
+                        with open(checkpoint_path, "w") as f:
+                            json.dump({"version": "expanded", "queries": updated_data}, f, indent=2)
+                        
+                        # Validate batch quality
+                        batch_queries = list(updated_data.keys())[-batch_size:]
+                        batch_labels = sum(
+                            len(updated_data[q].get(level, []))
+                            for q in batch_queries
+                            for level in ["highly_relevant", "relevant", "somewhat_relevant"]
+                        )
+                        avg_labels = batch_labels / len(batch_queries) if batch_queries else 0
+                        logger.info(f"  ✅ Validation: {avg_labels:.1f} avg labels per query in this batch")
+                except Exception as e:
+                    query_obj = futures[future]
+                    logger.error(f"Failed to process {query_obj.query}: {e}")
+    except Exception as e:
+        logger.error(f"Parallel processing failed: {e}, falling back to sequential")
+        # Fallback to sequential
+        for i, query_obj in enumerate(new_queries, 1):
+            query_name, query_data, success = process_single_query(query_obj, i, len(new_queries))
+            if success and query_data:
+                updated_data[query_name] = query_data
+                processed += 1
+            
+            if i % batch_size == 0:
+                logger.info(f"  💾 Checkpoint: {i}/{len(new_queries)} queries processed")
+                checkpoint_path = output_path.parent / f"{output_path.stem}_checkpoint.json"
+                with open(checkpoint_path, "w") as f:
+                    json.dump({"version": "expanded", "queries": updated_data}, f, indent=2)
+    
+    logger.info(f"✅ Generated labels for {processed}/{len(new_queries)} queries")
+    
+    # Save final test set with explicit game metadata
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    final_data = {
+        "version": "expanded_multi_judge",
+        "game": game,  # Explicit game field
+        "queries": updated_data,
+    }
+    
+    with open(output_path, "w") as f:
+        json.dump(final_data, f, indent=2)
+    
+    logger.info(f"✅ Saved expanded test set to {output_path}")
+    logger.info(f"   Total queries: {len(updated_data)} (was {len(existing_queries)})")
+    
+    return {
+        "existing_queries": len(existing_queries),
+        "new_queries": len(new_queries),
+        "successfully_labeled": processed,
+        "total_queries": len(updated_data),
+    }
+
+
+def main() -> int:
+    """Expand test set with LLM-generated queries and labels."""
+    parser = argparse.ArgumentParser(description="Expand test set with LLM")
+    parser.add_argument(
+        "--input",
+        type=str,
+        default="experiments/test_set_canonical_magic.json",
+        help="Existing test set JSON",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="experiments/test_set_expanded_magic.json",
+        help="Output test set JSON",
+    )
+    parser.add_argument(
+        "--num-queries",
+        type=int,
+        default=50,
+        help="Number of new queries to generate",
+    )
+    parser.add_argument(
+        "--num-judges",
+        type=int,
+        default=3,
+        help="Number of judges per query (for IAA)",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=10,
+        help="Checkpoint every N queries",
+    )
+    parser.add_argument(
+        "--parallel-judges",
+        action="store_true",
+        default=True,
+        help="Use parallel execution for multi-judge (default: True)",
+    )
+    parser.add_argument(
+        "--no-parallel-judges",
+        dest="parallel_judges",
+        action="store_false",
+        help="Disable parallel execution for multi-judge",
+    )
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required: pip install pydantic-ai")
+        return 1
+    
+    result = expand_test_set(
+        Path(args.input),
+        Path(args.output),
+        num_new_queries=args.num_queries,
+        num_judges=args.num_judges,
+        batch_size=args.batch_size,
+        parallel_judges=args.parallel_judges,
+    )
+    
+    if result:
+        print("\n=== Expansion Summary ===")
+        print(f"Existing queries: {result['existing_queries']}")
+        print(f"New queries generated: {result['new_queries']}")
+        print(f"Successfully labeled: {result['successfully_labeled']}")
+        print(f"Total queries: {result['total_queries']}")
+        return 0
+    
+    return 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

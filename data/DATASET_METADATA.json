@@ -1,0 +1,129 @@
+{
+  "version": "1.0",
+  "last_updated": "2025-01-03",
+  "description": "DeckSage dataset metadata and lineage",
+  "datasets": {
+    "pairs_large": {
+      "file": "data/processed/pairs_large.csv",
+      "description": "Card co-occurrence pairs from MTG decks",
+      "source": "Scraped deck data",
+      "rows": 7541436,
+      "format": "CSV",
+      "columns": [
+        "NAME_1",
+        "NAME_2",
+        "COUNT",
+        "DECK_ID",
+        "SOURCE"
+      ],
+      "game": "MTG",
+      "status": "active"
+    },
+    "pairs_multi_game": {
+      "file": "data/processed/pairs_multi_game.csv",
+      "description": "Card co-occurrence pairs (currently MTG-only despite name)",
+      "source": "Scraped deck data",
+      "rows": 24605118,
+      "format": "CSV",
+      "columns": [
+        "NAME_1",
+        "NAME_2",
+        "GAME_1",
+        "GAME_2",
+        "COUNT",
+        "DECK_ID",
+        "SOURCE"
+      ],
+      "game": "MTG",
+      "status": "active",
+      "note": "Contains only MTG data despite 'multi_game' name. See NOTE_pairs_multi_game.txt"
+    },
+    "card_attributes_enriched": {
+      "file": "data/processed/card_attributes_enriched.csv",
+      "description": "Card metadata with enriched attributes",
+      "source": "Scryfall API",
+      "rows": 47131,
+      "format": "CSV",
+      "columns": [
+        "name",
+        "type",
+        "colors",
+        "mana_cost",
+        "cmc",
+        "rarity",
+        "power",
+        "toughness",
+        "set",
+        "set_name",
+        "oracle_text",
+        "keywords"
+      ],
+      "game": "MTG",
+      "status": "active"
+    },
+    "test_set_canonical_magic": {
+      "file": "experiments/test_set_canonical_magic.json",
+      "description": "Canonical test set for MTG card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 38,
+      "format": "JSON",
+      "game": "magic",
+      "status": "active",
+      "target": 50
+    },
+    "test_set_canonical_pokemon": {
+      "file": "experiments/test_set_canonical_pokemon.json",
+      "description": "Canonical test set for Pokemon card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 10,
+      "format": "JSON",
+      "game": "pokemon",
+      "status": "active",
+      "target": 25
+    },
+    "test_set_canonical_yugioh": {
+      "file": "experiments/test_set_canonical_yugioh.json",
+      "description": "Canonical test set for Yu-Gi-Oh card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 13,
+      "format": "JSON",
+      "game": "yugioh",
+      "status": "active",
+      "target": 25
+    },
+    "ground_truth_v1": {
+      "file": "data/processed/ground_truth_v1.json",
+      "description": "Ground truth labels for evaluation",
+      "source": "Hand annotation + canonical test set merge",
+      "queries": 38,
+      "format": "JSON",
+      "game": "magic",
+      "status": "active",
+      "last_expanded": "2025-01-03"
+    }
+  },
+  "decks": {
+    "yugioh": {
+      "file": "data/decks/yugioh_decks.jsonl",
+      "count": 794,
+      "status": "active",
+      "target": 1000
+    },
+    "pokemon": {
+      "file": "data/processed/decks_pokemon.jsonl",
+      "count": 1208,
+      "status": "active",
+      "target": 1000
+    }
+  },
+  "embeddings": {
+    "production": "data/embeddings/production.wv",
+    "count": 19,
+    "documentation": "data/embeddings/README.md"
+  },
+  "validation": {
+    "script": "scripts/validate_datasets.py",
+    "health_check": "scripts/dataset_health_check.py",
+    "last_run": null
+  }
+}

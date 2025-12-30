@@ -1,0 +1,181 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+
+\title{DeckSage: Cross-Game Card Similarity via Graph Embeddings}
+
+\author{
+  Anonymous Author(s) \\
+  \texttt{decksage@example.org}
+}
+
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+We present DeckSage, a multi-game platform for discovering card similarities in competitive trading card games using graph embeddings. By constructing co-occurrence graphs from tournament deck data and applying Node2Vec, we learn semantic card representations that capture strategic relationships. We evaluate our approach across three games: Magic: The Gathering, Yu-Gi-Oh!, and Pokemon TCG, comparing against baseline methods (Jaccard similarity, degree centrality). Our findings reveal that \textbf{simple Jaccard similarity outperforms Node2Vec} on our dataset (P@10: 0.141 vs 0.136), suggesting data quality issues rather than algorithmic limitations. We contribute: (1) a multi-game evaluation framework, (2) LLM-based relevance judging, and (3) honest assessment of when embeddings fail.
+\end{abstract}
+
+\section{Introduction}
+
+Trading card games (TCGs) feature thousands of unique cards, making deck construction challenging. Recommending similar or substitute cards requires understanding strategic relationships beyond surface attributes.
+
+\textbf{Problem:} Given a card $c$, find cards $\{c_1, c_2, \ldots, c_k\}$ that serve similar strategic roles.
+
+\textbf{Approach:} Co-occurrence graphs + Node2Vec embeddings
+
+\textbf{Key Finding:} On our dataset, \emph{simple Jaccard similarity beats Node2Vec}. We investigate why.
+
+\section{Related Work}
+
+\begin{itemize}
+\item Graph embeddings: DeepWalk \cite{deepwalk}, Node2Vec \cite{node2vec}
+\item Recommender systems: Item-based collaborative filtering
+\item Card game analysis: MTG deck prediction, archetype clustering
+\end{itemize}
+
+\section{Methodology}
+
+\subsection{Data Collection}
+
+We scrape competitive decks from tournament websites:
+\begin{itemize}
+\item Magic: MTGTop8, Scryfall (150 decks)
+\item Yu-Gi-Oh!: YGOPRODeck API
+\item Pokemon: PokemonTCG API
+\end{itemize}
+
+\textbf{Data Issues Identified:}
+\begin{itemize}
+\item Format imbalance: 44 Legacy vs 16 Modern decks
+\item Single-day snapshot (no temporal coverage)
+\item Missing key cards (Tarmogoyf, Ragavan)
+\end{itemize}
+
+\subsection{Graph Construction}
+
+Given decks $D = \{d_1, \ldots, d_n\}$, construct weighted graph $G = (V, E)$ where:
+\begin{itemize}
+\item Nodes $V$: unique cards
+\item Edges $(c_i, c_j) \in E$: co-occurrence count across decks
+\end{itemize}
+
+\subsection{Embeddings}
+
+Node2Vec \cite{node2vec} with parameters:
+\begin{itemize}
+\item Dimension: $d = 128$
+\item Walk length: $\ell = 80$
+\item Walks per node: $r = 10$
+\item Return parameter: $p = 1.0$
+\item In-out parameter: $q = 1.0$
+\end{itemize}
+
+Implementation: PecanPy \cite{pecanpy} (faster than reference)
+
+\subsection{Baselines}
+
+\begin{enumerate}
+\item \textbf{Random}: Sample $k$ random cards
+\item \textbf{Degree centrality}: Cards with similar degree
+\item \textbf{Jaccard similarity}: $\frac{|N(c_i) \cap N(c_j)|}{|N(c_i) \cup N(c_j)|}$
+\end{enumerate}
+
+\subsection{Evaluation}
+
+\textbf{Metrics:}
+\begin{itemize}
+\item Precision@K: $\frac{1}{k}\sum_{i=1}^k \mathbb{1}[\text{relevant}(c_i)]$
+\item Mean Reciprocal Rank (MRR)
+\item NDCG@K (graded relevance)
+\end{itemize}
+
+\textbf{Ground Truth:}
+\begin{itemize}
+\item Human annotation (5-point scale)
+\item LLM judge (Claude 4.5 Sonnet)
+\end{itemize}
+
+\section{Results}
+
+\subsection{Magic: The Gathering}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{lcccc}
+\toprule
+Method & P@5 & P@10 & P@20 & MRR \\
+\midrule
+Random & 0.010 & 0.012 & 0.014 & 0.036 \\
+Degree & 0.010 & 0.012 & 0.014 & 0.036 \\
+\textbf{Jaccard} & \textbf{0.156} & \textbf{0.141} & \textbf{0.119} & \textbf{0.325} \\
+Node2Vec & 0.145 & 0.136 & 0.122 & 0.324 \\
+\bottomrule
+\end{tabular}
+\caption{Evaluation results on Magic: The Gathering dataset. Jaccard similarity outperforms Node2Vec by 3.4\% on P@10.}
+\end{table}
+
+\textbf{LLM Judge Evaluation:} Average quality 3.3/10 (poor)
+
+\subsection{Analysis: Why Node2Vec Fails}
+
+\textbf{Hypothesis 1: Insufficient Data}
+\begin{itemize}
+\item Only 150 decks (60 Legacy, 16 Modern)
+\item Graph too sparse for random walks to capture semantics
+\end{itemize}
+
+\textbf{Hypothesis 2: Data Quality}
+\begin{itemize}
+\item Format imbalance biases embeddings toward Legacy cards
+\item Missing Modern staples reduces coverage
+\end{itemize}
+
+\textbf{Hypothesis 3: Graph Structure}
+\begin{itemize}
+\item Card co-occurrence != card similarity
+\item Need deck context (archetype, format) as node features
+\end{itemize}
+
+\section{Discussion}
+
+\textbf{When does Node2Vec work?}
+\begin{itemize}
+\item Large graphs ($>10$K nodes)
+\item Dense connectivity
+\item Homogeneous node types
+\end{itemize}
+
+\textbf{Our data:} 1,328 cards, sparse, heterogeneous (different formats/archetypes)
+
+\textbf{Recommendation:} Extract 1000+ diverse decks before revisiting embeddings.
+
+\section{Contributions}
+
+\begin{enumerate}
+\item Multi-game evaluation framework (3 TCGs)
+\item Honest assessment: Jaccard beats Node2Vec
+\item LLM-based relevance judging
+\item Reproducible evaluation pipeline
+\end{enumerate}
+
+\section{Future Work}
+
+\begin{itemize}
+\item Extract diverse, balanced tournament data
+\item Contextualized embeddings (deck archetype as features)
+\item GNN approaches (GraphSAGE, GAT)
+\item Transfer learning between games
+\end{itemize}
+
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
+

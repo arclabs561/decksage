@@ -1,0 +1,405 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Enhanced evaluation system with comprehensive metrics.
+
+Adds:
+1. nDCG@K (Normalized Discounted Cumulative Gain)
+2. Recall@K
+3. MAP (Mean Average Precision)
+4. Per-query analysis
+5. Difficulty-stratified metrics
+6. Query type-stratified metrics
+7. Statistical significance testing
+8. Error analysis
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from collections import Counter, defaultdict
+from math import log2
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Add src to path for imports
+src_path = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(src_path))
+
+try:
+    from ml.utils.evaluation import compute_precision_at_k, RELEVANCE_WEIGHTS
+    from ml.utils.evaluation_with_ci import evaluate_with_confidence
+    HAS_EVAL_UTILS = True
+except ImportError:
+    HAS_EVAL_UTILS = False
+    RELEVANCE_WEIGHTS = {
+        "highly_relevant": 1.0,
+        "relevant": 0.75,
+        "somewhat_relevant": 0.5,
+        "marginally_relevant": 0.25,
+        "irrelevant": 0.0,
+    }
+
+
+def compute_recall_at_k(
+    predictions: list[str],
+    labels: dict[str, Any],
+    k: int = 10,
+) -> float:
+    """Compute Recall@K."""
+    all_relevant = set(
+        labels.get("highly_relevant", []) +
+        labels.get("relevant", []) +
+        labels.get("somewhat_relevant", [])
+    )
+    
+    if not all_relevant:
+        return 0.0
+    
+    top_k = predictions[:k]
+    relevant_in_top_k = sum(1 for p in top_k if p in all_relevant)
+    return relevant_in_top_k / len(all_relevant)
+
+
+def compute_ndcg_at_k(
+    predictions: list[str],
+    labels: dict[str, Any],
+    k: int = 10,
+) -> float:
+    """Compute nDCG@K."""
+    def rel_gain(card: str) -> float:
+        if card in labels.get("highly_relevant", []):
+            return RELEVANCE_WEIGHTS["highly_relevant"]
+        if card in labels.get("relevant", []):
+            return RELEVANCE_WEIGHTS["relevant"]
+        if card in labels.get("somewhat_relevant", []):
+            return RELEVANCE_WEIGHTS["somewhat_relevant"]
+        if card in labels.get("marginally_relevant", []):
+            return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
+        return 0.0
+    
+    def dcg(items: list[str]) -> float:
+        val = 0.0
+        for i, c in enumerate(items[:k], 1):
+            val += rel_gain(c) / log2(i + 1)
+        return val
+    
+    # Ideal ordering
+    ideal = (
+        labels.get("highly_relevant", []) +
+        labels.get("relevant", []) +
+        labels.get("somewhat_relevant", []) +
+        labels.get("marginally_relevant", [])
+    )
+    
+    idcg = dcg(ideal)
+    if idcg == 0:
+        return 0.0
+    
+    return dcg(predictions) / idcg
+
+
+def compute_map_at_k(
+    predictions: list[str],
+    labels: dict[str, Any],
+    k: int = 10,
+) -> float:
+    """Compute MAP@K (Mean Average Precision)."""
+    highly_relevant = set(labels.get("highly_relevant", []))
+    relevant = set(labels.get("relevant", []))
+    all_relevant = highly_relevant | relevant
+    
+    if not all_relevant:
+        return 0.0
+    
+    precisions = []
+    relevant_count = 0
+    
+    for i, pred in enumerate(predictions[:k], 1):
+        if pred in all_relevant:
+            relevant_count += 1
+            precision_at_i = relevant_count / i
+            precisions.append(precision_at_i)
+    
+    if not precisions:
+        return 0.0
+    
+    return sum(precisions) / len(all_relevant)
+
+
+def enhanced_evaluate_embedding(
+    embedding: KeyedVectors,
+    test_set: dict[str, dict[str, Any]],
+    top_k: int = 10,
+    name_mapper: dict[str, str] | None = None,
+) -> dict[str, Any]:
+    """
+    Enhanced evaluation with all metrics.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Enhanced evaluation with comprehensive metrics...")
+    
+    precision_scores = []
+    recall_scores = []
+    ndcg_scores = []
+    map_scores = []
+    mrr_scores = []
+    
+    per_query_results = {}
+    skipped_queries = []
+    
+    for query, labels in test_set.items():
+        # Apply name mapping
+        mapped_query = query
+        if name_mapper:
+            mapped_query = name_mapper.get(query, query)
+        
+        if mapped_query not in embedding:
+            skipped_queries.append(query)
+            continue
+        
+        try:
+            # Get similar cards
+            similar = embedding.most_similar(mapped_query, topn=top_k * 2)
+            predictions = [card for card, _ in similar]
+            
+            # Compute all metrics
+            p_at_k = compute_precision_at_k(predictions, labels, k=top_k) if HAS_EVAL_UTILS else (
+                len(set(predictions[:top_k]) & set(labels.get("highly_relevant", []) + labels.get("relevant", []))) / top_k
+            )
+            recall = compute_recall_at_k(predictions, labels, k=top_k)
+            ndcg = compute_ndcg_at_k(predictions, labels, k=top_k)
+            map_score = compute_map_at_k(predictions, labels, k=top_k)
+            
+            # MRR
+            all_relevant = set(
+                labels.get("highly_relevant", []) +
+                labels.get("relevant", [])
+            )
+            mrr = 0.0
+            for rank, card in enumerate(predictions[:top_k], 1):
+                if card in all_relevant:
+                    mrr = 1.0 / rank
+                    break
+            
+            precision_scores.append(p_at_k)
+            recall_scores.append(recall)
+            ndcg_scores.append(ndcg)
+            map_scores.append(map_score)
+            mrr_scores.append(mrr)
+            
+            # Per-query results
+            per_query_results[query] = {
+                "p@10": p_at_k,
+                "recall@10": recall,
+                "ndcg@10": ndcg,
+                "map@10": map_score,
+                "mrr": mrr,
+                "query_type": labels.get("type", "unknown"),
+                "difficulty": labels.get("difficulty", "unknown"),
+                "top_result": predictions[0] if predictions else None,
+                "top_result_relevant": predictions[0] in all_relevant if predictions else False,
+            }
+            
+        except Exception as e:
+            skipped_queries.append(query)
+            continue
+    
+    # Calculate statistics
+    results = {
+        "p@10": float(np.mean(precision_scores)) if precision_scores else 0.0,
+        "recall@10": float(np.mean(recall_scores)) if recall_scores else 0.0,
+        "ndcg@10": float(np.mean(ndcg_scores)) if ndcg_scores else 0.0,
+        "map@10": float(np.mean(map_scores)) if map_scores else 0.0,
+        "mrr": float(np.mean(mrr_scores)) if mrr_scores else 0.0,
+        "num_evaluated": len(precision_scores),
+        "num_skipped": len(skipped_queries),
+        "per_query_results": per_query_results,
+    }
+    
+    # Calculate confidence intervals (bootstrap)
+    if precision_scores:
+        n_bootstrap = 1000
+        p_bootstrap = []
+        mrr_bootstrap = []
+        
+        for _ in range(n_bootstrap):
+            sample = np.random.choice(precision_scores, size=len(precision_scores), replace=True)
+            p_bootstrap.append(float(np.mean(sample)))
+            sample_mrr = np.random.choice(mrr_scores, size=len(mrr_scores), replace=True)
+            mrr_bootstrap.append(float(np.mean(sample_mrr)))
+        
+        p_bootstrap.sort()
+        mrr_bootstrap.sort()
+        
+        alpha = 0.05
+        lower_idx = int(n_bootstrap * alpha / 2)
+        upper_idx = int(n_bootstrap * (1 - alpha / 2))
+        
+        results["p@10_ci_lower"] = p_bootstrap[lower_idx]
+        results["p@10_ci_upper"] = p_bootstrap[upper_idx]
+        results["mrr_ci_lower"] = mrr_bootstrap[lower_idx]
+        results["mrr_ci_upper"] = mrr_bootstrap[upper_idx]
+    
+    print(f"  ✅ Evaluated {len(precision_scores)} queries")
+    print(f"     P@10: {results['p@10']:.4f}, Recall@10: {results['recall@10']:.4f}")
+    print(f"     nDCG@10: {results['ndcg@10']:.4f}, MAP@10: {results['map@10']:.4f}, MRR: {results['mrr']:.4f}")
+    
+    return results
+
+
+def stratified_analysis(
+    per_query_results: dict[str, Any],
+) -> dict[str, Any]:
+    """Stratified analysis by difficulty and query type."""
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Stratified analysis...")
+    
+    by_difficulty = defaultdict(list)
+    by_query_type = defaultdict(list)
+    
+    for query, results in per_query_results.items():
+        difficulty = results.get("difficulty", "unknown")
+        query_type = results.get("query_type", "unknown")
+        
+        by_difficulty[difficulty].append(results["p@10"])
+        by_query_type[query_type].append(results["p@10"])
+    
+    stratified = {
+        "by_difficulty": {},
+        "by_query_type": {},
+    }
+    
+    for difficulty, scores in by_difficulty.items():
+        if scores:
+            stratified["by_difficulty"][difficulty] = {
+                "mean": float(np.mean(scores)),
+                "std": float(np.std(scores)),
+                "count": len(scores),
+            }
+    
+    for query_type, scores in by_query_type.items():
+        if scores:
+            stratified["by_query_type"][query_type] = {
+                "mean": float(np.mean(scores)),
+                "std": float(np.std(scores)),
+                "count": len(scores),
+            }
+    
+    print(f"  ✅ Stratified by {len(stratified['by_difficulty'])} difficulties, {len(stratified['by_query_type'])} types")
+    return stratified
+
+
+def main() -> int:
+    """Enhanced evaluation system."""
+    parser = argparse.ArgumentParser(
+        description="Enhanced evaluation with comprehensive metrics"
+    )
+    parser.add_argument("--embedding", type=str, required=True,
+                       help="Embedding file (.wv)")
+    parser.add_argument("--test-set", type=str, required=True,
+                       help="Test set JSON")
+    parser.add_argument("--output", type=str,
+                       default="experiments/evaluation_enhanced.json",
+                       help="Output evaluation JSON")
+    parser.add_argument("--name-mapping", type=str,
+                       help="Name mapping JSON")
+    parser.add_argument("--top-k", type=int, default=10,
+                       help="Top K for evaluation")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    embedding_path = Path(args.embedding)
+    if not embedding_path.exists():
+        print(f"❌ Embedding not found: {embedding_path}")
+        return 1
+    
+    test_set_path = Path(args.test_set)
+    if not test_set_path.exists():
+        print(f"❌ Test set not found: {test_set_path}")
+        return 1
+    
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Load embedding
+    print(f"📊 Loading embedding...")
+    embedding = KeyedVectors.load(str(embedding_path))
+    print(f"  ✅ Loaded {len(embedding)} cards")
+    
+    # Load test set
+    print(f"📊 Loading test set...")
+    with open(test_set_path) as f:
+        data = json.load(f)
+    test_set = data.get("queries", data)
+    print(f"  ✅ Loaded {len(test_set)} queries")
+    
+    # Load name mapping
+    name_mapper = None
+    if args.name_mapping:
+        name_mapping_path = Path(args.name_mapping)
+        if name_mapping_path.exists():
+            with open(name_mapping_path) as f:
+                name_mapper = json.load(f)
+            print(f"  ✅ Loaded {len(name_mapper)} name mappings")
+    
+    # Enhanced evaluation
+    results = enhanced_evaluate_embedding(
+        embedding,
+        test_set,
+        top_k=args.top_k,
+        name_mapper=name_mapper,
+    )
+    
+    # Stratified analysis
+    if results.get("per_query_results"):
+        stratified = stratified_analysis(results["per_query_results"])
+        results["stratified_analysis"] = stratified
+    
+    # Save results
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\n✅ Enhanced evaluation saved to {output_path}")
+    
+    # Print summary
+    print(f"\n📊 Summary:")
+    print(f"   P@10: {results['p@10']:.4f}")
+    print(f"   Recall@10: {results['recall@10']:.4f}")
+    print(f"   nDCG@10: {results['ndcg@10']:.4f}")
+    print(f"   MAP@10: {results['map@10']:.4f}")
+    print(f"   MRR: {results['mrr']:.4f}")
+    print(f"   Queries: {results['num_evaluated']}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

@@ -1,0 +1,156 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pandas",
+# ]
+# ///
+"""
+Analyze evaluation objective: co-occurrence vs functional similarity.
+
+Examines:
+1. What does the test set actually measure?
+2. What does training data contain?
+3. Are they aligned?
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    HAS_PANDAS = True
+except ImportError:
+    HAS_PANDAS = False
+
+
+def analyze_test_set_objective(test_set_path: Path) -> dict[str, Any]:
+    """Analyze what the test set is measuring."""
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    queries = data.get("queries", data)
+    
+    # Check test set source/description
+    source_info = {
+        "version": data.get("version", "unknown"),
+        "description": data.get("description", ""),
+        "sources": data.get("sources", {}),
+    }
+    
+    # Analyze label types
+    label_types = Counter()
+    for query, labels in queries.items():
+        # Check if labels are from co-occurrence or functional similarity
+        # (This is heuristic - would need metadata)
+        if "cooccurrence" in str(labels).lower() or "co-occurrence" in str(labels).lower():
+            label_types["cooccurrence"] += 1
+        elif "substitution" in str(labels).lower() or "functional" in str(labels).lower():
+            label_types["functional"] += 1
+        else:
+            label_types["unknown"] += 1
+    
+    return {
+        "source_info": source_info,
+        "label_types": dict(label_types),
+        "num_queries": len(queries),
+    }
+
+
+def analyze_training_objective(pairs_path: Path) -> dict[str, Any]:
+    """Analyze what training data contains."""
+    if not HAS_PANDAS:
+        return {"error": "pandas required"}
+    
+    df = pd.read_csv(pairs_path, nrows=10000)  # Sample
+    
+    # Training data is co-occurrence pairs
+    return {
+        "type": "cooccurrence",
+        "description": "Cards appearing together in decks",
+        "sample_size": len(df),
+        "columns": list(df.columns),
+    }
+
+
+def compare_objectives(
+    test_set_analysis: dict[str, Any],
+    training_analysis: dict[str, Any],
+) -> dict[str, Any]:
+    """Compare test set objective vs training objective."""
+    comparison = {
+        "training_objective": training_analysis.get("type", "unknown"),
+        "test_set_objective": "unknown",
+        "aligned": False,
+        "mismatch_reason": "",
+    }
+    
+    # Determine test set objective from source info
+    test_sources = test_set_analysis.get("source_info", {}).get("sources", {})
+    test_desc = test_set_analysis.get("source_info", {}).get("description", "")
+    
+    if "cooccurrence" in str(test_sources).lower() or "co-occurrence" in test_desc.lower():
+        comparison["test_set_objective"] = "cooccurrence"
+        comparison["aligned"] = training_analysis.get("type") == "cooccurrence"
+    elif "substitution" in str(test_sources).lower() or "functional" in test_desc.lower():
+        comparison["test_set_objective"] = "functional_similarity"
+        comparison["aligned"] = False
+        comparison["mismatch_reason"] = "Training: co-occurrence, Test: functional similarity"
+    else:
+        comparison["test_set_objective"] = "unknown"
+        comparison["mismatch_reason"] = "Cannot determine test set objective from metadata"
+    
+    return comparison
+
+
+def main() -> int:
+    """Analyze evaluation objective."""
+    parser = argparse.ArgumentParser(description="Analyze evaluation objective")
+    parser.add_argument("--test-set", type=Path, required=True, help="Test set JSON")
+    parser.add_argument("--pairs", type=Path, required=True, help="Training pairs CSV")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    
+    args = parser.parse_args()
+    
+    print("Analyzing evaluation objective...")
+    print(f"  Test set: {args.test_set}")
+    print(f"  Training data: {args.pairs}")
+    
+    test_analysis = analyze_test_set_objective(args.test_set)
+    training_analysis = analyze_training_objective(args.pairs)
+    comparison = compare_objectives(test_analysis, training_analysis)
+    
+    output = {
+        "test_set_analysis": test_analysis,
+        "training_analysis": training_analysis,
+        "comparison": comparison,
+    }
+    
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(output, f, indent=2)
+    
+    print(f"\n✅ Analysis saved to {args.output}")
+    print(f"\nComparison:")
+    print(f"  Training objective: {comparison['training_objective']}")
+    print(f"  Test set objective: {comparison['test_set_objective']}")
+    print(f"  Aligned: {comparison['aligned']}")
+    if not comparison['aligned']:
+        print(f"  ⚠️  MISMATCH: {comparison['mismatch_reason']}")
+        print(f"\n  Recommendation:")
+        if comparison['test_set_objective'] == "functional_similarity":
+            print(f"    - Option A: Change training to functional similarity (hard)")
+            print(f"    - Option B: Change test set to co-occurrence (easier)")
+            print(f"    - Option C: Train on both (multi-task)")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+

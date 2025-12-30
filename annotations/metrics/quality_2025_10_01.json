@@ -1,0 +1,43 @@
+{
+  "date": "2025-10-01",
+  "dataset_metrics": {
+    "total_queries": 5,
+    "total_annotations": 5,
+    "annotators": 1,
+    "avg_candidates_per_query": 4.0,
+    "batches_completed": 1
+  },
+  "model_performance": {
+    "node2vec_500decks": {
+      "P@5": 0.6400,
+      "P@10": 0.5000,
+      "P@20": 0.4858,
+      "NDCG@10": 0.8913,
+      "MRR": 0.8400
+    },
+    "jaccard_filtered": {
+      "P@5": 0.1900,
+      "P@10": 0.1350,
+      "P@20": 0.0775,
+      "MRR": 0.3167
+    }
+  },
+  "quality_assessment": {
+    "inter_annotator_agreement": null,
+    "annotation_quality": "initial",
+    "coverage": "basic_archetypes",
+    "notes": "Baseline established. Need multi-annotator validation."
+  },
+  "next_milestone": {
+    "target_date": "2025-10-08",
+    "goals": [
+      "Add 10 more queries (15 total)",
+      "Get second annotator",
+      "Compute inter-annotator agreement",
+      "Expand to removal/ramp/combo archetypes"
+    ]
+  }
+}
+
+
+

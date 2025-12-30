@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+"""Comprehensive monitoring of all active tasks."""
+import json
+import time
+from pathlib import Path
+
+print("=" * 70)
+print("COMPREHENSIVE MONITOR")
+print("=" * 70)
+print()
+
+# Training status
+print("📊 EMBEDDING TRAINING:")
+embeddings = {
+    "triplet": "data/embeddings/trained_triplet_substitution.wv",
+    "heterogeneous": "data/embeddings/trained_heterogeneous_substitution.wv",
+}
+
+for name, path in embeddings.items():
+    p = Path(path)
+    if p.exists():
+        mtime = p.stat().st_mtime
+        age_min = (time.time() - mtime) / 60
+        size_mb = p.stat().st_size / (1024 * 1024)
+        status = "🔄 RECENT" if age_min < 10 else "✅ COMPLETE"
+        print(f"  {status} {name}: {size_mb:.1f} MB ({age_min:.1f} min ago)")
+    else:
+        print(f"  ⏳ {name}: Training...")
+
+print()
+
+# Test sets
+print("📊 TEST SETS:")
+test_sets = {
+    "magic": "experiments/test_set_expanded_magic.json",
+    "pokemon": "experiments/test_set_expanded_pokemon.json",
+    "yugioh": "experiments/test_set_expanded_yugioh.json",
+}
+
+for game, path in test_sets.items():
+    p = Path(path)
+    if p.exists():
+        mtime = p.stat().st_mtime
+        age_min = (time.time() - mtime) / 60
+        
+        with open(p) as f:
+            data = json.load(f)
+        queries = data.get("queries", data) if isinstance(data, dict) else data
+        size = len(queries) if isinstance(queries, dict) else len(queries)
+        
+        status = "🔄 RECENT" if age_min < 10 else "✅ STABLE"
+        print(f"  {status} {game}: {size} queries ({age_min:.1f} min ago)")
+    else:
+        print(f"  ⏳ {game}: Not found")
+
+print()
+
+# Evaluation results
+print("📊 EVALUATION RESULTS:")
+eval_files = {
+    "comprehensive": "experiments/comprehensive_evaluation_chunked.json",
+    "substitution": "experiments/substitution_comparison_chunked.json",
+}
+
+for name, path in eval_files.items():
+    p = Path(path)
+    if p.exists():
+        with open(p) as f:
+            results = json.load(f)
+        
+        if isinstance(results, dict):
+            best = max(results.items(), key=lambda x: x[1].get("p@10", 0) if isinstance(x[1], dict) else 0)
+            best_name, best_result = best
+            if isinstance(best_result, dict):
+                p_at_10 = best_result.get("p@10", 0.0)
+                print(f"  ✅ {name}: Best={best_name} (P@10={p_at_10:.3f})")
+            else:
+                print(f"  ✅ {name}: Found")
+        else:
+            print(f"  ✅ {name}: Found")
+    else:
+        print(f"  ⏳ {name}: Not found")
+
+print()
+
+# S3 sync status
+print("📊 S3 SYNC:")
+print("  Use: just review-s3")
+print("  Sync: just sync-s3")
+
+print()
+print("✅ Monitoring complete")

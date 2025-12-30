@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"collections/blob"
+	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
@@ -74,9 +75,21 @@ func (d *Dataset) Extract(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for t := range tasks {
-				if err := d.parseItem(ctx, opts, sc, t.ItemURL); err != nil {
-					d.log.Errorf(ctx, "failed to parse item: %v", err)
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case t, ok := <-tasks:
+					if !ok {
+						return
+					}
+					if err := d.parseItem(ctx, opts, sc, t.ItemURL); err != nil {
+						d.log.Errorf(ctx, "failed to parse item: %v", err)
+						// Record error in statistics if available
+						if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+							stats.RecordCategorizedError(ctx, t.ItemURL, "mtgtop8", err)
+						}
+					}
 				}
 			}
 		}()
@@ -90,6 +103,14 @@ func (d *Dataset) Extract(
 
 	if len(opts.ItemOnlyURLs) > 0 {
 		for _, u := range opts.ItemOnlyURLs {
+			// Check context cancellation before sending
+			select {
+			case <-ctx.Done():
+				close(tasks)
+				wg.Wait()
+				return ctx.Err()
+			default:
+			}
 			tasks <- task{ItemURL: u}
 		}
 		return done(nil)
@@ -135,6 +156,12 @@ scroll:
 			return nil
 		}
 		for _, u := range urls {
+			// Check context cancellation before sending
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
 			tasks <- task{ItemURL: u}
 			totalItems++
 			if n, ok := opts.ItemLimit.Get(); ok && totalItems >= n {
@@ -165,7 +192,7 @@ func (d *Dataset) parsePage(
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-	page, err := dataset.Do(ctx, sc, &opts, req)
+	page, err := dataset.Do(ctx, sc, opts, req)
 	if err != nil {
 		return nil, err
 	}
@@ -175,22 +202,43 @@ func (d *Dataset) parsePage(
 		return nil, err
 	}
 	var urls []string
-	doc.Find("tr.hover_tr td.S12 a").EachWithBreak(func(i int, sel *goquery.Selection) bool {
-		href, ok := sel.Attr("href")
-		if !ok {
-			html, _ := sel.Parent().Html()
-			err = fmt.Errorf("failed to find href in: %s", html)
-			return false
+	// Try multiple selectors as page structure may have changed
+	selectors := []string{
+		"tr.hover_tr td.S12 a",
+		"table tr td a[href*='event']",
+		"tr td a[href*='event?e=']",
+		"a[href*='event?e=']",
+	}
+	
+	for _, selector := range selectors {
+		doc.Find(selector).EachWithBreak(func(i int, sel *goquery.Selection) bool {
+			href, ok := sel.Attr("href")
+			if !ok {
+				return true // Skip if no href
+			}
+			// Only process event URLs
+			if !strings.Contains(href, "event?e=") {
+				return true
+			}
+			uref, parseErr := url.Parse(href)
+			if parseErr != nil {
+				return true // Skip invalid URLs, don't break
+			}
+			u := base.ResolveReference(uref)
+			urlStr := u.String()
+			// Deduplicate URLs
+			for _, existing := range urls {
+				if existing == urlStr {
+					return true
+				}
+			}
+			urls = append(urls, urlStr)
+			return true
+		})
+		if len(urls) > 0 {
+			break // Found URLs with this selector
 		}
-		uref, parseErr := url.Parse(href)
-		if parseErr != nil {
-			err = fmt.Errorf("failed to parse href %q: %w", href, parseErr)
-			return false
-		}
-		u := base.ResolveReference(uref)
-		urls = append(urls, u.String())
-		return true
-	})
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -227,16 +275,16 @@ func (d *Dataset) parseItem(
 			}
 		}
 		if exists {
-			d.log.Field("url", itemURL).Debugf(ctx, "parsed collection already is exists")
+			d.log.Field("url", itemURL).Debugf(ctx, "parsed collection already exists")
 			return nil
 		}
 	}
 
 	req, err := http.NewRequest("GET", itemURL, nil)
 	if err != nil {
-		return err
+		return nil
 	}
-	page, err := dataset.Do(ctx, sc, &opts, req)
+	page, err := dataset.Do(ctx, sc, opts, req)
 	if err != nil {
 		return err
 	}
@@ -264,30 +312,74 @@ func (d *Dataset) parseItem(
 	format := doc.Find(".S14 .meta_arch").Text()
 	format = strings.TrimSpace(format)
 
-	// Extract event name, player, and placement
-	var event, player string
-	var placement int
-
-	// Event name is in first div.event_title
-	event = strings.TrimSpace(doc.Find("div.event_title").First().Text())
-
-	// Player is in <a class=player_big>
-	player = strings.TrimSpace(doc.Find("a.player_big").Text())
-
-	// Placement is in second div.event_title as "#N " prefix
-	placementText := doc.Find("div.event_title").Eq(1).Text()
-	if strings.HasPrefix(placementText, "#") {
-		// Extract number after #
-		parts := strings.SplitN(placementText, " ", 2)
-		if len(parts) > 0 {
-			numStr := strings.TrimPrefix(parts[0], "#")
-			if num, err := strconv.Atoi(numStr); err == nil {
-				placement = num
-			}
+	// Extract tournament metadata: player, event, placement, record
+	var player, event, placement, record string
+	var wins, losses, ties int
+	
+	// Try to extract from page structure - MTGTop8 shows this in various places
+	// Look for event name in page title or headers
+	titleText := doc.Find("head title").Text()
+	if strings.Contains(titleText, " - ") {
+		parts := strings.Split(titleText, " - ")
+		if len(parts) > 1 {
+			event = strings.TrimSpace(parts[0])
 		}
 	}
+	
+	// Look for player name in various selectors
+	doc.Find(".S14, .meta_arch, div[class*='player'], span[class*='player']").Each(func(i int, sel *goquery.Selection) {
+		text := strings.TrimSpace(sel.Text())
+		if text != "" && !strings.Contains(text, "Format:") && !strings.Contains(text, "Archetype:") {
+			// Heuristic: if it looks like a name and we don't have one yet
+			if player == "" && len(text) > 2 && len(text) < 50 && !strings.Contains(text, "http") {
+				player = text
+			}
+		}
+	})
+	
+	// Try to extract placement from result/rank indicators
+	doc.Find(".S14, .meta_arch, div[class*='result'], span[class*='result'], div[class*='rank'], span[class*='rank']").Each(func(i int, sel *goquery.Selection) {
+		text := strings.TrimSpace(sel.Text())
+		if strings.Contains(text, "st") || strings.Contains(text, "nd") || strings.Contains(text, "rd") || strings.Contains(text, "th") || 
+		   strings.Contains(text, "Top") || strings.Contains(text, "Winner") || strings.Contains(text, "Finalist") {
+			placement = text
+		}
+	})
+	
+	// Try to extract record (W-L-T format)
+	doc.Find(".S14, .meta_arch, div[class*='record'], span[class*='record']").Each(func(i int, sel *goquery.Selection) {
+		text := strings.TrimSpace(sel.Text())
+		// Look for patterns like "5-2-1" or "5-2" or "5W-2L"
+		if matched, _ := regexp.MatchString(`\d+[\s-]+\d+`, text); matched {
+			record = text
+			// Parse wins/losses/ties from record
+			reRecord := regexp.MustCompile(`(\d+)[\s-]+(\d+)(?:[\s-]+(\d+))?`)
+			if matches := reRecord.FindStringSubmatch(text); len(matches) >= 3 {
+				if w, err := strconv.Atoi(matches[1]); err == nil {
+					wins = w
+				}
+				if l, err := strconv.Atoi(matches[2]); err == nil {
+					losses = l
+				}
+				if len(matches) >= 4 && matches[3] != "" {
+					if t, err := strconv.Atoi(matches[3]); err == nil {
+						ties = t
+					}
+				}
+			}
+		}
+	})
 
+	// Try to extract date from page, fallback to current time
 	date := time.Now()
+	// Look for date in various formats on the page
+	doc.Find(".S14, .meta_arch, div[class*='date'], span[class*='date']").Each(func(i int, sel *goquery.Selection) {
+		text := strings.TrimSpace(sel.Text())
+		parsedDate := games.ParseDateWithFallback(text, date)
+		if !parsedDate.Equal(date) || parsedDate.After(time.Date(1990, 1, 1, 0, 0, 0, 0, time.UTC)) {
+			date = parsedDate
+		}
+	})
 
 	section := "Unknown"
 	parts := make(map[string][]game.CardDesc)
@@ -316,13 +408,14 @@ func (d *Dataset) parseItem(
 				err = fmt.Errorf("failed to parse count: %q", countStr)
 				return false
 			}
-			// Validate card count is reasonable
-			if count <= 0 || count > 100 {
-				d.log.Field("url", itemURL).Warnf(ctx, "invalid card count %d for %s, skipping", count, cardName)
-				return true // Continue to next card
+			// Normalize card name for consistency
+			normalizedName := games.NormalizeCardName(cardName)
+			if normalizedName == "" {
+				// Skip empty card names (after normalization)
+				return true
 			}
 			parts[section] = append(parts[section], game.CardDesc{
-				Name:  cardName,
+				Name:  normalizedName,
 				Count: int(count),
 			})
 			return true
@@ -340,6 +433,11 @@ func (d *Dataset) parseItem(
 		Player:    player,
 		Event:     event,
 		Placement: placement,
+		Record:    record,
+		Wins:      wins,
+		Losses:    losses,
+		Ties:      ties,
+		EventDate: date.Format("2006-01-02"),
 	}
 	tw := game.CollectionTypeWrapper{
 		Type:  t.Type(),
@@ -347,6 +445,10 @@ func (d *Dataset) parseItem(
 	}
 	var partitions []game.Partition
 	for section, cards := range parts {
+		// Only add partition if it has cards (validation requires non-empty partitions)
+		if len(cards) == 0 {
+			continue
+		}
 		partitions = append(partitions, game.Partition{
 			Name:  section,
 			Cards: cards,
@@ -358,7 +460,6 @@ func (d *Dataset) parseItem(
 		URL:         itemURL,
 		ReleaseDate: date,
 		Partitions:  partitions,
-		Source:      "mtgtop8", // Source tracking
 	}
 	if err := collection.Canonicalize(); err != nil {
 		if opts.Cat {
@@ -374,8 +475,16 @@ func (d *Dataset) parseItem(
 	if opts.Cat {
 		fmt.Println(string(b))
 	}
-	return d.blob.Write(ctx, bkey, b)
-
+	if err := d.blob.Write(ctx, bkey, b); err != nil {
+		return err
+	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
+	
+	return nil
 }
 
 var basePrefix = filepath.Join("magic", "mtgtop8")

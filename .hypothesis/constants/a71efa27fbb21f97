@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/fusion.py
+# hypothesis_version: 6.140.3
+
+[-1000000000.0, -1.0, 0.0, 1e-09, 0.25, 0.35, 0.4, 0.5, 1.0, 200, 'FusionWeights', 'KeyedVectors', 'WeightedLateFusion', 'card_name', 'comb-mnz', 'comb-sum', 'combmnz', 'combsum', 'embed', 'functional', 'index_to_key', 'jaccard', 'rrf', 'sum', 'weighted']

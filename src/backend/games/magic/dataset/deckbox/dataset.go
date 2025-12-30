@@ -18,6 +18,7 @@ import (
 	"github.com/PuerkitoBio/goquery"
 
 	"collections/blob"
+	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
@@ -83,10 +84,22 @@ func (d *Dataset) Extract(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for task := range tasks {
-				if err := d.parseCollection(ctx, sc, task, opts); err != nil {
-					d.log.Field("url", task.CollectionURL).Errorf(ctx, "failed to parse collection: %v", err)
-					continue
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case task, ok := <-tasks:
+					if !ok {
+						return
+					}
+					if err := d.parseCollection(ctx, sc, task, opts); err != nil {
+						d.log.Field("url", task.CollectionURL).Errorf(ctx, "failed to parse collection: %v", err)
+						// Record error in statistics if available
+						if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+							stats.RecordCategorizedError(ctx, task.CollectionURL, "deckbox", err)
+						}
+						continue
+					}
 				}
 			}
 		}()
@@ -94,6 +107,14 @@ func (d *Dataset) Extract(
 
 	if len(opts.ItemOnlyURLs) > 0 {
 		for _, u := range opts.ItemOnlyURLs {
+			// Check context cancellation before sending
+			select {
+			case <-ctx.Done():
+				close(tasks)
+				wg.Wait()
+				return ctx.Err()
+			default:
+			}
 			tasks <- task{
 				CollectionURL: u,
 				ReleaseDate:   time.Now(),
@@ -217,9 +238,22 @@ func (d *Dataset) parsePage(
 		collectionURLs = append(collectionURLs, cu)
 		t := strings.TrimSpace(sel.Find("td:last-of-type span[id^='time']").Text())
 		var releaseDate time.Time
-		releaseDate, err = time.Parse("02-Jan-2006 15:04", t)
+		// Use centralized date parsing with validation
+		releaseDate, err = games.ParseDateWithValidation(t)
 		if err != nil {
-			return false
+			// Try fallback format specific to Deckbox
+			if fallbackDate, fallbackErr := time.Parse("02-Jan-2006 15:04", t); fallbackErr == nil {
+				year := fallbackDate.Year()
+				if year >= 1990 && year <= 2100 {
+					releaseDate = fallbackDate
+					err = nil
+				} else {
+					err = fmt.Errorf("fallback date %q has invalid year %d", t, year)
+					return false
+				}
+			} else {
+				return false
+			}
 		}
 		collectionReleaseDates = append(collectionReleaseDates, releaseDate)
 		return true
@@ -263,7 +297,7 @@ func (d *Dataset) parseCollection(
 			return fmt.Errorf("failed to check if already parsed collection exists: %w", err)
 		}
 		if exists {
-			d.log.Field("url", task.CollectionURL).Debugf(ctx, "parsed collection already is exists")
+			d.log.Field("url", task.CollectionURL).Debugf(ctx, "parsed collection already exists")
 			return nil
 		}
 	}
@@ -291,14 +325,49 @@ func (d *Dataset) parseCollection(
 	collectionName := strings.TrimSpace(doc.Find(".page_header .section_title span").Text())
 
 	var t game.CollectionType
-	doc.Find("#validity span.dt.note").EachWithBreak(func(i int, sel *goquery.Selection) bool {
-		if strings.TrimSpace(sel.Text()) != "Format:" {
-			return true
+	// Try multiple selectors for format - page structure may have changed
+	// Format is in span.variant element, e.g., <span class="variant v7">com</span>Commander
+	formatFound := false
+	doc.Find("#validity span.variant").EachWithBreak(func(i int, sel *goquery.Selection) bool {
+		// Get the text after the span (e.g., "Commander" after "com")
+		formatText := strings.TrimSpace(sel.Text())
+		// Also try getting text from parent or next sibling
+		parentText := strings.TrimSpace(sel.Parent().Text())
+		nextText := strings.TrimSpace(sel.Next().Text())
+		
+		// Format might be abbreviated (com, mod, sta) or full name
+		// Try to extract full format name from surrounding context
+		var format string
+		if nextText != "" && len(nextText) > len(formatText) {
+			format = nextText
+		} else if parentText != "" {
+			// Remove the abbreviation and get the full name
+			format = strings.TrimSpace(strings.TrimPrefix(parentText, formatText))
+		} else {
+			format = formatText
 		}
-		format := sel.NextFilteredUntil("span.variant", "span.dt.note").Text()
+		
+		// Map common abbreviations to full names
+		formatMap := map[string]string{
+			"com": "Commander",
+			"mod": "Modern",
+			"sta": "Standard",
+			"leg": "Legacy",
+			"vin": "Vintage",
+			"pio": "Pioneer",
+			"pau": "Pauper",
+		}
+		if mapped, ok := formatMap[strings.ToLower(format)]; ok {
+			format = mapped
+		}
+		
 		format = strings.TrimSpace(format)
-		switch format {
-		case "cub":
+		if format == "" {
+			return true // Continue searching
+		}
+		
+		switch strings.ToLower(format) {
+		case "cube", "cub":
 			t = &game.CollectionTypeCube{
 				Name: collectionName,
 			}
@@ -308,17 +377,42 @@ func (d *Dataset) parseCollection(
 				Format: format,
 			}
 		}
-		return false
+		formatFound = true
+		return false // Stop searching
 	})
+	
+	// Fallback: try old selector
+	if !formatFound {
+		doc.Find("#validity span.dt.note").EachWithBreak(func(i int, sel *goquery.Selection) bool {
+			if strings.TrimSpace(sel.Text()) != "Format:" {
+				return true
+			}
+			format := sel.NextFilteredUntil("span.variant", "span.dt.note").Text()
+			format = strings.TrimSpace(format)
+			if format == "" {
+				return true
+			}
+			switch format {
+			case "cub":
+				t = &game.CollectionTypeCube{
+					Name: collectionName,
+				}
+			default:
+				t = &game.CollectionTypeDeck{
+					Name:   collectionName,
+					Format: format,
+				}
+			}
+			formatFound = true
+			return false
+		})
+	}
+	
 	if err != nil {
 		return err
 	}
 	if t == nil {
-		// No format found - might be inventory/wishlist/collection
-		// Default to Cube type for general collections
-		t = &game.CollectionTypeCube{
-			Name: collectionName,
-		}
+		return fmt.Errorf("failed to find collection format")
 	}
 
 	var partitions []game.Partition
@@ -337,21 +431,43 @@ func (d *Dataset) parseCollection(
 			err = fmt.Errorf("unknown section title: %q", title)
 			return false
 		}
-		var cards []game.CardDesc
+		// Use map to merge duplicate cards (case-insensitive)
+		cardMap := make(map[string]int)
+		cardNameMap := make(map[string]string) // normalized -> original (for consistent naming)
+		
 		sel.NextUntil(".section_title").
 			Find(".set_cards .card_name a").
 			Each(func(i int, sel *goquery.Selection) {
 				cardName := strings.TrimSpace(sel.Text())
 				cardCountStr := strings.TrimSpace(sel.SiblingsFiltered(".card_count").First().Text())
-				cardCount, err := strconv.ParseInt(cardCountStr, 10, 0)
-				if err != nil {
+				cardCount, parseErr := strconv.ParseInt(cardCountStr, 10, 0)
+				if parseErr != nil {
 					cardCount = 1
 				}
-				cards = append(cards, game.CardDesc{
-					Name:  cardName,
-					Count: int(cardCount),
-				})
+				// Normalize card name for consistency
+				normalizedName := games.NormalizeCardName(cardName)
+				if normalizedName == "" {
+					return // Skip empty names
+				}
+				// Merge duplicates by adding counts
+				normalizedLower := strings.ToLower(normalizedName)
+				cardMap[normalizedLower] += int(cardCount)
+				// Store the first normalized name we see (for consistent output)
+				if _, exists := cardNameMap[normalizedLower]; !exists {
+					cardNameMap[normalizedLower] = normalizedName
+				}
 			})
+		
+		// Convert map to slice
+		var cards []game.CardDesc
+		for normalizedLower, count := range cardMap {
+			if count > 0 {
+				cards = append(cards, game.CardDesc{
+					Name:  cardNameMap[normalizedLower],
+					Count: count,
+				})
+			}
+		}
 		if len(cards) == 0 {
 			return true
 		}
@@ -375,7 +491,6 @@ func (d *Dataset) parseCollection(
 		Type:        tw,
 		ReleaseDate: task.ReleaseDate,
 		Partitions:  partitions,
-		Source:      "deckbox", // Source tracking
 	}
 	if err := collection.Canonicalize(); err != nil {
 		return fmt.Errorf("collection is invalid: %w", err)
@@ -385,7 +500,16 @@ func (d *Dataset) parseCollection(
 	if err != nil {
 		return err
 	}
-	return d.blob.Write(ctx, bkey, b)
+	if err := d.blob.Write(ctx, bkey, b); err != nil {
+		return err
+	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
+	
+	return nil
 }
 
 var prefix = filepath.Join("magic", "deckbox")

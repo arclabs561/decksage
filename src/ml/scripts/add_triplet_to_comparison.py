@@ -1,0 +1,103 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""Add triplet to comparison when training completes."""
+import json
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+
+from gensim.models import KeyedVectors
+
+triplet_file = Path("data/embeddings/trained_triplet_substitution.wv")
+if not triplet_file.exists():
+    print("⏳ Triplet training not complete yet")
+    sys.exit(0)
+
+print("📊 Adding triplet to comparison...")
+
+# Load comparison
+comparison_file = Path("experiments/substitution_comparison_chunked.json")
+if comparison_file.exists():
+    with open(comparison_file) as f:
+        comparison = json.load(f)
+else:
+    comparison = {}
+
+# Load test pairs
+pairs_path = Path("experiments/downstream_tests/substitution_magic_expanded_100.json")
+with open(pairs_path) as f:
+    pairs_data = json.load(f)
+
+if isinstance(pairs_data, list):
+    test_pairs = [tuple(p) if isinstance(p, (list, tuple)) else (p[0], p[1]) for p in pairs_data]
+else:
+    test_pairs = []
+
+# Evaluate triplet
+print("  Evaluating triplet...")
+embedding = KeyedVectors.load(str(triplet_file))
+
+chunk_size = 25
+total_found = 0
+total_p_at_10 = 0
+
+for i in range(0, len(test_pairs), chunk_size):
+    chunk = test_pairs[i:i+chunk_size]
+    chunk_num = i // chunk_size + 1
+    total_chunks = (len(test_pairs) + chunk_size - 1) // chunk_size
+    
+    print(f"    Chunk {chunk_num}/{total_chunks}...", end=" ")
+    
+    found = 0
+    p_at_10 = 0
+    
+    for original, target in chunk:
+        if original not in embedding:
+            continue
+        
+        try:
+            similar = embedding.most_similar(original, topn=50)
+            predictions = [card for card, _ in similar]
+            
+            for rank, pred in enumerate(predictions, 1):
+                if pred == target:
+                    found += 1
+                    if rank <= 10:
+                        p_at_10 += 1
+                    break
+        except Exception:
+            continue
+    
+    chunk_p_at_10_rate = p_at_10 / len(chunk) if chunk else 0.0
+    total_found += found
+    total_p_at_10 += p_at_10
+    print(f"P@10={chunk_p_at_10_rate:.3f} ({found}/{len(chunk)})")
+
+final_p_at_10 = total_p_at_10 / len(test_pairs) if test_pairs else 0.0
+comparison["triplet"] = {
+    "p@10": final_p_at_10,
+    "found": total_found,
+    "total": len(test_pairs),
+}
+
+# Save updated comparison
+with open(comparison_file, "w") as f:
+    json.dump(comparison, f, indent=2)
+
+print(f"  ✅ Triplet: P@10={final_p_at_10:.3f}, Found={total_found}/{len(test_pairs)}")
+print()
+print("=" * 70)
+print("UPDATED COMPARISON")
+print("=" * 70)
+for name, result in sorted(comparison.items(), key=lambda x: x[1]["p@10"], reverse=True):
+    print(f"{name:20s}: P@10={result['p@10']:.3f} ({result['found']}/{result['total']})")
+print()
+print(f"✅ Saved to {comparison_file}")

@@ -1,0 +1,251 @@
+#!/usr/bin/env python3
+"""
+Monitor data extraction and quality in real-time.
+
+Generates HTML report showing:
+- Number of decks extracted per format
+- Temporal coverage
+- Card coverage
+- Format balance
+"""
+
+import argparse
+import json
+from collections import Counter
+from datetime import datetime
+from pathlib import Path
+
+
+def analyze_deck_data(data_dir: str) -> dict:
+    """Analyze extracted deck data"""
+    stats = {
+        "total_decks": 0,
+        "formats": Counter(),
+        "sources": Counter(),
+        "cards": set(),
+        "dates": [],
+        "issues": [],
+    }
+
+    # Scan all collection JSON files
+    data_path = Path(data_dir)
+
+    for json_file in data_path.rglob("*.json"):
+        try:
+            with open(json_file) as f:
+                data = json.load(f)
+
+            if data.get("kind") == "Collection":
+                col = data.get("collection", {})
+                stats["total_decks"] += 1
+
+                # Format
+                col_type = col.get("type", {}).get("inner", {})
+                if "format" in col_type:
+                    stats["formats"][col_type["format"]] += 1
+
+                # Source
+                url = col.get("url", "")
+                if "mtgtop8" in url:
+                    stats["sources"]["mtgtop8"] += 1
+                elif "goldfish" in url:
+                    stats["sources"]["goldfish"] += 1
+                elif "deckbox" in url:
+                    stats["sources"]["deckbox"] += 1
+
+                # Cards
+                for partition in col.get("partitions", []):
+                    for card in partition.get("cards", []):
+                        stats["cards"].add(card["name"])
+
+                # Date
+                if "release_date" in col:
+                    stats["dates"].append(col["release_date"])
+
+        except Exception as e:
+            stats["issues"].append(f"Failed to parse {json_file}: {e}")
+
+    return stats
+
+
+def generate_monitoring_html(stats: dict, output_file: str):
+    """Generate HTML monitoring dashboard"""
+
+    total = stats["total_decks"]
+    formats = stats["formats"]
+    sources = stats["sources"]
+    unique_cards = len(stats["cards"])
+
+    # Calculate balance
+    if formats:
+        max_format = max(formats.values())
+        min_format = min(formats.values())
+        balance_ratio = min_format / max_format if max_format > 0 else 0
+    else:
+        balance_ratio = 0
+
+    html = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="light dark">
+    <meta http-equiv="refresh" content="10">
+    <title>Data Extraction Monitor</title>
+    <link rel="stylesheet" href="shared.css">
+    <style>
+        :root {{
+            color-scheme: light dark;
+            --bg: #ffffff; --fg: #1a1a1a; --fg-muted: #666666;
+            --border: #e5e5e5; --accent: #0066cc; --code-bg: #f6f6f6;
+            --success: #16a34a; --warning: #ea580c;
+        }}
+        @media (prefers-color-scheme: dark) {{
+            :root {{
+                --bg: #1a1a1a; --fg: #e0e0e0; --fg-muted: #999999;
+                --border: #333333; --accent: #4a9eff; --code-bg: #2d2d2d;
+                --success: #22c55e; --warning: #fb923c;
+            }}
+        }}
+        * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{ font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+                background: var(--bg); color: var(--fg); padding: clamp(1rem, 3vw, 2rem); }}
+        .container {{ max-width: 1200px; margin: 0 auto; }}
+        header {{ border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 1.5rem; }}
+        h1 {{ font-size: clamp(1.5rem, 4vw, 2rem); font-weight: 600; letter-spacing: -0.02em; }}
+        h2 {{ font-size: 1.3rem; font-weight: 600; margin: 1.5rem 0 0.5rem 0; }}
+        .big-stat {{ font-size: 3rem; font-weight: 700; color: var(--accent); }}
+        .grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0; }}
+        .stat-card {{ background: var(--code-bg); border: 1px solid var(--border); border-radius: 4px; padding: 1rem; }}
+        .stat-card h3 {{ font-size: 0.85rem; color: var(--fg-muted); text-transform: uppercase; margin-bottom: 0.5rem; }}
+        .stat-card .value {{ font-size: 1.8rem; font-weight: 600; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: 0.85rem; }}
+        th, td {{ border: 1px solid var(--border); padding: 0.4rem 0.75rem; text-align: left; }}
+        th {{ background: var(--code-bg); font-weight: 600; }}
+        tr:hover {{ background: var(--code-bg); }}
+        .bar {{ background: var(--accent); height: 20px; border-radius: 2px; display: inline-block; }}
+        .status {{ color: var(--success); font-weight: 600; }}
+        .warning {{ color: var(--warning); }}
+        .refresh {{ color: var(--fg-muted); font-size: 0.75rem; margin-top: 1rem; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Data Extraction Monitor</h1>
+            <p style="color: var(--fg-muted); font-size: 0.85rem;">Last updated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")} | Auto-refresh: 10s</p>
+        </header>
+
+        <div class="grid">
+            <div class="stat-card">
+                <h3>Total Decks</h3>
+                <div class="value">{total:,}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Unique Cards</h3>
+                <div class="value">{unique_cards:,}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Format Balance</h3>
+                <div class="value {"status" if balance_ratio > 0.5 else "warning"}">{balance_ratio:.1%}</div>
+            </div>
+            <div class="stat-card">
+                <h3>Data Sources</h3>
+                <div class="value">{len(sources)}</div>
+            </div>
+        </div>
+
+        <h2>Format Distribution</h2>
+        <table>
+            <thead>
+                <tr><th>Format</th><th>Decks</th><th>Percentage</th><th>Visual</th></tr>
+            </thead>
+            <tbody>
+"""
+
+    if formats:
+        max_count = max(formats.values())
+        for fmt, count in formats.most_common():
+            pct = (count / total * 100) if total > 0 else 0
+            bar_width = int((count / max_count) * 300) if max_count > 0 else 0
+            html += f"""
+                <tr>
+                    <td><strong>{fmt}</strong></td>
+                    <td>{count}</td>
+                    <td>{pct:.1f}%</td>
+                    <td><span class="bar" style="width: {bar_width}px;"></span></td>
+                </tr>
+"""
+
+    html += """
+            </tbody>
+        </table>
+
+        <h2>Data Sources</h2>
+        <table>
+            <thead>
+                <tr><th>Source</th><th>Decks</th></tr>
+            </thead>
+            <tbody>
+"""
+
+    for source, count in sources.most_common():
+        html += f"""
+                <tr>
+                    <td><strong>{source}</strong></td>
+                    <td>{count}</td>
+                </tr>
+"""
+
+    html += """
+            </tbody>
+        </table>
+
+        <h2>Recommendations</h2>
+        <ul style="list-style: none; padding: 0;">
+"""
+
+    # Give recommendations
+    if total < 500:
+        html += (
+            f"<li>• Extract more data: {total} decks is insufficient for Node2Vec (need 500+)</li>"
+        )
+
+    if balance_ratio < 0.3:
+        html += "<li>• Format imbalance detected: Extract more from under-represented formats</li>"
+
+    if unique_cards < 2000:
+        html += "<li>• Limited card coverage: More decks needed for comprehensive embeddings</li>"
+
+    if total >= 500 and balance_ratio >= 0.5:
+        html += (
+            '<li class="status">✓ Data quality is good - ready to train improved embeddings!</li>'
+        )
+
+    html += """
+        </ul>
+
+        <p class="refresh">This page auto-refreshes every 10 seconds while extraction is running.</p>
+    </div>
+</body>
+</html>
+"""
+
+    with open(output_file, "w") as f:
+        f.write(html)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--data-dir", type=str, required=True)
+    parser.add_argument("--output", type=str, default="data_quality_report.html")
+
+    args = parser.parse_args()
+
+    stats = analyze_deck_data(args.data_dir)
+    generate_monitoring_html(stats, args.output)
+
+    print(f"📊 Data quality report: {args.output}")
+    print(f"   Total decks: {stats['total_decks']}")
+    print(f"   Unique cards: {len(stats['cards'])}")
+    print(f"   Formats: {dict(stats['formats'])}")

@@ -1,0 +1,362 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "requests>=2.31.0",
+# ]
+# ///
+"""
+Automated Deck Modification Evaluation Pipeline
+
+Runs the complete evaluation pipeline:
+1. Generate critique and test cases
+2. Generate annotations (with or without API)
+3. Run regression tests (if API available)
+4. Generate summary report
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import time
+from pathlib import Path
+from typing import Any
+
+try:
+    import requests
+    HAS_REQUESTS = True
+except ImportError:
+    HAS_REQUESTS = False
+
+
+def check_api_available(api_url: str, timeout: int = 5) -> bool:
+    """Check if API is available."""
+    try:
+        response = requests.get(f"{api_url}/live", timeout=timeout)
+        return response.status_code == 200
+    except Exception:
+        return False
+
+
+def run_critique(output_path: Path) -> dict[str, Any]:
+    """Run critique system and generate test cases."""
+    print("=" * 60)
+    print("Step 1: Generating Critique and Test Cases")
+    print("=" * 60)
+    
+    # Import and run critique
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    from ml.evaluation.deck_modification_evaluation import DeckModificationEvaluator
+    
+    evaluator = DeckModificationEvaluator()
+    results = evaluator.run_critique()
+    
+    # Save results
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"✓ Critique complete")
+    print(f"  Total critiques: {results['summary']['total_critiques']}")
+    print(f"  High: {results['summary']['high']}, Medium: {results['summary']['medium']}, Low: {results['summary']['low']}")
+    print(f"  Test cases: {results['summary']['total_test_cases']}")
+    print(f"✓ Saved to {output_path}")
+    
+    return results
+
+
+def generate_annotations(
+    critique_path: Path,
+    output_path: Path,
+    api_url: str | None = None,
+    wait_for_api: bool = True,
+    max_wait: int = 60,
+) -> None:
+    """Generate annotations for all tasks."""
+    print("\n" + "=" * 60)
+    print("Step 2: Generating Annotations")
+    print("=" * 60)
+    
+    # Check if API is available
+    if api_url:
+        print(f"Checking API availability at {api_url}...")
+        if not check_api_available(api_url):
+            if wait_for_api:
+                print(f"API not available. Waiting up to {max_wait}s...")
+                for i in range(max_wait):
+                    time.sleep(1)
+                    if check_api_available(api_url):
+                        print(f"✓ API available after {i+1}s")
+                        break
+                else:
+                    print("⚠ API still not available. Generating templates only.")
+                    api_url = None
+            else:
+                print("⚠ API not available. Generating templates only.")
+                api_url = None
+        else:
+            print("✓ API available")
+    else:
+        print("No API URL provided. Generating templates only.")
+    
+    # Import and run annotation generation
+    sys.path.insert(0, str(Path(__file__).parent.parent))
+    try:
+        from ml.evaluation.deck_modification_judge import generate_annotations_for_all_tasks
+        
+        generate_annotations_for_all_tasks(
+            critique_path=critique_path,
+            output_path=output_path,
+            api_url=api_url,
+            verbose=True,
+        )
+        print(f"✓ Annotations saved to {output_path}")
+    except Exception as e:
+        print(f"⚠ Annotation generation failed: {e}")
+        print("  Generating template structure only...")
+        
+        # Generate template structure
+        with open(critique_path) as f:
+            critique_data = json.load(f)
+        
+        annotations = []
+        for case in critique_data.get("test_cases", []):
+            annotations.append({
+                "test_case": case["name"],
+                "game": case["game"],
+                "deck": case["deck"],
+                "archetype": case.get("archetype"),
+                "format": case.get("format"),
+                "expected_additions": case.get("expected_additions", []),
+                "expected_removals": case.get("expected_removals", []),
+                "expected_replacements": case.get("expected_replacements", {}),
+                "judgments": {
+                    "add": [],
+                    "remove": [],
+                    "replace": [],
+                },
+                "note": "Template - run with API to generate actual judgments",
+            })
+        
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(annotations, f, indent=2)
+        
+        print(f"✓ Template annotations saved to {output_path}")
+
+
+def run_regression_tests(
+    annotations_path: Path,
+    api_url: str | None = None,
+    output_path: Path | None = None,
+) -> dict[str, Any]:
+    """Run regression tests."""
+    print("\n" + "=" * 60)
+    print("Step 3: Running Regression Tests")
+    print("=" * 60)
+    
+    if not api_url:
+        print("⚠ No API URL provided. Skipping regression tests.")
+        return {"skipped": True, "reason": "No API URL"}
+    
+    if not check_api_available(api_url):
+        print("⚠ API not available. Skipping regression tests.")
+        return {"skipped": True, "reason": "API not available"}
+    
+    if not HAS_REQUESTS:
+        print("⚠ requests not installed. Skipping regression tests.")
+        return {"skipped": True, "reason": "requests not installed"}
+    
+    try:
+        sys.path.insert(0, str(Path(__file__).parent.parent))
+        from ml.evaluation.regression_test_deck_modification import DeckModificationRegressionTester
+        
+        tester = DeckModificationRegressionTester(api_url, tolerance=0.5)
+        results = tester.run_regression_tests(annotations_path)
+        
+        if output_path:
+            with open(output_path, "w") as f:
+                json.dump(results, f, indent=2)
+            print(f"✓ Results saved to {output_path}")
+        
+        print(f"\n📊 Regression Test Summary:")
+        print(f"   Total: {results['total_tests']}")
+        print(f"   Passed: {results['passed']}")
+        print(f"   Failed: {results['failed']}")
+        print(f"   Pass Rate: {results['pass_rate']:.1%}")
+        
+        return results
+    except Exception as e:
+        print(f"⚠ Regression testing failed: {e}")
+        return {"error": str(e)}
+
+
+def generate_summary_report(
+    critique_path: Path,
+    annotations_path: Path | None = None,
+    regression_path: Path | None = None,
+    output_path: Path | None = None,
+) -> None:
+    """Generate summary report."""
+    print("\n" + "=" * 60)
+    print("Step 4: Generating Summary Report")
+    print("=" * 60)
+    
+    if output_path is None:
+        output_path = Path(__file__).parent.parent.parent / "experiments" / "deck_modification_evaluation_report.md"
+    
+    with open(critique_path) as f:
+        critique_data = json.load(f)
+    
+    report_lines = [
+        "# Deck Modification Evaluation Report",
+        "",
+        f"**Generated**: {time.strftime('%Y-%m-%d %H:%M:%S')}",
+        "",
+        "## Critique Summary",
+        "",
+        f"- **Total Issues**: {critique_data['summary']['total_critiques']}",
+        f"- **High Severity**: {critique_data['summary']['high']}",
+        f"- **Medium Severity**: {critique_data['summary']['medium']}",
+        f"- **Low Severity**: {critique_data['summary']['low']}",
+        f"- **Test Cases**: {critique_data['summary']['total_test_cases']}",
+        "",
+        "## High Priority Issues",
+        "",
+    ]
+    
+    for c in critique_data["critiques"]:
+        if c["severity"] == "high":
+            report_lines.extend([
+                f"### {c['category'].title()}: {c['issue']}",
+                "",
+                f"**Evidence**: {c['evidence']}",
+                "",
+                f"**Recommendation**: {c['recommendation']}",
+                "",
+                f"**Test Case**: `{c['test_case']}`",
+                "",
+            ])
+    
+    report_lines.extend([
+        "## Test Cases",
+        "",
+    ])
+    
+    for case in critique_data.get("test_cases", []):
+        report_lines.extend([
+            f"### {case['name']}",
+            "",
+            f"**Context**: {case['context']}",
+            "",
+            f"**Expected Additions**: {', '.join(case.get('expected_additions', []))}",
+            f"**Expected Removals**: {', '.join(case.get('expected_removals', []))}",
+            "",
+        ])
+    
+    if annotations_path and annotations_path.exists():
+        with open(annotations_path) as f:
+            annotations_data = json.load(f)
+        
+        report_lines.extend([
+            "## Annotations Status",
+            "",
+            f"- **Total Annotations**: {len(annotations_data)}",
+            "",
+        ])
+    
+    if regression_path and regression_path.exists():
+        with open(regression_path) as f:
+            regression_data = json.load(f)
+        
+        if not regression_data.get("skipped"):
+            report_lines.extend([
+                "## Regression Test Results",
+                "",
+                f"- **Total Tests**: {regression_data['total_tests']}",
+                f"- **Passed**: {regression_data['passed']}",
+                f"- **Failed**: {regression_data['failed']}",
+                f"- **Pass Rate**: {regression_data['pass_rate']:.1%}",
+                "",
+            ])
+    
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        f.write("\n".join(report_lines))
+    
+    print(f"✓ Report saved to {output_path}")
+
+
+def main():
+    """Run complete automated evaluation pipeline."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Automated deck modification evaluation")
+    parser.add_argument("--api-url", type=str, help="API URL (e.g., http://localhost:8000)")
+    parser.add_argument("--wait-for-api", action="store_true", help="Wait for API to become available")
+    parser.add_argument("--skip-regression", action="store_true", help="Skip regression tests")
+    parser.add_argument("--experiments-dir", type=str, help="Experiments directory")
+    
+    args = parser.parse_args()
+    
+    # Set up paths
+    if args.experiments_dir:
+        experiments_dir = Path(args.experiments_dir)
+    else:
+        # Try to find experiments directory
+        script_dir = Path(__file__).parent
+        experiments_dir = script_dir.parent.parent.parent / "experiments"
+    
+    critique_path = experiments_dir / "deck_modification_critique.json"
+    annotations_path = experiments_dir / "deck_modification_annotations.json"
+    regression_path = experiments_dir / "deck_modification_regression_results.json"
+    report_path = experiments_dir / "deck_modification_evaluation_report.md"
+    
+    print("🚀 Automated Deck Modification Evaluation Pipeline")
+    print("=" * 60)
+    
+    # Step 1: Critique
+    critique_data = run_critique(critique_path)
+    
+    # Step 2: Annotations
+    generate_annotations(
+        critique_path,
+        annotations_path,
+        api_url=args.api_url,
+        wait_for_api=args.wait_for_api,
+    )
+    
+    # Step 3: Regression tests
+    if not args.skip_regression:
+        regression_results = run_regression_tests(
+            annotations_path,
+            api_url=args.api_url,
+            output_path=regression_path,
+        )
+    else:
+        regression_results = {"skipped": True, "reason": "User requested skip"}
+    
+    # Step 4: Summary report
+    generate_summary_report(
+        critique_path,
+        annotations_path if annotations_path.exists() else None,
+        regression_path if regression_path.exists() else None,
+        report_path,
+    )
+    
+    print("\n" + "=" * 60)
+    print("✅ Evaluation Pipeline Complete")
+    print("=" * 60)
+    print(f"\n📁 Output Files:")
+    print(f"   - Critique: {critique_path}")
+    print(f"   - Annotations: {annotations_path}")
+    if regression_path.exists():
+        print(f"   - Regression: {regression_path}")
+    print(f"   - Report: {report_path}")
+
+
+if __name__ == "__main__":
+    main()
+

@@ -1,12 +1,9 @@
 package cardco
 
 import (
-	"bytes"
 	"context"
-	"encoding/csv"
 	"fmt"
 	"os"
-	"strconv"
 	"sync"
 
 	"github.com/dgraph-io/badger/v3"
@@ -83,16 +80,6 @@ type tval struct {
 	Multiset int
 }
 
-// Attribute storage for cards encountered via CardItem (from Scryfall dataset)
-type cattr struct {
-	CMC      float64
-	TypeLine string
-}
-
-var (
-	attrPrefix = []byte("ATTR:")
-)
-
 func (t *Transform) add(k tkey, v tval) error {
 	kb, err := msgpack.Marshal(k)
 	if err != nil {
@@ -152,193 +139,168 @@ func (t *Transform) add(k tkey, v tval) error {
 	// c.add(d)
 }
 
-func (t *Transform) setAttr(name string, attr cattr) error {
-	kb := append([]byte{}, attrPrefix...)
-	kb = append(kb, []byte(name)...)
-	vb, err := msgpack.Marshal(attr)
-	if err != nil {
-		return err
-	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
-	return t.db.Update(func(txn *badger.Txn) error {
-		if err := txn.Set(kb, vb); err != nil {
-			return fmt.Errorf("failed to set attr: %w", err)
-		}
-		return nil
-	})
-}
-
 func (t *Transform) Transform(
 	ctx context.Context,
 	datasets []dataset.Dataset,
 	options ...transform.TransformOption,
 ) (*transform.TransformOutput, error) {
-	t.log.Infof(ctx, "Starting card co-occurrence transform...")
+	// defer func() {
+	// 	if err := t.close(); err != nil {
+	// 		t.log.Errorf(ctx, "failed to close: %v", err)
+	// 	}
+	// }()
 
-	// Parse options
-	limit := -1
-	iterParallel := 0
-	for _, opt := range options {
-		switch opt := opt.(type) {
-		case *transform.OptTransformLimit:
-			if opt.Limit > 0 {
-				limit = opt.Limit
-			}
-		case *transform.OptTransformParallel:
-			// Pass through to dataset iteration
-			if opt.Parallel > 0 {
-				iterParallel = opt.Parallel
-			}
-		default:
-			panic(fmt.Sprintf("invalid option type %T", opt))
-		}
-	}
+	// d := datasets[0]
 
-	// Process items from all datasets
-	total := 0
-	for _, d := range datasets {
-		t.log.Infof(ctx, "Processing dataset: %s", d.Description().Name)
+	// limit := mo.None[int]()
+	// parallel := 1024
+	// for _, opt := range options {
+	// 	switch opt := opt.(type) {
+	// 	case *transform.OptTransformLimit:
+	// 		if opt.Limit > 0 {
+	// 			limit = mo.Some(opt.Limit)
+	// 		}
+	// 	case *transform.OptTransformParallel:
+	// 		parallel = opt.Parallel
+	// 	default:
+	// 		panic(fmt.Sprintf("invalid option type %T", opt))
+	// 	}
+	// }
 
-		var iterOpts []dataset.IterItemsOption
-		if iterParallel > 0 {
-			iterOpts = append(iterOpts, &dataset.OptIterItemsParallel{Parallel: iterParallel})
-		}
+	// f, err := os.Create("pairs.csv")
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// defer f.Close()
 
-		err := d.IterItems(ctx, func(item dataset.Item) error {
-			if err := t.worker(item); err != nil {
-				return fmt.Errorf("worker failed: %w", err)
-			}
-			total++
-			if total%100 == 0 {
-				t.log.Debugf(ctx, "Processed %d collections", total)
-			}
-			if limit > 0 && total >= limit {
-				return dataset.ErrIterItemsStop
-			}
-			return nil
-		}, iterOpts...)
+	// wg := new(sync.WaitGroup)
+	// items := make(chan dataset.Item)
+	// errs := make(chan error, 1)
+	// for i := 0; i < parallel; i++ {
+	// 	wg.Add(1)
+	// 	go func() {
+	// 		defer wg.Done()
+	// 		for it := range items {
+	// 			if err := t.worker(it); err != nil {
+	// 				errs <- err
+	// 				return
+	// 			}
+	// 		}
+	// 	}()
+	// }
 
-		if err != nil && err != dataset.ErrIterItemsStop {
-			return nil, fmt.Errorf("failed to iterate items: %w", err)
-		}
+	// total := 0
+	// it := d.IterItems(ctx)
+	// err = nil
+	// checkpoint := 100
+	// ITEMS:
+	// for it.Next(ctx) {
+	// 	select {
+	// 	case err = <-errs:
+	// 		break ITEMS
+	// 	default:
+	// 	}
+	// 	item, err := it.Item(ctx)
+	// 	if err != nil {
+	// 		t.log.Errorf(ctx, "failed to get item: %v", err)
+	// 		continue
+	// 	}
+	// 	switch item := item.(type) {
+	// 	case *dataset.CollectionItem:
+	// 		_ = item
+	// 		// fmt.Println(total, item.Collection.URL)
+	// 	}
+	// 	items <- item
+	// 	total++
+	// 	if total > 0 && total%checkpoint == 0 {
+	// 		t.log.Debugf(ctx, "iterated through %d items", total)
+	// 	}
+	// 	if n, ok := limit.Get(); ok && total >= n {
+	// 		break
+	// 	}
+	// }
+	// close(items)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// if err := it.Err(); err != nil {
+	// 	return nil, fmt.Errorf("failed to iterate items: %w", err)
+	// }
+	// wg.Wait()
+	// w := csv.NewWriter(f)
+	// defer w.Flush()
+	// w.Write([]string{"NAME_1", "NAME_2", "COUNT_SET", "COUNT_MULTISET"})
+	// stream := t.db.NewStream()
+	// stream.Send = func(buf *z.Buffer) error {
+	// 	list, err := badger.BufferToKVList(buf)
+	// 	if err != nil {
+	// 		return nil
+	// 	}
+	// 	for _, kv := range list.GetKv() {
+	// 		var k tkey
+	// 		if err := msgpack.Unmarshal(kv.Key, &k); err != nil {
+	// 			return err
+	// 		}
+	// 		var v tval
+	// 		if err := msgpack.Unmarshal(kv.Value, &v); err != nil {
+	// 			return err
+	// 		}
+	// 		err = w.Write([]string{
+	// 			k.Name1,
+	// 			k.Name2,
+	// 			fmt.Sprintf("%d", v.Set),
+	// 			fmt.Sprintf("%d", v.Multiset),
+	// 		})
+	// 		if err != nil {
+	// 			return err
+	// 		}
+	// 	}
+	// 	return nil
+	// }
+	// if err := stream.Orchestrate(ctx); err != nil {
+	// 	return nil, err
+	// }
+	// // err = t.db.View(func(txn *badger.Txn) error {
+	// // 	it := txn.NewIterator(badger.DefaultIteratorOptions)
+	// // 	defer it.Close()
+	// // 	for it.Rewind(); it.Valid(); it.Next() {
+	// // 		item := it.Item()
+	// // 		kb := item.Key()
+	// // 		var k tkey
+	// // 		if err := msgpack.Unmarshal(kb, &k); err != nil {
+	// // 			return err
+	// // 		}
+	// // 		vb, err := item.ValueCopy(nil)
+	// // 		if err != nil {
+	// // 			return err
+	// // 		}
+	// // 		var v tval
+	// // 		if err := msgpack.Unmarshal(vb, &v); err != nil {
+	// // 			return err
+	// // 		}
+	// // 		w.Write([]string{
+	// // 			k.Name1,
+	// // 			k.Name2,
+	// // 			fmt.Sprintf("%d", v.Set),
+	// // 			fmt.Sprintf("%d", v.Multiset),
+	// // 		})
 
-		if limit > 0 && total >= limit {
-			break
-		}
-	}
-
-	t.log.Infof(ctx, "Transform complete! Processed %d collections", total)
-	return &transform.TransformOutput{}, nil
-}
-
-// ExportCSV exports the co-occurrence matrix to CSV
-func (t *Transform) ExportCSV(ctx context.Context, filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	w := csv.NewWriter(f)
-	defer w.Flush()
-
-	return t.db.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-
-		// Write header
-		if err := w.Write([]string{"NAME_1", "NAME_2", "COUNT_SET", "COUNT_MULTISET"}); err != nil {
-			return err
-		}
-
-		count := 0
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-
-			var k tkey
-			if err := msgpack.Unmarshal(item.Key(), &k); err != nil {
-				return err
-			}
-
-			vb, err := item.ValueCopy(nil)
-			if err != nil {
-				return err
-			}
-
-			var v tval
-			if err := msgpack.Unmarshal(vb, &v); err != nil {
-				return err
-			}
-
-			if err := w.Write([]string{k.Name1, k.Name2, strconv.Itoa(v.Set), strconv.Itoa(v.Multiset)}); err != nil {
-				return err
-			}
-			count++
-		}
-
-		w.Flush()
-		if err := w.Error(); err != nil {
-			return err
-		}
-
-		t.log.Infof(ctx, "Exported %d card pairs to %s", count, filename)
-		return nil
-	})
-}
-
-// ExportAttributesCSV exports card attributes captured from CardItem entries.
-func (t *Transform) ExportAttributesCSV(ctx context.Context, filename string) error {
-	f, err := os.Create(filename)
-	if err != nil {
-		return err
-	}
-	defer f.Close()
-
-	w := csv.NewWriter(f)
-	defer w.Flush()
-
-	if err := w.Write([]string{"NAME", "CMC", "TYPE_LINE"}); err != nil {
-		return err
-	}
-
-	return t.db.View(func(txn *badger.Txn) error {
-		it := txn.NewIterator(badger.DefaultIteratorOptions)
-		defer it.Close()
-
-		count := 0
-		for it.Rewind(); it.Valid(); it.Next() {
-			item := it.Item()
-			key := item.Key()
-			if !bytes.HasPrefix(key, attrPrefix) {
-				continue
-			}
-			name := string(key[len(attrPrefix):])
-			vb, err := item.ValueCopy(nil)
-			if err != nil {
-				return err
-			}
-			var attr cattr
-			if err := msgpack.Unmarshal(vb, &attr); err != nil {
-				return err
-			}
-			if err := w.Write([]string{name, strconv.FormatFloat(attr.CMC, 'f', -1, 64), attr.TypeLine}); err != nil {
-				return err
-			}
-			count++
-		}
-		w.Flush()
-		if err := w.Error(); err != nil {
-			return err
-		}
-		t.log.Infof(ctx, "Exported %d card attributes to %s", count, filename)
-		return nil
-	})
-}
-
-// Close closes the transform and cleans up temp files
-func (t *Transform) Close() error {
-	return t.close()
+	// // 	}
+	// // 	return nil
+	// // })
+	// // for pair, count := range t.counts {
+	// // 	w.Write([]string{
+	// // 		pair.name1,
+	// // 		pair.name2,
+	// // 		fmt.Sprintf("%d", count.set),
+	// // 		fmt.Sprintf("%d", count.multiset),
+	// // 	})
+	// // }
+	// if err != nil {
+	// 	return nil, err
+	// }
+	// w.Flush()
+	return nil, nil
 }
 
 func (t *Transform) worker(item dataset.Item) error {
@@ -372,17 +334,6 @@ func (t *Transform) worker(item dataset.Item) error {
 			}
 		}
 	case *dataset.CardItem:
-		if item.Card != nil {
-			var cmc float64
-			cmc = item.Card.CMC
-			typeLine := ""
-			if len(item.Card.Faces) > 0 {
-				typeLine = item.Card.Faces[0].TypeLine
-			}
-			if err := t.setAttr(item.Card.Name, cattr{CMC: cmc, TypeLine: typeLine}); err != nil {
-				return err
-			}
-		}
 	default:
 		panic(fmt.Sprintf("unhandled item type: %T", item))
 	}

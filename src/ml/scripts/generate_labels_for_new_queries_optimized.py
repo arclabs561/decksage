@@ -1,0 +1,288 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Optimized label generation with retry logic, checkpointing, and better error handling.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import time
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic_ai import Agent
+    from pydantic import BaseModel, Field
+    import os
+    
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Try enhanced version first, fall back to original
+try:
+    from generate_labels_enhanced import (
+        ENHANCED_LABEL_GENERATION_PROMPT as LABEL_GENERATION_PROMPT,
+        EnhancedCardLabels as CardLabels,
+        make_enhanced_label_agent as make_label_generation_agent,
+        generate_labels_with_context,
+        load_card_context,
+    )
+    HAS_ENHANCED = True
+except ImportError:
+    HAS_ENHANCED = False
+    # Fallback: define basic types if enhanced version not available
+    # Note: generate_labels_for_new_queries.py has been archived
+    # This fallback should rarely be needed as enhanced version is preferred
+    try:
+        from pydantic import BaseModel, Field
+        class CardLabels(BaseModel):
+            """Basic card similarity labels."""
+            highly_relevant: list[str] = Field(default_factory=list)
+            relevant: list[str] = Field(default_factory=list)
+            somewhat_relevant: list[str] = Field(default_factory=list)
+            marginally_relevant: list[str] = Field(default_factory=list)
+            irrelevant: list[str] = Field(default_factory=list)
+        LABEL_GENERATION_PROMPT = "You are an expert at evaluating card similarity for TCGs."
+        make_label_generation_agent = None  # Will be handled by enhanced version
+    except ImportError:
+        CardLabels = None
+        LABEL_GENERATION_PROMPT = ""
+        make_label_generation_agent = None
+
+
+def generate_labels_for_query_with_retry(
+    agent: Agent,
+    query: str,
+    use_case: str | None = None,
+    game: str | None = None,
+    max_retries: int = 3,
+    retry_delay: float = 2.0,
+) -> dict[str, list[str]]:
+    """Generate labels with retry logic (uses enhanced version if available)."""
+    # Use enhanced version if available
+    if HAS_ENHANCED:
+        try:
+            from pathlib import Path
+            card_context = load_card_context(query, Path("data/processed/card_attributes_enriched.csv"))
+            return generate_labels_with_context(agent, query, use_case, card_context, game=game)
+        except Exception as e:
+            logger.warning(f"Enhanced generation failed, falling back: {e}")
+    
+    # Fallback to original (game-agnostic)
+    game_display = {"magic": "Magic: The Gathering", "pokemon": "Pokémon TCG", "yugioh": "Yu-Gi-Oh!"}.get(game, "TCG")
+    prompt = f"""Generate similarity labels for {game_display} card: {query}
+"""
+    
+    if use_case:
+        prompt += f"\nUse case: {use_case}\n"
+    
+    # Add game boundary enforcement if game is known
+    if game:
+        prompt += f"\n**CRITICAL: You are evaluating cards for {game_display}. ONLY include cards from {game_display}. Do not include cards from other games.\n"
+    
+    prompt += """
+Provide 3-5 cards for each relevance level. Focus on well-known cards that are actually similar.
+"""
+    
+    for attempt in range(max_retries):
+        try:
+            result = agent.run_sync(prompt)
+            
+            if hasattr(result, 'data') and result.data:
+                labels = result.data
+                if isinstance(labels, CardLabels):
+                    return {
+                        "highly_relevant": labels.highly_relevant,
+                        "relevant": labels.relevant,
+                        "somewhat_relevant": labels.somewhat_relevant,
+                        "marginally_relevant": labels.marginally_relevant,
+                        "irrelevant": labels.irrelevant,
+                    }
+                elif isinstance(labels, dict):
+                    return labels
+            
+            # If we get here, result was empty or invalid
+            if attempt < max_retries - 1:
+                logger.warning(f"Empty result for {query}, retrying ({attempt + 1}/{max_retries})...")
+                time.sleep(retry_delay)
+                continue
+                
+        except Exception as e:
+            logger.error(f"Error generating labels for {query} (attempt {attempt + 1}/{max_retries}): {e}")
+            if attempt < max_retries - 1:
+                time.sleep(retry_delay)
+                continue
+    
+    # All retries failed - return empty but log warning
+    logger.warning(f"Failed to generate labels for {query} after {max_retries} attempts")
+    return {
+        "highly_relevant": [],
+        "relevant": [],
+        "somewhat_relevant": [],
+        "marginally_relevant": [],
+        "irrelevant": [],
+    }
+
+
+def generate_labels_with_checkpoint(
+    test_set: dict[str, dict[str, Any]],
+    output_path: Path,
+    batch_size: int = 10,
+    checkpoint_interval: int = 5,
+    game: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """Generate labels with checkpointing."""
+    agent = make_label_generation_agent()
+    if not agent:
+        logger.error("Cannot create LLM agent")
+        return test_set
+    
+    # Detect game from test set if not provided
+    if not game:
+        # Try to get from test set metadata
+        if isinstance(test_set, dict) and "game" in test_set:
+            game = test_set["game"]
+        # Try to infer from path
+        path_str = str(output_path).lower()
+        if "pokemon" in path_str or "pkm" in path_str:
+            game = "pokemon"
+        elif "yugioh" in path_str or "ygo" in path_str:
+            game = "yugioh"
+        else:
+            game = "magic"  # Default
+        logger.info(f"Detected game: {game}")
+    
+    # Load existing if checkpoint exists
+    if output_path.exists():
+        try:
+            with open(output_path) as f:
+                checkpoint_data = json.load(f)
+                test_set = checkpoint_data.get("queries", checkpoint_data)
+                logger.info(f"Loaded checkpoint: {len(test_set)} queries")
+        except Exception as e:
+            logger.warning(f"Failed to load checkpoint: {e}")
+    
+    # Find queries that need labels
+    queries_needing_labels = []
+    for query, data in test_set.items():
+        has_labels = (
+            data.get("highly_relevant") or
+            data.get("relevant") or
+            data.get("somewhat_relevant")
+        )
+        if not has_labels:
+            queries_needing_labels.append((query, data))
+    
+    logger.info(f"Found {len(queries_needing_labels)} queries needing labels")
+    
+    if not queries_needing_labels:
+        return test_set
+    
+    # Generate labels in batches with checkpointing
+    updated = test_set.copy()
+    processed = 0
+    last_checkpoint = 0
+    
+    for i in range(0, len(queries_needing_labels), batch_size):
+        batch = queries_needing_labels[i:i+batch_size]
+        batch_num = i//batch_size + 1
+        total_batches = (len(queries_needing_labels)-1)//batch_size + 1
+        
+        logger.info(f"Processing batch {batch_num}/{total_batches} ({len(batch)} queries)...")
+        
+        for query, data in batch:
+            use_case = data.get("use_case")
+            labels = generate_labels_for_query_with_retry(agent, query, use_case, game=game)
+            
+            # Merge labels into existing data
+            updated[query] = {**data, **labels}
+            processed += 1
+            
+            # Check if we got any labels
+            if labels.get("highly_relevant") or labels.get("relevant"):
+                logger.debug(f"  ✅ {query}: {len(labels['highly_relevant'])} highly relevant")
+            else:
+                logger.warning(f"  ⚠️  {query}: No labels generated")
+        
+        # Checkpoint periodically
+        if processed - last_checkpoint >= checkpoint_interval:
+            output_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(output_path, "w") as f:
+                json.dump({
+                    "version": "labeled",
+                    "queries": updated,
+                    "metadata": {
+                        "processed": processed,
+                        "total_needing_labels": len(queries_needing_labels),
+                    },
+                }, f, indent=2)
+            logger.info(f"  💾 Checkpoint saved ({processed}/{len(queries_needing_labels)} processed)")
+            last_checkpoint = processed
+    
+    logger.info(f"✅ Generated labels for {processed} queries")
+    
+    return updated
+
+
+def main() -> int:
+    """Generate labels with optimizations."""
+    parser = argparse.ArgumentParser(description="Generate labels for test set queries (optimized)")
+    parser.add_argument("--input", type=str, required=True, help="Test set JSON")
+    parser.add_argument("--output", type=str, required=True, help="Output test set JSON")
+    parser.add_argument("--batch-size", type=int, default=10, help="Batch size for generation")
+    parser.add_argument("--checkpoint-interval", type=int, default=5, help="Save checkpoint every N queries")
+    parser.add_argument("--max-retries", type=int, default=3, help="Max retries per query")
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai not available")
+        return 1
+    
+    # Load test set
+    with open(args.input) as f:
+        test_data = json.load(f)
+        test_set = test_data.get("queries", test_data)
+    
+    # Generate labels with checkpointing
+    output_path = Path(args.output)
+    updated = generate_labels_with_checkpoint(
+        test_set,
+        output_path,
+        args.batch_size,
+        args.checkpoint_interval,
+    )
+    
+    # Final save
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump({
+            "version": "labeled",
+            "queries": updated,
+            "metadata": {
+                "original_size": len(test_set),
+                "updated_size": len(updated),
+            },
+        }, f, indent=2)
+    
+    logger.info(f"✅ Labeled test set saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

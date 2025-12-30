@@ -1,0 +1,246 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Expand test sets for all games (Magic, Yu-Gi-Oh!, Pokémon).
+
+Uses enhanced LLM query generation and multi-judge labeling.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic_ai import Agent
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+
+# Import enhanced generation scripts
+import sys
+script_dir = Path(__file__).parent
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
+try:
+    from expand_test_set_with_llm import expand_test_set
+    HAS_EXPAND = True
+except ImportError:
+    HAS_EXPAND = False
+    expand_test_set = None
+
+
+GAMES = {
+    "magic": {
+        "name": "Magic: The Gathering",
+        "target_queries": 200,  # Expand from 100 to 200
+        "test_set": "experiments/test_set_expanded_magic.json",
+    },
+    "pokemon": {
+        "name": "Pokémon TCG",
+        "target_queries": 100,  # Expand from ~10 to 100
+        "test_set": "experiments/test_set_canonical_pokemon.json",
+    },
+    "yugioh": {
+        "name": "Yu-Gi-Oh!",
+        "target_queries": 100,  # Expand from ~13 to 100
+        "test_set": "experiments/test_set_canonical_yugioh.json",
+    },
+}
+
+
+def expand_game_test_set(
+    game: str,
+    existing_path: Path,
+    output_path: Path,
+    target_size: int,
+    num_judges: int = 3,
+) -> dict[str, Any]:
+    """Expand test set for a specific game."""
+    if not HAS_EXPAND:
+        print(f"❌ expand_test_set_with_llm not available")
+        return {}
+    
+    game_info = GAMES[game]
+    current_size = 0
+    
+    # Check current size
+    if existing_path.exists():
+        with open(existing_path) as f:
+            data = json.load(f)
+        queries = data.get("queries", data) if isinstance(data, dict) else data
+        current_size = len(queries) if isinstance(queries, dict) else 0
+    
+    num_new = max(0, target_size - current_size)
+    
+    if num_new <= 0:
+        print(f"✅ {game_info['name']}: Already at target size ({current_size})")
+        return {"expanded": False, "current_size": current_size}
+    
+    print(f"\n{'='*70}")
+    print(f"Expanding {game_info['name']} test set")
+    print(f"{'='*70}")
+    print(f"  Current: {current_size} queries")
+    print(f"  Target: {target_size} queries")
+    print(f"  Adding: {num_new} queries")
+    print()
+    
+    # Process in smaller chunks with validation
+    chunk_size = 25  # Process 25 queries at a time
+    chunks = (num_new + chunk_size - 1) // chunk_size
+    total_processed = 0
+    
+    for chunk_idx in range(chunks):
+        chunk_num = min(chunk_size, num_new - total_processed)
+        print(f"\n📦 Processing chunk {chunk_idx + 1}/{chunks} ({chunk_num} queries)...")
+        
+        # Use temporary output for chunk
+        chunk_output = output_path.parent / f"{output_path.stem}_chunk_{chunk_idx + 1}.json"
+        
+        result = expand_test_set(
+            existing_test_set_path=existing_path if chunk_idx == 0 else output_path,
+            output_path=chunk_output,
+            num_new_queries=chunk_num,
+            num_judges=num_judges,
+            batch_size=10,
+            parallel_judges=True,
+            game=game,
+        )
+        
+        if result.get("successfully_labeled", 0) > 0:
+            # Merge chunk into main output
+            with open(chunk_output) as f:
+                chunk_data = json.load(f)
+            chunk_queries = chunk_data.get("queries", chunk_data)
+            
+            # Load existing or create new
+            if output_path.exists() and chunk_idx > 0:
+                with open(output_path) as f:
+                    main_data = json.load(f)
+                main_queries = main_data.get("queries", main_data)
+            else:
+                with open(existing_path) as f:
+                    main_data = json.load(f)
+                main_queries = main_data.get("queries", main_data) if isinstance(main_data, dict) else main_data
+            
+            # Merge
+            if isinstance(main_queries, dict) and isinstance(chunk_queries, dict):
+                main_queries.update(chunk_queries)
+            elif isinstance(chunk_queries, dict):
+                main_queries = chunk_queries
+            
+            # Save merged
+            with open(output_path, "w") as f:
+                json.dump({"version": "expanded", "queries": main_queries}, f, indent=2)
+            
+            # Validate chunk
+            chunk_labels = sum(
+                len(chunk_queries.get(q, {}).get(level, []))
+                for q in chunk_queries
+                for level in ["highly_relevant", "relevant", "somewhat_relevant"]
+            )
+            avg_labels = chunk_labels / len(chunk_queries) if chunk_queries else 0
+            print(f"  ✅ Chunk {chunk_idx + 1}: {len(chunk_queries)} queries, {avg_labels:.1f} avg labels")
+            
+            # Update for next chunk
+            existing_path = output_path
+            total_processed += result.get("successfully_labeled", 0)
+        else:
+            print(f"  ⚠️  Chunk {chunk_idx + 1}: No queries labeled, skipping")
+        
+        # Cleanup chunk file
+        if chunk_output.exists():
+            chunk_output.unlink()
+    
+    # Final validation
+    if output_path.exists():
+        with open(output_path) as f:
+            final_data = json.load(f)
+        final_queries = final_data.get("queries", final_data)
+        final_size = len(final_queries) if isinstance(final_queries, dict) else len(final_queries)
+        
+        return {
+            "expanded": True,
+            "current_size": current_size,
+            "final_size": final_size,
+            "total_processed": total_processed,
+        }
+    
+    return result
+
+
+def main() -> int:
+    """Expand test sets for all games."""
+    parser = argparse.ArgumentParser(description="Expand test sets for all games")
+    parser.add_argument("--games", type=str, nargs="+", default=["magic", "pokemon", "yugioh"],
+                       help="Games to expand (default: all)")
+    parser.add_argument("--num-judges", type=int, default=3, help="Number of judges per query")
+    parser.add_argument("--magic-target", type=int, default=200, help="Target queries for Magic")
+    parser.add_argument("--pokemon-target", type=int, default=100, help="Target queries for Pokémon")
+    parser.add_argument("--yugioh-target", type=int, default=100, help="Target queries for Yu-Gi-Oh!")
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        print("❌ pydantic-ai required")
+        return 1
+    
+    results = {}
+    
+    for game in args.games:
+        if game not in GAMES:
+            print(f"⚠️  Unknown game: {game}, skipping")
+            continue
+        
+        game_info = GAMES[game]
+        
+        # Determine target size
+        if game == "magic":
+            target = args.magic_target
+        elif game == "pokemon":
+            target = args.pokemon_target
+        elif game == "yugioh":
+            target = args.yugioh_target
+        else:
+            target = game_info.get("target_queries", 50)
+        
+        existing_path = Path(game_info["test_set"])
+        output_path = Path(f"experiments/test_set_expanded_{game}.json")
+        
+        result = expand_game_test_set(
+            game=game,
+            existing_path=existing_path,
+            output_path=output_path,
+            target_size=target,
+            num_judges=args.num_judges,
+        )
+        
+        results[game] = result
+    
+    # Summary
+    print("\n" + "="*70)
+    print("EXPANSION SUMMARY")
+    print("="*70)
+    
+    for game, result in results.items():
+        game_info = GAMES[game]
+        if result.get("expanded"):
+            print(f"✅ {game_info['name']}: Expanded to {result.get('final_size', '?')} queries")
+        else:
+            print(f"⏭️  {game_info['name']}: {result.get('current_size', '?')} queries (no expansion needed)")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

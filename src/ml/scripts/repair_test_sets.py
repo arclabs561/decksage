@@ -1,0 +1,298 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# ///
+"""
+Repair existing test sets by:
+1. Adding explicit game metadata
+2. Removing cross-game contamination
+3. Fixing duplicate cards across categories
+4. Resolving contradictions
+5. Ensuring proper structure
+"""
+
+import argparse
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Import card database and validation
+import sys
+from pathlib import Path as P
+script_dir = P(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.data.card_database import get_card_database
+    HAS_CARD_DB = True
+except ImportError:
+    HAS_CARD_DB = False
+    logger.warning("Card database not available, will use heuristics")
+
+
+def detect_game_from_path(test_set_path: Path, data: dict[str, Any] | None = None) -> str:
+    """Detect game from path or metadata."""
+    # Check metadata first
+    if data and isinstance(data, dict) and "game" in data:
+        game = data["game"].lower()
+        if game in ["magic", "pokemon", "yugioh"]:
+            return game
+    
+    # Check path
+    path_str = str(test_set_path).lower()
+    if "pokemon" in path_str or "pkm" in path_str:
+        return "pokemon"
+    elif "yugioh" in path_str or "ygo" in path_str:
+        return "yugioh"
+    else:
+        return "magic"  # Default
+
+
+def repair_test_set(
+    test_set_path: Path,
+    output_path: Path,
+    game: str | None = None,
+    use_card_db: bool = True,
+) -> dict[str, Any]:
+    """
+    Repair a test set by fixing all identified issues.
+    
+    Returns repair statistics.
+    """
+    logger.info(f"Repairing test set: {test_set_path}")
+    
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    # Detect game if not provided
+    if not game:
+        game = detect_game_from_path(test_set_path, data)
+        logger.info(f"Detected game: {game}")
+    
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    
+    # Initialize card database if available
+    card_db = None
+    if use_card_db and HAS_CARD_DB:
+        try:
+            card_db = get_card_database()
+            card_db.load()
+            logger.info(f"Card database loaded: {len(card_db._magic_cards)} Magic, {len(card_db._pokemon_cards)} Pokémon, {len(card_db._yugioh_cards)} Yu-Gi-Oh!")
+        except Exception as e:
+            logger.warning(f"Could not load card database: {e}")
+            card_db = None
+    
+    repair_stats = {
+        "total_queries": len(queries),
+        "queries_repaired": 0,
+        "cross_game_removed": 0,
+        "duplicates_fixed": 0,
+        "contradictions_resolved": 0,
+        "game_metadata_added": False,
+    }
+    
+    level_priority = {
+        "highly_relevant": 4,
+        "relevant": 3,
+        "somewhat_relevant": 2,
+        "marginally_relevant": 1,
+        "irrelevant": 0,
+    }
+    
+    repaired_queries = {}
+    
+    for query_name, query_data in queries.items():
+        if not isinstance(query_data, dict):
+            repaired_queries[query_name] = query_data
+            continue
+        
+        repaired = query_data.copy()
+        query_repaired = False
+        
+        # Step 1: Remove cross-game contamination
+        if card_db:
+            for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+                cards = repaired.get(level, [])
+                if cards:
+                    valid_cards, invalid_cards = card_db.filter_cards_by_game(cards, game)
+                    if invalid_cards:
+                        logger.debug(f"  {query_name}: Removed {len(invalid_cards)} cross-game cards from {level}")
+                        repair_stats["cross_game_removed"] += len(invalid_cards)
+                        repaired[level] = valid_cards
+                        query_repaired = True
+        
+        # Step 2: Fix duplicates and contradictions
+        card_to_levels = {}
+        for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+            for card in repaired.get(level, []):
+                if card not in card_to_levels:
+                    card_to_levels[card] = []
+                card_to_levels[card].append(level)
+        
+        # Rebuild levels with no duplicates
+        cleaned_levels = {
+            "highly_relevant": [],
+            "relevant": [],
+            "somewhat_relevant": [],
+            "marginally_relevant": [],
+            "irrelevant": [],
+        }
+        
+        for card, levels in card_to_levels.items():
+            if len(levels) > 1:
+                # Duplicate/contradiction - keep highest level
+                best_level = max(levels, key=lambda l: level_priority[l])
+                cleaned_levels[best_level].append(card)
+                repair_stats["duplicates_fixed"] += len(levels) - 1
+                
+                # Check if it's a contradiction (conflicting levels)
+                priority_values = [level_priority[l] for l in levels]
+                if max(priority_values) - min(priority_values) >= 3:
+                    repair_stats["contradictions_resolved"] += 1
+                    logger.debug(f"  {query_name}: Resolved contradiction for {card} (was in {levels}, kept {best_level})")
+                query_repaired = True
+            else:
+                # No duplicate
+                cleaned_levels[levels[0]].append(card)
+        
+        # Update repaired query
+        for level in cleaned_levels:
+            repaired[level] = cleaned_levels[level]
+        
+        if query_repaired:
+            repair_stats["queries_repaired"] += 1
+        
+        repaired_queries[query_name] = repaired
+    
+    # Step 3: Add game metadata
+    output_data = {
+        "version": data.get("version", "repaired"),
+        "game": game,  # Explicit game field
+        "queries": repaired_queries,
+    }
+    
+    if "game" not in data or data.get("game") != game:
+        repair_stats["game_metadata_added"] = True
+    
+    # Save repaired test set
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    logger.info(f"✅ Repaired test set saved to {output_path}")
+    
+    return repair_stats
+
+
+def repair_all_test_sets(
+    test_sets_dir: Path,
+    output_dir: Path | None = None,
+    pattern: str = "test_set*.json",
+) -> dict[str, Any]:
+    """Repair all test sets matching pattern."""
+    if output_dir is None:
+        output_dir = test_sets_dir
+    
+    test_sets = list(test_sets_dir.glob(pattern))
+    logger.info(f"Found {len(test_sets)} test sets to repair")
+    
+    all_stats = {}
+    
+    for test_set_path in test_sets:
+        # Skip checkpoint files
+        if "checkpoint" in test_set_path.name:
+            continue
+        
+        logger.info(f"\n{'='*60}")
+        logger.info(f"Repairing: {test_set_path.name}")
+        
+        output_path = output_dir / test_set_path.name
+        
+        try:
+            stats = repair_test_set(test_set_path, output_path)
+            all_stats[test_set_path.name] = stats
+            
+            logger.info(f"  Queries repaired: {stats['queries_repaired']}/{stats['total_queries']}")
+            logger.info(f"  Cross-game cards removed: {stats['cross_game_removed']}")
+            logger.info(f"  Duplicates fixed: {stats['duplicates_fixed']}")
+            logger.info(f"  Contradictions resolved: {stats['contradictions_resolved']}")
+            logger.info(f"  Game metadata added: {stats['game_metadata_added']}")
+        except Exception as e:
+            logger.error(f"  ❌ Failed to repair {test_set_path.name}: {e}")
+            import traceback
+            logger.debug(traceback.format_exc())
+    
+    return all_stats
+
+
+def main() -> int:
+    """Repair test sets."""
+    parser = argparse.ArgumentParser(description="Repair existing test sets")
+    parser.add_argument("--input", type=str, help="Input test set JSON (single file)")
+    parser.add_argument("--output", type=str, help="Output test set JSON (single file)")
+    parser.add_argument("--dir", type=str, help="Directory containing test sets (repair all)")
+    parser.add_argument("--output-dir", type=str, help="Output directory (for --dir mode)")
+    parser.add_argument("--game", type=str, choices=["magic", "pokemon", "yugioh"], help="Game name (auto-detected if not provided)")
+    parser.add_argument("--pattern", type=str, default="test_set*.json", help="Pattern for test sets (for --dir mode)")
+    parser.add_argument("--no-card-db", action="store_true", help="Don't use card database (use heuristics only)")
+    
+    args = parser.parse_args()
+    
+    if args.input:
+        # Single file mode
+        if not args.output:
+            logger.error("--output required when using --input")
+            return 1
+        
+        stats = repair_test_set(
+            Path(args.input),
+            Path(args.output),
+            game=args.game,
+            use_card_db=not args.no_card_db,
+        )
+        
+        print("\n=== Repair Summary ===")
+        print(f"Queries repaired: {stats['queries_repaired']}/{stats['total_queries']}")
+        print(f"Cross-game cards removed: {stats['cross_game_removed']}")
+        print(f"Duplicates fixed: {stats['duplicates_fixed']}")
+        print(f"Contradictions resolved: {stats['contradictions_resolved']}")
+        print(f"Game metadata added: {stats['game_metadata_added']}")
+    
+    elif args.dir:
+        # Directory mode
+        test_sets_dir = Path(args.dir)
+        output_dir = Path(args.output_dir) if args.output_dir else test_sets_dir
+        
+        all_stats = repair_all_test_sets(test_sets_dir, output_dir, args.pattern)
+        
+        print("\n=== Overall Repair Summary ===")
+        total_queries = sum(s['total_queries'] for s in all_stats.values())
+        total_repaired = sum(s['queries_repaired'] for s in all_stats.values())
+        total_cross_game = sum(s['cross_game_removed'] for s in all_stats.values())
+        total_duplicates = sum(s['duplicates_fixed'] for s in all_stats.values())
+        total_contradictions = sum(s['contradictions_resolved'] for s in all_stats.values())
+        
+        print(f"Test sets processed: {len(all_stats)}")
+        print(f"Total queries: {total_queries}")
+        print(f"Queries repaired: {total_repaired}")
+        print(f"Cross-game cards removed: {total_cross_game}")
+        print(f"Duplicates fixed: {total_duplicates}")
+        print(f"Contradictions resolved: {total_contradictions}")
+    
+    else:
+        logger.error("Either --input or --dir must be provided")
+        return 1
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

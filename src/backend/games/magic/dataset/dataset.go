@@ -168,7 +168,7 @@ func ResolveUpdateOptions(options ...UpdateOption) (ResolvedUpdateOptions, error
 func Do(
 	ctx context.Context,
 	sc *scraper.Scraper,
-	opts *ResolvedUpdateOptions,
+	opts ResolvedUpdateOptions,
 	req *http.Request,
 ) (*scraper.Page, error) {
 	var doOpts []scraper.DoOption

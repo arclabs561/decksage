@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/utils/constants.py
+# hypothesis_version: 6.140.3
+
+[0.0, 0.25, 0.5, 0.75, 1.0, 'Arcane Signet', 'Command Tower', 'Darkness Energy', 'Evolving Wilds', 'Fairy Energy', 'Fighting Energy', 'Fire Energy', 'Forest', 'Grass Energy', 'Island', 'Lightning Energy', 'Metal Energy', 'Mountain', 'Plains', 'Psychic Energy', 'Snow-Covered Forest', 'Snow-Covered Island', 'Snow-Covered Plains', 'Snow-Covered Swamp', 'Sol Ring', 'Swamp', 'Terramorphic Expanse', 'Wastes', 'Water Energy', 'all', 'basic', 'basic_energy', 'basic_lands', 'common', 'common_lands', 'energy', 'highly_relevant', 'irrelevant', 'magic', 'marginally_relevant', 'pokemon', 'relevant', 'somewhat_relevant', 'special_energy', 'staples', 'yugioh']
