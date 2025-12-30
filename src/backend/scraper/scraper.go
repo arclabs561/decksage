@@ -21,7 +21,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/hashicorp/go-cleanhttp"
 	"github.com/hashicorp/go-retryablehttp"
 	"go.uber.org/ratelimit"
 
@@ -80,9 +79,16 @@ func NewScraper(
 ) *Scraper {
 	httpClient := retryablehttp.NewClient()
 
-	// Configure HTTP client with timeout to prevent indefinite hangs
-	client := cleanhttp.DefaultClient() // not pooled
-	client.Timeout = 30 * time.Second
+	// Configure HTTP client with timeout and connection pooling
+	client := &http.Client{
+		Timeout: 30 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 10,
+			IdleConnTimeout:     90 * time.Second,
+			DisableKeepAlives:   false,
+		},
+	}
 	httpClient.HTTPClient = client
 
 	httpClient.Logger = newLeveledLogger(log)
@@ -200,13 +206,33 @@ func (s *Scraper) Do(
 		}
 		time.Sleep(d)
 	}
+	// Use larger limit for bulk data operations (like Scryfall bulk download)
+	// Regular pages should be much smaller, but bulk JSON can be 100MB+
+	// Configurable via SCRAPER_MAX_RESPONSE_SIZE_MB env var (default 200MB)
+	maxResponseSizeMB := 200
+	if envSize := os.Getenv("SCRAPER_MAX_RESPONSE_SIZE_MB"); envSize != "" {
+		if parsed, err := strconv.Atoi(envSize); err == nil && parsed > 0 {
+			maxResponseSizeMB = parsed
+		}
+	}
+	maxResponseSize := int64(maxResponseSizeMB) * 1024 * 1024
 	for i := 0; i < attemptsMax; i++ {
+		// Check context cancellation before each retry attempt
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		default:
+		}
+
 		resp, err = s.httpClient.Do(rreq)
 		if err != nil {
 			return nil, fmt.Errorf("failed to perform http get: %w", err)
 		}
-		body, err = io.ReadAll(resp.Body)
+		body, err = io.ReadAll(io.LimitReader(resp.Body, maxResponseSize+1))
 		resp.Body.Close()
+		if int64(len(body)) > maxResponseSize {
+			return nil, fmt.Errorf("response too large: %d bytes (max %d MB)", len(body), maxResponseSizeMB)
+		}
 		lastAttempt := i >= attemptsMax-1
 		if err != nil {
 			if lastAttempt {
@@ -224,7 +250,12 @@ func (s *Scraper) Do(
 				return nil, &ErrFetchThrottled{}
 			}
 			s.log.Fieldf("attempt", "%d", i).Warnf(ctx, "response is silently throttled, retrying")
-			time.Sleep(10 * time.Second)
+			// Check context during throttle wait
+			select {
+			case <-ctx.Done():
+				return nil, ctx.Err()
+			case <-time.After(10 * time.Second):
+			}
 			wait(i)
 			continue
 		}
@@ -296,10 +327,16 @@ func (s *Scraper) blobKey(req *http.Request) (string, []byte, error) {
 
 	var body []byte
 	if req.Body != nil {
+		// Limit request body size to prevent OOM attacks
+		// 10MB should be sufficient for any legitimate request
+		const maxRequestBodySize = 10 * 1024 * 1024 // 10MB
 		var err error
-		body, err = io.ReadAll(req.Body)
+		body, err = io.ReadAll(io.LimitReader(req.Body, maxRequestBodySize))
 		if err != nil {
 			return "", nil, err
+		}
+		if int64(len(body)) >= maxRequestBodySize {
+			return "", nil, fmt.Errorf("request body too large: %d bytes (max %d MB)", len(body), maxRequestBodySize/(1024*1024))
 		}
 	}
 	if _, err := buf.Write(body); err != nil {

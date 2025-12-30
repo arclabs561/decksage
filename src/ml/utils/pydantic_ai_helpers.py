@@ -7,6 +7,7 @@ Reduces duplication and centralizes common patterns.
 """
 
 import os
+from typing import Any
 
 try:
     from pydantic_ai import Agent
@@ -16,8 +17,16 @@ except ImportError:
     HAS_PYDANTIC_AI = False
     Agent = None
 
+# Import cost tracker (optional)
+try:
+    from ml.utils.llm_cost_tracker import get_global_tracker
+    HAS_COST_TRACKER = True
+except ImportError:
+    HAS_COST_TRACKER = False
+    get_global_tracker = None
 
-__all__ = ["make_agent", "get_default_model", "HAS_PYDANTIC_AI"]
+
+__all__ = ["make_agent", "get_default_model", "HAS_PYDANTIC_AI", "run_with_tracking"]
 
 
 def make_agent(
@@ -83,15 +92,75 @@ def get_default_model(purpose: str = "general") -> str:
     if env_value:
         return env_value
 
-    # Defaults by purpose
+    # Defaults by purpose (updated to frontier models from leaderboard)
+    # Top models (2025): gemini-3-pro, claude-opus-4.5, grok-4.1-thinking
+    # Note: OpenRouter model IDs use dots, not dashes (e.g., claude-opus-4.5)
     defaults = {
-        "judge": "openai/gpt-4o-mini",  # Cost-effective + JSON mode
-        "annotator": "anthropic/claude-4.5-sonnet",  # Quality for annotations
-        "validator": "anthropic/claude-4.5-sonnet",  # Quality for validation
+        "judge": "openai/gpt-4o",  # Good JSON mode + quality
+        "annotator": "anthropic/claude-opus-4.5",  # Top quality for annotations (leaderboard #5 text, #1 webdev)
+        "validator": "anthropic/claude-opus-4.5",  # Best for validation (#4 text, #1 webdev)
         "general": "openai/gpt-4o-mini",  # Cost-effective default
     }
 
     return defaults.get(purpose, defaults["general"])
+
+
+def run_with_tracking(
+    agent: Agent,
+    prompt: str,
+    model: str | None = None,
+    provider: str = "openrouter",
+    operation: str = "unknown",
+    cache_hit: bool = False,
+) -> Any:
+    """
+    Run agent with automatic cost tracking.
+    
+    Args:
+        agent: Pydantic AI agent
+        prompt: Input prompt
+        model: Model name (extracted from agent if not provided)
+        provider: Provider name
+        operation: Operation type for tracking
+        cache_hit: Whether this is a cache hit
+    
+    Returns:
+        Agent result
+    """
+    if not HAS_PYDANTIC_AI:
+        raise ImportError("pydantic-ai required")
+    
+    # Extract model from agent if not provided
+    if model is None:
+        agent_str = str(agent)
+        # Try to extract model from agent string
+        if "/" in agent_str:
+            parts = agent_str.split("/")
+            if len(parts) >= 2:
+                model = parts[-1]
+        else:
+            model = "unknown"
+    
+    # Run agent
+    result = agent.run_sync(prompt)
+    
+    # Track usage if tracker available
+    if HAS_COST_TRACKER and get_global_tracker:
+        try:
+            tracker = get_global_tracker()
+            tracker.record_usage(
+                result=result,
+                model=model,
+                provider=provider,
+                operation=operation,
+                cache_hit=cache_hit,
+            )
+        except Exception:
+            # Best-effort tracking, don't fail on errors
+            # Silently continue if cost tracking fails
+            pass
+    
+    return result
 
 
 if __name__ == "__main__":

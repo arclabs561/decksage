@@ -56,6 +56,11 @@ func NewBucket(
 				ctx: ctx,
 				log: log,
 			}
+			// Set value log file size limit to prevent unbounded growth
+			// Default is 1GB, we'll use 500MB per file with max 2 files = 1GB total
+			cacheOpts.ValueLogFileSize = 500 * 1024 * 1024 // 500MB
+			cacheOpts.ValueLogMaxEntries = 1000000 // Limit entries per value log file
+			// Enable compression to reduce disk usage (ZSTD is default in badger v3)
 			cache, err = badger.Open(cacheOpts)
 			if err != nil {
 				return nil, err
@@ -180,34 +185,74 @@ func (b *Bucket) Exists(ctx context.Context, key string) (ok bool, err error) {
 }
 
 func (b *Bucket) Write(ctx context.Context, key string, data []byte) error {
+	// Add timeout to blob write operations (30 seconds)
+	writeCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	key += ".zst"
-	var opts *blob.WriterOptions
-	w, err := b.bucket.NewWriter(ctx, key, opts)
-	if err != nil {
-		return fmt.Errorf("failed to create bucket writer: %w", err)
+	
+	// Retry blob writes up to 3 times with exponential backoff
+	var lastErr error
+	for attempt := 0; attempt < 3; attempt++ {
+		if attempt > 0 {
+			// Check context cancellation before retry
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			default:
+			}
+			// Exponential backoff: 100ms, 200ms, 400ms
+			backoff := time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond
+			time.Sleep(backoff)
+		}
+		
+		var opts *blob.WriterOptions
+		w, err := b.bucket.NewWriter(writeCtx, key, opts)
+		if err != nil {
+			lastErr = fmt.Errorf("failed to create bucket writer: %w", err)
+			continue
+		}
+		var _ io.Writer
+		zw := zstd.NewWriter(w)
+		n, err := zw.Write(data)
+		if err != nil {
+			_ = zw.Close()
+			_ = w.Close()
+			lastErr = err
+			continue
+		}
+		if n < len(data) {
+			_ = zw.Close()
+			_ = w.Close()
+			lastErr = fmt.Errorf("violation of io.Writer interface")
+			continue
+		}
+		if err := zw.Close(); err != nil {
+			_ = w.Close()
+			lastErr = fmt.Errorf("failed to close zstd writer: %w", err)
+			continue
+		}
+		if err := w.Close(); err != nil {
+			lastErr = fmt.Errorf("failed to close bucket writer: %w", err)
+			continue
+		}
+		// Success - break out of retry loop
+		lastErr = nil
+		break
 	}
-	var _ io.Writer
-	zw := zstd.NewWriter(w)
-	n, err := zw.Write(data)
-	if err != nil {
-		_ = zw.Close()
-		_ = w.Close()
-		return err
-	}
-	if n < len(data) {
-		_ = zw.Close()
-		_ = w.Close()
-		return fmt.Errorf("violation of io.Writer interface")
-	}
-	if err := zw.Close(); err != nil {
-		return fmt.Errorf("failed to close zstd writer: %w", err)
-	}
-	if err := w.Close(); err != nil {
-		return fmt.Errorf("failed to close bucket writer: %w", err)
+	
+	if lastErr != nil {
+		return fmt.Errorf("failed to write after 3 attempts: %w", lastErr)
 	}
 	if b.cache != nil {
+		// Cache writes are best-effort, don't block on errors
+		// Add TTL of 7 days to prevent unbounded cache growth
 		err := b.cache.Update(func(txn *badger.Txn) error {
-			return txn.Set(b.cacheKey(key), data)
+			return txn.SetEntry(&badger.Entry{
+				Key:       b.cacheKey(key),
+				Value:     data,
+				ExpiresAt: uint64(time.Now().Add(7 * 24 * time.Hour).Unix()),
+			})
 		})
 		if err != nil {
 			b.log.Errorf(ctx, "failed to set cache: %v", err)
@@ -225,6 +270,10 @@ func (e *ErrNotFound) Error() string {
 }
 
 func (b *Bucket) Read(ctx context.Context, key string) (data []byte, err error) {
+	// Add timeout to blob read operations (30 seconds)
+	readCtx, cancel := context.WithTimeout(ctx, 30*time.Second)
+	defer cancel()
+
 	start := time.Now()
 	source := "remote"
 	defer func() {
@@ -263,7 +312,7 @@ func (b *Bucket) Read(ctx context.Context, key string) (data []byte, err error) 
 		return cacheData, nil
 	}
 	var opts *blob.ReaderOptions
-	r, err := b.bucket.NewReader(ctx, key, opts)
+	r, err := b.bucket.NewReader(readCtx, key, opts)
 	if err != nil {
 		if gcerrors.Code(err) == gcerrors.NotFound {
 			return nil, &ErrNotFound{key}
@@ -284,8 +333,13 @@ func (b *Bucket) Read(ctx context.Context, key string) (data []byte, err error) 
 		return nil, fmt.Errorf("failed to close bucket reader: %w", err)
 	}
 	if cacheData == nil && b.cache != nil {
+		// Add TTL of 7 days to prevent unbounded cache growth
 		err := b.cache.Update(func(txn *badger.Txn) error {
-			return txn.Set(b.cacheKey(key), data)
+			return txn.SetEntry(&badger.Entry{
+				Key:       b.cacheKey(key),
+				Value:     data,
+				ExpiresAt: uint64(time.Now().Add(7 * 24 * time.Hour).Unix()),
+			})
 		})
 		if err != nil {
 			b.log.Errorf(ctx, "failed to set cache: %v", err)

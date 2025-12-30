@@ -1,0 +1,80 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""Monitor all training until completion."""
+import json
+import time
+from pathlib import Path
+
+def check_training_complete():
+    """Check if all training is complete."""
+    games = ["magic", "pokemon", "yugioh"]
+    all_complete = True
+    
+    for game in games:
+        emb = Path(f"data/embeddings/{game}_game_specific.wv")
+        if not emb.exists():
+            all_complete = False
+            break
+    
+    return all_complete
+
+def check_test_sets_complete():
+    """Check if all test sets are at target."""
+    test_sets = {
+        "magic": ("experiments/test_set_expanded_magic.json", 200),
+        "pokemon": ("experiments/test_set_expanded_pokemon.json", 100),
+        "yugioh": ("experiments/test_set_expanded_yugioh.json", 100),
+    }
+    
+    all_complete = True
+    for game, (path, target) in test_sets.items():
+        p = Path(path)
+        if p.exists():
+            with open(p) as f:
+                data = json.load(f)
+            queries = data.get("queries", data) if isinstance(data, dict) else data
+            current = len(queries) if isinstance(queries, dict) else len(queries)
+            if current < target:
+                all_complete = False
+        else:
+            all_complete = False
+    
+    return all_complete
+
+def main():
+    """Monitor until completion."""
+    print("=" * 70)
+    print("MONITORING UNTIL COMPLETION")
+    print("=" * 70)
+    print()
+    
+    iteration = 0
+    while True:
+        iteration += 1
+        print(f"\n[{iteration}] Check at {time.strftime('%H:%M:%S')}")
+        print("-" * 70)
+        
+        # Check training
+        training_complete = check_training_complete()
+        test_sets_complete = check_test_sets_complete()
+        
+        print(f"\n📊 Training: {'✅ Complete' if training_complete else '⏳ In progress'}")
+        print(f"📊 Test sets: {'✅ Complete' if test_sets_complete else '⏳ In progress'}")
+        
+        if training_complete and test_sets_complete:
+            print("\n" + "=" * 70)
+            print("✅ ALL TASKS COMPLETE!")
+            print("=" * 70)
+            break
+        
+        print("\n⏳ Waiting 60 seconds...")
+        time.sleep(60)
+
+if __name__ == "__main__":
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\n\n⚠️  Monitoring stopped")

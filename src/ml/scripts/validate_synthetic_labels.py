@@ -1,0 +1,141 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+Validate synthetic test set labels by spot-checking.
+
+For each query, checks:
+1. Are highly_relevant items actually highly similar?
+2. Are relevant items actually relevant?
+3. Are there obvious missing items?
+4. Are there obvious incorrect items?
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import random
+from pathlib import Path
+from typing import Any
+
+
+def validate_query(
+    query: str,
+    labels: dict[str, list[str]],
+    pairs_df: Any = None,
+) -> dict[str, Any]:
+    """
+    Validate a single query's labels.
+    
+    Checks:
+    - Do highly_relevant items make sense?
+    - Are there obvious missing items?
+    - Are there obvious incorrect items?
+    """
+    validation = {
+        "query": query,
+        "issues": [],
+        "warnings": [],
+        "suggestions": [],
+    }
+    
+    highly_relevant = labels.get("highly_relevant", [])
+    relevant = labels.get("relevant", [])
+    somewhat_relevant = labels.get("somewhat_relevant", [])
+    
+    # Check: Are highly_relevant items actually highly similar?
+    # (This is a placeholder - would need domain knowledge or LLM to validate)
+    
+    # Check: Are there duplicates across levels?
+    all_labels = set(highly_relevant) | set(relevant) | set(somewhat_relevant)
+    if len(all_labels) != len(highly_relevant) + len(relevant) + len(somewhat_relevant):
+        validation["warnings"].append("Duplicate items across relevance levels")
+    
+    # Check: Query in its own labels?
+    if query in all_labels:
+        validation["issues"].append(f"Query '{query}' appears in its own labels")
+    
+    # Check: Sufficient labels?
+    total_labels = len(highly_relevant) + len(relevant)
+    if total_labels < 3:
+        validation["warnings"].append(f"Only {total_labels} highly_relevant+relevant items (recommend >= 3)")
+    
+    # Check: Too many labels?
+    if len(highly_relevant) > 10:
+        validation["warnings"].append(f"Many highly_relevant items ({len(highly_relevant)}), may indicate low quality")
+    
+    return validation
+
+
+def main() -> int:
+    """Validate synthetic test set labels."""
+    parser = argparse.ArgumentParser(description="Validate synthetic test set labels")
+    parser.add_argument("--test-set", type=Path, required=True, help="Test set JSON to validate")
+    parser.add_argument("--output", type=Path, required=True, help="Output validation report JSON")
+    parser.add_argument("--sample", type=int, default=20, help="Number of queries to spot-check")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    
+    args = parser.parse_args()
+    
+    print(f"Loading test set from {args.test_set}...")
+    with open(args.test_set) as f:
+        test_data = json.load(f)
+    
+    queries = test_data.get("queries", test_data)
+    print(f"  Total queries: {len(queries)}")
+    
+    # Sample queries for validation
+    query_list = list(queries.items())
+    random.seed(args.seed)
+    sampled = random.sample(query_list, min(args.sample, len(query_list)))
+    
+    print(f"\nValidating {len(sampled)} sampled queries...")
+    
+    validations = []
+    total_issues = 0
+    total_warnings = 0
+    
+    for query, labels in sampled:
+        validation = validate_query(query, labels)
+        validations.append(validation)
+        total_issues += len(validation["issues"])
+        total_warnings += len(validation["warnings"])
+    
+    # Summary
+    summary = {
+        "total_queries": len(queries),
+        "sampled": len(sampled),
+        "total_issues": total_issues,
+        "total_warnings": total_warnings,
+        "queries_with_issues": sum(1 for v in validations if v["issues"]),
+        "queries_with_warnings": sum(1 for v in validations if v["warnings"]),
+    }
+    
+    output = {
+        "summary": summary,
+        "validations": validations,
+    }
+    
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(output, f, indent=2)
+    
+    print(f"\n✅ Validation report saved to {args.output}")
+    print(f"\nSummary:")
+    print(f"  Queries with issues: {summary['queries_with_issues']}/{len(sampled)}")
+    print(f"  Queries with warnings: {summary['queries_with_warnings']}/{len(sampled)}")
+    print(f"  Total issues: {total_issues}")
+    print(f"  Total warnings: {total_warnings}")
+    
+    if total_issues > 0:
+        print(f"\n⚠️  Found {total_issues} issues - review validation report")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+

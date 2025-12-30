@@ -1,0 +1,538 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Enhanced query generation with better models and richer context.
+
+Uses better models and more sophisticated prompts to generate
+diverse, high-quality test queries.
+
+Research Basis:
+- Diverse test queries improve evaluation coverage
+- Game-aware generation ensures relevance to specific games
+- Better models generate higher-quality queries
+- Use case categorization (substitute, synergy, archetype, functional) improves task coverage
+
+References:
+- Test set design: https://ego4d-data.org/docs/data/annotation-guidelines/
+- Query generation best practices: https://snorkel.ai/blog/data-annotation/
+- Evaluation task design: Research on recommendation system evaluation frameworks
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import os
+import traceback
+from pathlib import Path
+from typing import Any, Callable
+
+try:
+    from pydantic_ai import Agent
+    from pydantic import BaseModel, Field
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+    Agent = None  # type: ignore[assignment,misc]
+    BaseModel = None  # type: ignore[assignment,misc]
+    Field = None  # type: ignore[assignment,misc]
+
+try:
+    from ml.utils.pydantic_ai_helpers import run_with_tracking
+    HAS_PYDANTIC_AI_HELPERS = True
+except ImportError:
+    HAS_PYDANTIC_AI_HELPERS = False
+    run_with_tracking = None  # type: ignore[assignment]
+
+try:
+    from ml.utils.llm_cost_tracker import LLMCostTracker  # noqa: F401
+    HAS_COST_TRACKER = True
+except ImportError:
+    HAS_COST_TRACKER = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+# Game-specific information for prompts
+GAME_INFO = {
+    "magic": {
+        "name": "Magic: The Gathering",
+        "card_types": "Creatures, instants, sorceries, enchantments, artifacts, planeswalkers, lands",
+        "formats": "Standard, Modern, Legacy, Vintage, Commander, Limited, Pioneer",
+        "examples": [
+            '"Lightning Bolt" - Classic burn, many substitutes, format-defining',
+            '"Brainstorm" - Format-defining card draw, clear alternatives',
+            '"Sol Ring" - Commander staple, clear functional equivalents',
+            '"Dark Confidant" - Jund midrange, clear synergies',
+            '"Snapcaster Mage" - Blue tempo, clear role',
+            '"Counterspell" - Classic answer, many variants',
+        ],
+    },
+    "pokemon": {
+        "name": "Pokémon TCG",
+        "card_types": "Pokémon, Trainer cards, Energy cards",
+        "formats": "Standard, Expanded, Unlimited",
+        "examples": [
+            '"Pikachu" - Iconic Pokémon, many variants',
+            '"Professor\'s Research" - Format-defining draw, clear alternatives',
+            '"Quick Ball" - Staple search, clear functional equivalents',
+        ],
+    },
+    "yugioh": {
+        "name": "Yu-Gi-Oh!",
+        "card_types": "Monsters, Spells, Traps",
+        "formats": "Advanced, Traditional, Speed Duel",
+        "examples": [
+            '"Blue-Eyes White Dragon" - Iconic monster, many variants',
+            '"Pot of Greed" - Format-defining draw (banned), clear alternatives',
+            '"Dark Magician" - Classic monster, clear synergies',
+        ],
+    },
+}
+
+
+def get_enhanced_query_generation_prompt(game_name: str = "magic") -> str:
+    """Get game-aware system prompt for query generation."""
+    game_data = GAME_INFO.get(game_name, GAME_INFO["magic"])
+    game_name_display = game_data["name"]
+    
+    return f"""You are an expert at generating high-quality test queries for card similarity evaluation in {game_name_display}.
+
+**Your Task**: Generate diverse, representative test queries that will effectively evaluate card similarity systems.
+
+**Query Quality Criteria**:
+
+1. **Diversity Requirements**:
+   - **Card Types**: {game_data["card_types"]}
+   - **Formats**: {game_data["formats"]}
+   - **Archetypes**: Aggro, Control, Combo, Midrange, Tempo, Ramp (or game-appropriate archetypes)
+   - **Power Levels**: Commons, uncommons, rares, mythics, format staples, niche cards
+   - **Functions**: Removal, card draw, ramp, threats, answers, combo pieces, utility
+   - **Eras**: Classic sets, Modern era, Recent sets
+
+2. **Query Selection Standards**:
+   - **Well-known cards**: Not obscure, recognizable to players
+   - **Clear similar cards**: Should have 5-10 obvious similar cards
+   - **Specific use case**: Each query should test a specific similarity type
+   - **Representative**: Cover different aspects of the game
+   - **Challenging**: Include edge cases and nuanced similarities
+
+3. **Use Case Categories**:
+   - **substitute**: Cards that can replace each other
+   - **synergy**: Cards that work well together
+   - **archetype**: Cards that define archetypes
+   - **functional**: Cards with similar functions
+
+4. **Examples of Excellent Queries**:
+{chr(10).join(f"   - {ex}" for ex in game_data["examples"])}
+
+5. **Output Format**:
+   For each query, provide:
+   - **query**: Card name (exact, well-known)
+   - **use_case**: One of: substitute, synergy, archetype, functional
+   - **format**: Format name if format-specific, null otherwise
+   - **archetype**: Archetype name if archetype-specific, null otherwise
+   - **reasoning**: Why this is an excellent test query (2-3 sentences)
+   - **expected_similar_cards**: List of 5-10 cards that should be highly relevant
+   - **difficulty**: easy|medium|hard (how challenging for similarity systems)
+
+6. **Quality Checklist**:
+   - ✅ Card is well-known (not obscure)
+   - ✅ Has clear similar cards (5-10 obvious ones)
+   - ✅ Represents a specific use case
+   - ✅ Diverse from existing queries
+   - ✅ Tests important similarity patterns
+   - ✅ Includes expected similar cards for validation
+
+Generate diverse, high-quality test queries that will effectively evaluate card similarity systems."""
+
+
+if HAS_PYDANTIC_AI and BaseModel is not None and Field is not None:
+    try:
+        from pydantic import field_validator  # type: ignore[import]
+        HAS_FIELD_VALIDATOR = True
+    except ImportError:
+        # Older pydantic versions might not have field_validator
+        HAS_FIELD_VALIDATOR = False
+        field_validator = None  # type: ignore[assignment]
+    
+    class EnhancedTestQuery(BaseModel):  # type: ignore[misc]
+        """Enhanced test query with more metadata."""
+        query: str = Field(description="Card name (exact, well-known)")  # type: ignore[misc]
+        use_case: str = Field(description="substitute|synergy|archetype|functional")  # type: ignore[misc]
+        format: str | None = Field(None, description="Format name if format-specific")  # type: ignore[misc]
+        archetype: str | None = Field(None, description="Archetype name if archetype-specific")  # type: ignore[misc]
+        reasoning: str = Field(description="Why this is an excellent test query (2-3 sentences)")  # type: ignore[misc]
+        expected_similar_cards: list[str] = Field(description="5-10 cards that should be highly relevant")  # type: ignore[misc]
+        difficulty: str = Field(description="easy|medium|hard - how challenging for similarity systems")  # type: ignore[misc]
+        
+        if HAS_FIELD_VALIDATOR and field_validator is not None:
+            @field_validator('use_case')  # type: ignore[misc]
+            @classmethod
+            def validate_use_case(cls, v: str) -> str:  # type: ignore[misc]
+                valid_cases = {'substitute', 'synergy', 'archetype', 'functional'}
+                if v not in valid_cases:
+                    raise ValueError(f"use_case must be one of {valid_cases}, got '{v}'")
+                return v
+            
+            @field_validator('difficulty')  # type: ignore[misc]
+            @classmethod
+            def validate_difficulty(cls, v: str) -> str:  # type: ignore[misc]
+                valid_difficulties = {'easy', 'medium', 'hard'}
+                if v not in valid_difficulties:
+                    raise ValueError(f"difficulty must be one of {valid_difficulties}, got '{v}'")
+                return v
+            
+            @field_validator('query')  # type: ignore[misc]
+            @classmethod
+            def validate_query(cls, v: str) -> str:  # type: ignore[misc]
+                if not v or not v.strip():
+                    raise ValueError("query cannot be empty")
+                return v.strip()
+
+
+    class EnhancedTestQueryBatch(BaseModel):  # type: ignore[misc]
+        """Batch of enhanced test queries."""
+        queries: list[EnhancedTestQuery] = Field(description="List of test queries")  # type: ignore[misc]
+else:
+    # Dummy classes when pydantic not available
+    class EnhancedTestQuery:  # type: ignore[no-redef]
+        """Dummy class when pydantic not available."""
+        def __init__(self, **kwargs: Any) -> None:
+            self.query = kwargs.get("query", "")
+            self.use_case = kwargs.get("use_case", "")
+            self.format = kwargs.get("format", None)
+            self.archetype = kwargs.get("archetype", None)
+            self.reasoning = kwargs.get("reasoning", "")
+            self.expected_similar_cards = kwargs.get("expected_similar_cards", [])
+            self.difficulty = kwargs.get("difficulty", "medium")
+        
+        def model_dump(self) -> dict[str, Any]:
+            return {
+                "query": self.query,
+                "use_case": self.use_case,
+                "format": self.format,
+                "archetype": self.archetype,
+                "reasoning": self.reasoning,
+                "expected_similar_cards": self.expected_similar_cards,
+                "difficulty": self.difficulty,
+            }
+    
+    class EnhancedTestQueryBatch:  # type: ignore[no-redef]
+        """Dummy class when pydantic not available."""
+        def __init__(self, **kwargs: Any) -> None:
+            self.queries = kwargs.get("queries", [])
+
+
+def make_enhanced_query_agent(
+    model_name: str | None = None,
+    use_best_model: bool = True,
+    game_name: str = "magic",
+) -> Agent | None:
+    """Create enhanced query generation agent."""
+    if not HAS_PYDANTIC_AI:
+        return None
+    
+    # Validate game name
+    if game_name not in GAME_INFO:
+        logger.warning(f"Unknown game '{game_name}', defaulting to 'magic'")
+        game_name = "magic"
+    
+    try:
+        # Load .env - find project root more robustly
+        script_path = Path(__file__).resolve()
+        # Go up from: src/ml/scripts/generate_queries_enhanced.py
+        # To: project root
+        project_root = script_path.parent.parent.parent.parent
+        env_file = project_root / ".env"
+        if env_file.exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file)
+            except ImportError:
+                # Fallback: simple .env parsing (doesn't handle all edge cases)
+                try:
+                    with open(env_file) as f:
+                        for line in f:
+                            line = line.strip()
+                            if "=" in line and not line.startswith("#"):
+                                key, value = line.split("=", 1)
+                                os.environ[key.strip()] = value.strip().strip('"').strip("'")
+                except Exception as e:
+                    logger.warning(f"Failed to parse .env file: {e}")
+        
+        # Model selection: use frontier models from leaderboard
+        if model_name:
+            selected_model = model_name
+        elif use_best_model:
+            selected_model = (
+                os.getenv("ANNOTATOR_MODEL_BEST") or
+                os.getenv("ANNOTATOR_MODEL") or
+                "anthropic/claude-opus-4.5"  # Top quality (#5 text, #1 webdev)
+            )
+        else:
+            selected_model = (
+                os.getenv("ANNOTATOR_MODEL") or
+                os.getenv("OPENROUTER_MODEL") or
+                "anthropic/claude-opus-4-5-20251101"  # High quality default
+            )
+        
+        provider = os.getenv("LLM_PROVIDER", "openrouter")
+        
+        logger.info(f"Using model: {provider}:{selected_model}")
+        
+        if Agent is None:
+            logger.error("Agent class not available")
+            return None
+        
+        system_prompt = get_enhanced_query_generation_prompt(game_name)
+        agent = Agent(
+            f"{provider}:{selected_model}",
+            output_type=EnhancedTestQueryBatch,
+            system_prompt=system_prompt,
+        )
+        
+        return agent
+    except Exception as e:
+        logger.error(f"Failed to create agent: {e}")
+        return None
+
+
+def generate_enhanced_queries(
+    agent: Agent | None,
+    num_queries: int,
+    existing_queries: set[str],
+    game_name: str = "magic",
+) -> list[EnhancedTestQuery]:
+    """Generate enhanced test queries with better context (game-aware)."""
+    if agent is None:
+        logger.error("Agent is None, cannot generate queries")
+        return []
+    
+    existing_list = list(existing_queries)[:30]
+    existing_str = ', '.join(existing_list) if existing_list else "None"
+    
+    # Game-specific prompts
+    game_data = GAME_INFO.get(game_name, GAME_INFO["magic"])
+    game_display = game_data["name"]
+    
+    prompt = f"""Generate exactly {num_queries} diverse, high-quality test queries for {game_display} card similarity evaluation.
+
+**Existing queries** (avoid duplicates - be creative):
+{existing_str}
+
+**Focus on diversity** (cover all these dimensions):
+- **Card Types**: {game_data["card_types"]}
+- **Formats**: {game_data["formats"]}
+- **Archetypes**: Aggro, Control, Combo, Midrange, Tempo, Ramp (or game-appropriate archetypes)
+- **Functions**: Removal, card draw, ramp, threats, answers, combo pieces, utility
+- **Power Levels**: Commons, uncommons, rares, mythics, format staples, niche cards
+- **Eras**: Classic sets, Modern era, Recent sets
+- **Edge Cases**: Unique mechanics, format-specific, banned cards, basic/energy cards
+
+**Requirements** (be rigorous):
+1. Each query must be a well-known card (not obscure)
+2. Each query must have 5-10 clear similar cards (testable)
+3. Each query must represent a specific use case (substitute/synergy/archetype/functional)
+4. Queries must be diverse from existing ones (avoid repetition)
+5. Include difficulty assessment (easy/medium/hard) based on how challenging for similarity systems
+6. Provide expected_similar_cards (5-10 cards) for validation
+
+**Quality Checklist** (verify each query):
+- ✅ Card is well-known and recognizable
+- ✅ Has 5-10 clear similar cards (not ambiguous)
+- ✅ Represents a specific use case
+- ✅ Diverse from existing queries
+- ✅ Tests important similarity patterns
+- ✅ Includes expected similar cards for validation
+
+Generate {num_queries} queries now, ensuring maximum diversity and quality."""
+    
+    try:
+        # Use tracking wrapper if available
+        if HAS_COST_TRACKER and HAS_PYDANTIC_AI_HELPERS and run_with_tracking is not None:
+            result = run_with_tracking(
+                agent=agent,
+                prompt=prompt,
+                operation="query_generation",
+            )
+        else:
+            result = agent.run_sync(prompt)
+        
+        # Handle different Pydantic AI result formats
+        data = None
+        if hasattr(result, 'data') and result.data is not None:
+            data = result.data
+        elif hasattr(result, 'output') and result.output is not None:
+            data = result.output
+        
+        if data is None:
+            logger.error(f"Unexpected result format: {result}")
+            return []
+        
+        # Validate data structure
+        if not hasattr(data, 'queries'):
+            logger.error(f"Result data missing 'queries' attribute: {data}")
+            return []
+        
+        queries = data.queries
+        if not isinstance(queries, list):
+            logger.error(f"Expected queries to be a list, got {type(queries)}: {queries}")
+            return []
+        
+        # Validate query objects
+        validated_queries = []
+        for i, q in enumerate(queries):
+            try:
+                # Check if query has required fields
+                query_name = getattr(q, 'query', '') if hasattr(q, 'query') else ''
+                if not query_name or not str(query_name).strip():
+                    logger.warning(f"Skipping query {i}: missing or empty 'query' field")
+                    continue
+                
+                # Validate use_case if present (Pydantic models will handle validation automatically)
+                # But we can log warnings for invalid values
+                if hasattr(q, 'use_case'):
+                    use_case = getattr(q, 'use_case', '')
+                    valid_cases = {'substitute', 'synergy', 'archetype', 'functional'}
+                    if use_case and use_case not in valid_cases:
+                        logger.warning(f"Query {i} ('{query_name}') has invalid use_case '{use_case}'")
+                
+                # Validate difficulty if present
+                if hasattr(q, 'difficulty'):
+                    difficulty = getattr(q, 'difficulty', '')
+                    valid_difficulties = {'easy', 'medium', 'hard'}
+                    if difficulty and difficulty not in valid_difficulties:
+                        logger.warning(f"Query {i} ('{query_name}') has invalid difficulty '{difficulty}'")
+                
+                validated_queries.append(q)
+            except Exception as e:
+                logger.warning(f"Skipping query {i} due to validation error: {e}")
+                continue
+        
+        if len(validated_queries) == 0:
+            logger.warning("No valid queries generated after validation")
+            return []
+        
+        return validated_queries
+    except Exception as e:
+        logger.error(f"Failed to generate queries: {e}")
+        logger.debug(traceback.format_exc())
+        return []
+
+
+def main() -> int:
+    """Test enhanced query generation."""
+    parser = argparse.ArgumentParser(description="Enhanced query generation")
+    parser.add_argument("--num-queries", type=int, default=10, help="Number of queries")
+    parser.add_argument("--existing", type=str, help="Path to existing test set JSON")
+    parser.add_argument("--model", type=str, help="Specific model to use")
+    parser.add_argument("--use-best", action="store_true", help="Use best available model")
+    parser.add_argument("--output", type=str, default="experiments/enhanced_queries.json", help="Output JSON")
+    parser.add_argument("--game", type=str, default="magic", help="Game name (magic, pokemon, yugioh)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required")
+        return 1
+    
+    if args.num_queries <= 0:
+        logger.error("--num-queries must be positive")
+        return 1
+    
+    # Validate game name
+    if args.game not in GAME_INFO:
+        logger.warning(f"Unknown game '{args.game}', defaulting to 'magic'")
+        args.game = "magic"
+    
+    # Load existing queries
+    existing = set()
+    if args.existing:
+        try:
+            with open(args.existing) as f:
+                data = json.load(f)
+                queries = data.get("queries", data) if isinstance(data, dict) else data
+                # Handle both dict format (queries as keys) and list format (queries as objects)
+                if isinstance(queries, dict):
+                    existing = set(queries.keys())
+                elif isinstance(queries, list):
+                    for q in queries:
+                        query_name = ""
+                        if isinstance(q, dict):
+                            query_name = q.get("query", "")
+                        elif hasattr(q, "query"):
+                            query_name = getattr(q, "query", "")
+                        
+                        # Only add non-empty query names
+                        if query_name and query_name.strip():
+                            existing.add(query_name.strip())
+        except (FileNotFoundError, json.JSONDecodeError) as e:
+            logger.warning(f"Failed to load existing queries from {args.existing}: {e}")
+            existing = set()
+    
+    # Create agent
+    agent = make_enhanced_query_agent(
+        model_name=args.model,
+        use_best_model=args.use_best or not args.model,
+        game_name=args.game,
+    )
+    
+    if not agent:
+        logger.error("Failed to create agent")
+        return 1
+    
+    # Generate queries
+    queries = generate_enhanced_queries(agent, args.num_queries, existing, game_name=args.game)
+    
+    if not queries:
+        logger.warning("No queries generated. Check logs for errors.")
+        return 1
+    
+    # Save
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    try:
+        with open(output_path, "w") as f:
+            query_dicts = []
+            for q in queries:
+                if hasattr(q, "model_dump"):
+                    query_dicts.append(q.model_dump())
+                elif isinstance(q, dict):
+                    query_dicts.append(q)
+                else:
+                    # Fallback for dummy classes
+                    query_dicts.append({
+                        "query": getattr(q, "query", ""),
+                        "use_case": getattr(q, "use_case", ""),
+                        "format": getattr(q, "format", None),
+                        "archetype": getattr(q, "archetype", None),
+                        "reasoning": getattr(q, "reasoning", ""),
+                        "expected_similar_cards": getattr(q, "expected_similar_cards", []),
+                        "difficulty": getattr(q, "difficulty", "medium"),
+                    })
+            json.dump({
+                "version": "enhanced",
+                "queries": query_dicts,
+            }, f, indent=2)
+    except Exception as e:
+        logger.error(f"Failed to save queries to {output_path}: {e}")
+        return 1
+    
+    logger.info(f"Generated {len(queries)} queries, saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

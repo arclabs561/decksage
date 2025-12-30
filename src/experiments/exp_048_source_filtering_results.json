@@ -1,0 +1,27 @@
+{
+  "experiment": "exp_048_source_filtering",
+  "date": "2025-10-04",
+  "hypothesis": "Filtering to tournament-curated decks improves P@10",
+  "method": "Jaccard similarity on co-occurrence graph",
+  "baseline": {
+    "name": "all_decks",
+    "num_decks": 57322,
+    "num_cards": 26805,
+    "p_at_10": 0.06315789473684211,
+    "build_time": 114.56679511070251
+  },
+  "filtered": {
+    "name": "tournament_only",
+    "num_decks": 55293,
+    "num_cards": 13359,
+    "p_at_10": 0.10789473684210528,
+    "build_time": 956.8296718597412
+  },
+  "comparison": {
+    "delta_p10": 0.04473684210526317,
+    "pct_change": 70.83333333333334,
+    "decks_removed": 2029
+  },
+  "conclusion": "significant_improvement",
+  "recommendation": "Use tournament filtering in production"
+}

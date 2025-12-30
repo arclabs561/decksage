@@ -1,0 +1,331 @@
+#!/usr/bin/env python3
+"""
+Measure Individual Signal Performance with Available Data
+
+Works without scipy/numpy if needed - uses basic Python.
+"""
+
+import json
+import sys
+from pathlib import Path
+from collections import defaultdict
+
+# Try imports, fallback gracefully
+try:
+    import numpy as np
+    HAS_NUMPY = True
+except ImportError:
+    HAS_NUMPY = False
+
+try:
+    from gensim.models import KeyedVectors
+    HAS_GENSIM = True
+except ImportError:
+    HAS_GENSIM = False
+
+try:
+    from ..similarity.similarity_methods import load_graph, jaccard_similarity
+    HAS_SIMILARITY = True
+except ImportError:
+    HAS_SIMILARITY = False
+
+try:
+    from ..enrichment.card_functional_tagger import FunctionalTagger
+    HAS_TAGGER = True
+except ImportError:
+    HAS_TAGGER = False
+    FunctionalTagger = None
+
+
+def precision_at_k(predictions: list[str], labels: dict[str, list[str]], k: int = 10) -> float:
+    """Compute weighted precision at k."""
+    if not predictions:
+        return 0.0
+    
+    top_k = predictions[:k]
+    score = 0.0
+    
+    weights = {
+        "highly_relevant": 1.0,
+        "relevant": 0.8,
+        "somewhat_relevant": 0.5,
+        "marginally_relevant": 0.2,
+        "irrelevant": 0.0,
+    }
+    
+    for pred in top_k:
+        for level, weight in weights.items():
+            if pred in labels.get(level, []):
+                score += weight
+                break
+    
+    return score / k
+
+
+def bootstrap_ci(scores: list[float], n: int = 1000) -> tuple[float, float]:
+    """Bootstrap confidence interval."""
+    if not scores:
+        return 0.0, 0.0
+    
+    import random
+    bootstrap_means = []
+    for _ in range(n):
+        sample = [random.choice(scores) for _ in scores]
+        bootstrap_means.append(sum(sample) / len(sample))
+    
+    sorted_means = sorted(bootstrap_means)
+    ci_lower = sorted_means[int(len(sorted_means) * 0.025)]
+    ci_upper = sorted_means[int(len(sorted_means) * 0.975)]
+    return ci_lower, ci_upper
+
+
+def mean_std(scores: list[float]) -> tuple[float, float]:
+    """Compute mean and std."""
+    if not scores:
+        return 0.0, 0.0
+    
+    if HAS_NUMPY:
+        return float(np.mean(scores)), float(np.std(scores))
+    else:
+        m = sum(scores) / len(scores)
+        std = (sum((v - m) ** 2 for v in scores) / len(scores)) ** 0.5
+        return float(m), float(std)
+
+
+def main() -> int:
+    """Main measurement."""
+    print("=" * 70)
+    print("Individual Signal Performance Measurement")
+    print("=" * 70)
+    print()
+    
+    # Load test set
+    test_set_path = Path("experiments/test_set_canonical_magic.json")
+    if not test_set_path.exists():
+        print(f"❌ Test set not found: {test_set_path}")
+        return 1
+    
+    with open(test_set_path) as f:
+        test_set = json.load(f)
+    
+    queries = test_set.get("queries", test_set)
+    print(f"Loaded test set: {len(queries)} queries")
+    print()
+    
+    results = {
+        "test_set": str(test_set_path),
+        "n_queries": len(queries),
+        "signals": [],
+    }
+    
+    # Try to load graph
+    pairs_paths = [
+        Path("data/processed/pairs_large.csv"),
+        Path("src/backend/pairs.csv"),
+    ]
+    pairs_csv = None
+    adj = {}
+    
+    for path in pairs_paths:
+        if path.exists():
+            pairs_csv = path
+            print(f"Loading graph from {path}...")
+            if HAS_SIMILARITY:
+                try:
+                    adj, weights = load_graph(str(path), filter_lands=True)
+                    print(f"  ✅ Loaded: {len(adj):,} cards, {len(weights):,} edges")
+                    break
+                except Exception as e:
+                    print(f"  ❌ Failed: {e}")
+            else:
+                print("  ⚠️ Cannot load (similarity_methods not available)")
+    
+    if not adj:
+        print("  ⚠️ No graph data available - skipping Jaccard measurement")
+    
+    # Measure Jaccard
+    if adj and HAS_SIMILARITY:
+        print("\nMeasuring Jaccard similarity...")
+        scores = []
+        for query, labels in queries.items():
+            try:
+                predictions = jaccard_similarity(query, adj, top_k=10, filter_lands=True)
+                pred_cards = [card for card, _ in predictions]
+                p_at_k = precision_at_k(pred_cards, labels, k=10)
+                scores.append(p_at_k)
+            except Exception as e:
+                print(f"  ⚠️ Query '{query}' failed: {e}")
+                scores.append(0.0)
+        
+        if scores:
+            mean_p, std_p = mean_std(scores)
+            ci_lower, ci_upper = bootstrap_ci(scores)
+            results["signals"].append({
+                "signal": "jaccard",
+                "mean_p_at_k": mean_p,
+                "std": std_p,
+                "ci_lower": ci_lower,
+                "ci_upper": ci_upper,
+                "n_queries": len(scores),
+                "status": "success",
+            })
+            print(f"  ✅ Jaccard P@10: {mean_p:.4f} (95% CI: [{ci_lower:.4f}, {ci_upper:.4f}])")
+    
+    # Try embeddings
+    embed_paths = [
+        Path("data/embeddings/magic_128d_pecanpy.wv"),
+        Path("data/embeddings/magic_64d_pecanpy.wv"),
+    ]
+    embeddings = None
+    
+    for path in embed_paths:
+        if path.exists() and HAS_GENSIM:
+            try:
+                embeddings = KeyedVectors.load(str(path))
+                print(f"\nLoaded embeddings: {path}")
+                print(f"  Cards: {len(embeddings):,}, Dim: {embeddings.vector_size}")
+                break
+            except Exception as e:
+                print(f"  Failed to load {path}: {e}")
+    
+    if embeddings:
+        print("\nMeasuring Embedding similarity...")
+        scores = []
+        for query, labels in queries.items():
+            try:
+                similar = embeddings.most_similar(query, topn=10)
+                pred_cards = [card for card, _ in similar]
+                p_at_k = precision_at_k(pred_cards, labels, k=10)
+                scores.append(p_at_k)
+            except KeyError:
+                scores.append(0.0)
+            except Exception as e:
+                print(f"  ⚠️ Query '{query}' failed: {e}")
+                scores.append(0.0)
+        
+        if scores:
+            mean_p, std_p = mean_std(scores)
+            ci_lower, ci_upper = bootstrap_ci(scores)
+            results["signals"].append({
+                "signal": "embed",
+                "mean_p_at_k": mean_p,
+                "std": std_p,
+                "ci_lower": ci_lower,
+                "ci_upper": ci_upper,
+                "n_queries": len(scores),
+                "status": "success",
+            })
+            print(f"  ✅ Embedding P@10: {mean_p:.4f} (95% CI: [{ci_lower:.4f}, {ci_upper:.4f}])")
+    else:
+        print("\n⚠️ Embeddings not available - skipping measurement")
+        results["signals"].append({"signal": "embed", "status": "missing_data"})
+    
+    # Try functional tagger
+    tagger = None
+    if HAS_TAGGER and FunctionalTagger:
+        try:
+            tagger = FunctionalTagger()
+            print("\nFunctional tagger available")
+        except Exception as e:
+            print(f"\n⚠️ Functional tagger failed: {e}")
+    
+    if tagger and adj:
+        print("Measuring Functional tag similarity...")
+        scores = []
+        for query, labels in queries.items():
+            try:
+                query_tags = tagger.tag_card(query)
+                if not query_tags:
+                    scores.append(0.0)
+                    continue
+                
+                query_tag_set = set(query_tags.tags if hasattr(query_tags, 'tags') else [])
+                
+                if query not in adj:
+                    scores.append(0.0)
+                    continue
+                
+                candidates = list(adj[query])[:100]
+                scored = []
+                
+                for candidate in candidates:
+                    try:
+                        cand_tags = tagger.tag_card(candidate)
+                        if not cand_tags:
+                            continue
+                        
+                        cand_tag_set = set(cand_tags.tags if hasattr(cand_tags, 'tags') else [])
+                        intersection = len(query_tag_set & cand_tag_set)
+                        union = len(query_tag_set | cand_tag_set)
+                        similarity = intersection / union if union > 0 else 0.0
+                        scored.append((candidate, similarity))
+                    except Exception:
+                        continue
+                
+                scored.sort(key=lambda x: x[1], reverse=True)
+                pred_cards = [card for card, _ in scored[:10]]
+                p_at_k = precision_at_k(pred_cards, labels, k=10)
+                scores.append(p_at_k)
+            except Exception as e:
+                print(f"  ⚠️ Query '{query}' failed: {e}")
+                scores.append(0.0)
+        
+        if scores:
+            mean_p, std_p = mean_std(scores)
+            ci_lower, ci_upper = bootstrap_ci(scores)
+            results["signals"].append({
+                "signal": "functional",
+                "mean_p_at_k": mean_p,
+                "std": std_p,
+                "ci_lower": ci_lower,
+                "ci_upper": ci_upper,
+                "n_queries": len(scores),
+                "status": "success",
+            })
+            print(f"  ✅ Functional P@10: {mean_p:.4f} (95% CI: [{ci_lower:.4f}, {ci_upper:.4f}])")
+    else:
+        print("\n⚠️ Functional tagger not available - skipping measurement")
+        results["signals"].append({"signal": "functional", "status": "missing_data"})
+    
+    # Save results
+    output_path = Path("experiments/signal_performance_measurement.json")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\n✅ Results saved to {output_path}")
+    print()
+    
+    # Summary
+    print("=" * 70)
+    print("Summary")
+    print("=" * 70)
+    print()
+    
+    baseline_fusion = 0.088
+    baseline_jaccard = 0.089
+    
+    print(f"Baseline Fusion: P@10 = {baseline_fusion:.4f}")
+    print(f"Baseline Jaccard: P@10 = {baseline_jaccard:.4f}")
+    print()
+    
+    for signal in results["signals"]:
+        if signal.get("status") == "success":
+            mean_p = signal["mean_p_at_k"]
+            print(f"{signal['signal'].upper()}: P@10 = {mean_p:.4f}")
+            if mean_p > baseline_fusion:
+                print(f"  ✅ Beats fusion baseline!")
+            elif mean_p > baseline_jaccard:
+                print(f"  ✅ Beats Jaccard baseline!")
+            else:
+                print(f"  ⚠️ Below baselines")
+    
+    print()
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

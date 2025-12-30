@@ -1,0 +1,350 @@
+#!/usr/bin/env python3
+"""
+Data Gardening Tools
+
+The dataset is a garden - it needs:
+- Pruning (remove bad data)
+- Weeding (clean inconsistencies)
+- Cultivation (enrich with annotations)
+- Growth (expand with new data)
+- Assessment (quality metrics)
+
+Philosophy: Treat data as living, evolving, requiring care.
+"""
+
+import json
+import statistics
+from collections import Counter, defaultdict
+from pathlib import Path
+
+
+def assess_dataset_health(jsonl_path):
+    """Assess overall dataset quality - the garden's health."""
+
+    health_report = {
+        "total_decks": 0,
+        "with_archetype": 0,
+        "with_format": 0,
+        "with_sideboard": 0,
+        "empty_decks": 0,
+        "suspicious_decks": [],
+        "format_distribution": Counter(),
+        "archetype_distribution": Counter(),
+        "deck_size_stats": [],
+        "unique_cards_stats": [],
+    }
+
+    with open(jsonl_path) as f:
+        for line_num, line in enumerate(f, 1):
+            try:
+                deck = json.loads(line)
+                health_report["total_decks"] += 1
+
+                # Check metadata presence
+                if deck.get("archetype") and deck["archetype"] != "unknown":
+                    health_report["with_archetype"] += 1
+                if deck.get("format") and deck["format"] != "unknown":
+                    health_report["with_format"] += 1
+
+                cards = deck.get("cards", [])
+
+                # Empty deck check
+                if not cards:
+                    health_report["empty_decks"] += 1
+                    health_report["suspicious_decks"].append(
+                        {
+                            "line": line_num,
+                            "issue": "empty_deck",
+                            "deck_id": deck.get("deck_id", "unknown"),
+                        }
+                    )
+                    continue
+
+                # Sideboard check
+                has_sb = any(c.get("partition") == "Sideboard" for c in cards)
+                if has_sb:
+                    health_report["with_sideboard"] += 1
+
+                # Distribution tracking
+                health_report["format_distribution"][deck.get("format", "unknown")] += 1
+                health_report["archetype_distribution"][deck.get("archetype", "unknown")] += 1
+
+                # Deck composition stats
+                total_cards = sum(c.get("count", 1) for c in cards)
+                unique_cards = len({c["name"] for c in cards})
+
+                health_report["deck_size_stats"].append(total_cards)
+                health_report["unique_cards_stats"].append(unique_cards)
+
+                # Suspicious patterns
+                if total_cards < 20:
+                    health_report["suspicious_decks"].append(
+                        {
+                            "line": line_num,
+                            "issue": "too_small",
+                            "size": total_cards,
+                            "deck_id": deck.get("deck_id", "unknown"),
+                        }
+                    )
+                elif total_cards > 250:
+                    health_report["suspicious_decks"].append(
+                        {
+                            "line": line_num,
+                            "issue": "too_large",
+                            "size": total_cards,
+                            "deck_id": deck.get("deck_id", "unknown"),
+                        }
+                    )
+
+                # Very low unique cards (likely error)
+                if unique_cards < 10 and total_cards > 30:
+                    health_report["suspicious_decks"].append(
+                        {
+                            "line": line_num,
+                            "issue": "low_variety",
+                            "unique": unique_cards,
+                            "total": total_cards,
+                            "deck_id": deck.get("deck_id", "unknown"),
+                        }
+                    )
+
+            except json.JSONDecodeError:
+                health_report["suspicious_decks"].append(
+                    {"line": line_num, "issue": "invalid_json"}
+                )
+
+    # Calculate statistics
+    if health_report["deck_size_stats"]:
+        health_report["avg_deck_size"] = statistics.mean(health_report["deck_size_stats"])
+        health_report["median_deck_size"] = statistics.median(health_report["deck_size_stats"])
+
+    if health_report["unique_cards_stats"]:
+        health_report["avg_unique_cards"] = statistics.mean(health_report["unique_cards_stats"])
+        health_report["median_unique_cards"] = statistics.median(
+            health_report["unique_cards_stats"]
+        )
+
+    return health_report
+
+
+def print_health_report(report):
+    """Pretty print garden health assessment."""
+    print("=" * 60)
+    print("DATASET HEALTH REPORT")
+    print("=" * 60)
+    print(f"Total decks: {report['total_decks']}")
+    print("\nMetadata Coverage:")
+    print(
+        f"  With archetype: {report['with_archetype']} ({report['with_archetype'] / report['total_decks'] * 100:.1f}%)"
+    )
+    print(
+        f"  With format:    {report['with_format']} ({report['with_format'] / report['total_decks'] * 100:.1f}%)"
+    )
+    print(
+        f"  With sideboard: {report['with_sideboard']} ({report['with_sideboard'] / report['total_decks'] * 100:.1f}%)"
+    )
+
+    print("\nDeck Composition:")
+    print(f"  Avg deck size:     {report.get('avg_deck_size', 0):.0f} cards")
+    print(f"  Median deck size:  {report.get('median_deck_size', 0):.0f} cards")
+    print(f"  Avg unique cards:  {report.get('avg_unique_cards', 0):.0f}")
+    print(f"  Median unique:     {report.get('median_unique_cards', 0):.0f}")
+
+    print("\nIssues Found:")
+    print(f"  Empty decks:       {report['empty_decks']}")
+    print(f"  Suspicious decks:  {len(report['suspicious_decks'])}")
+
+    if report["suspicious_decks"]:
+        print("\n  Issue breakdown:")
+        issue_types = Counter(d["issue"] for d in report["suspicious_decks"])
+        for issue, count in issue_types.most_common():
+            print(f"    {issue}: {count}")
+
+    print("\nFormat Distribution (top 10):")
+    for fmt, count in report["format_distribution"].most_common(10):
+        pct = count / report["total_decks"] * 100
+        print(f"  {fmt:20s} {count:5d} ({pct:4.1f}%)")
+
+    print("\nArchetype Distribution (top 15):")
+    for arch, count in report["archetype_distribution"].most_common(15):
+        pct = count / report["total_decks"] * 100
+        print(f"  {arch:30s} {count:4d} ({pct:4.1f}%)")
+
+    # Overall health score
+    metadata_score = (report["with_archetype"] + report["with_format"]) / (
+        2 * report["total_decks"]
+    )
+    issue_score = 1 - (len(report["suspicious_decks"]) / report["total_decks"])
+    overall_health = (metadata_score * 0.6 + issue_score * 0.4) * 100
+
+    print(f"\n{'=' * 60}")
+    print(f"OVERALL HEALTH SCORE: {overall_health:.1f}/100")
+    print(f"{'=' * 60}")
+
+    if overall_health >= 90:
+        print("✅ Excellent - Garden is thriving!")
+    elif overall_health >= 75:
+        print("✓ Good - Minor weeding needed")
+    elif overall_health >= 60:
+        print("⚠ Fair - Needs attention and care")
+    else:
+        print("❌ Poor - Significant cultivation required")
+
+    return overall_health
+
+
+def identify_gaps(jsonl_path):
+    """Identify gaps in the dataset - where should we plant more?"""
+
+    print("\n" + "=" * 60)
+    print("GAP ANALYSIS - Where to Grow")
+    print("=" * 60)
+
+    format_archetypes = defaultdict(set)
+    archetype_counts = Counter()
+
+    with open(jsonl_path) as f:
+        for line in f:
+            deck = json.loads(line)
+            fmt = deck.get("format", "unknown")
+            arch = deck.get("archetype", "unknown")
+
+            format_archetypes[fmt].add(arch)
+            if fmt != "unknown" and arch != "unknown":
+                key = f"{fmt}::{arch}"
+                archetype_counts[key] += 1
+
+    print("\nFormat Coverage:")
+    for fmt, archs in sorted(format_archetypes.items(), key=lambda x: -len(x[1]))[:10]:
+        print(f"  {fmt:20s} {len(archs):3d} archetypes")
+
+    print("\nUnderrepresented Archetypes (<20 decks):")
+    underrep = [(k, v) for k, v in archetype_counts.items() if v < 20]
+    for combo, count in sorted(underrep, key=lambda x: x[1])[:20]:
+        print(f"  {combo:40s} {count:2d} decks ⚠️")
+
+    print("\nWell-Represented Archetypes (>100 decks):")
+    wellrep = [(k, v) for k, v in archetype_counts.items() if v > 100]
+    for combo, count in sorted(wellrep, key=lambda x: -x[1])[:10]:
+        print(f"  {combo:40s} {count:3d} decks ✓")
+
+    print("\n💡 Recommendations:")
+    print("  1. Target underrepresented archetypes for scraping")
+    print("  2. Balance format distribution")
+    print("  3. Increase sample size for archetypes <30 decks")
+
+
+def create_pruning_list(jsonl_path, output_path):
+    """Create list of decks to prune (remove from garden)."""
+
+    to_prune = []
+
+    with open(jsonl_path) as f:
+        for line_num, line in enumerate(f, 1):
+            try:
+                deck = json.loads(line)
+                cards = deck.get("cards", [])
+
+                # Prune criteria
+                should_prune = False
+                reason = []
+
+                # Empty or near-empty
+                total_cards = sum(c.get("count", 1) for c in cards)
+                if total_cards < 20:
+                    should_prune = True
+                    reason.append(f"too_small:{total_cards}")
+
+                # Suspiciously large
+                if total_cards > 250:
+                    should_prune = True
+                    reason.append(f"too_large:{total_cards}")
+
+                # No metadata
+                if not deck.get("format") and not deck.get("archetype"):
+                    should_prune = True
+                    reason.append("no_metadata")
+
+                # Very low variety
+                unique = len({c["name"] for c in cards})
+                if unique < 10 and total_cards > 30:
+                    should_prune = True
+                    reason.append(f"low_variety:{unique}/{total_cards}")
+
+                if should_prune:
+                    to_prune.append(
+                        {
+                            "line": line_num,
+                            "deck_id": deck.get("deck_id", "unknown"),
+                            "url": deck.get("url", ""),
+                            "reasons": reason,
+                        }
+                    )
+
+            except Exception as e:
+                to_prune.append(
+                    {"line": line_num, "deck_id": "parse_error", "reasons": [f"error:{e!s}"]}
+                )
+
+    # Save pruning list
+    with open(output_path, "w") as f:
+        json.dump(to_prune, f, indent=2)
+
+    print(f"\n{'=' * 60}")
+    print("PRUNING LIST CREATED")
+    print(f"{'=' * 60}")
+    print(f"Decks to prune: {len(to_prune)}")
+    print(f"Saved to: {output_path}")
+
+    # Breakdown by reason
+    all_reasons = []
+    for item in to_prune:
+        all_reasons.extend(item["reasons"])
+
+    reason_counts = Counter(r.split(":")[0] for r in all_reasons)
+    print("\nReasons breakdown:")
+    for reason, count in reason_counts.most_common():
+        print(f"  {reason:20s} {count:4d}")
+
+    return to_prune
+
+
+def main():
+    data_path = Path("../../data/processed/decks_with_metadata.jsonl")
+
+    print("DATA GARDENING - Assessing Your Dataset")
+    print("=" * 60)
+    print("Philosophy: Data is a garden requiring cultivation")
+    print()
+
+    # Health assessment
+    print("🌱 Assessing garden health...")
+    report = assess_dataset_health(data_path)
+    health_score = print_health_report(report)
+
+    # Gap analysis
+    identify_gaps(data_path)
+
+    # Create pruning list
+    prune_path = Path("../../data/to_prune.json")
+    print("\n🌿 Creating pruning recommendations...")
+    to_prune = create_pruning_list(data_path, prune_path)
+
+    # Summary
+    print(f"\n{'=' * 60}")
+    print("GARDENING SUMMARY")
+    print(f"{'=' * 60}")
+    print(f"Health Score:     {health_score:.1f}/100")
+    print(f"Total Decks:      {report['total_decks']}")
+    print(f"To Prune:         {len(to_prune)} ({len(to_prune) / report['total_decks'] * 100:.1f}%)")
+    print(f"Healthy Decks:    {report['total_decks'] - len(to_prune)}")
+    print()
+    print("Next Steps:")
+    print("  1. Review pruning list and remove bad data")
+    print("  2. Target gaps with new scraping")
+    print("  3. Enrich with LLM annotations")
+    print("  4. Monitor health over time")
+
+
+if __name__ == "__main__":
+    main()

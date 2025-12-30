@@ -1,0 +1,234 @@
+#!/usr/bin/env python3
+"""
+Complete Fix Pipeline
+
+Systematically:
+1. Check what's available
+2. Export what's missing (if data exists)
+3. Train what can be trained
+4. Compute what can be computed
+5. Measure what can be measured
+6. Report what still needs to be done
+
+Think calmly and mindfully - systematic approach.
+"""
+
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
+    """Run a command and return success status."""
+    print(f"\n{'='*70}")
+    print(f"Running: {description}")
+    print(f"Command: {' '.join(cmd)}")
+    print(f"{'='*70}\n")
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        
+        if result.returncode == 0:
+            return True, result.stdout
+        else:
+            return False, result.stderr or result.stdout
+    except Exception as e:
+        return False, str(e)
+
+
+def check_file(path: Path) -> tuple[bool, int]:
+    """Check if file exists and return size."""
+    if path.exists():
+        return True, path.stat().st_size
+    return False, 0
+
+
+def main() -> int:
+    """Main pipeline."""
+    print("=" * 70)
+    print("Complete Fix Pipeline")
+    print("=" * 70)
+    print()
+    
+    # Step 1: Check what exists
+    print("Step 1: Checking what's available...")
+    print()
+    
+    pairs_csv = Path("src/backend/pairs.csv")
+    pairs_exists, pairs_size = check_file(pairs_csv)
+    
+    data_dir = Path("src/backend/data-full/games/magic")
+    data_exists = data_dir.exists()
+    
+    test_set = Path("experiments/test_set_canonical_magic.json")
+    test_set_exists, _ = check_file(test_set)
+    
+    embeddings_dir = Path("data/embeddings")
+    embeddings_dir.mkdir(parents=True, exist_ok=True)
+    
+    signals_dir = Path("experiments/signals")
+    signals_dir.mkdir(parents=True, exist_ok=True)
+    
+    processed_dir = Path("data/processed")
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    
+    print(f"  Pairs CSV: {'✅' if pairs_exists else '❌'} {pairs_csv}")
+    if pairs_exists:
+        print(f"    Size: {pairs_size:,} bytes")
+    
+    print(f"  Data directory: {'✅' if data_exists else '❌'} {data_dir}")
+    print(f"  Test set: {'✅' if test_set_exists else '❌'} {test_set}")
+    print()
+    
+    # Step 2: Export pairs CSV if needed
+    if not pairs_exists and data_exists:
+        print("Step 2: Exporting pairs CSV...")
+        cmd = [
+            "go", "run", "./cmd/export-decks-only/main.go",
+            str(data_dir),
+            str(pairs_csv),
+        ]
+        success, output = run_command(cmd, "Export pairs CSV")
+        if success:
+            print("  ✅ Pairs CSV exported")
+            pairs_exists = True
+        else:
+            print(f"  ❌ Failed: {output[:200]}")
+            print("  ⚠️ Continuing with other steps...")
+    elif pairs_exists:
+        print("Step 2: Pairs CSV already exists, skipping export")
+    else:
+        print("Step 2: Cannot export (no data directory)")
+    print()
+    
+    # Step 3: Copy pairs CSV to processed if needed
+    processed_pairs = processed_dir / "pairs_large.csv"
+    if pairs_exists and not processed_pairs.exists():
+        print("Step 3: Copying pairs CSV to processed directory...")
+        import shutil
+        shutil.copy2(pairs_csv, processed_pairs)
+        print(f"  ✅ Copied to {processed_pairs}")
+    elif processed_pairs.exists():
+        print("Step 3: Processed pairs CSV already exists")
+    print()
+    
+    # Step 4: Train embeddings if pairs CSV exists
+    embed_file = embeddings_dir / "magic_128d_pecanpy.wv"
+    if pairs_exists and not embed_file.exists():
+        print("Step 4: Training embeddings...")
+        cmd = [
+            "uv", "run", "python", "-m", "src.ml.similarity.card_similarity_pecan",
+            "--input", str(processed_pairs if processed_pairs.exists() else pairs_csv),
+            "--output", "magic_128d",
+            "--dim", "128",
+        ]
+        success, output = run_command(cmd, "Train embeddings")
+        if success:
+            print("  ✅ Embeddings trained")
+        else:
+            print(f"  ❌ Failed: {output[:500]}")
+            print("  ⚠️ Continuing...")
+    elif embed_file.exists():
+        print("Step 4: Embeddings already exist, skipping training")
+    else:
+        print("Step 4: Cannot train (no pairs CSV)")
+    print()
+    
+    # Step 5: Compute signals if data available
+    signals_needed = [
+        "sideboard_cooccurrence.json",
+        "temporal_cooccurrence.json",
+        "archetype_staples.json",
+        "archetype_cooccurrence.json",
+        "format_cooccurrence.json",
+        "cross_format_patterns.json",
+    ]
+    
+    signals_exist = all((signals_dir / f).exists() for f in signals_needed)
+    
+    if not signals_exist and processed_pairs.exists():
+        print("Step 5: Computing signals...")
+        cmd = [
+            "uv", "run", "python", "-m", "src.ml.scripts.compute_and_cache_signals",
+        ]
+        success, output = run_command(cmd, "Compute signals")
+        if success:
+            print("  ✅ Signals computed")
+        else:
+            print(f"  ⚠️ Some signals may have failed: {output[:500]}")
+    elif signals_exist:
+        print("Step 5: Signals already computed, skipping")
+    else:
+        print("Step 5: Cannot compute signals (need pairs CSV and decks metadata)")
+    print()
+    
+    # Step 6: Measure individual signals
+    if test_set_exists and (pairs_exists or embed_file.exists()):
+        print("Step 6: Measuring individual signal performance...")
+        cmd = [
+            "uv", "run", "python", "-m", "src.ml.scripts.fix_and_measure_all",
+        ]
+        success, output = run_command(cmd, "Measure signals")
+        if success:
+            print("  ✅ Measurement complete")
+            print("\n  Results:")
+            # Try to read and display results
+            results_file = Path("experiments/signal_performance_measurement.json")
+            if results_file.exists():
+                with open(results_file) as f:
+                    results = json.load(f)
+                    for signal in results.get("signals", []):
+                        if signal.get("status") == "success":
+                            print(f"    {signal['signal']}: P@10 = {signal['mean_p_at_k']:.4f}")
+        else:
+            print(f"  ⚠️ Measurement had issues: {output[:500]}")
+    else:
+        print("Step 6: Cannot measure (need test set and data)")
+    print()
+    
+    # Step 7: Final status
+    print("=" * 70)
+    print("Final Status")
+    print("=" * 70)
+    print()
+    
+    final_checks = {
+        "Pairs CSV": processed_pairs.exists() or pairs_csv.exists(),
+        "Embeddings": embed_file.exists(),
+        "Signals": signals_exist,
+        "Test Set": test_set_exists,
+    }
+    
+    for name, exists in final_checks.items():
+        print(f"  {name}: {'✅' if exists else '❌'}")
+    
+    print()
+    
+    # What's ready
+    ready = sum(final_checks.values())
+    total = len(final_checks)
+    
+    if ready == total:
+        print("✅ All components ready!")
+        print("\nNext: Run full evaluation and optimize fusion weights")
+    else:
+        print(f"⚠️ {ready}/{total} components ready")
+        print("\nRemaining tasks:")
+        for name, exists in final_checks.items():
+            if not exists:
+                print(f"  - {name}")
+    
+    print()
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

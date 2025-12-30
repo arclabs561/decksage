@@ -1,0 +1,267 @@
+#!/usr/bin/env python3
+"""
+Yu-Gi-Oh! Functional Tagging System
+
+Assigns functional roles to Yu-Gi-Oh! cards based on their effects and card types.
+"""
+
+import json
+import subprocess
+import tempfile
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Dict, List
+
+
+@dataclass
+class YugiohFunctionalTags:
+    """Functional classification for Yu-Gi-Oh! cards"""
+    card_name: str
+    
+    # Card types
+    is_monster: bool = False
+    is_spell: bool = False
+    is_trap: bool = False
+    
+    # Monster roles
+    beatstick: bool = False  # High ATK (2500+)
+    wall: bool = False  # High DEF (2000+)
+    boss_monster: bool = False  # 3000+ ATK or special summoning condition
+    
+    # Removal
+    monster_removal: bool = False
+    spell_trap_removal: bool = False
+    mass_removal: bool = False  # Board wipe
+    banish: bool = False  # Banishes cards
+    
+    # Resource generation
+    draw_power: bool = False
+    search: bool = False  # Adds cards from deck to hand
+    special_summon: bool = False  # Special summons monsters
+    
+    # Disruption
+    negation: bool = False  # Negates effects
+    hand_disruption: bool = False
+    deck_disruption: bool = False  # Mill, banish from deck
+    
+    # Protection
+    protection: bool = False  # Cannot be targeted/destroyed
+    recovery: bool = False  # Returns cards from GY
+    
+    # Control
+    continuous_effect: bool = False  # Floodgate/continuous control
+    quick_effect: bool = False  # Can activate during opponent's turn
+    hand_trap: bool = False  # Can activate from hand
+    
+    # Win conditions
+    otk_enabler: bool = False  # Enables OTK
+    alt_win_con: bool = False  # Alternative win condition
+    
+    # Utility
+    graveyard_setup: bool = False  # Sends cards to GY for value
+    extra_deck_focused: bool = False  # Supports Extra Deck summoning
+    link_support: bool = False
+    xyz_support: bool = False
+    synchro_support: bool = False
+    fusion_support: bool = False
+
+
+class YugiohFunctionalTagger:
+    """Tags Yu-Gi-Oh! cards with functional roles"""
+    
+    def __init__(self, card_data_path: Path = None):
+        """Initialize with card data from ygoprodeck source"""
+        self.card_db = {}
+        if card_data_path:
+            self.card_db = self._load_card_database(card_data_path)
+    
+    def _load_card_database(self, base_path: Path) -> Dict[str, Dict]:
+        """Load Yu-Gi-Oh! cards from integration_test_tmp (with zstd decompression)"""
+        cards = {}
+        
+        # Path to our extracted cards (note: double games/ nesting from blob storage)
+        cards_dir = base_path / "integration_test_tmp" / "games" / "games" / "yugioh" / "ygoprodeck" / "cards"
+        
+        if not cards_dir.exists():
+            print(f"Warning: Cards directory not found at {cards_dir}")
+            return cards
+        
+        for card_file in cards_dir.glob("*.json.zst"):
+            try:
+                # Use zstd command-line tool for decompression (more reliable)
+                result = subprocess.run(
+                    ["zstd", "-d", "-c", str(card_file)],
+                    capture_output=True,
+                    check=True
+                )
+                card_data = json.loads(result.stdout)
+                cards[card_data["name"]] = card_data
+            except Exception as e:
+                # Skip files that can't be decompressed
+                continue
+        
+        print(f"Loaded {len(cards)} Yu-Gi-Oh! cards")
+        return cards
+    
+    def tag_card(self, card_name: str, card_data: Dict = None) -> YugiohFunctionalTags:
+        """Tag a Yu-Gi-Oh! card with functional roles"""
+        tags = YugiohFunctionalTags(card_name=card_name)
+        
+        if card_data is None:
+            card_data = self.card_db.get(card_name, {})
+        
+        if not card_data:
+            return tags
+        
+        # Extract properties
+        desc = (card_data.get("description", "") + " " + card_name).lower()
+        card_type = card_data.get("type", "").lower()
+        atk = card_data.get("atk", 0) or 0
+        def_val = card_data.get("def", 0) or 0
+        
+        # Card type classification
+        tags.is_monster = "monster" in card_type
+        tags.is_spell = "spell" in card_type
+        tags.is_trap = "trap" in card_type
+        
+        # Monster-specific tags
+        if tags.is_monster:
+            tags.beatstick = atk >= 2500
+            tags.wall = def_val >= 2000
+            tags.boss_monster = atk >= 3000
+            
+            # Check for special summoning mechanics
+            if "cannot be normal summoned" in desc or "must be" in desc or "must first be" in desc:
+                tags.boss_monster = True
+        
+        # Removal detection
+        if "destroy" in desc:
+            if "monster" in desc or "face-up" in desc:
+                tags.monster_removal = True
+            if "spell" in desc or "trap" in desc:
+                tags.spell_trap_removal = True
+            if "all" in desc or "as many" in desc:
+                tags.mass_removal = True
+        
+        if "banish" in desc:
+            tags.banish = True
+            if "all" in desc:
+                tags.mass_removal = True
+        
+        # Resource generation
+        if "draw" in desc and ("card" in desc or "cards" in desc):
+            tags.draw_power = True
+        
+        if "add" in desc and ("deck" in desc or "from your deck" in desc) and "hand" in desc:
+            tags.search = True
+        
+        if "special summon" in desc:
+            tags.special_summon = True
+            
+            # Extra deck mechanics
+            if "link" in desc or "link summon" in card_type:
+                tags.link_support = True
+                tags.extra_deck_focused = True
+            if "xyz" in desc or "xyz" in card_type:
+                tags.xyz_support = True
+                tags.extra_deck_focused = True
+            if "synchro" in desc or "synchro" in card_type:
+                tags.synchro_support = True
+                tags.extra_deck_focused = True
+            if "fusion" in desc or "fusion" in card_type:
+                tags.fusion_support = True
+                tags.extra_deck_focused = True
+        
+        # Disruption
+        if "negate" in desc:
+            tags.negation = True
+        
+        if "discard" in desc and ("opponent" in desc or "random" in desc):
+            tags.hand_disruption = True
+        
+        if "send" in desc and "deck" in desc and "graveyard" in desc:
+            tags.deck_disruption = True
+        
+        # Protection
+        if "cannot be targeted" in desc or "cannot be destroyed" in desc or "unaffected" in desc:
+            tags.protection = True
+        
+        # Recovery
+        if ("target" in desc or "add" in desc) and "graveyard" in desc and ("hand" in desc or "deck" in desc or "field" in desc):
+            tags.recovery = True
+        
+        # Control effects
+        if tags.is_spell and "continuous" in card_type:
+            tags.continuous_effect = True
+        if tags.is_trap and ("continuous" in card_type or "counter" in card_type):
+            tags.continuous_effect = True
+        
+        if "(quick effect)" in desc or "during either player's turn" in desc:
+            tags.quick_effect = True
+        
+        if "from your hand" in desc and ("opponent" in desc or "during" in desc):
+            if not "discard" in desc[:50]:  # Not a cost
+                tags.hand_trap = True
+        
+        # Win conditions
+        if "win the duel" in desc or "wins the duel" in desc:
+            tags.alt_win_con = True
+        
+        # OTK enablers (multiple attacks, damage doubling)
+        if "attack twice" in desc or "additional attack" in desc or "double" in desc:
+            tags.otk_enabler = True
+        
+        # Graveyard setup
+        if "send" in desc and ("deck" in desc or "hand" in desc) and "graveyard" in desc:
+            if "target" not in desc[:30]:  # Not opponent targeting
+                tags.graveyard_setup = True
+        
+        return tags
+    
+    def tag_deck_cards(self, deck_cards: List[str]) -> Dict[str, YugiohFunctionalTags]:
+        """Tag all cards in a deck"""
+        result = {}
+        for card_name in deck_cards:
+            result[card_name] = self.tag_card(card_name)
+        return result
+    
+    def export_tags(self, output_path: Path):
+        """Export all tags for cards in database"""
+        print(f"Tagging {len(self.card_db)} Yu-Gi-Oh! cards...")
+        
+        results = []
+        for card_name in self.card_db:
+            tags = self.tag_card(card_name)
+            results.append(asdict(tags))
+        
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+        
+        print(f"✅ Exported {len(results)} Yu-Gi-Oh! card tags to {output_path}")
+        return results
+
+
+if __name__ == "__main__":
+    # Use relative path from src/ml to project root
+    base_path = Path(__file__).parent.parent.parent
+    
+    tagger = YugiohFunctionalTagger(base_path)
+    
+    # Export all tags
+    output = Path("yugioh_functional_tags.json")
+    results = tagger.export_tags(output)
+    
+    # Show statistics
+    if results:
+        print("\n📊 Yu-Gi-Oh! Tag Distribution:")
+        total = len(results)
+        tag_counts = {}
+        
+        for item in results:
+            for key, value in item.items():
+                if key != "card_name" and value:
+                    tag_counts[key] = tag_counts.get(key, 0) + 1
+        
+        for tag, count in sorted(tag_counts.items(), key=lambda x: -x[1]):
+            pct = 100 * count / total
+            print(f"{tag:30s}: {count:5d} ({pct:.1f}%)")

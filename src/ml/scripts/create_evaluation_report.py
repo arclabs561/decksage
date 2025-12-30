@@ -1,0 +1,170 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+# ]
+# ///
+"""
+Create comprehensive evaluation report.
+
+Combines:
+- Evaluation results
+- Statistical comparisons
+- Test set analysis
+- Performance trends
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+
+def load_evaluation(eval_path: Path) -> dict[str, Any]:
+    """Load evaluation results."""
+    with open(eval_path) as f:
+        return json.load(f)
+
+
+def load_test_set_analysis(analysis_path: Path) -> dict[str, Any] | None:
+    """Load test set analysis."""
+    if not analysis_path.exists():
+        return None
+    
+    with open(analysis_path) as f:
+        return json.load(f)
+
+
+def create_report(
+    evaluation_path: Path,
+    test_set_analysis_path: Path | None = None,
+    comparison_path: Path | None = None,
+    output_path: Path | None = None,
+) -> dict[str, Any]:
+    """Create comprehensive evaluation report."""
+    print("=" * 70)
+    print("Creating Evaluation Report")
+    print("=" * 70)
+    
+    # Load evaluation
+    print(f"\n📊 Loading evaluation from {evaluation_path}...")
+    evaluation = load_evaluation(evaluation_path)
+    
+    # Load test set analysis
+    test_set_analysis = None
+    if test_set_analysis_path:
+        print(f"📊 Loading test set analysis from {test_set_analysis_path}...")
+        test_set_analysis = load_test_set_analysis(test_set_analysis_path)
+    
+    # Load comparison
+    comparison = None
+    if comparison_path:
+        print(f"📊 Loading statistical comparison from {comparison_path}...")
+        if comparison_path.exists():
+            with open(comparison_path) as f:
+                comparison = json.load(f)
+    
+    # Create report
+    report = {
+        "evaluation": {
+            "file": str(evaluation_path),
+            "metrics": {
+                "p@10": evaluation.get("p@10", 0),
+                "recall@10": evaluation.get("recall@10", 0),
+                "ndcg@10": evaluation.get("ndcg@10", 0),
+                "map@10": evaluation.get("map@10", 0),
+                "mrr": evaluation.get("mrr", 0),
+            },
+            "num_evaluated": evaluation.get("num_evaluated", 0),
+            "num_skipped": evaluation.get("num_skipped", 0),
+        },
+    }
+    
+    if test_set_analysis:
+        report["test_set"] = {
+            "total_queries": test_set_analysis.get("total_queries", 0),
+            "coverage": test_set_analysis.get("coverage_analysis", {}).get("coverage_percentage", 0),
+            "query_types": test_set_analysis.get("query_types", {}),
+        }
+    
+    if comparison:
+        report["comparison"] = {
+            "metric": comparison.get("metric", "unknown"),
+            "significant": comparison.get("paired_t_test", {}).get("significant", False),
+            "p_value": comparison.get("paired_t_test", {}).get("p_value", 1.0),
+            "effect_size": comparison.get("effect_size", 0),
+            "interpretation": comparison.get("interpretation", "unknown"),
+        }
+    
+    # Summary
+    report["summary"] = {
+        "performance": "excellent" if evaluation.get("p@10", 0) > 0.5 else "good" if evaluation.get("p@10", 0) > 0.3 else "needs_improvement",
+        "coverage": "excellent" if evaluation.get("num_evaluated", 0) / max(evaluation.get("num_evaluated", 0) + evaluation.get("num_skipped", 0), 1) > 0.9 else "good",
+    }
+    
+    # Save report
+    if output_path:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(report, f, indent=2)
+        print(f"\n✅ Report saved to {output_path}")
+    
+    # Print summary
+    print(f"\n📊 Report Summary:")
+    print(f"   P@10: {report['evaluation']['metrics']['p@10']:.4f}")
+    print(f"   Recall@10: {report['evaluation']['metrics']['recall@10']:.4f}")
+    print(f"   nDCG@10: {report['evaluation']['metrics']['ndcg@10']:.4f}")
+    print(f"   MAP@10: {report['evaluation']['metrics']['map@10']:.4f}")
+    print(f"   MRR: {report['evaluation']['metrics']['mrr']:.4f}")
+    print(f"   Queries: {report['evaluation']['num_evaluated']}")
+    if test_set_analysis:
+        print(f"   Test set coverage: {report['test_set']['coverage']:.1f}%")
+    if comparison:
+        print(f"   Comparison: {'Significant' if report['comparison']['significant'] else 'Not significant'} (p={report['comparison']['p_value']:.4f})")
+    
+    return report
+
+
+def main() -> int:
+    """Create evaluation report."""
+    parser = argparse.ArgumentParser(
+        description="Create comprehensive evaluation report"
+    )
+    parser.add_argument("--evaluation", type=str, required=True,
+                       help="Evaluation JSON file")
+    parser.add_argument("--test-set-analysis", type=str,
+                       help="Test set analysis JSON")
+    parser.add_argument("--comparison", type=str,
+                       help="Statistical comparison JSON")
+    parser.add_argument("--output", type=str,
+                       default="experiments/evaluation_report.json",
+                       help="Output report JSON")
+    
+    args = parser.parse_args()
+    
+    evaluation_path = Path(args.evaluation)
+    if not evaluation_path.exists():
+        print(f"❌ Evaluation not found: {evaluation_path}")
+        return 1
+    
+    test_set_analysis_path = Path(args.test_set_analysis) if args.test_set_analysis else None
+    comparison_path = Path(args.comparison) if args.comparison else None
+    output_path = Path(args.output)
+    
+    create_report(
+        evaluation_path,
+        test_set_analysis_path=test_set_analysis_path,
+        comparison_path=comparison_path,
+        output_path=output_path,
+    )
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

@@ -1,0 +1,278 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Generate high-quality substitution pairs using LLM.
+
+Creates test pairs where cards are functionally substitutable,
+not just statistically similar.
+
+Research Basis:
+- LLM-generated test data improves coverage of edge cases
+- Functional substitutability requires domain expertise
+- High-quality test pairs enable better evaluation of substitution task
+- Explicit criteria (functional equivalence, trade-offs) improve quality
+
+References:
+- Data annotation best practices: https://www.atltranslate.com/ai/blog/labeling-data-best-practices
+- LLM for annotation: https://snorkel.ai/blog/data-annotation/
+- Test data generation: Research on synthetic test data for recommendation systems
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import os
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic_ai import Agent
+    from pydantic import BaseModel, Field
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Fix import path
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+# Import cost tracker
+try:
+    from ml.utils.llm_cost_tracker import get_global_tracker, LLMCostTracker
+    from ml.utils.pydantic_ai_helpers import run_with_tracking
+    HAS_COST_TRACKER = True
+except ImportError:
+    HAS_COST_TRACKER = False
+    get_global_tracker = None
+    run_with_tracking = None
+
+try:
+    from ml.utils.pydantic_ai_helpers import make_agent, get_default_model
+    HAS_HELPERS = True
+except ImportError:
+    HAS_HELPERS = False
+
+
+SUBSTITUTION_PAIR_GENERATION_PROMPT = """You are an expert at identifying functionally substitutable cards in TCGs.
+
+**Your Task**: Generate pairs of cards where one can functionally substitute for the other in most decks.
+
+**Substitution Criteria**:
+1. **Same Function**: Cards serve the same role (removal, card draw, ramp, threat, etc.)
+2. **Similar Power Level**: Comparable effectiveness in their role
+3. **Same Format**: Both legal in the same format (or both banned/restricted)
+4. **Substitutability**: Can replace one with the other without major deck changes
+5. **Well-Known Cards**: Both cards should be recognizable to players
+
+**Examples of Good Substitution Pairs**:
+- Lightning Bolt → Chain Lightning (both 1-mana red burn)
+- Brainstorm → Ponder (both blue card selection)
+- Path to Exile → Swords to Plowshares (both white removal)
+- Counterspell → Mana Leak (both blue counterspells)
+- Sol Ring → Mana Crypt (both fast mana artifacts)
+
+**Examples of Bad Pairs** (NOT substitutable):
+- Lightning Bolt → Fireball (different functions: burn vs X-spell)
+- Brainstorm → Ancestral Recall (different power levels)
+- Island → Counterspell (completely different card types)
+
+**Output Format**:
+For each pair, provide:
+- **original**: The original card name
+- **substitute**: The functional substitute
+- **function**: The shared function (e.g., "burn", "card_selection", "removal")
+- **format**: Format where both are legal (e.g., "Legacy", "Modern", "Commander")
+- **reasoning**: Why these are good substitutes (2-3 sentences)
+- **confidence**: high|medium|low (how confident you are in substitutability)
+
+Generate {num_pairs} high-quality substitution pairs."""
+
+
+if HAS_PYDANTIC_AI:
+    class SubstitutionPair(BaseModel):
+        """A pair of functionally substitutable cards."""
+        original: str = Field(description="Original card name")
+        substitute: str = Field(description="Functional substitute card name")
+        function: str = Field(description="Shared function (e.g., burn, card_selection, removal)")
+        format: str = Field(description="Format where both are legal")
+        reasoning: str = Field(description="Why these are good substitutes")
+        confidence: str = Field(description="Confidence level: high|medium|low")
+    
+    class SubstitutionPairBatch(BaseModel):
+        """Batch of substitution pairs."""
+        pairs: list[SubstitutionPair] = Field(description="List of substitution pairs")
+
+
+def make_substitution_agent() -> Agent | None:
+    """Create LLM agent for generating substitution pairs."""
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required")
+        return None
+    
+    try:
+        # Load .env
+        env_file = Path(__file__).parent.parent.parent.parent / ".env"
+        if env_file.exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file)
+            except ImportError:
+                pass
+        
+        # Try to use helpers if available
+        if HAS_HELPERS:
+            try:
+                model_name = get_default_model("annotator")  # Use annotator model for quality
+                provider = os.getenv("LLM_PROVIDER", "openrouter")
+                
+                agent = make_agent(
+                    model_name,
+                    SubstitutionPairBatch,
+                    SUBSTITUTION_PAIR_GENERATION_PROMPT,
+                    provider=provider,
+                )
+                logger.info(f"Created agent with helpers: {provider}:{model_name}")
+                return agent
+            except Exception as e:
+                logger.warning(f"Could not use helpers: {e}, falling back to direct creation")
+        
+        # Fallback: create agent directly
+        model_name = (
+            os.getenv("ANNOTATOR_MODEL") or 
+            os.getenv("ANNOTATOR_MODEL_BEST") or
+            os.getenv("OPENROUTER_MODEL") or 
+            "anthropic/claude-opus-4.5"
+        )
+        provider = os.getenv("LLM_PROVIDER", "openrouter")
+        
+        logger.info(f"Creating agent directly: {provider}:{model_name}")
+        agent = Agent(
+            f"{provider}:{model_name}",
+            output_type=SubstitutionPairBatch,
+            system_prompt=SUBSTITUTION_PAIR_GENERATION_PROMPT,
+        )
+        
+        return agent
+    except Exception as e:
+        logger.error(f"Failed to create agent: {e}")
+        import traceback
+        logger.error(traceback.format_exc())
+        return None
+
+
+def generate_substitution_pairs(
+    num_pairs: int,
+    game: str = "magic",
+    batch_size: int = 10,
+) -> list[dict[str, Any]]:
+    """Generate substitution pairs using LLM."""
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required")
+        return []
+    
+    agent = make_substitution_agent()
+    if not agent:
+        logger.error("Could not create agent")
+        return []
+    
+    all_pairs = []
+    num_batches = (num_pairs + batch_size - 1) // batch_size
+    
+    for batch_num in range(num_batches):
+        current_batch_size = min(batch_size, num_pairs - len(all_pairs))
+        if current_batch_size <= 0:
+            break
+        
+        logger.info(f"Generating batch {batch_num + 1}/{num_batches} ({current_batch_size} pairs)...")
+        
+        prompt = f"Generate {current_batch_size} substitution pairs for {game}."
+        
+        try:
+            result = agent.run_sync(prompt)
+            output = result.data if hasattr(result, 'data') else result.output
+            
+            if output and hasattr(output, 'pairs'):
+                batch_pairs = output.pairs
+                for pair in batch_pairs:
+                    all_pairs.append({
+                        "original": pair.original,
+                        "substitute": pair.substitute,
+                        "function": pair.function,
+                        "format": pair.format,
+                        "reasoning": pair.reasoning,
+                        "confidence": pair.confidence,
+                    })
+                logger.info(f"  Generated {len(batch_pairs)} pairs")
+            else:
+                logger.warning(f"  No pairs in response")
+        except Exception as e:
+            logger.error(f"  Error generating batch: {e}")
+            continue
+    
+    return all_pairs
+
+
+def main() -> int:
+    """Generate substitution pairs."""
+    parser = argparse.ArgumentParser(description="Generate LLM-based substitution pairs")
+    parser.add_argument("--game", type=str, default="magic", choices=["magic", "pokemon", "yugioh"])
+    parser.add_argument("--num-pairs", type=int, default=50, help="Number of pairs to generate")
+    parser.add_argument("--batch-size", type=int, default=10, help="Batch size for LLM calls")
+    parser.add_argument("--output", type=str, required=True, help="Output JSON file")
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai required: pip install pydantic-ai")
+        return 1
+    
+    logger.info(f"Generating {args.num_pairs} substitution pairs for {args.game}...")
+    
+    pairs = generate_substitution_pairs(
+        num_pairs=args.num_pairs,
+        game=args.game,
+        batch_size=args.batch_size,
+    )
+    
+    if not pairs:
+        logger.error("No pairs generated")
+        return 1
+    
+    # Save as list of [original, substitute] tuples (compatible with existing format)
+    output_pairs = [[p["original"], p["substitute"]] for p in pairs]
+    
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, "w") as f:
+        json.dump(output_pairs, f, indent=2)
+    
+    logger.info(f"✅ Generated {len(pairs)} pairs")
+    logger.info(f"✅ Saved to {output_path}")
+    
+    # Also save with metadata
+    metadata_path = output_path.with_suffix('.metadata.json')
+    with open(metadata_path, "w") as f:
+        json.dump(pairs, f, indent=2)
+    logger.info(f"✅ Metadata saved to {metadata_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

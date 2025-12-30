@@ -1,0 +1,65 @@
+#!/bin/bash
+# Run hyperparameter search with runctl on AWS
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
+
+echo "🚀 Starting hyperparameter search on AWS with runctl..."
+
+# Create instance with better error handling
+echo "Creating AWS EC2 instance (g4dn.xlarge spot)..."
+INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot g4dn.xlarge 2>&1)
+EXIT_CODE=$?
+
+if [ $EXIT_CODE -ne 0 ]; then
+    echo "❌ Failed to create instance (exit code: $EXIT_CODE)"
+    echo "Output: $INSTANCE_OUTPUT"
+    echo ""
+    echo "Troubleshooting:"
+    echo "  1. Check AWS credentials: aws sts get-caller-identity"
+    echo "  2. Check EC2 quota: aws service-quotas get-service-quota --service-code ec2 --quota-code L-34B43A08"
+    echo "  3. Try different instance type: t3.medium or t3.large"
+    exit 1
+fi
+
+INSTANCE_ID=$(echo "$INSTANCE_OUTPUT" | grep -o 'i-[a-z0-9]*' | head -1)
+
+if [ -z "$INSTANCE_ID" ]; then
+    echo "❌ Failed to extract instance ID"
+    echo "Output: $INSTANCE_OUTPUT"
+    echo ""
+    echo "Trying alternative instance type..."
+    INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot t3.large 2>&1)
+    INSTANCE_ID=$(echo "$INSTANCE_OUTPUT" | grep -o 'i-[a-z0-9]*' | head -1)
+    
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "❌ Failed with alternative instance type too"
+        exit 1
+    fi
+    echo "✅ Instance created with t3.large: $INSTANCE_ID"
+else
+    echo "✅ Instance created: $INSTANCE_ID"
+fi
+
+# Wait for instance to be ready
+# runctl will handle instance readiness internally, but give it a moment
+echo "Waiting for instance to initialize..."
+sleep 30
+
+# Run training
+# runctl will sync code and we'll use S3 paths directly in the script
+# The script can handle S3 paths via boto3
+echo "Starting hyperparameter search..."
+$RUNCTL_BIN aws train "$INSTANCE_ID" \
+    src/ml/scripts/improve_embeddings_hyperparameter_search.py \
+    --output-s3 s3://games-collections/experiments/ \
+    -- \
+    --input s3://games-collections/processed/pairs_large.csv \
+    --output s3://games-collections/experiments/hyperparameter_results.json \
+    --test-set s3://games-collections/processed/test_set_canonical_magic.json
+
+echo "✅ Training started. Monitoring..."
+$RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow
+

@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/validators/gigo_sentinel.py
+# hypothesis_version: 6.140.3
+
+[0.0, 0.7, 0.8, 0.95, 1.0, 1000.0, 1000, 'COUNT_MULTISET', 'NAME_1', 'NAME_2', 'OPENROUTER_API_KEY', 'card', 'confidence', 'count', 'deck_coherence', 'deck_id', 'findings', 'high', 'issue', 'issues', 'line', 'llm_audit', 'low', 'low|medium|high', 'medium', 'name', 'pair', 'price_outlier_high', 'price_usd', 'run_sentinel', 'severity', 'structural_issue', 'suggested_fix', 'summary', 'threshold', 'type', 'unknown', 'usd']

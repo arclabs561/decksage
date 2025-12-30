@@ -1,8 +1,81 @@
+# Environment
 .env
-data
-deploy
 .venv
 __pycache__
 *.pyc
 .cache
-backups
+
+# Large data directories
+data/raw/
+data/full/
+data-full/
+old-scraper-data/
+data/archive/
+integration_test_tmp/
+
+# Data files - embeddings, graphs, large datasets
+data/embeddings/*.wv
+data/embeddings/*.kv
+data/embeddings/*.pkl
+data/graphs/*.edg
+data/decks/*.jsonl
+data/processed/*.csv
+data/processed/*.jsonl
+data/pairs/
+
+# Training checkpoints
+checkpoints/
+
+# Deployment
+deploy/
+backups/
+
+# Logs
+logs/
+*.log
+/tmp/*.log
+
+# Archive
+archive/
+
+# Experiments (large files)
+experiments/*.jsonl
+experiments/*.html
+experiments/*.csv
+
+# Documentation (too many MD files in root - keep only key ones)
+*.md
+!README.md
+!QUICK_REFERENCE.md
+!PRIORITY_MATRIX.md
+!PAUSE_RESUME_GUIDE.md
+docs/*.md
+
+# Build artifacts
+target/
+dist/
+build/
+*.egg-info/
+
+# Config files - ignore files that don't help with code understanding
+.dockerignore
+.gitignore
+.gitattributes
+.cursor/rules/
+*.mdc
+.editorconfig
+.prettierignore
+.eslintignore
+.ruffignore
+.mypy.ini
+pytest.ini
+
+# Keep important config files (pyproject.toml, justfile, Makefile are useful for context)
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

@@ -1,0 +1,89 @@
+#!/bin/bash
+# Extract ALL collections from all sources - no limits
+# This will extract gigabytes of data
+
+# Don't exit on errors - continue with other extractions
+set +e
+
+# Default to S3 bucket if AWS is configured, otherwise use local file storage
+if [ -z "$BUCKET" ]; then
+    if aws sts get-caller-identity >/dev/null 2>&1; then
+        # Check if games-collections bucket exists
+        if aws s3api head-bucket --bucket "games-collections" 2>/dev/null; then
+            BUCKET="s3://games-collections"
+        else
+            # Try to create it
+            REGION=$(aws configure get region 2>/dev/null || echo "us-east-1")
+            if aws s3api create-bucket --bucket "games-collections" --region "$REGION" --create-bucket-configuration LocationConstraint="$REGION" 2>/dev/null || \
+               aws s3api create-bucket --bucket "games-collections" --region "$REGION" 2>/dev/null; then
+                BUCKET="s3://games-collections"
+            else
+                BUCKET="file:///tmp/decksage-full"
+                echo "⚠️  Could not create S3 bucket, using local storage: $BUCKET"
+            fi
+        fi
+    else
+        BUCKET="file:///tmp/decksage-full"
+    fi
+fi
+PARALLEL="${PARALLEL:-128}"
+LOG_LEVEL="${LOG_LEVEL:-info}"
+
+echo "=== EXTRACTING ALL COLLECTIONS ==="
+echo "Bucket: $BUCKET"
+echo "Parallel workers: $PARALLEL"
+echo ""
+
+cd src/backend
+
+# 1. Scryfall - ALL cards and ALL sets
+echo "📦 Extracting Scryfall cards and sets..."
+SCRAPER_MAX_RESPONSE_SIZE_MB=500 go run ./cmd/dataset/main.go extract scryfall \
+  --section "cards" \
+  --bucket "$BUCKET" \
+  --parallel "$PARALLEL" \
+  --log "$LOG_LEVEL" \
+  --reparse || echo "Scryfall cards extraction had errors (may already exist)"
+
+go run ./cmd/dataset/main.go extract scryfall \
+  --section "collections" \
+  --bucket "$BUCKET" \
+  --parallel "$PARALLEL" \
+  --log "$LOG_LEVEL" \
+  --reparse || echo "Scryfall sets extraction had errors (may already exist)"
+
+# 2. MTGTop8 - ALL tournament decks (no page limit, no item limit)
+echo ""
+echo "🏆 Extracting MTGTop8 tournament decks (ALL pages, ALL decks)..."
+go run ./cmd/dataset/main.go extract mtgtop8 \
+  --bucket "$BUCKET" \
+  --parallel "$PARALLEL" \
+  --log "$LOG_LEVEL" \
+  --reparse \
+  || echo "MTGTop8 extraction had errors (continuing...)"
+
+# 3. Goldfish - ALL metagame decks (no scroll limit, no item limit)
+echo ""
+echo "🐟 Extracting Goldfish metagame decks (ALL sections, ALL decks)..."
+go run ./cmd/dataset/main.go extract goldfish \
+  --bucket "$BUCKET" \
+  --parallel "$PARALLEL" \
+  --log "$LOG_LEVEL" \
+  --reparse \
+  || echo "Goldfish extraction had errors (continuing...)"
+
+# 4. Deckbox - ALL user collections (no page limit, no item limit)
+echo ""
+echo "📚 Extracting Deckbox user collections (ALL pages, ALL collections)..."
+go run ./cmd/dataset/main.go extract deckbox \
+  --bucket "$BUCKET" \
+  --parallel "$PARALLEL" \
+  --log "$LOG_LEVEL" \
+  --reparse \
+  || echo "Deckbox extraction had errors (continuing...)"
+
+echo ""
+echo "✅ Extraction complete!"
+echo ""
+echo "Summary:"
+find "$(echo $BUCKET | sed 's|file://||')/games/magic" -type f -name "*.zst" 2>/dev/null | wc -l | xargs echo "Total collections:"

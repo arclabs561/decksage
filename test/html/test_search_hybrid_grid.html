@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeckSage Card Search - Grid View</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            padding: 32px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #1a1a1a;
+        }
+        .view-toggle {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .view-toggle button {
+            padding: 8px 16px;
+            border: 1px solid #e5e7eb;
+            background: #ffffff;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .view-toggle button.active {
+            background: #3b82f6;
+            color: white;
+            border-color: #3b82f6;
+        }
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+        }
+        input:focus {
+            border-color: #3b82f6;
+        }
+        .results-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        .result-card {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        .result-card:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        .result-card img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 5/7;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+            margin-bottom: 12px;
+        }
+        .result-card-name {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+        .result-card-meta {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .source-badge {
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .source-badge.hybrid {
+            background: #fef3c7;
+            color: #92400e;
+        }
+        .source-badge.keyword {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+        .source-badge.semantic {
+            background: #ede9fe;
+            color: #5b21b6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Deck Building Recommender - Grid View</h1>
+            <p style="color: #6b7280; margin-top: 8px;">Visual browsing layout</p>
+        </header>
+        
+        <div class="view-toggle">
+            <button onclick="window.location.href='test_search_hybrid.html'">List View</button>
+            <button class="active">Grid View</button>
+        </div>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Type to search for cards..."
+                autocomplete="off"
+            />
+        </div>
+        
+        <div class="results-grid" id="results"></div>
+    </div>
+
+    <script>
+        // Same mock data and functions as hybrid.html
+        // Simplified for grid view
+        const searchInput = document.getElementById('searchInput');
+        const resultsDiv = document.getElementById('results');
+        
+        async function mockSearch(query, limit = 20) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            const mockResults = [
+                { card_name: 'Lightning Bolt', score: 0.95, source: 'hybrid', metadata: { type_line: 'Instant' } },
+                { card_name: 'Lightning Strike', score: 0.87, source: 'hybrid', metadata: { type_line: 'Instant' } },
+                { card_name: 'Shock', score: 0.82, source: 'meilisearch', metadata: { type_line: 'Instant' } },
+                { card_name: 'Bolt of Keranos', score: 0.78, source: 'qdrant', metadata: { type_line: 'Instant' } },
+                { card_name: 'Chain Lightning', score: 0.75, source: 'hybrid', metadata: { type_line: 'Instant' } },
+                { card_name: 'Lava Spike', score: 0.72, source: 'meilisearch', metadata: { type_line: 'Sorcery' } },
+                { card_name: 'Rift Bolt', score: 0.68, source: 'qdrant', metadata: { type_line: 'Sorcery' } },
+                { card_name: 'Burst Lightning', score: 0.65, source: 'hybrid', metadata: { type_line: 'Instant' } },
+            ];
+            return {
+                query: query,
+                results: mockResults.slice(0, limit).map(r => ({
+                    ...r,
+                    score: r.score * (0.8 + Math.random() * 0.2)
+                }))
+            };
+        }
+
+        function getImageUrl(cardName) {
+            return `https://api.scryfall.com/cards/named?exact=${encodeURIComponent(cardName)}&format=image`;
+        }
+
+        function getSourceBadge(source) {
+            const badges = {
+                'hybrid': { text: 'HYBRID', class: 'hybrid' },
+                'meilisearch': { text: 'KEYWORD', class: 'keyword' },
+                'qdrant': { text: 'SEMANTIC', class: 'semantic' }
+            };
+            const badge = badges[source] || badges['hybrid'];
+            return `<span class="source-badge ${badge.class}">${badge.text}</span>`;
+        }
+
+        async function performSearch(query) {
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: #6b7280;">Searching...</div>';
+            
+            try {
+                const data = await mockSearch(query, 20);
+                
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: #6b7280;">No results found</div>';
+                    return;
+                }
+
+                resultsDiv.innerHTML = data.results.map(result => `
+                    <div class="result-card" onclick="window.location.href='test_search_hybrid.html?q=${encodeURIComponent(result.card_name)}'">
+                        <img src="${getImageUrl(result.card_name)}" alt="${result.card_name}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'">
+                        <div class="result-card-name">${result.card_name}</div>
+                        <div class="result-card-meta">
+                            ${getSourceBadge(result.source)}
+                            <span>Score: ${result.score.toFixed(3)}</span>
+                            ${result.metadata?.type_line ? `<span>• ${result.metadata.type_line}</span>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                resultsDiv.innerHTML = '<div style="grid-column: 1/-1; text-align: center; padding: 48px; color: #dc2626;">Error: ' + error.message + '</div>';
+            }
+        }
+
+        let debounceTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                performSearch(e.target.value);
+            }, 200);
+        });
+
+        // Check for query param
+        const urlParams = new URLSearchParams(window.location.search);
+        const query = urlParams.get('q');
+        if (query) {
+            searchInput.value = query;
+            performSearch(query);
+        }
+    </script>
+</body>
+</html>
+

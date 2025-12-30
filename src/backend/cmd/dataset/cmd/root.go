@@ -36,6 +36,8 @@ func init() {
 	rootCmd.AddCommand(transformCmd)
 	rootCmd.AddCommand(indexCmd)
 	rootCmd.AddCommand(catCmd)
+	rootCmd.AddCommand(statsCmd)
+	rootCmd.AddCommand(healthCmd)
 
 	rootCmd.AddCommand(migrateCmd)
 }
