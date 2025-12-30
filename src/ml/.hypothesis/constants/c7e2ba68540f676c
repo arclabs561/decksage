@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/utils/pydantic_ai_helpers.py
+# hypothesis_version: 6.140.3
+
+['ANNOTATOR_MODEL', 'DEFAULT_LLM_MODEL', 'HAS_PYDANTIC_AI', 'JUDGE_MODEL', 'LLM_PROVIDER', 'Test message', 'VALIDATOR_MODEL', 'You are a test agent', '__main__', 'annotator', 'general', 'get_default_model', 'judge', 'make_agent', 'openai/gpt-4o-mini', 'openrouter', 'validator', '✅ make_agent() works']

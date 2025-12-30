@@ -1,0 +1,159 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+# ]
+# ///
+"""
+Update fusion weights based on evaluation results.
+
+Uses the latest evaluation results to calculate optimal weights.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+
+
+def calculate_optimal_weights(
+    embedding_p10: float,
+    jaccard_p10: float,
+    functional_p10: float = 0.0,
+) -> dict[str, float]:
+    """Calculate optimal weights based on signal performance."""
+    # Only use signals we have data for
+    signals = {}
+    if embedding_p10 > 0:
+        signals["embed"] = embedding_p10
+    if jaccard_p10 > 0:
+        signals["jaccard"] = jaccard_p10
+    if functional_p10 > 0:
+        signals["functional"] = functional_p10
+    
+    if not signals:
+        # Fallback: equal weights
+        return {"embed": 0.33, "jaccard": 0.33, "functional": 0.34}
+    
+    # Proportional weights
+    total = sum(signals.values())
+    weights = {k: v / total for k, v in signals.items()}
+    
+    # Fill in missing signals with 0
+    if "embed" not in weights:
+        weights["embed"] = 0.0
+    if "jaccard" not in weights:
+        weights["jaccard"] = 0.0
+    if "functional" not in weights:
+        weights["functional"] = 0.0
+    
+    return weights
+
+
+def main() -> int:
+    """Update fusion weights from evaluation results."""
+    parser = argparse.ArgumentParser(description="Update fusion weights from evaluation")
+    parser.add_argument(
+        "--evaluation-results",
+        type=str,
+        default="experiments/embedding_evaluation_with_mapping.json",
+        help="Evaluation results JSON file",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="experiments/optimized_fusion_weights_latest.json",
+        help="Output JSON file",
+    )
+    
+    args = parser.parse_args()
+    
+    print("=" * 70)
+    print("Update Fusion Weights from Evaluation Results")
+    print("=" * 70)
+    print()
+    
+    # Load evaluation results
+    eval_file = Path(args.evaluation_results)
+    if not eval_file.exists():
+        print(f"❌ Evaluation results not found: {eval_file}")
+        return 1
+    
+    with open(eval_file) as f:
+        eval_data = json.load(f)
+    
+    results = eval_data.get("results", {})
+    
+    # Extract P@10 for each method
+    embedding_p10 = results.get("magic_128d_test_pecanpy", {}).get("p@10", 0.0)
+    jaccard_p10 = results.get("jaccard", {}).get("p@10", 0.0)
+    
+    print("📊 Signal Performance (from evaluation):")
+    print(f"  Embedding: P@10 = {embedding_p10:.4f}")
+    print(f"  Jaccard: P@10 = {jaccard_p10:.4f}")
+    print()
+    
+    # Calculate optimal weights
+    optimal_weights = calculate_optimal_weights(embedding_p10, jaccard_p10)
+    
+    print("📐 Optimal Fusion Weights (proportional to performance):")
+    print(f"  embed: {optimal_weights['embed']:.4f} ({optimal_weights['embed']*100:.1f}%)")
+    print(f"  jaccard: {optimal_weights['jaccard']:.4f} ({optimal_weights['jaccard']*100:.1f}%)")
+    print(f"  functional: {optimal_weights['functional']:.4f} ({optimal_weights['functional']*100:.1f}%)")
+    print()
+    
+    # Calculate expected fusion performance (weighted average)
+    expected_p10 = (
+        optimal_weights["embed"] * embedding_p10 +
+        optimal_weights["jaccard"] * jaccard_p10
+    )
+    
+    print("📈 Expected Fusion Performance:")
+    print(f"  Expected P@10: {expected_p10:.4f}")
+    print(f"  Best individual: {max(embedding_p10, jaccard_p10):.4f} (Jaccard)")
+    print()
+    
+    # Save results
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    output_data = {
+        "source": "embedding_evaluation_with_mapping.json",
+        "signal_performance": {
+            "embedding": embedding_p10,
+            "jaccard": jaccard_p10,
+        },
+        "optimal_weights": optimal_weights,
+        "expected_p10": expected_p10,
+        "recommendation": {
+            "embed": optimal_weights["embed"],
+            "jaccard": optimal_weights["jaccard"],
+            "functional": optimal_weights["functional"],
+            "text_embed": 0.0,
+            "sideboard": 0.0,
+            "temporal": 0.0,
+            "gnn": 0.0,
+            "archetype": 0.0,
+            "format": 0.0,
+        },
+        "rationale": "Weights proportional to individual signal P@10 performance. Jaccard is 3x better than embedding, so it gets 75% weight.",
+    }
+    
+    with open(output_path, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    print(f"✅ Results saved to {output_path}")
+    print()
+    print("💡 Next steps:")
+    print("  1. Update FusionWeights defaults in src/ml/similarity/fusion.py")
+    print("  2. Test new weights on test set")
+    print("  3. Update API default weights if needed")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

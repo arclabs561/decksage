@@ -3,7 +3,7 @@ package limitlessweb
 import (
 	"bytes"
 	"collections/blob"
-	"collections/games/magic/dataset"
+	"collections/games"
 	"collections/games/pokemon/game"
 	"collections/logger"
 	"collections/scraper"
@@ -16,6 +16,8 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"time"
 
 	"github.com/PuerkitoBio/goquery"
@@ -46,8 +48,9 @@ func NewDataset(log *logger.Logger, blob *blob.Bucket) *Dataset {
 	}
 }
 
-func (d *Dataset) Description() dataset.Description {
-	return dataset.Description{
+func (d *Dataset) Description() games.Description {
+	return games.Description{
+		Game: "pokemon",
 		Name: "limitless-web",
 	}
 }
@@ -57,9 +60,9 @@ var reDeckListURL = regexp.MustCompile(`^https://limitlesstcg\.com/decks/list/\d
 func (d *Dataset) Extract(
 	ctx context.Context,
 	sc *scraper.Scraper,
-	options ...dataset.UpdateOption,
+	options ...games.UpdateOption,
 ) error {
-	opts, err := dataset.ResolveUpdateOptions(options...)
+	opts, err := games.ResolveUpdateOptions(options...)
 	if err != nil {
 		return err
 	}
@@ -80,34 +83,61 @@ func (d *Dataset) Extract(
 
 	d.log.Infof(ctx, "Found %d deck URLs to process", len(deckURLs))
 
-	// Process each deck URL
-	totalDecks := 0
-	for i, deckURL := range deckURLs {
-		if limit, ok := opts.ItemLimit.Get(); ok && totalDecks >= limit {
-			d.log.Infof(ctx, "Reached item limit of %d", limit)
-			break
-		}
+	// Process deck URLs in parallel using worker pool
+	tasks := make(chan string, len(deckURLs))
+	wg := new(sync.WaitGroup)
+	var totalDecks atomic.Int64
 
-		if (i+1)%10 == 0 {
-			d.log.Infof(ctx, "Processing deck %d/%d...", i+1, len(deckURLs))
-		}
-
-		if err := d.parseDeck(ctx, sc, deckURL, opts); err != nil {
-			d.log.Field("url", deckURL).Errorf(ctx, "Failed to parse deck: %v", err)
-			continue
-		}
-
-		totalDecks++
+	for i := 0; i < opts.Parallel; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case deckURL, ok := <-tasks:
+					if !ok {
+						return
+					}
+					if limit, ok := opts.ItemLimit.Get(); ok && int(totalDecks.Load()) >= limit {
+						return
+					}
+						if err := d.parseDeck(ctx, sc, deckURL, opts); err != nil {
+							d.log.Field("url", deckURL).Errorf(ctx, "Failed to parse deck: %v", err)
+							// Record error in statistics if available
+							if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+								stats.RecordCategorizedError(ctx, deckURL, "limitless-web", err)
+							}
+							continue
+						}
+					totalDecks.Add(1)
+					if totalDecks.Load()%10 == 0 {
+						d.log.Infof(ctx, "Processed %d/%d decks...", totalDecks.Load(), len(deckURLs))
+					}
+				}
+			}
+		}()
 	}
 
-	d.log.Infof(ctx, "✅ Extracted %d Pokemon tournament decks from Limitless TCG website", totalDecks)
+	// Send all URLs to workers
+	for _, deckURL := range deckURLs {
+		if limit, ok := opts.ItemLimit.Get(); ok && int(totalDecks.Load()) >= limit {
+			break
+		}
+		tasks <- deckURL
+	}
+	close(tasks)
+	wg.Wait()
+
+	d.log.Infof(ctx, "✅ Extracted %d Pokemon tournament decks from Limitless TCG website", totalDecks.Load())
 	return nil
 }
 
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
 	sc *scraper.Scraper,
-	opts dataset.ResolvedUpdateOptions,
+	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	// Start with the main deck lists page
 	listingURL := "https://limitlesstcg.com/decks/lists"
@@ -141,6 +171,8 @@ func (d *Dataset) scrapeDeckListingPages(
 		}
 
 		// Find all deck links in the table
+		// Use map for O(1) deduplication instead of O(n) linear search
+		seenURLs := make(map[string]bool)
 		pageURLs := []string{}
 		doc.Find("table tbody tr td a[href^='/decks/list/']").Each(func(i int, s *goquery.Selection) {
 			href, exists := s.Attr("href")
@@ -148,8 +180,9 @@ func (d *Dataset) scrapeDeckListingPages(
 				return
 			}
 			fullURL := "https://limitlesstcg.com" + href
-			// Deduplicate
-			if !contains(allURLs, fullURL) && !contains(pageURLs, fullURL) {
+			// Deduplicate using map for efficiency
+			if !seenURLs[fullURL] {
+				seenURLs[fullURL] = true
 				pageURLs = append(pageURLs, fullURL)
 			}
 		})
@@ -171,7 +204,7 @@ func (d *Dataset) parseDeck(
 	ctx context.Context,
 	sc *scraper.Scraper,
 	deckURL string,
-	opts dataset.ResolvedUpdateOptions,
+	opts games.ResolvedUpdateOptions,
 ) error {
 	// Extract deck ID from URL
 	reDeckID := regexp.MustCompile(`/decks/list/(\d+)$`)
@@ -217,7 +250,7 @@ func (d *Dataset) parseDeck(
 	playerName := ""
 	tournamentName := ""
 	placement := 0
-	eventDate := ""
+	eventDateStr := ""
 
 	doc.Find(".decklist-results ul li").Each(func(i int, s *goquery.Selection) {
 		text := s.Text()
@@ -249,8 +282,9 @@ func (d *Dataset) parseDeck(
 	})
 
 	// Try to extract date from tournament link on listing page
-	// For now use current date
-	eventDate = time.Now().Format("2006-01-02")
+	// For now use current date as fallback
+	eventDateStr = time.Now().Format("2006-01-02")
+	// Note: Could be improved by extracting actual event date from page
 
 	// Parse card list from the data attributes
 	cards := []game.CardDesc{}
@@ -268,8 +302,13 @@ func (d *Dataset) parseDeck(
 			return
 		}
 
+		// Normalize card name for consistency
+		normalizedName := games.NormalizeCardName(cardName)
+		if normalizedName == "" {
+			return // Skip empty card names
+		}
 		cards = append(cards, game.CardDesc{
-			Name:  cardName,
+			Name:  normalizedName,
 			Count: count,
 		})
 	})
@@ -289,7 +328,7 @@ func (d *Dataset) parseDeck(
 		Player:    playerName,
 		Event:     tournamentName,
 		Placement: placement,
-		EventDate: eventDate,
+		EventDate: eventDateStr,
 	}
 
 	tw := game.CollectionTypeWrapper{
@@ -301,7 +340,7 @@ func (d *Dataset) parseDeck(
 		Type:        tw,
 		ID:          deckID,
 		URL:         deckURL,
-		ReleaseDate: time.Now(), // Use current time as fallback
+		ReleaseDate: games.ParseDateWithFallback(eventDateStr, time.Now()), // Use parsed date or fallback
 		Partitions: []game.Partition{{
 			Name:  "Deck",
 			Cards: cards,
@@ -318,7 +357,16 @@ func (d *Dataset) parseDeck(
 		return err
 	}
 
-	return d.blob.Write(ctx, bkey, b)
+	if err := d.blob.Write(ctx, bkey, b); err != nil {
+		return err
+	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
+	
+	return nil
 }
 
 var (
@@ -338,9 +386,9 @@ func (d *Dataset) fetch(
 	ctx context.Context,
 	sc *scraper.Scraper,
 	req *http.Request,
-	opts dataset.ResolvedUpdateOptions,
+	opts games.ResolvedUpdateOptions,
 ) (*scraper.Page, error) {
-	return dataset.Do(ctx, sc, &opts, req)
+	return games.Do(ctx, sc, &opts, req)
 }
 
 var prefix = filepath.Join("pokemon", "limitless-web")
@@ -351,19 +399,19 @@ func (d *Dataset) collectionKey(collectionID string) string {
 
 func (d *Dataset) IterItems(
 	ctx context.Context,
-	fn func(item dataset.Item) error,
-	options ...dataset.IterItemsOption,
+	fn func(item games.Item) error,
+	options ...games.IterItemsOption,
 ) error {
-	return dataset.IterItemsBlobPrefix(
+	return games.IterItemsBlobPrefix(
 		ctx,
 		d.blob,
 		prefix+"/",
-		func(key string, data []byte) (dataset.Item, error) {
+		func(key string, data []byte) (games.Item, error) {
 			var collection game.Collection
 			if err := json.Unmarshal(data, &collection); err != nil {
 				return nil, err
 			}
-			return &dataset.CollectionItem{
+			return &games.CollectionItem{
 				Collection: &collection,
 			}, nil
 		},
@@ -372,11 +420,3 @@ func (d *Dataset) IterItems(
 	)
 }
 
-func contains(slice []string, item string) bool {
-	for _, s := range slice {
-		if s == item {
-			return true
-		}
-	}
-	return false
-}

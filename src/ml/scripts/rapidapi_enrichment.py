@@ -1,0 +1,240 @@
+#!/usr/bin/env python3
+"""
+RapidAPI Integration for Pokemon & Yu-Gi-Oh! Enrichment
+
+RapidAPI hosts multiple card game APIs with enhanced data:
+- Pokemon TCG pricing via TCGPlayer
+- Yu-Gi-Oh! pricing and metagame data
+- Additional card metadata not in official APIs
+
+Uses RAPIDAPI_KEY from .env
+"""
+
+import os
+import requests
+from dataclasses import dataclass
+from typing import Optional, Dict, List
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+@dataclass
+class RapidAPIPokemonPrice:
+    """Pokemon pricing from RapidAPI/TCGPlayer"""
+    card_name: str
+    market_price: Optional[float] = None
+    low_price: Optional[float] = None
+    mid_price: Optional[float] = None
+    high_price: Optional[float] = None
+    last_updated: Optional[str] = None
+
+
+@dataclass
+class RapidAPIYugiohPrice:
+    """Yu-Gi-Oh! pricing from RapidAPI"""
+    card_name: str
+    tcgplayer_price: Optional[float] = None
+    ebay_price: Optional[float] = None
+    amazon_price: Optional[float] = None
+    last_updated: Optional[str] = None
+
+
+class RapidAPIPokemonEnricher:
+    """
+    Pokemon enrichment via RapidAPI
+    
+    Available APIs on RapidAPI:
+    - pokemon-tcg-card-prices (TCGPlayer data)
+    - pokemon-tcg-api-enhanced
+    """
+    
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv("RAPIDAPI_KEY")
+        if not self.api_key:
+            raise ValueError("RAPIDAPI_KEY not set in .env")
+        
+        self.base_url = "https://pokemon-tcg-card-prices.p.rapidapi.com"
+        self.headers = {
+            "X-RapidAPI-Key": self.api_key,
+            "X-RapidAPI-Host": "pokemon-tcg-card-prices.p.rapidapi.com"
+        }
+    
+    def get_card_price(self, card_name: str) -> Optional[RapidAPIPokemonPrice]:
+        """Get pricing for a Pokemon card"""
+        
+        try:
+            # Search for card
+            params = {"name": card_name}
+            response = requests.get(
+                f"{self.base_url}/card",
+                headers=self.headers,
+                params=params,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            data = response.json()
+            
+            # Parse pricing (structure varies by API)
+            prices = data.get("prices", {})
+            
+            return RapidAPIPokemonPrice(
+                card_name=card_name,
+                market_price=self._parse_price(prices.get("market")),
+                low_price=self._parse_price(prices.get("low")),
+                mid_price=self._parse_price(prices.get("mid")),
+                high_price=self._parse_price(prices.get("high")),
+                last_updated=data.get("updated_at")
+            )
+        
+        except Exception as e:
+            print(f"Error fetching Pokemon price for {card_name}: {e}")
+            return None
+    
+    def _parse_price(self, price_val) -> Optional[float]:
+        """Parse price value (can be string or float)"""
+        if price_val is None:
+            return None
+        try:
+            return float(price_val)
+        except:
+            return None
+
+
+class RapidAPIYugiohEnricher:
+    """
+    Yu-Gi-Oh! enrichment via RapidAPI
+    
+    Available APIs:
+    - yu-gi-oh-api-enhanced
+    - yugioh-prices
+    """
+    
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv("RAPIDAPI_KEY")
+        if not self.api_key:
+            raise ValueError("RAPIDAPI_KEY not set in .env")
+        
+        # Note: Actual endpoint depends on which RapidAPI YGO service is subscribed
+        self.base_url = "https://yugioh-prices.p.rapidapi.com"
+        self.headers = {
+            "X-RapidAPI-Key": self.api_key,
+            "X-RapidAPI-Host": "yugioh-prices.p.rapidapi.com"
+        }
+    
+    def get_card_price(self, card_name: str) -> Optional[RapidAPIYugiohPrice]:
+        """Get pricing for a Yu-Gi-Oh! card"""
+        
+        try:
+            params = {"name": card_name}
+            response = requests.get(
+                f"{self.base_url}/card",
+                headers=self.headers,
+                params=params,
+                timeout=10
+            )
+            
+            if response.status_code != 200:
+                return None
+            
+            data = response.json()
+            
+            return RapidAPIYugiohPrice(
+                card_name=card_name,
+                tcgplayer_price=self._parse_price(data.get("tcgplayer_price")),
+                ebay_price=self._parse_price(data.get("ebay_price")),
+                amazon_price=self._parse_price(data.get("amazon_price")),
+                last_updated=data.get("updated_at")
+            )
+        
+        except Exception as e:
+            print(f"Error fetching YGO price for {card_name}: {e}")
+            return None
+    
+    def _parse_price(self, price_val) -> Optional[float]:
+        """Parse price value"""
+        if price_val is None:
+            return None
+        try:
+            return float(price_val)
+        except:
+            return None
+
+
+# Unified RapidAPI manager
+class RapidAPIEnrichmentManager:
+    """Manages all RapidAPI enrichment sources"""
+    
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv("RAPIDAPI_KEY")
+        if not self.api_key:
+            print("⚠️  RAPIDAPI_KEY not set - RapidAPI enrichment unavailable")
+            self.available = False
+            return
+        
+        self.available = True
+        self.pokemon_enricher = RapidAPIPokemonEnricher(api_key)
+        self.yugioh_enricher = RapidAPIYugiohEnricher(api_key)
+    
+    def enrich_pokemon_card(self, card_name: str) -> Dict:
+        """Get Pokemon enrichment from RapidAPI"""
+        if not self.available:
+            return {}
+        
+        price_data = self.pokemon_enricher.get_card_price(card_name)
+        if not price_data:
+            return {}
+        
+        return {
+            "source": "rapidapi",
+            "market_price": price_data.market_price,
+            "low_price": price_data.low_price,
+            "mid_price": price_data.mid_price,
+            "high_price": price_data.high_price,
+            "last_updated": price_data.last_updated,
+        }
+    
+    def enrich_yugioh_card(self, card_name: str) -> Dict:
+        """Get Yu-Gi-Oh! enrichment from RapidAPI"""
+        if not self.available:
+            return {}
+        
+        price_data = self.yugioh_enricher.get_card_price(card_name)
+        if not price_data:
+            return {}
+        
+        return {
+            "source": "rapidapi",
+            "tcgplayer_price": price_data.tcgplayer_price,
+            "ebay_price": price_data.ebay_price,
+            "amazon_price": price_data.amazon_price,
+            "last_updated": price_data.last_updated,
+        }
+
+
+if __name__ == "__main__":
+    # Test RapidAPI integration
+    manager = RapidAPIEnrichmentManager()
+    
+    if not manager.available:
+        print("⚠️  RapidAPI not available (check RAPIDAPI_KEY in .env)")
+    else:
+        print("✅ RapidAPI enrichment manager initialized")
+        
+        # Test Pokemon
+        print("\nTesting Pokemon pricing...")
+        pokemon_price = manager.enrich_pokemon_card("Charizard ex")
+        if pokemon_price:
+            print(f"  Charizard ex: ${pokemon_price.get('market_price', 'N/A')}")
+        
+        # Test YGO
+        print("\nTesting Yu-Gi-Oh! pricing...")
+        ygo_price = manager.enrich_yugioh_card("Ash Blossom & Joyous Spring")
+        if ygo_price:
+            print(f"  Ash Blossom: ${ygo_price.get('tcgplayer_price', 'N/A')}")
+        
+        print("\nNote: Actual API endpoints depend on RapidAPI subscription")
+        print("Update base_url and headers based on subscribed APIs")

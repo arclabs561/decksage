@@ -1,0 +1,140 @@
+#!/usr/bin/env python3
+"""
+Multi-Source Dataset Expansion
+
+Don't rely on one source - diversify the garden!
+
+Sources Available:
+1. MTGTop8 - Tournament results (primary)
+2. Goldfish - Metagame decks
+3. Pokemon TCG - Scraped but not integrated
+4. Yu-Gi-Oh! - Scraped but not integrated
+
+Strategy: Expand all sources, then merge strategically.
+"""
+
+from pathlib import Path
+
+
+def analyze_all_sources():
+    """Check what data we have from all sources."""
+
+    backend = Path("../../src/backend/data-full")
+
+    sources = {}
+
+    # MTG sources
+    for source in ["mtgtop8", "goldfish", "deckbox", "scryfall"]:
+        path = backend / "games" / "magic" / source
+        if path.exists():
+            zst_files = list(path.rglob("*.zst"))
+            sources[f"magic/{source}"] = len(zst_files)
+
+    # Other games
+    for game in ["pokemon", "yugioh"]:
+        game_path = backend / "games" / "games" / game  # Note: nested games/games
+        if game_path.exists():
+            zst_files = list(game_path.rglob("*.zst"))
+            sources[game] = len(zst_files)
+
+    return sources
+
+
+def print_source_analysis(sources):
+    """Display all available data sources."""
+
+    print("=" * 60)
+    print("MULTI-SOURCE DATA INVENTORY")
+    print("=" * 60)
+    print()
+    print("Magic: The Gathering:")
+    for source, count in sources.items():
+        if source.startswith("magic/"):
+            status = "✅" if count > 1000 else "⚠️" if count > 100 else "📦"
+            print(f"  {status} {source:20s} {count:6,d} files")
+
+    print()
+    print("Other Games:")
+    for source, count in sources.items():
+        if not source.startswith("magic/"):
+            status = "✅" if count > 1000 else "⚠️" if count > 100 else "📦"
+            print(f"  {status} {source:20s} {count:6,d} files")
+
+    total = sum(sources.values())
+    print()
+    print(f"Total across all sources: {total:,} files")
+
+
+def create_expansion_commands():
+    """Generate commands for multi-source expansion."""
+
+    print(f"\n{'=' * 60}")
+    print("EXPANSION COMMANDS")
+    print(f"{'=' * 60}")
+
+    print("\n1. MTGGoldfish Expansion (Metagame Data)")
+    print("```bash")
+    print("cd /Users/henry/Documents/dev/decksage/src/backend")
+    print("# Scrape Goldfish tournament decks")
+    print("go run cmd/dataset/main.go extract goldfish \\")
+    print("  --bucket=file://./data-full \\")
+    print("  --limit=500 \\")
+    print("  --parallel=128")
+    print("```")
+
+    print("\n2. Pokemon TCG Integration")
+    print("```bash")
+    print("# Export Pokemon data (already scraped)")
+    print("go run cmd/export-hetero/main.go \\")
+    print("  data-full/games/games/pokemon \\")
+    print("  ../../data/processed/decks_pokemon.jsonl")
+    print("```")
+
+    print("\n3. Yu-Gi-Oh! Integration")
+    print("```bash")
+    print("# Export YGO data (already scraped)")
+    print("go run cmd/export-hetero/main.go \\")
+    print("  data-full/games/games/yugioh \\")
+    print("  ../../data/processed/decks_yugioh.jsonl")
+    print("```")
+
+    print("\n4. More MTGTop8 (Continue expanding)")
+    print("```bash")
+    print("# After current expansion, continue from page 260")
+    print("go run cmd/dataset/main.go extract mtgtop8 \\")
+    print("  --bucket=file://./data-full \\")
+    print("  --pages=300 \\")
+    print("  --start=260")
+    print("```")
+
+
+def main():
+    print("MULTI-SOURCE EXPANSION ANALYSIS")
+    print("=" * 60)
+    print("Diversifying the garden across games and sources")
+    print()
+
+    sources = analyze_all_sources()
+    print_source_analysis(sources)
+    create_expansion_commands()
+
+    print(f"\n{'=' * 60}")
+    print("GROWTH STRATEGY")
+    print(f"{'=' * 60}")
+    print("Phase 1: Aggressive MTGTop8 (running now)")
+    print("  → +2,000 decks")
+    print()
+    print("Phase 2: MTGGoldfish")
+    print("  → +500-1,000 decks")
+    print()
+    print("Phase 3: Multi-game expansion")
+    print("  → Pokemon & Yu-Gi-Oh! data integration")
+    print()
+    print("Phase 4: Continue MTGTop8")
+    print("  → Keep expanding until gaps filled")
+    print()
+    print("Target: 10,000+ MTG decks + multi-game coverage")
+
+
+if __name__ == "__main__":
+    main()

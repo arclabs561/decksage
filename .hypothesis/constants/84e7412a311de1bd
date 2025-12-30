@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/deck_building/deck_completion.py
+# hypothesis_version: 6.140.3
+
+[-0.5, 0.0, 0.15, 0.9, 1.0, 2.718281828459045, 'Brawl', 'Commander', 'CompletionConfig', 'Darkness Energy', 'Duel Commander', 'Fairy Energy', 'Fighting Energy', 'Fire Energy', 'Forest', 'Grass Energy', 'Island', 'Lightning Energy', 'Main', 'Main Deck', 'Metal Energy', 'Mountain', 'Plains', 'Psychic Energy', 'Snow-Covered Forest', 'Snow-Covered Island', 'Snow-Covered Plains', 'Snow-Covered Swamp', 'Swamp', 'Wastes', 'Water Energy', 'add_card', 'cEDH', 'card', 'cards', 'count', 'decksage.completion', 'embedding', 'format', 'fusion', 'greedy_complete', 'jaccard', 'magic', 'name', 'num_candidates_legal', 'num_candidates_raw', 'op', 'partition', 'partitions', 'pokemon', 'suggest_additions', 'yugioh']

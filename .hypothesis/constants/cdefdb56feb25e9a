@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/similarity/similarity_methods.py
+# hypothesis_version: 6.140.3
+
+[0.0, 0.25, 0.5, 0.75, 1.0, 10.0, 'Arid Mesa', 'Bloodstained Mire', 'CMC', 'COUNT_MULTISET', 'City of Brass', 'Command Tower', 'Flooded Strand', 'Forest', 'Island', 'Marsh Flats', 'Misty Rainforest', 'Mountain', 'NAME', 'NAME_1', 'NAME_2', 'Plains', 'Polluted Delta', 'Scalding Tarn', 'Swamp', 'TYPE_LINE', 'Verdant Catacombs', 'Windswept Heath', 'Wooded Foothills', 'cmc', 'highly_relevant', 'irrelevant', 'marginally_relevant', 'max', 'mean', 'min', 'num_queries', 'p10', 'relevant', 'scores_distribution', 'somewhat_relevant', 'std', 'type', 'type_line', 'types']

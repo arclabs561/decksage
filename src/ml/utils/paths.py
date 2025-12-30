@@ -28,6 +28,9 @@ PAIRS_500 = PROCESSED_DIR / "pairs_500decks.csv"
 
 # NEW: Fixed metadata export (Oct 2025 - bug fix)
 DECKS_WITH_METADATA = PROCESSED_DIR / "decks_with_metadata.jsonl"
+DECKS_ALL_UNIFIED = PROCESSED_DIR / "decks_all_unified.jsonl"
+DECKS_ALL_ENHANCED = PROCESSED_DIR / "decks_all_enhanced.jsonl"
+DECKS_ALL_FINAL = PROCESSED_DIR / "decks_all_final.jsonl"
 
 # Test sets
 TEST_SET_MAGIC = EXPERIMENTS_DIR / "test_set_canonical_magic.json"
@@ -53,6 +56,9 @@ class PATHS:
     pairs_large = PAIRS_LARGE
     pairs_500 = PAIRS_500
     decks_with_metadata = DECKS_WITH_METADATA
+    decks_all_unified = DECKS_ALL_UNIFIED
+    decks_all_enhanced = DECKS_ALL_ENHANCED
+    decks_all_final = DECKS_ALL_FINAL
 
     # Test sets
     test_magic = TEST_SET_MAGIC

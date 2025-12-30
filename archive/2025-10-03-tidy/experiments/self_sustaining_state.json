@@ -1,0 +1,8 @@
+{
+  "iteration": 1,
+  "decision": "TRY_METADATA",
+  "reason": "P@10 = 0.14 is too low - use archetype/text features",
+  "current_best": 0.14,
+  "test_set_size": 20,
+  "suggestions": 10
+}

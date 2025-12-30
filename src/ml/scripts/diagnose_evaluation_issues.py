@@ -1,0 +1,225 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Diagnose evaluation issues by analyzing test set vs embedding vocabulary.
+
+Identifies:
+- Queries missing from embeddings
+- Name mapping failures
+- Test set quality issues
+- Coverage gaps
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Fix import path
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.utils.name_normalizer import NameMapper
+    HAS_NORMALIZER = True
+except ImportError:
+    HAS_NORMALIZER = False
+
+
+def diagnose_coverage(
+    test_set_path: Path,
+    embedding_path: Path,
+    name_mapping_path: Path | None = None,
+) -> dict[str, Any]:
+    """Diagnose vocabulary coverage issues."""
+    # Load test set
+    with open(test_set_path) as f:
+        data = json.load(f)
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    test_queries = list(queries.keys())
+    
+    # Load embedding
+    embedding = KeyedVectors.load(str(embedding_path))
+    vocab = set(embedding.key_to_index.keys())
+    
+    # Load name mapping if available
+    name_mapper = None
+    if name_mapping_path and name_mapping_path.exists() and HAS_NORMALIZER:
+        name_mapper = NameMapper.load_from_file(name_mapping_path)
+    
+    diagnosis = {
+        "test_set": str(test_set_path),
+        "embedding": str(embedding_path),
+        "total_queries": len(test_queries),
+        "vocab_size": len(vocab),
+        "coverage": {
+            "direct_match": [],
+            "mapped_match": [],
+            "not_found": [],
+        },
+        "issues": [],
+        "recommendations": [],
+    }
+    
+    for query in test_queries:
+        # Direct match
+        if query in vocab:
+            diagnosis["coverage"]["direct_match"].append(query)
+            continue
+        
+        # Mapped match
+        if name_mapper:
+            mapped = name_mapper.map_name(query)
+            if mapped != query and mapped in vocab:
+                diagnosis["coverage"]["mapped_match"].append((query, mapped))
+                continue
+        
+        # Not found
+        diagnosis["coverage"]["not_found"].append(query)
+    
+    # Calculate statistics
+    direct = len(diagnosis["coverage"]["direct_match"])
+    mapped = len(diagnosis["coverage"]["mapped_match"])
+    not_found = len(diagnosis["coverage"]["not_found"])
+    total = len(test_queries)
+    
+    coverage_pct = ((direct + mapped) / total * 100) if total > 0 else 0.0
+    
+    diagnosis["statistics"] = {
+        "direct_match_count": direct,
+        "mapped_match_count": mapped,
+        "not_found_count": not_found,
+        "coverage_percentage": coverage_pct,
+    }
+    
+    # Identify issues
+    if coverage_pct < 90:
+        diagnosis["issues"].append(
+            f"Low coverage: {coverage_pct:.1f}% ({direct + mapped}/{total} queries found)"
+        )
+    
+    if not_found > 0:
+        diagnosis["issues"].append(
+            f"{not_found} queries not found in vocabulary"
+        )
+    
+    if mapped > 0 and not name_mapper:
+        diagnosis["issues"].append(
+            f"{mapped} queries could be found with name mapping (but mapping not provided)"
+        )
+    
+    # Recommendations
+    if not_found > 0:
+        diagnosis["recommendations"].append(
+            f"Consider adding name mappings for {not_found} missing queries"
+        )
+    
+    if coverage_pct < 95:
+        diagnosis["recommendations"].append(
+            f"Improve coverage from {coverage_pct:.1f}% to >95% by fixing name mappings or "
+            f"updating test set to use vocabulary names"
+        )
+    
+    # Sample missing queries for inspection
+    if diagnosis["coverage"]["not_found"]:
+        diagnosis["sample_missing"] = diagnosis["coverage"]["not_found"][:10]
+    
+    return diagnosis
+
+
+def main() -> int:
+    """Diagnose evaluation coverage issues."""
+    parser = argparse.ArgumentParser(description="Diagnose evaluation coverage issues")
+    parser.add_argument("--test-set", type=str, required=True, help="Test set JSON")
+    parser.add_argument("--embedding", type=str, required=True, help="Embedding file (.wv)")
+    parser.add_argument("--name-mapping", type=str, help="Name mapping JSON (optional)")
+    parser.add_argument("--output", type=str, help="Output diagnosis JSON (optional)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    test_set_path = Path(args.test_set)
+    embedding_path = Path(args.embedding)
+    name_mapping_path = Path(args.name_mapping) if args.name_mapping else None
+    
+    if not test_set_path.exists():
+        print(f"❌ Test set not found: {test_set_path}")
+        return 1
+    
+    if not embedding_path.exists():
+        print(f"❌ Embedding not found: {embedding_path}")
+        return 1
+    
+    print("Diagnosing coverage issues...")
+    diagnosis = diagnose_coverage(
+        test_set_path=test_set_path,
+        embedding_path=embedding_path,
+        name_mapping_path=name_mapping_path,
+    )
+    
+    print("\n" + "=" * 70)
+    print("Coverage Diagnosis")
+    print("=" * 70)
+    print(f"\nTest Set: {diagnosis['test_set']}")
+    print(f"Embedding: {diagnosis['embedding']}")
+    print(f"Vocabulary Size: {diagnosis['vocab_size']:,} cards")
+    print(f"Test Queries: {diagnosis['total_queries']}")
+    
+    stats = diagnosis["statistics"]
+    print(f"\n📊 Coverage Statistics:")
+    print(f"  Direct Match: {stats['direct_match_count']} queries")
+    print(f"  Mapped Match: {stats['mapped_match_count']} queries")
+    print(f"  Not Found: {stats['not_found_count']} queries")
+    print(f"  Coverage: {stats['coverage_percentage']:.1f}%")
+    
+    if diagnosis["issues"]:
+        print(f"\n⚠️  Issues Found:")
+        for issue in diagnosis["issues"]:
+            print(f"  - {issue}")
+    
+    if diagnosis["recommendations"]:
+        print(f"\n💡 Recommendations:")
+        for rec in diagnosis["recommendations"]:
+            print(f"  - {rec}")
+    
+    if "sample_missing" in diagnosis:
+        print(f"\n📋 Sample Missing Queries (first 10):")
+        for q in diagnosis["sample_missing"]:
+            print(f"    - {q}")
+    
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(diagnosis, f, indent=2)
+        print(f"\n✅ Diagnosis saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

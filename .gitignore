@@ -94,3 +94,6 @@ venv/
 # MegaLinter reports
 megalinter-reports/
 report/
+
+# Snyk Security Extension - AI Rules (auto-generated)
+.cursor/rules/snyk_rules.mdc

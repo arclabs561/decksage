@@ -1,0 +1,188 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pandas",
+#   "numpy",
+# ]
+# ///
+"""
+Evaluate baseline methods for comparison.
+
+Baselines:
+1. Random: Random card selection
+2. Popular: Most frequently co-occurring cards
+3. Same-color: Cards of same color (for Magic)
+4. Same-type: Cards of same type
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import random
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+
+def random_baseline(
+    all_cards: list[str],
+    query: str,
+    k: int = 10,
+) -> list[tuple[str, float]]:
+    """Random baseline: return random cards."""
+    candidates = [c for c in all_cards if c != query]
+    selected = random.sample(candidates, min(k, len(candidates)))
+    return [(card, random.random()) for card in selected]
+
+
+def popular_baseline(
+    pairs_df: pd.DataFrame,
+    query: str,
+    k: int = 10,
+) -> list[tuple[str, float]]:
+    """Popular baseline: most frequently co-occurring cards."""
+    cooccurrence = Counter()
+    
+    for _, row in pairs_df.iterrows():
+        name1 = row.get("NAME_1", "")
+        name2 = row.get("NAME_2", "")
+        count = row.get("COUNT_MULTISET", 1)
+        
+        if name1 == query:
+            cooccurrence[name2] += count
+        elif name2 == query:
+            cooccurrence[name1] += count
+    
+    # Sort by frequency
+    top_k = cooccurrence.most_common(k)
+    return [(card, float(count)) for card, count in top_k]
+
+
+def evaluate_baseline(
+    baseline_fn,
+    test_set: dict[str, dict[str, Any]],
+    top_k: int = 10,
+    name: str = "baseline",
+) -> dict[str, Any]:
+    """Evaluate a baseline method."""
+    from ml.utils.evaluation import (
+        compute_precision_at_k,
+        compute_recall_at_k,
+        compute_map,
+    )
+    
+    scores = []
+    recalls = []
+    maps = []
+    mrrs = []
+    
+    for query, labels in test_set.items():
+        try:
+            predictions_with_scores = baseline_fn(query, top_k)
+            predictions = [card for card, _ in predictions_with_scores]
+            
+            p_at_k = compute_precision_at_k(predictions, labels, k=top_k)
+            r_at_k = compute_recall_at_k(predictions, labels, k=top_k)
+            map_at_k = compute_map(predictions, labels, k=top_k)
+            
+            scores.append(p_at_k)
+            recalls.append(r_at_k)
+            maps.append(map_at_k)
+            
+            # MRR
+            target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
+            rr = 0.0
+            for rank, pred in enumerate(predictions, 1):
+                if pred in target:
+                    rr = 1.0 / rank
+                    break
+            mrrs.append(rr)
+        except Exception:
+            continue
+    
+    return {
+        "name": name,
+        "p@10": float(np.mean(scores)) if scores else 0.0,
+        "r@10": float(np.mean(recalls)) if recalls else 0.0,
+        "map@10": float(np.mean(maps)) if maps else 0.0,
+        "mrr": float(np.mean(mrrs)) if mrrs else 0.0,
+        "num_evaluated": len(scores),
+    }
+
+
+def main() -> int:
+    """Evaluate baselines."""
+    parser = argparse.ArgumentParser(description="Evaluate baseline methods")
+    parser.add_argument("--test-set", type=Path, required=True, help="Test set JSON")
+    parser.add_argument("--pairs", type=Path, help="Pairs CSV for popular baseline")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("Error: pandas, numpy required")
+        return 1
+    
+    random.seed(args.seed)
+    np.random.seed(args.seed)
+    
+    print(f"Loading test set from {args.test_set}...")
+    with open(args.test_set) as f:
+        test_data = json.load(f)
+    
+    queries = test_data.get("queries", test_data)
+    print(f"  Queries: {len(queries)}")
+    
+    # Get all cards for random baseline
+    all_cards = set()
+    for query, labels in queries.items():
+        all_cards.add(query)
+        for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+            all_cards.update(labels.get(level, []))
+    all_cards = list(all_cards)
+    print(f"  Total cards: {len(all_cards)}")
+    
+    results = {}
+    
+    # Random baseline
+    print("\nEvaluating random baseline...")
+    def random_fn(query: str, k: int) -> list[tuple[str, float]]:
+        return random_baseline(all_cards, query, k)
+    
+    results["random"] = evaluate_baseline(random_fn, queries, name="random")
+    print(f"  P@10: {results['random']['p@10']:.4f}")
+    
+    # Popular baseline (if pairs provided)
+    if args.pairs and args.pairs.exists():
+        print("\nEvaluating popular baseline...")
+        pairs_df = pd.read_csv(args.pairs)
+        
+        def popular_fn(query: str, k: int) -> list[tuple[str, float]]:
+            return popular_baseline(pairs_df, query, k)
+        
+        results["popular"] = evaluate_baseline(popular_fn, queries, name="popular")
+        print(f"  P@10: {results['popular']['p@10']:.4f}")
+    
+    # Save results
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\n✅ Baseline results saved to {args.output}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+

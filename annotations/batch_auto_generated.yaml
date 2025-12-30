@@ -1,0 +1,18 @@
+generated_by: active_annotation_selector
+generation_method: model_uncertainty + disagreement + coverage
+tasks:
+- candidates: []
+  note: New query - need to define ground truth
+  query: Prismatic Vista
+- candidates: []
+  note: New query - need to define ground truth
+  query: Exotic Orchard
+- candidates: []
+  note: New query - need to define ground truth
+  query: Mox Diamond
+- candidates: []
+  note: New query - need to define ground truth
+  query: Otawara, Soaring City
+- candidates: []
+  note: New query - need to define ground truth
+  query: Talon Gates of Madara

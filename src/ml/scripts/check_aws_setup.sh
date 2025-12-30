@@ -1,0 +1,68 @@
+#!/bin/bash
+# Check AWS setup for training
+set -euo pipefail
+
+echo "🔍 Checking AWS Setup for Training"
+echo "=================================="
+echo ""
+
+# Check credentials
+echo "1. AWS Credentials:"
+if aws sts get-caller-identity > /dev/null 2>&1; then
+    echo "   ✅ Credentials valid"
+    aws sts get-caller-identity --query '[Account,UserId]' --output text | awk '{print "   Account:", $1, "| User:", $2}'
+else
+    echo "   ❌ Credentials invalid or missing"
+    echo "   Fix: aws configure"
+    exit 1
+fi
+echo ""
+
+# Check EC2 permissions
+echo "2. EC2 Permissions:"
+if aws ec2 describe-instances --max-items 1 > /dev/null 2>&1; then
+    echo "   ✅ EC2 access working"
+else
+    echo "   ❌ Cannot access EC2"
+    echo "   Check IAM permissions"
+    exit 1
+fi
+echo ""
+
+# Check instance limits
+echo "3. Instance Limits:"
+RUNNING=$(aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" --query 'length(Reservations[*].Instances[*])' --output text 2>/dev/null || echo "0")
+echo "   Running instances: $RUNNING"
+echo ""
+
+# Check spot instance availability
+echo "4. Spot Instance Availability:"
+AVAILABILITY=$(aws ec2 describe-spot-price-history \
+    --instance-types g4dn.xlarge \
+    --product-descriptions "Linux/UNIX" \
+    --max-items 1 \
+    --query 'SpotPriceHistory[0].SpotPrice' \
+    --output text 2>/dev/null || echo "unknown")
+if [ "$AVAILABILITY" != "unknown" ] && [ -n "$AVAILABILITY" ]; then
+    echo "   ✅ Spot instances available (g4dn.xlarge: \$$AVAILABILITY/hour)"
+else
+    echo "   ⚠️  Could not check spot pricing"
+fi
+echo ""
+
+# Check S3 access
+echo "5. S3 Access:"
+if aws s3 ls s3://games-collections/ > /dev/null 2>&1; then
+    echo "   ✅ S3 bucket accessible"
+else
+    echo "   ❌ Cannot access S3 bucket"
+    echo "   Check bucket permissions"
+    exit 1
+fi
+echo ""
+
+echo "✅ AWS Setup Check Complete"
+echo ""
+echo "If all checks passed, you can run:"
+echo "  just hyperparam-search"
+

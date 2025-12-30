@@ -1,0 +1,342 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Test optimized fusion weights on test set.
+
+Compares:
+- Current fusion weights (embed=0.1, jaccard=0.2, functional=0.7)
+- Optimized weights (embed=0.63, jaccard=0.37, functional=0.0)
+- Embedding alone (baseline)
+- Jaccard alone (baseline)
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    
+    HAS_DEPS = True
+except ImportError as e:
+    HAS_DEPS = False
+    print(f"Missing dependencies: {e}")
+
+
+def load_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
+    """Load test set (canonical format)."""
+    with open(test_set_path) as f:
+        data = json.load(f)
+        if "queries" in data:
+            return data["queries"]
+        return data
+
+
+def get_all_relevant(labels: dict[str, list[str]]) -> set[str]:
+    """Get all relevant cards."""
+    relevant = set()
+    for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+        relevant.update(labels.get(level, []))
+    return relevant
+
+
+def evaluate_fusion(
+    wv: KeyedVectors,
+    adj: dict[str, set[str]],
+    test_set: dict[str, dict[str, Any]],
+    weights: dict[str, float],
+    top_k: int = 10,
+) -> dict[str, float]:
+    """Evaluate fusion with given weights."""
+    # Simple fusion: weighted combination of embedding and jaccard
+    correct = 0
+    total = 0
+    reciprocal_ranks = []
+    relevance_weights = {
+        "highly_relevant": 1.0,
+        "relevant": 0.75,
+        "somewhat_relevant": 0.5,
+        "marginally_relevant": 0.25,
+    }
+    
+    def jaccard_similarity(set1: set[str], set2: set[str]) -> float:
+        intersection = len(set1 & set2)
+        union = len(set1 | set2)
+        return intersection / union if union > 0 else 0.0
+    
+    for query, labels in test_set.items():
+        all_relevant = get_all_relevant(labels)
+        if not all_relevant:
+            continue
+        
+        # Get embedding similarity
+        embed_scores = {}
+        if query in wv and weights.get("embed", 0) > 0:
+            try:
+                similar = wv.most_similar(query, topn=top_k * 2)
+                for card, sim in similar:
+                    embed_scores[card] = float(sim)
+            except KeyError:
+                pass
+        
+        # Get Jaccard similarity
+        jaccard_scores = {}
+        if query in adj and weights.get("jaccard", 0) > 0:
+            query_neighbors = adj[query]
+            for candidate in adj.keys():
+                if candidate == query:
+                    continue
+                candidate_neighbors = adj[candidate]
+                sim = jaccard_similarity(query_neighbors, candidate_neighbors)
+                jaccard_scores[candidate] = sim
+        
+        # Combine scores
+        all_candidates = set(embed_scores.keys()) | set(jaccard_scores.keys())
+        combined_scores = {}
+        
+        for candidate in all_candidates:
+            score = 0.0
+            if candidate in embed_scores:
+                score += weights.get("embed", 0) * embed_scores[candidate]
+            if candidate in jaccard_scores:
+                score += weights.get("jaccard", 0) * jaccard_scores[candidate]
+            combined_scores[candidate] = score
+        
+        # Get top-k
+        candidates = sorted(combined_scores.items(), key=lambda x: x[1], reverse=True)[:top_k]
+        candidate_cards = [card for card, _ in candidates]
+        
+        # Weighted P@K
+        score = 0.0
+        for card in candidate_cards[:top_k]:
+            for level, weight in relevance_weights.items():
+                if card in labels.get(level, []):
+                    score += weight
+                    break
+        
+        precision_at_k = score / top_k
+        if precision_at_k > 0:
+            correct += 1
+        
+        # MRR
+        found = False
+        for rank, candidate in enumerate(candidate_cards, 1):
+            if candidate in all_relevant:
+                reciprocal_ranks.append(1.0 / rank)
+                found = True
+                break
+        if not found:
+            reciprocal_ranks.append(0.0)
+        
+        total += 1
+    
+    if total == 0:
+        return {"p@10": 0.0, "mrr": 0.0, "num_queries": 0}
+    
+    return {
+        "p@10": float(correct / total),
+        "mrr": float(np.mean(reciprocal_ranks)),
+        "num_queries": total,
+    }
+
+
+def load_graph_for_jaccard(pairs_csv: Path) -> dict[str, set[str]]:
+    """Load graph adjacency."""
+    print(f"Loading graph from {pairs_csv}...")
+    df = pd.read_csv(pairs_csv)
+    
+    adj: dict[str, set[str]] = {}
+    for _, row in df.iterrows():
+        card1, card2 = row["NAME_1"], row["NAME_2"]
+        if card1 not in adj:
+            adj[card1] = set()
+        if card2 not in adj:
+            adj[card2] = set()
+        adj[card1].add(card2)
+        adj[card2].add(card1)
+    
+    print(f"  Loaded {len(adj):,} cards")
+    return adj
+
+
+def main() -> int:
+    """Test optimized fusion weights."""
+    parser = argparse.ArgumentParser(description="Test optimized fusion weights")
+    parser.add_argument(
+        "--test-set",
+        type=str,
+        default="experiments/test_set_canonical_magic.json",
+        help="Test set path",
+    )
+    parser.add_argument(
+        "--pairs-csv",
+        type=str,
+        default="data/processed/pairs_large.csv",
+        help="Pairs CSV",
+    )
+    parser.add_argument(
+        "--embeddings",
+        type=str,
+        default="data/embeddings/node2vec_default.wv",
+        help="Embeddings file",
+    )
+    parser.add_argument(
+        "--optimized-weights",
+        type=str,
+        default="experiments/optimized_fusion_weights.json",
+        help="Optimized weights JSON",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="experiments/fusion_weight_comparison.json",
+        help="Output JSON",
+    )
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    print("=" * 70)
+    print("Test Optimized Fusion Weights")
+    print("=" * 70)
+    print()
+    
+    # Load test set
+    test_set_path = Path(args.test_set)
+    if not test_set_path.exists():
+        print(f"❌ Test set not found: {test_set_path}")
+        return 1
+    
+    test_set = load_test_set(test_set_path)
+    print(f"📊 Loaded test set: {len(test_set)} queries")
+    
+    # Load embeddings
+    embed_path = Path(args.embeddings)
+    if not embed_path.exists():
+        print(f"❌ Embeddings not found: {embed_path}")
+        return 1
+    
+    wv = KeyedVectors.load(str(embed_path))
+    print(f"📊 Loaded embeddings: {len(wv):,} cards")
+    
+    # Load graph
+    pairs_csv = Path(args.pairs_csv)
+    if not pairs_csv.exists():
+        print(f"❌ Pairs CSV not found: {pairs_csv}")
+        return 1
+    
+    adj = load_graph_for_jaccard(pairs_csv)
+    print()
+    
+    # Load optimized weights
+    opt_weights_path = Path(args.optimized_weights)
+    if opt_weights_path.exists():
+        with open(opt_weights_path) as f:
+            opt_data = json.load(f)
+        optimized_weights = opt_data.get("fusion_weights", {})
+    else:
+        optimized_weights = {"embed": 0.63, "jaccard": 0.37, "functional": 0.0}
+    
+    # Test different weight configurations
+    results = {}
+    
+    # Current fusion weights
+    print("Testing current fusion weights (embed=0.1, jaccard=0.2, functional=0.7)...")
+    current_weights = {"embed": 0.1, "jaccard": 0.2, "functional": 0.7}
+    metrics = evaluate_fusion(wv, adj, test_set, current_weights)
+    results["current_fusion"] = metrics
+    print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+    print()
+    
+    # Optimized weights
+    print("Testing optimized fusion weights (embed=0.63, jaccard=0.37, functional=0.0)...")
+    metrics = evaluate_fusion(wv, adj, test_set, optimized_weights)
+    results["optimized_fusion"] = metrics
+    print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+    print()
+    
+    # Embedding only
+    print("Testing embedding only (embed=1.0, jaccard=0.0)...")
+    embed_only = {"embed": 1.0, "jaccard": 0.0, "functional": 0.0}
+    metrics = evaluate_fusion(wv, adj, test_set, embed_only)
+    results["embedding_only"] = metrics
+    print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+    print()
+    
+    # Jaccard only
+    print("Testing Jaccard only (embed=0.0, jaccard=1.0)...")
+    jaccard_only = {"embed": 0.0, "jaccard": 1.0, "functional": 0.0}
+    metrics = evaluate_fusion(wv, adj, test_set, jaccard_only)
+    results["jaccard_only"] = metrics
+    print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+    print()
+    
+    # Summary
+    print("=" * 70)
+    print("Results Summary")
+    print("=" * 70)
+    print()
+    
+    sorted_results = sorted(
+        results.items(),
+        key=lambda x: x[1].get("p@10", 0.0),
+        reverse=True,
+    )
+    
+    print(f"{'Method':<25} {'P@10':<10} {'MRR':<10} {'Queries':<10}")
+    print("-" * 55)
+    for method, metrics in sorted_results:
+        print(
+            f"{method:<25} {metrics.get('p@10', 0.0):<10.4f} "
+            f"{metrics.get('mrr', 0.0):<10.4f} {metrics.get('num_queries', 0):<10}"
+        )
+    
+    # Improvement analysis
+    current_p10 = results.get("current_fusion", {}).get("p@10", 0.0)
+    optimized_p10 = results.get("optimized_fusion", {}).get("p@10", 0.0)
+    
+    if current_p10 > 0:
+        improvement = ((optimized_p10 / current_p10) - 1) * 100
+        print()
+        print(f"Improvement: {improvement:+.1f}%")
+    
+    # Save results
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, "w") as f:
+        json.dump({
+            "test_set": str(test_set_path),
+            "weights_tested": {
+                "current": current_weights,
+                "optimized": optimized_weights,
+            },
+            "results": results,
+            "improvement_pct": improvement if current_p10 > 0 else None,
+        }, f, indent=2)
+    
+    print()
+    print(f"✅ Results saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

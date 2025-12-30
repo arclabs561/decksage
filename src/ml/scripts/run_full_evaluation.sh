@@ -1,0 +1,55 @@
+#!/bin/bash
+# Automated Deck Modification Evaluation Pipeline
+#
+# Runs complete evaluation:
+# 1. Generate critique and test cases
+# 2. Generate annotations (with API if available)
+# 3. Run regression tests
+# 4. Generate summary report
+
+set -e
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+cd "$PROJECT_ROOT"
+
+# Configuration
+API_URL="${API_URL:-http://localhost:8000}"
+EXPERIMENTS_DIR="${EXPERIMENTS_DIR:-$PROJECT_ROOT/experiments}"
+
+echo "🚀 Automated Deck Modification Evaluation Pipeline"
+echo "=================================================="
+echo "API URL: $API_URL"
+echo "Experiments Dir: $EXPERIMENTS_DIR"
+echo ""
+
+# Check if API is running
+if command -v curl >/dev/null 2>&1; then
+    if curl -s -f "$API_URL/live" >/dev/null 2>&1; then
+        echo "✓ API is available at $API_URL"
+        USE_API=true
+    else
+        echo "⚠ API not available at $API_URL (will generate templates only)"
+        USE_API=false
+    fi
+else
+    echo "⚠ curl not available, assuming API is not running"
+    USE_API=false
+fi
+
+# Run evaluation
+if [ "$USE_API" = true ]; then
+    python3 src/ml/scripts/automated_deck_modification_evaluation.py \
+        --api-url "$API_URL" \
+        --wait-for-api
+else
+    python3 src/ml/scripts/automated_deck_modification_evaluation.py \
+        --skip-regression
+fi
+
+echo ""
+echo "✅ Evaluation complete!"
+echo ""
+echo "📁 Output files in $EXPERIMENTS_DIR:"
+ls -lh "$EXPERIMENTS_DIR"/deck_modification* 2>/dev/null || true
+

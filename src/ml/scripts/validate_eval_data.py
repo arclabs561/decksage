@@ -1,0 +1,154 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+# ]
+# ///
+"""
+Validate evaluation data quality.
+
+Checks:
+1. Format correctness
+2. Query coverage
+3. Label distribution
+4. Vocabulary coverage
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+import logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def validate_eval_data(test_set_path: Path, verbose: bool = False) -> dict[str, Any]:
+    """Validate evaluation data."""
+    logger.info("=" * 70)
+    logger.info("VALIDATING EVALUATION DATA")
+    logger.info("=" * 70)
+    logger.info("")
+    
+    if not test_set_path.exists():
+        logger.error(f"Test set not found: {test_set_path}")
+        return {"valid": False, "error": "File not found"}
+    
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    
+    if isinstance(queries, list):
+        queries = {q.get("query", str(i)): q for i, q in enumerate(queries)}
+    
+    if not isinstance(queries, dict):
+        logger.error("Invalid format: queries must be a dict")
+        return {"valid": False, "error": "Invalid format"}
+    
+    logger.info(f"📊 Total queries: {len(queries)}")
+    
+    # Validate each query
+    valid_queries = 0
+    invalid_queries = []
+    label_counts = {
+        "highly_relevant": 0,
+        "relevant": 0,
+        "somewhat_relevant": 0,
+        "marginally_relevant": 0,
+    }
+    
+    all_relevant_cards = set()
+    
+    for query, labels in queries.items():
+        if not isinstance(labels, dict):
+            invalid_queries.append(query)
+            continue
+        
+        query_valid = True
+        query_labels = 0
+        
+        for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+            if level not in labels:
+                labels[level] = []
+            
+            level_cards = labels[level]
+            if not isinstance(level_cards, list):
+                query_valid = False
+                break
+            
+            count = len(level_cards)
+            label_counts[level] += count
+            query_labels += count
+            
+            all_relevant_cards.update(level_cards)
+        
+        if query_valid and query_labels > 0:
+            valid_queries += 1
+        else:
+            invalid_queries.append(query)
+    
+    logger.info(f"✅ Valid queries: {valid_queries}/{len(queries)}")
+    if invalid_queries:
+        logger.warning(f"⚠️  Invalid queries: {len(invalid_queries)}")
+        if verbose:
+            for q in invalid_queries[:10]:
+                logger.warning(f"   - {q}")
+    
+    logger.info("\n📊 Label Distribution:")
+    total_labels = sum(label_counts.values())
+    for level, count in label_counts.items():
+        pct = (count / total_labels * 100) if total_labels > 0 else 0.0
+        logger.info(f"   {level:20s} {count:5d} ({pct:5.1f}%)")
+    
+    logger.info(f"\n📊 Unique relevant cards: {len(all_relevant_cards)}")
+    
+    # Check vocabulary coverage if pairs CSV provided
+    # (This would require loading pairs CSV, skipped for now)
+    
+    result = {
+        "valid": len(invalid_queries) == 0,
+        "total_queries": len(queries),
+        "valid_queries": valid_queries,
+        "invalid_queries": len(invalid_queries),
+        "label_counts": label_counts,
+        "unique_relevant_cards": len(all_relevant_cards),
+    }
+    
+    if result["valid"]:
+        logger.info("\n✅ Validation passed!")
+    else:
+        logger.warning("\n⚠️  Validation failed (some queries invalid)")
+    
+    return result
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Validate evaluation data")
+    parser.add_argument("test_set", type=Path, help="Test set JSON to validate")
+    parser.add_argument("--verbose", action="store_true", help="Verbose output")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    result = validate_eval_data(args.test_set, verbose=args.verbose)
+    
+    return 0 if result.get("valid", False) else 1
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())

@@ -1,0 +1,77 @@
+[
+  {
+    "deck": {
+      "format": "Duel Commander",
+      "archetype": "Partner WR",
+      "deck_id": "73709.759185.json.zst"
+    },
+    "annotation": {
+      "archetype_match": "yes",
+      "coherence_score": 7,
+      "actual_strategy": "An aggressive Boros (White-Red) partner commander deck that aims to establish early board presence with efficient creatures while leveraging Yoshimaru's growing power and Bruse Tarl's combat abilities.",
+      "issues": [
+        "Card list appears to include some non-standard or custom cards (e.g., Abstergo Entertainment, Cloud, Midgar Mercenary) which may not be legal in actual Duel Commander",
+        "Mana base seems slightly unfocused with too many utility lands that might affect color consistency",
+        "Some included cards seem more focused on flavor than optimal competitive choices"
+      ]
+    }
+  },
+  {
+    "deck": {
+      "format": "Duel Commander",
+      "archetype": "Hidetsugu And Kairi",
+      "deck_id": "73710.759186.json.zst"
+    },
+    "annotation": {
+      "error": "Failed to parse response",
+      "raw": "{\n  \"archetype_match\": \"partial\",\n  \"coherence_score\": 7,\n  \"actual_strategy\": \"A blue-black control deck focused on countering spells and removing threats while setting up for big mana plays like Expropriate.\",\n  \"issues\": [\n    \"Only seeing half the deck makes full analysis difficult\",\n    \"Hidetsugu and Kairi as commanders suggest red, but no red cards visible in the list\",\n    \"Heavy emphasis on blue/black control suggests a different commander might be more optimal\",\n    \"Mana base appears slightly light on colored sources for the heavy color requirements\"\n  ]\n}\n\nNote: The deck appears to be a solid UB control shell, but there's a disconnect between the claimed commanders (which would include red) and the actual cards shown (which are purely UB). Without seeing the full deck list, it's hard to tell if this is an intentional focus on two colors or if the red element appears later in the list."
+    }
+  },
+  {
+    "deck": {
+      "format": "Duel Commander",
+      "archetype": "Slimefoot And Squee",
+      "deck_id": "73710.759187.json.zst"
+    },
+    "annotation": {
+      "archetype_match": "no",
+      "coherence_score": 7,
+      "actual_strategy": "A Jund midrange value deck that uses efficient creatures, removal, and tutors to control the board while generating card advantage through powerful planeswalkers and creatures.",
+      "issues": [
+        "The deck name suggests a Slimefoot/Squee focus but appears to be a general Jund goodstuff deck",
+        "Mana base seems stretched across three colors without showing full optimization",
+        "Mix of different strategies (aristocrats, midrange, value) without clear focus on any one",
+        "Commander choice unclear from first 50 cards shown"
+      ]
+    }
+  },
+  {
+    "deck": {
+      "format": "Duel Commander",
+      "archetype": "Aragorn, King Of Gondor",
+      "deck_id": "73710.759188.json.zst"
+    },
+    "annotation": {
+      "archetype_match": "partial",
+      "coherence_score": 7,
+      "actual_strategy": "A tempo/control deck using Aragorn as commander while leveraging efficient interaction and countermagic to control the game while developing threats.",
+      "issues": [
+        "The manabase seems stretched across multiple colors (Jeskai) which could be risky in a 100-card singleton format",
+        "Some of the card choices like Gitaxian Probe feel suboptimal for the strategy",
+        "The deck appears to be trying to do both tempo and control, which could lead to consistency issues",
+        "Without seeing the full decklist, the win condition package might be too thin"
+      ]
+    }
+  },
+  {
+    "deck": {
+      "format": "Duel Commander",
+      "archetype": "Deadpool, Trading Card",
+      "deck_id": "73710.759189.json.zst"
+    },
+    "annotation": {
+      "error": "Failed to parse response",
+      "raw": "{\n  \"archetype_match\": \"yes\",\n  \"coherence_score\": 8,\n  \"actual_strategy\": \"An aggressive Rakdos (Black/Red) midrange deck that uses efficient threats, discard spells, and removal to control the game while pressuring the opponent's life total.\",\n  \"issues\": [\n    \"Blazemire Verge seems out of place as it's not optimal for a two-color deck\",\n    \"Some newer cards like Deadpool and Fear of Missing Out suggest this might be using Un-set or non-tournament legal cards which could affect competitive viability\",\n    \"Mana base appears slightly unfocused with too many enters-tapped lands for an aggressive strategy\"\n  ]\n}\n\nNote: The deck appears to be a solid Rakdos midrange list with many competitive staples (Dragon's Rage Channeler, Dauthi Voidwalker, efficient removal, and strong discard package), but the inclusion of some non-standard cards makes it harder to fully evaluate in a traditional competitive context. The core strategy is very coherent and follows established Rakdos midrange principles."
+    }
+  }
+]

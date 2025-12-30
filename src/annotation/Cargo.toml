@@ -1,0 +1,33 @@
+[package]
+name = "decksage-annotation"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.74"
+
+[dependencies]
+# Rank libraries
+rank-fusion = { path = "../../../rank-fusion/rank-fusion" }
+rank-refine = { path = "../../../rank-refine/rank-refine" }
+
+# Evaluation framework (from anno)
+anno = { path = "../../../anno", features = ["eval"] }
+
+# Serialization
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+
+# CLI
+clap = { version = "4.4", features = ["derive"] }
+
+# Utilities
+anyhow = "1.0"
+rand = "0.8"
+fastrand = "2.0"
+
+# CSV handling
+csv = "1.3"
+
+# Time handling
+chrono = { version = "0.4", features = ["serde"] }
+

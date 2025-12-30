@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
+"""
+Validate exported decks using Pydantic validators.
+
+Checks:
+- Game-specific deck construction rules
+- Format legality
+- Card name quality
+- Deck size constraints
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+
+def validate_decks(
+    input_file: Path,
+    output_file: Path | None = None,
+    lenient: bool = True,
+) -> dict[str, Any]:
+    """Validate decks using Pydantic validators."""
+    try:
+        from src.ml.validation.validators.loader import load_decks_lenient
+        HAS_VALIDATORS = True
+    except ImportError:
+        HAS_VALIDATORS = False
+        print("⚠️  Validators not available, skipping validation")
+        # Count total for stats
+        total = 0
+        with open(input_file) as f:
+            total = sum(1 for _ in f)
+        return {"total": total, "validated": 0, "invalid": total, "errors": []}
+    
+    print(f"Validating decks from {input_file}...")
+    
+    # Use the validator loader
+    validated_decks = load_decks_lenient(
+        input_file,
+        game="auto",
+        check_legality=False,  # Don't check ban lists (too slow)
+        verbose=True,
+    )
+    
+    stats = {
+        "total": 0,
+        "validated": len(validated_decks),
+        "invalid": 0,
+        "errors": [],
+    }
+    
+    # Count total in file
+    with open(input_file) as f:
+        stats["total"] = sum(1 for _ in f)
+    
+    stats["invalid"] = stats["total"] - stats["validated"]
+    
+    # Write validated decks if output specified
+    if output_file:
+        print(f"\nWriting {len(validated_decks):,} validated decks to {output_file}...")
+        output_file.parent.mkdir(parents=True, exist_ok=True)
+        
+        with open(output_file, "w") as f:
+            for deck in validated_decks:
+                json.dump(deck.model_dump(), f)
+                f.write("\n")
+    
+    return stats
+
+
+def main() -> int:
+    """Validate exported decks."""
+    parser = argparse.ArgumentParser(description="Validate exported decks")
+    parser.add_argument("--input", type=Path, default=Path("data/processed/decks_all_enhanced.jsonl"), help="Input file")
+    parser.add_argument("--output", type=Path, help="Output file for validated decks")
+    parser.add_argument("--strict", action="store_true", help="Strict mode (fail on invalid)")
+    
+    args = parser.parse_args()
+    
+    if not args.input.exists():
+        print(f"❌ Input file not found: {args.input}")
+        return 1
+    
+    print("=" * 70)
+    print("VALIDATING EXPORTED DECKS")
+    print("=" * 70)
+    
+    stats = validate_decks(
+        args.input,
+        args.output,
+        lenient=not args.strict,
+    )
+    
+    print("\n" + "=" * 70)
+    print("VALIDATION SUMMARY")
+    print("=" * 70)
+    print(f"Total decks: {stats['total']:,}")
+    print(f"Validated: {stats['validated']:,}")
+    print(f"Invalid: {stats['invalid']:,}")
+    
+    if stats['invalid'] > 0:
+        invalid_pct = (stats['invalid'] / stats['total']) * 100
+        print(f"Invalid rate: {invalid_pct:.1f}%")
+    
+    if args.strict and stats['invalid'] > 0:
+        print("\n❌ Validation failed (strict mode)")
+        return 1
+    
+    print("\n✅ Validation complete")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

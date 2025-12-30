@@ -18,6 +18,7 @@ import (
 	"github.com/samber/mo"
 
 	"collections/blob"
+	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
@@ -107,25 +108,8 @@ type card struct {
 	Rarity          string     `json:"rarity"`
 	Artist          string     `json:"artist"`
 	Set             string     `json:"set"`
-	SetName         string     `json:"set_name"`
 	CollectorNumber string     `json:"collector_number"`
 	Faces           []cardFace `json:"card_faces"`
-
-	// Enrichment fields
-	Keywords      []string          `json:"keywords"`
-	Colors        []string          `json:"colors"`
-	ColorIdentity []string          `json:"color_identity"`
-	CMC           float64           `json:"cmc"`
-	Prices        cardPrices        `json:"prices"`
-	Legalities    map[string]string `json:"legalities"`
-}
-
-type cardPrices struct {
-	USD     *string `json:"usd"` // Scryfall returns prices as strings
-	USDFoil *string `json:"usd_foil"`
-	EUR     *string `json:"eur"`
-	EURFoil *string `json:"eur_foil"`
-	TIX     *string `json:"tix"`
 }
 
 type imageURIs struct {
@@ -133,14 +117,13 @@ type imageURIs struct {
 }
 
 type cardProps struct {
-	Name       string  `json:"name"`
-	ManaCost   string  `json:"mana_cost"`
-	Power      string  `json:"power"`
-	Toughness  string  `json:"toughness"`
-	TypeLine   string  `json:"type_line"`
-	OracleText string  `json:"oracle_text"`
-	FlavorText string  `json:"flavor_text"`
-	CMC        float64 `json:"cmc"` // Missing field for enrichment
+	Name       string `json:"name"`
+	ManaCost   string `json:"mana_cost"`
+	Power      string `json:"power"`
+	Toughness  string `json:"toughness"`
+	TypeLine   string `json:"type_line"`
+	OracleText string `json:"oracle_text"`
+	FlavorText string `json:"flavor_text"`
 }
 
 type cardFace struct {
@@ -200,18 +183,39 @@ func (d *Dataset) extractCards(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for rawCard := range queue {
-				if err := d.parseCard(ctx, rawCard); err != nil {
-					d.log.Errorf(ctx, "failed to parse card %q: %v", rawCard.Name, err)
-					atomic.AddUint32(&nerr, 1)
-					continue
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case rawCard, ok := <-queue:
+					if !ok {
+						return
+					}
+						if err := d.parseCard(ctx, rawCard); err != nil {
+							d.log.Errorf(ctx, "failed to parse card %q: %v", rawCard.Name, err)
+							atomic.AddUint32(&nerr, 1)
+							// Record error in statistics if available
+							if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+								stats.RecordCategorizedError(ctx, rawCard.ScryfallURI, "scryfall", err)
+							}
+							continue
+						}
+					atomic.AddUint32(&nok, 1)
 				}
-				atomic.AddUint32(&nok, 1)
 			}
 		}()
 	}
 	for i, rawCard := range rawCards {
-		// FIXME
+		// Check context cancellation
+		select {
+		case <-ctx.Done():
+			close(queue)
+			wg.Wait()
+			return ctx.Err()
+		default:
+		}
+		
+		// Check item limit
 		if n, ok := opts.ItemLimit.Get(); ok && i >= n {
 			break
 		}
@@ -219,10 +223,10 @@ func (d *Dataset) extractCards(
 		if !opts.Reparse {
 			exists, err := d.blob.Exists(ctx, bkey)
 			if err != nil {
-				return fmt.Errorf("failed to check if already parsed collection exists: %w", err)
+				return fmt.Errorf("failed to check if card already exists: %w", err)
 			}
 			if exists {
-				d.log.Field("name", rawCard.Name).Debugf(ctx, "parsed card already is exists")
+				d.log.Field("name", rawCard.Name).Debugf(ctx, "parsed card already exists")
 				continue
 			}
 		}
@@ -277,35 +281,6 @@ func (d *Dataset) parseCard(
 		}
 	}
 	ref.RawQuery = qvals.Encode()
-
-	// Parse prices (convert strings to float64 pointers)
-	prices := game.CardPrices{}
-	if rawCard.Prices.USD != nil {
-		if val, err := parsePrice(*rawCard.Prices.USD); err == nil {
-			prices.USD = &val
-		}
-	}
-	if rawCard.Prices.USDFoil != nil {
-		if val, err := parsePrice(*rawCard.Prices.USDFoil); err == nil {
-			prices.USDFoil = &val
-		}
-	}
-	if rawCard.Prices.EUR != nil {
-		if val, err := parsePrice(*rawCard.Prices.EUR); err == nil {
-			prices.EUR = &val
-		}
-	}
-	if rawCard.Prices.EURFoil != nil {
-		if val, err := parsePrice(*rawCard.Prices.EURFoil); err == nil {
-			prices.EURFoil = &val
-		}
-	}
-	if rawCard.Prices.TIX != nil {
-		if val, err := parsePrice(*rawCard.Prices.TIX); err == nil {
-			prices.TIX = &val
-		}
-	}
-
 	card := &game.Card{
 		Name:  rawCard.Name,
 		Faces: faces,
@@ -315,15 +290,6 @@ func (d *Dataset) parseCard(
 		References: []game.CardReference{
 			{URL: ref.String()},
 		},
-		Keywords:      rawCard.Keywords,
-		Colors:        rawCard.Colors,
-		ColorIdentity: rawCard.ColorIdentity,
-		CMC:           rawCard.CMC,
-		Prices:        prices,
-		Legalities:    rawCard.Legalities,
-		Rarity:        rawCard.Rarity,
-		Set:           rawCard.Set,
-		SetName:       rawCard.SetName,
 	}
 
 	bkey := d.cardKey(card.Name)
@@ -334,17 +300,13 @@ func (d *Dataset) parseCard(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return fmt.Errorf("failed to write card %q: %w", card.Name, err)
 	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
 
 	return nil
-}
-
-func parsePrice(s string) (float64, error) {
-	if s == "" {
-		return 0, fmt.Errorf("empty price string")
-	}
-	var f float64
-	_, err := fmt.Sscanf(s, "%f", &f)
-	return f, err
 }
 
 func (d *Dataset) extractCollections(
@@ -361,6 +323,10 @@ func (d *Dataset) extractCollections(
 			for u := range urls {
 				if err := d.parseCollection(ctx, sc, u, opts); err != nil {
 					d.log.Field("url", u).Errorf(ctx, "failed to parse collection: %v", err)
+					// Record error in statistics if available
+					if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+						stats.RecordCategorizedError(ctx, u, "scryfall", err)
+					}
 					continue
 				}
 			}
@@ -369,15 +335,33 @@ func (d *Dataset) extractCollections(
 
 	if len(opts.ItemOnlyURLs) > 0 {
 		for _, u := range opts.ItemOnlyURLs {
+			// Check context cancellation before sending
+			select {
+			case <-ctx.Done():
+				close(urls)
+				wg.Wait()
+				return ctx.Err()
+			default:
+			}
 			urls <- u
 		}
 	} else {
 		parsedURLs, err := d.parsePage(ctx, sc, "/sets")
 		if err != nil {
+			close(urls)
+			wg.Wait()
 			return err
 		}
 		collections := 0
 		for _, u := range parsedURLs {
+			// Check context cancellation before sending
+			select {
+			case <-ctx.Done():
+				close(urls)
+				wg.Wait()
+				return ctx.Err()
+			default:
+			}
 			urls <- u
 			collections++
 			if limit, ok := opts.ItemLimit.Get(); ok && collections >= limit {
@@ -449,7 +433,7 @@ func (d *Dataset) parseCollection(
 			return fmt.Errorf("failed to check if already parsed collection exists: %w", err)
 		}
 		if exists {
-			d.log.Field("url", u).Debugf(ctx, "parsed collection already is exists")
+			d.log.Field("url", u).Debugf(ctx, "parsed collection already exists")
 			return nil
 		}
 	}
@@ -481,27 +465,81 @@ func (d *Dataset) parseCollection(
 	if setReleasedSubmatches == nil {
 		return fmt.Errorf("failed to extract set release date: %q", setReleasedRaw)
 	}
-	setReleaseDate, err := time.Parse("2006-01-02", setReleasedSubmatches[1])
+		// Use centralized date parsing with validation
+		setReleaseDate, err := games.ParseDateWithValidation(setReleasedSubmatches[1])
+		if err != nil {
+			// Try fallback format
+			if fallbackDate, fallbackErr := time.Parse("2006-01-02", setReleasedSubmatches[1]); fallbackErr == nil {
+				year := fallbackDate.Year()
+				if year >= 1990 && year <= 2100 {
+					setReleaseDate = fallbackDate
+					err = nil
+				} else {
+					err = fmt.Errorf("fallback date has invalid year %d", year)
+				}
+			}
+		}
 	if err != nil {
 		return fmt.Errorf("failed to parse set release date %q: %w", setReleasedSubmatches[1], err)
 	}
 
-	sel := doc.Find(".card-grid-header-content a:first-of-type")
+	sel := doc.Find(".card-grid-header-content")
 	var partitions []game.Partition
-	sel.EachWithBreak(func(i int, sel *goquery.Selection) bool {
-		id, ok := sel.Attr("id")
-		if !ok {
-			// Try getting partition name from link text
-			id = strings.TrimSpace(sel.Text())
-			if id == "" {
-				html, _ := sel.Parent().Html()
-				err = fmt.Errorf("failed to find partition name: %s", html)
-				return false
+	sel.EachWithBreak(func(i int, headerSel *goquery.Selection) bool {
+		// Try to get partition name from id attribute on anchor (legacy format)
+		anchorSel := headerSel.Find("a:first-of-type")
+		partitionName, hasID := anchorSel.Attr("id")
+		
+		// If no id attribute, extract from text content
+		if !hasID {
+			// Clone the header selection and remove child elements to get just the text
+			textSel := headerSel.Clone()
+			textSel.Find("a").Remove()
+			textSel.Find(".card-grid-header-dot").Remove()
+			textSel.Find("span").Remove()
+			partitionName = strings.TrimSpace(textSel.Text())
+			
+			// Clean up the partition name
+			partitionName = strings.TrimSpace(partitionName)
+			partitionName = strings.TrimPrefix(partitionName, "•")
+			partitionName = strings.TrimSpace(partitionName)
+			
+			// If still empty, try extracting from the raw text content
+			if partitionName == "" {
+				// Get all text and split by newlines
+				allText := headerSel.Text()
+				lines := strings.Split(allText, "\n")
+				for _, line := range lines {
+					line = strings.TrimSpace(line)
+					// Skip lines with "cards", bullet points, or empty
+					if line != "" && 
+					   !strings.Contains(strings.ToLower(line), "cards") && 
+					   !strings.Contains(line, "•") &&
+					   !strings.HasPrefix(line, "<") {
+						partitionName = line
+						break
+					}
+				}
 			}
+			
+			// Final cleanup: remove any HTML entities or special characters
+			partitionName = strings.TrimSpace(partitionName)
+			// Remove common prefixes/suffixes
+			partitionName = strings.TrimPrefix(partitionName, "•")
+			partitionName = strings.TrimSuffix(partitionName, "•")
+			partitionName = strings.TrimSpace(partitionName)
 		}
+		
+		// If we still don't have a partition name, skip this partition with a warning
+		if partitionName == "" {
+			html, _ := headerSel.Html()
+			d.log.Field("html", html).Warnf(ctx, "skipping partition with no name")
+			return true // Continue to next partition instead of failing
+		}
+		
 		var cards []game.CardDesc
-		seen := make(map[string]int)
-		sel.ParentsMatcher(goquery.Single(".card-grid-header")).
+		seen := make(map[string]int) // Key: normalized card name (lowercase), Value: index in cards slice
+		headerSel.ParentsMatcher(goquery.Single(".card-grid-header")).
 			NextFilteredUntil(".card-grid", ".card-grid-header").
 			Find(".card-grid-item-invisible-label").
 			Each(func(i int, sel *goquery.Selection) {
@@ -509,24 +547,43 @@ func (d *Dataset) parseCollection(
 				if strings.HasPrefix(t, "|") && strings.HasSuffix(t, ".") {
 					return
 				}
-				if j, ok := seen[t]; ok {
+				// Normalize card name first, then check for duplicates
+				normalizedName := games.NormalizeCardName(t)
+				if normalizedName == "" {
+					return // Skip empty card names
+				}
+				// Use normalized lowercase name for duplicate detection
+				normalizedLower := strings.ToLower(normalizedName)
+				if j, ok := seen[normalizedLower]; ok {
 					cards[j].Count++
 					return
 				}
-				seen[t] = len(cards)
+				seen[normalizedLower] = len(cards)
 				cards = append(cards, game.CardDesc{
-					Name:  t,
+					Name:  normalizedName,
 					Count: 1,
 				})
 			})
+		
+		// Only add partition if it has cards (validation requires non-empty partitions)
+		if len(cards) == 0 {
+			d.log.Field("partition", partitionName).Warnf(ctx, "skipping partition with no cards")
+			return true // Continue to next partition
+		}
+		
 		partitions = append(partitions, game.Partition{
-			Name:  id,
+			Name:  partitionName,
 			Cards: cards,
 		})
 		return true
 	})
 	if err != nil {
 		return err
+	}
+	
+	// Check if we have any partitions with cards
+	if len(partitions) == 0 {
+		return fmt.Errorf("collection has no partitions with cards")
 	}
 
 	ty := &game.CollectionTypeSet{
@@ -543,12 +600,27 @@ func (d *Dataset) parseCollection(
 		ReleaseDate: setReleaseDate,
 		Partitions:  partitions,
 	}
+	
+	// Validate and normalize the collection before writing
+	if err := set.Canonicalize(); err != nil {
+		return fmt.Errorf("collection is invalid: %w", err)
+	}
+	
 	b, err := json.Marshal(set)
 	if err != nil {
 		return err
 	}
 
-	return d.blob.Write(ctx, bkey, b)
+	if err := d.blob.Write(ctx, bkey, b); err != nil {
+		return err
+	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
+
+	return nil
 }
 
 func (d *Dataset) resolveRef(ref string) (string, error) {

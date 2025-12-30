@@ -1,0 +1,178 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Generate massive evaluation data for all games.
+
+Orchestrates generation of comprehensive test sets for:
+- Magic: The Gathering
+- Pokemon TCG
+- Yu-Gi-Oh!
+"""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+
+def generate_for_game(
+    game: str,
+    pairs_csv: Path,
+    embedding_path: Path | None = None,
+    num_queries: int = 500,
+) -> None:
+    """Generate massive test set for a game."""
+    print(f"\n{'=' * 70}")
+    print(f"Generating Massive Test Set for {game.upper()}")
+    print(f"{'=' * 70}\n")
+    
+    # Comprehensive generated data
+    print(f"1. Generating comprehensive data for {game}...")
+    cmd = [
+        sys.executable, "-m", "ml.scripts.generate_comprehensive_eval_data",
+        "--game", game,
+        "--pairs-csv", str(pairs_csv),
+        "--output", f"experiments/test_set_comprehensive_generated_{game}_massive.json",
+        "--explicit-top-n", str(num_queries // 2),
+        "--implicit-top-n", str(num_queries // 4),
+        "--substitution-top-n", str(num_queries // 3),
+        "--synthetic-num", str(num_queries // 2),
+    ]
+    
+    if embedding_path and embedding_path.exists():
+        cmd.extend(["--embedding", str(embedding_path)])
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"  ⚠️  Comprehensive generation failed: {result.stderr[:200]}")
+    
+    # Synthetic test cases
+    print(f"\n2. Generating synthetic test cases for {game}...")
+    cmd = [
+        sys.executable, "-m", "ml.scripts.create_synthetic_test_cases",
+        "--game", game,
+        "--pairs-csv", str(pairs_csv),
+        "--output", f"experiments/test_set_synthetic_{game}_massive.json",
+        "--functional-num", str(num_queries // 4),
+        "--archetype-num", str(num_queries // 2),
+        "--power-level-num", str(num_queries // 4),
+        "--format-num", str(num_queries // 4),
+    ]
+    
+    if embedding_path and embedding_path.exists():
+        cmd.extend(["--embedding", str(embedding_path)])
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"  ⚠️  Synthetic generation failed: {result.stderr[:200]}")
+    
+    # Improved quality data
+    print(f"\n3. Generating improved quality data for {game}...")
+    cmd = [
+        sys.executable, "-m", "ml.scripts.generate_improved_quality_eval_data",
+        "--game", game,
+        "--pairs-csv", str(pairs_csv),
+        "--output", f"experiments/test_set_improved_quality_{game}_massive.json",
+        "--functional-num", str(num_queries // 3),
+        "--archetype-num", str(num_queries // 3),
+        "--adversarial-num", str(num_queries // 6),
+        "--format-num", str(num_queries // 6),
+    ]
+    
+    if embedding_path and embedding_path.exists():
+        cmd.extend(["--embedding", str(embedding_path)])
+    
+    result = subprocess.run(cmd, capture_output=True, text=True)
+    if result.returncode != 0:
+        print(f"  ⚠️  Quality generation failed: {result.stderr[:200]}")
+    
+    # Merge all
+    print(f"\n4. Merging all test sets for {game}...")
+    test_sets = [
+        f"experiments/test_set_comprehensive_generated_{game}_massive.json",
+        f"experiments/test_set_synthetic_{game}_massive.json",
+        f"experiments/test_set_improved_quality_{game}_massive.json",
+    ]
+    
+    # Only include existing files
+    existing_sets = [ts for ts in test_sets if Path(ts).exists()]
+    
+    if existing_sets:
+        cmd = [
+            sys.executable, "-m", "ml.scripts.merge_and_analyze_test_sets",
+            "--test-sets", *existing_sets,
+            "--output", f"experiments/test_set_massive_all_{game}.json",
+            "--pairs-csv", str(pairs_csv),
+            "--analysis-output", f"experiments/test_set_analysis_massive_all_{game}.json",
+            "--game", game,
+        ]
+        
+        result = subprocess.run(cmd, capture_output=True, text=True)
+        if result.returncode == 0:
+            print(f"  ✅ Merged {len(existing_sets)} test sets")
+        else:
+            print(f"  ⚠️  Merge failed: {result.stderr[:200]}")
+    
+    print(f"\n✅ Completed generation for {game}")
+
+
+def main() -> int:
+    """Generate massive evaluation data for all games."""
+    parser = argparse.ArgumentParser(
+        description="Generate massive evaluation data for all games"
+    )
+    parser.add_argument("--pairs-csv", type=str, required=True,
+                       help="Pairs CSV file")
+    parser.add_argument("--embedding", type=str, help="Embedding file (.wv)")
+    parser.add_argument("--games", type=str, nargs="+",
+                       default=["magic", "pokemon", "yugioh"],
+                       help="Games to generate for")
+    parser.add_argument("--num-queries", type=int, default=500,
+                       help="Target number of queries per game")
+    
+    args = parser.parse_args()
+    
+    pairs_csv = Path(args.pairs_csv)
+    if not pairs_csv.exists():
+        print(f"❌ Pairs CSV not found: {pairs_csv}")
+        return 1
+    
+    embedding_path = Path(args.embedding) if args.embedding else None
+    
+    print("=" * 70)
+    print("Generate Massive Evaluation Data for All Games")
+    print("=" * 70)
+    print(f"\nGames: {', '.join(args.games)}")
+    print(f"Pairs CSV: {pairs_csv}")
+    if embedding_path:
+        print(f"Embedding: {embedding_path}")
+    print(f"Target queries per game: {args.num_queries}\n")
+    
+    for game in args.games:
+        generate_for_game(
+            game,
+            pairs_csv,
+            embedding_path=embedding_path,
+            num_queries=args.num_queries,
+        )
+    
+    print("\n" + "=" * 70)
+    print("✅ Generation complete for all games")
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

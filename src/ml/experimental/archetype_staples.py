@@ -1,0 +1,139 @@
+#!/usr/bin/env python3
+"""
+Archetype Staples Analysis
+
+Use case that WORKS with co-occurrence: Find cards that appear frequently
+in specific archetypes.
+
+Example: "What are the staple cards in Burn decks?"
+Answer: Cards appearing in 70%+ of Burn decks.
+"""
+
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+
+# Use PATHS for canonical paths
+import sys
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from utils.paths import PATHS
+
+
+def analyze_archetype_staples(jsonl_path, min_decks=20):
+    """Find staple cards for each archetype"""
+
+    # Group decks by archetype
+    decks_by_archetype = defaultdict(list)
+
+    with open(jsonl_path) as f:
+        for line in f:
+            deck = json.loads(line)
+            archetype = deck.get("archetype", "unknown")
+            cards = [c["name"] for c in deck.get("cards", [])]
+            decks_by_archetype[archetype].append(cards)
+
+    # Analyze each archetype
+    results = {}
+
+    for archetype, decks in decks_by_archetype.items():
+        if len(decks) < min_decks:
+            continue  # Skip archetypes with too few decks
+
+        # Count card occurrences
+        card_counts = Counter()
+        for deck in decks:
+            unique_cards = set(deck)
+            card_counts.update(unique_cards)
+
+        # Calculate percentages
+        num_decks = len(decks)
+        card_percentages = {}
+        for card, count in card_counts.items():
+            percentage = (count / num_decks) * 100
+            card_percentages[card] = {
+                "count": count,
+                "percentage": percentage,
+                "total_decks": num_decks,
+            }
+
+        # Find staples (>70%), core (50-70%), common (30-50%)
+        staples = {
+            card: stats for card, stats in card_percentages.items() if stats["percentage"] >= 70
+        }
+        core = {
+            card: stats
+            for card, stats in card_percentages.items()
+            if 50 <= stats["percentage"] < 70
+        }
+        common = {
+            card: stats
+            for card, stats in card_percentages.items()
+            if 30 <= stats["percentage"] < 50
+        }
+
+        results[archetype] = {
+            "num_decks": num_decks,
+            "staples": staples,
+            "core": core,
+            "common": common,
+        }
+
+    return results
+
+
+def print_archetype_analysis(archetype_name, analysis):
+    """Pretty print analysis for one archetype"""
+    print(f"\n{'=' * 60}")
+    print(f"{archetype_name}")
+    print(f"{'=' * 60}")
+    print(f"Analyzed {analysis['num_decks']} decks")
+
+    if analysis["staples"]:
+        print("\n🌟 STAPLES (>70% of decks):")
+        for card, stats in sorted(analysis["staples"].items(), key=lambda x: -x[1]["percentage"])[
+            :15
+        ]:
+            print(f"  {stats['percentage']:5.1f}%  {card}")
+
+    if analysis["core"]:
+        print("\n⭐ CORE (50-70% of decks):")
+        for card, stats in sorted(analysis["core"].items(), key=lambda x: -x[1]["percentage"])[:10]:
+            print(f"  {stats['percentage']:5.1f}%  {card}")
+
+    if analysis["common"]:
+        print("\n• Common (30-50% of decks):")
+        for card, stats in sorted(analysis["common"].items(), key=lambda x: -x[1]["percentage"])[
+            :10
+        ]:
+            print(f"  {stats['percentage']:5.1f}%  {card}")
+
+
+def main():
+    data_path = PATHS.decks_with_metadata
+
+    print("Analyzing archetype staples...")
+    print("(This actually works because it uses co-occurrence's strength)")
+
+    results = analyze_archetype_staples(data_path, min_decks=30)
+
+    # Show top archetypes
+    top_archetypes = sorted(results.items(), key=lambda x: -x[1]["num_decks"])[:5]
+
+    for archetype, analysis in top_archetypes:
+        print_archetype_analysis(archetype, analysis)
+
+    # Summary
+    print(f"\n{'=' * 60}")
+    print("Summary")
+    print(f"{'=' * 60}")
+    print(f"Total archetypes analyzed: {len(results)}")
+    print("(Only showing top 5 by deck count)")
+    print("\nThis tool WORKS because:")
+    print("- Uses co-occurrence strength (frequency analysis)")
+    print("- Doesn't try to beat P@10 similarity benchmark")
+    print("- Solves real use case: 'What should I put in my Burn deck?'")
+    print("- Data speaks for itself: 70%+ = staple")
+
+
+if __name__ == "__main__":
+    main()

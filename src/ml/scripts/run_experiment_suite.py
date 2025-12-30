@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""
+Integrated Experiment Suite Runner
+
+Runs all active experiments as a validation suite.
+Does NOT run deprecated experiments from experimental/.
+
+Experiments:
+- exp_source_filtering.py - Source filtering (Oct 4, 2025) ✅ VALIDATED
+- exp_format_specific.py - Format-specific filtering (needs data path fix)
+
+Analysis Tools (NOT experiments, but should work):
+- archetype_staples.py
+- sideboard_analysis.py
+- card_companions.py
+- deck_composition_stats.py
+
+Validation Tools (today):
+- validate_data_quality.py
+- test_source_filtering.py
+"""
+
+import subprocess
+import sys
+from datetime import datetime
+from pathlib import Path
+
+
+class ExperimentSuite:
+    """Orchestrate experiment execution."""
+
+    def __init__(self):
+        self.results = []
+        self.ml_dir = Path(__file__).parent
+
+    def run_script(self, script_name, description, timeout=300, expect_success=True):
+        """Run a Python script and capture results."""
+        print("\n" + "=" * 80)
+        print(f"{description}")
+        print("=" * 80)
+        print(f"Running: {script_name}")
+
+        script_path = self.ml_dir / script_name
+        if not script_path.exists():
+            print("❌ SKIP: File not found")
+            self.results.append(
+                {"script": script_name, "status": "missing", "description": description}
+            )
+            return False
+
+        try:
+            result = subprocess.run(
+                ["uv", "run", "python", script_name],
+                check=False,
+                cwd=self.ml_dir,
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+
+            if result.returncode == 0 or not expect_success:
+                print("✅ SUCCESS")
+                if result.stdout:
+                    # Show last 30 lines
+                    lines = result.stdout.split("\n")
+                    for line in lines[-30:]:
+                        print(f"   {line}")
+
+                self.results.append(
+                    {"script": script_name, "status": "success", "description": description}
+                )
+                return True
+            else:
+                print(f"❌ FAILED (exit code {result.returncode})")
+                if result.stderr:
+                    print("STDERR:")
+                    for line in result.stderr.split("\n")[:20]:
+                        print(f"   {line}")
+
+                self.results.append(
+                    {
+                        "script": script_name,
+                        "status": "failed",
+                        "description": description,
+                        "error": result.stderr[:500],
+                    }
+                )
+                return False
+
+        except subprocess.TimeoutExpired:
+            print(f"⏱️  TIMEOUT (>{timeout}s)")
+            self.results.append(
+                {"script": script_name, "status": "timeout", "description": description}
+            )
+            return False
+
+        except Exception as e:
+            print(f"❌ EXCEPTION: {e}")
+            self.results.append(
+                {
+                    "script": script_name,
+                    "status": "exception",
+                    "description": description,
+                    "error": str(e),
+                }
+            )
+            return False
+
+    def run_all(self):
+        """Run full suite."""
+        print("=" * 80)
+        print("DECKSAGE EXPERIMENT SUITE")
+        print("=" * 80)
+        print(f"Date: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print(f"Directory: {self.ml_dir}")
+        print()
+
+        # 1. Validation tools (quick)
+        print("\n" + "=" * 80)
+        print("PHASE 1: DATA VALIDATION")
+        print("=" * 80)
+
+        self.run_script("validate_data_quality.py", "📊 Data Quality Validation", timeout=60)
+        self.run_script("test_source_filtering.py", "🧪 Source Filtering Tests", timeout=30)
+
+        # 2. Analysis tools (quick)
+        print("\n" + "=" * 80)
+        print("PHASE 2: ANALYSIS TOOLS")
+        print("=" * 80)
+
+        self.run_script(
+            "archetype_staples.py", "🌟 Archetype Staples", timeout=60, expect_success=False
+        )
+        self.run_script(
+            "sideboard_analysis.py", "🛡️  Sideboard Analysis", timeout=60, expect_success=False
+        )
+        self.run_script(
+            "card_companions.py", "🤝 Card Companions", timeout=60, expect_success=False
+        )
+        self.run_script(
+            "deck_composition_stats.py", "📊 Deck Composition", timeout=60, expect_success=False
+        )
+
+        # 3. Experiments (slower, skip by default)
+        print("\n" + "=" * 80)
+        print("PHASE 3: EXPERIMENTS (SKIPPED - too slow)")
+        print("=" * 80)
+        print("To run experiments manually:")
+        print("  uv run python exp_source_filtering.py  # ~55 minutes")
+        print("  uv run python exp_format_specific.py   # ~30 minutes")
+
+        # 4. Unit tests
+        print("\n" + "=" * 80)
+        print("PHASE 4: UNIT TESTS")
+        print("=" * 80)
+
+        result = subprocess.run(
+            ["uv", "run", "pytest", "tests/", "-v", "--tb=short"],
+            check=False,
+            cwd=self.ml_dir,
+            capture_output=True,
+            text=True,
+        )
+
+        if result.returncode == 0:
+            print("✅ ALL UNIT TESTS PASSED")
+            # Count tests
+            lines = result.stdout.split("\n")
+            for line in lines:
+                if "passed" in line:
+                    print(f"   {line.strip()}")
+        else:
+            print("❌ SOME UNIT TESTS FAILED")
+            print(result.stdout)
+
+        # Summary
+        print("\n" + "=" * 80)
+        print("SUITE SUMMARY")
+        print("=" * 80)
+
+        by_status = {}
+        for r in self.results:
+            status = r["status"]
+            by_status[status] = by_status.get(status, 0) + 1
+
+        print(f"\nTotal scripts run: {len(self.results)}")
+        for status, count in sorted(by_status.items()):
+            icon = {
+                "success": "✅",
+                "failed": "❌",
+                "timeout": "⏱️",
+                "missing": "⚠️",
+                "exception": "❌",
+            }.get(status, "?")
+            print(f"   {icon} {status}: {count}")
+
+        # Details
+        print("\nDetails:")
+        for r in self.results:
+            icon = {
+                "success": "✅",
+                "failed": "❌",
+                "timeout": "⏱️",
+                "missing": "⚠️",
+                "exception": "❌",
+            }.get(r["status"], "?")
+            print(f"   {icon} {r['script']}: {r['status']}")
+
+        print("\n" + "=" * 80)
+
+        # Return code
+        failed_count = sum(1 for r in self.results if r["status"] in ["failed", "exception"])
+        return 0 if failed_count == 0 else 1
+
+
+if __name__ == "__main__":
+    suite = ExperimentSuite()
+    exit_code = suite.run_all()
+    sys.exit(exit_code)

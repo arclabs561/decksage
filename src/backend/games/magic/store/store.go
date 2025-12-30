@@ -2,21 +2,41 @@ package store
 
 import (
 	"context"
+	"embed"
+
+	"github.com/dgraph-io/dgo/v210"
+	"github.com/dgraph-io/dgo/v210/protos/api"
 )
 
-// Store is a placeholder for future graph database integration.
-// Currently unused - the system uses Badger for caching and CSV for ML data flow.
-//
-// Potential use cases:
-// - Persistent card database with complex queries
-// - Deck archetype classification
-// - Tournament result tracking
-//
-// Consider SQLite or keep Badger + CSV → Python for graph operations.
+//go:embed assets
+var assets embed.FS
+
 type Store struct {
-	// Future: database connection
+	dgraph *dgo.Dgraph
 }
 
-func NewStore(ctx context.Context) (*Store, error) {
-	return &Store{}, nil
+func NewStore(
+	ctx context.Context,
+	dgraph *dgo.Dgraph,
+) (*Store, error) {
+	s := &Store{
+		dgraph: dgraph,
+	}
+	if err := s.init(ctx); err != nil {
+		return nil, err
+	}
+	return s, nil
+}
+
+func (s *Store) init(ctx context.Context) error {
+	return nil
+	schema, err := assets.ReadFile("assets/schema.graphql")
+	if err != nil {
+		return err
+	}
+	op := &api.Operation{Schema: string(schema)}
+	if err := s.dgraph.Alter(ctx, op); err != nil {
+		return err
+	}
+	return nil
 }

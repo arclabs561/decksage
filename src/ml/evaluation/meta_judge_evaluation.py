@@ -1,0 +1,488 @@
+#!/usr/bin/env python3
+"""
+Meta-Judge Evaluation System
+
+Evaluates the judges themselves to ensure they're measuring what we actually care about.
+
+This system:
+1. Reviews judge prompts for alignment with actual goals
+2. Tests judge consistency and calibration
+3. Identifies gaps between what we judge and what we want
+4. Proposes prompt improvements
+"""
+
+from __future__ import annotations
+
+import json
+from dataclasses import dataclass, asdict
+from pathlib import Path
+from typing import Any
+
+# Import PATHS directly to avoid pandas dependency
+import sys
+from pathlib import Path
+
+try:
+    from ..utils.paths import PATHS
+except (ImportError, ModuleNotFoundError):
+    # Fallback: import directly
+    _utils_path = Path(__file__).parent.parent / "utils" / "paths.py"
+    if _utils_path.exists():
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("paths", _utils_path)
+        paths_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(paths_module)
+        PATHS = paths_module.PATHS
+    else:
+        # Last resort: define minimal PATHS
+        _project_root = Path(__file__).parent.parent.parent.parent
+        class PATHS:
+            experiments = _project_root / "experiments"
+
+
+@dataclass
+class JudgePromptAnalysis:
+    """Analysis of a judge prompt."""
+    prompt_text: str
+    judge_name: str
+    task: str  # add|remove|replace|contextual|similarity
+    
+    # Alignment analysis
+    measures_what_we_want: bool
+    missing_criteria: list[str]  # What we want but don't judge
+    extra_criteria: list[str]  # What we judge but don't care about
+    clarity_score: int  # 0-4: How clear is the prompt?
+    calibration_issues: list[str]  # Potential calibration problems
+    
+    # Recommendations
+    recommended_changes: list[str]
+    improved_prompt: str | None
+
+
+@dataclass
+class JudgeCalibrationTest:
+    """Test case for judge calibration."""
+    name: str
+    scenario: str
+    expected_judgment: dict[str, Any]  # What we expect
+    actual_judgment: dict[str, Any] | None  # What judge actually said
+    alignment: str  # "aligned" | "misaligned" | "uncertain"
+    reasoning: str
+
+
+class MetaJudgeEvaluator:
+    """Evaluates judges and their prompts."""
+    
+    def __init__(self):
+        self.actual_goals = self._define_actual_goals()
+        self.prompt_analyses: list[JudgePromptAnalysis] = []
+        self.calibration_tests: list[JudgeCalibrationTest] = []
+    
+    def _define_actual_goals(self) -> dict[str, list[str]]:
+        """
+        Define what we ACTUALLY care about for each task.
+        
+        This is the ground truth for what should be judged.
+        """
+        return {
+            "add": [
+                "Card fits the deck's strategy/archetype",
+                "Card fills a functional gap (role awareness)",
+                "Card is legal in the format",
+                "Card fits budget constraints (if provided)",
+                "Card count is appropriate (1-of vs 4-of)",
+                "Explanation is clear and actionable",
+            ],
+            "remove": [
+                "Card is actually weak/redundant (not just low archetype match)",
+                "Removal won't break synergies",
+                "Removal won't create new gaps",
+                "Reasoning explains why it's safe to remove",
+            ],
+            "replace": [
+                "Replacement fills the same role",
+                "Replacement is actually better (not just different)",
+                "Price delta is accurate (for upgrades/downgrades)",
+                "Replacement maintains deck balance (curve, etc.)",
+            ],
+            "contextual": [
+                "Synergy is functional, not just co-occurrence",
+                "Alternative is actually equivalent (same role)",
+                "Upgrade is actually better (not just more expensive)",
+                "Downgrade maintains functionality (not just cheaper)",
+            ],
+            "similarity": [
+                "Cards serve similar functions",
+                "Cards are substitutable in decks",
+                "Similarity is explainable (not just statistical)",
+            ],
+        }
+    
+    def analyze_judge_prompt(
+        self,
+        prompt_text: str,
+        judge_name: str,
+        task: str,
+    ) -> JudgePromptAnalysis:
+        """Analyze a judge prompt for alignment with actual goals."""
+        actual_goals = self.actual_goals.get(task, [])
+        
+        # Check what the prompt measures
+        measures_what_we_want = True
+        missing_criteria: list[str] = []
+        extra_criteria: list[str] = []
+        
+        # Simple keyword-based analysis (could be enhanced with LLM)
+        prompt_lower = prompt_text.lower()
+        
+        # Check for each actual goal
+        goal_keywords = {
+            "Card fits the deck's strategy/archetype": ["archetype", "strategy", "fit"],
+            "Card fills a functional gap (role awareness)": ["role", "gap", "functional"],
+            "Card is legal in the format": ["legal", "format", "banlist"],
+            "Card fits budget constraints": ["budget", "price", "cost"],
+            "Card count is appropriate": ["count", "copies", "4-of", "1-of"],
+            "Explanation is clear and actionable": ["explanation", "clear", "actionable"],
+            "Card is actually weak/redundant": ["weak", "redundant", "excess"],
+            "Removal won't break synergies": ["synergy", "break", "tribal"],
+            "Replacement fills the same role": ["same role", "role match"],
+            "Replacement is actually better": ["better", "upgrade", "improvement"],
+            "Synergy is functional": ["functional", "synergy", "combo"],
+            "Alternative is actually equivalent": ["equivalent", "same function"],
+        }
+        
+        for goal in actual_goals:
+            keywords = goal_keywords.get(goal, [goal.lower().split()])
+            if not any(kw in prompt_lower for kw in keywords if isinstance(kw, str)):
+                missing_criteria.append(goal)
+                measures_what_we_want = False
+        
+        # Check for clarity
+        clarity_score = 4  # Start high
+        if "rate" not in prompt_lower and "score" not in prompt_lower:
+            clarity_score -= 1
+        if "0-4" not in prompt_lower and "scale" not in prompt_lower:
+            clarity_score -= 1
+        if len(prompt_text) < 200:
+            clarity_score -= 1  # Might be too brief
+        
+        # Check for calibration issues
+        calibration_issues: list[str] = []
+        if "perfect" in prompt_lower and "ideal" in prompt_lower:
+            calibration_issues.append("Might be too lenient (perfect/ideal both = 4)")
+        if "completely wrong" in prompt_lower and "inappropriate" in prompt_lower:
+            calibration_issues.append("Might be too strict (completely wrong = 0)")
+        if "moderate" not in prompt_lower and "generally" not in prompt_lower:
+            calibration_issues.append("Missing middle ground (2-3 range might be unclear)")
+        
+        # Generate recommendations
+        recommended_changes: list[str] = []
+        if missing_criteria:
+            recommended_changes.append(f"Add criteria: {', '.join(missing_criteria[:3])}")
+        if clarity_score < 3:
+            recommended_changes.append("Improve clarity: Add explicit scale definitions")
+        if calibration_issues:
+            recommended_changes.append(f"Fix calibration: {calibration_issues[0]}")
+        
+        # Generate improved prompt (simplified - would use LLM in production)
+        improved_prompt = None
+        if missing_criteria or clarity_score < 3:
+            improved_prompt = self._generate_improved_prompt(
+                prompt_text,
+                task,
+                missing_criteria,
+                actual_goals,
+            )
+        
+        return JudgePromptAnalysis(
+            prompt_text=prompt_text,
+            judge_name=judge_name,
+            task=task,
+            measures_what_we_want=measures_what_we_want,
+            missing_criteria=missing_criteria,
+            extra_criteria=extra_criteria,
+            clarity_score=clarity_score,
+            calibration_issues=calibration_issues,
+            recommended_changes=recommended_changes,
+            improved_prompt=improved_prompt,
+        )
+    
+    def _generate_improved_prompt(
+        self,
+        original: str,
+        task: str,
+        missing_criteria: list[str],
+        actual_goals: list[str],
+    ) -> str:
+        """Generate an improved prompt that addresses missing criteria."""
+        improved = f"""You are an expert TCG judge evaluating {task} suggestions.
+
+**What We Actually Care About:**
+{chr(10).join(f"- {goal}" for goal in actual_goals)}
+
+**Evaluation Dimensions:**
+
+1. **Relevance (0-4)**: How appropriate is this suggestion?
+   - 4: Perfect/ideal - exactly what's needed
+   - 3: Strong/very appropriate - good fit
+   - 2: Moderate/generally appropriate - acceptable
+   - 1: Weak/partially appropriate - questionable
+   - 0: Completely wrong/inappropriate - should not be suggested
+
+2. **Explanation Quality (0-4)**: Is the reasoning clear and actionable?
+   - 4: Excellent - clear, accurate, actionable
+   - 3: Good - mostly clear, minor issues
+   - 2: Adequate - understandable but could be clearer
+   - 1: Poor - unclear or inaccurate
+   - 0: No explanation or completely wrong
+
+3. **Task-Specific Dimensions** (if applicable):
+"""
+        
+        if task == "add":
+            improved += """   - **Archetype Match (0-4)**: Does it fit the archetype?
+   - **Role Fit (0-4)**: Does it fill a needed role?
+   - **Format Legality**: Is it legal? (affects relevance)
+   - **Budget Fit**: Does it fit budget? (affects relevance)
+"""
+        elif task == "remove":
+            improved += """   - **Redundancy (0-4)**: How redundant is this card?
+   - **Synergy Safety (0-4)**: Will removal break synergies?
+"""
+        elif task == "replace":
+            improved += """   - **Role Match (0-4)**: Does it fill the same role?
+   - **Improvement (0-4)**: Is it actually better?
+   - **Price Accuracy (0-4)**: Is price delta accurate?
+"""
+        
+        improved += """
+**Critical Considerations:**
+- Be critical but fair
+- Consider format legality, budget, and deck context
+- Distinguish between "good card" and "good for this deck"
+- Prioritize functional fit over statistical similarity
+"""
+        
+        return improved
+    
+    def create_calibration_tests(self) -> list[JudgeCalibrationTest]:
+        """Create test cases to calibrate judges."""
+        tests = []
+        
+        # Test 1: Clear perfect match
+        tests.append(JudgeCalibrationTest(
+            name="perfect_archetype_staple",
+            scenario="Burn deck, suggest Lightning Bolt (95% inclusion rate, fills removal gap)",
+            expected_judgment={
+                "relevance": 4,
+                "explanation_quality": 4,
+                "archetype_match": 4,
+                "role_fit": 4,
+            },
+            actual_judgment=None,
+            alignment="uncertain",
+            reasoning="Should be perfect score - tests if judge recognizes ideal case",
+        ))
+        
+        # Test 2: Clear mismatch
+        tests.append(JudgeCalibrationTest(
+            name="wrong_archetype",
+            scenario="Burn deck, suggest Counterspell (blue control card, doesn't fit red aggro)",
+            expected_judgment={
+                "relevance": 0,
+                "explanation_quality": 2,  # Explanation might be OK even if suggestion is wrong
+                "archetype_match": 0,
+            },
+            actual_judgment=None,
+            alignment="uncertain",
+            reasoning="Should be low score - tests if judge recognizes clear mismatch",
+        ))
+        
+        # Test 3: Edge case - format staple but not archetype staple
+        tests.append(JudgeCalibrationTest(
+            name="format_staple_not_archetype",
+            scenario="Burn deck, suggest Path to Exile (Modern staple, but sideboard card for Burn)",
+            expected_judgment={
+                "relevance": 2,  # Moderate - good card but wrong context
+                "archetype_match": 1,  # Low - not in maindeck
+            },
+            actual_judgment=None,
+            alignment="uncertain",
+            reasoning="Tests nuanced judgment - good card but wrong context",
+        ))
+        
+        # Test 4: Budget constraint
+        tests.append(JudgeCalibrationTest(
+            name="budget_prioritization",
+            scenario="Budget deck (max $2/card), suggest $10 card vs $1 card (both fit archetype)",
+            expected_judgment={
+                "relevance": 1,  # Low - doesn't fit budget
+                "explanation_quality": 3,  # Good explanation but wrong suggestion
+            },
+            actual_judgment=None,
+            alignment="uncertain",
+            reasoning="Tests if judge respects budget constraints",
+        ))
+        
+        # Test 5: Synergy awareness
+        tests.append(JudgeCalibrationTest(
+            name="synergy_break_removal",
+            scenario="Goblin deck, suggest removing Goblin Guide (tribal synergy, not just individual card)",
+            expected_judgment={
+                "relevance": 1,  # Low - breaks synergy
+                "explanation_quality": 2,  # Explanation should mention synergy
+            },
+            actual_judgment=None,
+            alignment="uncertain",
+            reasoning="Tests if judge considers synergies, not just individual cards",
+        ))
+        
+        return tests
+    
+    def evaluate_all_judges(self) -> dict[str, Any]:
+        """Evaluate all judge prompts."""
+        analyses = []
+        
+        # Analyze deck modification judge
+        try:
+            from ml.evaluation.deck_modification_judge import make_deck_modification_judge_agent
+            HAS_DECK_MOD_JUDGE = True
+        except ImportError:
+            HAS_DECK_MOD_JUDGE = False
+        
+        try:
+            from pydantic_ai import Agent
+            HAS_PYDANTIC_AI = True
+        except ImportError:
+            HAS_PYDANTIC_AI = False
+        
+        if HAS_PYDANTIC_AI and HAS_DECK_MOD_JUDGE:
+            try:
+                agent = make_deck_modification_judge_agent()
+                if agent:
+                    # Get the system prompt (would need to extract from agent)
+                    # For now, use the prompt from the function
+                    prompt_text = """You are an expert TCG judge evaluating deck modification suggestions.
+
+Your task is to evaluate suggestions based on:
+1. Relevance: How appropriate is this suggestion for the deck/archetype?
+2. Explanation Quality: Is the reasoning clear and accurate?
+3. Archetype Match: Does it fit the archetype? (if archetype provided)
+4. Role Fit: Does it fill a needed role? (if role gap identified)
+
+Rate each dimension 0-4:
+- 0: Completely wrong/inappropriate
+- 1: Weak/partially appropriate
+- 2: Moderate/generally appropriate
+- 3: Strong/very appropriate
+- 4: Perfect/ideal suggestion
+
+Be critical but fair. Consider format legality, budget constraints, and deck context."""
+                    
+                    analysis = self.analyze_judge_prompt(
+                        prompt_text,
+                        "deck_modification_judge",
+                        "add",  # Primary task
+                    )
+                    analyses.append(analysis)
+            except Exception as e:
+                pass
+        
+        # Analyze similarity judge
+        try:
+            from ml.annotation.llm_judge_batch import make_judge_agent
+            HAS_SIMILARITY_JUDGE = True
+        except ImportError:
+            HAS_SIMILARITY_JUDGE = False
+        
+        if HAS_PYDANTIC_AI and HAS_SIMILARITY_JUDGE:
+            try:
+                agent = make_judge_agent()
+                if agent:
+                    prompt_text = """You are an expert TCG judge evaluating card similarity.
+Given a query card and candidate card, judge similarity on 0-4 scale:
+4: Extremely similar (near substitutes, same function)
+3: Very similar (often seen together, similar role)
+2: Somewhat similar (related function or archetype)
+1: Marginally similar (loose connection)
+0: Irrelevant (different function, color, or archetype)
+Be consistent and provide clear reasoning."""
+                    
+                    analysis = self.analyze_judge_prompt(
+                        prompt_text,
+                        "similarity_judge",
+                        "similarity",
+                    )
+                    analyses.append(analysis)
+            except Exception as e:
+                pass
+        
+        # Create calibration tests
+        calibration_tests = self.create_calibration_tests()
+        
+        return {
+            "prompt_analyses": [asdict(a) for a in analyses],
+            "calibration_tests": [asdict(t) for t in calibration_tests],
+            "actual_goals": self.actual_goals,
+            "summary": {
+                "total_judges_analyzed": len(analyses),
+                "judges_with_missing_criteria": len([a for a in analyses if a.missing_criteria]),
+                "judges_with_clarity_issues": len([a for a in analyses if a.clarity_score < 3]),
+                "calibration_tests": len(calibration_tests),
+            },
+        }
+
+
+def main():
+    """Run meta-judge evaluation."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Meta-evaluate judges and prompts")
+    parser.add_argument("--output", type=str, help="Output path for analysis JSON")
+    
+    args = parser.parse_args()
+    
+    evaluator = MetaJudgeEvaluator()
+    results = evaluator.evaluate_all_judges()
+    
+    # Save results
+    if args.output:
+        output_path = Path(args.output)
+    else:
+        output_path = PATHS.experiments / "meta_judge_evaluation.json"
+    
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print("=" * 60)
+    print("Meta-Judge Evaluation Results")
+    print("=" * 60)
+    print(f"\nJudges Analyzed: {results['summary']['total_judges_analyzed']}")
+    print(f"Judges with Missing Criteria: {results['summary']['judges_with_missing_criteria']}")
+    print(f"Judges with Clarity Issues: {results['summary']['judges_with_clarity_issues']}")
+    print(f"Calibration Tests: {results['summary']['calibration_tests']}")
+    
+    print("\n" + "=" * 60)
+    print("Prompt Analyses")
+    print("=" * 60)
+    
+    for analysis in results["prompt_analyses"]:
+        print(f"\n{analysis['judge_name']} ({analysis['task']}):")
+        if analysis["missing_criteria"]:
+            print(f"  ⚠ Missing: {', '.join(analysis['missing_criteria'][:3])}")
+        if analysis["clarity_score"] < 3:
+            print(f"  ⚠ Clarity: {analysis['clarity_score']}/4")
+        if analysis["calibration_issues"]:
+            print(f"  ⚠ Calibration: {analysis['calibration_issues'][0]}")
+        if analysis["recommended_changes"]:
+            print(f"  💡 Recommendations:")
+            for rec in analysis["recommended_changes"]:
+                print(f"     - {rec}")
+    
+    print(f"\n✓ Results saved to {output_path}")
+
+
+if __name__ == "__main__":
+    main()
+

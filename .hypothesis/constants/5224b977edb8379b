@@ -1,0 +1,4 @@
+# file: /Users/henry/Documents/dev/decksage/src/ml/validators/loader.py
+# hypothesis_version: 6.140.3
+
+[100, '  Top errors:', 'Cube', 'Deck', 'Extra Deck', 'Main', 'Main Deck', 'Pokemon', 'Set', 'Sideboard', 'Standard', 'TCG', 'Unknown', 'YGO', 'alchemy', 'archetype', 'archidekt', 'auto', 'brawl', 'cards', 'cedh', 'commander', 'count', 'deck_id', 'deckbox', 'deckbox.org', 'empty_archetype', 'empty_format', 'empty_source', 'error_distribution', 'event', 'event_date', 'expanded', 'format', 'formats', 'game_types', 'goldfish', 'historic', 'id', 'inferred_source', 'inner', 'json_parse', 'legacy', 'limitless', 'limitless-web', 'magic', 'modern', 'moxfield', 'mtggoldfish', 'mtgtop8', 'name', 'ocg', 'partition', 'partitions', 'pauper', 'pioneer', 'placement', 'player', 'pokemon', 'pokemon.com', 'scryfall', 'source', 'standard', 'tcg', 'type', 'unknown', 'unlimited', 'url', 'vintage', 'ygoprodeck', 'yugioh']

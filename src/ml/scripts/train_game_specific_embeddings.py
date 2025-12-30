@@ -1,0 +1,319 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "pecanpy>=2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""Train game-specific embeddings (Option 1: recommended approach).
+
+Trains separate embeddings for each game (Magic, Pokemon, Yu-Gi-Oh).
+This is better for our use cases since all tasks are within-game.
+
+Research Basis:
+- Cross-game training may add noise for domain-specific tasks
+- Game-specific embeddings optimize for each game's mechanics
+- All our tasks (similarity, deck completion, substitution) are within-game
+"""
+import argparse
+import logging
+from pathlib import Path
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import Word2Vec, KeyedVectors
+    from pecanpy.pecanpy import SparseOTF
+    HAS_DEPS = True
+except ImportError as e:
+    HAS_DEPS = False
+    print(f"Missing dependencies: {e}")
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+def infer_game_from_card_name(card_name: str) -> str:
+    """Infer game from card name patterns."""
+    # Simple heuristics - can be improved
+    name_lower = card_name.lower()
+    
+    # Pokemon patterns
+    if any(x in name_lower for x in ["-ex", "-gx", "-v", "-vmax", "-vstar", "pokemon"]):
+        return "PKM"
+    
+    # Yu-Gi-Oh patterns (harder to detect, but some patterns)
+    if any(x in name_lower for x in ["blue-eyes", "dark magician", "exodia", "pot of"]):
+        return "YGO"
+    
+    # Default to Magic (largest dataset)
+    return "MTG"
+
+def load_game_pairs(pairs_csv: Path, game: str) -> tuple[dict[str, set[str]], dict[tuple[str, str], int]]:
+    """Load pairs for a specific game."""
+    logger.info(f"Loading {game} pairs from {pairs_csv}...")
+    
+    # Read sample to check structure
+    df_sample = pd.read_csv(pairs_csv, nrows=100)
+    
+    # Check for game columns (GAME_1, GAME_2, or single GAME column)
+    game_cols = [col for col in df_sample.columns if "GAME" in col.upper()]
+    
+    # Read full file (in chunks if large)
+    logger.info("Reading CSV file...")
+    chunk_size = 100000
+    chunks = []
+    total_read = 0
+    total_filtered = 0
+    
+    for chunk in pd.read_csv(pairs_csv, chunksize=chunk_size):
+        total_read += len(chunk)
+        
+        # Filter by game if game columns exist
+        if game_cols:
+            if len(game_cols) >= 2:
+                # Both cards must be from the same game
+                game1_col, game2_col = game_cols[0], game_cols[1]
+                # Filter where both are the target game
+                mask = (chunk[game1_col].str.upper() == game.upper()) & (chunk[game2_col].str.upper() == game.upper())
+                chunk = chunk[mask]
+                total_filtered += len(chunk)
+                if len(chunk) > 0:
+                    logger.debug(f"  Chunk: {len(chunk)} rows match {game}")
+            elif len(game_cols) == 1:
+                # Single game column
+                mask = chunk[game_cols[0]].str.upper() == game.upper()
+                chunk = chunk[mask]
+                total_filtered += len(chunk)
+                if len(chunk) > 0:
+                    logger.debug(f"  Chunk: {len(chunk)} rows match {game}")
+        else:
+            # No game column - assume all rows are for this game (game-specific file)
+            logger.info("No game column found, using all pairs (assuming game-specific file)")
+            total_filtered = total_read
+        
+        if len(chunk) > 0:
+            chunks.append(chunk)
+    
+    if chunks:
+        df = pd.concat(chunks, ignore_index=True)
+        logger.info(f"Filtered to {len(df):,} {game} pairs (from {total_read:,} total)")
+    else:
+        # Fallback: assume all rows are for this game if it's a game-specific file
+        logger.warning(f"No matches found for {game} in {pairs_csv}")
+        logger.info("Trying to read all pairs (assuming game-specific file)...")
+        df = pd.read_csv(pairs_csv)
+        logger.info(f"Loaded {len(df):,} pairs (no filtering applied)")
+    
+    # Find name columns
+    name_cols = [c for c in df.columns if "NAME" in c.upper() or "name" in c]
+    if len(name_cols) < 2:
+        raise ValueError(f"Could not find name columns in {pairs_csv}")
+    
+    count_col = None
+    for c in df.columns:
+        if "COUNT" in c.upper() or "count" in c:
+            count_col = c
+            break
+    
+    card1_col, card2_col = name_cols[0], name_cols[1]
+    
+    adj: dict[str, set[str]] = {}
+    weights: dict[tuple[str, str], int] = {}
+    
+    for _, row in df.iterrows():
+        card1 = str(row[card1_col]).strip()
+        card2 = str(row[card2_col]).strip()
+        
+        if not card1 or not card2 or card1 == card2:
+            continue
+        
+        # Normalize pair
+        if card1 > card2:
+            card1, card2 = card2, card1
+        
+        # Add to graph
+        if card1 not in adj:
+            adj[card1] = set()
+        if card2 not in adj:
+            adj[card2] = set()
+        
+        adj[card1].add(card2)
+        adj[card2].add(card1)
+        
+        # Update weight
+        pair_key = (card1, card2)
+        count = int(row[count_col]) if count_col and pd.notna(row[count_col]) else 1
+        weights[pair_key] = weights.get(pair_key, 0) + count
+    
+    logger.info(f"Loaded {len(adj):,} cards, {len(weights):,} edges")
+    return adj, weights
+
+def train_game_embeddings(
+    pairs_csv: Path,
+    output_path: Path,
+    game: str,
+    dim: int = 128,
+    walk_length: int = 80,
+    num_walks: int = 10,
+    window: int = 10,
+    epochs: int = 50,
+    p: float = 1.0,
+    q: float = 1.0,
+) -> KeyedVectors:
+    """Train embeddings for a specific game."""
+    logger.info(f"Training {game} embeddings...")
+    
+    # Load pairs
+    adj, weights = load_game_pairs(pairs_csv, game)
+    
+    if not adj:
+        raise ValueError(f"No data found for {game}")
+    
+    # Create edgelist for PecanPy
+    import tempfile
+    with tempfile.NamedTemporaryFile(mode='w', suffix='.edgelist', delete=False) as f:
+        edgelist_path = Path(f.name)
+        for (card1, card2), weight in weights.items():
+            f.write(f"{card1}\t{card2}\t{weight}\n")
+    
+    try:
+        # Generate walks with PecanPy
+        logger.info(f"Generating random walks (p={p}, q={q})...")
+        pecanpy = SparseOTF(p=p, q=q, workers=4, verbose=True, extend=True)
+        pecanpy.read_edg(str(edgelist_path), weighted=True, directed=False)
+        
+        walks = pecanpy.simulate_walks(
+            num_walks=num_walks,
+            walk_length=walk_length,
+        )
+        
+        logger.info(f"Generated {len(walks):,} walks")
+        
+        # Train Word2Vec
+        logger.info(f"Training Word2Vec (dim={dim}, window={window}, epochs={epochs})...")
+        model = Word2Vec(
+            sentences=walks,
+            vector_size=dim,
+            window=window,
+            min_count=1,
+            workers=4,
+            epochs=epochs,
+        )
+        
+        # Save
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        model.wv.save(str(output_path))
+        logger.info(f"✅ Saved {game} embeddings to {output_path}")
+        
+        return model.wv
+        
+    finally:
+        # Cleanup
+        if edgelist_path.exists():
+            edgelist_path.unlink()
+
+def main():
+    parser = argparse.ArgumentParser(description="Train game-specific embeddings")
+    parser.add_argument("--input", type=str, required=True, help="Input pairs CSV")
+    parser.add_argument("--output", type=str, required=True, help="Output embeddings path")
+    parser.add_argument("--game", type=str, required=True, choices=["magic", "pokemon", "yugioh", "MTG", "PKM", "YGO"],
+                       help="Game name")
+    parser.add_argument("--dim", type=int, default=128, help="Embedding dimension")
+    parser.add_argument("--walk-length", type=int, default=80, help="Walk length")
+    parser.add_argument("--num-walks", type=int, default=10, help="Number of walks per node")
+    parser.add_argument("--window", type=int, default=10, help="Word2Vec window size")
+    parser.add_argument("--epochs", type=int, default=50, help="Training epochs")
+    parser.add_argument("--p", type=float, default=1.0, help="Node2Vec p parameter")
+    parser.add_argument("--q", type=float, default=1.0, help="Node2Vec q parameter")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Normalize game name
+    game_map = {
+        "magic": "MTG",
+        "pokemon": "PKM",
+        "yugioh": "YGO",
+    }
+    game = game_map.get(args.game.lower(), args.game.upper())
+    
+    pairs_csv = Path(args.input)
+    output_path = Path(args.output)
+    
+    if not pairs_csv.exists():
+        logger.error(f"Input file not found: {pairs_csv}")
+        return 1
+    
+    try:
+        train_game_embeddings(
+            pairs_csv=pairs_csv,
+            output_path=output_path,
+            game=game,
+            dim=args.dim,
+            walk_length=args.walk_length,
+            num_walks=args.num_walks,
+            window=args.window,
+            epochs=args.epochs,
+            p=args.p,
+            q=args.q,
+        )
+        return 0
+    except Exception as e:
+        logger.error(f"Training failed: {e}", exc_info=True)
+        return 1
+
+if __name__ == "__main__":
+    exit(main())
+
+    parser.add_argument("--window", type=int, default=10, help="Word2Vec window size")
+    parser.add_argument("--epochs", type=int, default=50, help="Training epochs")
+    parser.add_argument("--p", type=float, default=1.0, help="Node2Vec p parameter")
+    parser.add_argument("--q", type=float, default=1.0, help="Node2Vec q parameter")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Normalize game name
+    game_map = {
+        "magic": "MTG",
+        "pokemon": "PKM",
+        "yugioh": "YGO",
+    }
+    game = game_map.get(args.game.lower(), args.game.upper())
+    
+    pairs_csv = Path(args.input)
+    output_path = Path(args.output)
+    
+    if not pairs_csv.exists():
+        logger.error(f"Input file not found: {pairs_csv}")
+        return 1
+    
+    try:
+        train_game_embeddings(
+            pairs_csv=pairs_csv,
+            output_path=output_path,
+            game=game,
+            dim=args.dim,
+            walk_length=args.walk_length,
+            num_walks=args.num_walks,
+            window=args.window,
+            epochs=args.epochs,
+            p=args.p,
+            q=args.q,
+        )
+        return 0
+    except Exception as e:
+        logger.error(f"Training failed: {e}", exc_info=True)
+        return 1
+
+if __name__ == "__main__":
+    exit(main())

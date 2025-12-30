@@ -1,0 +1,88 @@
+#!/bin/bash
+# Run hyperparameter search with runctl on AWS (fixed for SSM/IAM)
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
+
+echo "🚀 Starting hyperparameter search on AWS with runctl..."
+
+# Check for existing instance or create new
+echo "🔍 Checking for existing AWS instances..."
+AVAILABLE_INSTANCE=$(aws ec2 describe-instances \
+    --filters "Name=instance-state-name,Values=running" "Name=instance-type,Values=g4dn.xlarge" \
+    --query 'Reservations[*].Instances[*].InstanceId' \
+    --output text 2>/dev/null | head -1)
+
+INSTANCE_ID=""
+
+if [ -n "$AVAILABLE_INSTANCE" ] && [ "$AVAILABLE_INSTANCE" != "None" ] && [ "$AVAILABLE_INSTANCE" != "" ]; then
+    INSTANCE_STATE=$(aws ec2 describe-instances --instance-ids "$AVAILABLE_INSTANCE" --query 'Reservations[0].Instances[0].State.Name' --output text 2>/dev/null || echo "unknown")
+    if [ "$INSTANCE_STATE" = "running" ]; then
+        echo "✅ Using existing instance: $AVAILABLE_INSTANCE"
+        INSTANCE_ID="$AVAILABLE_INSTANCE"
+    fi
+fi
+
+if [ -z "$INSTANCE_ID" ]; then
+    echo "⏳ Creating new instance..."
+    INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot g4dn.xlarge 2>&1)
+    EXIT_CODE=$?
+    
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "⚠️  Failed to create g4dn.xlarge, trying t3.large..."
+        INSTANCE_OUTPUT=$($RUNCTL_BIN aws create --spot t3.large 2>&1)
+        EXIT_CODE=$?
+    fi
+    
+    if [ $EXIT_CODE -ne 0 ]; then
+        echo "❌ Failed to create instance"
+        echo "Output: $INSTANCE_OUTPUT"
+        exit 1
+    fi
+    
+    INSTANCE_ID=$(echo "$INSTANCE_OUTPUT" | grep -o 'i-[a-z0-9]*' | head -1)
+    if [ -z "$INSTANCE_ID" ]; then
+        echo "❌ Failed to extract instance ID"
+        exit 1
+    fi
+    
+    echo "✅ Instance created: $INSTANCE_ID"
+    echo "Waiting for instance to initialize..."
+    sleep 30
+fi
+
+# Run training - runctl should handle SSM automatically if no SSH key
+echo "Starting hyperparameter search..."
+echo "Instance: $INSTANCE_ID"
+echo "Script: src/ml/scripts/improve_embeddings_hyperparameter_search.py"
+
+# Check if instance has SSM enabled (no key pair)
+INSTANCE_KEY=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].KeyName' --output text 2>/dev/null || echo "None")
+
+if [ "$INSTANCE_KEY" = "None" ] || [ -z "$INSTANCE_KEY" ]; then
+    echo "ℹ️  Instance uses SSM (no SSH key), runctl should handle automatically"
+else
+    echo "ℹ️  Instance has key pair: $INSTANCE_KEY"
+    # Try to find SSH key
+    if [ -f ~/.ssh/${INSTANCE_KEY}.pem ]; then
+        export SSH_KEY_PATH=~/.ssh/${INSTANCE_KEY}.pem
+        echo "   Using SSH key: $SSH_KEY_PATH"
+    elif [ -f ~/.ssh/tarek.pem ]; then
+        export SSH_KEY_PATH=~/.ssh/tarek.pem
+        echo "   Using fallback SSH key: $SSH_KEY_PATH"
+    fi
+fi
+
+$RUNCTL_BIN aws train "$INSTANCE_ID" \
+    src/ml/scripts/improve_embeddings_hyperparameter_search.py \
+    --output-s3 s3://games-collections/experiments/ \
+    -- \
+    --input s3://games-collections/processed/pairs_large.csv \
+    --output s3://games-collections/experiments/hyperparameter_results.json \
+    --test-set s3://games-collections/processed/test_set_canonical_magic.json
+
+echo "✅ Training started. Monitoring..."
+$RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow
+

@@ -1,0 +1,91 @@
+#!/bin/bash
+# Fly.io Setup Script for decksage.cards
+# This script automates the Fly.io setup process
+
+set -e
+
+APP_NAME="decksage"
+DOMAIN="decksage.cards"
+
+echo "🚀 Setting up Fly.io deployment for $DOMAIN"
+echo ""
+
+# Check if fly CLI is installed
+if ! command -v fly &> /dev/null; then
+    echo "❌ Fly CLI not found. Installing..."
+    curl -L https://fly.io/install.sh | sh
+    export FLYCTL_INSTALL="$HOME/.fly"
+    export PATH="$FLYCTL_INSTALL/bin:$PATH"
+fi
+
+# Check if logged in
+if ! fly auth whoami &> /dev/null; then
+    echo "🔐 Please log in to Fly.io:"
+    fly auth login
+fi
+
+echo "✅ Fly CLI ready"
+echo ""
+
+# Create app if it doesn't exist
+if ! fly apps list | grep -q "$APP_NAME"; then
+    echo "📦 Creating Fly.io app: $APP_NAME"
+    fly apps create "$APP_NAME"
+else
+    echo "✅ App $APP_NAME already exists"
+fi
+
+# Allocate IPv6 (required for TLS)
+echo ""
+echo "🌐 Allocating IPv6 address (required for TLS)..."
+if ! fly ips list -a "$APP_NAME" | grep -q "v6"; then
+    fly ips allocate-v6 -a "$APP_NAME"
+else
+    echo "✅ IPv6 address already allocated"
+fi
+
+# Allocate IPv4 (recommended)
+echo ""
+echo "🌐 Allocating IPv4 address..."
+if ! fly ips list -a "$APP_NAME" | grep -q "v4"; then
+    fly ips allocate-v4 -a "$APP_NAME"
+else
+    echo "✅ IPv4 address already allocated"
+fi
+
+# Show IP addresses
+echo ""
+echo "📋 Current IP addresses:"
+fly ips list -a "$APP_NAME"
+
+# Add domain certificate
+echo ""
+echo "🔒 Adding domain certificate for $DOMAIN..."
+echo "This will show DNS configuration instructions."
+echo ""
+fly certs add "$DOMAIN" -a "$APP_NAME"
+
+echo ""
+echo "✅ Setup complete!"
+echo ""
+echo "📝 Next steps:"
+echo "1. Configure DNS records in AWS Route 53 (see deploy/flyio-setup.md)"
+echo "2. Wait for DNS propagation (5-60 minutes)"
+echo "3. Check certificate status: fly certs check $DOMAIN -a $APP_NAME"
+echo "4. Deploy your app: fly deploy -a $APP_NAME"
+echo ""
+echo "For detailed instructions, see: deploy/flyio-setup.md"
+
+
+
+
+
+
+
+
+
+
+
+
+
+

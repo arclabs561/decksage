@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"collections/blob"
+	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
@@ -78,10 +79,22 @@ func (d *Dataset) Extract(
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			for u := range urls {
-				if err := d.parseCollection(ctx, sc, u, opts); err != nil {
-					d.log.Field("url", u).Errorf(ctx, "failed to parse collection: %v", err)
-					continue
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				case u, ok := <-urls:
+					if !ok {
+						return
+					}
+					if err := d.parseCollection(ctx, sc, u, opts); err != nil {
+						d.log.Field("url", u).Errorf(ctx, "failed to parse collection: %v", err)
+						// Record error in statistics if available
+						if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+							stats.RecordCategorizedError(ctx, u, "goldfish", err)
+						}
+						continue
+					}
 				}
 			}
 		}()
@@ -89,6 +102,12 @@ func (d *Dataset) Extract(
 
 	if len(opts.ItemOnlyURLs) > 0 {
 		for _, u := range opts.ItemOnlyURLs {
+				// Check context cancellation before sending
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
+				}
 			urls <- u
 		}
 	} else {
@@ -123,7 +142,7 @@ func (d *Dataset) parseRoot(
 			href, ok := sel.Attr("href")
 			if !ok {
 				html, _ := sel.Html()
-				err = fmt.Errorf("mising href: %s", html)
+				err = fmt.Errorf("missing href: %s", html)
 				return false
 			}
 			var u string
@@ -157,6 +176,12 @@ SECTIONS:
 			for _, u := range parsed.CollectionURLs {
 				if shouldStop() {
 					break
+				}
+				// Check context cancellation before sending
+				select {
+				case <-ctx.Done():
+					return ctx.Err()
+				default:
 				}
 				total++
 				added++
@@ -270,12 +295,17 @@ func (d *Dataset) parseCollection(
 			return fmt.Errorf("failed to check if already parsed collection exists: %w", err)
 		}
 		if exists {
-			d.log.Field("url", u).Debugf(ctx, "parsed collection already is exists")
+			d.log.Field("url", u).Debugf(ctx, "parsed collection already exists")
 			return nil
 		}
 	}
 
-	page, err := d.fetch(ctx, sc, u, opts)
+	// Append #paper to URL to ensure paper tab is active
+	deckURL := u
+	if !strings.Contains(deckURL, "#") {
+		deckURL = deckURL + "#paper"
+	}
+	page, err := d.fetch(ctx, sc, deckURL, opts)
 	if err != nil {
 		return err
 	}
@@ -299,84 +329,97 @@ func (d *Dataset) parseCollection(
 	if dateSubmatches == nil {
 		return fmt.Errorf("failed to extract deck date")
 	}
-	date, err := time.Parse("Jan _2, 2006", dateSubmatches[1])
+	// Use centralized date parsing with validation
+	date, err := games.ParseDateWithValidation(dateSubmatches[1])
 	if err != nil {
-		return fmt.Errorf("failed to parse deck date: %w", err)
+		// Try fallback format specific to Goldfish
+		if fallbackDate, fallbackErr := time.Parse("Jan _2, 2006", dateSubmatches[1]); fallbackErr == nil {
+			// Validate the fallback date is in reasonable range
+			year := fallbackDate.Year()
+			if year >= 1990 && year <= 2100 {
+				date = fallbackDate
+			} else {
+				return fmt.Errorf("fallback date %q has invalid year %d (expected 1990-2100)", dateSubmatches[1], year)
+			}
+		} else {
+			return fmt.Errorf("failed to parse deck date %q: %w (fallback also failed: %v)", dateSubmatches[1], err, fallbackErr)
+		}
 	}
 
-	// MTGGoldfish embeds deck list in form input field with name="deck_input[deck]"
-	// Format is plain text: "COUNT CARDNAME" per line, with "--" or blank line separating main/sideboard
-	deckInput, exists := doc.Find(`input[name="deck_input[deck]"]`).First().Attr("value")
-	if !exists || deckInput == "" {
-		return fmt.Errorf("failed to find deck input field")
+	// Extract deck ID from URL for download endpoint
+	deckID := strings.TrimPrefix(u, "https://www.mtggoldfish.com/deck/")
+	deckID = strings.TrimSuffix(deckID, "#paper")
+	deckID = strings.TrimSuffix(deckID, "#")
+	
+	// Fetch deck in plain text format (much more reliable than HTML parsing)
+	downloadURL := fmt.Sprintf("https://www.mtggoldfish.com/deck/download/%s", deckID)
+	downloadPage, err := d.fetch(ctx, sc, downloadURL, opts)
+	if err != nil {
+		return fmt.Errorf("failed to fetch deck download: %w", err)
 	}
-
-	// Parse deck list from text format
-	partitions := []game.Partition{}
-	currentSection := "Main"
-	mainCards := []game.CardDesc{}
-	sideboardCards := []game.CardDesc{}
-
-	lines := strings.Split(deckInput, "\n")
+	
+	// Parse plain text deck format:
+	// "3 Card Name\n4 Another Card\n\n1 Sideboard Card\n..."
+	// Blank line separates main deck from sideboard
+	deckText := string(downloadPage.Response.Body)
+	lines := strings.Split(deckText, "\n")
+	
+	var mainCards []game.CardDesc
+	var sideboardCards []game.CardDesc
+	inSideboard := false
+	
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
+			inSideboard = true
 			continue
 		}
-		// Sideboard separator (case-insensitive check)
-		lineLower := strings.ToLower(line)
-		if line == "--" || lineLower == "sideboard" || strings.HasPrefix(lineLower, "sideboard") {
-			currentSection = "Sideboard"
-			continue
-		}
-
-		// Parse "COUNT CARDNAME" format
+		
+		// Parse format: "3 Card Name" or "4 Card Name"
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) != 2 {
-			continue
+			continue // Skip invalid lines
 		}
-		countStr := strings.TrimSpace(parts[0])
-		cardName := strings.TrimSpace(parts[1])
-
+		
+		countStr := parts[0]
+		cardName := parts[1]
+		
 		count, parseErr := strconv.ParseInt(countStr, 10, 0)
 		if parseErr != nil {
-			// Skip lines that don't start with a number
+			continue // Skip lines that don't start with a number
+		}
+		
+		// Normalize card name for consistency
+		normalizedName := games.NormalizeCardName(cardName)
+		if normalizedName == "" || count <= 0 {
 			continue
 		}
-
-		// Validate card count is reasonable (must be positive, max 100 for sanity)
-		if count <= 0 || count > 100 {
-			d.log.Field("url", u).Warnf(ctx, "invalid card count %d for %s, skipping", count, cardName)
-			continue
-		}
-
+		
 		card := game.CardDesc{
-			Name:  cardName,
+			Name:  normalizedName,
 			Count: int(count),
 		}
-
-		if currentSection == "Sideboard" {
+		
+		if inSideboard {
 			sideboardCards = append(sideboardCards, card)
 		} else {
 			mainCards = append(mainCards, card)
 		}
 	}
-
-	if len(mainCards) > 0 {
-		partitions = append(partitions, game.Partition{
-			Name:  "Main",
-			Cards: mainCards,
-		})
+	
+	if len(mainCards) == 0 {
+		return fmt.Errorf("failed to parse cards: no cards found in deck download")
 	}
+	
+	partitions := []game.Partition{{
+		Name:  "Main",
+		Cards: mainCards,
+	}}
 	if len(sideboardCards) > 0 {
 		partitions = append(partitions, game.Partition{
 			Name:  "Sideboard",
 			Cards: sideboardCards,
 		})
-	}
-
-	if len(partitions) == 0 {
-		return fmt.Errorf("no cards found in deck")
 	}
 
 	t := &game.CollectionTypeDeck{
@@ -393,7 +436,6 @@ func (d *Dataset) parseCollection(
 		URL:         u,
 		ReleaseDate: date,
 		Partitions:  partitions,
-		Source:      "goldfish", // Source tracking
 	}
 	if err := collection.Canonicalize(); err != nil {
 		return fmt.Errorf("collection is invalid: %w", err)
@@ -403,7 +445,16 @@ func (d *Dataset) parseCollection(
 	if err != nil {
 		return err
 	}
-	return d.blob.Write(ctx, bkey, b)
+	if err := d.blob.Write(ctx, bkey, b); err != nil {
+		return err
+	}
+	
+	// Record success in statistics if available
+	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+		stats.RecordSuccess()
+	}
+	
+	return nil
 }
 
 var prefix = filepath.Join("magic", "goldfish")

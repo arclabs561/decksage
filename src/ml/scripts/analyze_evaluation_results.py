@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+# ]
+# ///
+"""
+Analyze evaluation results and provide insights.
+
+Identifies:
+- Performance trends
+- Coverage issues
+- Metric consistency
+- Comparison to targets
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+
+def analyze_evaluation_results(results_path: Path) -> dict[str, Any]:
+    """Analyze evaluation results and provide insights."""
+    with open(results_path) as f:
+        data = json.load(f)
+    
+    results = data.get("results", {})
+    summary = data.get("summary", {})
+    
+    analysis = {
+        "test_set": data.get("test_set", "unknown"),
+        "total_methods": len(results),
+        "methods_with_errors": 0,
+        "methods_evaluated": 0,
+        "performance_analysis": {},
+        "coverage_analysis": {},
+        "recommendations": [],
+    }
+    
+    # Collect metrics
+    method_metrics = []
+    for method_name, metrics in results.items():
+        if "error" in metrics:
+            analysis["methods_with_errors"] += 1
+            continue
+        
+        analysis["methods_evaluated"] += 1
+        
+        p10 = metrics.get("p@10", 0.0)
+        mrr = metrics.get("mrr", metrics.get("mrr@10", 0.0))
+        num_eval = metrics.get("num_evaluated", metrics.get("num_queries", 0))
+        
+        method_metrics.append({
+            "method": method_name,
+            "p@10": p10,
+            "mrr": mrr,
+            "num_evaluated": num_eval,
+            "vocab_coverage": metrics.get("vocab_coverage", {}),
+        })
+        
+        # Coverage analysis
+        if "vocab_coverage" in metrics:
+            cov = metrics["vocab_coverage"]
+            total = cov.get("total_queries", 0)
+            found = cov.get("found_in_vocab", cov.get("found_in_graph", 0))
+            coverage_pct = (found / total * 100) if total > 0 else 0.0
+            
+            if coverage_pct < 90:
+                analysis["recommendations"].append(
+                    f"{method_name}: Low vocabulary coverage ({coverage_pct:.1f}%) - "
+                    f"consider improving name mapping or test set selection"
+                )
+    
+    if not method_metrics:
+        analysis["recommendations"].append("No methods successfully evaluated - check for errors")
+        return analysis
+    
+    # Performance analysis
+    df = pd.DataFrame(method_metrics)
+    
+    best_p10 = df.loc[df["p@10"].idxmax()]
+    best_mrr = df.loc[df["mrr"].idxmax()]
+    
+    analysis["performance_analysis"] = {
+        "best_p@10": {
+            "method": best_p10["method"],
+            "value": float(best_p10["p@10"]),
+        },
+        "best_mrr": {
+            "method": best_mrr["method"],
+            "value": float(best_mrr["mrr"]),
+        },
+        "p@10_range": {
+            "min": float(df["p@10"].min()),
+            "max": float(df["p@10"].max()),
+            "mean": float(df["p@10"].mean()),
+            "std": float(df["p@10"].std()),
+        },
+        "mrr_range": {
+            "min": float(df["mrr"].min()),
+            "max": float(df["mrr"].max()),
+            "mean": float(df["mrr"].mean()),
+            "std": float(df["mrr"].std()),
+        },
+    }
+    
+    # Compare to target (0.15 P@10 from project rules)
+    target_p10 = 0.15
+    best_p10_val = best_p10["p@10"]
+    if best_p10_val < target_p10:
+        gap = target_p10 - best_p10_val
+        analysis["recommendations"].append(
+            f"Performance gap: Best P@10 ({best_p10_val:.4f}) is {gap:.4f} below target (0.15). "
+            f"Need {gap/target_p10*100:.1f}% improvement."
+        )
+    else:
+        analysis["recommendations"].append(
+            f"✅ Target exceeded: Best P@10 ({best_p10_val:.4f}) exceeds target (0.15)"
+        )
+    
+    # Coverage summary
+    coverage_pcts = []
+    for m in method_metrics:
+        if "vocab_coverage" in m and m["vocab_coverage"]:
+            cov = m["vocab_coverage"]
+            total = cov.get("total_queries", 0)
+            found = cov.get("found_in_vocab", cov.get("found_in_graph", 0))
+            if total > 0:
+                coverage_pcts.append(found / total * 100)
+    
+    if coverage_pcts:
+        analysis["coverage_analysis"] = {
+            "mean_coverage": float(np.mean(coverage_pcts)),
+            "min_coverage": float(np.min(coverage_pcts)),
+            "max_coverage": float(np.max(coverage_pcts)),
+        }
+    
+    # Method comparison
+    if "jaccard" in results and "error" not in results["jaccard"]:
+        jaccard_p10 = results["jaccard"].get("p@10", 0.0)
+        embedding_better = df[df["p@10"] > jaccard_p10]
+        if len(embedding_better) > 0:
+            analysis["recommendations"].append(
+                f"✅ {len(embedding_better)} embedding method(s) outperform Jaccard baseline "
+                f"(Jaccard P@10: {jaccard_p10:.4f})"
+            )
+        else:
+            analysis["recommendations"].append(
+                f"⚠️  No embedding methods outperform Jaccard baseline "
+                f"(Jaccard P@10: {jaccard_p10:.4f})"
+            )
+    
+    return analysis
+
+
+def main() -> int:
+    """Analyze evaluation results."""
+    parser = argparse.ArgumentParser(description="Analyze evaluation results")
+    parser.add_argument("--results", type=str, required=True, help="Evaluation results JSON")
+    parser.add_argument("--output", type=str, help="Output analysis JSON (optional)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies (pandas, numpy)")
+        return 1
+    
+    results_path = Path(args.results)
+    if not results_path.exists():
+        print(f"❌ Results file not found: {results_path}")
+        return 1
+    
+    print("Analyzing evaluation results...")
+    analysis = analyze_evaluation_results(results_path)
+    
+    print("\n" + "=" * 70)
+    print("Evaluation Analysis")
+    print("=" * 70)
+    print(f"\nTest Set: {analysis['test_set']}")
+    print(f"Methods Evaluated: {analysis['methods_evaluated']}/{analysis['total_methods']}")
+    if analysis['methods_with_errors'] > 0:
+        print(f"Methods with Errors: {analysis['methods_with_errors']}")
+    
+    print("\n📊 Performance Analysis:")
+    perf = analysis["performance_analysis"]
+    print(f"  Best P@10: {perf['best_p@10']['method']} ({perf['best_p@10']['value']:.4f})")
+    print(f"  Best MRR: {perf['best_mrr']['method']} ({perf['best_mrr']['value']:.4f})")
+    print(f"  P@10 Range: {perf['p@10_range']['min']:.4f} - {perf['p@10_range']['max']:.4f} "
+          f"(mean: {perf['p@10_range']['mean']:.4f}, std: {perf['p@10_range']['std']:.4f})")
+    
+    if analysis["coverage_analysis"]:
+        cov = analysis["coverage_analysis"]
+        print(f"\n📈 Coverage Analysis:")
+        print(f"  Mean Coverage: {cov['mean_coverage']:.1f}%")
+        print(f"  Range: {cov['min_coverage']:.1f}% - {cov['max_coverage']:.1f}%")
+    
+    if analysis["recommendations"]:
+        print(f"\n💡 Recommendations:")
+        for rec in analysis["recommendations"]:
+            print(f"  - {rec}")
+    
+    if args.output:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(analysis, f, indent=2)
+        print(f"\n✅ Analysis saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

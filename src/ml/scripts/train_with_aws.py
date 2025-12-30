@@ -1,0 +1,214 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+# ]
+# ///
+"""
+Train embeddings using AWS resources.
+
+Can:
+1. Download data from S3
+2. Train embeddings locally or on EC2
+3. Upload results to S3
+
+Uses PEP 723 inline dependencies.
+"""
+
+import subprocess
+import sys
+from pathlib import Path
+
+def run_command(cmd: list[str], description: str) -> tuple[bool, str]:
+    """Run a command."""
+    print(f"\n{'='*70}")
+    print(f"{description}")
+    print(f"Command: {' '.join(cmd)}")
+    print(f"{'='*70}\n")
+    
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        
+        if result.returncode == 0:
+            return True, result.stdout
+        else:
+            return False, result.stderr or result.stdout
+    except Exception as e:
+        return False, str(e)
+
+
+def download_pairs_from_s3(bucket: str = "games-collections", local_path: Path = None) -> Path:
+    """Download pairs CSV from S3."""
+    if local_path is None:
+        local_path = Path("data/processed/pairs_large.csv")
+    
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    # Try different possible S3 paths
+    s3_paths = [
+        f"s3://{bucket}/processed/pairs_large.csv",
+        f"s3://{bucket}/pairs_large.csv",
+        f"s3://{bucket}/magic/pairs_large.csv",
+    ]
+    
+    for s3_path in s3_paths:
+        print(f"Trying: {s3_path}")
+        success, output = run_command(
+            ["aws", "s3", "cp", s3_path, str(local_path)],
+            f"Downloading pairs CSV from {s3_path}",
+        )
+        if success and local_path.exists():
+            print(f"  ✅ Downloaded to {local_path}")
+            return local_path
+    
+    print("  ⚠️ Pairs CSV not found in S3, using local if available")
+    return local_path if local_path.exists() else None
+
+
+def train_embeddings(pairs_csv: Path, output_name: str = "magic_128d", dim: int = 128) -> bool:
+    """Train embeddings."""
+    if not pairs_csv or not pairs_csv.exists():
+        print(f"❌ Pairs CSV not found: {pairs_csv}")
+        return False
+    
+    cmd = [
+        "uv", "run", "python", "-m", "src.ml.similarity.card_similarity_pecan",
+        "--input", str(pairs_csv),
+        "--output", output_name,
+        "--dim", str(dim),
+    ]
+    
+    success, output = run_command(cmd, "Training embeddings")
+    
+    if success:
+        embed_file = Path(f"data/embeddings/{output_name}_pecanpy.wv")
+        if embed_file.exists():
+            print(f"  ✅ Embeddings trained: {embed_file}")
+            return True
+    
+    print(f"  ❌ Training failed: {output[:500]}")
+    return False
+
+
+def upload_to_s3(local_path: Path, s3_path: str, description: str = "") -> bool:
+    """Upload file to S3."""
+    if not local_path.exists():
+        print(f"  ❌ File not found: {local_path}")
+        return False
+    
+    success, output = run_command(
+        ["aws", "s3", "cp", str(local_path), s3_path],
+        f"Uploading {description or local_path.name} to S3",
+    )
+    
+    return success
+
+
+def main() -> int:
+    """Main training pipeline."""
+    import argparse
+    
+    parser = argparse.ArgumentParser(description="Train embeddings with AWS")
+    parser.add_argument(
+        "--bucket",
+        type=str,
+        default="games-collections",
+        help="S3 bucket name",
+    )
+    parser.add_argument(
+        "--download",
+        action="store_true",
+        help="Download pairs CSV from S3 first",
+    )
+    parser.add_argument(
+        "--upload",
+        action="store_true",
+        help="Upload results to S3 after training",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="magic_128d",
+        help="Output embedding name",
+    )
+    parser.add_argument(
+        "--dim",
+        type=int,
+        default=128,
+        help="Embedding dimension",
+    )
+    parser.add_argument(
+        "--pairs-csv",
+        type=str,
+        help="Local pairs CSV path (skip download if provided)",
+    )
+    
+    args = parser.parse_args()
+    
+    print("=" * 70)
+    print("Train Embeddings with AWS")
+    print("=" * 70)
+    print()
+    
+    # Step 1: Get pairs CSV
+    pairs_csv = None
+    if args.pairs_csv:
+        pairs_csv = Path(args.pairs_csv)
+        if not pairs_csv.exists():
+            print(f"❌ Pairs CSV not found: {pairs_csv}")
+            return 1
+        print(f"✅ Using local pairs CSV: {pairs_csv}")
+    elif args.download:
+        print("Step 1: Downloading pairs CSV from S3...")
+        pairs_csv = download_pairs_from_s3(args.bucket)
+        if not pairs_csv:
+            print("❌ Failed to download pairs CSV")
+            return 1
+    else:
+        # Try local
+        local_paths = [
+            Path("data/processed/pairs_large.csv"),
+            Path("src/backend/pairs.csv"),
+        ]
+        for path in local_paths:
+            if path.exists():
+                pairs_csv = path
+                print(f"✅ Using local pairs CSV: {pairs_csv}")
+                break
+        
+        if not pairs_csv:
+            print("❌ No pairs CSV found locally. Use --download or --pairs-csv")
+            return 1
+    
+    # Step 2: Train embeddings
+    print("\nStep 2: Training embeddings...")
+    success = train_embeddings(pairs_csv, args.output, args.dim)
+    
+    if not success:
+        print("❌ Training failed")
+        return 1
+    
+    # Step 3: Upload to S3
+    if args.upload:
+        print("\nStep 3: Uploading to S3...")
+        embed_file = Path(f"data/embeddings/{args.output}_pecanpy.wv")
+        s3_path = f"s3://{args.bucket}/embeddings/{args.output}_pecanpy.wv"
+        upload_to_s3(embed_file, s3_path, "embeddings")
+    
+    print()
+    print("=" * 70)
+    print("✅ Training complete!")
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+

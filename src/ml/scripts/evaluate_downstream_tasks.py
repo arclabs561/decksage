@@ -1,0 +1,378 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Evaluate embeddings on downstream tasks:
+1. Deck completion
+2. Card substitution
+3. Contextual discovery
+
+Measures task-specific performance metrics.
+
+Research Basis:
+- Downstream task evaluation measures real-world utility
+- Task-specific metrics (P@K, completion rate, coverage) capture different aspects
+- Multi-task evaluation provides comprehensive assessment
+- Task weighting (primary=1.0, secondary=0.5) balances importance
+
+References:
+- Evaluating recommender systems: https://www.evidentlyai.com/ranking-metrics/evaluating-recommender-systems
+- Offline vs online evaluation: https://www.shaped.ai/blog/evaluating-recommender-models-offline-vs-online-evaluation
+- Recommendation evaluation: https://arxiv.org/pdf/2411.01354.pdf
+- A/B testing rankings: https://www.shaped.ai/blog/a-b-testing-your-rankings-metrics-that-matter-in-the-real-world
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any, Callable
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Fix import path
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.deck_building.deck_completion import (
+        suggest_additions,
+        suggest_replacements,
+        CompletionConfig,
+    )
+    from ml.deck_building.contextual_discovery import ContextualCardDiscovery
+    HAS_DOWNSTREAM = True
+except ImportError as e:
+    HAS_DOWNSTREAM = False
+    print(f"⚠️  Downstream modules not available: {e}")
+
+
+def evaluate_deck_completion(
+    embedding: KeyedVectors,
+    test_decks: list[dict],
+    game: str,
+    top_k: int = 10,
+) -> dict[str, Any]:
+    """Evaluate deck completion performance."""
+    if not HAS_DOWNSTREAM:
+        return {"error": "Downstream modules not available"}
+    
+    def candidate_fn(card: str, k: int) -> list[tuple[str, float]]:
+        if card not in embedding:
+            return []
+        similar = embedding.most_similar(card, topn=k)
+        return similar
+    
+    results = {
+        "total_decks": len(test_decks),
+        "completed": 0,
+        "avg_suggestions": 0.0,
+        "avg_quality": 0.0,
+    }
+    
+    total_suggestions = 0
+    total_quality = 0.0
+    
+    for deck in test_decks:
+        try:
+            suggestions = suggest_additions(
+                game=game,
+                deck=deck,
+                candidate_fn=candidate_fn,
+                top_k=top_k,
+            )
+            
+            if suggestions:
+                results["completed"] += 1
+                total_suggestions += len(suggestions)
+                # Quality: average similarity score
+                avg_score = sum(score for _, score, _ in suggestions) / len(suggestions)
+                total_quality += avg_score
+        except Exception as e:
+            continue
+    
+    if results["completed"] > 0:
+        results["avg_suggestions"] = total_suggestions / results["completed"]
+        results["avg_quality"] = total_quality / results["completed"]
+    
+    return results
+
+
+def evaluate_card_substitution(
+    embedding: KeyedVectors,
+    test_pairs: list[tuple[str, str]],  # (original_card, target_card)
+    game: str,
+    top_k: int = 10,
+) -> dict[str, Any]:
+    """Evaluate card substitution performance."""
+    if not HAS_DOWNSTREAM:
+        return {"error": "Downstream modules not available"}
+    
+    def candidate_fn(card: str, k: int) -> list[tuple[str, float]]:
+        if card not in embedding:
+            return []
+        similar = embedding.most_similar(card, topn=k)
+        return similar
+    
+    results = {
+        "total_pairs": len(test_pairs),
+        "found_substitute": 0,
+        "avg_rank": 0.0,
+        "p@1": 0.0,
+        "p@5": 0.0,
+        "p@10": 0.0,
+    }
+    
+    ranks = []
+    p_at_1 = 0
+    p_at_5 = 0
+    p_at_10 = 0
+    
+    for original, target in test_pairs:
+        try:
+            suggestions = suggest_replacements(
+                game=game,
+                deck={},  # Minimal deck for substitution
+                card=original,
+                candidate_fn=candidate_fn,
+                top_k=max(top_k, 50),  # Check more candidates for evaluation
+            )
+            
+            # Find target in suggestions
+            found = False
+            for rank, (card, score, _) in enumerate(suggestions, 1):
+                if card == target:
+                    ranks.append(rank)
+                    found = True
+                    if rank <= 1:
+                        p_at_1 += 1
+                    if rank <= 5:
+                        p_at_5 += 1
+                    if rank <= 10:
+                        p_at_10 += 1
+                    break
+            
+            if found:
+                results["found_substitute"] += 1
+        except Exception:
+            continue
+    
+    if results["total_pairs"] > 0:
+        results["avg_rank"] = np.mean(ranks) if ranks else float("inf")
+        results["p@1"] = p_at_1 / results["total_pairs"]
+        results["p@5"] = p_at_5 / results["total_pairs"]
+        results["p@10"] = p_at_10 / results["total_pairs"]
+        results["found_substitute"] = len(ranks)  # Fix: use actual count, not conditional increment
+    
+    return results
+
+
+def evaluate_contextual_discovery(
+    embedding: KeyedVectors,
+    test_queries: list[dict],  # {card, format, archetype, expected_synergies}
+    game: str,
+    top_k: int = 10,
+) -> dict[str, Any]:
+    """Evaluate contextual discovery performance."""
+    if not HAS_DOWNSTREAM:
+        return {"error": "Downstream modules not available"}
+    
+    def candidate_fn(card: str, k: int) -> list[tuple[str, float]]:
+        if card not in embedding:
+            return []
+        similar = embedding.most_similar(card, topn=k)
+        return similar
+    
+    # Create a minimal fusion object for contextual discovery
+    # Contextual discovery needs fusion.adj, so we'll use embedding similarity directly
+    # and create a simple adjacency structure from embedding
+    try:
+        from ml.similarity.fusion import WeightedLateFusion
+        
+        # Build simple adj from embedding (for cards in vocabulary)
+        adj = {}
+        for card in embedding.key_to_index.keys():
+            # Get top neighbors from embedding
+            try:
+                similar = embedding.most_similar(card, topn=50)
+                adj[card] = {neighbor for neighbor, _ in similar}
+            except KeyError:
+                adj[card] = set()
+        
+        fusion = WeightedLateFusion(
+            embeddings=embedding,
+            adj=adj,
+            weights=None,  # Use defaults
+        )
+        
+        discovery = ContextualCardDiscovery(
+            fusion=fusion,
+            price_fn=None,
+            tag_set_fn=None,
+            archetype_staples=None,
+            archetype_cooccurrence=None,
+            format_cooccurrence=None,
+        )
+    except Exception as e:
+        # Fallback: use embedding similarity directly
+        print(f"⚠️  Could not create fusion object: {e}, using embedding directly")
+        discovery = None
+    
+    results = {
+        "total_queries": len(test_queries),
+        "found_synergies": 0,
+        "avg_synergies": 0.0,
+    }
+    
+    total_synergies = 0
+    
+    for query in test_queries:
+        try:
+            card = query.get("card")
+            format_name = query.get("format")
+            archetype = query.get("archetype")
+            expected = set(query.get("expected_synergies", []))
+            
+            if discovery:
+                synergies = discovery.find_synergies(
+                    card,
+                    format=format_name,
+                    archetype=archetype,
+                    top_k=top_k,
+                )
+                # Convert CardSynergy objects to dicts
+                synergy_cards = [s.card if hasattr(s, 'card') else s.get('card', '') for s in synergies]
+            else:
+                # Fallback: use embedding similarity
+                if card not in embedding:
+                    continue
+                similar = embedding.most_similar(card, topn=top_k)
+                synergy_cards = [neighbor for neighbor, _ in similar]
+            
+            found_count = sum(1 for c in synergy_cards if c in expected)
+            if found_count > 0:
+                results["found_synergies"] += 1
+                total_synergies += found_count
+        except Exception as e:
+            continue
+    
+    if results["found_synergies"] > 0:
+        results["avg_synergies"] = total_synergies / results["found_synergies"]
+    
+    return results
+
+
+def main() -> int:
+    """Evaluate embeddings on downstream tasks."""
+    parser = argparse.ArgumentParser(description="Evaluate downstream tasks")
+    parser.add_argument("--embedding", type=str, required=True, help="Embedding file (.wv)")
+    parser.add_argument("--game", type=str, default="magic", choices=["magic", "pokemon", "yugioh"],
+                       help="Game to evaluate")
+    parser.add_argument("--output", type=str, required=True, help="Output JSON")
+    parser.add_argument("--test-decks", type=str, help="Test decks JSONL (for completion)")
+    parser.add_argument("--test-substitutions", type=str, help="Test substitution pairs JSON (for substitution)")
+    parser.add_argument("--test-contextual", type=str, help="Test contextual queries JSON (for discovery)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    # Load embedding
+    embed_path = Path(args.embedding)
+    if not embed_path.exists():
+        print(f"❌ Embedding not found: {embed_path}")
+        return 1
+    
+    print(f"Loading embedding: {embed_path}")
+    embedding = KeyedVectors.load(str(embed_path))
+    print(f"  Vocabulary: {len(embedding)} cards")
+    
+    results = {
+        "embedding": str(embed_path),
+        "game": args.game,
+        "tasks": {},
+    }
+    
+    # Evaluate deck completion
+    if args.test_decks:
+        test_decks_path = Path(args.test_decks)
+        if test_decks_path.exists():
+            print("\n📊 Evaluating deck completion...")
+            test_decks = []
+            with open(test_decks_path) as f:
+                for line in f:
+                    test_decks.append(json.loads(line))
+            
+            completion_results = evaluate_deck_completion(
+                embedding=embedding,
+                test_decks=test_decks,
+                game=args.game,
+            )
+            results["tasks"]["deck_completion"] = completion_results
+            print(f"  Completed: {completion_results.get('completed', 0)}/{completion_results.get('total_decks', 0)}")
+    
+    # Evaluate card substitution
+    if args.test_substitutions:
+        subs_path = Path(args.test_substitutions)
+        if subs_path.exists():
+            print("\n📊 Evaluating card substitution...")
+            with open(subs_path) as f:
+                test_pairs = json.load(f)
+            
+            substitution_results = evaluate_card_substitution(
+                embedding=embedding,
+                test_pairs=test_pairs,
+                game=args.game,
+            )
+            results["tasks"]["card_substitution"] = substitution_results
+            print(f"  P@10: {substitution_results.get('p@10', 0):.4f}")
+    
+    # Evaluate contextual discovery
+    if args.test_contextual:
+        contextual_path = Path(args.test_contextual)
+        if contextual_path.exists():
+            print("\n📊 Evaluating contextual discovery...")
+            with open(contextual_path) as f:
+                test_queries = json.load(f)
+            
+            discovery_results = evaluate_contextual_discovery(
+                embedding=embedding,
+                test_queries=test_queries,
+                game=args.game,
+            )
+            results["tasks"]["contextual_discovery"] = discovery_results
+            print(f"  Found synergies: {discovery_results.get('found_synergies', 0)}/{discovery_results.get('total_queries', 0)}")
+    
+    # Save results
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(results, f, indent=2)
+    
+    print(f"\n✅ Results saved to {output_path}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

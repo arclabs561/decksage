@@ -1,0 +1,353 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Expand test set using LLM-as-Judge with best practices.
+
+Based on research:
+- Clear evaluation criteria with examples
+- Iterative refinement
+- Diverse, representative queries
+- Validation against human standards
+- Adversarial test cases
+
+Target: Expand from 38 to 100+ queries.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+try:
+    from pydantic_ai import Agent
+    from pydantic import BaseModel, Field
+    
+    HAS_PYDANTIC_AI = True
+except ImportError:
+    HAS_PYDANTIC_AI = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+# Best practices prompt template
+TEST_QUERY_GENERATION_PROMPT = """You are an expert at generating high-quality test queries for card similarity evaluation.
+
+**Your Task**: Generate diverse test queries for Magic: The Gathering card similarity evaluation.
+
+**Evaluation Criteria** (what makes a good query):
+1. **Diverse card types**: Creatures, instants, sorceries, enchantments, artifacts, planeswalkers
+2. **Diverse formats**: Standard, Modern, Legacy, Commander, Limited
+3. **Diverse archetypes**: Aggro, Control, Combo, Midrange
+4. **Different power levels**: Commons, uncommons, rares, mythics
+5. **Different functions**: Removal, card draw, ramp, threats, answers
+6. **Edge cases**: Cards with unique mechanics, format-specific cards, banned cards
+
+**Query Quality Standards**:
+- Query should be a well-known card (not obscure)
+- Query should have clear similar cards (not ambiguous)
+- Query should represent a specific use case (substitute, synergy, archetype)
+- Query should be diverse from existing queries
+
+**Output Format**: For each query, provide:
+- query: Card name
+- use_case: substitute|synergy|archetype|functional
+- format: Format name (if format-specific)
+- archetype: Archetype name (if archetype-specific)
+- reasoning: Why this is a good test query
+- expected_similar_cards: List of 3-5 cards that should be highly relevant
+
+**Examples of Good Queries**:
+1. "Lightning Bolt" - Classic burn spell, many substitutes
+2. "Brainstorm" - Format-defining card draw, clear alternatives
+3. "Sol Ring" - Commander staple, clear functional equivalents
+4. "Counterspell" - Classic answer, many variants
+5. "Dark Confidant" - Archetype-defining card, clear synergies
+
+Generate {num_queries} diverse, high-quality test queries."""
+
+
+class TestQuery(BaseModel):
+    """A test query for card similarity evaluation."""
+    query: str = Field(description="Card name")
+    use_case: str = Field(description="substitute|synergy|archetype|functional")
+    format: str | None = Field(None, description="Format name if format-specific")
+    archetype: str | None = Field(None, description="Archetype name if archetype-specific")
+    reasoning: str = Field(description="Why this is a good test query")
+    expected_similar_cards: list[str] = Field(description="3-5 cards that should be highly relevant")
+
+
+class TestQueryBatch(BaseModel):
+    """Batch of test queries."""
+    queries: list[TestQuery] = Field(description="List of test queries")
+
+
+def make_query_generation_agent() -> Agent | None:
+    """Create LLM agent for generating test queries."""
+    if not HAS_PYDANTIC_AI:
+        return None
+    
+    try:
+        import os
+        from pathlib import Path
+        
+        # Load .env file if it exists
+        env_file = Path(__file__).parent.parent.parent.parent / ".env"
+        if env_file.exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv(env_file)
+            except ImportError:
+                # Fallback: manually parse .env
+                with open(env_file) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            key, value = line.split("=", 1)
+                            os.environ[key.strip()] = value.strip().strip('"').strip("'")
+        elif Path(".env").exists():
+            try:
+                from dotenv import load_dotenv
+                load_dotenv()
+            except ImportError:
+                pass
+        
+        # Get model from env or use default
+        # Use frontier models from leaderboard
+        model_name = (
+            os.getenv("ANNOTATOR_MODEL_BEST") or
+            os.getenv("ANNOTATOR_MODEL") or
+            os.getenv("OPENROUTER_MODEL") or
+            os.getenv("DEFAULT_LLM_MODEL") or
+            "anthropic/claude-opus-4.5"  # Top quality (#5 text, #1 webdev)
+        )
+        provider = os.getenv("LLM_PROVIDER", "openrouter")
+        
+        # Create agent directly (avoid import issues)
+        agent = Agent(
+            f"{provider}:{model_name}",
+            output_type=TestQueryBatch,
+            system_prompt=TEST_QUERY_GENERATION_PROMPT,
+        )
+        
+        return agent
+    except Exception as e:
+        logger.error(f"Failed to create agent: {e}")
+        return None
+    
+    model = get_default_model("annotator")  # Use annotator model for generation
+    
+    system_prompt = TEST_QUERY_GENERATION_PROMPT
+    
+    return make_agent(model, TestQueryBatch, system_prompt)
+
+
+def generate_queries(
+    agent: Agent,
+    num_queries: int,
+    existing_queries: set[str],
+) -> list[TestQuery]:
+    """Generate test queries using LLM."""
+    prompt = f"""Generate exactly {num_queries} diverse, high-quality test queries for Magic: The Gathering card similarity evaluation.
+
+**Existing queries** (avoid duplicates):
+{', '.join(list(existing_queries)[:20])}
+
+**Focus on diversity**:
+- Different card types (creatures, instants, sorceries, enchantments, artifacts, planeswalkers)
+- Different formats (Standard, Modern, Legacy, Commander, Limited)
+- Different archetypes (Aggro, Control, Combo, Midrange)
+- Different power levels and rarities
+- Edge cases and unique mechanics
+
+**Requirements for each query**:
+1. query: Card name (well-known, not obscure)
+2. use_case: One of: substitute, synergy, archetype, functional
+3. format: Format name if format-specific, null otherwise
+4. archetype: Archetype name if archetype-specific, null otherwise
+5. reasoning: Why this is a good test query (1-2 sentences)
+6. expected_similar_cards: List of 3-5 card names that should be highly relevant
+
+**Output Format**: Return a TestQueryBatch object with a "queries" list containing exactly {num_queries} TestQuery objects.
+
+Generate {num_queries} queries now."""
+    
+    try:
+        result = agent.run_sync(prompt)
+        logger.debug(f"LLM result type: {type(result)}")
+        logger.debug(f"LLM result data: {result.data if hasattr(result, 'data') else 'No data attr'}")
+        
+        if hasattr(result, 'data') and result.data:
+            batch = result.data
+            if isinstance(batch, TestQueryBatch):
+                return batch.queries
+            elif isinstance(batch, dict):
+                if "queries" in batch:
+                    return [TestQuery(**q) if isinstance(q, dict) else q for q in batch["queries"]]
+                # Try to parse as list
+                if isinstance(batch, list):
+                    return [TestQuery(**q) if isinstance(q, dict) else q for q in batch]
+        elif hasattr(result, 'output') and result.output:
+            # Try output attribute
+            batch = result.output
+            if isinstance(batch, TestQueryBatch):
+                return batch.queries
+    except Exception as e:
+        logger.error(f"Error generating queries: {e}")
+        import traceback
+        logger.debug(traceback.format_exc())
+    
+    return []
+
+
+def validate_queries(
+    queries: list[TestQuery],
+    existing_queries: set[str],
+) -> list[TestQuery]:
+    """Validate and filter queries."""
+    valid = []
+    
+    for query in queries:
+        # Check for duplicates
+        if query.query in existing_queries:
+            logger.debug(f"Skipping duplicate: {query.query}")
+            continue
+        
+        # Check for required fields
+        if not query.query or not query.use_case:
+            logger.debug(f"Skipping invalid: missing fields")
+            continue
+        
+        # Check use_case is valid
+        if query.use_case not in ["substitute", "synergy", "archetype", "functional"]:
+            logger.debug(f"Skipping invalid use_case: {query.use_case}")
+            continue
+        
+        valid.append(query)
+    
+    return valid
+
+
+def expand_test_set(
+    existing_test_set: dict[str, dict[str, Any]],
+    target_size: int,
+    batch_size: int = 10,
+) -> dict[str, dict[str, Any]]:
+    """Expand test set to target size."""
+    agent = make_query_generation_agent()
+    if not agent:
+        logger.error("Cannot create LLM agent (pydantic-ai not available)")
+        return existing_test_set
+    
+    existing_queries = set(existing_test_set.keys())
+    current_size = len(existing_queries)
+    needed = max(0, target_size - current_size)
+    
+    if needed == 0:
+        logger.info("Test set already at target size")
+        return existing_test_set
+    
+    logger.info(f"Expanding test set from {current_size} to {target_size} queries")
+    logger.info(f"Generating {needed} new queries in batches of {batch_size}")
+    
+    new_queries = {}
+    generated = 0
+    
+    while generated < needed:
+        batch_needed = min(batch_size, needed - generated)
+        
+        logger.info(f"Generating batch: {batch_needed} queries (progress: {generated}/{needed})")
+        
+        # Generate queries
+        queries = generate_queries(agent, batch_needed, existing_queries)
+        
+        # Validate
+        valid_queries = validate_queries(queries, existing_queries)
+        
+        # Add to new queries
+        for query in valid_queries:
+            # Convert to test set format (placeholder labels for now)
+            new_queries[query.query] = {
+                "use_case": query.use_case,
+                "format": query.format,
+                "archetype": query.archetype,
+                "reasoning": query.reasoning,
+                "expected_similar": query.expected_similar_cards,
+                # Placeholder labels (will be filled by LLM-as-Judge)
+                "highly_relevant": [],
+                "relevant": [],
+                "somewhat_relevant": [],
+                "marginally_relevant": [],
+                "irrelevant": [],
+            }
+            existing_queries.add(query.query)
+            generated += 1
+        
+        if len(valid_queries) == 0:
+            logger.warning("No valid queries generated, stopping")
+            break
+    
+    # Merge with existing
+    expanded = {**existing_test_set, **new_queries}
+    
+    logger.info(f"✅ Expanded test set: {len(existing_test_set)} → {len(expanded)} queries")
+    
+    return expanded
+
+
+def main() -> int:
+    """Expand test set."""
+    parser = argparse.ArgumentParser(description="Expand test set using LLM-as-Judge")
+    parser.add_argument("--input", type=str, required=True, help="Existing test set JSON")
+    parser.add_argument("--output", type=str, required=True, help="Output test set JSON")
+    parser.add_argument("--target-size", type=int, default=100, help="Target number of queries")
+    parser.add_argument("--batch-size", type=int, default=10, help="Batch size for generation")
+    
+    args = parser.parse_args()
+    
+    if not HAS_PYDANTIC_AI:
+        logger.error("pydantic-ai not available")
+        logger.error("Install with: pip install pydantic-ai")
+        return 1
+    
+    # Load existing test set
+    with open(args.input) as f:
+        test_data = json.load(f)
+        test_set = test_data.get("queries", test_data)
+    
+    # Expand
+    expanded = expand_test_set(test_set, args.target_size, args.batch_size)
+    
+    # Save
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    with open(output_path, "w") as f:
+        json.dump({
+            "version": "expanded",
+            "queries": expanded,
+            "metadata": {
+                "original_size": len(test_set),
+                "expanded_size": len(expanded),
+                "new_queries": len(expanded) - len(test_set),
+            },
+        }, f, indent=2)
+    
+    logger.info(f"✅ Expanded test set saved to {output_path}")
+    logger.info(f"📊 Size: {len(test_set)} → {len(expanded)} queries")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

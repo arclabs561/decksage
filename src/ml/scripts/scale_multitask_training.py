@@ -1,0 +1,101 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pandas>=2.0.0",
+#   "numpy<2.0.0",
+#   "pecanpy>=2.0.0",
+#   "gensim>=4.3.0",
+# ]
+# ///
+"""
+Scale multi-task training to full dataset.
+
+Uses optimal weight configuration (5x) and trains on full dataset
+instead of samples for maximum performance.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+import subprocess
+import sys
+from pathlib import Path
+from typing import Any
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def main() -> int:
+    """Scale multi-task training to full dataset."""
+    parser = argparse.ArgumentParser(description="Scale multi-task training to full dataset")
+    parser.add_argument("--pairs", type=Path, default=Path("data/processed/pairs_large.csv"), help="Pairs CSV")
+    parser.add_argument("--substitution-pairs", type=Path, default=Path("experiments/test_set_canonical_magic.json"), help="Substitution pairs")
+    parser.add_argument("--output", type=Path, default=Path("data/embeddings/multitask_sub5_full.wv"), help="Output .wv file")
+    parser.add_argument("--substitution-weight", type=float, default=5.0, help="Substitution weight (optimal: 5.0)")
+    parser.add_argument("--dim", type=int, default=128, help="Embedding dimension")
+    parser.add_argument("--epochs", type=int, default=10, help="Training epochs")
+    parser.add_argument("--use-aws", action="store_true", help="Train on AWS using runctl")
+    
+    args = parser.parse_args()
+    
+    logger.info("=" * 70)
+    logger.info("Scale Multi-Task Training to Full Dataset")
+    logger.info("=" * 70)
+    logger.info(f"Substitution weight: {args.substitution_weight}x")
+    logger.info(f"Output: {args.output}")
+    
+    if args.use_aws:
+        logger.info("\n🚀 Training on AWS...")
+        logger.info("  Using runctl for cloud training")
+        
+        # Use runctl for AWS training
+        cmd = [
+            "just", "train-aws", "instance",
+            "--input", str(args.pairs),
+            "--substitution-pairs", str(args.substitution_pairs),
+            "--output", str(args.output),
+            "--substitution-weight", str(args.substitution_weight),
+        ]
+        
+        logger.info(f"  Command: {' '.join(cmd)}")
+        logger.info("  Note: Configure AWS instance first")
+        
+        # For now, just log the command
+        logger.info("  Run manually: just train-aws instance ...")
+        return 0
+    else:
+        logger.info("\n💻 Training locally (full dataset)...")
+        logger.info("  This may take a while...")
+        
+        # Call train_multitask_refined with full dataset (no sampling)
+        cmd = [
+            sys.executable, "-m", "src.ml.scripts.train_multitask_refined",
+            "--pairs", str(args.pairs),
+            "--substitution-pairs", str(args.substitution_pairs),
+            "--output", str(args.output),
+            "--substitution-weight", str(args.substitution_weight),
+            "--dim", str(args.dim),
+            "--epochs", str(args.epochs),
+        ]
+        
+        logger.info(f"  Command: {' '.join(cmd)}")
+        
+        # Run training
+        result = subprocess.run(cmd, capture_output=False)
+        
+        if result.returncode == 0:
+            logger.info(f"\n✅ Training complete: {args.output}")
+            logger.info(f"   File size: {args.output.stat().st_size / 1024 / 1024:.1f} MB")
+            return 0
+        else:
+            logger.error(f"\n❌ Training failed with code {result.returncode}")
+            return 1
+
+
+if __name__ == "__main__":
+    exit(main())
+

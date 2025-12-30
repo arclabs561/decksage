@@ -1,0 +1,55 @@
+# Annotation Schema v1.0
+# 
+# Best practices for building high-quality similarity datasets:
+# - Multiple annotators per query (inter-annotator agreement)
+# - Version control for annotations
+# - Track annotator expertise
+# - Progressive expansion (start small, validate, grow)
+# - Consistent guidelines
+
+metadata:
+  schema_version: "1.0"
+  created: "2025-10-01"
+  game: "magic"
+  
+annotators:
+  - id: "annotator_001"
+    name: "Expert MTG Player"
+    expertise_level: "competitive"  # casual, competitive, professional
+    formats: ["Modern", "Legacy", "Pauper"]
+    date_joined: "2025-10-01"
+    annotations_completed: 0
+  
+  - id: "annotator_002"  
+    name: "Second Annotator"
+    expertise_level: "competitive"
+    formats: ["Modern", "Pioneer"]
+    date_joined: "2025-10-01"
+    annotations_completed: 0
+
+guidelines:
+  relevance_scale:
+    4: "Functional substitute - can replace in most decks (Chain Lightning for Lightning Bolt)"
+    3: "Very similar - same role/function (Fireblast for Lightning Bolt in Burn)"
+    2: "Synergy - works well together but different role (Monastery Swiftspear + Lightning Bolt)"
+    1: "Related - same archetype/color but different function (Rift Bolt, sorcery speed)"
+    0: "Irrelevant - completely different (Counterspell)"
+  
+  similarity_types:
+    substitute: "Functional replacement (same card type, similar effect)"
+    synergy: "Cards that work well together"
+    upgrade: "Strictly better or meta improvement"
+    downgrade: "Budget alternative"
+    archetype: "Common in same deck archetype"
+  
+  annotation_process:
+    - "Read query card carefully"
+    - "For each candidate, consider: function, cost, format legality"
+    - "Assign relevance score (0-4)"
+    - "Add notes for edge cases"
+    - "Flag uncertain annotations for review"
+
+annotations: []  # Will be populated below
+
+
+

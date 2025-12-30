@@ -1,0 +1,479 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "boto3>=1.34.0",
+# ]
+# ///
+"""
+Train embeddings on AWS EC2 instance.
+
+⚠️  DEPRECATED: Use train_on_aws_instance_runctl.py instead!
+This script uses direct SSM calls. The runctl version provides:
+- Unified instance management
+- Automatic SSM/SSH handling
+- Better S3 integration
+- Consistent with rest of codebase
+
+Creates/uses EC2 instance to train embeddings, then downloads results.
+Uses PEP 723 inline dependencies.
+"""
+
+from __future__ import annotations
+
+import argparse
+import subprocess
+import sys
+import time
+from pathlib import Path
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+    print("Install boto3: pip install boto3")
+
+
+def create_ec2_instance(
+    instance_type: str = "t3.medium",
+    ami_id: str = "ami-08fa3ed5577079e64",  # Amazon Linux 2023 (us-east-1)
+    key_name: str | None = None,
+    use_spot: bool = True,
+    spot_max_price: str | None = None,
+    fallback_to_ondemand: bool = True,
+) -> str | None:
+    """
+    Create EC2 instance for training.
+    
+    Args:
+        instance_type: EC2 instance type (e.g., "t3.medium", "c5.xlarge")
+        ami_id: AMI ID to use
+        key_name: Key pair name (optional)
+        use_spot: Use spot instances (default: True for cost savings)
+        spot_max_price: Maximum spot price (default: on-demand price)
+        fallback_to_ondemand: Fall back to on-demand if spot request fails
+    
+    Returns:
+        Instance ID or None if failed
+    """
+    if not HAS_BOTO3:
+        print("❌ boto3 not installed")
+        return None
+    
+    ec2 = boto3.client("ec2")
+    
+    user_data = """#!/bin/bash
+yum update -y
+yum install -y python3.11 python3.11-pip git
+pip3.11 install uv
+"""
+    
+    tags = [
+        {"Key": "Name", "Value": "decksage-training"},
+        {"Key": "Project", "Value": "decksage"},
+    ]
+    
+    # Try spot instance first if requested
+    if use_spot:
+        try:
+            print("💰 Attempting to launch spot instance (cost savings)...")
+            
+            # Get on-demand price for reference
+            if spot_max_price is None:
+                # Use on-demand price as max (typically spot is 70-90% cheaper)
+                pricing = boto3.client("pricing", region_name="us-east-1")
+                # For simplicity, use a reasonable max price (e.g., 80% of on-demand)
+                # In practice, you'd query the pricing API or use a fixed percentage
+                spot_max_price = "0.10"  # Default max price per hour (adjust per instance type)
+            
+            # Try to use SSM instance profile
+            iam_instance_profile = None
+            try:
+                iam = boto3.client("iam")
+                # Try EC2-SSM-InstanceProfile first (our custom one)
+                for profile_name in ["EC2-SSM-InstanceProfile", "AmazonSSMManagedInstanceCore"]:
+                    try:
+                        iam.get_instance_profile(InstanceProfileName=profile_name)
+                        iam_instance_profile = {"Name": profile_name}
+                        print(f"   Using IAM instance profile: {profile_name}")
+                        break
+                    except:
+                        continue
+                # If not found, try to find any SSM-related instance profile
+                if not iam_instance_profile:
+                    profiles = iam.list_instance_profiles()
+                    for profile in profiles.get("InstanceProfiles", []):
+                        if "SSM" in profile["InstanceProfileName"] or "ssm" in profile["InstanceProfileName"].lower():
+                            iam_instance_profile = {"Name": profile["InstanceProfileName"]}
+                            print(f"   Using IAM instance profile: {profile['InstanceProfileName']}")
+                            break
+            except Exception as e:
+                print(f"   ⚠️  Could not find IAM instance profile: {e}")
+                print("   Instance will be created without IAM role (SSM may not work)")
+            
+            run_kwargs = {
+                "ImageId": ami_id,
+                "MinCount": 1,
+                "MaxCount": 1,
+                "InstanceType": instance_type,
+                "UserData": user_data,
+                "InstanceMarketOptions": {
+                    "MarketType": "spot",
+                    "SpotOptions": {
+                        "MaxPrice": spot_max_price,
+                        "SpotInstanceType": "one-time",
+                        "InstanceInterruptionBehavior": "terminate",
+                    },
+                },
+                "TagSpecifications": [
+                    {
+                        "ResourceType": "instance",
+                        "Tags": tags + [{"Key": "InstanceType", "Value": "spot"}],
+                    }
+                ],
+            }
+            if key_name:
+                run_kwargs["KeyName"] = key_name
+            if iam_instance_profile:
+                run_kwargs["IamInstanceProfile"] = iam_instance_profile
+            
+            response = ec2.run_instances(**run_kwargs)
+            
+            instance_id = response["Instances"][0]["InstanceId"]
+            print(f"✅ Created spot instance: {instance_id}")
+            print(f"   Max price: ${spot_max_price}/hour")
+            return instance_id
+            
+        except Exception as e:
+            print(f"⚠️  Spot instance request failed: {e}")
+            if not fallback_to_ondemand:
+                print("❌ Not falling back to on-demand (--no-fallback specified)")
+                return None
+            print("🔄 Falling back to on-demand instance...")
+    
+    # Fall back to on-demand
+    try:
+        print("💳 Launching on-demand instance...")
+        # Try to use SSM instance profile
+        iam_instance_profile = None
+        try:
+            iam = boto3.client("iam")
+            for profile_name in ["EC2-SSM-InstanceProfile", "AmazonSSMManagedInstanceCore"]:
+                try:
+                    iam.get_instance_profile(InstanceProfileName=profile_name)
+                    iam_instance_profile = {"Name": profile_name}
+                    print(f"   Using IAM instance profile: {profile_name}")
+                    break
+                except:
+                    continue
+            if not iam_instance_profile:
+                profiles = iam.list_instance_profiles()
+                for profile in profiles.get("InstanceProfiles", []):
+                    if "SSM" in profile["InstanceProfileName"] or "ssm" in profile["InstanceProfileName"].lower():
+                        iam_instance_profile = {"Name": profile["InstanceProfileName"]}
+                        print(f"   Using IAM instance profile: {profile['InstanceProfileName']}")
+                        break
+        except Exception as e:
+            print(f"   ⚠️  Could not find IAM instance profile: {e}")
+        
+        run_kwargs = {
+            "ImageId": ami_id,
+            "MinCount": 1,
+            "MaxCount": 1,
+            "InstanceType": instance_type,
+            "UserData": user_data,
+            "TagSpecifications": [
+                {
+                    "ResourceType": "instance",
+                    "Tags": tags + [{"Key": "InstanceType", "Value": "on-demand"}],
+                }
+            ],
+        }
+        if key_name:
+            run_kwargs["KeyName"] = key_name
+        if iam_instance_profile:
+            run_kwargs["IamInstanceProfile"] = iam_instance_profile
+        
+        response = ec2.run_instances(**run_kwargs)
+        
+        instance_id = response["Instances"][0]["InstanceId"]
+        print(f"✅ Created on-demand instance: {instance_id}")
+        return instance_id
+    except Exception as e:
+        print(f"❌ Failed to create instance: {e}")
+        return None
+
+
+def wait_for_instance(instance_id: str, state: str = "running") -> bool:
+    """Wait for instance to reach desired state."""
+    if not HAS_BOTO3:
+        return False
+    
+    ec2 = boto3.client("ec2")
+    
+    print(f"⏳ Waiting for instance {instance_id} to be {state}...")
+    waiter = ec2.get_waiter(f"instance_{state}")
+    
+    try:
+        waiter.wait(InstanceIds=[instance_id], WaiterConfig={"Delay": 5, "MaxAttempts": 60})
+        print(f"✅ Instance is {state}")
+        return True
+    except Exception as e:
+        print(f"❌ Timeout waiting for instance: {e}")
+        return False
+
+
+def check_spot_interruption(instance_id: str) -> bool:
+    """Check if spot instance was interrupted."""
+    if not HAS_BOTO3:
+        return False
+    
+    ec2 = boto3.client("ec2")
+    
+    try:
+        response = ec2.describe_instances(InstanceIds=[instance_id])
+        instance = response["Reservations"][0]["Instances"][0]
+        
+        # Check if it's a spot instance
+        if "SpotInstanceRequestId" in instance:
+            # Check instance state
+            state = instance["State"]["Name"]
+            if state == "terminated":
+                # Check if it was interrupted
+                state_reason = instance.get("StateTransitionReason", "")
+                if "interrupted" in state_reason.lower() or "spot" in state_reason.lower():
+                    print(f"⚠️  Spot instance {instance_id} was interrupted")
+                    return True
+        
+        return False
+    except Exception as e:
+        print(f"⚠️  Could not check spot status: {e}")
+        return False
+
+
+def get_instance_ip(instance_id: str) -> str | None:
+    """Get public IP of instance."""
+    if not HAS_BOTO3:
+        return None
+    
+    ec2 = boto3.client("ec2")
+    
+    try:
+        response = ec2.describe_instances(InstanceIds=[instance_id])
+        instance = response["Reservations"][0]["Instances"][0]
+        return instance.get("PublicIpAddress")
+    except Exception as e:
+        print(f"❌ Failed to get IP: {e}")
+        return None
+
+
+def run_training_on_instance(
+    instance_id: str,
+    pairs_s3_path: str,
+    output_name: str,
+    dim: int = 128,
+) -> bool:
+    """Run training script on EC2 instance via SSM."""
+    if not HAS_BOTO3:
+        print("❌ boto3 not installed")
+        return False
+    
+    ssm = boto3.client("ssm")
+    
+    # Training command (fixed Python syntax - use heredoc to avoid f-string escaping issues)
+    command = f"""
+cd /tmp
+aws s3 cp {pairs_s3_path} pairs_large.csv
+pip3.11 install pecanpy gensim pandas numpy
+python3.11 << 'PYTHON_SCRIPT'
+from pecanpy.pecanpy import SparseOTF
+from gensim.models import Word2Vec
+import pandas as pd
+import subprocess
+
+# Prepare edgelist
+df = pd.read_csv('pairs_large.csv')
+with open('graph.edg', 'w') as f:
+    for _, row in df.iterrows():
+        f.write(f"{{row['NAME_1']}}\\t{{row['NAME_2']}}\\t{{row['COUNT_MULTISET']}}\\n")
+
+# Train
+g = SparseOTF(p=1.0, q=1.0, workers=4, verbose=True, extend=True)
+g.read_edg('graph.edg', weighted=True, directed=False)
+walks = g.simulate_walks(num_walks=10, walk_length=80)
+model = Word2Vec(walks, vector_size={dim}, window=10, min_count=0, sg=1, workers=4, epochs=1)
+model.wv.save('embeddings.wv')
+
+# Upload to S3
+subprocess.run(['aws', 's3', 'cp', 'embeddings.wv', 's3://games-collections/embeddings/{output_name}_pecanpy.wv'])
+PYTHON_SCRIPT
+"""
+    
+    try:
+        response = ssm.send_command(
+            InstanceIds=[instance_id],
+            DocumentName="AWS-RunShellScript",
+            Parameters={"commands": [command]},
+        )
+        
+        command_id = response["Command"]["CommandId"]
+        print(f"✅ Started training (command ID: {command_id})")
+        print("⏳ Training in progress... (this may take 10-30 minutes)")
+        
+        # Wait for command to complete
+        while True:
+            time.sleep(30)
+            status = ssm.get_command_invocation(
+                CommandId=command_id,
+                InstanceId=instance_id,
+            )
+            
+            if status["Status"] == "Success":
+                print("✅ Training complete!")
+                return True
+            elif status["Status"] == "Failed":
+                print(f"❌ Training failed: {status.get('StandardErrorContent', 'Unknown error')}")
+                return False
+        
+    except Exception as e:
+        print(f"❌ Failed to run training: {e}")
+        return False
+
+
+def main() -> int:
+    """Train embeddings on AWS EC2 instance."""
+    parser = argparse.ArgumentParser(description="Train embeddings on AWS EC2")
+    parser.add_argument(
+        "--instance-id",
+        type=str,
+        help="Existing EC2 instance ID (if not provided, creates new)",
+    )
+    parser.add_argument(
+        "--instance-type",
+        type=str,
+        default="t3.medium",
+        help="EC2 instance type",
+    )
+    parser.add_argument(
+        "--pairs-s3",
+        type=str,
+        default="s3://games-collections/processed/pairs_large.csv",
+        help="S3 path to pairs CSV",
+    )
+    parser.add_argument(
+        "--output",
+        type=str,
+        default="magic_128d",
+        help="Output name for embeddings",
+    )
+    parser.add_argument(
+        "--dim",
+        type=int,
+        default=128,
+        help="Embedding dimension",
+    )
+    parser.add_argument(
+        "--terminate",
+        action="store_true",
+        help="Terminate instance after training",
+    )
+    parser.add_argument(
+        "--no-spot",
+        action="store_true",
+        help="Use on-demand instances only (no spot)",
+    )
+    parser.add_argument(
+        "--spot-max-price",
+        type=str,
+        help="Maximum spot price per hour (default: auto-calculated)",
+    )
+    parser.add_argument(
+        "--no-fallback",
+        action="store_true",
+        help="Don't fall back to on-demand if spot request fails",
+    )
+    
+    args = parser.parse_args()
+    
+    if not HAS_BOTO3:
+        print("❌ boto3 not installed")
+        print("Install with: pip install boto3")
+        return 1
+    
+    print("=" * 70)
+    print("Train Embeddings on AWS EC2")
+    print("=" * 70)
+    print()
+    
+    # Get or create instance
+    if args.instance_id:
+        instance_id = args.instance_id
+        print(f"✅ Using existing instance: {instance_id}")
+    else:
+        print("Creating EC2 instance...")
+        instance_id = create_ec2_instance(
+            instance_type=args.instance_type,
+            use_spot=not args.no_spot,
+            spot_max_price=args.spot_max_price,
+            fallback_to_ondemand=not args.no_fallback,
+        )
+        if not instance_id:
+            return 1
+        
+        if not wait_for_instance(instance_id):
+            return 1
+    
+    # Wait for SSM agent to be ready
+    print("⏳ Waiting for SSM agent to be ready...")
+    time.sleep(60)
+    
+    # Run training
+    success = run_training_on_instance(
+        instance_id,
+        args.pairs_s3,
+        args.output,
+        args.dim,
+    )
+    
+    if not success:
+        return 1
+    
+    # Download results
+    print("\nDownloading embeddings from S3...")
+    local_path = Path(f"data/embeddings/{args.output}_pecanpy.wv")
+    local_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    result = subprocess.run(
+        [
+            "aws", "s3", "cp",
+            f"s3://games-collections/embeddings/{args.output}_pecanpy.wv",
+            str(local_path),
+        ],
+        capture_output=True,
+        text=True,
+    )
+    
+    if result.returncode == 0:
+        print(f"✅ Downloaded to {local_path}")
+    else:
+        print(f"⚠️  Download failed: {result.stderr}")
+    
+    # Terminate instance if requested
+    if args.terminate:
+        print("\nTerminating instance...")
+        ec2 = boto3.client("ec2")
+        ec2.terminate_instances(InstanceIds=[instance_id])
+        print("✅ Instance terminated")
+    
+    print()
+    print("=" * 70)
+    print("✅ Training complete!")
+    print("=" * 70)
+    
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
+
