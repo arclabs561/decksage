@@ -108,3 +108,5 @@ report/
 /logs/
 /.mypy_cache/
 .mypy_cache/
+# Large JSON config files
+/src/ml/*_functional_tags.json
