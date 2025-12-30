@@ -110,3 +110,6 @@ report/
 .mypy_cache/
 # Large JSON config files
 /src/ml/*_functional_tags.json
+# Frontend dependencies
+/src/frontend/*/node_modules/
+src/frontend/*/node_modules/
