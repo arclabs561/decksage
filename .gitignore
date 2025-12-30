@@ -103,3 +103,8 @@ report/
 /data/processed/card_attributes_enriched.csv
 /experiments/*.json
 /.cache/**
+# Logs and cache
+*.log
+/logs/
+/.mypy_cache/
+.mypy_cache/
