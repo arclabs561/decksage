@@ -97,3 +97,9 @@ report/
 
 # Snyk Security Extension - AI Rules (auto-generated)
 .cursor/rules/snyk_rules.mdc
+# Additional large files to ignore
+/data/decks/*.jsonl
+/data/processed/decks_pokemon.jsonl
+/data/processed/card_attributes_enriched.csv
+/experiments/*.json
+/.cache/**
