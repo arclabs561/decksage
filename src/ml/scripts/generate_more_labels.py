@@ -1,0 +1,392 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pydantic-ai>=0.0.12",
+# ]
+# ///
+"""
+Generate more labeled data using enhanced prompts.
+
+This script can:
+1. Add more labels to existing queries (deepen existing test set)
+2. Generate labels for queries that don't have them yet
+3. Optionally generate new queries and label them
+"""
+
+import argparse
+import json
+import logging
+import sys
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from pathlib import Path
+from typing import Any
+
+# Add scripts to path
+script_dir = Path(__file__).parent
+if str(script_dir) not in sys.path:
+    sys.path.insert(0, str(script_dir))
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+try:
+    from generate_labels_multi_judge import generate_labels_multi_judge
+    from expand_test_set_with_llm import expand_test_set
+    HAS_SCRIPTS = True
+except ImportError as e:
+    logger.error(f"Could not import scripts: {e}")
+    HAS_SCRIPTS = False
+
+
+def deepen_existing_labels(
+    test_set_path: Path,
+    output_path: Path,
+    num_judges: int = 3,
+    min_labels_per_query: int = 20,
+    game: str | None = None,
+) -> dict[str, Any]:
+    """Add more labels to existing queries."""
+    logger.info(f"Loading test set from {test_set_path}")
+    
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    # Detect game from metadata if not provided
+    if not game:
+        if isinstance(data, dict) and "game" in data:
+            game = data["game"]
+        else:
+            # Try to infer from path
+            path_str = str(test_set_path).lower()
+            if "pokemon" in path_str or "pkm" in path_str:
+                game = "pokemon"
+            elif "yugioh" in path_str or "ygo" in path_str:
+                game = "yugioh"
+            else:
+                game = "magic"  # Default
+        logger.info(f"Detected game: {game}")
+    
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    
+    logger.info(f"Found {len(queries)} queries")
+    
+    # Find queries that need more labels
+    queries_to_deepen = []
+    for query_name, query_data in queries.items():
+        if not isinstance(query_data, dict):
+            continue
+        
+        current_count = sum(
+            len(query_data.get(level, []))
+            for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]
+        )
+        
+        if current_count < min_labels_per_query:
+            queries_to_deepen.append((query_name, query_data, current_count))
+    
+    logger.info(f"Found {len(queries_to_deepen)} queries with < {min_labels_per_query} labels")
+    
+    if not queries_to_deepen:
+        logger.info("✅ All queries have sufficient labels")
+        return {"deepened": 0, "total": len(queries)}
+    
+    # Generate more labels in parallel
+    updated = queries.copy() if isinstance(queries, dict) else {q: d for q, d in queries.items()}
+    deepened = 0
+    
+    def process_query(query_info):
+        """Process a single query in parallel."""
+        query_name, query_data, current_count = query_info
+        logger.info(f"Deepening {query_name} ({current_count} labels -> target: {min_labels_per_query})...")
+        
+        use_case = query_data.get("use_case")
+        
+        try:
+            result = generate_labels_multi_judge(query_name, num_judges=num_judges, use_case=use_case)
+            
+            if result:
+                # Merge new labels with existing (avoid duplicates)
+                existing_sets = {
+                    level: set(query_data.get(level, []))
+                    for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]
+                }
+                
+                merged = query_data.copy()
+                added = 0
+                
+                # Deduplicate: a card should only appear in the highest relevance level
+                all_new_cards = {}  # card -> level (track highest level)
+                for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+                    for card in result.get(level, []):
+                        if card not in existing_sets[level]:
+                            # If card already seen in a higher level, skip
+                            if card not in all_new_cards:
+                                all_new_cards[card] = level
+                            else:
+                                # Keep the higher relevance level
+                                level_order = {"highly_relevant": 4, "relevant": 3, "somewhat_relevant": 2, "marginally_relevant": 1}
+                                if level_order[level] > level_order[all_new_cards[card]]:
+                                    all_new_cards[card] = level
+                
+                # Add cards to appropriate levels
+                for card, level in all_new_cards.items():
+                    if card not in existing_sets[level]:
+                        merged[level] = list(existing_sets[level]) + [card]
+                        added += 1
+                
+                # Also check for duplicates across existing levels
+                all_existing = set()
+                for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+                    existing_list = list(existing_sets[level])
+                    deduped = [c for c in existing_list if c not in all_existing]
+                    all_existing.update(deduped)
+                    merged[level] = deduped
+                
+                new_count = sum(len(merged.get(level, [])) for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"])
+                
+                merged["iaa"] = result.get("iaa", {})
+                
+                logger.info(f"  ✅ {query_name}: Added {added} new labels (now {new_count} total)")
+                return (query_name, merged, True)
+            else:
+                logger.warning(f"  ⚠️  {query_name}: No labels generated")
+                return (query_name, None, False)
+        except Exception as e:
+            logger.error(f"  ❌ Error deepening {query_name}: {e}")
+            return (query_name, None, False)
+    
+    # Process in parallel
+    max_workers = min(len(queries_to_deepen), 10)  # Up to 10 concurrent queries
+    logger.info(f"Processing {len(queries_to_deepen)} queries with {max_workers} parallel workers...")
+    
+    checkpoint_path = output_path.parent / f"{output_path.stem}_checkpoint.json"
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(process_query, query_info): query_info
+            for query_info in queries_to_deepen
+        }
+        
+        completed = 0
+        for future in as_completed(futures):
+            try:
+                query_name, merged_data, success = future.result(timeout=300.0)  # 5 min per query
+                if success and merged_data:
+                    updated[query_name] = merged_data
+                    deepened += 1
+                
+                completed += 1
+                # Checkpoint every 5 queries
+                if completed % 5 == 0:
+                    logger.info(f"  💾 Checkpoint: {completed}/{len(queries_to_deepen)} queries processed")
+                    with open(checkpoint_path, "w") as f:
+                        json.dump({"version": "deepened_checkpoint", "queries": updated}, f, indent=2)
+            except Exception as e:
+                query_info = futures[future]
+                logger.error(f"Failed to process {query_info[0]}: {e}")
+    
+    # Save
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_data = {
+        "version": "deepened",
+        "queries": updated,
+    }
+    
+    with open(output_path, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    logger.info(f"✅ Deepened {deepened} queries")
+    logger.info(f"✅ Saved to {output_path}")
+    
+    return {"deepened": deepened, "total": len(updated)}
+
+
+def generate_labels_for_missing(
+    test_set_path: Path,
+    output_path: Path,
+    num_judges: int = 3,
+    game: str | None = None,
+) -> dict[str, Any]:
+    """Generate labels for queries that don't have them."""
+    logger.info(f"Loading test set from {test_set_path}")
+    
+    with open(test_set_path) as f:
+        data = json.load(f)
+    
+    # Detect game from metadata if not provided
+    if not game:
+        if isinstance(data, dict) and "game" in data:
+            game = data["game"]
+        else:
+            # Try to infer from path
+            path_str = str(test_set_path).lower()
+            if "pokemon" in path_str or "pkm" in path_str:
+                game = "pokemon"
+            elif "yugioh" in path_str or "ygo" in path_str:
+                game = "yugioh"
+            else:
+                game = "magic"  # Default
+        logger.info(f"Detected game: {game}")
+    
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    
+    # Find queries missing labels
+    queries_needing_labels = []
+    for query_name, query_data in queries.items():
+        if not isinstance(query_data, dict):
+            continue
+        
+        has_labels = (
+            query_data.get("highly_relevant") or
+            query_data.get("relevant") or
+            query_data.get("somewhat_relevant")
+        )
+        
+        if not has_labels:
+            queries_needing_labels.append((query_name, query_data))
+    
+    logger.info(f"Found {len(queries_needing_labels)} queries needing labels")
+    
+    if not queries_needing_labels:
+        logger.info("✅ All queries already have labels")
+        return {"labeled": 0, "total": len(queries)}
+    
+    # Generate labels in parallel
+    updated = queries.copy() if isinstance(queries, dict) else {q: d for q, d in queries.items()}
+    labeled = 0
+    
+    def process_query(query_info):
+        """Process a single query in parallel."""
+        query_name, query_data = query_info
+        logger.info(f"Generating labels for {query_name}...")
+        
+        use_case = query_data.get("use_case")
+        
+        try:
+            result = generate_labels_multi_judge(query_name, num_judges=num_judges, use_case=use_case)
+            
+            if result:
+                query_result = {
+                    **query_data,
+                    **{k: v for k, v in result.items() if k != "iaa"},
+                    "iaa": result.get("iaa", {}),
+                }
+                
+                num_labels = sum(len(result.get(level, [])) for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"])
+                logger.info(f"  ✅ {query_name}: Generated {num_labels} labels")
+                return (query_name, query_result, True)
+            else:
+                logger.warning(f"  ⚠️  {query_name}: No labels generated")
+                return (query_name, None, False)
+        except Exception as e:
+            logger.error(f"  ❌ Error labeling {query_name}: {e}")
+            return (query_name, None, False)
+    
+    # Process in parallel
+    max_workers = min(len(queries_needing_labels), 10)  # Up to 10 concurrent queries
+    logger.info(f"Processing {len(queries_needing_labels)} queries with {max_workers} parallel workers...")
+    
+    with ThreadPoolExecutor(max_workers=max_workers) as executor:
+        futures = {
+            executor.submit(process_query, query_info): query_info
+            for query_info in queries_needing_labels
+        }
+        
+        for future in as_completed(futures):
+            try:
+                query_name, query_result, success = future.result(timeout=300.0)  # 5 min per query
+                if success and query_result:
+                    updated[query_name] = query_result
+                    labeled += 1
+            except Exception as e:
+                query_info = futures[future]
+                logger.error(f"Failed to process {query_info[0]}: {e}")
+    
+    # Save
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_data = {
+        "version": "labeled",
+        "queries": updated,
+    }
+    
+    with open(output_path, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    logger.info(f"✅ Labeled {labeled} queries")
+    logger.info(f"✅ Saved to {output_path}")
+    
+    return {"labeled": labeled, "total": len(updated)}
+
+
+def main() -> int:
+    """Main entry point."""
+    parser = argparse.ArgumentParser(description="Generate more labeled data")
+    parser.add_argument("--input", type=str, required=True, help="Input test set JSON")
+    parser.add_argument("--output", type=str, required=True, help="Output test set JSON")
+    parser.add_argument("--mode", choices=["deepen", "label", "expand"], default="deepen",
+                       help="Mode: deepen (add more labels), label (label missing), expand (new queries)")
+    parser.add_argument("--num-judges", type=int, default=3, help="Number of judges per query")
+    parser.add_argument("--min-labels", type=int, default=20, help="Minimum labels per query (for deepen mode)")
+    parser.add_argument("--num-new-queries", type=int, default=20, help="Number of new queries (for expand mode)")
+    parser.add_argument("--game", type=str, choices=["magic", "pokemon", "yugioh"], help="Game name (auto-detected if not provided)")
+    
+    args = parser.parse_args()
+    
+    if not HAS_SCRIPTS:
+        logger.error("Required scripts not available")
+        return 1
+    
+    input_path = Path(args.input)
+    output_path = Path(args.output)
+    
+    if not input_path.exists():
+        logger.error(f"Input not found: {input_path}")
+        return 1
+    
+    if args.mode == "deepen":
+        result = deepen_existing_labels(
+            input_path,
+            output_path,
+            num_judges=args.num_judges,
+            min_labels_per_query=args.min_labels,
+            game=args.game,
+        )
+        print(f"\n=== Results ===")
+        print(f"Deepened: {result['deepened']}")
+        print(f"Total queries: {result['total']}")
+    
+    elif args.mode == "label":
+        result = generate_labels_for_missing(
+            input_path,
+            output_path,
+            num_judges=args.num_judges,
+            game=args.game,
+        )
+        print(f"\n=== Results ===")
+        print(f"Labeled: {result['labeled']}")
+        print(f"Total queries: {result['total']}")
+    
+    elif args.mode == "expand":
+        # Use expand_test_set_with_llm
+        result = expand_test_set(
+            input_path,
+            output_path,
+            num_new_queries=args.num_new_queries,
+            num_judges=args.num_judges,
+            batch_size=10,
+            parallel_judges=True,
+        )
+        print(f"\n=== Results ===")
+        print(f"Existing queries: {result.get('existing_queries', 0)}")
+        print(f"New queries: {result.get('new_queries', 0)}")
+        print(f"Successfully labeled: {result.get('successfully_labeled', 0)}")
+        print(f"Total queries: {result.get('total_queries', 0)}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

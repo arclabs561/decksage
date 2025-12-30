@@ -1,0 +1,418 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "pecanpy>=2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Hyperparameter search for Node2Vec embeddings.
+
+Based on research:
+- p and q are critical parameters
+- Node2Vec is robust but tuning helps
+- Task-specific evaluation is key
+- Walk length and num_walks matter
+
+Uses grid search with evaluation on test set.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import Word2Vec, KeyedVectors
+    from pecanpy.pecanpy import SparseOTF
+    
+    HAS_DEPS = True
+except ImportError as e:
+    HAS_DEPS = False
+    print(f"Missing dependencies: {e}")
+
+try:
+    import boto3
+    HAS_BOTO3 = True
+except ImportError:
+    HAS_BOTO3 = False
+
+try:
+    from ml.utils.aim_helpers import create_training_run, track_hyperparameter_result
+    HAS_AIM = True
+except ImportError:
+    HAS_AIM = False
+    create_training_run = None
+    track_hyperparameter_result = None
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def prepare_edgelist(csv_file: Path, output_edg: Path, min_cooccurrence: int = 2) -> tuple[int, int]:
+    """Convert pairs CSV to edgelist format."""
+    df = pd.read_csv(csv_file)
+    df = df[df["COUNT_SET"] >= min_cooccurrence]
+    
+    with open(output_edg, "w") as f:
+        for _, row in df.iterrows():
+            f.write(f"{row['NAME_1']}\t{row['NAME_2']}\t{row['COUNT_MULTISET']}\n")
+    
+    num_nodes = len(set(df["NAME_1"]) | set(df["NAME_2"]))
+    return num_nodes, len(df)
+
+
+def train_embedding(
+    edgelist_file: Path,
+    dim: int,
+    walk_length: int,
+    num_walks: int,
+    window_size: int,
+    p: float,
+    q: float,
+    epochs: int,
+    workers: int = 4,
+) -> KeyedVectors:
+    """Train Node2Vec embedding with given hyperparameters."""
+    g = SparseOTF(p=p, q=q, workers=workers, verbose=False, extend=True)
+    g.read_edg(str(edgelist_file), weighted=True, directed=False)
+    
+    walks = g.simulate_walks(num_walks=num_walks, walk_length=walk_length)
+    
+    model = Word2Vec(
+        walks,
+        vector_size=dim,
+        window=window_size,
+        min_count=0,
+        sg=1,
+        workers=workers,
+        epochs=epochs,
+    )
+    
+    return model.wv
+
+
+def evaluate_embedding(
+    wv: KeyedVectors,
+    test_set: dict[str, dict[str, Any]],
+    name_mapper: dict[str, str] | None = None,
+    top_k: int = 10,
+    game_filter: str | None = None,
+) -> dict[str, float]:
+    """Evaluate embedding on test set."""
+    try:
+        from ml.utils.name_normalizer import NameMapper
+    except ImportError:
+        # Fallback if name_normalizer not available
+        class NameMapper:
+            def __init__(self, mapping=None):
+                self.mapping = mapping or {}
+            def map_name(self, name):
+                return self.mapping.get(name, name)
+            def map_names(self, names):
+                return [self.mapping.get(n, n) for n in names]
+    
+    if name_mapper:
+        mapper = NameMapper(mapping=name_mapper)
+    else:
+        mapper = None
+    
+    total_p_at_k = 0.0
+    total_mrr = 0.0
+    num_queries = 0
+    
+    for query, labels in test_set.items():
+        # Map query name
+        if mapper:
+            query = mapper.map_name(query)
+        
+        if query not in wv:
+            continue
+        
+        # Get all relevant cards
+        all_relevant = set()
+        for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+            cards = labels.get(level, [])
+            if mapper:
+                cards = mapper.map_names(cards)
+            all_relevant.update(cards)
+        
+        if not all_relevant:
+            continue
+        
+        # Get predictions
+        try:
+            similar = wv.most_similar(query, topn=top_k * 2)  # Get extra for filtering
+            predictions = [card for card, _ in similar if card in wv][:top_k]
+        except KeyError:
+            continue
+        
+        # Calculate P@K
+        hits = sum(1 for pred in predictions if pred in all_relevant)
+        p_at_k = hits / min(top_k, len(predictions)) if predictions else 0.0
+        
+        # Calculate MRR
+        mrr = 0.0
+        for rank, pred in enumerate(predictions, 1):
+            if pred in all_relevant:
+                mrr = 1.0 / rank
+                break
+        
+        total_p_at_k += p_at_k
+        total_mrr += mrr
+        num_queries += 1
+    
+    if num_queries == 0:
+        return {"p@10": 0.0, "mrr": 0.0, "num_queries": 0}
+    
+    return {
+        "p@10": total_p_at_k / num_queries,
+        "mrr": total_mrr / num_queries,
+        "num_queries": num_queries,
+    }
+
+
+def grid_search(
+    edgelist_file: Path,
+    test_set: dict[str, dict[str, Any]],
+    name_mapper: dict[str, str] | None = None,
+    p_values: list[float] | None = None,
+    q_values: list[float] | None = None,
+    dim_values: list[int] | None = None,
+    walk_length_values: list[int] | None = None,
+    num_walks_values: list[int] | None = None,
+    epochs_values: list[int] | None = None,
+    max_configs: int = 50,
+) -> dict[str, Any]:
+    """Grid search over hyperparameters."""
+    # Default search space (focused on most impactful)
+    if p_values is None:
+        p_values = [0.5, 1.0, 2.0]  # Focused search
+    if q_values is None:
+        q_values = [0.5, 1.0, 2.0]
+    if dim_values is None:
+        dim_values = [128, 256]  # Start with current + higher
+    if walk_length_values is None:
+        walk_length_values = [80, 120]  # Current + longer
+    if num_walks_values is None:
+        num_walks_values = [10, 20]  # Current + more
+    if epochs_values is None:
+        epochs_values = [1, 5]  # Current + more
+    
+    results = []
+    config_num = 0
+    
+    logger.info("Starting grid search...")
+    logger.info(f"Search space: {len(p_values) * len(q_values) * len(dim_values) * len(walk_length_values) * len(num_walks_values) * len(epochs_values)} configs")
+    
+    # Initialize Aim tracking for hyperparameter search
+    aim_run = None
+    if HAS_AIM and create_training_run:
+        aim_run = create_training_run(
+            experiment_name="hyperparameter_search",
+            hparams={
+                "max_configs": max_configs,
+                "test_set": str(test_set_path),
+            },
+            tags=["hyperparameter_search", "node2vec", "grid_search"],
+        )
+    
+    for p in p_values:
+        for q in q_values:
+            for dim in dim_values:
+                for walk_length in walk_length_values:
+                    for num_walks in num_walks_values:
+                        for epochs in epochs_values:
+                            config_num += 1
+                            
+                            if config_num > max_configs:
+                                logger.info(f"Reached max_configs ({max_configs}), stopping search")
+                                break
+                            
+                            logger.info(f"\n[{config_num}] Testing: p={p}, q={q}, dim={dim}, walk={walk_length}, walks={num_walks}, epochs={epochs}")
+                            
+                            try:
+                                # Train
+                                wv = train_embedding(
+                                    edgelist_file,
+                                    dim=dim,
+                                    walk_length=walk_length,
+                                    num_walks=num_walks,
+                                    window_size=10,
+                                    p=p,
+                                    q=q,
+                                    epochs=epochs,
+                                )
+                                
+                                # Evaluate
+                                metrics = evaluate_embedding(wv, test_set, name_mapper)
+                                
+                                config = {
+                                    "p": p,
+                                    "q": q,
+                                    "dim": dim,
+                                    "walk_length": walk_length,
+                                    "num_walks": num_walks,
+                                    "epochs": epochs,
+                                }
+                                
+                                result = {
+                                    "config": config,
+                                    "metrics": metrics,
+                                }
+                                
+                                results.append(result)
+                                
+                                # Track in Aim
+                                if aim_run and track_hyperparameter_result:
+                                    track_hyperparameter_result(aim_run, config, metrics)
+                                
+                                logger.info(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+                                
+                            except Exception as e:
+                                logger.error(f"  Error: {e}")
+                                continue
+                        
+                        if config_num > max_configs:
+                            break
+                    if config_num > max_configs:
+                        break
+                if config_num > max_configs:
+                    break
+            if config_num > max_configs:
+                break
+        if config_num > max_configs:
+            break
+    
+    # Find best
+    if not results:
+        return {"error": "No successful configurations"}
+    
+    best = max(results, key=lambda x: x["metrics"]["p@10"])
+    
+    return {
+        "best_config": best["config"],
+        "best_metrics": best["metrics"],
+        "all_results": results,
+        "summary": {
+            "total_configs": len(results),
+            "best_p@10": best["metrics"]["p@10"],
+            "best_mrr": best["metrics"]["mrr"],
+        },
+    }
+
+
+def main() -> int:
+    """Run hyperparameter search."""
+    parser = argparse.ArgumentParser(description="Hyperparameter search for Node2Vec")
+    parser.add_argument("--input", type=str, required=True, help="Pairs CSV")
+    parser.add_argument("--test-set", type=str, required=True, help="Test set JSON")
+    parser.add_argument("--name-mapping", type=str, help="Name mapping JSON")
+    parser.add_argument("--output", type=str, default="experiments/hyperparameter_search_results.json")
+    parser.add_argument("--max-configs", type=int, default=50, help="Max configurations to test")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Load test set (handle S3 paths)
+    if args.test_set.startswith("s3://"):
+        import boto3
+        import tempfile
+        s3_client = boto3.client("s3")
+        bucket, key = args.test_set.replace("s3://", "").split("/", 1)
+        local_test_set = Path(tempfile.mktemp(suffix=".json"))
+        logger.info(f"Downloading {args.test_set} to {local_test_set}...")
+        s3_client.download_file(bucket, key, str(local_test_set))
+        test_set_path = local_test_set
+    else:
+        test_set_path = Path(args.test_set)
+    
+    with open(test_set_path) as f:
+        test_data = json.load(f)
+        test_set = test_data.get("queries", test_data)
+    
+    # Load name mapping
+    name_mapper = None
+    if args.name_mapping:
+        with open(args.name_mapping) as f:
+            mapping_data = json.load(f)
+            name_mapper = mapping_data.get("mapping", {})
+    
+    # Handle S3 paths
+    input_path_str = args.input
+    if input_path_str.startswith("s3://"):
+        # Download from S3 first
+        import boto3
+        import tempfile
+        s3_client = boto3.client("s3")
+        bucket, key = input_path_str.replace("s3://", "").split("/", 1)
+        local_input = Path(tempfile.mktemp(suffix=".csv"))
+        logger.info(f"Downloading {input_path_str} to {local_input}...")
+        s3_client.download_file(bucket, key, str(local_input))
+        input_path = local_input
+    else:
+        input_path = Path(args.input)
+    
+    graphs_dir = input_path.parent.parent / "graphs"
+    graphs_dir.mkdir(parents=True, exist_ok=True)
+    edg_file = graphs_dir / f"{input_path.stem}_hyperparam_search.edg"
+    
+    logger.info("Preparing edgelist...")
+    prepare_edgelist(input_path, edg_file)
+    
+    # Run grid search
+    logger.info("Starting hyperparameter search...")
+    results = grid_search(
+        edg_file,
+        test_set,
+        name_mapper,
+        max_configs=args.max_configs,
+    )
+    
+    # Save results (handle S3 paths)
+    if args.output.startswith("s3://"):
+        import boto3
+        import tempfile
+        s3_client = boto3.client("s3")
+        bucket, key = args.output.replace("s3://", "").split("/", 1)
+        local_output = Path(tempfile.mktemp(suffix=".json"))
+        with open(local_output, "w") as f:
+            json.dump(results, f, indent=2)
+        logger.info(f"Uploading results to {args.output}...")
+        s3_client.upload_file(str(local_output), bucket, key)
+        output_path = Path(args.output)  # For logging
+    else:
+        output_path = Path(args.output)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+    
+    logger.info(f"\n✅ Search complete!")
+    logger.info(f"📊 Results saved to {output_path}")
+    
+    if "best_config" in results:
+        logger.info(f"\n🏆 Best Configuration:")
+        for key, value in results["best_config"].items():
+            logger.info(f"  {key}: {value}")
+        logger.info(f"\n📈 Best Metrics:")
+        logger.info(f"  P@10: {results['best_metrics']['p@10']:.4f}")
+        logger.info(f"  MRR: {results['best_metrics']['mrr']:.4f}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

@@ -26,9 +26,10 @@ from enum import Enum
 
 from pathlib import Path
 import json
+from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, FastAPI, HTTPException, Query
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -38,13 +39,27 @@ from ..deck_building.deck_completion import (
     greedy_complete,
     suggest_additions,
 )
-from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
+# deck_patch module - optional dependency
+try:
+    from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
+except ImportError:
+    DeckPatch = None
+    DeckPatchResult = None
+    apply_deck_patch = None
 from ..similarity.fusion import FusionWeights, WeightedLateFusion
 from ..similarity.similarity_methods import (
     jaccard_similarity as sm_jaccard,
     load_graph as sm_load_graph,
 )
 from ..utils.paths import PATHS
+
+# Search integration
+try:
+    from ..search import HybridSearch
+    HAS_SEARCH = True
+except ImportError:
+    HybridSearch = None
+    HAS_SEARCH = False
 
 # Optional dependencies with graceful degradation
 try:
@@ -109,7 +124,7 @@ class SimilarityRequest(BaseModel):
     )
     weights: dict[str, float] | None = Field(
         None,
-        description="Optional fusion weights {embed, jaccard, functional}; will be normalized",
+        description="Optional fusion weights {embed, jaccard, functional, text_embed, sideboard, temporal, gnn, archetype, format}; will be normalized",
     )
     aggregator: str | None = Field(
         None,
@@ -161,6 +176,16 @@ class ApiState:
         self.model_info: dict = {}
         self.fusion_default_weights: FusionWeights | None = None
         self.card_attrs: dict | None = None
+        # New signals
+        self.sideboard_cooccurrence: dict[str, dict[str, float]] | None = None
+        self.temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
+        self.text_embedder: object | None = None
+        self.gnn_embedder: object | None = None
+        # New signals
+        self.archetype_staples: dict[str, dict[str, float]] | None = None
+        self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
+        self.format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
+        self.cross_format_patterns: dict[str, dict[str, float]] | None = None
 
 
 def get_state() -> ApiState:
@@ -192,17 +217,39 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
         logger.info("Loaded graph: %s cards, %s weights", f"{len(adj):,}", f"{len(weights):,}")
 
     # Load tuned fusion weights if available (non-fatal)
+    # Try optimized_fusion_weights_latest.json first (from evaluation), then fusion_grid_search_latest.json
     try:
-        weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
+        weights_path = PATHS.experiments / "optimized_fusion_weights_latest.json"
+        if not weights_path.exists():
+            weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
+        
         if weights_path.exists():
             with open(weights_path) as fh:
                 data = json.load(fh)
-            bw = data.get("best_weights", {})
-            fw = FusionWeights(
-                embed=float(bw.get("embed", 0.20)),
-                jaccard=float(bw.get("jaccard", 0.40)),
-                functional=float(bw.get("functional", 0.40)),
-            ).normalized()
+            
+            # Handle both formats
+            if "recommendation" in data:
+                rec = data["recommendation"]
+                fw = FusionWeights(
+                    embed=float(rec.get("embed", 0.25)),
+                    jaccard=float(rec.get("jaccard", 0.75)),
+                    functional=float(rec.get("functional", 0.0)),
+                    text_embed=float(rec.get("text_embed", 0.0)),
+                    sideboard=float(rec.get("sideboard", 0.0)),
+                    temporal=float(rec.get("temporal", 0.0)),
+                    gnn=float(rec.get("gnn", 0.0)),
+                    archetype=float(rec.get("archetype", 0.0)),
+                    format=float(rec.get("format", 0.0)),
+                ).normalized()
+            else:
+                # Legacy format
+                bw = data.get("best_weights", {})
+                fw = FusionWeights(
+                    embed=float(bw.get("embed", 0.25)),
+                    jaccard=float(bw.get("jaccard", 0.75)),
+                    functional=float(bw.get("functional", 0.0)),
+                ).normalized()
+            
             state.fusion_default_weights = fw
             state.model_info["fusion_default_weights"] = {
                 "embed": fw.embed,
@@ -269,6 +316,13 @@ async def lifespan(app: FastAPI):
             logger.info("Loaded card attributes from %s (count=%d)", attrs_path, len(state.card_attrs))
         except Exception:
             logger.exception("Failed to load attributes CSV: %s", attrs_path)
+    # Load additional signals (sideboard, temporal, GNN, text embeddings)
+    try:
+        from .load_signals import load_signals_to_state
+        text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
+        load_signals_to_state(text_embedder_model=text_embedder_model)
+    except Exception:
+        logger.debug("Failed to load additional signals (this is optional)", exc_info=True)
     try:
         yield
     finally:
@@ -414,11 +468,19 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     tagger = FunctionalTagger() if FunctionalTagger is not None else None
     w = request.weights or {}
-    base_fw = state.fusion_default_weights or FusionWeights(embed=0.20, jaccard=0.40, functional=0.40)
+    base_fw = state.fusion_default_weights or FusionWeights(
+        embed=0.25, jaccard=0.75, functional=0.0, text_embed=0.0, sideboard=0.0, temporal=0.0, gnn=0.0, archetype=0.0, format=0.0
+    )
     fw = FusionWeights(
         embed=float(w.get("embed", base_fw.embed)),
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
         functional=float(w.get("functional", base_fw.functional)),
+        text_embed=float(w.get("text_embed", base_fw.text_embed)),
+        sideboard=float(w.get("sideboard", base_fw.sideboard)),
+        temporal=float(w.get("temporal", base_fw.temporal)),
+        gnn=float(w.get("gnn", base_fw.gnn)),
+        archetype=float(w.get("archetype", base_fw.archetype)),
+        format=float(w.get("format", base_fw.format)),
     ).normalized()
     fusion = WeightedLateFusion(
         state.embeddings,
@@ -428,6 +490,15 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         aggregator=(request.aggregator or "weighted"),
         rrf_k=int(request.rrf_k or 60),
         mmr_lambda=float(request.mmr_lambda or 0.0),
+        text_embedder=state.text_embedder,
+        card_data=state.card_attrs,  # Use card_attrs for Oracle text access
+        sideboard_cooccurrence=state.sideboard_cooccurrence,
+        temporal_cooccurrence=state.temporal_cooccurrence,
+        gnn_embedder=state.gnn_embedder,
+        archetype_staples=state.archetype_staples,
+        archetype_cooccurrence=state.archetype_cooccurrence,
+        format_cooccurrence=state.format_cooccurrence,
+        cross_format_patterns=state.cross_format_patterns,
     )
     if request.also_like:
         queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
@@ -488,6 +559,132 @@ def get_similar_v1(
     return _similar_impl(req)
 
 
+# ContextualResponse not defined - commenting out for now
+# @router.get("/cards/{card}/contextual", response_model=ContextualResponse)
+def get_contextual_suggestions(
+    card: str,
+    game: str = Query(..., description="Game name (magic, yugioh, pokemon)"),
+    format: str | None = Query(None, description="Format name (e.g., Modern, Legacy)"),
+    archetype: str | None = Query(None, description="Archetype name (e.g., Burn, Control)"),
+    top_k: int = Query(10, description="Number of results per category"),
+):
+    """
+    Get contextual suggestions for a card:
+    - Synergies: Cards that work well together
+    - Alternatives: Functional equivalents
+    - Upgrades: Better versions (more expensive)
+    - Downgrades: Budget alternatives (cheaper)
+    """
+    game_lower = game.lower()
+    if game_lower not in {"magic", "yugioh", "pokemon"}:
+        raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
+    
+    state = get_state()
+    
+    # Build fusion instance for similarity
+    from ..similarity.fusion import WeightedLateFusion, FusionWeights
+    
+    fusion = WeightedLateFusion(
+        embeddings=state.embeddings,
+        adj=state.graph_data.get("adj", {}) if state.graph_data else {},
+        weights=FusionWeights(),  # Use defaults
+    )
+    
+    # Get price function
+    price_fn = None
+    try:
+        from ..enrichment.card_market_data import MarketDataManager  # type: ignore[import-not-found]
+        _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
+        app.state.price_manager = _pm
+        
+        def price_fn(card_name: str) -> float | None:
+            p = _pm.get_price(card_name)
+            return float(p.usd) if p and p.usd else None
+    except Exception:
+        price_fn = None
+    
+    # Get tag function
+    tag_set_fn = None
+    if FunctionalTagger is not None and game_lower == "magic":
+        try:
+            _tagger = getattr(app.state, "mtg_tagger", None) or FunctionalTagger()
+            app.state.mtg_tagger = _tagger
+            
+            def tag_set_fn(card_name: str) -> set[str]:
+                dc = _tagger.tag_card(card_name)
+                return {k for k, v in dc.__dict__.items() if k != "card_name" and isinstance(v, bool) and v}
+        except Exception:
+            tag_set_fn = None
+    
+    # Get archetype data
+    archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
+    archetype_cooccurrence = state.archetype_cooccurrence if hasattr(state, "archetype_cooccurrence") else None
+    format_cooccurrence = state.format_cooccurrence if hasattr(state, "format_cooccurrence") else None
+    
+    # Create discovery instance
+    from ..deck_building.contextual_discovery import ContextualCardDiscovery
+    
+    discovery = ContextualCardDiscovery(
+        fusion=fusion,
+        price_fn=price_fn,
+        tag_set_fn=tag_set_fn,
+        archetype_staples=archetype_staples,
+        archetype_cooccurrence=archetype_cooccurrence,
+        format_cooccurrence=format_cooccurrence,
+    )
+    
+    # Find all contextual relationships
+    synergies = discovery.find_synergies(
+        card,
+        format=format,
+        archetype=archetype,
+        top_k=top_k,
+    )
+    
+    alternatives = discovery.find_alternatives(card, top_k=top_k)
+    upgrades = discovery.find_upgrades(card, top_k=top_k)
+    downgrades = discovery.find_downgrades(card, top_k=top_k)
+    
+    # Convert to dict format for JSON response
+    return ContextualResponse(
+        synergies=[
+            {
+                "card": s.card,
+                "score": s.score,
+                "co_occurrence_rate": s.co_occurrence_rate,
+                "reasoning": s.reasoning,
+            }
+            for s in synergies
+        ],
+        alternatives=[
+            {
+                "card": a.card,
+                "score": a.score,
+                "reasoning": a.reasoning,
+            }
+            for a in alternatives
+        ],
+        upgrades=[
+            {
+                "card": u.card,
+                "score": u.score,
+                "price_delta": u.price_delta,
+                "reasoning": u.reasoning,
+            }
+            for u in upgrades
+        ],
+        downgrades=[
+            {
+                "card": d.card,
+                "score": d.score,
+                "price_delta": d.price_delta,
+                "reasoning": d.reasoning,
+            }
+            for d in downgrades
+        ],
+    )
+
+
 @router.get("/cards", response_model=CardsResponse)
 def list_cards_v1(
     prefix: str | None = None,
@@ -512,6 +709,160 @@ def list_cards_v1(
     next_offset = end if end < total else None
 
     return CardsResponse(items=items, total=total, next_offset=next_offset)
+
+
+# ---------------------------------------------------------------------------
+# Card search (Meilisearch + Qdrant)
+# ---------------------------------------------------------------------------
+
+
+class SearchRequest(BaseModel):
+    query: str = Field(..., description="Search query text")
+    limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
+    text_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for text search (0-1)")
+    vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for vector search (0-1)")
+
+
+class SearchResultItem(BaseModel):
+    card_name: str = Field(..., description="Card name")
+    score: float = Field(..., description="Search score")
+    source: str = Field(..., description="Source: meilisearch, qdrant, or hybrid")
+    metadata: dict[str, Any] | None = Field(None, description="Additional metadata")
+
+
+class SearchResponse(BaseModel):
+    query: str = Field(..., description="Original query")
+    results: list[SearchResultItem] = Field(..., description="Search results")
+    total: int = Field(..., description="Total number of results")
+
+
+def _get_search_client() -> HybridSearch | None:
+    """Get or create hybrid search client."""
+    if not HAS_SEARCH or HybridSearch is None:
+        return None
+
+    state = get_state()
+    if state.embeddings is None:
+        return None
+
+    # Check if search client is cached in app state
+    if hasattr(app.state, "search_client"):
+        return app.state.search_client
+
+    # Create new client
+    try:
+        client = HybridSearch(embeddings=state.embeddings)
+        app.state.search_client = client
+        return client
+    except Exception as e:
+        logger.error(f"Failed to create search client: {e}")
+        return None
+
+
+@router.post("/search", response_model=SearchResponse)
+def search_cards_v1(request: SearchRequest):
+    """
+    Hybrid card search combining Meilisearch (text) and Qdrant (vector).
+    Falls back to embeddings-only search if Meilisearch/Qdrant unavailable.
+
+    Performs both text-based keyword search and semantic vector search,
+    then combines results based on weights.
+    """
+    client = _get_search_client()
+    
+    # Fallback to embeddings-only search if hybrid search unavailable
+    if client is None:
+        state = get_state()
+        if not hasattr(state, 'embeddings') or not state.embeddings:
+            raise HTTPException(
+                status_code=503,
+                detail="Search not available. Embeddings not loaded.",
+            )
+        
+        # Use embeddings for simple name matching
+        try:
+            from gensim.models import KeyedVectors
+            
+            embeddings = state.embeddings
+            if embeddings and isinstance(embeddings, KeyedVectors):
+                # Simple fallback: find cards with query in name using embeddings
+                query_lower = request.query.lower()
+                matching_cards = [
+                    card for card in embeddings.key_to_index.keys()
+                    if query_lower in card.lower()
+                ][:request.limit]
+                
+                # Create fallback results from embeddings
+                results = []
+                for i, card_name in enumerate(matching_cards):
+                    # Try to get image URL from card attributes if available
+                    image_url = None
+                    if state.card_attrs:
+                        card_data = state.card_attrs.get(card_name) or state.card_attrs.get(card_name.lower())
+                        if card_data and isinstance(card_data, dict):
+                            # Check for image URL in various formats
+                            image_url = (
+                                card_data.get("image_url") or
+                                card_data.get("image") or
+                                (card_data.get("images", {}).get("large") if isinstance(card_data.get("images"), dict) else None)
+                            )
+                    
+                    results.append(SearchResultItem(
+                        card_name=card_name,
+                        score=max(0.5, 1.0 - (i * 0.05)),  # Decreasing scores, min 0.5
+                        source="embedding_fallback",
+                        metadata={"image_url": image_url, "ref_url": None}
+                    ))
+                
+                if results:
+                    return SearchResponse(query=request.query, total=len(results), results=results)
+                else:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"No cards found matching '{request.query}'. Try a different search term.",
+                    )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.warning(f"Fallback search failed: {e}")
+        
+        raise HTTPException(
+            status_code=503,
+            detail="Search not available. Ensure Meilisearch and Qdrant are running and embeddings are loaded.",
+        )
+
+    results = client.search(
+        query=request.query,
+        limit=request.limit,
+        text_weight=request.text_weight,
+        vector_weight=request.vector_weight,
+    )
+
+    return SearchResponse(
+        query=request.query,
+        results=[
+            SearchResultItem(
+                card_name=r.card_name,
+                score=r.score,
+                source=r.source,
+                metadata=r.metadata,
+            )
+            for r in results
+        ],
+        total=len(results),
+    )
+
+
+@router.get("/search", response_model=SearchResponse)
+def search_cards_get_v1(
+    q: str = Query(..., description="Search query"),
+    limit: int = Query(10, ge=1, le=100, description="Maximum number of results"),
+    text_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for text search"),
+    vector_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for vector search"),
+):
+    """GET version of card search endpoint."""
+    request = SearchRequest(query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight)
+    return search_cards_v1(request)
 
 
 # ---------------------------------------------------------------------------
@@ -552,15 +903,25 @@ class SuggestActionsRequest(BaseModel):
     tag_weights: dict[str, float] | None = None  # optional per-tag weights
     curve_weight: float | None = None
     curve_target: dict[int, float] | None = None  # desired CMC distribution
+    archetype: str | None = None  # Archetype name for context-aware suggestions
+    action_type: str = "add"  # add|remove|replace|suggest (suggest = all)
+
+
+class ContextualResponse(BaseModel):
+    synergies: list[dict]
+    alternatives: list[dict]
+    upgrades: list[dict]
+    downgrades: list[dict]
 
 
 class SuggestedAction(BaseModel):
-    op: str
+    op: str  # add_card|remove_card|replace_card
     partition: str
     card: str
     count: int = 1
     score: float
     reason: str | None = None
+    target: str | None = None  # For replace_card: card to replace
 
 
 class SuggestActionsResponse(BaseModel):
@@ -651,52 +1012,144 @@ def suggest_actions(req: SuggestActionsRequest):
         except Exception:
             return None
 
-    pairs_or = suggest_additions(
-        game,
-        req.deck,
-        cand_fn,
-        top_k=req.top_k,
-        price_fn=price_fn,
-        max_unit_price=req.budget_max,
-        tag_set_fn=tag_set_fn,
-        tag_weight_fn=tag_weight_fn if tw else None,
-        coverage_weight=(req.coverage_weight or 0.0),
-        cmc_fn=cmc_fn if get_state().card_attrs else None,
-        curve_target=req.curve_target,
-        curve_weight=(req.curve_weight or 0.0),
-        return_metrics=True,
-    )
-    if isinstance(pairs_or, tuple):
-        pairs, s_metrics = pairs_or
-    else:
-        pairs, s_metrics = pairs_or, {}
-    elapsed_ms = int((time.time() - t0) * 1000)
+    # Get archetype from request or infer from deck
+    archetype = getattr(req, "archetype", None)
+    state = get_state()
+    archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
+    
     part = {"magic": "Main", "yugioh": "Main Deck"}.get(game, "Main Deck")
     actions = []
-    for c, s in pairs:
-        reason = []
-        if req.budget_max is not None:
-            reason.append(f"budget<=${req.budget_max}")
-        if req.coverage_weight:
-            reason.append("coverage+")
-        actions.append(
-            SuggestedAction(
-                op="add_card",
-                partition=part,
-                card=c,
-                count=1,
-                score=float(s),
-                reason=", ".join(reason) if reason else None,
-            )
+    action_type = (req.action_type or "add").lower()
+    
+    # Handle different action types
+    if action_type in ("add", "suggest"):
+        from ..deck_building.deck_completion import suggest_additions
+        
+        pairs_or = suggest_additions(
+            game,  # type: ignore[arg-type]
+            req.deck,
+            cand_fn,
+            top_k=req.top_k,
+            price_fn=price_fn,
+            max_unit_price=req.budget_max,
+            tag_set_fn=tag_set_fn,
+            tag_weight_fn=tag_weight_fn if tw else None,
+            coverage_weight=(req.coverage_weight or 0.0),
+            cmc_fn=cmc_fn if get_state().card_attrs else None,
+            curve_target=req.curve_target,
+            curve_weight=(req.curve_weight or 0.0),
+            return_metrics=True,
+            archetype=archetype,
+            archetype_staples=archetype_staples,
+            role_aware=True,
+            max_suggestions=min(req.top_k, 10),  # Constrained choice
         )
+        if isinstance(pairs_or, tuple):
+            pairs, s_metrics = pairs_or
+        else:
+            pairs, s_metrics = pairs_or, {}
+        
+        # Get score reasons from metrics if available
+        score_reasons = s_metrics.get("score_reasons", {})
+        for c, s in pairs:
+            reason_parts = []
+            
+            # Use score reason if available (archetype staple, role gap, etc.)
+            if c in score_reasons:
+                reason_parts.append(score_reasons[c])
+            
+            # Add budget info if applicable
+            if req.budget_max is not None:
+                reason_parts.append(f"budget<=${req.budget_max}")
+            
+            # Add coverage info if applicable
+            if req.coverage_weight:
+                reason_parts.append("coverage+")
+            
+            actions.append(
+                SuggestedAction(
+                    op="add_card",
+                    partition=part,
+                    card=c,
+                    count=1,
+                    score=float(s),
+                    reason=", ".join(reason_parts) if reason_parts else "Similarity match",
+                )
+            )
+    
+    if action_type in ("remove", "suggest"):
+        from ..deck_building.deck_completion import suggest_removals
+        
+        removals = suggest_removals(
+            game,  # type: ignore[arg-type]
+            req.deck,
+            cand_fn,
+            archetype=archetype,
+            archetype_staples=archetype_staples,
+            tag_set_fn=tag_set_fn,
+            preserve_roles=True,
+            max_suggestions=min(req.top_k, 10),
+        )
+        
+        for card, score, reason in removals:
+            actions.append(
+                SuggestedAction(
+                    op="remove_card",
+                    partition=part,
+                    card=card,
+                    count=1,
+                    score=float(score),
+                    reason=reason,
+                )
+            )
+    
+    if action_type == "replace" and req.seed_card:
+        from ..deck_building.deck_completion import suggest_replacements
+        
+        replacements = suggest_replacements(
+            game,  # type: ignore[arg-type]
+            req.deck,
+            req.seed_card,
+            cand_fn,
+            top_k=req.top_k,
+            price_fn=price_fn,
+            max_unit_price=req.budget_max,
+            tag_set_fn=tag_set_fn,
+            archetype=archetype,
+            archetype_staples=archetype_staples,
+        )
+        
+        for replacement, score, reason in replacements:
+            actions.append(
+                SuggestedAction(
+                    op="replace_card",
+                    partition=part,
+                    card=replacement,
+                    count=1,
+                    score=float(score),
+                    reason=reason,
+                    target=req.seed_card,
+                )
+            )
+    
+    # Sort all actions by score (descending)
+    actions.sort(key=lambda a: a.score, reverse=True)
+    
+    # Limit total actions
+    if len(actions) > req.top_k:
+        actions = actions[:req.top_k]
+    
+    elapsed_ms = int((time.time() - t0) * 1000)
     metrics = {
         "top_k": req.top_k,
         "elapsed_ms": elapsed_ms,
+        "action_type": action_type,
+        "num_actions": len(actions),
         "budget_max": req.budget_max,
         "coverage_weight": req.coverage_weight,
         "facets_available": bool(get_state().card_attrs is not None),
-        **s_metrics,
     }
+    
     return SuggestActionsResponse(actions=actions, metrics=metrics)
 
 
@@ -710,6 +1163,8 @@ class CompleteRequest(BaseModel):
     coverage_weight: float | None = None
     strict_size: bool | None = None
     check_legality: bool | None = None
+    method: str = "greedy"  # "greedy" or "beam"
+    beam_width: int = 5  # For beam search
 
 
 class CompleteResponse(BaseModel):
@@ -763,14 +1218,64 @@ def complete_deck(req: CompleteRequest):
 
     import time
     t0 = time.time()
-    deck_out, steps = greedy_complete(
-        game,
-        req.deck,
-        cand_fn,
-        cfg,
-        price_fn=price_fn,
-        tag_set_fn=tag_set_fn,
-    )
+    
+    # Choose completion method
+    if req.method == "beam":
+        from ..deck_building.beam_search import beam_search_completion
+        
+        # Build CMC function for beam search
+        def cmc_fn(card: str) -> int | None:
+            state = get_state()
+            attrs = state.card_attrs
+            if not attrs:
+                return None
+            data = attrs.get(card) or attrs.get(card.lower())
+            if not data:
+                return None
+            try:
+                return int(data.get("cmc", 0))
+            except Exception:
+                return None
+        
+        # Convert candidate_fn to beam search format
+        def beam_candidate_fn(deck: dict, top_k: int) -> list[tuple[str, float]]:
+            result = suggest_additions(
+                game,  # type: ignore[arg-type]
+                deck,
+                cand_fn,
+                top_k=top_k,
+                price_fn=price_fn,
+                max_unit_price=cfg.budget_max,
+                tag_set_fn=tag_set_fn,
+                coverage_weight=cfg.coverage_weight,
+            )
+            # Handle tuple return (with metrics) or list return
+            if isinstance(result, tuple):
+                candidates, _ = result
+            else:
+                candidates = result
+            return candidates
+        
+        deck_out = beam_search_completion(
+            initial_deck=req.deck,
+            candidate_fn=beam_candidate_fn,  # type: ignore[arg-type]
+            config=cfg,
+            beam_width=req.beam_width,
+            tag_set_fn=tag_set_fn,
+            cmc_fn=cmc_fn,
+            curve_target=None,  # TODO: Load from archetype
+        )
+        # Extract steps from beam search (simplified - beam search doesn't track steps the same way)
+        steps: list[dict] = []  # Beam search doesn't return steps in same format
+    else:
+        deck_out, steps = greedy_complete(
+            game,  # type: ignore[arg-type]
+            req.deck,
+            cand_fn,
+            cfg,
+            price_fn=price_fn,
+            tag_set_fn=tag_set_fn,
+        )
     # Final strict validation pass according to flags
     strict_errors: list[str] = []
     if req.strict_size or req.check_legality:
@@ -789,6 +1294,47 @@ def complete_deck(req: CompleteRequest):
             strict_errors = ["strict_validation_exception"]
 
     elapsed_ms = int((time.time() - t0) * 1000)
+    
+    # Assess deck quality if we have the necessary functions
+    quality_metrics = None
+    if tag_set_fn:
+        try:
+            from ..deck_building.deck_quality import assess_deck_quality
+            
+            # Build CMC function from card attributes
+            def cmc_fn(card: str) -> int | None:
+                state = get_state()
+                attrs = state.card_attrs
+                if not attrs:
+                    return None
+                data = attrs.get(card) or attrs.get(card.lower())
+                if not data:
+                    return None
+                try:
+                    return int(data.get("cmc", 0))
+                except Exception:
+                    return None
+            
+            # Assess quality (reference decks optional for now)
+            quality = assess_deck_quality(
+                deck=deck_out,
+                game=game,
+                tag_set_fn=tag_set_fn,
+                cmc_fn=cmc_fn,
+                reference_decks=None,  # TODO: Load reference decks from archetype
+            )
+            quality_metrics = {
+                "mana_curve_score": quality.mana_curve_score,
+                "tag_balance_score": quality.tag_balance_score,
+                "synergy_score": quality.synergy_score,
+                "overall_score": quality.overall_score,
+                "num_cards": quality.num_cards,
+                "num_unique_tags": quality.num_unique_tags,
+                "avg_tags_per_card": quality.avg_tags_per_card,
+            }
+        except Exception as e:
+            logger.debug("Failed to assess deck quality: %s", e, exc_info=True)
+    
     metrics = {
         "steps": len(steps),
         "elapsed_ms": elapsed_ms,
@@ -798,6 +1344,9 @@ def complete_deck(req: CompleteRequest):
         "check_legality": bool(req.check_legality),
         "strict_errors": strict_errors,
     }
+    if quality_metrics:
+        metrics["quality"] = quality_metrics
+    
     return CompleteResponse(deck=deck_out, steps=steps, metrics=metrics)
 
 

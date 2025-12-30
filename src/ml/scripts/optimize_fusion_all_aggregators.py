@@ -1,0 +1,364 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "gensim>=4.0.0",
+#     "pandas>=2.0.0",
+#     "numpy>=1.24.0",
+#     "scipy>=1.10.0",
+# ]
+# ///
+"""
+Optimize fusion weights for all aggregation methods.
+
+Tests weighted, RRF, combsum, combmax, combmin to find best combination.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+try:
+    from gensim.models import KeyedVectors
+    HAS_GENSIM = True
+except ImportError:
+    HAS_GENSIM = False
+
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.similarity.fusion import WeightedLateFusion, FusionWeights
+    HAS_FUSION = True
+except ImportError:
+    HAS_FUSION = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def load_jaccard_graph(pairs_csv: Path) -> dict[str, set[str]]:
+    """Load Jaccard co-occurrence graph."""
+    logger.info(f"Loading Jaccard graph from {pairs_csv}...")
+    adj: dict[str, set[str]] = {}
+    
+    import pandas as pd
+    df = pd.read_csv(pairs_csv)
+    
+    name_cols = [c for c in df.columns if "NAME" in c.upper()]
+    if len(name_cols) < 2:
+        logger.error("Could not find name columns")
+        return adj
+    
+    card1_col, card2_col = name_cols[0], name_cols[1]
+    
+    for _, row in df.iterrows():
+        card1 = str(row[card1_col]).strip()
+        card2 = str(row[card2_col]).strip()
+        
+        if not card1 or not card2 or card1 == card2:
+            continue
+        
+        if card1 not in adj:
+            adj[card1] = set()
+        if card2 not in adj:
+            adj[card2] = set()
+        
+        adj[card1].add(card2)
+        adj[card2].add(card1)
+    
+    logger.info(f"  Loaded {len(adj):,} cards")
+    return adj
+
+
+def evaluate_substitution(
+    fusion: WeightedLateFusion,
+    test_pairs: list[tuple[str, str]],
+    k: int = 10,
+) -> float:
+    """Evaluate substitution task with fusion."""
+    found = 0
+    
+    for query, target in test_pairs:
+        try:
+            similar = fusion.similar(query, k=k)
+            similar_cards = [card for card, _ in similar]
+            
+            if target in similar_cards:
+                found += 1
+        except Exception as e:
+            logger.debug(f"Error evaluating {query} -> {target}: {e}")
+            continue
+    
+    p_at_10 = found / len(test_pairs) if test_pairs else 0.0
+    return p_at_10
+
+
+def optimize_for_aggregator(
+    embedding: KeyedVectors,
+    adj: dict[str, set[str]],
+    test_pairs: list[tuple[str, str]],
+    aggregator: str,
+    tagger: Any | None = None,
+    text_embedder: Any | None = None,
+    card_data: dict[str, dict[str, Any]] | None = None,
+) -> dict[str, Any]:
+    """Optimize weights for a specific aggregator."""
+    from scipy.optimize import minimize
+    import numpy as np
+    
+    def objective(x: np.ndarray) -> float:
+        """Objective function: negative P@10."""
+        if tagger and text_embedder:
+            weights = FusionWeights(
+                embed=x[0],
+                jaccard=x[1],
+                functional=x[2],
+                text_embed=x[3],
+            )
+        elif tagger:
+            weights = FusionWeights(
+                embed=x[0],
+                jaccard=x[1],
+                functional=x[2],
+            )
+        elif text_embedder:
+            weights = FusionWeights(
+                embed=x[0],
+                jaccard=x[1],
+                text_embed=x[2],
+            )
+        else:
+            weights = FusionWeights(
+                embed=x[0],
+                jaccard=x[1],
+            )
+        
+        fusion = WeightedLateFusion(
+            embeddings=embedding,
+            adj=adj,
+            tagger=tagger,
+            weights=weights,
+            aggregator=aggregator,
+        )
+        
+        p_at_10 = evaluate_substitution(fusion, test_pairs, k=10)
+        return -p_at_10  # Negative for minimization
+    
+    # Initial guess and bounds
+    if tagger and text_embedder:
+        x0 = np.array([0.25, 0.25, 0.25, 0.25])
+        bounds = [(0.0, 1.0)] * 4
+    elif tagger:
+        x0 = np.array([0.33, 0.33, 0.34])
+        bounds = [(0.0, 1.0)] * 3
+    elif text_embedder:
+        x0 = np.array([0.33, 0.33, 0.34])
+        bounds = [(0.0, 1.0)] * 3
+    else:
+        x0 = np.array([0.5, 0.5])
+        bounds = [(0.0, 1.0)] * 2
+    
+    # Constraint: weights sum to 1
+    def constraint(x):
+        return np.sum(x) - 1.0
+    
+    constraints = {'type': 'eq', 'fun': constraint}
+    
+    # Optimize
+    result = minimize(
+        objective,
+        x0,
+        method='SLSQP',
+        bounds=bounds,
+        constraints=constraints,
+        options={'maxiter': 50},
+    )
+    
+    # Extract best weights
+    if tagger and text_embedder:
+        best_weights = FusionWeights(
+            embed=result.x[0],
+            jaccard=result.x[1],
+            functional=result.x[2],
+            text_embed=result.x[3],
+        )
+    elif tagger:
+        best_weights = FusionWeights(
+            embed=result.x[0],
+            jaccard=result.x[1],
+            functional=result.x[2],
+        )
+    elif text_embedder:
+        best_weights = FusionWeights(
+            embed=result.x[0],
+            jaccard=result.x[1],
+            text_embed=result.x[2],
+        )
+    else:
+        best_weights = FusionWeights(
+            embed=result.x[0],
+            jaccard=result.x[1],
+        )
+    
+    best_p_at_10 = -result.fun
+    
+    return {
+        "aggregator": aggregator,
+        "best_weights": {
+            "embed": best_weights.embed,
+            "jaccard": best_weights.jaccard,
+            "functional": best_weights.functional if tagger else None,
+            "text_embed": best_weights.text_embed if text_embedder else None,
+        },
+        "best_p@10": best_p_at_10,
+        "optimization_success": result.success,
+        "message": result.message,
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Optimize fusion for all aggregators")
+    parser.add_argument("--embedding", type=Path, required=True, help="Embedding file")
+    parser.add_argument("--pairs-csv", type=Path, required=True, help="Pairs CSV")
+    parser.add_argument("--test-pairs", type=Path, required=True, help="Test substitution pairs JSON")
+    parser.add_argument("--game", type=str, default="magic", help="Game name")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    parser.add_argument("--use-functional-tags", action="store_true", help="Use functional tags")
+    
+    args = parser.parse_args()
+    
+    if not HAS_GENSIM or not HAS_FUSION:
+        logger.error("Missing dependencies")
+        return 1
+    
+    # Load embedding
+    logger.info(f"Loading embedding: {args.embedding}")
+    embedding = KeyedVectors.load(str(args.embedding))
+    logger.info(f"  Vocabulary: {len(embedding)} cards")
+    
+    # Load Jaccard graph
+    adj = load_jaccard_graph(args.pairs_csv)
+    
+    # Load test pairs
+    with open(args.test_pairs) as f:
+        test_data = json.load(f)
+    
+    test_pairs = []
+    if isinstance(test_data, list):
+        for pair in test_data:
+            if isinstance(pair, dict):
+                test_pairs.append((pair["query"], pair["target"]))
+            else:
+                test_pairs.append(tuple(pair[:2]))
+    elif isinstance(test_data, dict):
+        for query, targets in test_data.items():
+            if isinstance(targets, list):
+                for target in targets:
+                    test_pairs.append((query, target))
+            elif isinstance(targets, dict):
+                for target in targets.keys():
+                    test_pairs.append((query, target))
+    
+    logger.info(f"  Test pairs: {len(test_pairs)}")
+    
+    # Load functional tagger if requested
+    tagger = None
+    if args.use_functional_tags:
+        try:
+            from ml.enrichment.card_functional_tagger_unified import UnifiedFunctionalTagger
+            tagger = UnifiedFunctionalTagger()
+            logger.info("  Functional tagger loaded")
+        except Exception as e:
+            logger.warning(f"Could not load functional tagger: {e}")
+    
+    # Load text embedder if available
+    text_embedder = None
+    card_data = None
+    try:
+        from ml.similarity.text_embeddings import CardTextEmbedder
+        text_embed_path = Path("data/embeddings/oracle_text_embeddings.pkl")
+        if text_embed_path.exists():
+            import pickle
+            with open(text_embed_path, "rb") as f:
+                text_embedder = pickle.load(f)
+            logger.info("  Text embedder loaded")
+            
+            # Load card data for Oracle text
+            import pandas as pd
+            card_attrs = Path("data/processed/card_attributes_enriched.csv")
+            if card_attrs.exists():
+                df = pd.read_csv(card_attrs)
+                card_data = {row["name"]: row.to_dict() for _, row in df.iterrows()}
+                logger.info(f"  Card data loaded: {len(card_data)} cards")
+    except Exception as e:
+        logger.debug(f"Could not load text embedder: {e}")
+    
+    # Test all aggregators
+    aggregators = ["weighted", "rrf", "combsum", "combmax", "combmin"]
+    results = {}
+    
+    logger.info("\nOptimizing for all aggregators...")
+    for aggregator in aggregators:
+        logger.info(f"\n{'='*70}")
+        logger.info(f"Optimizing {aggregator}...")
+        logger.info(f"{'='*70}")
+        
+        result = optimize_for_aggregator(
+            embedding,
+            adj,
+            test_pairs,
+            aggregator,
+            tagger,
+            text_embedder,
+            card_data,
+        )
+        
+        results[aggregator] = result
+        logger.info(f"  Best P@10: {result['best_p@10']:.4f}")
+        logger.info(f"  Weights: {result['best_weights']}")
+    
+    # Save results
+    output_data = {
+        "embedding": str(args.embedding),
+        "test_pairs": str(args.test_pairs),
+        "game": args.game,
+        "results": results,
+    }
+    
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    logger.info(f"\n✅ Results saved to {args.output}")
+    
+    # Summary
+    print("\n" + "=" * 70)
+    print("AGGREGATOR OPTIMIZATION RESULTS")
+    print("=" * 70)
+    for agg, res in sorted(results.items(), key=lambda x: x[1]["best_p@10"], reverse=True):
+        print(f"{agg:12s}: P@10={res['best_p@10']:.4f}")
+        weights = res['best_weights']
+        print(f"             Weights: embed={weights['embed']:.3f}, jaccard={weights['jaccard']:.3f}")
+        if weights.get('functional') is not None:
+            print(f"                      functional={weights['functional']:.3f}")
+        if weights.get('text_embed') is not None:
+            print(f"                      text_embed={weights['text_embed']:.3f}")
+    
+    best_agg = max(results.items(), key=lambda x: x[1]["best_p@10"])
+    print(f"\n✅ Best aggregator: {best_agg[0]} (P@10={best_agg[1]['best_p@10']:.4f})")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

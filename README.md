@@ -4,7 +4,7 @@ Learn which cards are functionally similar by analyzing competitive tournament d
 
 ---
 
-## Current State (October 5, 2025 - Enrichment Complete)
+## Current State (January 2025 - Pipeline Coherent)
 
 **Cross-Game Coverage**: **ALL 3 GAMES NOW HAVE COMPREHENSIVE ENRICHMENT!**
 
@@ -14,9 +14,11 @@ Learn which cards are functionally similar by analyzing competitive tournament d
 | **Pokemon** | 3,000 | 1,208 (scalable 5k+) | Pricing ✅ Tags 25+ ✅ LLM ✅ Vision ✅ |
 | **Yu-Gi-Oh** | 13,930 | 20 → 1,500+ target | Pricing ✅ Tags 35+ ✅ LLM ✅ Vision ✅ |
 
-**Total**: 52,330 cards + **56,521 tournament decks** = **108,851 items**  
+**Total**: 52,330 cards + **69,000 tournament decks** (enhanced) = **121,330 items**  
 **Enrichment**: ⭐ **90+ functional tags, LLM semantic analysis, vision models, full pricing** ⭐  
-**Balance**: 90% parity across all games - no more MTG bias!
+**Balance**: 90% parity across all games - no more MTG bias!  
+**Pipeline**: ✅ Coherent S3 sync, unified deck exports, enhanced data quality  
+**Storage**: All data synced to `s3://games-collections/` (880K+ files extracted)
 
 ---
 
@@ -67,7 +69,30 @@ uv run python unified_enrichment_pipeline.py \
     --level standard
 ```
 
-### Train Embeddings (Traditional)
+### Train Embeddings
+
+**Recommended (AWS with runctl):**
+```bash
+# Create instance (defaults to g4dn.xlarge for GPU training)
+just train-aws-create
+# or manually:
+../runctl/target/release/runctl aws create --spot g4dn.xlarge
+
+# Train on AWS
+just train-aws <instance-id>
+# or use the wrapper script:
+./scripts/train_with_runctl.sh <instance-id> multigame 50
+```
+
+**Note**: Training instances default to `g4dn.xlarge` (GPU-enabled) for better performance. Smaller instances like `t3.medium` or `t4g.small` are not recommended for training workloads.
+
+**Local (using PATHS):**
+```bash
+cd src/ml
+uv run python card_similarity_pecan.py --input data/processed/pairs_large.csv
+```
+
+**Traditional (legacy):**
 ```bash
 cd src/backend
 go run cmd/export-graph/main.go pairs.csv
@@ -78,8 +103,10 @@ uv run python card_similarity_pecan.py --input ../backend/pairs.csv
 
 ### Run API
 ```bash
-cd src/ml
-uv run python api.py --embeddings vectors.kv --pairs ../backend/pairs.csv --port 8000
+# Quick start
+./start_api.sh
+# or
+python3 -m src.ml.api.api --embeddings data/embeddings/magic_128d_test_pecanpy.wv --port 8000
 
 # Health
 curl -s localhost:8000/live
@@ -94,7 +121,24 @@ curl -s "localhost:8000/v1/cards/Lightning%20Bolt/similar?mode=fusion&k=10"
 curl -s -X POST localhost:8000/v1/similar \
   -H 'Content-Type: application/json' \
   -d '{"query": "Lightning Bolt", "top_k": 10, "use_case": "substitute", "mode": "fusion", "weights": {"embed": 0.2, "jaccard": 0.4, "functional": 0.4}}'
+
+# Hybrid Search (Meilisearch + Qdrant)
+curl -s "localhost:8000/v1/search?q=lightning&limit=10&text_weight=0.5&vector_weight=0.5"
 ```
+
+### Run Frontend
+```bash
+cd src/frontend/deck-recommender
+npm install
+npm start
+# Opens at http://localhost:3000
+```
+
+**Features**:
+- Type-ahead search with card images
+- Hybrid search (text + semantic)
+- Click card image to see similar cards from embeddings
+- Expandable result rows with details
 
 ---
 
@@ -206,6 +250,12 @@ src/
 - `QUICK_REFERENCE.md` - Daily workflow & common commands
 - `PRIORITY_MATRIX.md` - What to work on next (decision tool)
 
+**Training & Infrastructure**:
+- Training instances default to `g4dn.xlarge` (GPU-enabled)
+- Personal infrastructure (gyarados, alakazam) excluded from training scripts
+- Use `scripts/verify_training_status.py` to check training instances
+- Use `scripts/analyze_idle_instances.py` to identify idle instances
+
 **Core References**:
 - `ENRICHMENT_QUICKSTART.md` - Enrichment quick start
 - `COMMANDS.md` - Command reference  
@@ -245,17 +295,12 @@ These map directly to the two primary goals in `README_SCRATCH.md`:
 - Similarity: canonical test sets + audit page visualize relevance buckets with images.
 - Deck recommend: `experiments/audit_deck_completion.html` (before/after + steps); summarized on the unified audit page.
 
-**Detailed**:
-- `COMPREHENSIVE_ENRICHMENT_SUMMARY.md` - Complete system reference
-- `ENRICHMENT_GUIDE.md` - Detailed enrichment guide
-- `SESSION_COMPLETE_OCT_5.md` - Session log
-- `BUG_REVIEW_COMPLETE.md` - Bug fixes
-- `FINAL_EXECUTION_SUMMARY.md` - Execution summary
+**Pipeline & Data**:
+- `PIPELINE_COHERENCE_COMPLETE.md` - Complete pipeline documentation
+- `PIPELINE_COHERENCE_SUMMARY.md` - Executive summary
+- `data/README.md` - Data directory structure and usage
 
-**Historical**: `archive/` - Previous session documents  
-**Latest Review**: 
-- `REVIEW_SUMMARY.md` - Oct 2025 ML folder multi-scale review & fixes applied
-- `DEEP_REVIEW_TRIAGED_ACTIONS.md` - Deep dive analysis with prioritized next steps
+**Historical**: `docs/archive/` - Previous session documents
 
 ---
 

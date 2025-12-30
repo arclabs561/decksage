@@ -1,0 +1,325 @@
+#!/usr/bin/env python3
+"""
+Card Market Data Integration
+
+Utilities for capturing and managing card pricing and market data from various sources:
+- Scryfall (already integrated - prices captured in Go scraper)
+- TCGPlayer API (requires API key)
+- CardMarket/Cardmarket (Europe - requires API)
+- eBay (scraping - complex)
+
+This module provides:
+1. Price data extraction from existing Scryfall JSON
+2. Placeholders for external API integration
+3. Price trend analysis
+4. Budget recommendation system
+"""
+
+import json
+import subprocess
+from dataclasses import dataclass
+from datetime import datetime
+from pathlib import Path
+from typing import Dict, List, Optional
+import statistics
+
+
+@dataclass
+class CardPrice:
+    """Price information for a card"""
+    card_name: str
+    usd: Optional[float] = None
+    usd_foil: Optional[float] = None
+    eur: Optional[float] = None
+    eur_foil: Optional[float] = None
+    tix: Optional[float] = None  # MTGO tickets
+    last_updated: Optional[str] = None
+    
+    @property
+    def primary_price(self) -> Optional[float]:
+        """Get primary price (USD paper)"""
+        return self.usd
+    
+    @property
+    def has_price(self) -> bool:
+        """Check if any price is available"""
+        return any([self.usd, self.usd_foil, self.eur, self.eur_foil, self.tix])
+
+
+@dataclass
+class PriceTier:
+    """Price tier classification"""
+    tier: str  # "budget", "mid", "premium", "whale"
+    min_price: float
+    max_price: float
+    description: str
+
+
+# Price tiers for MTG singles
+MTG_PRICE_TIERS = [
+    PriceTier("bulk", 0.0, 0.25, "Bulk commons/uncommons"),
+    PriceTier("budget", 0.25, 5.0, "Budget playables"),
+    PriceTier("mid", 5.0, 20.0, "Mid-range staples"),
+    PriceTier("premium", 20.0, 100.0, "Premium cards"),
+    PriceTier("whale", 100.0, float('inf'), "Reserved list / chase mythics"),
+]
+
+
+class MarketDataManager:
+    """Manages card pricing and market data"""
+    
+    def __init__(self, scryfall_card_dir: Path = None):
+        if scryfall_card_dir is None:
+            # Default to backend data directory
+            scryfall_card_dir = Path(__file__).parent.parent / "backend" / "data-full" / "magic" / "scryfall" / "cards"
+        
+        self.scryfall_dir = scryfall_card_dir
+        self.price_cache = self._load_prices()
+    
+    def _load_prices(self) -> Dict[str, CardPrice]:
+        """Load prices from Scryfall card JSON files"""
+        print("Loading card prices from Scryfall data...")
+        
+        prices = {}
+        
+        if not self.scryfall_dir.exists():
+            print(f"Warning: Scryfall directory not found: {self.scryfall_dir}")
+            return prices
+        
+        # Iterate through Scryfall card JSONs
+        card_files = list(self.scryfall_dir.glob("*.json"))
+        print(f"Found {len(card_files)} card files")
+        
+        for card_file in card_files[:1000]:  # Limit for demo - remove in production
+            try:
+                with open(card_file) as f:
+                    card_data = json.load(f)
+                
+                card_name = card_data.get("name")
+                if not card_name:
+                    continue
+                
+                price_data = card_data.get("prices", {})
+                
+                prices[card_name] = CardPrice(
+                    card_name=card_name,
+                    usd=price_data.get("usd"),
+                    usd_foil=price_data.get("usd_foil"),
+                    eur=price_data.get("eur"),
+                    eur_foil=price_data.get("eur_foil"),
+                    tix=price_data.get("tix"),
+                    last_updated=datetime.now().isoformat(),
+                )
+            except Exception as e:
+                continue
+        
+        priced_cards = sum(1 for p in prices.values() if p.has_price)
+        print(f"✅ Loaded prices for {priced_cards}/{len(prices)} cards")
+        
+        return prices
+    
+    def get_price(self, card_name: str) -> Optional[CardPrice]:
+        """Get price for a card"""
+        return self.price_cache.get(card_name)
+    
+    def get_deck_price(self, deck_cards: Dict[str, int]) -> Dict:
+        """Calculate total price for a deck
+        
+        Args:
+            deck_cards: Dict of {card_name: count}
+        
+        Returns:
+            Dict with total, breakdown, and missing cards
+        """
+        total_usd = 0.0
+        breakdown = []
+        missing = []
+        
+        for card_name, count in deck_cards.items():
+            price = self.get_price(card_name)
+            if price and price.usd:
+                card_total = price.usd * count
+                total_usd += card_total
+                breakdown.append({
+                    "card": card_name,
+                    "count": count,
+                    "unit_price": price.usd,
+                    "total": card_total,
+                })
+            else:
+                missing.append(card_name)
+        
+        return {
+            "total_usd": round(total_usd, 2),
+            "breakdown": sorted(breakdown, key=lambda x: -x["total"]),
+            "missing_prices": missing,
+            "coverage": f"{len(breakdown)}/{len(deck_cards)}",
+        }
+    
+    def classify_price_tier(self, price: float) -> str:
+        """Classify a card price into a tier"""
+        for tier in MTG_PRICE_TIERS:
+            if tier.min_price <= price < tier.max_price:
+                return tier.tier
+        return "unknown"
+    
+    def find_budget_substitutes(
+        self,
+        target_card: str,
+        similar_cards: List[str],
+        max_price: float = 5.0,
+    ) -> List[Dict]:
+        """Find budget alternatives to a card
+        
+        Args:
+            target_card: The expensive card to replace
+            similar_cards: List of functionally similar cards (from similarity engine)
+            max_price: Maximum price for substitutes
+        
+        Returns:
+            List of substitutes with prices
+        """
+        target_price = self.get_price(target_card)
+        if not target_price or not target_price.usd:
+            return []
+        
+        # Only look for substitutes if target is expensive
+        if target_price.usd <= max_price:
+            return []
+        
+        substitutes = []
+        for card_name in similar_cards:
+            price = self.get_price(card_name)
+            if price and price.usd and price.usd <= max_price:
+                substitutes.append({
+                    "card_name": card_name,
+                    "price": price.usd,
+                    "savings": target_price.usd - price.usd,
+                    "price_ratio": price.usd / target_price.usd,
+                })
+        
+        return sorted(substitutes, key=lambda x: x["savings"], reverse=True)
+    
+    def export_price_database(self, output_path: Path):
+        """Export price database to JSON"""
+        export_data = []
+        for price in self.price_cache.values():
+            if price.has_price:
+                export_data.append({
+                    "card_name": price.card_name,
+                    "usd": price.usd,
+                    "usd_foil": price.usd_foil,
+                    "eur": price.eur,
+                    "eur_foil": price.eur_foil,
+                    "tix": price.tix,
+                    "tier": self.classify_price_tier(price.usd or 0),
+                    "last_updated": price.last_updated,
+                })
+        
+        with open(output_path, "w") as f:
+            json.dump(export_data, f, indent=2)
+        
+        print(f"✅ Exported {len(export_data)} card prices to {output_path}")
+    
+    def analyze_price_distribution(self):
+        """Analyze price distribution across cards"""
+        prices = [p.usd for p in self.price_cache.values() if p.usd]
+        
+        if not prices:
+            print("No price data available")
+            return
+        
+        print("\n📊 Price Distribution:")
+        print(f"Total cards with prices: {len(prices)}")
+        print(f"Mean: ${statistics.mean(prices):.2f}")
+        print(f"Median: ${statistics.median(prices):.2f}")
+        print(f"Std Dev: ${statistics.stdev(prices):.2f}")
+        print(f"Min: ${min(prices):.2f}")
+        print(f"Max: ${max(prices):.2f}")
+        
+        # Price tier distribution
+        print("\nPrice Tier Distribution:")
+        tier_counts = {}
+        for price in prices:
+            tier = self.classify_price_tier(price)
+            tier_counts[tier] = tier_counts.get(tier, 0) + 1
+        
+        for tier, count in sorted(tier_counts.items()):
+            pct = 100 * count / len(prices)
+            print(f"  {tier:10s}: {count:5d} ({pct:.1f}%)")
+
+
+# External API integration stubs (requires API keys)
+
+class TCGPlayerAPI:
+    """TCGPlayer API integration (requires API key)
+    
+    To use:
+    1. Sign up at https://api.tcgplayer.com/
+    2. Get API credentials
+    3. Set TCGPLAYER_API_KEY env var
+    """
+    
+    def __init__(self, api_key: str = None):
+        import os
+        self.api_key = api_key or os.getenv("TCGPLAYER_API_KEY")
+        if not self.api_key:
+            raise ValueError("TCGPLAYER_API_KEY not set")
+    
+    def get_price(self, card_name: str) -> Optional[CardPrice]:
+        """Get current price from TCGPlayer
+        
+        Implementation requires:
+        - OAuth2 authentication
+        - Product search by name
+        - Price point retrieval
+        """
+        raise NotImplementedError("TCGPlayer API integration requires API key and implementation")
+
+
+class CardmarketAPI:
+    """Cardmarket/MCM API integration (requires API key)
+    
+    European market prices. Requires:
+    - App registration at https://api.cardmarket.com/
+    - OAuth 1.0a authentication
+    """
+    
+    def __init__(self, app_token: str = None, app_secret: str = None):
+        import os
+        self.app_token = app_token or os.getenv("CARDMARKET_APP_TOKEN")
+        self.app_secret = app_secret or os.getenv("CARDMARKET_APP_SECRET")
+        if not self.app_token or not self.app_secret:
+            raise ValueError("CARDMARKET credentials not set")
+    
+    def get_price(self, card_name: str) -> Optional[CardPrice]:
+        """Get current price from Cardmarket"""
+        raise NotImplementedError("Cardmarket API integration requires credentials and implementation")
+
+
+if __name__ == "__main__":
+    manager = MarketDataManager()
+    
+    # Export price database
+    output = Path("card_prices.json")
+    manager.export_price_database(output)
+    
+    # Show statistics
+    manager.analyze_price_distribution()
+    
+    # Example: Price a sample deck
+    print("\n💰 Sample Deck Pricing:")
+    sample_deck = {
+        "Lightning Bolt": 4,
+        "Monastery Swiftspear": 4,
+        "Mountain": 18,
+        "Eidolon of the Great Revel": 4,
+    }
+    
+    pricing = manager.get_deck_price(sample_deck)
+    print(f"Total: ${pricing['total_usd']}")
+    print(f"Coverage: {pricing['coverage']}")
+    
+    print("\nMost expensive cards:")
+    for item in pricing["breakdown"][:5]:
+        print(f"  {item['count']}x {item['card']:30s} ${item['unit_price']:6.2f} = ${item['total']:6.2f}")

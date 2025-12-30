@@ -1,0 +1,237 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#   "pandas",
+#   "numpy",
+#   "gensim",
+# ]
+# ///
+"""
+Analyze sensitivity to substitution weight.
+
+Tests different weight configurations and identifies optimal balance
+between co-occurrence and functional similarity performance.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+
+def evaluate_embedding_quick(
+    embedding_path: Path,
+    pairs_path: Path,
+    test_set_path: Path,
+) -> dict[str, float]:
+    """Quick evaluation for weight sensitivity analysis."""
+    if not embedding_path.exists():
+        return {}
+    
+    try:
+        embedding = KeyedVectors.load(str(embedding_path))
+    except Exception:
+        return {}
+    
+    from ml.utils.evaluation import (
+        compute_precision_at_k,
+        compute_recall_at_k,
+    )
+    
+    results = {}
+    
+    # Co-occurrence (quick sample)
+    if pairs_path.exists():
+        pairs_df = pd.read_csv(pairs_path, nrows=20000)
+        cooccurrence_data = {}
+        for _, row in pairs_df.iterrows():
+            n1, n2 = row.get("NAME_1", ""), row.get("NAME_2", "")
+            if n1 and n2:
+                if n1 not in cooccurrence_data:
+                    cooccurrence_data[n1] = set()
+                cooccurrence_data[n1].add(n2)
+        
+        valid_queries = [q for q in cooccurrence_data.keys() 
+                        if q in embedding and len(cooccurrence_data[q]) >= 3][:30]
+        
+        scores = []
+        for query in valid_queries:
+            cooccurring = list(cooccurrence_data[query])[:10]
+            labels = {"highly_relevant": cooccurring[:5], "relevant": cooccurring[5:10]}
+            
+            try:
+                similar = embedding.most_similar(query, topn=10)
+                predictions = [card for card, _ in similar]
+                p_at_k = compute_precision_at_k(predictions, labels, k=10)
+                scores.append(p_at_k)
+            except Exception:
+                continue
+        
+        results["cooccurrence_p10"] = float(np.mean(scores)) if scores else 0.0
+    
+    # Functional similarity
+    if test_set_path.exists():
+        with open(test_set_path) as f:
+            test_data = json.load(f)
+        functional_test = test_data.get("queries", test_data)
+        
+        scores = []
+        for query, labels in list(functional_test.items())[:30]:
+            if query not in embedding:
+                continue
+            
+            try:
+                similar = embedding.most_similar(query, topn=10)
+                predictions = [card for card, _ in similar]
+                p_at_k = compute_precision_at_k(predictions, labels, k=10)
+                scores.append(p_at_k)
+            except Exception:
+                continue
+        
+        results["functional_p10"] = float(np.mean(scores)) if scores else 0.0
+    
+    return results
+
+
+def main() -> int:
+    """Analyze weight sensitivity."""
+    parser = argparse.ArgumentParser(description="Analyze substitution weight sensitivity")
+    parser.add_argument("--pairs", type=Path, required=True, help="Pairs CSV")
+    parser.add_argument("--test-set", type=Path, required=True, help="Test set JSON")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    parser.add_argument("--weights", nargs="+", type=float, default=[1.0, 2.0, 3.0, 5.0, 7.0, 10.0], help="Weights to analyze")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("Error: pandas, numpy, gensim required")
+        return 1
+    
+    print("Analyzing weight sensitivity...")
+    print("=" * 70)
+    
+    results = []
+    
+    # Baseline (no substitution)
+    print("\nEvaluating baseline (no substitution weight)...")
+    baseline_path = Path("data/embeddings/node2vec_default.wv")
+    baseline_results = evaluate_embedding_quick(baseline_path, args.pairs, args.test_set)
+    if baseline_results:
+        results.append({
+            "weight": 0.0,
+            "ratio": "baseline",
+            **baseline_results,
+        })
+        print(f"  Co-occurrence P@10: {baseline_results.get('cooccurrence_p10', 0):.4f}")
+        print(f"  Functional P@10: {baseline_results.get('functional_p10', 0):.4f}")
+    
+    # Multi-task variants
+    for weight in args.weights:
+        embedding_path = Path(f"data/embeddings/multitask_sub{int(weight)}.wv")
+        
+        if not embedding_path.exists():
+            print(f"\n⚠️  {embedding_path} not found, skipping weight {weight}")
+            continue
+        
+        print(f"\nEvaluating weight {weight}x...")
+        eval_results = evaluate_embedding_quick(embedding_path, args.pairs, args.test_set)
+        
+        if eval_results:
+            results.append({
+                "weight": weight,
+                "ratio": f"{weight}x",
+                **eval_results,
+            })
+            print(f"  Co-occurrence P@10: {eval_results.get('cooccurrence_p10', 0):.4f}")
+            print(f"  Functional P@10: {eval_results.get('functional_p10', 0):.4f}")
+    
+    # Find optimal
+    if results and baseline_results:
+        baseline_co = baseline_results.get("cooccurrence_p10", 0)
+        baseline_func = baseline_results.get("functional_p10", 0)
+        
+        # Score: balance between maintaining co-occurrence and improving functional
+        best_score = 0
+        best_weight = None
+        
+        for result in results:
+            if result["weight"] == 0:
+                continue
+            
+            co = result.get("cooccurrence_p10", 0)
+            func = result.get("functional_p10", 0)
+            
+            # Normalized scores (relative to baseline)
+            co_norm = co / baseline_co if baseline_co > 0 else 0
+            func_norm = func / baseline_func if baseline_func > 0 else 0
+            
+            # Combined score: want both to be good
+            # Weight functional improvement more (since it's the goal)
+            score = 0.3 * co_norm + 0.7 * func_norm
+            
+            if score > best_score:
+                best_score = score
+                best_weight = result["weight"]
+        
+        summary = {
+            "baseline": baseline_results,
+            "results": results,
+            "optimal_weight": best_weight,
+            "optimal_score": best_score,
+        }
+    else:
+        summary = {
+            "results": results,
+        }
+    
+    # Save
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(summary, f, indent=2)
+    
+    print(f"\n✅ Weight sensitivity analysis saved to {args.output}")
+    
+    if best_weight:
+        print(f"\n🎯 Optimal weight: {best_weight}x")
+        print(f"   Combined score: {best_score:.4f}")
+    
+    # Print summary table
+    print("\n" + "=" * 70)
+    print("Weight Sensitivity Summary")
+    print("=" * 70)
+    print(f"{'Weight':<10} {'Co-occ P@10':<15} {'Func P@10':<15} {'Combined':<15}")
+    print("-" * 70)
+    
+    for result in results:
+        weight = result.get("weight", 0)
+        ratio = result.get("ratio", "0x")
+        co = result.get("cooccurrence_p10", 0)
+        func = result.get("functional_p10", 0)
+        
+        if baseline_results:
+            co_norm = co / baseline_results.get("cooccurrence_p10", 1) if baseline_results.get("cooccurrence_p10", 0) > 0 else 0
+            func_norm = func / baseline_results.get("functional_p10", 1) if baseline_results.get("functional_p10", 0) > 0 else 0
+            combined = 0.3 * co_norm + 0.7 * func_norm
+        else:
+            combined = 0
+        
+        marker = " ⭐" if weight == best_weight else ""
+        print(f"{ratio:<10} {co:<15.4f} {func:<15.4f} {combined:<15.4f}{marker}")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    exit(main())
+

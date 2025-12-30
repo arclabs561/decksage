@@ -1,0 +1,1090 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeckSage Card Search - Hybrid (Scholastic + Card Game)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #ffffff;
+            min-height: 100vh;
+            padding: 20px;
+            color: #1a1a1a;
+            line-height: 1.6;
+        }
+        body.dark-theme {
+            background: #0f172a;
+            color: #e5e7eb;
+        }
+        body.dark-theme header {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .result-row {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .result-row:hover {
+            border-color: #3b82f6;
+        }
+        body.dark-theme input {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e5e7eb;
+        }
+        body.dark-theme .suggestions {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        .theme-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 8px 16px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 1000;
+        }
+        body.dark-theme .theme-toggle {
+            background: #1e293b;
+            border-color: #334155;
+            color: #e5e7eb;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            padding: 32px;
+            border-radius: 8px;
+            margin-bottom: 32px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 28px;
+            margin-bottom: 8px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: -0.01em;
+        }
+        .subtitle {
+            font-size: 14px;
+            color: #6b7280;
+            margin-top: 8px;
+        }
+        .search-box {
+            position: relative;
+            max-width: 600px;
+            margin: 0 auto 32px;
+        }
+        input {
+            width: 100%;
+            padding: 12px 16px;
+            font-size: 16px;
+            background: #ffffff;
+            border: 2px solid #e5e7eb;
+            border-radius: 8px;
+            outline: none;
+            transition: border-color 0.2s;
+            color: #1a1a1a;
+        }
+        input::placeholder {
+            color: #9ca3af;
+        }
+        input:focus {
+            border-color: #3b82f6;
+        }
+        .suggestions {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin-top: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            z-index: 1000;
+            display: none;
+        }
+        .suggestion {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 16px;
+            border-bottom: 1px solid #f3f4f6;
+            cursor: pointer;
+            transition: background-color 0.15s;
+        }
+        .suggestion:last-child {
+            border-bottom: none;
+        }
+        .suggestion:hover,
+        .suggestion.selected {
+            background: #f9fafb;
+        }
+        body.dark-theme .suggestion:hover,
+        body.dark-theme .suggestion.selected {
+            background: #334155;
+        }
+        .suggestion img {
+            width: 70px;
+            height: 98px;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 2px solid #e5e7eb;
+            flex-shrink: 0;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .suggestion:hover img,
+        .suggestion.selected img {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
+        }
+        .search-hint {
+            text-align: center;
+            font-size: 12px;
+            color: #6b7280;
+            margin-top: 8px;
+            font-style: italic;
+        }
+        .results {
+            margin-top: 32px;
+        }
+        .search-results-header {
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #e5e7eb;
+        }
+        .search-results-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 12px;
+        }
+        .zone-counts {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .zone-count {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            font-size: 13px;
+            color: #374151;
+        }
+        .zone-count strong {
+            font-weight: 600;
+        }
+        .result-zone {
+            margin-bottom: 32px;
+        }
+        .zone-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .zone-header h3 {
+            font-size: 16px;
+            font-weight: 600;
+            color: #374151;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin: 0;
+        }
+        .zone-count-badge {
+            margin-left: auto;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .result-row {
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            gap: 20px;
+            position: relative;
+        }
+        .result-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+            background: transparent;
+            border-radius: 8px 0 0 8px;
+            transition: background 0.2s;
+        }
+        .result-row:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+            transform: translateX(2px);
+        }
+        .result-row:hover::before {
+            background: #3b82f6;
+        }
+        .result-row.expanded {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+            background: #f8f9fa;
+        }
+        .result-row.selected-card {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            background: #f0f7ff;
+        }
+        body.dark-theme .result-row.selected-card {
+            background: #1e3a5f;
+        }
+        .result-row.expanded::before {
+            background: #3b82f6;
+        }
+        body.dark-theme .result-row {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .result-row:hover {
+            border-color: #3b82f6;
+            background: #1e293b;
+        }
+        body.dark-theme .result-row.expanded {
+            background: #0f172a;
+        }
+        .result-image-wrapper {
+            flex-shrink: 0;
+            position: relative;
+        }
+        .result-image {
+            width: 200px;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 2px solid #e5e7eb;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .result-image:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+            transform: scale(1.02);
+        }
+        .result-image:active {
+            transform: scale(0.98);
+        }
+        .result-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .result-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        .result-name strong {
+            color: #3b82f6;
+            font-weight: 700;
+            background: rgba(59, 130, 246, 0.1);
+            padding: 2px 4px;
+            border-radius: 3px;
+        }
+        body.dark-theme .result-name {
+            color: #e5e7eb;
+        }
+        body.dark-theme .result-name strong {
+            background: rgba(59, 130, 246, 0.2);
+        }
+        .result-explanation {
+            font-size: 14px;
+            color: #6b7280;
+            line-height: 1.5;
+        }
+        .result-meta {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+            padding-top: 12px;
+            border-top: 1px solid #f3f4f6;
+        }
+        .source-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border: 1px solid;
+        }
+        .source-badge.hybrid {
+            background: #fef3c7;
+            color: #92400e;
+            border-color: #fbbf24;
+        }
+        .source-badge.keyword {
+            background: #dbeafe;
+            color: #1e40af;
+            border-color: #60a5fa;
+        }
+        .source-badge.semantic {
+            background: #ede9fe;
+            color: #5b21b6;
+            border-color: #a78bfa;
+        }
+        .score-display {
+            display: flex;
+            align-items: baseline;
+            gap: 4px;
+        }
+        .score-label {
+            font-size: 12px;
+            color: #6b7280;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .score-value {
+            font-size: 16px;
+            font-weight: 700;
+            color: #1a1a1a;
+            font-variant-numeric: tabular-nums;
+        }
+        .expanded-content {
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px solid #e5e7eb;
+        }
+        .detail-item {
+            font-size: 14px;
+            line-height: 1.6;
+            color: #374151;
+            margin-bottom: 8px;
+        }
+        .detail-item strong {
+            color: #1a1a1a;
+            font-weight: 600;
+            margin-right: 8px;
+        }
+        .loading {
+            text-align: center;
+            padding: 48px;
+            color: #6b7280;
+            font-size: 16px;
+        }
+        .card-preview {
+            position: fixed;
+            z-index: 10000;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card-preview.visible {
+            opacity: 1;
+        }
+        .card-preview img {
+            width: 280px;
+            height: auto;
+            border-radius: 8px;
+            border: 2px solid #3b82f6;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+        }
+        .card-zoom-modal {
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.85);
+            z-index: 20000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .card-zoom-modal img {
+            max-width: 90vw;
+            max-height: 90vh;
+            border-radius: 8px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.5);
+            cursor: default;
+        }
+        .similar-cards-section {
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 2px solid #e5e7eb;
+        }
+        .similar-cards-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+        }
+        .similar-cards-header h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1a1a1a;
+            margin: 0;
+        }
+        .similar-cards-close {
+            padding: 4px 12px;
+            background: #f3f4f6;
+            border: 1px solid #e5e7eb;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            color: #6b7280;
+        }
+        .similar-cards-close:hover {
+            background: #e5e7eb;
+        }
+        .similar-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        .similar-card-item {
+            background: #f8f9fa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .similar-card-item:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+            transform: translateY(-2px);
+        }
+        .similar-card-item img {
+            width: 100%;
+            height: auto;
+            aspect-ratio: 5/7;
+            object-fit: cover;
+            border-radius: 6px;
+            border: 1px solid #e5e7eb;
+        }
+        .similar-card-item-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #1a1a1a;
+            line-height: 1.3;
+        }
+        .similar-card-item-score {
+            font-size: 12px;
+            color: #6b7280;
+            font-variant-numeric: tabular-nums;
+        }
+        .similar-cards-loading {
+            text-align: center;
+            padding: 24px;
+            color: #6b7280;
+        }
+        body.dark-theme .similar-cards-section {
+            border-top-color: #334155;
+        }
+        body.dark-theme .similar-cards-header h3 {
+            color: #e5e7eb;
+        }
+        body.dark-theme .similar-card-item {
+            background: #1e293b;
+            border-color: #334155;
+        }
+        body.dark-theme .similar-card-item-name {
+            color: #e5e7eb;
+        }
+    </style>
+</head>
+<body>
+    <button class="theme-toggle" onclick="toggleTheme()">Toggle Theme</button>
+    <div class="container">
+        <header>
+            <h1>Deck Building Recommender</h1>
+            <p class="subtitle">Search for cards using type-ahead with images</p>
+        </header>
+        
+        <div class="search-box">
+            <input 
+                type="text" 
+                id="searchInput" 
+                placeholder="Type to search for cards (try: lightning, bolt, fire, etc.)..."
+                autocomplete="off"
+            />
+            <div class="suggestions" id="suggestions"></div>
+            <div class="search-hint">Use ↑↓ to navigate, Enter to select, Esc to close</div>
+        </div>
+        
+        <div class="results" id="results"></div>
+    </div>
+
+    <script>
+        const searchInput = document.getElementById('searchInput');
+        const suggestionsDiv = document.getElementById('suggestions');
+        const resultsDiv = document.getElementById('results');
+        
+        let currentSuggestions = [];
+        let selectedSuggestionIndex = -1;
+        let expandedIndex = null;
+        let searchError = null;
+        let selectedCard = null;
+        let similarCards = null;
+
+        function getImageUrl(cardName) {
+            const encoded = encodeURIComponent(cardName);
+            return `https://api.scryfall.com/cards/named?exact=${encoded}&format=image`;
+        }
+
+        function highlightQuery(text, query) {
+            if (!query || query.length < 2) return text;
+            const regex = new RegExp(`(${query})`, 'gi');
+            const parts = text.split(regex);
+            return parts.map((part, i) => 
+                regex.test(part) ? `<strong>${part}</strong>` : part
+            ).join('');
+        }
+
+        function getSourceBadge(source) {
+            const badges = {
+                'hybrid': { text: 'HYBRID', class: 'hybrid' },
+                'meilisearch': { text: 'KEYWORD', class: 'keyword' },
+                'qdrant': { text: 'SEMANTIC', class: 'semantic' }
+            };
+            const badge = badges[source] || badges['hybrid'];
+            return `<span class="source-badge ${badge.class}">${badge.text}</span>`;
+        }
+
+        // Mock search function
+        async function mockSearch(query, limit = 20) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            const mockResults = [
+                { card_name: 'Lightning Bolt', score: 0.95, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Deal 3 damage to any target.' } },
+                { card_name: 'Lightning Strike', score: 0.87, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Lightning Strike deals 3 damage to any target.' } },
+                { card_name: 'Shock', score: 0.82, source: 'meilisearch', metadata: { type_line: 'Instant', text: 'Shock deals 2 damage to any target.' } },
+                { card_name: 'Bolt of Keranos', score: 0.78, source: 'qdrant', metadata: { type_line: 'Instant', text: 'Bolt of Keranos deals 3 damage to target creature or player.' } },
+                { card_name: 'Chain Lightning', score: 0.75, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Chain Lightning deals 3 damage to any target.' } },
+                { card_name: 'Lava Spike', score: 0.72, source: 'meilisearch', metadata: { type_line: 'Sorcery', text: 'Lava Spike deals 3 damage to target player.' } },
+                { card_name: 'Rift Bolt', score: 0.68, source: 'qdrant', metadata: { type_line: 'Sorcery', text: 'Rift Bolt deals 3 damage to any target.' } },
+                { card_name: 'Burst Lightning', score: 0.65, source: 'hybrid', metadata: { type_line: 'Instant', text: 'Burst Lightning deals 2 damage to any target.' } },
+            ];
+            
+            return {
+                query: query,
+                results: mockResults.slice(0, limit).map(r => ({
+                    ...r,
+                    score: r.score * (0.8 + Math.random() * 0.2)
+                }))
+            };
+        }
+
+        async function fetchSuggestions(query) {
+            if (query.length < 2) {
+                suggestionsDiv.style.display = 'none';
+                currentSuggestions = [];
+                return;
+            }
+
+            try {
+                const data = await mockSearch(query, 8);
+                currentSuggestions = data.results;
+                renderSuggestions();
+            } catch (error) {
+                console.error('Suggestions error:', error);
+                suggestionsDiv.style.display = 'none';
+            }
+        }
+
+        function renderSuggestions() {
+            if (currentSuggestions.length === 0) {
+                suggestionsDiv.style.display = 'none';
+                return;
+            }
+
+            suggestionsDiv.style.display = 'block';
+            suggestionsDiv.innerHTML = currentSuggestions.map((result, index) => {
+                const escapedName = result.card_name.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+                const highlightedName = highlightQuery(result.card_name, searchInput.value);
+                const typeLine = result.metadata?.type_line || '';
+                const cardText = result.metadata?.text || '';
+                const textPreview = cardText.length > 60 ? cardText.substring(0, 60) + '...' : cardText;
+                return `
+                    <div class="suggestion ${index === selectedSuggestionIndex ? 'selected' : ''}" 
+                         data-index="${index}"
+                         onclick="selectSuggestion('${escapedName}')"
+                         onmouseenter="highlightSuggestion(${index})">
+                        <img src="${getImageUrl(result.card_name)}" 
+                             alt="${result.card_name}"
+                             onerror="this.style.display='none'">
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 600; color: #1a1a1a; margin-bottom: 4px; font-size: 15px;">${highlightedName}</div>
+                            ${typeLine ? `<div style="font-size: 12px; color: #6b7280; margin-bottom: 4px; font-style: italic;">${typeLine}</div>` : ''}
+                            ${textPreview ? `<div style="font-size: 12px; color: #9ca3af; line-height: 1.4; margin-bottom: 4px;">${textPreview}</div>` : ''}
+                            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px; margin-top: 4px;">
+                                ${getSourceBadge(result.source)}
+                                <span style="color: #6b7280; font-weight: 600;">Score: ${result.score.toFixed(3)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function highlightSuggestion(index) {
+            if (index >= 0 && index < currentSuggestions.length) {
+                selectedSuggestionIndex = index;
+                renderSuggestions();
+            }
+        }
+
+        function selectSuggestion(cardName) {
+            searchInput.value = cardName;
+            suggestionsDiv.style.display = 'none';
+            selectedSuggestionIndex = -1;
+            currentSuggestions = [];
+            performSearch(cardName);
+        }
+
+        async function performSearch(query) {
+            if (!resultsDiv) return;
+            
+            if (query.length < 2) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            resultsDiv.innerHTML = '<div class="loading">Searching...</div>';
+            searchError = null;
+            
+            try {
+                const data = await mockSearch(query, 20);
+                
+                if (!data.results || data.results.length === 0) {
+                    resultsDiv.innerHTML = `
+                        <div class="loading">
+                            <div style="font-size: 18px; margin-bottom: 16px; color: #1a1a1a;">No results found for "${query}"</div>
+                            <div style="font-size: 14px; color: #6b7280;">Try a different search term</div>
+                        </div>
+                    `;
+                    return;
+                }
+
+                // Group results by source type
+                const groupedResults = {
+                    hybrid: data.results.filter(r => r.source === 'hybrid'),
+                    meilisearch: data.results.filter(r => r.source === 'meilisearch'),
+                    qdrant: data.results.filter(r => r.source === 'qdrant')
+                };
+                
+                const zoneLabels = {
+                    hybrid: { name: 'Hybrid Matches', icon: '⚡' },
+                    meilisearch: { name: 'Keyword Matches', icon: '🔍' },
+                    qdrant: { name: 'Semantic Matches', icon: '🧠' }
+                };
+                
+                const header = `
+                    <div class="search-results-header">
+                        <h2>Search Results for "${query}"</h2>
+                        <div class="zone-counts">
+                            <span class="zone-count">Total: <strong>${data.results.length}</strong></span>
+                            ${Object.entries(groupedResults).map(([key, results]) => 
+                                results.length > 0 ? `
+                                    <span class="zone-count">
+                                        ${zoneLabels[key].icon} ${zoneLabels[key].name}: <strong>${results.length}</strong>
+                                    </span>
+                                ` : ''
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+
+                // Render results grouped by zone
+                let resultsHtml = '';
+                Object.entries(groupedResults).forEach(([sourceKey, results]) => {
+                    if (results.length === 0) return;
+                    
+                    const zone = zoneLabels[sourceKey];
+                    resultsHtml += `
+                        <div class="result-zone">
+                            <div class="zone-header">
+                                <h3>${zone.icon} ${zone.name}</h3>
+                                <span class="zone-count-badge">${results.length} ${results.length === 1 ? 'card' : 'cards'}</span>
+                            </div>
+                            ${results.map((result, zoneIndex) => {
+                                const index = data.results.indexOf(result);
+                                const highlightedName = highlightQuery(result.card_name, query.toLowerCase());
+                                const explanation = result.source === 'hybrid' 
+                                    ? 'Found via both text and semantic search'
+                                    : result.source === 'meilisearch'
+                                    ? 'Matched by text/keyword search'
+                                    : 'Matched by semantic similarity';
+                                
+                                return `
+                                    <div class="result-row ${expandedIndex === index ? 'expanded' : ''}" 
+                                         onclick="toggleExpand(${index})"
+                                         data-index="${index}">
+                                        <div class="result-image-wrapper" 
+                                             onmouseenter="showCardPreview(event, '${result.card_name.replace(/'/g, "\\'")}', '${getImageUrl(result.card_name).replace(/'/g, "\\'")}')"
+                                             onmouseleave="hideCardPreview()">
+                                            <img src="${getImageUrl(result.card_name)}" 
+                                                 class="result-image"
+                                                 alt="${result.card_name}"
+                                                 onclick="event.stopPropagation(); showSimilarCards('${result.card_name.replace(/'/g, "\\'")}')"
+                                                 onerror="if(this.src !== 'https://via.placeholder.com/200x280?text=No+Image') this.src='https://via.placeholder.com/200x280?text=No+Image';"
+                                                 title="Click to see similar cards">
+                                        </div>
+                                        <div class="result-content">
+                                            <div class="result-name">${highlightedName}</div>
+                                            <div class="result-explanation">${explanation}</div>
+                                            <div class="result-meta">
+                                                ${getSourceBadge(result.source)}
+                                                <div class="score-display">
+                                                    <span class="score-label">Score</span>
+                                                    <span class="score-value">${result.score.toFixed(3)}</span>
+                                                </div>
+                                                ${result.metadata?.type_line ? `
+                                                    <div style="font-size: 13px; color: #6b7280;">
+                                                        Type: ${result.metadata.type_line}
+                                                    </div>
+                                                ` : ''}
+                                            </div>
+                                            ${expandedIndex === index ? `
+                                                <div class="expanded-content">
+                                                    <div class="detail-item"><strong>Card Name:</strong> ${result.card_name}</div>
+                                                    <div class="detail-item"><strong>Relevance Score:</strong> ${result.score.toFixed(4)}</div>
+                                                    <div class="detail-item"><strong>Search Source:</strong> ${result.source}</div>
+                                                    ${result.metadata?.type_line ? `<div class="detail-item"><strong>Type:</strong> ${result.metadata.type_line}</div>` : ''}
+                                                    ${result.metadata?.text ? `<div class="detail-item"><strong>Text:</strong> ${result.metadata.text}</div>` : ''}
+                                                    <div style="margin-top: 12px;">
+                                                        <button onclick="event.stopPropagation(); showSimilarCards('${result.card_name.replace(/'/g, "\\'")}')" 
+                                                                style="padding: 6px 12px; background: #3b82f6; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 500;">
+                                                            Show Similar Cards →
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    ${isSelected ? `
+                                        <div class="similar-cards-section">
+                                            <div class="similar-cards-header">
+                                                <h3>Similar Cards to "${result.card_name}"</h3>
+                                                <button class="similar-cards-close" onclick="hideSimilarCards()">Close</button>
+                                            </div>
+                                            ${similarCards === null ? `
+                                                <div class="similar-cards-loading">Loading similar cards...</div>
+                                            ` : similarCards.length > 0 ? `
+                                                <div class="similar-cards-grid">
+                                                    ${similarCards.map(similar => `
+                                                        <div class="similar-card-item" onclick="searchInput.value='${similar.card.replace(/'/g, "\\'")}'; performSearch('${similar.card.replace(/'/g, "\\'")}'); hideSimilarCards();">
+                                                            <img src="${getImageUrl(similar.card)}" alt="${similar.card}" onerror="this.src='https://via.placeholder.com/200x280?text=No+Image'">
+                                                            <div class="similar-card-item-name">${similar.card}</div>
+                                                            <div class="similar-card-item-score">Similarity: ${similar.similarity.toFixed(3)}</div>
+                                                        </div>
+                                                    `).join('')}
+                                                </div>
+                                            ` : `
+                                                <div class="similar-cards-loading">No similar cards found</div>
+                                            `}
+                                        </div>
+                                    ` : ''}
+                                `;
+                            }).join('')}
+                        </div>
+                    `;
+                });
+                
+                resultsDiv.innerHTML = header + resultsHtml;
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `
+                    <div class="loading">
+                        <div style="color: #dc2626;">Error: ${error.message}</div>
+                    </div>
+                `;
+            }
+        }
+
+        function toggleExpand(index) {
+            console.log('toggleExpand called with index:', index, 'current expandedIndex:', expandedIndex);
+            expandedIndex = expandedIndex === index ? null : index;
+            const currentQuery = searchInput.value;
+            if (currentQuery && currentQuery.length >= 2) {
+                performSearch(currentQuery);
+            }
+        }
+        
+        async function showSimilarCards(cardName) {
+            selectedCard = cardName;
+            similarCards = null;
+            
+            // Re-render to show loading state
+            const currentQuery = searchInput.value;
+            if (currentQuery && currentQuery.length >= 2) {
+                await performSearch(currentQuery);
+            }
+            
+            try {
+                // Try to fetch from API
+                const API_URL = 'http://localhost:8000';
+                const response = await fetch(`${API_URL}/v1/cards/${encodeURIComponent(cardName)}/similar?k=12`);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    similarCards = data.results || [];
+                } else {
+                    // Fallback to mock data
+                    similarCards = await mockSimilarCards(cardName);
+                }
+            } catch (error) {
+                console.warn('API not available, using mock data:', error);
+                similarCards = await mockSimilarCards(cardName);
+            }
+            
+            // Re-render with similar cards
+            if (currentQuery && currentQuery.length >= 2) {
+                await performSearch(currentQuery);
+            }
+        }
+        
+        function hideSimilarCards() {
+            selectedCard = null;
+            similarCards = null;
+            const currentQuery = searchInput.value;
+            if (currentQuery && currentQuery.length >= 2) {
+                performSearch(currentQuery);
+            }
+        }
+        
+        async function mockSimilarCards(cardName) {
+            await new Promise(resolve => setTimeout(resolve, 300));
+            
+            // Mock similar cards based on card name
+            // This is a fallback when API is not available
+            const mockSimilar = {
+                'Lightning Bolt': [
+                    { card: 'Lightning Strike', similarity: 0.92 },
+                    { card: 'Shock', similarity: 0.88 },
+                    { card: 'Burst Lightning', similarity: 0.85 },
+                    { card: 'Chain Lightning', similarity: 0.83 },
+                    { card: 'Lava Spike', similarity: 0.80 },
+                    { card: 'Rift Bolt', similarity: 0.78 },
+                    { card: 'Bolt of Keranos', similarity: 0.75 },
+                    { card: 'Incinerate', similarity: 0.72 },
+                    { card: 'Magma Jet', similarity: 0.70 },
+                    { card: 'Searing Spear', similarity: 0.68 },
+                    { card: 'Lightning Helix', similarity: 0.65 },
+                    { card: 'Boros Charm', similarity: 0.62 },
+                ],
+                'Lightning Strike': [
+                    { card: 'Lightning Bolt', similarity: 0.94 },
+                    { card: 'Shock', similarity: 0.89 },
+                    { card: 'Burst Lightning', similarity: 0.86 },
+                    { card: 'Chain Lightning', similarity: 0.84 },
+                    { card: 'Lava Spike', similarity: 0.81 },
+                    { card: 'Rift Bolt', similarity: 0.79 },
+                    { card: 'Bolt of Keranos', similarity: 0.76 },
+                    { card: 'Incinerate', similarity: 0.73 },
+                    { card: 'Magma Jet', similarity: 0.71 },
+                    { card: 'Searing Spear', similarity: 0.69 },
+                    { card: 'Lightning Helix', similarity: 0.66 },
+                    { card: 'Boros Charm', similarity: 0.63 },
+                ],
+            };
+            
+            // Try to find a match (case-insensitive)
+            const cardLower = cardName.toLowerCase();
+            for (const [key, value] of Object.entries(mockSimilar)) {
+                if (key.toLowerCase() === cardLower) {
+                    return value;
+                }
+            }
+            
+            // Default fallback
+            return mockSimilar['Lightning Bolt'];
+        }
+        
+        // Make toggleExpand available globally
+        window.toggleExpand = toggleExpand;
+        window.showSimilarCards = showSimilarCards;
+        window.hideSimilarCards = hideSimilarCards;
+
+        // Card preview on hover
+        let previewTimeout;
+        let cardPreview = null;
+
+        function showCardPreview(event, cardName, imageUrl) {
+            clearTimeout(previewTimeout);
+            
+            if (!cardPreview) {
+                cardPreview = document.createElement('div');
+                cardPreview.className = 'card-preview';
+                cardPreview.innerHTML = `<img src="${imageUrl}" alt="${cardName}" />`;
+                document.body.appendChild(cardPreview);
+            }
+            
+            previewTimeout = setTimeout(() => {
+                if (cardPreview) {
+                    const rect = event.target.getBoundingClientRect();
+                    let left = rect.right + 20;
+                    let top = rect.top;
+                    
+                    if (left + 280 > window.innerWidth) {
+                        left = rect.left - 300;
+                    }
+                    if (top + 400 > window.innerHeight) {
+                        top = window.innerHeight - 400 - 20;
+                    }
+                    if (top < 20) {
+                        top = 20;
+                    }
+                    
+                    cardPreview.style.left = left + 'px';
+                    cardPreview.style.top = top + 'px';
+                    cardPreview.querySelector('img').src = imageUrl;
+                    cardPreview.classList.add('visible');
+                }
+            }, 300);
+        }
+
+        function hideCardPreview() {
+            clearTimeout(previewTimeout);
+            if (cardPreview) {
+                cardPreview.classList.remove('visible');
+            }
+        }
+
+        // Card zoom modal
+        let zoomModal = null;
+        
+        function showCardZoom(imageUrl, cardName) {
+            if (!zoomModal) {
+                zoomModal = document.createElement('div');
+                zoomModal.className = 'card-zoom-modal';
+                zoomModal.innerHTML = `<img src="${imageUrl}" alt="${cardName}" />`;
+                zoomModal.onclick = () => hideCardZoom();
+                document.body.appendChild(zoomModal);
+            }
+            
+            zoomModal.querySelector('img').src = imageUrl;
+            zoomModal.querySelector('img').alt = cardName;
+            document.body.style.overflow = 'hidden';
+            
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    hideCardZoom();
+                    document.removeEventListener('keydown', escHandler);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        }
+
+        function hideCardZoom() {
+            if (zoomModal) {
+                zoomModal.remove();
+                zoomModal = null;
+            }
+            document.body.style.overflow = '';
+        }
+
+        // Event listeners
+        let debounceTimeout;
+        searchInput.addEventListener('input', (e) => {
+            clearTimeout(debounceTimeout);
+            debounceTimeout = setTimeout(() => {
+                fetchSuggestions(e.target.value);
+            }, 200);
+        });
+
+        searchInput.addEventListener('keydown', (e) => {
+            const isSuggestionsVisible = suggestionsDiv.style.display === 'block';
+            
+            if (isSuggestionsVisible && currentSuggestions.length > 0) {
+                switch (e.key) {
+                    case 'ArrowDown':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, currentSuggestions.length - 1);
+                        renderSuggestions();
+                        break;
+                    case 'ArrowUp':
+                        e.preventDefault();
+                        selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
+                        renderSuggestions();
+                        break;
+                    case 'Enter':
+                        e.preventDefault();
+                        if (selectedSuggestionIndex >= 0 && selectedSuggestionIndex < currentSuggestions.length) {
+                            selectSuggestion(currentSuggestions[selectedSuggestionIndex].card_name);
+                        } else {
+                            performSearch(searchInput.value);
+                        }
+                        break;
+                    case 'Escape':
+                        suggestionsDiv.style.display = 'none';
+                        selectedSuggestionIndex = -1;
+                        break;
+                }
+            } else if (e.key === 'Enter') {
+                performSearch(searchInput.value);
+            }
+        });
+
+        searchInput.addEventListener('focus', () => {
+            if (currentSuggestions.length > 0) {
+                suggestionsDiv.style.display = 'block';
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            if (suggestionsDiv && searchInput && 
+                !suggestionsDiv.contains(e.target) && 
+                e.target !== searchInput) {
+                suggestionsDiv.style.display = 'none';
+                selectedSuggestionIndex = -1;
+            }
+        });
+
+        function toggleTheme() {
+            document.body.classList.toggle('dark-theme');
+            localStorage.setItem('theme', document.body.classList.contains('dark-theme') ? 'dark' : 'light');
+        }
+
+        // Load saved theme
+        if (localStorage.getItem('theme') === 'dark') {
+            document.body.classList.add('dark-theme');
+        }
+    </script>
+</body>
+</html>
+

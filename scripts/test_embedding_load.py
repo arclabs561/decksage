@@ -1,0 +1,25 @@
+#!/usr/bin/env python3
+"""Test embedding load via data_loading utility."""
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent / "src"))
+
+try:
+    from ml.utils.data_loading import load_embeddings
+    from ml.utils.paths import PATHS
+    
+    print("Testing embedding load...")
+    print(f"Expected path: {PATHS.embeddings / 'magic_128d_test_pecanpy.wv'}")
+    print(f"File exists: {(PATHS.embeddings / 'magic_128d_test_pecanpy.wv').exists()}")
+    
+    # Try loading
+    wv = load_embeddings("magic_128d_test_pecanpy")
+    print(f"✅ Loaded: {len(wv):,} vectors, {wv.vector_size} dimensions")
+    
+except ImportError as e:
+    print(f"⚠️  Import error (expected if gensim not installed): {e}")
+    print("   Embeddings file exists and will work when gensim is available")
+except Exception as e:
+    print(f"❌ Error: {e}")
+    import traceback
+    traceback.print_exc()

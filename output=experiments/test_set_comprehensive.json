@@ -1,0 +1,167 @@
+{
+  "queries": {
+    "Fleshbag Marauder": {
+      "highly_relevant": [
+        "Swamp",
+        "Plains",
+        "Mountain",
+        "Forest",
+        "Island",
+        "Sol Ring",
+        "Sign in Blood"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Gideon Blackblade": {
+      "highly_relevant": [
+        "Nicol Bolas, Dragon-God",
+        "Ral, Storm Conduit",
+        "Ugin, the Ineffable",
+        "Teferi, Time Raveler",
+        "Karn, the Great Creator",
+        "Sorin, Vengeful Bloodlord",
+        "Jace, Wielder of Mysteries",
+        "Tamiyo, Collector of Tales",
+        "Liliana, Dreadhorde General",
+        "Nissa, Who Shakes the World",
+        "Vivien, Champion of the Wilds",
+        "The Wanderer",
+        "Teyo, the Shieldmage",
+        "Samut, Tyrant Smasher",
+        "Kaya, Bane of the Dead",
+        "Nahiri, Storm of Stone",
+        "Sarkhan the Masterless",
+        "Huatli, the Sun's Heart",
+        "Narset, Parter of Veils",
+        "Jaya, Venerated Firemage",
+        "Kiora, Behemoth Beckoner",
+        "Vraska, Swarm's Eminence",
+        "Jiang Yanggu, Wildcrafter",
+        "Kasmina, Enigmatic Mentor",
+        "Tibalt, Rakish Instigator",
+        "Saheeli, Sublime Artificer",
+        "Ob Nixilis, the Hate-Twisted"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Arcanis the Omnipotent": {
+      "highly_relevant": [
+        "Mountain",
+        "Swamp",
+        "Island",
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Forgotten Ancient": {
+      "highly_relevant": [
+        "Sol Ring",
+        "Solemn Simulacrum",
+        "Temple of the False God"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Fountain of Youth": {
+      "highly_relevant": [
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Garruk, Unleashed": {
+      "highly_relevant": [
+        "Teferi, Master of Time",
+        "Ugin, the Spirit Dragon",
+        "Liliana, Waker of the Dead"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Go for the Throat": {
+      "highly_relevant": [
+        "Plains",
+        "Sol Ring",
+        "Swords to Plowshares"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Asmodeus the Archfiend": {
+      "highly_relevant": [
+        "Wish",
+        "Flumph",
+        "Demilich",
+        "Long Rest",
+        "Flameskull",
+        "Froghemoth",
+        "Eye of Vecna",
+        "Meteor Swarm",
+        "Vorpal Sword",
+        "Dancing Sword",
+        "Hand of Vecna",
+        "Loyal Warhound",
+        "Treasure Chest",
+        "True Polymorph",
+        "Yuan-Ti Malison",
+        "Forsworn Paladin",
+        "Guardian of Faith",
+        "Orb of Dragonkind",
+        "Skeletal Swarming",
+        "Wizard's Spellbook",
+        "Teleportation Circle",
+        "Werewolf Pack Leader",
+        "Hobgoblin Bandit Lord",
+        "Triumphant Adventurer",
+        "Circle of Dreams Druid",
+        "Sphere of Annihilation",
+        "Instrument of the Bards",
+        "The Deck of Many Things",
+        "Xanathar, Guild Kingpin",
+        "Orcus, Prince of Undeath",
+        "Tasha's Hideous Laughter",
+        "The Book of Exalted Deeds",
+        "The Book of Vile Darkness",
+        "The Blackstaff of Waterdeep"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Bloodthirsty Adversary": {
+      "highly_relevant": [
+        "The Celestus",
+        "Willow Geist",
+        "Memory Deluge",
+        "Consuming Blob",
+        "Pithing Needle",
+        "Siphon Insight",
+        "Sludge Monster",
+        "Can't Stay Away",
+        "Fateful Absence",
+        "Moonveil Regent",
+        "Patrician Geist",
+        "Rite of Harmony",
+        "Curse of Silence",
+        "Grafted Identity",
+        "Hallowed Respite",
+        "Primal Adversary",
+        "Sigardian Savior",
+        "Sungold Sentinel"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    }
+  }
+}

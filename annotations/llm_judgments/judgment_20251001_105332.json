@@ -1,0 +1,126 @@
+{
+  "query_card": "Lightning Bolt",
+  "annotator": "system",
+  "annotation_type": "programmatic_ensemble",
+  "timestamp": "2025-10-01T10:53:32.025741",
+  "evaluations": [
+    {
+      "card": "Goblin Tomb Raider",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 7.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Gingerbrute",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 4.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Great Furnace",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 9.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Voldaren Epicure",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 10.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Chain Lightning",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 1.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Burning-Tree Emissary",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 3.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Fireblast",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 2.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Guttersnipe",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 5.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Rally at the Hornburg",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 8.0,
+      "bias_flag": "groupthink_possible"
+    },
+    {
+      "card": "Kessig Flamebreather",
+      "relevance": 2,
+      "confidence": 1.0,
+      "method_votes": [
+        "node2vec"
+      ],
+      "avg_rank": 6.0,
+      "bias_flag": "groupthink_possible"
+    }
+  ],
+  "methods_used": [
+    "node2vec"
+  ],
+  "bias_checks": {
+    "groupthink_candidates": [
+      "Goblin Tomb Raider",
+      "Gingerbrute",
+      "Great Furnace",
+      "Voldaren Epicure",
+      "Chain Lightning",
+      "Burning-Tree Emissary",
+      "Fireblast",
+      "Guttersnipe",
+      "Rally at the Hornburg",
+      "Kessig Flamebreather"
+    ],
+    "low_confidence": []
+  }
+}

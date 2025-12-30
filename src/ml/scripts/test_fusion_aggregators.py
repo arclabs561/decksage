@@ -1,0 +1,232 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "gensim>=4.0.0",
+#     "pandas>=2.0.0",
+#     "numpy>=1.24.0",
+# ]
+# ///
+"""
+Test different fusion aggregation methods on substitution task.
+
+Compares weighted, RRF, combsum, combmax, combmin.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import logging
+from pathlib import Path
+from typing import Any
+
+try:
+    from gensim.models import KeyedVectors
+    HAS_GENSIM = True
+except ImportError:
+    HAS_GENSIM = False
+
+import sys
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+try:
+    from ml.similarity.fusion import WeightedLateFusion, FusionWeights
+    HAS_FUSION = True
+except ImportError as e:
+    print(f"Could not import fusion: {e}")
+    HAS_FUSION = False
+
+try:
+    from ml.enrichment.card_functional_tagger_unified import get_tags
+    HAS_TAGGER = True
+except ImportError as e:
+    print(f"Could not import tagger: {e}")
+    HAS_TAGGER = False
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+
+def load_jaccard_graph(pairs_csv: Path) -> dict[str, set[str]]:
+    """Load Jaccard co-occurrence graph."""
+    logger.info(f"Loading Jaccard graph from {pairs_csv}...")
+    adj: dict[str, set[str]] = {}
+    
+    import pandas as pd
+    df = pd.read_csv(pairs_csv)
+    
+    name_cols = [c for c in df.columns if "NAME" in c.upper()]
+    if len(name_cols) < 2:
+        logger.error("Could not find name columns")
+        return adj
+    
+    card1_col, card2_col = name_cols[0], name_cols[1]
+    
+    for _, row in df.iterrows():
+        card1 = str(row[card1_col]).strip()
+        card2 = str(row[card2_col]).strip()
+        
+        if not card1 or not card2 or card1 == card2:
+            continue
+        
+        if card1 not in adj:
+            adj[card1] = set()
+        if card2 not in adj:
+            adj[card2] = set()
+        
+        adj[card1].add(card2)
+        adj[card2].add(card1)
+    
+    logger.info(f"  Loaded {len(adj):,} cards")
+    return adj
+
+
+def evaluate_substitution(
+    fusion: WeightedLateFusion,
+    test_pairs: list[tuple[str, str]],
+    k: int = 10,
+) -> float:
+    """Evaluate substitution task with fusion."""
+    found = 0
+    
+    for query, target in test_pairs:
+        try:
+            similar = fusion.similar(query, k=k)
+            similar_cards = [card for card, _ in similar]
+            
+            if target in similar_cards:
+                found += 1
+        except Exception as e:
+            logger.debug(f"Error evaluating {query} -> {target}: {e}")
+            continue
+    
+    p_at_10 = found / len(test_pairs) if test_pairs else 0.0
+    return p_at_10
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Test fusion aggregators")
+    parser.add_argument("--embedding", type=Path, required=True, help="Embedding file")
+    parser.add_argument("--pairs-csv", type=Path, required=True, help="Pairs CSV")
+    parser.add_argument("--test-pairs", type=Path, required=True, help="Test substitution pairs JSON")
+    parser.add_argument("--game", type=str, default="magic", help="Game name")
+    parser.add_argument("--output", type=Path, required=True, help="Output JSON")
+    parser.add_argument("--use-functional-tags", action="store_true", help="Use functional tags")
+    
+    args = parser.parse_args()
+    
+    if not HAS_GENSIM:
+        logger.error("gensim required")
+        return 1
+    
+    if not HAS_FUSION:
+        logger.error("fusion module required")
+        return 1
+    
+    # Load embedding
+    logger.info(f"Loading embedding: {args.embedding}")
+    embedding = KeyedVectors.load(str(args.embedding))
+    logger.info(f"  Vocabulary: {len(embedding)} cards")
+    
+    # Load Jaccard graph
+    adj = load_jaccard_graph(args.pairs_csv)
+    
+    # Load test pairs
+    with open(args.test_pairs) as f:
+        test_data = json.load(f)
+    
+    test_pairs = []
+    if isinstance(test_data, list):
+        for pair in test_data:
+            if isinstance(pair, dict):
+                test_pairs.append((pair["query"], pair["target"]))
+            else:
+                test_pairs.append(tuple(pair[:2]))
+    elif isinstance(test_data, dict):
+        for query, targets in test_data.items():
+            if isinstance(targets, list):
+                for target in targets:
+                    test_pairs.append((query, target))
+            elif isinstance(targets, dict):
+                for target in targets.keys():
+                    test_pairs.append((query, target))
+    
+    logger.info(f"  Test pairs: {len(test_pairs)}")
+    
+    # Load functional tagger if requested
+    # Create a simple wrapper for get_tags
+    tagger = None
+    if args.use_functional_tags and HAS_TAGGER:
+        class TaggerWrapper:
+            def tag_card(self, card_name: str):
+                return get_tags(card_name, game=args.game)
+        
+        tagger = TaggerWrapper()
+        logger.info("  Functional tagger loaded")
+    elif args.use_functional_tags:
+        logger.warning("Functional tagger not available")
+    
+    # Test each aggregator
+    aggregators = ["weighted", "rrf", "combsum", "combmax", "combmin"]
+    results = {}
+    
+    # Use equal weights for all signals
+    weights = FusionWeights(
+        embed=0.25,
+        jaccard=0.25,
+        functional=0.25 if tagger else 0.0,
+        text_embed=0.25 if not tagger else 0.0,
+    )
+    
+    for aggregator in aggregators:
+        logger.info(f"\nTesting aggregator: {aggregator}")
+        
+        fusion = WeightedLateFusion(
+            embeddings=embedding,
+            adj=adj,
+            tagger=tagger,
+            weights=weights,
+            aggregator=aggregator,
+        )
+        
+        p_at_10 = evaluate_substitution(fusion, test_pairs, k=10)
+        results[aggregator] = {
+            "p@10": p_at_10,
+            "found": int(p_at_10 * len(test_pairs)),
+            "total": len(test_pairs),
+        }
+        
+        logger.info(f"  P@10: {p_at_10:.4f}")
+    
+    # Save results
+    output_data = {
+        "embedding": str(args.embedding),
+        "test_pairs": str(args.test_pairs),
+        "game": args.game,
+        "results": results,
+    }
+    
+    args.output.parent.mkdir(parents=True, exist_ok=True)
+    with open(args.output, "w") as f:
+        json.dump(output_data, f, indent=2)
+    
+    logger.info(f"\n✅ Results saved to {args.output}")
+    
+    # Summary
+    print("\n" + "=" * 70)
+    print("AGGREGATOR COMPARISON")
+    print("=" * 70)
+    for agg, res in sorted(results.items(), key=lambda x: x[1]["p@10"], reverse=True):
+        print(f"{agg:12s}: P@10={res['p@10']:.4f} ({res['found']}/{res['total']})")
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

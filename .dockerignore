@@ -1,0 +1,127 @@
+# .dockerignore - Optimized to minimize build context size
+# Reduces build time by excluding unnecessary files from Docker build context
+
+# Git
+.git
+.gitignore
+.gitattributes
+.gitmodules
+
+# Python cache and build artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg
+*.egg-info/
+dist/
+build/
+*.egg-info
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.tox/
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
+*.sublime-*
+
+# Data files (exclude large datasets)
+data/
+games/
+old-scraper-data/
+backups/
+experiments/
+annotations/
+logs/
+notebooks/
+archive/
+*.csv
+*.json
+*.parquet
+*.h5
+*.hdf5
+*.db
+*.sqlite
+*.sqlite3
+
+# Backend (Go code, not needed for API)
+src/backend/
+
+# Frontend (not needed for API)
+src/frontend/
+
+# Test files
+tests/
+test_*.py
+*_test.py
+*_tests.py
+conftest.py
+pytest.ini
+.pytest_cache/
+
+# Documentation (keep README for reference)
+*.md
+!README.md
+
+# Deployment and CI/CD
+deploy/
+debug/
+scripts/
+.github/
+.gitlab-ci.yml
+.travis.yml
+.circleci/
+Jenkinsfile
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+*.local
+*.secret
+secrets/
+
+# OS files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.log
+*.bak
+*.swp
+*.swo
+*~
+
+# Docker files (don't include in build context)
+Dockerfile*
+docker-compose*.yml
+.dockerignore
+
+

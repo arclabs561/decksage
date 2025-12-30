@@ -1,0 +1,385 @@
+#!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = [
+#     "pandas>=2.0.0",
+#     "numpy<2.0.0",
+#     "gensim>=4.3.0",
+# ]
+# ///
+"""
+Improve evaluation metrics with additional analysis.
+
+Adds:
+1. Per-query analysis
+2. Difficulty-stratified metrics
+3. Query type-stratified metrics
+4. Error analysis
+5. Coverage analysis
+6. Label quality metrics
+7. Statistical significance testing
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+from collections import Counter, defaultdict
+from pathlib import Path
+from typing import Any
+
+try:
+    import pandas as pd
+    import numpy as np
+    from gensim.models import KeyedVectors
+    HAS_DEPS = True
+except ImportError:
+    HAS_DEPS = False
+
+# Import evaluation functions (inline to avoid module issues)
+import sys
+from pathlib import Path
+
+# Add src to path
+src_path = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(src_path))
+
+try:
+    from ml.utils.evaluation import compute_precision_at_k, evaluate_similarity
+    from ml.utils.evaluation_with_ci import evaluate_with_confidence
+    HAS_EVAL_UTILS = True
+except ImportError:
+    HAS_EVAL_UTILS = False
+    # Define minimal versions
+    def compute_precision_at_k(predictions, labels, k=10):
+        """Minimal precision@k calculation."""
+        all_relevant = set(labels.get("highly_relevant", []) + labels.get("relevant", []))
+        top_k = predictions[:k]
+        relevant_in_top_k = sum(1 for p in top_k if p in all_relevant)
+        return relevant_in_top_k / k if k > 0 else 0.0
+    
+    def evaluate_with_confidence(*args, **kwargs):
+        return {}
+
+
+def analyze_per_query_performance(
+    embedding: KeyedVectors,
+    test_set: dict[str, dict[str, Any]],
+    top_k: int = 10,
+) -> dict[str, Any]:
+    """
+    Analyze performance per query with detailed metrics.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Analyzing per-query performance...")
+    
+    per_query_results = {}
+    
+    for query, labels in test_set.get("queries", {}).items():
+        if query not in embedding:
+            continue
+        
+        # Get all relevant cards
+        all_relevant = (
+            labels.get("highly_relevant", []) +
+            labels.get("relevant", []) +
+            labels.get("somewhat_relevant", [])
+        )
+        
+        if not all_relevant:
+            continue
+        
+        # Get similar cards from embedding
+        try:
+            similar = embedding.most_similar(query, topn=top_k * 2)
+            similar_cards = [card for card, _ in similar]
+        except KeyError:
+            continue
+        
+        # Calculate metrics
+        p_at_k = compute_precision_at_k(
+            similar_cards[:top_k],
+            all_relevant,
+            labels,
+        )
+        
+        # Calculate MRR
+        mrr = 0.0
+        for rank, card in enumerate(similar_cards[:top_k], 1):
+            if card in labels.get("highly_relevant", []):
+                mrr = 1.0 / rank
+                break
+            elif card in labels.get("relevant", []):
+                mrr = 0.75 / rank
+                break
+            elif card in labels.get("somewhat_relevant", []):
+                mrr = 0.5 / rank
+                break
+        
+        per_query_results[query] = {
+            "p@10": p_at_k,
+            "mrr": mrr,
+            "query_type": labels.get("type", "unknown"),
+            "difficulty": labels.get("difficulty", "unknown"),
+            "num_relevant": len(all_relevant),
+            "top_result": similar_cards[0] if similar_cards else None,
+            "top_result_relevant": similar_cards[0] in all_relevant if similar_cards else False,
+        }
+    
+    print(f"  ✅ Analyzed {len(per_query_results)} queries")
+    return per_query_results
+
+
+def stratified_metrics(
+    per_query_results: dict[str, Any],
+) -> dict[str, Any]:
+    """
+    Calculate stratified metrics by difficulty and query type.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Calculating stratified metrics...")
+    
+    stratified = {
+        "by_difficulty": defaultdict(list),
+        "by_query_type": defaultdict(list),
+    }
+    
+    for query, results in per_query_results.items():
+        difficulty = results.get("difficulty", "unknown")
+        query_type = results.get("query_type", "unknown")
+        
+        stratified["by_difficulty"][difficulty].append(results["p@10"])
+        stratified["by_query_type"][query_type].append(results["p@10"])
+    
+    # Calculate statistics
+    stratified_stats = {
+        "by_difficulty": {},
+        "by_query_type": {},
+    }
+    
+    for difficulty, scores in stratified["by_difficulty"].items():
+        if scores:
+            stratified_stats["by_difficulty"][difficulty] = {
+                "mean": float(np.mean(scores)),
+                "std": float(np.std(scores)),
+                "count": len(scores),
+                "min": float(np.min(scores)),
+                "max": float(np.max(scores)),
+            }
+    
+    for query_type, scores in stratified["by_query_type"].items():
+        if scores:
+            stratified_stats["by_query_type"][query_type] = {
+                "mean": float(np.mean(scores)),
+                "std": float(np.std(scores)),
+                "count": len(scores),
+                "min": float(np.min(scores)),
+                "max": float(np.max(scores)),
+            }
+    
+    print(f"  ✅ Calculated stratified metrics for {len(stratified_stats['by_difficulty'])} difficulties, {len(stratified_stats['by_query_type'])} types")
+    return stratified_stats
+
+
+def error_analysis(
+    per_query_results: dict[str, Any],
+    test_set: dict[str, dict[str, Any]],
+    embedding: KeyedVectors,
+    top_k: int = 10,
+) -> dict[str, Any]:
+    """
+    Analyze errors: queries with low performance.
+    """
+    if not HAS_DEPS:
+        return {}
+    
+    print(f"📊 Analyzing errors...")
+    
+    # Find low-performing queries
+    low_performing = []
+    
+    for query, results in per_query_results.items():
+        if results["p@10"] < 0.1:  # Low precision threshold
+            labels = test_set.get("queries", {}).get(query, {})
+            
+            # Get top results
+            try:
+                similar = embedding.most_similar(query, topn=top_k)
+                top_results = [card for card, _ in similar]
+            except KeyError:
+                top_results = []
+            
+            low_performing.append({
+                "query": query,
+                "p@10": results["p@10"],
+                "mrr": results["mrr"],
+                "query_type": results["query_type"],
+                "difficulty": results["difficulty"],
+                "expected_relevant": labels.get("highly_relevant", [])[:5],
+                "top_results": top_results[:5],
+                "top_result_relevant": results["top_result_relevant"],
+            })
+    
+    # Sort by worst performance
+    low_performing.sort(key=lambda x: x["p@10"])
+    
+    error_analysis = {
+        "low_performing_count": len(low_performing),
+        "low_performing_queries": low_performing[:20],  # Top 20 worst
+        "common_issues": {
+            "no_relevant_in_top": sum(1 for q in low_performing if not q["top_result_relevant"]),
+            "wrong_query_type": Counter(q["query_type"] for q in low_performing),
+            "high_difficulty": sum(1 for q in low_performing if q["difficulty"] == "hard"),
+        },
+    }
+    
+    print(f"  ✅ Found {len(low_performing)} low-performing queries")
+    return error_analysis
+
+
+def comprehensive_evaluation_analysis(
+    embedding_path: Path,
+    test_set_path: Path,
+    output_path: Path,
+    top_k: int = 10,
+) -> None:
+    """Run comprehensive evaluation analysis."""
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return
+    
+    print("=" * 70)
+    print("Comprehensive Evaluation Analysis")
+    print("=" * 70)
+    
+    # Load embedding
+    print(f"\n📊 Loading embedding from {embedding_path}...")
+    embedding = KeyedVectors.load(str(embedding_path))
+    print(f"  ✅ Loaded {len(embedding)} cards")
+    
+    # Load test set
+    print(f"\n📊 Loading test set from {test_set_path}...")
+    with open(test_set_path) as f:
+        test_set = json.load(f)
+    queries = test_set.get("queries", {})
+    print(f"  ✅ Loaded {len(queries)} queries")
+    
+    # Per-query analysis
+    per_query_results = analyze_per_query_performance(
+        embedding,
+        test_set,
+        top_k=top_k,
+    )
+    
+    # Stratified metrics
+    stratified_stats = stratified_metrics(per_query_results)
+    
+    # Error analysis
+    error_analysis_results = error_analysis(
+        per_query_results,
+        test_set,
+        embedding,
+        top_k=top_k,
+    )
+    
+    # Overall metrics with CI
+    print(f"\n📊 Calculating overall metrics with confidence intervals...")
+    overall_metrics = evaluate_with_confidence(
+        embedding,
+        test_set,
+        top_k=top_k,
+        num_bootstrap=1000,
+        verbose=False,
+    )
+    
+    # Compile comprehensive analysis
+    analysis = {
+        "test_set": str(test_set_path),
+        "embedding": str(embedding_path),
+        "overall_metrics": overall_metrics,
+        "per_query_results": per_query_results,
+        "stratified_metrics": stratified_stats,
+        "error_analysis": error_analysis_results,
+        "summary": {
+            "total_queries": len(queries),
+            "evaluated_queries": len(per_query_results),
+            "mean_p@10": float(np.mean([r["p@10"] for r in per_query_results.values()])),
+            "mean_mrr": float(np.mean([r["mrr"] for r in per_query_results.values()])),
+            "low_performing_count": error_analysis_results["low_performing_count"],
+        },
+    }
+    
+    # Save analysis
+    with open(output_path, "w") as f:
+        json.dump(analysis, f, indent=2)
+    
+    print(f"\n✅ Comprehensive analysis saved to {output_path}")
+    print(f"\n📊 Summary:")
+    print(f"   Mean P@10: {analysis['summary']['mean_p@10']:.4f}")
+    print(f"   Mean MRR: {analysis['summary']['mean_mrr']:.4f}")
+    print(f"   Low-performing queries: {analysis['summary']['low_performing_count']}")
+    
+    # Print stratified results
+    if stratified_stats["by_difficulty"]:
+        print(f"\n📊 By Difficulty:")
+        for difficulty, stats in stratified_stats["by_difficulty"].items():
+            print(f"   {difficulty}: P@10 = {stats['mean']:.4f} (n={stats['count']})")
+    
+    if stratified_stats["by_query_type"]:
+        print(f"\n📊 By Query Type:")
+        for qtype, stats in list(stratified_stats["by_query_type"].items())[:5]:
+            print(f"   {qtype}: P@10 = {stats['mean']:.4f} (n={stats['count']})")
+
+
+def main() -> int:
+    """Improve evaluation metrics."""
+    parser = argparse.ArgumentParser(
+        description="Improve evaluation metrics with comprehensive analysis"
+    )
+    parser.add_argument("--embedding", type=str, required=True,
+                       help="Embedding file (.wv)")
+    parser.add_argument("--test-set", type=str, required=True,
+                       help="Test set JSON")
+    parser.add_argument("--output", type=str,
+                       default="experiments/evaluation_comprehensive_analysis.json",
+                       help="Output analysis JSON")
+    parser.add_argument("--top-k", type=int, default=10,
+                       help="Top K for evaluation")
+    
+    args = parser.parse_args()
+    
+    if not HAS_DEPS:
+        print("❌ Missing dependencies")
+        return 1
+    
+    embedding_path = Path(args.embedding)
+    if not embedding_path.exists():
+        print(f"❌ Embedding not found: {embedding_path}")
+        return 1
+    
+    test_set_path = Path(args.test_set)
+    if not test_set_path.exists():
+        print(f"❌ Test set not found: {test_set_path}")
+        return 1
+    
+    output_path = Path(args.output)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    
+    comprehensive_evaluation_analysis(
+        embedding_path,
+        test_set_path,
+        output_path,
+        top_k=args.top_k,
+    )
+    
+    return 0
+
+
+if __name__ == "__main__":
+    import sys
+    sys.exit(main())
+

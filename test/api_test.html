@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deck Search - API Test</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #0f172a;
+            color: #e2e8f0;
+        }
+        .search-box {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 8px;
+        }
+        input {
+            width: 100%;
+            max-width: 400px;
+            padding: 10px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+            border-radius: 6px;
+            color: #e2e8f0;
+            font-size: 14px;
+        }
+        button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            background: #3b82f6;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+        }
+        .results {
+            margin-top: 20px;
+        }
+        .result-item {
+            padding: 16px;
+            margin: 10px 0;
+            background: rgba(30, 41, 59, 0.5);
+            border-radius: 8px;
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .error {
+            padding: 16px;
+            margin: 20px 0;
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            color: #fca5a5;
+        }
+        .badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-right: 8px;
+        }
+        .badge-embedding { background: rgba(52, 211, 153, 0.15); color: #34d399; }
+        .badge-hybrid { background: rgba(251, 191, 36, 0.15); color: #fbbf24; }
+    </style>
+</head>
+<body>
+    <h1>Deck Search - API Test</h1>
+    
+    <div class="search-box">
+        <h3>Search Cards</h3>
+        <input type="text" id="searchInput" placeholder="Enter search query (e.g., lightning)" />
+        <button onclick="doSearch()">Search</button>
+    </div>
+    
+    <div class="search-box">
+        <h3>Similar Cards Finder</h3>
+        <input type="text" id="similarInput" placeholder="Enter card name (e.g., Lightning Bolt)" />
+        <button onclick="findSimilar()">Find Similar</button>
+    </div>
+    
+    <div id="results" class="results"></div>
+    
+    <script>
+        const API_URL = 'http://localhost:8000';
+        
+        async function doSearch() {
+            const query = document.getElementById('searchInput').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Searching...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/v1/search?q=${encodeURIComponent(query)}&limit=5`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    resultsDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${response.status} - ${errorText}</div>`;
+                    return;
+                }
+                
+                const data = await response.json();
+                displaySearchResults(data);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        }
+        
+        async function findSimilar() {
+            const cardName = document.getElementById('similarInput').value;
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = '<p>Finding similar cards...</p>';
+            
+            try {
+                const response = await fetch(`${API_URL}/v1/cards/${encodeURIComponent(cardName)}/similar?k=5`);
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    resultsDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${response.status} - ${errorText}</div>`;
+                    return;
+                }
+                
+                const data = await response.json();
+                displaySimilarResults(cardName, data);
+            } catch (error) {
+                resultsDiv.innerHTML = `<div class="error"><strong>Error:</strong> ${error.message}</div>`;
+            }
+        }
+        
+        function displaySearchResults(data) {
+            const resultsDiv = document.getElementById('results');
+            if (!data.results || data.results.length === 0) {
+                resultsDiv.innerHTML = '<p>No results found</p>';
+                return;
+            }
+            
+            let html = `<h2>Search Results for "${data.query}" (${data.total} results)</h2>`;
+            data.results.forEach(r => {
+                const badgeClass = r.source === 'embedding_fallback' ? 'badge-embedding' : 'badge-hybrid';
+                html += `
+                    <div class="result-item">
+                        <div><strong>${r.card_name}</strong> <span class="badge ${badgeClass}">${r.source}</span></div>
+                        <div>Score: ${r.score.toFixed(3)}</div>
+                        <div>${r.metadata?.text || 'No description'}</div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        }
+        
+        function displaySimilarResults(cardName, data) {
+            const resultsDiv = document.getElementById('results');
+            if (!data.results || data.results.length === 0) {
+                resultsDiv.innerHTML = '<p>No similar cards found</p>';
+                return;
+            }
+            
+            let html = `<h2>Similar Cards to "${cardName}" (${data.results.length} results)</h2>`;
+            data.results.forEach(r => {
+                html += `
+                    <div class="result-item">
+                        <div><strong>${r.card}</strong></div>
+                        <div>Similarity: ${r.similarity.toFixed(3)}</div>
+                    </div>
+                `;
+            });
+            resultsDiv.innerHTML = html;
+        }
+        
+        // Allow Enter key
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') doSearch();
+        });
+        document.getElementById('similarInput').addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') findSimilar();
+        });
+    </script>
+</body>
+</html>

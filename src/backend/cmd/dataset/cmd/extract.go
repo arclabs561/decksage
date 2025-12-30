@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
@@ -12,20 +13,8 @@ import (
 	"collections/games/magic/dataset"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
-	"collections/games/magic/dataset/mtgdecks"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
-	"collections/games/pokemon/dataset/limitless"
-	limitlessweb "collections/games/pokemon/dataset/limitless-web"
-
-	// "collections/games/pokemon/dataset/pokemontcg"
-	pokemontcgprice "collections/games/pokemon/dataset/pokemon-tcg-price-api"
-	pokemoncardio "collections/games/pokemon/dataset/pokemoncard-io"
-	pokemontcgdata "collections/games/pokemon/dataset/pokemontcg-data"
-	pokestats "collections/games/pokemon/dataset/pokestats"
-	"collections/games/yugioh/dataset/ygoprodeck"
-	ygoprodecktournament "collections/games/yugioh/dataset/ygoprodeck-tournament"
-	"collections/games/yugioh/dataset/yugiohmeta"
 	"collections/logger"
 	"collections/scraper"
 )
@@ -67,108 +56,89 @@ func runExtract(cmd *cobra.Command, args []string) error {
 
 	scraper := scraper.NewScraper(config.Log, scraperBlob)
 
+	var d dataset.Dataset
 	datasetName := strings.ToLower(args[0])
-
 	switch datasetName {
-	// MTG datasets (use magic/dataset options)
 	case "deckbox":
-		d := deckbox.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
+		d = deckbox.NewDataset(config.Log, gamesBlob)
 	case "scryfall":
-		d := scryfall.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
+		d = scryfall.NewDataset(config.Log, gamesBlob)
 	case "goldfish":
-		d := goldfish.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "mtgdecks":
-		d := mtgdecks.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
+		d = goldfish.NewDataset(config.Log, gamesBlob)
 	case "mtgtop8":
-		d := mtgtop8.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	// Yu-Gi-Oh! datasets (use games options)
-	case "ygoprodeck":
-		d := ygoprodeck.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "ygoprodeck-tournament":
-		d := ygoprodecktournament.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "yugiohmeta":
-		d := yugiohmeta.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	// Pokemon datasets (use games options)
-	case "pokemontcg-data":
-		d := pokemontcgdata.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "pokemon-tcg-price-api":
-		d := pokemontcgprice.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "pokemoncard-io":
-		d := pokemoncardio.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "pokestats":
-		d := pokestats.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "limitless":
-		d := limitless.NewDataset(config.Log, gamesBlob)
-		opts := parseGamesOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
-	case "limitless-web":
-		d := limitlessweb.NewDataset(config.Log, gamesBlob)
-		opts := parseMTGOptions(config.Ctx, config.Log, cmd.Flags())
-		if err := d.Extract(config.Ctx, scraper, opts...); err != nil {
-			return fmt.Errorf("failed to update: %w", err)
-		}
+		d = mtgtop8.NewDataset(config.Log, gamesBlob)
 	default:
 		return fmt.Errorf(
 			"unsupported dataset %q, allowed (%+v)",
 			datasetName,
-			[]string{"deckbox", "scryfall", "goldfish", "mtgdecks", "mtgtop8", "ygoprodeck", "ygoprodeck-tournament", "yugiohmeta", "pokemontcg-data", "pokemon-tcg-price-api", "pokemoncard-io", "pokestats", "limitless", "limitless-web"},
+			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8"},
 		)
+	}
+	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
+	
+	// Create stats tracker and progress reporter for extraction metrics
+	stats := games.NewExtractStats(config.Log)
+	progress := games.NewProgressReporter(config.Log, d.Description().Name, 30*time.Second)
+	
+	// Pass stats through context so datasets can access it
+	ctxWithStats := games.WithExtractStats(config.Ctx, stats)
+	
+	config.Log.Infof(ctxWithStats, "🚀 Starting extraction for dataset: %s", d.Description().Name)
+	
+	if err := d.Extract(ctxWithStats, scraper, opts...); err != nil {
+		stats.RecordError(config.Ctx, "", d.Description().Name, err)
+		progress.IncrementFailed()
+		config.Log.Errorf(config.Ctx, "Extraction failed: %v", err)
+		progress.FinalReport()
+		config.Log.Infof(config.Ctx, "Extraction summary: %s", stats.Summary())
+		return fmt.Errorf("failed to update: %w", err)
+	}
+	
+	// Final progress report
+	progress.FinalReport()
+	
+	// Display extraction summary with quality metrics
+	config.Log.Infof(config.Ctx, "✅ Extraction complete: %s", stats.Summary())
+	
+	// Show quality metrics
+	if stats.NormalizedCount > 0 {
+		config.Log.Infof(config.Ctx, "📝 Normalized %d card names", stats.NormalizedCount)
+	}
+	cacheHitRate := stats.GetCacheHitRate() * 100
+	if stats.CacheHits+stats.CacheMisses > 0 {
+		config.Log.Infof(config.Ctx, "💾 Cache: %.1f%% hit rate (%d hits, %d misses)", 
+			cacheHitRate, stats.CacheHits, stats.CacheMisses)
+	}
+	if len(stats.ValidationFailures) > 0 {
+		config.Log.Warnf(config.Ctx, "⚠️  Validation failures:")
+		for errorType, count := range stats.ValidationFailures {
+			config.Log.Warnf(config.Ctx, "   - %s: %d", errorType, count)
+		}
+	}
+	
+	// Show recent errors if any
+	errors := stats.GetErrors()
+	if len(errors) > 0 {
+		config.Log.Warnf(config.Ctx, "❌ Encountered %d errors during extraction", len(errors))
+		// Show first 5 errors
+		maxErrors := 5
+		if len(errors) < maxErrors {
+			maxErrors = len(errors)
+		}
+		for i := 0; i < maxErrors; i++ {
+			config.Log.Field("url", errors[i].URL).
+				Field("error", errors[i].Error).
+				Warnf(config.Ctx, "Error %d/%d", i+1, len(errors))
+		}
+		if len(errors) > maxErrors {
+			config.Log.Warnf(config.Ctx, "... and %d more errors (see logs for details)", len(errors)-maxErrors)
+		}
 	}
 
 	return nil
 }
 
-func parseMTGOptions(
+func parseOptions(
 	ctx context.Context,
 	log *logger.Logger,
 	flags *pflag.FlagSet,
@@ -243,86 +213,6 @@ func parseMTGOptions(
 	}
 	if cat {
 		opts = append(opts, &dataset.OptExtractItemCat{})
-	}
-
-	return opts
-}
-
-func parseGamesOptions(
-	ctx context.Context,
-	log *logger.Logger,
-	flags *pflag.FlagSet,
-) []games.UpdateOption {
-	var opts []games.UpdateOption
-
-	reparse, err := flags.GetBool("reparse")
-	if err != nil {
-		log.Fatalf(ctx, "failed to get bool flag --reparse")
-	}
-	if reparse {
-		opts = append(opts, &games.OptExtractReparse{})
-	}
-
-	rescrape, err := flags.GetBool("rescrape")
-	if err != nil {
-		log.Fatalf(ctx, "failed to get bool flag --rescrape")
-	}
-	if rescrape {
-		opts = append(opts, &games.OptExtractScraperReplaceAll{})
-	}
-
-	parallel, err := flags.GetInt("parallel")
-	if err != nil {
-		log.Fatalf(ctx, "failed to get int flag --parallel")
-	}
-	opts = append(opts, &games.OptExtractParallel{Parallel: parallel})
-
-	if flags.Lookup("section") != nil {
-		section, err := flags.GetString("section")
-		if err != nil {
-			log.Fatalf(ctx, "failed to get string flag --section")
-		}
-		opts = append(opts, &games.OptExtractSectionOnly{Section: section})
-	}
-
-	if flags.Lookup("pages") != nil {
-		pages, err := flags.GetInt("pages")
-		if err != nil {
-			log.Fatalf(ctx, "failed to get int flag --pages")
-		}
-		opts = append(opts, &games.OptExtractScrollLimit{Limit: pages})
-	}
-
-	if flags.Lookup("start") != nil {
-		start, err := flags.GetInt("start")
-		if err != nil {
-			log.Fatalf(ctx, "failed to get int flag --start")
-		}
-		opts = append(opts, &games.OptExtractScrollStart{Start: start})
-	}
-
-	if flags.Lookup("limit") != nil {
-		limit, err := flags.GetInt("limit")
-		if err != nil {
-			log.Fatalf(ctx, "failed to get int flag --limit")
-		}
-		opts = append(opts, &games.OptExtractItemLimit{Limit: limit})
-	}
-
-	only, err := flags.GetStringArray("only")
-	if err != nil {
-		log.Fatalf(ctx, "failed to get int flag --only")
-	}
-	for _, o := range only {
-		opts = append(opts, &games.OptExtractItemOnlyURL{URL: o})
-	}
-
-	cat, err := flags.GetBool("cat")
-	if err != nil {
-		log.Fatalf(ctx, "failed to get bool flag --cat")
-	}
-	if cat {
-		opts = append(opts, &games.OptExtractItemCat{})
 	}
 
 	return opts

@@ -33,33 +33,43 @@ LANDS = {
 }
 
 
-def load_graph(csv_path="../backend/pairs_large.csv", filter_lands=True):
+def load_graph(csv_path=None, filter_lands=True):
     """
     Load co-occurrence graph from CSV.
 
     Returns: adjacency dict, edge weights dict
 
     Principle: Don't reload graph in every experiment.
-    Default path: ../backend/pairs_large.csv (from src/ml/)
+    Default path: Uses PATHS.pairs_large from paths.py
     """
     import os
+    from ..utils.paths import PATHS
 
-    # Handle different working directories
+    # Use PATHS if no path provided
+    if csv_path is None:
+        csv_path = str(PATHS.pairs_large)
+    
+    # Handle different working directories - try PATHS first
     if not os.path.exists(csv_path):
-        # Try alternative paths
-        alternatives = [
-            "../../data/processed/pairs_large.csv",
-            "../data/processed/pairs_large.csv",
-            "data/processed/pairs_large.csv",
-            "../backend/pairs_large.csv",
-            "../../src/backend/pairs_large.csv",
-        ]
-        for alt in alternatives:
-            if os.path.exists(alt):
-                csv_path = alt
-                break
+        # Try PATHS canonical path
+        if PATHS.pairs_large.exists():
+            csv_path = str(PATHS.pairs_large)
         else:
-            raise FileNotFoundError(f"Could not find pairs CSV. Tried: {alternatives}")
+            # Fallback to alternatives (for backward compatibility)
+            alternatives = [
+                str(PATHS.pairs_500),
+                "../../data/processed/pairs_large.csv",
+                "../data/processed/pairs_large.csv",
+                "data/processed/pairs_large.csv",
+                "../backend/pairs_large.csv",
+                "../../src/backend/pairs_large.csv",
+            ]
+            for alt in alternatives:
+                if os.path.exists(alt):
+                    csv_path = alt
+                    break
+            else:
+                raise FileNotFoundError(f"Could not find pairs CSV. Tried: {[csv_path] + alternatives}")
 
     df = pd.read_csv(csv_path)
 
