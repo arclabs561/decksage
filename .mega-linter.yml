@@ -120,7 +120,7 @@ YAML_YAMLLINT_CONFIG_FILE: .yamllint.yml
 YAML_YAMLLINT_ARGUMENTS:
   - "-d"
   - "{extends: relaxed, rules: {line-length: {max: 120}}}"
-YAML_YAMLLINT_FILTER_REGEX_INCLUDE: "(annotations/|\.github/)"
+YAML_YAMLLINT_FILTER_REGEX_INCLUDE: "(annotations/|\\.github/)"
 
 # ─────────────────────────────────────────────────────────────
 # JSON Configuration
