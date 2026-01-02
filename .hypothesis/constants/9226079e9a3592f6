@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/card_market_data.py
-# hypothesis_version: 6.140.3
-
-[0.0, 0.25, 5.0, 20.0, 100.0, 100, 1000, '*.json', 'Budget playables', 'CARDMARKET_APP_TOKEN', 'Lightning Bolt', 'Mid-range staples', 'Monastery Swiftspear', 'Mountain', 'Premium cards', 'TCGPLAYER_API_KEY', '__main__', 'backend', 'breakdown', 'budget', 'bulk', 'card', 'card_name', 'card_prices.json', 'cards', 'count', 'coverage', 'data-full', 'eur', 'eur_foil', 'inf', 'last_updated', 'magic', 'mid', 'missing_prices', 'name', 'premium', 'price', 'price_ratio', 'prices', 'savings', 'scryfall', 'tier', 'tix', 'total', 'total_usd', 'unit_price', 'unknown', 'usd', 'usd_foil', 'w', 'whale']
