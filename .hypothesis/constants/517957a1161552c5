@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/experimental/llm_judge.py
-# hypothesis_version: 6.140.3
-
-['\n</body>\n</html>\n', '    </div>', '+', '--embeddings', '--k', '--model', '--output', '--queries', '.json', '0-4 relevance score', '1', 'Biases in the model', 'LLM judge evaluation', 'LLM model', 'LLMCache', 'LLM_CACHE_BYPASS', 'Magic: The Gathering', 'OPENROUTER_API_KEY', 'Path to .wv file', 'Query cards', 'TRUE', 'Top-k predictions', 'Why this score?', '__main__', 'analysis', 'biases_detected', 'card_ratings', 'engine', 'evaluation', 'excellent', 'good', 'issues', 'llm_judge', 'medium', 'missing_cards', 'model', 'ok', 'openai/gpt-4o-mini', 'openrouter', 'overall_quality', 'poor', 'predictions', 'prompt', 'query_card', 'relevance', 'schema', 'suggestions', 'system', 'system_prompt', 'true', 'w']
