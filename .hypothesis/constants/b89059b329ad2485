@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/llm_semantic_enricher.py
-# hypothesis_version: 6.140.3
-
-[0.0, 0.3, 0.5, 1.0, 1000, 'ATK', 'Authorization', 'Content-Type', 'DEF', 'HTTP-Referer', 'Instant', 'Lightning Bolt', 'OPENROUTER_API_KEY', 'Unknown', 'X-Title', '__main__', '```', '```json', 'abilities', 'anti_synergies', 'application/json', 'archetype_fit', 'archetype_role', 'atk', 'attacks', 'card_name', 'choices', 'complexity', 'content', 'def', 'desc', 'description', 'enabler', 'faces', 'format_staple', 'game', 'hp', 'llm_confidence', 'llm_enricher', 'llm_features', 'mana_cost', 'max_tokens', 'message', 'messages', 'meta_relevance', 'model', 'mtg', 'name', 'oracle_text', 'play_pattern', 'pokemon', 'power_level', 'role', 'rule_based_features', 'strategy_summary', 'synergies', 'synergy_explanation', 'system', 'tech_card', 'temperature', 'type', 'type_line', 'unknown', 'user', 'w', 'weakness_explanation', 'win_condition', 'yugioh', '{', '{R}', '{}', '}']

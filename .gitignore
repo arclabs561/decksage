@@ -119,3 +119,22 @@ yarn.lock
 # Experiment artifacts
 experiments/*.png
 experiments/*.html
+deploy/build/
+
+# Built binaries (should be built on-demand, not committed)
+bin/
+archive/
+
+# Local state and cache directories (should not be committed)
+**/.aim/
+**/.hypothesis/
+**/.runctl/sessions/
+
+# Temporary status markers
+.enrichment-complete-*
+.final-status-*
+.session-complete
+.git_workaround.sh
+
+# Jupyter notebook checkpoints
+**/.ipynb_checkpoints/

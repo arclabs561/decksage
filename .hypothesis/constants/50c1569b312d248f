@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/utils/llm_cache.py
-# hypothesis_version: 6.140.3
-
-[1024, 3600, ',', '.cache', '1', ':', 'LLM_CACHE_BYPASS', 'LLM_CACHE_DIR', 'LLM_CACHE_SIZE_MB', 'T', 'backend', 'bypass', 'default', 'dir', 'diskcache', 'engine', 'llm_responses', 'messages', 'model', 'on', 'openrouter', 'params', 'size_limit_mb', 'stats', 'true', 'ttl_seconds', 'utf-8', 'v', 'yes']
