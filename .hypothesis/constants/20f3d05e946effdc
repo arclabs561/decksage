@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/utils/data_loading.py
-# hypothesis_version: 6.140.3
-
-['.wv', '500', 'KeyedVectors', 'NAME_1', 'NAME_2', 'archetype', 'auto', 'basic', 'by_archetype', 'by_format', 'by_source', 'event', 'format', 'goldfish', 'has_event', 'has_placement', 'has_player', 'large', 'magic', 'mtgtop8', 'placement', 'player', 'source', 'total', 'unknown']

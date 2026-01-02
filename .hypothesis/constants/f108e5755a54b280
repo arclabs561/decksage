@@ -1,4 +1,0 @@
-# file: /Users/henry/Documents/dev/decksage/src/ml/annotation/llm_annotator.py
-# hypothesis_version: 6.140.3
-
-[0.0, 0.01, 0.02, 0.7, 1.0, 100, '%Y%m%d_%H%M%S', ', ', '--archetypes', '--similarity', '--strategy', '--substitutions', '.env', '=', 'ANNOTATION SUMMARY', 'Archetype', 'Budget consideration', 'Cards', 'Cards that conflict', 'How does it win?', 'How similar? 0-1', 'Modern', 'Name', 'Number of archetypes', 'OPENROUTER_API_KEY', 'Partitions', 'Type', 'Unknown', 'What you gain/lose', 'Why this score?', '__main__', 'annotations_created', 'annotations_llm', 'archetype', 'archetypes', 'archetypes_described', 'cards', 'count', 'coverage', 'decks_hetero.jsonl', 'diverse', 'estimated_cost_usd', 'focused', 'format', 'inner', 'name', 'none', 'partitions', 'pydantic-ai required', 'similarity_pairs', 'substitutions', 'substitutions_for', 'timestamp', 'type', 'w']
