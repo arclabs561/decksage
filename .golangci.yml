@@ -110,6 +110,14 @@ linters-settings:
   goimports:
     local-prefixes: decksage
 
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes: decksage
+
 issues:
   exclude-rules:
     # Exclude some linters from running on tests
