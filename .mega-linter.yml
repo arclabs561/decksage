@@ -85,7 +85,7 @@ GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
 GO_GOLANGCI_LINT_ARGUMENTS:
   - "run"
   - "--timeout=5m"
-  - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,typecheck,unused"
+  - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,unused"
   - "--enable=gofmt,goimports,misspell,revive"
   - "--path-prefix=src/backend"
   - "src/backend/..."

@@ -16,7 +16,7 @@ linters:
     - govet         # Go vet
     - ineffassign   # Detect ineffectual assignments
     - staticcheck   # Comprehensive static analysis
-    - typecheck     # Type checking
+    # typecheck is built-in to golangci-lint v2, not a separate linter
     - unused        # Detect unused code
     
     # Style & formatting
