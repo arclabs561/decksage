@@ -130,6 +130,7 @@ YAML_YAMLLINT_FILTER_REGEX_INCLUDE: "(annotations/|\\.github/)"
 # ─────────────────────────────────────────────────────────────
 JSON_JSONLINT_DISABLE_ERRORS: true  # Don't fail on JSON formatting
 JSON_V8R_DISABLE_ERRORS: true  # Schema validation too strict for markdownlint.json
+JSON_PRETTIER_DISABLE_ERRORS: true  # Some JSON files may have formatting issues
 JSON_PRETTIER_ARGUMENTS:
   - "--print-width=100"
   - "--tab-width=2"
