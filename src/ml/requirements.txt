@@ -1,3 +1,9 @@
+# NOTE: pyproject.toml is the canonical source for dependencies
+# This file is kept for:
+# 1. Path detection markers (used by path_setup.py, paths.py)
+# 2. Legacy scripts that may reference it
+# For new projects, use: uv sync (reads pyproject.toml)
+
 # Core dependencies
 pecanpy>=2.0.0
 gensim>=4.3.0
