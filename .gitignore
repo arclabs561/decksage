@@ -139,3 +139,9 @@ archive/
 # Jupyter notebook checkpoints
 **/.ipynb_checkpoints/
 docs/assets
+
+# Large data files (should not be committed)
+data/processed/pairs_*.csv
+data/graphs/incremental_graph.*
+data/embeddings/**/*.wv
+**/*.db
