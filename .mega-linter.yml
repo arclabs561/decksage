@@ -90,7 +90,8 @@ GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
 GO_GOLANGCI_LINT_ARGUMENTS:
   - "--timeout=5m"
   - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,unused"
-  - "--enable=gofmt,goimports,misspell,revive"
+  - "--enable=misspell,revive"
+  # Note: gofmt and goimports are formatters in v2, not linters - handled separately
   - "--path-prefix=src/backend"
   - "src/backend/..."
 GO_GOLANGCI_LINT_CONFIG_FILE: WORKSPACE  # Will look for .golangci.yml
