@@ -2,7 +2,7 @@
 # See https://docs.astral.sh/ruff/
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.6.9  # Note: Use latest ruff version, this is just the hook repo version
+    rev: v0.14.10  # Updated to match ruff 0.14.x
     hooks:
       # Run the linter
       - id: ruff
@@ -11,7 +11,7 @@ repos:
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.6.0
+    rev: v6.0.0  # Updated to latest
     hooks:
       - id: trailing-whitespace
       - id: end-of-file-fixer
