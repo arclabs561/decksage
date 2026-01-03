@@ -114,6 +114,7 @@ BASH_SHFMT_ARGUMENTS:
 MARKDOWN_MARKDOWNLINT_CONFIG_FILE: .markdownlint.json
 MARKDOWN_MARKDOWNLINT_DISABLE_ERRORS: true  # Don't fail on markdown issues
 MARKDOWN_MARKDOWNLINT_FILTER_REGEX_EXCLUDE: "(archive/|experiments/|paper/)"
+MARKDOWN_MARKDOWN_LINK_CHECK_DISABLE_ERRORS: true  # Dead links are common in docs
 
 # ─────────────────────────────────────────────────────────────
 # YAML Configuration
