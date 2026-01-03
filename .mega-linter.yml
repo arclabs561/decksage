@@ -83,7 +83,6 @@ GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
 
 # golangci-lint: Meta-linter that runs multiple Go linters
 GO_GOLANGCI_LINT_ARGUMENTS:
-  - "run"
   - "--timeout=5m"
   - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,unused"
   - "--enable=gofmt,goimports,misspell,revive"
