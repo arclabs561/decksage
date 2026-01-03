@@ -106,9 +106,6 @@ linters-settings:
       
   misspell:
     locale: US
-    
-  goimports:
-    local-prefixes: decksage
 
 formatters:
   enable:
