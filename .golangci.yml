@@ -20,8 +20,8 @@ linters:
     - unused        # Detect unused code
     
     # Style & formatting
-    - gofmt         # Check formatting
-    - goimports     # Check imports
+    # Note: gofmt and goimports are formatters in v2, not linters
+    # Configure them in the formatters section below
     - misspell      # Detect misspellings
     - revive        # Fast, configurable linter
     
