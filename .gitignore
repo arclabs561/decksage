@@ -138,3 +138,4 @@ archive/
 
 # Jupyter notebook checkpoints
 **/.ipynb_checkpoints/
+docs/assets
