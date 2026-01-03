@@ -27,11 +27,12 @@ dependencies = [
 
 [project.scripts]
 decksage-api = "ml.api.api:main"
+decksage = "ml.cli.main:main"
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.6.0",  # Fast, modern linter + formatter
-    "pytest>=7.4.0",
+    "ruff>=0.14.0",  # Fast, modern linter + formatter
+    "pytest>=9.0.0",
     "pytest-cov>=4.1.0",
     "pytest-xdist>=3.6.1",
     "hypothesis>=6.98.0",
@@ -162,7 +163,7 @@ norecursedirs = [
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
-addopts = "-q --strict-markers --tb=short --maxfail=1 --durations=15 --dist=loadscope -n auto"
+addopts = "-q --strict-markers --tb=short --maxfail=1 --durations=15"
 markers = [
     "llm: marks tests that make actual LLM API calls (slow, requires API key)",
     "slow: marks tests as slow",
@@ -173,6 +174,12 @@ markers = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.0",
+    "pytest-cov>=7.0.0",
+]
 
 [tool.coverage.run]
 branch = true
