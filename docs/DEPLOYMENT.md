@@ -1,13 +1,6 @@
-# AI Agent Deployment Guide
+# Deployment Guide
 
-**For AI Agents (Cursor, Claude, etc.)**: This guide explains how to deploy DeckSage to production and what checks must pass before deployment.
-
-## Deployment Architecture
-
-**Platform**: Fly.io
-**Container**: Docker (multi-stage build)
-**API**: FastAPI (uvicorn)
-**Health Check**: `/live` endpoint
+How to deploy DeckSage API to production (Fly.io).
 
 ## Pre-Deployment Checklist
 
@@ -21,9 +14,7 @@ Before deploying, ensure:
 6. **Docker builds**: `docker build -f Dockerfile.api -t decksage-api .`
 7. **Health check works**: API responds to `GET /live`
 
-## Deployment Workflow
-
-### Manual Deployment (Current)
+## Manual Deployment
 
 ```bash
 # 1. Build Docker image
@@ -36,7 +27,7 @@ docker build -f Dockerfile.api -t decksage-api .
 flyctl deploy --dockerfile Dockerfile.api
 ```
 
-### Automated Deployment (GitHub Actions)
+## Automated Deployment (GitHub Actions)
 
 **Trigger**: Push to `main` branch with `[deploy]` in commit message
 **Workflow**: `.github/workflows/deploy.yml`
@@ -45,6 +36,8 @@ flyctl deploy --dockerfile Dockerfile.api
 2. Build Docker image
 3. Validate deployment
 4. Deploy to Fly.io (if all checks pass)
+
+**Setup**: Add `FLY_API_TOKEN` to GitHub secrets for automated deployment.
 
 ## Deployment Validation
 
@@ -76,16 +69,7 @@ flyctl releases list
 flyctl releases rollback [release-id]
 ```
 
-## For AI Agents
-
-When modifying deployment-related code:
-1. **Always test Docker build**: `docker build -f Dockerfile.api -t test-api .`
-2. **Check health endpoints**: Ensure `/live` and `/ready` work
-3. **Validate model paths**: Use `PATHS` utility, not hardcoded paths
-4. **Update fly.toml**: If changing ports, memory, or regions
-5. **Test locally first**: `./scripts/start_api.sh` before deploying
-
-## Common Deployment Issues
+## Common Issues
 
 | Issue | Solution |
 |-------|----------|
