@@ -14,8 +14,9 @@ repos:
         stages: [commit]
 
   # Go: golangci-lint (comprehensive Go linter)
+  # Updated to v2.6.2 for Go 1.24 support and v2 config format compatibility
   - repo: https://github.com/golangci/golangci-lint
-    rev: v1.60.1
+    rev: v2.6.2
     hooks:
       - id: golangci-lint
         stages: [commit]
