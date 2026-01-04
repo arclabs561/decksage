@@ -177,7 +177,14 @@ def main():
         f.write(json.dumps(exp) + "\n")
 
     print("\n✓ Logged exp_014")
-    print(f"\nTotal experiments: {sum(1 for _ in open('../../experiments/EXPERIMENT_LOG.jsonl'))}")
+    # Count experiments with proper file handling
+    exp_log_path = Path("../../experiments/EXPERIMENT_LOG.jsonl")
+    if exp_log_path.exists():
+        with open(exp_log_path) as f:
+            count = sum(1 for _ in f)
+        print(f"\nTotal experiments: {count}")
+    else:
+        print("\nTotal experiments: 0 (log file not found)")
 
 
 if __name__ == "__main__":

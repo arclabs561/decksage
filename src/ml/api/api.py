@@ -29,8 +29,10 @@ import json
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Query
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
 # Local application imports
@@ -93,7 +95,11 @@ except Exception:  # pragma: no cover
 # Note: dotenv is loaded twice intentionally: once early for CORS/env-driven config
 # and again inside lifespan to catch late environment overrides in tests.
 
-logger = logging.getLogger("decksage.api")
+try:
+    from ..utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger("decksage.api")
 
 if not HAS_GENSIM:
     logger.warning("gensim is not installed; embedding features will be unavailable")
@@ -155,6 +161,7 @@ class SimilarityResponse(BaseModel):
     query: str
     results: list[SimilarCard]
     model_info: dict
+    feedback_url: str | None = Field(None, description="URL for submitting feedback on results")
 
 
 class HealthResponse(BaseModel):
@@ -167,6 +174,14 @@ class CardsResponse(BaseModel):
     items: list[str]
     total: int
     next_offset: int | None = None
+
+
+class ContextualResponse(BaseModel):
+    synergies: list[dict]
+    alternatives: list[dict]
+    upgrades: list[dict]
+    downgrades: list[dict]
+    feedback_url: str | None = Field(None, description="URL for submitting feedback on suggestions")
 
 
 class ApiState:
@@ -242,12 +257,19 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
                     format=float(rec.get("format", 0.0)),
                 ).normalized()
             else:
-                # Legacy format
+                # Legacy format - include all weight fields for hybrid system compatibility
+                # Use recommended defaults if legacy format missing fields
                 bw = data.get("best_weights", {})
                 fw = FusionWeights(
-                    embed=float(bw.get("embed", 0.25)),
-                    jaccard=float(bw.get("jaccard", 0.75)),
-                    functional=float(bw.get("functional", 0.0)),
+                    embed=float(bw.get("embed", 0.20)),  # Co-occurrence (default from recommended weights)
+                    jaccard=float(bw.get("jaccard", 0.15)),  # Jaccard (default from recommended weights)
+                    functional=float(bw.get("functional", 0.10)),  # Functional (default from recommended weights)
+                    text_embed=float(bw.get("text_embed", 0.25)),  # Instruction-tuned (default from recommended weights)
+                    sideboard=float(bw.get("sideboard", 0.0)),
+                    temporal=float(bw.get("temporal", 0.0)),
+                    gnn=float(bw.get("gnn", 0.30)),  # GNN (default from recommended weights)
+                    archetype=float(bw.get("archetype", 0.0)),
+                    format=float(bw.get("format", 0.0)),
                 ).normalized()
             
             state.fusion_default_weights = fw
@@ -257,10 +279,12 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
                 "functional": fw.functional,
             }
             logger.info(
-                "Loaded tuned fusion weights: embed=%.2f, jaccard=%.2f, functional=%.2f",
+                "Loaded tuned fusion weights: embed=%.2f, jaccard=%.2f, functional=%.2f, text_embed=%.2f, gnn=%.2f",
                 fw.embed,
                 fw.jaccard,
                 fw.functional,
+                fw.text_embed,
+                fw.gnn,
             )
     except Exception:
         logger.debug("No tuned fusion weights loaded", exc_info=True)
@@ -375,6 +399,44 @@ app.add_middleware(
 ## startup event replaced by lifespan
 
 
+# Root route - serve HTML landing page or JSON based on Accept header
+@app.get("/")
+def root(request: Request):
+    """Root endpoint - serves HTML landing page or JSON API info."""
+    accept = request.headers.get("accept", "").lower()
+    # Browsers send "text/html" or "*/*", API clients send "application/json"
+    # Default to HTML unless explicitly requesting JSON
+    wants_json = "application/json" in accept and "text/html" not in accept
+    
+    # Serve HTML for browsers (default)
+    if not wants_json:
+        # Serve HTML landing page for browsers
+        _landing_html = Path(__file__).parent.parent.parent.parent / "test_search.html"
+        if _landing_html.exists():
+            return FileResponse(str(_landing_html), media_type="text/html")
+        # Fallback to redirect
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/search.html")
+    
+    # Return JSON for API clients that explicitly request it
+    return {
+        "name": "DeckSage Similarity API",
+        "version": "0.1.0",
+        "docs": "/docs",
+        "search_ui": "/search.html",
+        "health": "/health",
+        "ready": "/ready",
+        "live": "/live",
+        "api_prefix": "/v1",
+        "endpoints": {
+            "similarity": "/v1/similar",
+            "cards": "/v1/cards",
+            "search": "/v1/search",
+            "deck_complete": "/v1/deck/complete",
+        }
+    }
+
+
 # Versioned router
 router = APIRouter(prefix="/v1")
 
@@ -468,9 +530,7 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     tagger = FunctionalTagger() if FunctionalTagger is not None else None
     w = request.weights or {}
-    base_fw = state.fusion_default_weights or FusionWeights(
-        embed=0.25, jaccard=0.75, functional=0.0, text_embed=0.0, sideboard=0.0, temporal=0.0, gnn=0.0, archetype=0.0, format=0.0
-    )
+    base_fw = state.fusion_default_weights or FusionWeights()  # Uses recommended defaults (30% GNN, 25% Instruction, 20% Co-occurrence, 15% Jaccard, 10% Functional)
     fw = FusionWeights(
         embed=float(w.get("embed", base_fw.embed)),
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
@@ -482,6 +542,15 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         archetype=float(w.get("archetype", base_fw.archetype)),
         format=float(w.get("format", base_fw.format)),
     ).normalized()
+    
+    # Map use_case to task_type for instruction-tuned embeddings
+    use_case_to_task = {
+        UseCaseEnum.substitute: "substitution",
+        UseCaseEnum.synergy: "synergy",
+        UseCaseEnum.meta: "similar",  # Meta uses general similarity
+    }
+    task_type = use_case_to_task.get(request.use_case, "substitution")
+    
     fusion = WeightedLateFusion(
         state.embeddings,
         state.graph_data["adj"],
@@ -499,12 +568,13 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         archetype_cooccurrence=state.archetype_cooccurrence,
         format_cooccurrence=state.format_cooccurrence,
         cross_format_patterns=state.cross_format_patterns,
+        task_type=task_type,
     )
     if request.also_like:
         queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
         similar = fusion.similar_multi(queries, k)
     else:
-        similar = fusion.similar(query, k)
+        similar = fusion.similar(query, k, task_type=task_type)
     return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
 
 
@@ -540,12 +610,33 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         raise HTTPException(status_code=400, detail=f"Unknown similarity method: {method}")
     state = get_state()
     return SimilarityResponse(
-        query=query, results=results, model_info={**state.model_info, "method_used": method}
+        query=query,
+        results=results,
+        model_info={**state.model_info, "method_used": method},
+        feedback_url="/v1/feedback",  # Endpoint for submitting feedback
     )
 
 
 @router.post("/similar", response_model=SimilarityResponse)
 def find_similar_v1(request: SimilarityRequest):
+    # Log query for analytics
+    try:
+        from .query_history import log_query
+        user_id = getattr(request, "user_id", None)
+        session_id = getattr(request, "session_id", None)
+        log_query(
+            endpoint="/v1/similar",
+            query=request.query,
+            user_id=user_id,
+            session_id=session_id,
+            metadata={
+                "method": getattr(request, "mode", None),
+                "top_k": request.top_k,
+                "use_case": request.use_case.value if hasattr(request.use_case, "value") else str(request.use_case),
+            },
+        )
+    except Exception:
+        pass  # Non-fatal - don't break API if logging fails
     return _similar_impl(request)
 
 
@@ -555,12 +646,23 @@ def get_similar_v1(
     mode: UseCaseEnum = UseCaseEnum.substitute,
     k: int = Query(10, ge=1, le=100),
 ):
+    # Log query for analytics
+    try:
+        from .query_history import log_query
+        log_query(
+            endpoint="/v1/cards/{name}/similar",
+            query=name,
+            user_id=None,  # Could extract from request if available
+            session_id=None,
+            metadata={"mode": mode.value if hasattr(mode, "value") else str(mode), "top_k": k},
+        )
+    except Exception:
+        pass  # Non-fatal - don't break API if logging fails
     req = SimilarityRequest(query=name, top_k=k, use_case=mode)
     return _similar_impl(req)
 
 
-# ContextualResponse not defined - commenting out for now
-# @router.get("/cards/{card}/contextual", response_model=ContextualResponse)
+@router.get("/cards/{card}/contextual", response_model=ContextualResponse)
 def get_contextual_suggestions(
     card: str,
     game: str = Query(..., description="Game name (magic, yugioh, pokemon)"),
@@ -575,19 +677,35 @@ def get_contextual_suggestions(
     - Upgrades: Better versions (more expensive)
     - Downgrades: Budget alternatives (cheaper)
     """
+    # Log query for analytics
+    try:
+        from .query_history import log_query
+        log_query(
+            endpoint="/v1/cards/{card}/contextual",
+            query=card,
+            user_id=None,  # Could extract from request if available
+            session_id=None,
+            metadata={"game": game, "format": format, "archetype": archetype, "top_k": top_k},
+        )
+    except Exception:
+        pass  # Non-fatal
+    
     game_lower = game.lower()
     if game_lower not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
     
     state = get_state()
     
-    # Build fusion instance for similarity
+    # Build fusion instance for similarity with task-specific instructions
     from ..similarity.fusion import WeightedLateFusion, FusionWeights
     
+    # Contextual discovery uses different task types per category
+    # We'll use "synergy" as default, but each method can override
     fusion = WeightedLateFusion(
         embeddings=state.embeddings,
         adj=state.graph_data.get("adj", {}) if state.graph_data else {},
         weights=FusionWeights(),  # Use defaults
+        task_type="synergy",  # Default for contextual discovery
     )
     
     # Get price function
@@ -682,6 +800,7 @@ def get_contextual_suggestions(
             }
             for d in downgrades
         ],
+        feedback_url="/v1/feedback",
     )
 
 
@@ -795,23 +914,42 @@ def search_cards_v1(request: SearchRequest):
                 # Create fallback results from embeddings
                 results = []
                 for i, card_name in enumerate(matching_cards):
-                    # Try to get image URL from card attributes if available
-                    image_url = None
+                    # Try to get full metadata from card attributes if available
+                    metadata = {}
                     if state.card_attrs:
                         card_data = state.card_attrs.get(card_name) or state.card_attrs.get(card_name.lower())
                         if card_data and isinstance(card_data, dict):
-                            # Check for image URL in various formats
-                            image_url = (
-                                card_data.get("image_url") or
-                                card_data.get("image") or
-                                (card_data.get("images", {}).get("large") if isinstance(card_data.get("images"), dict) else None)
-                            )
+                            # Extract all available metadata
+                            metadata = {
+                                "image_url": (
+                                    card_data.get("image_url") or
+                                    card_data.get("image") or
+                                    (card_data.get("images", {}).get("large") if isinstance(card_data.get("images"), dict) else None)
+                                ),
+                                "ref_url": card_data.get("ref_url") or card_data.get("scryfall_uri"),
+                                "type": card_data.get("type") or card_data.get("type_line", ""),
+                                "mana_cost": card_data.get("mana_cost", ""),
+                                "cmc": card_data.get("cmc", 0),
+                                "colors": card_data.get("colors", ""),
+                                "rarity": card_data.get("rarity", ""),
+                                "power": card_data.get("power", ""),
+                                "toughness": card_data.get("toughness", ""),
+                                "set": card_data.get("set", ""),
+                                "set_name": card_data.get("set_name", ""),
+                                "oracle_text": card_data.get("oracle_text", ""),
+                                "keywords": card_data.get("keywords", ""),
+                                "functional_tags": card_data.get("functional_tags", ""),
+                                "archetype": card_data.get("archetype", ""),
+                                "format_legal": card_data.get("format_legal", ""),
+                            }
+                            # Remove empty values
+                            metadata = {k: v for k, v in metadata.items() if v}
                     
                     results.append(SearchResultItem(
                         card_name=card_name,
                         score=max(0.5, 1.0 - (i * 0.05)),  # Decreasing scores, min 0.5
                         source="embedding_fallback",
-                        metadata={"image_url": image_url, "ref_url": None}
+                        metadata=metadata if metadata else {"image_url": None, "ref_url": None}
                     ))
                 
                 if results:
@@ -907,13 +1045,6 @@ class SuggestActionsRequest(BaseModel):
     action_type: str = "add"  # add|remove|replace|suggest (suggest = all)
 
 
-class ContextualResponse(BaseModel):
-    synergies: list[dict]
-    alternatives: list[dict]
-    upgrades: list[dict]
-    downgrades: list[dict]
-
-
 class SuggestedAction(BaseModel):
     op: str  # add_card|remove_card|replace_card
     partition: str
@@ -929,7 +1060,7 @@ class SuggestActionsResponse(BaseModel):
     metrics: dict | None = None
 
 
-def _make_candidate_fn(mode: str | None):
+def _make_candidate_fn(mode: str | None, task_type: str | None = None):
     forced = (mode or "").lower().strip()
 
     def fn(card: str, k: int):
@@ -944,7 +1075,16 @@ def _make_candidate_fn(mode: str | None):
             else:
                 return []  # No data available
 
-        req = SimilarityRequest(query=card, top_k=k, use_case=UseCaseEnum.substitute)
+        # Map task_type to use_case if provided
+        use_case = UseCaseEnum.substitute  # Default
+        if task_type == "completion":
+            use_case = UseCaseEnum.substitute  # Completion uses substitution-like similarity
+        elif task_type == "synergy":
+            use_case = UseCaseEnum.synergy
+        elif task_type == "substitution":
+            use_case = UseCaseEnum.substitute
+
+        req = SimilarityRequest(query=card, top_k=k, use_case=use_case)
         req.mode = effective_mode  # type: ignore
         try:
             resp = _similar_impl(req)
@@ -957,6 +1097,21 @@ def _make_candidate_fn(mode: str | None):
 
 @router.post("/deck/suggest_actions", response_model=SuggestActionsResponse)
 def suggest_actions(req: SuggestActionsRequest):
+    # Log query for analytics
+    try:
+        from .query_history import log_query
+        user_id = getattr(req, "user_id", None)
+        session_id = getattr(req, "session_id", None)
+        log_query(
+            endpoint="/v1/deck/suggest_actions",
+            query=f"deck_refinement_{req.action_type}",
+            user_id=user_id,
+            session_id=session_id,
+            metadata={"game": req.game, "action_type": req.action_type, "top_k": req.top_k},
+        )
+    except Exception:
+        pass  # Non-fatal
+    
     game = req.game.lower()
     if game not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
@@ -1020,6 +1175,16 @@ def suggest_actions(req: SuggestActionsRequest):
     part = {"magic": "Main", "yugioh": "Main Deck"}.get(game, "Main Deck")
     actions = []
     action_type = (req.action_type or "add").lower()
+    
+    # Map action_type to task_type for instruction-tuned embeddings
+    action_to_task = {
+        "add": "completion",
+        "suggest": "completion",
+        "replace": "substitution",
+        "remove": None,  # No instruction needed for removal
+    }
+    task_type = action_to_task.get(action_type, "substitution")
+    cand_fn = _make_candidate_fn(req.mode, task_type=task_type)
     
     # Handle different action types
     if action_type in ("add", "suggest"):
@@ -1150,7 +1315,7 @@ def suggest_actions(req: SuggestActionsRequest):
         "facets_available": bool(get_state().card_attrs is not None),
     }
     
-    return SuggestActionsResponse(actions=actions, metrics=metrics)
+    return SuggestActionsResponse(actions=actions, metrics=metrics, feedback_url="/v1/feedback")
 
 
 class CompleteRequest(BaseModel):
@@ -1171,15 +1336,33 @@ class CompleteResponse(BaseModel):
     deck: dict
     steps: list[dict]
     metrics: dict | None = None
+    feedback_url: str | None = Field(None, description="URL for submitting feedback on completion")
 
 
 @router.post("/deck/complete", response_model=CompleteResponse)
 def complete_deck(req: CompleteRequest):
+    # Log query for analytics
+    try:
+        from .query_history import log_query
+        user_id = getattr(req, "user_id", None)
+        session_id = getattr(req, "session_id", None)
+        deck_size = len(req.deck.get("Main", [])) if isinstance(req.deck, dict) else 0
+        log_query(
+            endpoint="/v1/deck/complete",
+            query=f"deck_completion_{req.game}",
+            user_id=user_id,
+            session_id=session_id,
+            metadata={"game": req.game, "target_size": req.target_main_size, "current_size": deck_size, "method": req.method},
+        )
+    except Exception:
+        pass  # Non-fatal
+    
     game = req.game.lower()
     if game not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
 
-    cand_fn = _make_candidate_fn(req.mode)
+    # Deck completion uses "completion" task type
+    cand_fn = _make_candidate_fn(req.mode, task_type="completion")
     cfg = CompletionConfig(
         game=game,
         target_main_size=req.target_main_size,
@@ -1267,8 +1450,9 @@ def complete_deck(req: CompleteRequest):
         )
         # Extract steps from beam search (simplified - beam search doesn't track steps the same way)
         steps: list[dict] = []  # Beam search doesn't return steps in same format
+        quality_metrics = None
     else:
-        deck_out, steps = greedy_complete(
+        deck_out, steps, quality_metrics = greedy_complete(
             game,  # type: ignore[arg-type]
             req.deck,
             cand_fn,
@@ -1347,11 +1531,42 @@ def complete_deck(req: CompleteRequest):
     if quality_metrics:
         metrics["quality"] = quality_metrics
     
-    return CompleteResponse(deck=deck_out, steps=steps, metrics=metrics)
+    return CompleteResponse(deck=deck_out, steps=steps, metrics=metrics, feedback_url="/v1/feedback")
 
 
 # Ensure router is mounted after routes are defined
 app.include_router(router)
+
+# Include feedback router
+try:
+    from .feedback import router as feedback_router
+    app.include_router(feedback_router)
+except ImportError:
+    logger.debug("Feedback router not available (optional)")
+
+# Serve static HTML files for frontend interface
+# Mount static directory if it exists
+_static_dir = Path(__file__).parent.parent.parent.parent / "test"
+if _static_dir.exists():
+    try:
+        app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
+    except Exception as e:
+        logger.debug("Could not mount static files: %s", e)
+
+# Serve main search interface at /search.html
+_search_html = Path(__file__).parent.parent.parent.parent / "test_search.html"
+if _search_html.exists():
+    @app.get("/search.html")
+    def search_html():
+        """Serve the main search interface."""
+        return FileResponse(str(_search_html))
+    
+    # Also serve at root if no other root handler
+    @app.get("/search")
+    def search_redirect():
+        """Redirect to search interface."""
+        from fastapi.responses import RedirectResponse
+        return RedirectResponse(url="/search.html")
 
 
 def main():
@@ -1376,8 +1591,7 @@ def main():
     )
 
     # Run server
-    # Configure basic logging when running directly
-    logging.basicConfig(level=logging.INFO)
+    # Logging is already configured via get_logger above
     if uvicorn is None:
         logger.error("uvicorn is not installed; cannot start the server")
         return 1
