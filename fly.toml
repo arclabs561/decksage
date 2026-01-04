@@ -5,7 +5,7 @@ app = "decksage"
 primary_region = "iad"  # US East (Virginia) - adjust to your preference
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = "Dockerfile.api"
 
 [env]
   PORT = "8000"
