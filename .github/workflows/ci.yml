@@ -105,7 +105,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd src/ml
-          uv sync
+          uv sync --extra dev
       
       - name: Run fast tests
         run: |
@@ -178,7 +178,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd src/ml
-          uv sync
+          uv sync --extra dev
           uv pip install --system ty
       
       - name: Run type checker
