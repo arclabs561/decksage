@@ -13,6 +13,8 @@ from __future__ import annotations
 import json
 from datetime import datetime, timedelta
 
+import pytest
+
 from ml.data.incremental_graph import Edge, IncrementalCardGraph
 from ml.data.temporal_stats import (
     compute_consistency,
@@ -21,6 +23,34 @@ from ml.data.temporal_stats import (
 )
 from ml.scripts.compute_temporal_metadata import compute_matchup_statistics
 from ml.utils.matchup_analysis import aggregate_matchup_data
+
+
+@pytest.fixture
+def sample_edge():
+    """Create a sample Edge with temporal data for testing."""
+    edge = Edge(
+        card1="Lightning Bolt",
+        card2="Shock",
+        game="magic",
+        weight=10,
+        first_seen=datetime(2024, 1, 1),
+        last_seen=datetime(2024, 3, 15),
+        monthly_counts={"2024-01": 5, "2024-02": 3, "2024-03": 2},
+        format_periods={
+            "Modern_2024-2025": {"2024-01": 3, "2024-02": 2, "2024-03": 1},
+            "Standard_2024-2025": {"2024-01": 2, "2024-02": 1, "2024-03": 1},
+        },
+    )
+    return edge
+
+
+@pytest.fixture
+def temp_graph(tmp_path):
+    """Create a temporary IncrementalCardGraph for testing."""
+    graph_path = tmp_path / "test_graph.db"
+    graph = IncrementalCardGraph(graph_path=str(graph_path), use_sqlite=True)
+    yield graph
+    # Cleanup: graph is automatically saved/closed
 
 
 class TestEdgeSerialization:
@@ -208,15 +238,25 @@ class TestGraphIntegrationEdgeCases:
     def test_graph_temporal_accumulation(self, temp_graph, sample_deck):
         """Test that temporal data accumulates across multiple decks."""
         base_date = datetime(2024, 1, 1)
+        # Ensure sample_deck has format
+        deck_with_format = sample_deck.copy()
+        if "format" not in deck_with_format:
+            deck_with_format["format"] = "Modern"
+
         for i in range(10):
             deck_id = f"deep_verify_deck_{i}"
             timestamp = base_date + timedelta(days=i * 30)
 
-            temp_graph.set_deck_metadata(deck_id, {"format": sample_deck["format"]})
-            temp_graph.add_deck(sample_deck, timestamp=timestamp, deck_id=deck_id)
+            temp_graph.set_deck_metadata(
+                deck_id, {"format": deck_with_format.get("format", "Modern")}
+            )
+            temp_graph.add_deck(deck_with_format, timestamp=timestamp, deck_id=deck_id)
 
-        edge_key = tuple(sorted(["Lightning Bolt", "Shock"]))
-        assert edge_key in temp_graph.edges
+        # Check for an edge that exists in sample_deck (e.g., Lightning Bolt and Rift Bolt)
+        edge_key = tuple(sorted(["Lightning Bolt", "Rift Bolt"]))
+        assert edge_key in temp_graph.edges, (
+            f"Edge {edge_key} not found. Available edges: {list(temp_graph.edges.keys())[:5]}"
+        )
 
         edge = temp_graph.edges[edge_key]
         assert len(edge.monthly_counts) > 0
@@ -227,11 +267,18 @@ class TestGraphIntegrationEdgeCases:
 
     def test_graph_reload_preserves_temporal_data(self, temp_graph, sample_deck):
         """Test that graph reload preserves temporal data."""
-        # Add deck
-        temp_graph.set_deck_metadata("deck1", {"format": "Modern"})
-        temp_graph.add_deck(sample_deck, timestamp=datetime(2024, 1, 15), deck_id="deck1")
+        # Ensure sample_deck has format
+        deck_with_format = sample_deck.copy()
+        if "format" not in deck_with_format:
+            deck_with_format["format"] = "Modern"
 
-        edge_key = tuple(sorted(["Lightning Bolt", "Shock"]))
+        # Add deck
+        temp_graph.set_deck_metadata("deck1", {"format": deck_with_format.get("format", "Modern")})
+        temp_graph.add_deck(deck_with_format, timestamp=datetime(2024, 1, 15), deck_id="deck1")
+
+        # Check for an edge that exists in sample_deck (e.g., Lightning Bolt and Rift Bolt)
+        edge_key = tuple(sorted(["Lightning Bolt", "Rift Bolt"]))
+        assert edge_key in temp_graph.edges
         original_edge = temp_graph.edges[edge_key]
         original_monthly = original_edge.monthly_counts.copy()
         original_formats = original_edge.format_periods.copy()
