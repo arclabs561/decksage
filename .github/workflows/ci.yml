@@ -142,7 +142,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd src/ml
-          uv sync
+          uv sync --extra dev
       
       - name: Run slow/integration tests
         run: |
