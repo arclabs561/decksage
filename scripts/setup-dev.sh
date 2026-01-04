@@ -8,25 +8,43 @@ echo "🔧 Setting up development environment..."
 echo ""
 
 # Check if pre-commit is available
-if ! command -v pre-commit >/dev/null 2>&1; then
+export PATH="$HOME/.local/bin:$PATH"
+if ! command -v pre-commit >/dev/null 2>&1 && ! python3 -m pre_commit --version >/dev/null 2>&1; then
   echo "📦 Installing pre-commit..."
   if command -v uv >/dev/null 2>&1; then
-    uv pip install --system pre-commit
+    uv pip install --system pre-commit || python3 -m pip install --user pre-commit
   elif command -v pip >/dev/null 2>&1; then
-    pip install pre-commit
+    pip install --user pre-commit || python3 -m pip install --user pre-commit
   else
-    echo "❌ Error: Neither uv nor pip found. Please install pre-commit manually."
-    exit 1
+    python3 -m pip install --user pre-commit
   fi
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
-echo "✅ Pre-commit installed: $(pre-commit --version)"
+# Verify installation
+if command -v pre-commit >/dev/null 2>&1; then
+  echo "✅ Pre-commit installed: $(pre-commit --version)"
+elif python3 -m pre_commit --version >/dev/null 2>&1; then
+  echo "✅ Pre-commit installed: $(python3 -m pre_commit --version)"
+  export PATH="$HOME/.local/bin:$PATH"
+else
+  echo "❌ Pre-commit installation failed"
+  exit 1
+fi
 echo ""
 
 # Install git hooks
 echo "🔗 Installing git hooks..."
-pre-commit install
-pre-commit install --hook-type pre-push
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit install
+  pre-commit install --hook-type pre-push
+elif python3 -m pre_commit --version >/dev/null 2>&1; then
+  python3 -m pre_commit install
+  python3 -m pre_commit install --hook-type pre-push
+else
+  echo "❌ Cannot install hooks - pre-commit not found"
+  exit 1
+fi
 
 echo ""
 echo "✅ Git hooks installed!"
@@ -47,7 +65,15 @@ fi
 
 echo ""
 echo "🧪 Running pre-commit on all files to verify setup..."
-pre-commit run --all-files || {
+if command -v pre-commit >/dev/null 2>&1; then
+  pre-commit run --all-files || {
+elif python3 -m pre_commit --version >/dev/null 2>&1; then
+  python3 -m pre_commit run --all-files || {
+else
+  echo "⚠️  Cannot run pre-commit - not in PATH"
+  echo "   Add to your shell: export PATH=\"\$HOME/.local/bin:\$PATH\""
+  {
+fi
   echo ""
   echo "⚠️  Some hooks failed, but setup is complete."
   echo "   Hooks will run automatically on commit/push."
