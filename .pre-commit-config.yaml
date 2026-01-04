@@ -15,7 +15,7 @@
 #   - just pre-commit-run (all files)
 #   - pre-commit run (staged files only)
 #
-# NOTE FOR AI AGENTS:
+# For developers:
 #   - Review docs/DEVELOPMENT_RULES.md for common rules and themes
 #   - Check .cursor/rules/*.mdc for detailed project-specific rules
 #   - All hooks are optimized to check only changed files (fast execution)
