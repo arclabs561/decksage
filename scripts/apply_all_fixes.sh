@@ -1,41 +1,4 @@
 #!/usr/bin/env bash
 # Apply all deck quality fixes in sequence
 
-set -e
-
-echo "======================================================================"
-echo "APPLYING ALL DECK QUALITY FIXES"
-echo "======================================================================"
-echo ""
-
-# Step 1: Enhance decks (normalize, deduplicate, filter)
-echo "[1/3] Enhancing decks..."
-python3 scripts/enhance_exported_decks.py \
-    --input data/processed/decks_all_unified.jsonl \
-    --output data/processed/decks_all_enhanced.jsonl
-
-# Step 2: Backfill metadata
-echo ""
-echo "[2/3] Backfilling metadata..."
-python3 scripts/backfill_metadata.py \
-    --input data/processed/decks_all_enhanced.jsonl \
-    --output data/processed/decks_all_final.jsonl
-
-# Step 3: Validate (optional, may be slow)
-echo ""
-echo "[3/3] Validating decks..."
-python3 scripts/validate_exported_decks.py \
-    --input data/processed/decks_all_final.jsonl \
-    || echo "⚠️  Validation had issues (non-critical)"
-
-echo ""
-echo "======================================================================"
-echo "ALL FIXES APPLIED"
-echo "======================================================================"
-echo ""
-echo "Files created:"
-echo "  - data/processed/decks_all_enhanced.jsonl (normalized, deduplicated)"
-echo "  - data/processed/decks_all_final.jsonl (with backfilled metadata)"
-echo ""
-echo "✅ Done!"
-
+set -euo pipefail echo "======================================================================" echo "APPLYING ALL DECK QUALITY FIXES" echo "======================================================================" echo "" # Step 1: Enhance decks (normalize, deduplicate, filter) echo "[1/3] Enhancing decks..." python3 scripts/enhance_exported_decks.py \ --input data/processed/decks_all_unified.jsonl \ --output data/processed/decks_all_enhanced.jsonl # Step 2: Backfill metadata echo "" echo "[2/3] Backfilling metadata..." python3 scripts/backfill_metadata.py \ --input data/processed/decks_all_enhanced.jsonl \ --output data/processed/decks_all_final.jsonl # Step 3: Validate (optional, may be slow) echo "" echo "[3/3] Validating decks..." python3 scripts/validate_exported_decks.py \ --input data/processed/decks_all_final.jsonl \ || echo "Warning: Validation had issues (non-critical)" echo "" echo "======================================================================" echo "ALL FIXES APPLIED" echo "======================================================================" echo "" echo "Files created:" echo " - data/processed/decks_all_enhanced.jsonl (normalized, deduplicated)" echo " - data/processed/decks_all_final.jsonl (with backfilled metadata)" echo "" echo " Done!"

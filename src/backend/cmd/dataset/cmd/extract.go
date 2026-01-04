@@ -10,11 +10,17 @@ import (
 	"github.com/spf13/pflag"
 
 	"collections/games"
-	"collections/games/magic/dataset"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
+	digimonlimitless "collections/games/digimon/dataset/limitless"
+	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
+	onepiecelimitless "collections/games/onepiece/dataset/limitless"
+	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
+	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
+	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
+	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
 	"collections/logger"
 	"collections/scraper"
 )
@@ -56,22 +62,44 @@ func runExtract(cmd *cobra.Command, args []string) error {
 
 	scraper := scraper.NewScraper(config.Log, scraperBlob)
 
-	var d dataset.Dataset
+	var d games.Dataset
 	datasetName := strings.ToLower(args[0])
 	switch datasetName {
 	case "deckbox":
-		d = deckbox.NewDataset(config.Log, gamesBlob)
+		d = wrapMTGDataset(deckbox.NewDataset(config.Log, gamesBlob))
 	case "scryfall":
-		d = scryfall.NewDataset(config.Log, gamesBlob)
+		d = wrapMTGDataset(scryfall.NewDataset(config.Log, gamesBlob))
 	case "goldfish":
-		d = goldfish.NewDataset(config.Log, gamesBlob)
+		d = wrapMTGDataset(goldfish.NewDataset(config.Log, gamesBlob))
 	case "mtgtop8":
-		d = mtgtop8.NewDataset(config.Log, gamesBlob)
+		d = wrapMTGDataset(mtgtop8.NewDataset(config.Log, gamesBlob))
+	case "digimon-limitless", "digimonlimitless":
+		d = digimonlimitless.NewDataset(config.Log, gamesBlob)
+	case "digimon-limitless-web", "digimonlimitlessweb":
+		d = digimonlimitlessweb.NewDataset(config.Log, gamesBlob)
+	case "onepiece-limitless", "onepiecelimitless":
+		d = onepiecelimitless.NewDataset(config.Log, gamesBlob)
+	case "onepiece-limitless-web", "onepiecelimitlessweb":
+		d = onepiecelimitlessweb.NewDataset(config.Log, gamesBlob)
+	case "riftbound-riftmana", "riftboundriftmana":
+		dataset, err := riftboundriftmana.NewDataset(config.Log, gamesBlob)
+		if err != nil {
+			return fmt.Errorf("failed to create riftmana dataset: %w", err)
+		}
+		d = dataset
+	case "riftbound-riftcodex", "riftboundriftcodex":
+		d = riftboundriftcodex.NewDataset(config.Log, gamesBlob)
+		case "riftbound-riftboundgg", "riftboundriftboundgg", "riftbound-gg":
+			dataset, err := riftboundriftboundgg.NewDataset(config.Log, gamesBlob)
+			if err != nil {
+				return fmt.Errorf("failed to create riftbound.gg dataset: %w", err)
+			}
+			d = dataset
 	default:
 		return fmt.Errorf(
 			"unsupported dataset %q, allowed (%+v)",
 			datasetName,
-			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8"},
+			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimon-limitless", "digimon-limitless-web", "onepiece-limitless", "onepiece-limitless-web", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
 		)
 	}
 	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
@@ -142,15 +170,15 @@ func parseOptions(
 	ctx context.Context,
 	log *logger.Logger,
 	flags *pflag.FlagSet,
-) []dataset.UpdateOption {
-	var opts []dataset.UpdateOption
+) []games.UpdateOption {
+	var opts []games.UpdateOption
 
 	reparse, err := flags.GetBool("reparse")
 	if err != nil {
 		log.Fatalf(ctx, "failed to get bool flag --reparse")
 	}
 	if reparse {
-		opts = append(opts, &dataset.OptExtractReparse{})
+		opts = append(opts, &games.OptExtractReparse{})
 	}
 
 	rescrape, err := flags.GetBool("rescrape")
@@ -158,21 +186,21 @@ func parseOptions(
 		log.Fatalf(ctx, "failed to get bool flag --rescrape")
 	}
 	if rescrape {
-		opts = append(opts, &dataset.OptExtractScraperReplaceAll{})
+		opts = append(opts, &games.OptExtractScraperReplaceAll{})
 	}
 
 	parallel, err := flags.GetInt("parallel")
 	if err != nil {
 		log.Fatalf(ctx, "failed to get int flag --parallel")
 	}
-	opts = append(opts, &dataset.OptExtractParallel{Parallel: parallel})
+	opts = append(opts, &games.OptExtractParallel{Parallel: parallel})
 
 	if flags.Lookup("section") != nil {
 		section, err := flags.GetString("section")
 		if err != nil {
 			log.Fatalf(ctx, "failed to get string flag --section")
 		}
-		opts = append(opts, &dataset.OptExtractSectionOnly{Section: section})
+		opts = append(opts, &games.OptExtractSectionOnly{Section: section})
 	}
 
 	if flags.Lookup("pages") != nil {
@@ -180,7 +208,7 @@ func parseOptions(
 		if err != nil {
 			log.Fatalf(ctx, "failed to get int flag --pages")
 		}
-		opts = append(opts, &dataset.OptExtractScrollLimit{Limit: pages})
+		opts = append(opts, &games.OptExtractScrollLimit{Limit: pages})
 	}
 
 	if flags.Lookup("start") != nil {
@@ -188,7 +216,7 @@ func parseOptions(
 		if err != nil {
 			log.Fatalf(ctx, "failed to get int flag --start")
 		}
-		opts = append(opts, &dataset.OptExtractScrollStart{Start: start})
+		opts = append(opts, &games.OptExtractScrollStart{Start: start})
 	}
 
 	if flags.Lookup("limit") != nil {
@@ -196,7 +224,7 @@ func parseOptions(
 		if err != nil {
 			log.Fatalf(ctx, "failed to get int flag --limit")
 		}
-		opts = append(opts, &dataset.OptExtractItemLimit{Limit: limit})
+		opts = append(opts, &games.OptExtractItemLimit{Limit: limit})
 	}
 
 	only, err := flags.GetStringArray("only")
@@ -204,7 +232,7 @@ func parseOptions(
 		log.Fatalf(ctx, "failed to get int flag --only")
 	}
 	for _, o := range only {
-		opts = append(opts, &dataset.OptExtractItemOnlyURL{URL: o})
+		opts = append(opts, &games.OptExtractItemOnlyURL{URL: o})
 	}
 
 	cat, err := flags.GetBool("cat")
@@ -212,7 +240,7 @@ func parseOptions(
 		log.Fatalf(ctx, "failed to get bool flag --cat")
 	}
 	if cat {
-		opts = append(opts, &dataset.OptExtractItemCat{})
+		opts = append(opts, &games.OptExtractItemCat{})
 	}
 
 	return opts

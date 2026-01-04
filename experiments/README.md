@@ -1,65 +1,42 @@
 # Experiments Directory
 
-## Current State (January 2025)
+## Unified Test Sets
 
-### Test Sets (Canonical - Production Standard)
-- `test_set_canonical_magic.json`: 38 queries ✅
-- `test_set_canonical_pokemon.json`: 10 queries ✅
-- `test_set_canonical_yugioh.json`: 13 queries ✅
-- `ground_truth_v1.json`: 38 queries (Magic, merged from canonical)
+This directory contains unified test sets for all games. These are the canonical test sets used by all evaluation and training scripts.
 
-### Test Sets (Expanded - Comprehensive Analysis)
-- `test_set_expanded_magic.json`: Various sizes
-- `test_set_expanded_pokemon.json`
-- `test_set_expanded_yugioh.json`
+### Active Test Sets
 
-### Experiment Logs
-- `EXPERIMENT_LOG_CANONICAL.jsonl`: Consolidated experiment log
-- Use canonical test sets for production evaluation
-- Use expanded test sets for comprehensive analysis
+- `test_set_unified_magic.json` - Magic: The Gathering (940 queries, 10,569 labels)
+- `test_set_unified_pokemon.json` - Pokemon TCG (58 queries, 1,175 labels)
+- `test_set_unified_yugioh.json` - Yu-Gi-Oh! (58 queries, 1,065 labels)
 
-### System State
-- `SYSTEM_STATE_FINAL.json`: Complete context for resumption
-- `CURRENT_BEST_magic.json`: Best method tracker
-- `self_sustaining_state.json`: Autonomous loop state
+### Canonical References
 
-### Documentation
-- `MOTIVATIONS.md`: Why each principle exists (pain → solution)
-- `PRINCIPLES.md`: What each paper contributes
-- `NEXT_SESSION_PREP.md`: Action plan with options
-- `ADVANCED_METHODS_ROADMAP.md`: Long-term plan
-- `DATA_SOURCES.md`: Where data comes from
+- `test_set_canonical_*.json` - Original canonical sets (kept for reference)
 
-### Archived
-- `archived/`: Old experiment logs (before cleaning)
-- `plans/`: Experiment plan files
+### Archived Test Sets
 
-## Evaluation
+- `test_sets_archive/` - Old test sets superseded by unified sets
 
-### Running Evaluation
-```bash
-# All games with canonical test sets
-just evaluate-all-games
+## Evaluation Results
 
-# Comprehensive evaluation
-just evaluate-final
+- `evaluation_results_unified.json` - Evaluation results using unified test sets
+- `evaluation_results.json` - Old results (5 queries only - INVALID, kept for reference)
 
-# Specific embedding
-uv run src/ml/scripts/evaluate_all_embeddings.py \
-  --embedding data/embeddings/production.wv \
-  --test-set experiments/test_set_canonical_magic.json
+## Usage
+
+All scripts default to unified test sets:
+
+```python
+from ml.utils.paths import PATHS
+
+# Load unified test set
+test_set = load_test_set("magic")  # Uses test_set_unified_magic.json
 ```
 
-### Best Practices
-- Use canonical test sets for production evaluation
-- Use expanded test sets for comprehensive analysis
-- Track Inter-Annotator Agreement (IAA) for labels
-- Use confidence intervals for metrics
+## Maintenance
 
-## Critical Files
-
-- `test_set_canonical_*.json`: Production evaluation standard
-- `EXPERIMENT_LOG_CANONICAL.jsonl`: Experiment history
-- `fusion_grid_search_latest.json`: Latest fusion weights (auto-loaded by API)
-
-
+To update unified test sets:
+1. Run `scripts/unify_test_sets.py` to merge new test sets
+2. Test sets are automatically synced to S3
+3. All scripts will use updated unified sets automatically

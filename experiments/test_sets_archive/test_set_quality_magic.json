@@ -1,0 +1,1263 @@
+{
+  "game": "magic",
+  "sources": {
+    "stratified_sampling": 200,
+    "difficulty_distributed": 3
+  },
+  "queries": {
+    "Spectacle Mage": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Myr Battlesphere": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Halvar, God of Battle // Sword of the Realms": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Snuff Out": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Orcish Cannonade": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Lunar Rejection": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kamahl's Will": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Solemn Simulacrum": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Toxin Sliver": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Phantasmal Terrain": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Oneirophage": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sedris, the Traitor King": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "March of Burgeoning Life": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Grapple with the Past": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Flow of Knowledge": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Millstone": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Cosmos Charger": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Glacial Crevasses": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kotose, the Silent Spider": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heavy Infantry": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Utter End": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skyhunter Skirmisher": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Unmarked Grave": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Esika's Chariot": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Marked by Honor": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rally the Ranks": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gavony Ironwright": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Quakebringer": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Warchief": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Krosan Tusker": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Linvala, Shield of Sea Gate": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Stormchaser Chimera": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pollywog Symbiote": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Keldon Halberdier": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skyclave Apparition": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rabid Bite": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Reclusive Taxidermist": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Resurgent Belief": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gavi, Nest Warden": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Temple of Malice": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Llanowar Greenwidow": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Supreme Phantom": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Green Sun's Zenith": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Trained Caracal": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ravenous Intruder": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Dissipate": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heiko Yamazaki, the General": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Universal Surveillance": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hanweir Lancer": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mesa Lynx": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gust Walker": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Thraben Gargoyle // Stonewing Antagonizer": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Unbreakable Formation": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Life Goes On": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Silver Myr": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Phyrexian Ghoul": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Virulent Swipe": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "History of Benalia": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tyrant of Valakut": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Word of Seizing": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tome of the Infinite": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mosscoat Goriak": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Triton Shorestalker": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ragefire Hellkite": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Transmogrifying Wand": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sunblast Angel": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Soul Partition": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Trespasser's Curse": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Living Lore": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Instill Infection": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Seraph": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Oracle's Vault": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Piker": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Narnam Renegade": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Suq'Ata Lancer": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Helm of Obedience": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Stalking Vengeance": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Scourge Wolf": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Glint-Horn Buccaneer": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Havoc Jester": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Stronghold Zeppelin": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Offalsnout": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Humble the Brute": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Springjack Shepherd": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Racketeer": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Simoon": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mind Swords": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gladecover Scout": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tithe": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Long-Finned Skywhale": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kumena's Speaker": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "H\u00e9roe benalita": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Nephalia Smuggler": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sosuke's Summons": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rampaging Ferocidon": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Fuerza vital": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Oraxid": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Knowledge Vault": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sneaky Homunculus": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heroes' Podium": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Take Heart": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Razortooth Rats": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Spiteful Bully": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Herald of Torment": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gustcloak Cavalier": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kitkin Amrou": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pattern of Rebirth": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Lochmere Serpent": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tasigur, the Golden Fang": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Selhoff Occultist": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "S\u00e9ance": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Turba": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tormentor's Helm": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Blood Pact": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Siegebreaker Giant": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Woodcutter's Grit": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Soaring Thought-Thief": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sosuke, Son of Seshiro": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Koma's Faithful": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "God-Eternal Kefnet": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Void Winnower": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Enthralling Victor": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Keranos, God of Storms": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rhystic Shield": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Bleed Dry": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Steppe Glider": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Homarid Explorer": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skarrgan Hellkite": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Inquisitor Eisenhorn": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skeletal Grimace": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Vulshok Morningstar": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gloomwidow": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Molting Harpy": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Loathsome Chimera": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skewer the Critics": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Frenzied Arynx": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rhox Faithmender": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Paragon of Gathering Mists": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Jund Battlemage": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Golden Ratio": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "\u00c1ngel de piedad": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hormagaunt Horde": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Loyal Retainers": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hold the Gates": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Specter's Wail": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "My First Tome": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Immortal Servitude": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hindervines": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Scythe Leopard": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Parallel Thoughts": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Stingscourger": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ghastbark Twins": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Orzhov Charm": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Risen Riptide": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Leonin of the Lost Pride": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pin to the Earth": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Karn's Temporal Sundering": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Prison Sentence": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Terramorph": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Archmage Emeritus": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pride Sovereign": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Waves of Aggression": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Yavimaya Sojourner": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Resplendent Mentor": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Moonbow Illusionist": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mad Science Fair Project": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Increasing Vengeance": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Syphon Life": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Palace Guard": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Totem Speaker": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Inescapable Blaze": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tresserhorn Sinks": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heaven's Gate": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Merfolk Mistbinder": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Promise of Power": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Willbender": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Soaring Seacliff": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Luminarch Ascension": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Homarid Warrior": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Poigne de mort": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ojo de kraken": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mercy Killing": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Solar Tide": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Krark's Other Thumb": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Reality Acid": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mandatory Friendship Shackles": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hellkite Whelp": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Jeskai Runemark": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Spiritual Sanctuary": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Strip Bare": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Minamo Sightbender": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Krovikan Plague": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rimefeather Owl": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Lovisa Coldeyes": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gravetiller Wurm": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Machinist": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Whispergear Sneak": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Martillo de guerra loxod\u00f3n": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "World at War": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Merfolk Observer": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Fleshbag Marauder": {
+      "type": "difficulty_medium",
+      "highly_relevant": [],
+      "relevant": [
+        "Swamp"
+      ],
+      "somewhat_relevant": [],
+      "difficulty": "medium"
+    },
+    "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom": {
+      "type": "edge_case_rare_combo",
+      "highly_relevant": [
+        "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "difficulty": "hard"
+    },
+    "Urza's Blueprints (minigame) // Urza's Blueprints (cont'd)": {
+      "type": "edge_case_rare_combo",
+      "highly_relevant": [
+        "Winchester Draft // Winchester Draft (cont'd)"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "difficulty": "hard"
+    }
+  },
+  "quality_validation": {
+    "total_queries": 203,
+    "coverage": {
+      "in_training_data": 51,
+      "not_in_training_data": 152,
+      "coverage_percentage": 25.12315270935961
+    },
+    "label_distribution": {
+      "avg_highly_relevant": 0.6666666666666666,
+      "avg_relevant": 0.3333333333333333,
+      "avg_somewhat_relevant": 0.0
+    },
+    "difficulty_distribution": {
+      "unknown": 200,
+      "medium": 1,
+      "hard": 2
+    },
+    "type_distribution": {
+      "stratified_tier_1_very_popular": 40,
+      "stratified_tier_2_popular": 40,
+      "stratified_tier_3_medium": 40,
+      "stratified_tier_4_uncommon": 40,
+      "stratified_tier_5_rare": 40,
+      "difficulty_medium": 1,
+      "edge_case_rare_combo": 2
+    }
+  }
+}

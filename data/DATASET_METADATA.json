@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "last_updated": "2025-01-03",
   "description": "DeckSage dataset metadata and lineage",
   "datasets": {
@@ -17,12 +17,18 @@
         "SOURCE"
       ],
       "game": "MTG",
-      "status": "active"
+      "status": "active",
+      "lineage": {
+        "source": "decks_all_final.jsonl",
+        "generated_by": "src/backend/cmd/export-decks-only/main.go",
+        "generated_at": "2025-01-03",
+        "version": "v1.0"
+      }
     },
     "pairs_multi_game": {
       "file": "data/processed/pairs_multi_game.csv",
-      "description": "Card co-occurrence pairs (currently MTG-only despite name)",
-      "source": "Scraped deck data",
+      "description": "Card co-occurrence pairs from all games (MTG, Pokemon, Yu-Gi-Oh)",
+      "source": "Scraped deck data from all games",
       "rows": 24605118,
       "format": "CSV",
       "columns": [
@@ -34,9 +40,16 @@
         "DECK_ID",
         "SOURCE"
       ],
-      "game": "MTG",
+      "games": ["MTG", "PKM", "YGO"],
       "status": "active",
-      "note": "Contains only MTG data despite 'multi_game' name. See NOTE_pairs_multi_game.txt"
+      "lineage": {
+        "source": "src/backend/data-full/games/*",
+        "generated_by": "src/backend/cmd/export-multi-game-graph/main.go",
+        "regeneration_script": "scripts/data_processing/regenerate_multi_game_pairs.py",
+        "generated_at": "2025-01-03",
+        "version": "v2.0",
+        "note": "Regenerated to include all games. Use regenerate_multi_game_pairs.py to update."
+      }
     },
     "card_attributes_enriched": {
       "file": "data/processed/card_attributes_enriched.csv",
@@ -59,7 +72,13 @@
         "keywords"
       ],
       "game": "MTG",
-      "status": "active"
+      "status": "active",
+      "lineage": {
+        "source": "Scryfall bulk data API",
+        "generated_by": "scripts/enrich_card_attributes.py",
+        "generated_at": "2025-01-03",
+        "version": "v1.0"
+      }
     },
     "test_set_canonical_magic": {
       "file": "experiments/test_set_canonical_magic.json",
@@ -103,6 +122,27 @@
     }
   },
   "decks": {
+    "all_final": {
+      "file": "data/processed/decks_all_final.jsonl",
+      "description": "All decks unified, enhanced, and validated",
+      "count": 69000,
+      "status": "active",
+      "lineage": {
+        "source": "src/backend/data-full/games/*",
+        "exported_by": "src/backend/cmd/export-hetero/main.go",
+        "enhanced_by": "scripts/enhance_exported_decks.py",
+        "pipeline": "scripts/data_processing/unified_export_pipeline.py",
+        "generated_at": "2025-01-03",
+        "version": "v2.0",
+        "features": [
+          "Normalized card names",
+          "Deduplicated by URL and card signature",
+          "Source field backfilled",
+          "scraped_at timestamps added",
+          "Invalid deck sizes filtered"
+        ]
+      }
+    },
     "yugioh": {
       "file": "data/decks/yugioh_decks.jsonl",
       "count": 794,

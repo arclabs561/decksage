@@ -256,14 +256,20 @@ func (d *Dataset) parseDeck(
 		})
 	}
 
+	// Extract tournament type and location from event name
+	tournamentType := extractYGOTournamentType(event)
+	location := extractYGOLocation(event)
+	
 	deckType := &game.CollectionTypeDeck{
-		Name:      deckName,
-		Format:    format,
-		Archetype: archetype,
-		Player:    player,
-		Event:     event,
-		Placement: placement,
-		EventDate: eventDate,
+		Name:           deckName,
+		Format:         format,
+		Archetype:      archetype,
+		Player:         player,
+		Event:          event,
+		Placement:      placement,
+		EventDate:      eventDate,
+		TournamentType: tournamentType,
+		Location:       location,
 	}
 
 	collection := game.Collection{
@@ -288,6 +294,81 @@ func (d *Dataset) parseDeck(
 	}
 
 	return d.blob.Write(ctx, bkey, b)
+}
+
+// extractYGOTournamentType extracts tournament type from event name
+func extractYGOTournamentType(eventName string) string {
+	if eventName == "" {
+		return ""
+	}
+	
+	eventLower := strings.ToLower(eventName)
+	
+	// Check for common tournament types
+	if strings.Contains(eventLower, "ycs") || strings.Contains(eventLower, "yugioh championship series") {
+		return "YCS"
+	}
+	if strings.Contains(eventLower, "wcq") || strings.Contains(eventLower, "world championship qualifier") {
+		return "WCQ"
+	}
+	if strings.Contains(eventLower, "regional") {
+		return "Regional"
+	}
+	if strings.Contains(eventLower, "championship") || strings.Contains(eventLower, "worlds") {
+		return "Championship"
+	}
+	if strings.Contains(eventLower, "local") {
+		return "Local"
+	}
+	if strings.Contains(eventLower, "national") {
+		return "National"
+	}
+	if strings.Contains(eventLower, "continental") {
+		return "Continental"
+	}
+	
+	return ""
+}
+
+// extractYGOLocation extracts location from event name
+// Examples: "YCS Las Vegas", "Regional Pittsburgh, PA"
+func extractYGOLocation(eventName string) string {
+	if eventName == "" {
+		return ""
+	}
+	
+	// Try to find comma-separated location
+	parts := strings.Split(eventName, ",")
+	if len(parts) >= 2 {
+		// Check if last part looks like a state/country (2-3 letters or full country name)
+		lastPart := strings.TrimSpace(parts[len(parts)-1])
+		if len(lastPart) <= 3 || strings.Contains(strings.ToLower(lastPart), "united states") {
+			// Likely a location
+			city := strings.TrimSpace(parts[len(parts)-2])
+			// Remove tournament type prefix if present
+			city = strings.TrimPrefix(city, "YCS")
+			city = strings.TrimPrefix(city, "WCQ")
+			city = strings.TrimPrefix(city, "Regional")
+			city = strings.TrimPrefix(city, "Championship")
+			city = strings.TrimSpace(city)
+			return fmt.Sprintf("%s, %s", city, lastPart)
+		}
+	}
+	
+	// Try to extract city from common patterns like "YCS Las Vegas"
+	eventLower := strings.ToLower(eventName)
+	if strings.Contains(eventLower, "ycs ") {
+		parts := strings.Fields(eventName)
+		for i, part := range parts {
+			if strings.ToLower(part) == "ycs" && i+1 < len(parts) {
+				// Next part might be city
+				city := strings.Join(parts[i+1:], " ")
+				return city
+			}
+		}
+	}
+	
+	return ""
 }
 
 func (d *Dataset) parseCardList(doc *goquery.Document, selector string) []game.CardDesc {

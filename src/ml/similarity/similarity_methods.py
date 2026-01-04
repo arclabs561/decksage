@@ -33,19 +33,54 @@ LANDS = {
 }
 
 
-def load_graph(csv_path=None, filter_lands=True):
+def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
     """
-    Load co-occurrence graph from CSV.
+    Load co-occurrence graph from graph database (preferred) or CSV (fallback).
 
     Returns: adjacency dict, edge weights dict
 
     Principle: Don't reload graph in every experiment.
-    Default path: Uses PATHS.pairs_large from paths.py
+    Default: Uses PATHS.incremental_graph_db (preferred) or PATHS.pairs_large (fallback)
+    
+    Args:
+        csv_path: Path to pairs CSV (legacy option)
+        graph_db: Path to incremental graph database (SQLite .db) - preferred
+        game: Filter by game ("MTG", "PKM", "YGO")
+        filter_lands: Filter out basic lands (Magic only)
     """
     import os
+    from pathlib import Path
     from ..utils.paths import PATHS
 
-    # Use PATHS if no path provided
+    # Try graph database first (preferred), but only if csv_path not explicitly provided
+    # If csv_path is provided, skip graph DB to allow testing with custom CSVs
+    use_graph_db = csv_path is None
+    
+    if use_graph_db:
+        if graph_db is None:
+            graph_db = PATHS.incremental_graph_db
+        
+        if graph_db and Path(graph_db).exists():
+            try:
+                from ..utils.shared_operations import load_graph_for_jaccard
+                adj = load_graph_for_jaccard(graph_db=Path(graph_db), game=game)
+                # Convert to weights dict (simplified - use presence as weight)
+                weights = {}
+                for c1 in adj:
+                    for c2 in adj[c1]:
+                        if filter_lands and game == "MTG" and (c1 in LANDS or c2 in LANDS):
+                            continue
+                        key = tuple(sorted([c1, c2]))
+                        weights[key] = weights.get(key, 0) + 1
+                        weights[(c1, c2)] = weights.get((c1, c2), 0) + 1
+                        weights[(c2, c1)] = weights.get((c2, c1), 0) + 1
+                return adj, weights
+            except Exception as e:
+                # Fall back to CSV if graph DB fails
+                import warnings
+                warnings.warn(f"Could not load from graph database: {e}, falling back to CSV")
+    
+    # Fallback to CSV (legacy or explicit csv_path)
     if csv_path is None:
         csv_path = str(PATHS.pairs_large)
     

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2025-12-25T08:53:47.668058",
+  "model_type": "hybrid",
+  "model_version": "2025-W52",
+  "metrics": {
+    "p_at_10": 0.12000000000000001
+  },
+  "full_results": {
+    "summary": {
+      "avg_p_at_10": 0.12000000000000001
+    }
+  }
+}

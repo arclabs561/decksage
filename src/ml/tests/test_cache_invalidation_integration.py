@@ -134,13 +134,17 @@ class TestCacheInvalidation:
     
     def test_keep_cache_on_same_version(self, cache_strategy):
         """Cache should be kept when prompt version matches."""
+        from datetime import datetime, timedelta
+        
+        # Use recent timestamp to avoid age-based invalidation
+        recent_timestamp = (datetime.now() - timedelta(days=1)).isoformat()
         cache_entry = {
             "data": {"highly_relevant": ["Chain Lightning"]},
             "prompt_version": "2.1.0",
-            "timestamp": "2024-01-01T00:00:00",
+            "timestamp": recent_timestamp,
         }
         
-        # Should not invalidate because version matches
+        # Should not invalidate because version matches and entry is recent
         assert cache_strategy.should_invalidate(
             cache_entry,
             current_prompt_version="2.1.0",
@@ -291,4 +295,7 @@ class TestCrossScriptCompatibility:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+
 

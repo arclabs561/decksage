@@ -1,0 +1,1577 @@
+{
+  "game": "magic",
+  "sources": {
+    "functional_role": 60,
+    "archetype_aware": 0,
+    "adversarial_pairs": 40,
+    "format_specific": 0
+  },
+  "queries": {
+    "Fleshbag Marauder": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Keruga, the Macrosage",
+        "Jade Mage",
+        "Scatter the Seeds",
+        "Healing Hands",
+        "Gwyllion Hedge-Mage"
+      ],
+      "relevant": [
+        "Malakir Cullblade",
+        "Ulvenwald Mysteries",
+        "Nantuko Husk",
+        "Sigiled Paladin",
+        "Scrapdiver Serpent"
+      ],
+      "somewhat_relevant": [
+        "Subterranean Scout",
+        "Jungle Shrine",
+        "Plummet",
+        "Reins of Power",
+        "Invigorate"
+      ],
+      "difficulty": "medium"
+    },
+    "Forbidden Alchemy": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Scatter the Seeds",
+        "Spirit Cairn",
+        "Pouncing Cheetah",
+        "Markov Patrician",
+        "Healing Hands"
+      ],
+      "relevant": [
+        "Nantuko Husk",
+        "Silkweaver Elite",
+        "Master's Call",
+        "Gwyllion Hedge-Mage",
+        "Oakgnarl Warrior"
+      ],
+      "somewhat_relevant": [
+        "Ulvenwald Mystics // Ulvenwald Primordials",
+        "Plummet",
+        "The Gitrog Monster",
+        "Ondu Giant",
+        "Invigorate"
+      ],
+      "difficulty": "medium"
+    },
+    "Forgotten Ancient": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Tainted Wood",
+        "Wood Elves",
+        "Mirage Mirror",
+        "Reckless Spite",
+        "Shoreline Ranger"
+      ],
+      "relevant": [
+        "Goblin Tunneler",
+        "Metallurgic Summonings",
+        "Kresh the Bloodbraided",
+        "Wall of Junk",
+        "Vow of Wildness"
+      ],
+      "somewhat_relevant": [
+        "Mycosynth Wellspring",
+        "Karlov of the Ghost Council",
+        "Grim Backwoods",
+        "Goblin Spymaster",
+        "Isolated Chapel"
+      ],
+      "difficulty": "medium"
+    },
+    "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Baleful Mastery",
+        "Bramble Wurm"
+      ],
+      "relevant": [
+        "Deep Forest Hermit",
+        "Traveling Minister",
+        "End the Festivities",
+        "Codie, Vociferous Codex",
+        "Duress"
+      ],
+      "somewhat_relevant": [
+        "Hungry Ridgewolf",
+        "Mischievous Catgeist // Catlike Curiosity",
+        "Wrenn and Seven",
+        "Lorehold Command",
+        "Surge to Victory"
+      ],
+      "difficulty": "medium"
+    },
+    "Forbidden Orchard": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Grindstone",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Misery's Shadow",
+        "Staggershock"
+      ],
+      "relevant": [
+        "Mycosynth Wellspring",
+        "Siphon Insight",
+        "Pious Kitsune",
+        "Prosper, Tome-Bound",
+        "Spara's Headquarters"
+      ],
+      "somewhat_relevant": [
+        "Goblin Spymaster",
+        "Sigarda's Splendor",
+        "Sarinth Greatwurm",
+        "Undercover Operative",
+        "Villainous Ogre"
+      ],
+      "difficulty": "medium"
+    },
+    "Force of Negation": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Misery's Shadow",
+        "Venomous Changeling",
+        "Staggershock"
+      ],
+      "relevant": [
+        "Siphon Insight",
+        "Sigarda's Splendor",
+        "Sarinth Greatwurm",
+        "Prosper, Tome-Bound",
+        "Spara's Headquarters"
+      ],
+      "somewhat_relevant": [
+        "Smiting Helix",
+        "Undercover Operative",
+        "Twinflame",
+        "Vampire Sovereign",
+        "Satsuki, the Living Lore"
+      ],
+      "difficulty": "medium"
+    },
+    "Alrund, God of the Cosmos // Hakka, Whispering Raven": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Deep Forest Hermit",
+        "Baleful Mastery",
+        "Gnottvold Recluse",
+        "Codie, Vociferous Codex",
+        "Icehide Troll"
+      ],
+      "relevant": [
+        "Gods' Hall Guardian",
+        "Battle for Bretagard",
+        "Wrenn and Seven",
+        "Lorehold Command",
+        "Surge to Victory"
+      ],
+      "somewhat_relevant": [
+        "Esika, God of the Tree // The Prismatic Bridge",
+        "Forsworn Paladin",
+        "Horizon Seeker",
+        "Venerable Warsinger",
+        "Rune of Might"
+      ],
+      "difficulty": "medium"
+    },
+    "Fable of the Mirror-Breaker // Reflection of Kiki-Jiki": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Invigorating Hot Spring",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Misery's Shadow",
+        "Moonsnare Prototype"
+      ],
+      "relevant": [
+        "Generous Visitor",
+        "Short Circuit",
+        "Prosper, Tome-Bound",
+        "The Shattered States Era // Nameless Conqueror",
+        "Spara's Headquarters"
+      ],
+      "somewhat_relevant": [
+        "Siphon Insight",
+        "Sigarda's Splendor",
+        "Sarinth Greatwurm",
+        "Seismic Wave",
+        "Undercover Operative"
+      ],
+      "difficulty": "medium"
+    },
+    "Birgi, God of Storytelling // Harnfel, Horn of Bounty": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Deep Forest Hermit",
+        "Gnottvold Recluse",
+        "Codie, Vociferous Codex",
+        "Icehide Troll",
+        "Gods' Hall Guardian"
+      ],
+      "relevant": [
+        "Forsworn Paladin",
+        "Wrenn and Seven",
+        "Lorehold Command",
+        "Surge to Victory",
+        "Rune of Might"
+      ],
+      "somewhat_relevant": [
+        "Demonic Gifts",
+        "Reinterpret",
+        "Raiders' Karve",
+        "Magma Opus",
+        "Doom Weaver",
+        "Hand of Vecna",
+        "Esika, God of the Tree // The Prismatic Bridge",
+        "Monologue Tax",
+        "Frost Bite",
+        "Horizon Seeker",
+        "Venerable Warsinger",
+        "Dusk // Dawn",
+        "Red Dragon",
+        "Kasmina, Enigma Sage",
+        "Poison the Cup",
+        "Stinging Study",
+        "Cursed Mirror",
+        "Professor Onyx",
+        "Furycalm Snarl",
+        "Trudge Garden",
+        "Village Rites",
+        "Icebind Pillar",
+        "Dancing Sword",
+        "Frostpeak Yeti",
+        "Rushed Rebirth",
+        "Spectral Steel",
+        "Semester's End",
+        "Essence Pulse",
+        "Wake the Past",
+        "White Dragon",
+        "Culling Ritual",
+        "Sly Instigator",
+        "Pilfering Hawk",
+        "Vault Robber",
+        "Dread Rider",
+        "Cleaver Skaab",
+        "Loyal Warhound",
+        "Dream Strix",
+        "Mistwalker",
+        "Masked Vandal",
+        "Oriq Loremage",
+        "Muse Vortex",
+        "Goldvein Pick",
+        "Crowded Crypt",
+        "Saw It Coming"
+      ],
+      "difficulty": "medium"
+    },
+    "Hidetsugu Consumes All // Vessel of the All-Consuming": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Invigorating Hot Spring",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Misery's Shadow",
+        "Moonsnare Prototype"
+      ],
+      "relevant": [
+        "Siphon Insight",
+        "Short Circuit",
+        "Prosper, Tome-Bound",
+        "The Shattered States Era // Nameless Conqueror",
+        "Spara's Headquarters"
+      ],
+      "somewhat_relevant": [
+        "Sigarda's Splendor",
+        "Sarinth Greatwurm",
+        "Seismic Wave",
+        "Undercover Operative",
+        "Repel the Vile"
+      ],
+      "difficulty": "medium"
+    },
+    "Dennick, Pious Apprentice // Dennick, Pious Apparition": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Traveling Minister",
+        "End the Festivities"
+      ],
+      "relevant": [
+        "Hungry Ridgewolf",
+        "Siphon Insight",
+        "Duress",
+        "Mischievous Catgeist // Catlike Curiosity",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Sigarda's Splendor",
+        "Voldaren Epicure",
+        "Fierce Retribution",
+        "Old Stickfingers",
+        "Hungry for More"
+      ],
+      "difficulty": "medium"
+    },
+    "Dorothea, Vengeful Victim // Dorothea's Retribution": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Traveling Minister",
+        "End the Festivities"
+      ],
+      "relevant": [
+        "Hungry Ridgewolf",
+        "Siphon Insight",
+        "Duress",
+        "Mischievous Catgeist // Catlike Curiosity",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Sigarda's Splendor",
+        "Voldaren Epicure",
+        "Fierce Retribution",
+        "Old Stickfingers",
+        "Hungry for More"
+      ],
+      "difficulty": "medium"
+    },
+    "Jugan Defends the Temple // Remnant of the Rising Star": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Misery's Shadow",
+        "Moonsnare Prototype",
+        "Short Circuit"
+      ],
+      "relevant": [
+        "Siphon Insight",
+        "Sigarda's Splendor",
+        "Prosper, Tome-Bound",
+        "The Shattered States Era // Nameless Conqueror",
+        "Spara's Headquarters"
+      ],
+      "somewhat_relevant": [
+        "Sarinth Greatwurm",
+        "Seismic Wave",
+        "Undercover Operative",
+        "Repel the Vile",
+        "Satsuki, the Living Lore"
+      ],
+      "difficulty": "medium"
+    },
+    "Jadzi, Oracle of Arcavios // Journey to the Oracle": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Kelpie Guide",
+        "Venerable Warsinger",
+        "Wrenn and Seven",
+        "Lorehold Command",
+        "Surge to Victory"
+      ],
+      "relevant": [
+        "Kasmina, Enigma Sage",
+        "Multiple Choice",
+        "Mavinda, Students' Advocate",
+        "Witherbloom Campus",
+        "Rionya, Fire Dancer"
+      ],
+      "somewhat_relevant": [
+        "Sproutback Trudge",
+        "Sequence Engine",
+        "Xanathar, Guild Kingpin",
+        "The Deck of Many Things",
+        "Out of Time"
+      ],
+      "difficulty": "medium"
+    },
+    "Kianne, Dean of Substance // Imbraham, Dean of Theory": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Venerable Warsinger",
+        "Mavinda, Students' Advocate",
+        "Wrenn and Seven",
+        "Lorehold Command",
+        "Surge to Victory"
+      ],
+      "relevant": [
+        "Multiple Choice",
+        "Witherbloom Campus",
+        "Rionya, Fire Dancer",
+        "The Deck of Many Things",
+        "Out of Time"
+      ],
+      "somewhat_relevant": [
+        "Sproutback Trudge",
+        "Sequence Engine",
+        "Xanathar, Guild Kingpin",
+        "Show of Confidence",
+        "Righteous Valkyrie"
+      ],
+      "difficulty": "medium"
+    },
+    "Harvesttide Infiltrator // Harvesttide Assailant": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Patrician Geist",
+        "Vanquish the Horde",
+        "Traveling Minister",
+        "Mischievous Catgeist // Catlike Curiosity"
+      ],
+      "relevant": [
+        "Hungry Ridgewolf",
+        "Siphon Insight",
+        "Sigarda's Splendor",
+        "Voldaren Epicure",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Ludevic, Necrogenius // Olag, Ludevic's Hubris",
+        "Old Stickfingers",
+        "Hungry for More",
+        "Witch's Web",
+        "Plummet"
+      ],
+      "difficulty": "medium"
+    },
+    "Jerren, Corrupted Bishop // Ormendahl, the Corrupter": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Rise of the Ants",
+        "Patrician Geist",
+        "Pestilent Wolf",
+        "Skaab Wrangler"
+      ],
+      "relevant": [
+        "Vanquish the Horde",
+        "Voice of the Blessed",
+        "Mystic Skull // Mystic Monstrosity",
+        "Traveling Minister",
+        "Mischievous Catgeist // Catlike Curiosity"
+      ],
+      "somewhat_relevant": [
+        "Wrenn and Seven",
+        "Outland Liberator // Frenzied Trapbreaker",
+        "Lier, Disciple of the Drowned",
+        "Kaya, Geist Hunter",
+        "Retrieve"
+      ],
+      "difficulty": "medium"
+    },
+    "Folk of the Pines": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Lim-D\u00fbl's Hex",
+        "Hecatomb",
+        "Thunder Wall",
+        "Forgotten Lore",
+        "Zuran Enchanter"
+      ],
+      "relevant": [
+        "Night Soil",
+        "Snowfall",
+        "Nature's Wrath",
+        "Sea Spirit",
+        "Tinder Wall"
+      ],
+      "somewhat_relevant": [
+        "Ravages of War",
+        "Pygmy Allosaurus",
+        "Fungal Bloom",
+        "Wiitigo",
+        "Power Sink"
+      ],
+      "difficulty": "medium"
+    },
+    "Flujo energ\u00e9tico": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Zephyr Falcon",
+        "Red Elemental Blast",
+        "Monstruo fantasmal",
+        "R\u00e1faga elemental roja",
+        "Tranquillit\u00e0"
+      ],
+      "relevant": [
+        "Unicornio perlado",
+        "Sinnbad",
+        "Muro de piedra",
+        "Keldon Warlord",
+        "Lobos de la tundra"
+      ],
+      "somewhat_relevant": [
+        "Hypnotic Specter",
+        "Gul carro\u00f1ero",
+        "Oasis",
+        "Regeneraci\u00f3n",
+        "Vampire Bats"
+      ],
+      "difficulty": "medium"
+    },
+    "Katilda, Dawnhart Martyr // Katilda's Rising Dawn": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Markov Purifier",
+        "Rise of the Ants",
+        "Patrician Geist",
+        "Pestilent Wolf",
+        "Skaab Wrangler"
+      ],
+      "relevant": [
+        "Vanquish the Horde",
+        "Voice of the Blessed",
+        "Mystic Skull // Mystic Monstrosity",
+        "Traveling Minister",
+        "Mischievous Catgeist // Catlike Curiosity"
+      ],
+      "somewhat_relevant": [
+        "Wrenn and Seven",
+        "Outland Liberator // Frenzied Trapbreaker",
+        "Lier, Disciple of the Drowned",
+        "Kaya, Geist Hunter",
+        "Retrieve"
+      ],
+      "difficulty": "medium"
+    },
+    "Mila, Crafty Companion // Lukka, Wayward Bonder": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Venerable Warsinger",
+        "Wrenn and Seven",
+        "Witherbloom Campus",
+        "Rionya, Fire Dancer",
+        "Surge to Victory"
+      ],
+      "relevant": [
+        "Sproutback Trudge",
+        "Sequence Engine",
+        "Multiple Choice",
+        "The Deck of Many Things",
+        "Out of Time"
+      ],
+      "somewhat_relevant": [
+        "Xanathar, Guild Kingpin",
+        "Show of Confidence",
+        "Righteous Valkyrie",
+        "Vanishing Verse",
+        "Sorin the Mirthless"
+      ],
+      "difficulty": "medium"
+    },
+    "Plargg, Dean of Chaos // Augusta, Dean of Order": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Thrilling Discovery",
+        "Yuan-Ti Malison",
+        "Weather the Storm",
+        "Sol Talisman",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory"
+      ],
+      "relevant": [
+        "Soothsayer Adept",
+        "Wrenn and Seven",
+        "Search for Glory",
+        "Timeless Dragon",
+        "Surge to Victory"
+      ],
+      "somewhat_relevant": [
+        "Willowdusk, Essence Seer",
+        "Quakebringer",
+        "Unwilling Ingredient",
+        "Werewolf Pack Leader",
+        "Shattered Sanctum"
+      ],
+      "difficulty": "medium"
+    },
+    "Flowstone Crusher": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Wood Elves",
+        "Ogre Taskmaster",
+        "Viashino Sandstalker",
+        "Nantuko Husk",
+        "Veteran Cavalier"
+      ],
+      "relevant": [
+        "Hypnotic Specter",
+        "Serra's Blessing",
+        "Off Balance",
+        "Harvest Mage",
+        "Gluttonous Zombie"
+      ],
+      "somewhat_relevant": [
+        "Rackling",
+        "Yawgmoth Demon",
+        "Loxodon Warhammer",
+        "Thought Courier",
+        "Kraken's Eye"
+      ],
+      "difficulty": "medium"
+    },
+    "Flowstone Hellion": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Mindwarper",
+        "Yawgmoth's Bargain",
+        "Spirit Cairn",
+        "Scabland",
+        "Spike Colony"
+      ],
+      "relevant": [
+        "Soltari Emissary",
+        "Grasslands",
+        "Grand Coliseum",
+        "Reins of Power",
+        "Revenant"
+      ],
+      "somewhat_relevant": [
+        "Spike Soldier",
+        "Prophetic Bolt",
+        "Tribute to the Wild",
+        "Hermit Druid",
+        "Power Sink"
+      ],
+      "difficulty": "medium"
+    },
+    "Reidane, God of the Worthy // Valkmira, Protector's Shield": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Showdown of the Skalds",
+        "Undersea Invader",
+        "Yuan-Ti Malison",
+        "Weather the Storm",
+        "Sol Talisman"
+      ],
+      "relevant": [
+        "Return Upon the Tide",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory",
+        "Wrenn and Seven",
+        "Search for Glory",
+        "Timeless Dragon"
+      ],
+      "somewhat_relevant": [
+        "Willowdusk, Essence Seer",
+        "Werewolf Pack Leader",
+        "Surge to Victory",
+        "The Bloodsky Massacre",
+        "Rune of Might"
+      ],
+      "difficulty": "medium"
+    },
+    "Flooded Woodlands": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Lim-D\u00fbl's Hex",
+        "Kjeldoran Skyknight",
+        "Flow of Maggots",
+        "Rime Dryad",
+        "Thunder Wall"
+      ],
+      "relevant": [
+        "Forgotten Lore",
+        "Skeleton Ship",
+        "Icy Prison",
+        "Vibrating Sphere",
+        "Pyknite"
+      ],
+      "somewhat_relevant": [
+        "Minion of Leshrac",
+        "Soldevi Simulacrum",
+        "Fyndhorn Bow",
+        "Wall of Lava",
+        "Gravebind"
+      ],
+      "difficulty": "medium"
+    },
+    "Behold the Unspeakable // Vision of the Unspeakable": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Boon of Boseiju",
+        "Invigorating Hot Spring",
+        "Essence Capture",
+        "Spirit-Sister's Call",
+        "Lethal Exploit"
+      ],
+      "relevant": [
+        "Biting-Palm Ninja",
+        "Moonsnare Prototype",
+        "Nezumi Bladeblesser",
+        "Colossal Skyturtle",
+        "Generous Visitor"
+      ],
+      "somewhat_relevant": [
+        "Dragonspark Reactor",
+        "Short Circuit",
+        "Era of Enlightenment // Hand of Enlightenment",
+        "Peerless Samurai",
+        "Tamiyo's Compleation"
+      ],
+      "difficulty": "medium"
+    },
+    "Rowan, Scholar of Sparks // Will, Scholar of Frost": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Thrilling Discovery",
+        "Yuan-Ti Malison",
+        "Weather the Storm",
+        "Sol Talisman",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory"
+      ],
+      "relevant": [
+        "Soothsayer Adept",
+        "Wrenn and Seven",
+        "Search for Glory",
+        "Timeless Dragon",
+        "Surge to Victory"
+      ],
+      "somewhat_relevant": [
+        "Willowdusk, Essence Seer",
+        "Unwilling Ingredient",
+        "Werewolf Pack Leader",
+        "Shattered Sanctum",
+        "Venerable Warsinger"
+      ],
+      "difficulty": "medium"
+    },
+    "Chandra, Fire of Kaladesh // Chandra, Roaring Flame": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Undercity Troll",
+        "Shaman of the Pack",
+        "Claustrophobia",
+        "Consul's Lieutenant",
+        "Dark Petition"
+      ],
+      "relevant": [
+        "Sentinel of the Eternal Watch",
+        "Charging Griffin",
+        "Infernal Scarring",
+        "Jace's Sanctum",
+        "Fetid Imp"
+      ],
+      "somewhat_relevant": [
+        "Sylvan Messenger",
+        "Llanowar Empath",
+        "Healing Hands",
+        "Jace, Vryn's Prodigy // Jace, Telepath Unbound",
+        "Turn to Frog"
+      ],
+      "difficulty": "medium"
+    },
+    "Forbidding Spirit": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Sagittars' Volley",
+        "Watchful Giant",
+        "Maeve, Insidious Singer",
+        "Ravenous Chupacabra",
+        "Gavony Unhallowed"
+      ],
+      "relevant": [
+        "Vilis, Broker of Blood",
+        "Vogar, Necropolis Tyrant",
+        "Sentinel's Mark",
+        "Gyre Engineer",
+        "Immaculate Magistrate"
+      ],
+      "somewhat_relevant": [
+        "Spear Spewer",
+        "Sylvan Messenger",
+        "Quench",
+        "Spire Mangler",
+        "Vow of Wildness"
+      ],
+      "difficulty": "medium"
+    },
+    "Shatterskull Smashing // Shatterskull, the Hammer Pass": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Sword of War and Peace",
+        "Thalisse, Reverent Medium",
+        "Tazeem Roilmage",
+        "Transmogrify",
+        "Voracious Greatshark"
+      ],
+      "relevant": [
+        "Skyclave Shadowcat",
+        "Sparkhunter Masticore",
+        "Turntimber Ascetic",
+        "Tazri, Beacon of Unity",
+        "Skyclave Geopede"
+      ],
+      "somewhat_relevant": [
+        "Sword of Body and Mind",
+        "Temple of Epiphany",
+        "Uro, Titan of Nature's Wrath",
+        "Thrasios, Triton Hero",
+        "Taunting Arbormage"
+      ],
+      "difficulty": "medium"
+    },
+    "Shaile, Dean of Radiance // Embrose, Dean of Shadow": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Thrilling Discovery",
+        "Yuan-Ti Malison",
+        "Weather the Storm",
+        "Sol Talisman",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory"
+      ],
+      "relevant": [
+        "Willowdusk, Essence Seer",
+        "Soothsayer Adept",
+        "Wrenn and Seven",
+        "Timeless Dragon",
+        "Surge to Victory"
+      ],
+      "somewhat_relevant": [
+        "Unwilling Ingredient",
+        "Werewolf Pack Leader",
+        "Thundering Mightmare",
+        "Shattered Sanctum",
+        "Venerable Warsinger"
+      ],
+      "difficulty": "medium"
+    },
+    "Font of Fertility": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Wood Elves",
+        "Mortal Obstinacy",
+        "Gaea's Cradle",
+        "Pensive Minotaur",
+        "Starfall"
+      ],
+      "relevant": [
+        "Pin to the Earth",
+        "Heroes' Bane",
+        "Rise of Eagles",
+        "Kruphix's Insight",
+        "Selesnya Signet"
+      ],
+      "somewhat_relevant": [
+        "Returned Reveler",
+        "Munda's Vanguard",
+        "Thassa's Devourer",
+        "Skyship Weatherlight",
+        "Worst Fears"
+      ],
+      "difficulty": "medium"
+    },
+    "Growing Rites of Itlimoc // Itlimoc, Cradle of the Sun": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Imperial Aerosaur",
+        "Steadfast Armasaur",
+        "Omniscience",
+        "Vanquisher's Banner",
+        "Kumena's Speaker"
+      ],
+      "relevant": [
+        "Huatli, Warrior Poet",
+        "Pirate's Cutlass",
+        "Vona, Butcher of Magan",
+        "Watertrap Weaver",
+        "Repeating Barrage"
+      ],
+      "somewhat_relevant": [
+        "Raptor Companion",
+        "Treasure Map // Treasure Cove",
+        "Heartless Pillage",
+        "Shapers' Sanctuary",
+        "Regisaur Alpha"
+      ],
+      "difficulty": "medium"
+    },
+    "Flickering Spirit": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Volcanic Awakening",
+        "Traitor's Clutch",
+        "Shadow Sliver",
+        "Smallpox",
+        "Swarmyard"
+      ],
+      "relevant": [
+        "Fortify",
+        "Mishra, Artificer Prodigy",
+        "Ixidron",
+        "Ivory Giant",
+        "Ignite Memories"
+      ],
+      "somewhat_relevant": [
+        "Jaya Ballard, Task Mage",
+        "Slipstream Serpent",
+        "Stormcloud Djinn",
+        "Foriysian Totem",
+        "Might of Old Krosa"
+      ],
+      "difficulty": "medium"
+    },
+    "Flow of Knowledge": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "No One Left Behind",
+        "Thran Power Suit",
+        "Misery's Shadow",
+        "Scatter Ray",
+        "Mishra's Domination"
+      ],
+      "relevant": [
+        "Visions of Phyrexia",
+        "Take Flight",
+        "Gaea's Courser",
+        "Mishra's Foundry",
+        "Lay Down Arms"
+      ],
+      "somewhat_relevant": [
+        "Sarinth Greatwurm",
+        "Goblin Firebomb",
+        "Stone Retrieval Unit",
+        "Ravenous Gigamole",
+        "Koilos Roc"
+      ],
+      "difficulty": "medium"
+    },
+    "Force of Savagery": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Illusionist's Bracers",
+        "Scout's Warning",
+        "Henchfiend of Ukor",
+        "Marshaling Cry",
+        "Lavaborn Muse"
+      ],
+      "relevant": [
+        "Tapestry of the Ages",
+        "Llanowar Empath",
+        "Lucent Liminid",
+        "Shimian Specter",
+        "Patrician's Scorn"
+      ],
+      "somewhat_relevant": [
+        "Ghostfire",
+        "Soratami Savant",
+        "Tezzeret, Artifice Master",
+        "That Which Was Taken",
+        "Sword of the Meek"
+      ],
+      "difficulty": "medium"
+    },
+    "Flummoxed Cyclops": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Witness of Tomorrows",
+        "Shoal Kraken",
+        "Protean Thaumaturge",
+        "Heroes of the Revel",
+        "Funeral Rites"
+      ],
+      "relevant": [
+        "Naiad of Hidden Coves",
+        "Uro, Titan of Nature's Wrath",
+        "Nyxborn Courser",
+        "The First Iroan Games",
+        "Kroxa, Titan of Death's Hunger"
+      ],
+      "somewhat_relevant": [
+        "Rumbling Sentry",
+        "Plummet",
+        "Wavebreak Hippocamp",
+        "Satyr's Cunning",
+        "Memory Drain"
+      ],
+      "difficulty": "medium"
+    },
+    "Hermit of the Natterknolls // Lone Wolf of the Natterknolls": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Spectral Shepherd",
+        "Malevolent Whispers",
+        "Hope Against Hope",
+        "Indulgent Aristocrat",
+        "Pyre Hound"
+      ],
+      "relevant": [
+        "Intrepid Provisioner",
+        "Niblis of Dusk",
+        "Thraben Inspector",
+        "Not Forgotten",
+        "Sanguinary Mage"
+      ],
+      "somewhat_relevant": [
+        "Ulvenwald Mysteries",
+        "Moonlight Hunt",
+        "Pore Over the Pages",
+        "Morkrut Necropod",
+        "Tamiyo's Journal"
+      ],
+      "difficulty": "medium"
+    },
+    "Forced Adaptation": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Luminate Primordial",
+        "Illusionist's Bracers",
+        "Hydroform",
+        "Holy Mantle",
+        "Kingpin's Pet"
+      ],
+      "relevant": [
+        "Wrecking Ogre",
+        "Greenside Watcher",
+        "Midnight Recovery",
+        "Urbis Protector",
+        "Knight Watch"
+      ],
+      "somewhat_relevant": [
+        "Knight of Obligation",
+        "Pit Fight",
+        "Razortip Whip",
+        "Rust Scarab",
+        "Gruul Guildgate"
+      ],
+      "difficulty": "medium"
+    },
+    "Fleshpulper Giant": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Staff of the Flame Magus",
+        "Messenger Drake",
+        "Haunted Plate Mail",
+        "Hunt the Weak",
+        "Scourge of Valkas"
+      ],
+      "relevant": [
+        "Show of Valor",
+        "Pillarfield Ox",
+        "Pitchburn Devils",
+        "Into the Wilds",
+        "Fortify"
+      ],
+      "somewhat_relevant": [
+        "Staff of the Wild Magus",
+        "Voracious Wurm",
+        "Millstone",
+        "Fog",
+        "Giant Spider"
+      ],
+      "difficulty": "medium"
+    },
+    "Liliana, Heretical Healer // Liliana, Defiant Necromancer": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Undercity Troll",
+        "Shaman of the Pack",
+        "Sentinel of the Eternal Watch",
+        "Llanowar Empath",
+        "Turn to Frog"
+      ],
+      "relevant": [
+        "Sylvan Messenger",
+        "Malakir Cullblade",
+        "Starfield of Nyx",
+        "War Oracle",
+        "Nantuko Husk"
+      ],
+      "somewhat_relevant": [
+        "Sphinx's Tutelage",
+        "Relic Seeker",
+        "Titanic Growth",
+        "Seismic Elemental",
+        "Valeron Wardens"
+      ],
+      "difficulty": "medium"
+    },
+    "Nicol Bolas, the Ravager // Nicol Bolas, the Arisen": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Salvager of Secrets",
+        "Trumpet Blast",
+        "Skyrider Patrol",
+        "Shield Mare",
+        "Omniscience"
+      ],
+      "relevant": [
+        "Tezzeret, Artifice Master",
+        "Vampire Sovereign",
+        "Take Vengeance",
+        "Plummet",
+        "Vine Mare"
+      ],
+      "somewhat_relevant": [
+        "Transmogrifying Wand",
+        "Titanic Growth",
+        "Patient Rebuilding",
+        "The Gitrog Monster",
+        "Shock"
+      ],
+      "difficulty": "medium"
+    },
+    "Flowstone Embrace": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Scout's Warning",
+        "Henchfiend of Ukor",
+        "Marshaling Cry",
+        "Llanowar Empath",
+        "Lucent Liminid"
+      ],
+      "relevant": [
+        "Ghostfire",
+        "Scourge of Kher Ridges",
+        "Shimian Specter",
+        "Patrician's Scorn",
+        "Sword of the Meek"
+      ],
+      "somewhat_relevant": [
+        "Storm Entity",
+        "Narcomoeba",
+        "Quagnoth",
+        "Gibbering Descent",
+        "Llanowar Augur"
+      ],
+      "difficulty": "medium"
+    },
+    "The Restoration of Eiganjo // Architect of Restoration": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Visions of Phyrexia",
+        "Waste Management",
+        "Vanquish the Horde",
+        "Voice of the Blessed",
+        "The Shattered States Era // Nameless Conqueror"
+      ],
+      "relevant": [
+        "Undercover Operative",
+        "Wake to Slaughter",
+        "You Are Already Dead",
+        "The Long Reach of Night // Animus of Night's Reach",
+        "Twisted Embrace"
+      ],
+      "somewhat_relevant": [
+        "Titania, Nature's Force",
+        "Yoshimaru, Ever Faithful",
+        "Unforgiving One",
+        "Webspinner Cuff",
+        "Thran Spider"
+      ],
+      "difficulty": "medium"
+    },
+    "Michiko's Reign of Truth // Portrait of Michiko": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Spirit-Sister's Call",
+        "Moonsnare Prototype",
+        "Nezumi Bladeblesser",
+        "Short Circuit",
+        "Tamiyo's Compleation"
+      ],
+      "relevant": [
+        "Simian Sling",
+        "Oni-Cult Anvil",
+        "Seismic Wave",
+        "The Shattered States Era // Nameless Conqueror",
+        "Peerless Samurai"
+      ],
+      "somewhat_relevant": [
+        "Okiba Reckoner Raid // Nezumi Road Captain",
+        "Repel the Vile",
+        "Spinning Wheel Kick",
+        "You Are Already Dead",
+        "Sky-Blessed Samurai"
+      ],
+      "difficulty": "medium"
+    },
+    "Flooded Shoreline": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Viashivan Dragon",
+        "Wake of Vultures",
+        "Vanishing",
+        "Knight of Valor",
+        "Viashino Sandstalker"
+      ],
+      "relevant": [
+        "Vision Charm",
+        "Funeral Charm",
+        "Goblin Swine-Rider",
+        "Retribution of the Meek",
+        "Relentless Assault"
+      ],
+      "somewhat_relevant": [
+        "Kyscu Drake",
+        "Inspiration",
+        "Guiding Spirit",
+        "Waterspout Djinn",
+        "Forbidden Ritual"
+      ],
+      "difficulty": "medium"
+    },
+    "Curse of the Fire Penguin // Curse of the Fire Penguin Creature": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Dumb Ass",
+        "When Fluffy Bunnies Attack",
+        "Infernal Spawn of Infernal Spawn of Evil",
+        "Land Aid '04",
+        "Rare-B-Gone"
+      ],
+      "relevant": [
+        "Magical Hacker",
+        "Emcee",
+        "Necro-Impotence",
+        "Supersize",
+        "Fat Ass"
+      ],
+      "somewhat_relevant": [
+        "Who // What // When // Where // Why",
+        "Graphic Violence",
+        "Keeper of the Sacred Word",
+        "Touch and Go",
+        "Moniker Mage"
+      ],
+      "difficulty": "medium"
+    },
+    "Sage of Ancient Lore // Werewolf of Ancient Hunger": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Spectral Shepherd",
+        "Ulvenwald Mysteries",
+        "Thraben Inspector",
+        "Tamiyo's Journal",
+        "Sanguinary Mage"
+      ],
+      "relevant": [
+        "Tireless Tracker",
+        "Vampire Noble",
+        "Voldaren Duelist",
+        "Uninvited Geist // Unimpeded Trespasser",
+        "The Gitrog Monster"
+      ],
+      "somewhat_relevant": [
+        "Stensia Masquerade",
+        "Welcome to the Fold",
+        "Vessel of Malignity",
+        "Senseless Rage",
+        "Village Messenger // Moonrise Intruder"
+      ],
+      "difficulty": "medium"
+    },
+    "Floodtide Serpent": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Oracle of Bones",
+        "Siren Song Lyre",
+        "Satyr Firedancer",
+        "Nessian Wilds Ravager",
+        "Siren of the Silent Song"
+      ],
+      "relevant": [
+        "Ornitharch",
+        "Thunder Brute",
+        "Perplexing Chimera",
+        "Sudden Storm",
+        "Thassa's Rebuff"
+      ],
+      "somewhat_relevant": [
+        "Nyxborn Triton",
+        "Searing Blood",
+        "Mindreaver",
+        "Loyal Pegasus",
+        "Swordwise Centaur"
+      ],
+      "difficulty": "medium"
+    },
+    "Flowstone Thopter": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Topple",
+        "Seal of Fire",
+        "Rath's Edge",
+        "Parallax Wave",
+        "Spiteful Bully"
+      ],
+      "relevant": [
+        "Rupture",
+        "Harvest Mage",
+        "Reverent Silence",
+        "Moggcatcher",
+        "Kill Switch"
+      ],
+      "somewhat_relevant": [
+        "Off Balance",
+        "Laccolith Rig",
+        "Rathi Intimidator",
+        "Skyshroud Sentinel",
+        "Lightbringer"
+      ],
+      "difficulty": "medium"
+    },
+    "Foriysian Brigade": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Gallowbraid",
+        "Nature's Kiss",
+        "Pendrell Mists",
+        "Sage Owl",
+        "Touchstone"
+      ],
+      "relevant": [
+        "Serra's Blessing",
+        "Harvest Wurm",
+        "Master of Arms",
+        "Volunteer Reserves",
+        "Hidden Horror"
+      ],
+      "somewhat_relevant": [
+        "Urborg Justice",
+        "Well of Knowledge",
+        "Shattered Crypt",
+        "Mwonvuli Ooze",
+        "Relearn"
+      ],
+      "difficulty": "medium"
+    },
+    "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Vanquish the Horde",
+        "Voice of the Blessed",
+        "Wedding Security",
+        "Traveling Minister",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [
+        "Ulvenwald Oddity // Ulvenwald Behemoth",
+        "Winterthorn Blessing",
+        "Vengeful Strangler // Strangling Grasp",
+        "Wrenn and Seven",
+        "Undying Malice"
+      ],
+      "somewhat_relevant": [
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Voldaren Epicure",
+        "Vampire Interloper",
+        "Voldaren Stinger",
+        "Wanderlight Spirit"
+      ],
+      "difficulty": "medium"
+    },
+    "Flowstone Charger": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Necravolver",
+        "Suffocating Blast",
+        "Yavimaya's Embrace",
+        "Goblin Trenches",
+        "Last Stand"
+      ],
+      "relevant": [
+        "Sylvan Messenger",
+        "Jaded Response",
+        "Lay of the Land",
+        "Zombie Boa",
+        "Manacles of Decay"
+      ],
+      "somewhat_relevant": [
+        "Fungal Shambler",
+        "Powerstone Minefield",
+        "Necra Sanctuary",
+        "Phyrexian Gargantua",
+        "Orim's Thunder"
+      ],
+      "difficulty": "medium"
+    },
+    "Forgotten Harvest": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Inflame",
+        "Noxious Field",
+        "Latulla's Orders",
+        "Shield Dancer",
+        "Zerapa Minotaur"
+      ],
+      "relevant": [
+        "Snag",
+        "Mageta the Lion",
+        "Wild Might",
+        "Pygmy Razorback",
+        "Plague Wind"
+      ],
+      "somewhat_relevant": [
+        "Latulla, Keldon Overseer",
+        "Keldon Arsonist",
+        "Well of Life",
+        "Keldon Firebombers",
+        "Hazy Homunculus"
+      ],
+      "difficulty": "medium"
+    },
+    "Rune-Tail, Kitsune Ascendant // Rune-Tail's Essence": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Wear // Tear",
+        "Sokenzan Spellblade",
+        "Tapestry of the Ages",
+        "Skyfire Kirin",
+        "That Which Was Taken"
+      ],
+      "relevant": [
+        "Sen Triplets",
+        "Soratami Savant",
+        "Tezzeret, Artifice Master",
+        "Twincast",
+        "Spelltithe Enforcer"
+      ],
+      "somewhat_relevant": [
+        "Veteran Motorist",
+        "Spiritual Visit",
+        "Soratami Cloud Chariot",
+        "Thoughts of Ruin",
+        "The Unspeakable"
+      ],
+      "difficulty": "medium"
+    },
+    "Valentin, Dean of the Vein // Lisette, Dean of the Root": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Yuan-Ti Malison",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Weather the Storm",
+        "Zariel, Archduke of Avernus",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory"
+      ],
+      "relevant": [
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Alrund, God of the Cosmos // Hakka, Whispering Raven",
+        "Wizard's Spellbook",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury",
+        "Varragoth, Bloodsky Sire"
+      ],
+      "somewhat_relevant": [
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost",
+        "Willowdusk, Essence Seer",
+        "Winds of Abandon",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Wrenn and Seven"
+      ],
+      "difficulty": "medium"
+    },
+    "Uvilda, Dean of Perfection // Nassari, Dean of Expression": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Yuan-Ti Malison",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Weather the Storm",
+        "Zariel, Archduke of Avernus",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory"
+      ],
+      "relevant": [
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Alrund, God of the Cosmos // Hakka, Whispering Raven",
+        "Wizard's Spellbook",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury",
+        "Varragoth, Bloodsky Sire"
+      ],
+      "somewhat_relevant": [
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost",
+        "Willowdusk, Essence Seer",
+        "Winds of Abandon",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Wrenn and Seven"
+      ],
+      "difficulty": "medium"
+    },
+    "Turntimber Symbiosis // Turntimber, Serpentine Wood": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Vulpikeet",
+        "Zareth San, the Trickster",
+        "Veteran Adventurer",
+        "Xenagos, God of Revels",
+        "Winota, Joiner of Forces"
+      ],
+      "relevant": [
+        "Valakut Awakening // Valakut Stoneforge",
+        "Fleshbag Marauder",
+        "Zur the Enchanter",
+        "Vito, Thorn of the Dusk Rose",
+        "Viscera Seer"
+      ],
+      "somewhat_relevant": [
+        "Vastwood Fortification // Vastwood Thicket",
+        "Wayward Guide-Beast",
+        "Valakut Exploration",
+        "Wheel of Misfortune",
+        "Zedruu the Greathearted"
+      ],
+      "difficulty": "medium"
+    },
+    "Forlorn Pseudamma": {
+      "type": "functional_role",
+      "highly_relevant": [
+        "Oracle of Bones",
+        "Siren Song Lyre",
+        "Satyr Firedancer",
+        "Sudden Storm",
+        "Thassa's Rebuff"
+      ],
+      "relevant": [
+        "Ornitharch",
+        "Thunder Brute",
+        "Perplexing Chimera",
+        "Searing Blood",
+        "Nyxborn Triton"
+      ],
+      "somewhat_relevant": [
+        "Mindreaver",
+        "Loyal Pegasus",
+        "Peregrination",
+        "Swordwise Centaur",
+        "Mortal's Resolve"
+      ],
+      "difficulty": "medium"
+    }
+  },
+  "quality_validation": {
+    "total_queries": 60,
+    "coverage": {
+      "in_training_data": 60,
+      "not_in_training_data": 0,
+      "coverage_percentage": 100.0,
+      "filtered_cards": 0
+    },
+    "label_statistics": {
+      "queries_with_labels": 60,
+      "avg_highly_relevant": 5.0,
+      "avg_relevant": 5.0,
+      "avg_somewhat_relevant": 5.666666666666667
+    },
+    "difficulty_distribution": {
+      "medium": 60
+    },
+    "type_distribution": {
+      "functional_role": 60
+    },
+    "quality_metrics": {
+      "diversity_score": -0.0,
+      "edge_case_coverage": 0,
+      "adversarial_pairs": 0
+    }
+  }
+}

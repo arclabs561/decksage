@@ -3,10 +3,10 @@
 Runner script: evaluate fusion weights on canonical test set (Magic by default).
 
 Usage:
-  uv run python src/ml/fusion_grid_search_runner.py \
-      --embeddings data/embeddings/magic_39k_decks_pecanpy.wv \
-      --pairs data/processed/pairs_large.csv \
-      --game magic --step 0.1 --top-k 10
+ uv run python src/ml/fusion_grid_search_runner.py \
+ --embeddings data/embeddings/magic_39k_decks_pecanpy.wv \
+ --pairs data/processed/pairs_large.csv \
+ --game magic --step 0.1 --top-k 10
 """
 
 from __future__ import annotations
@@ -21,9 +21,9 @@ from .utils.paths import PATHS
 
 
 def load_test_set(game: str) -> dict:
-    path = getattr(PATHS, f"test_{game}")
-    with open(path) as f:
-        data = json.load(f)
+    """Load test set (uses canonical implementation)."""
+    from ml.utils.data_loading import load_test_set as canonical_load
+    data = canonical_load(game=game)
     # Canonical file may have metadata wrapper
     if isinstance(data, dict) and "queries" in data:
         return data["queries"]
@@ -53,10 +53,10 @@ def main() -> int:
         try:
             tagger = FunctionalTagger()
         except Exception as e:
-            print(f"  ⚠️ FunctionalTagger unavailable: {e}")
+            print(f" Warning: FunctionalTagger unavailable: {e}")
 
     test_set = load_test_set(args.game)
-    print(f"  Test queries: {len(test_set)}")
+    print(f" Test queries: {len(test_set)}")
 
     def builder(weights: FusionWeights) -> WeightedLateFusion:
         # Limit candidate pool for performance during grid search
@@ -67,9 +67,9 @@ def main() -> int:
 
     print("\nBest weights:")
     print(
-        f"  embed={result.best_weights.embed:.2f}, jaccard={result.best_weights.jaccard:.2f}, functional={result.best_weights.functional:.2f}"
+        f" embed={result.best_weights.embed:.2f}, jaccard={result.best_weights.jaccard:.2f}, functional={result.best_weights.functional:.2f}"
     )
-    print(f"  P@{args.top_k}: {result.best_score:.4f}")
+    print(f" P@{args.top_k}: {result.best_score:.4f}")
 
     # Save summary
     out_dir = PATHS.experiments
@@ -82,14 +82,14 @@ def main() -> int:
                 "pairs": args.pairs,
                 "game": args.game,
                 "step": args.step,
-                "top_k": args.top_k,
-                "best_weights": {
-                    "embed": result.best_weights.embed,
-                    "jaccard": result.best_weights.jaccard,
-                    "functional": result.best_weights.functional,
-                },
-                "best_score": result.best_score,
-            },
+ "top_k": args.top_k,
+ "best_weights": {
+ "embed": result.best_weights.embed,
+ "jaccard": result.best_weights.jaccard,
+ "functional": result.best_weights.functional,
+ },
+ "best_score": result.best_score,
+ },
             f,
             indent=2,
         )
@@ -99,8 +99,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
+ import sys
 
-    sys.exit(main())
+ sys.exit(main())
 
 

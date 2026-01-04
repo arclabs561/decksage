@@ -133,23 +133,37 @@ def evaluate_with_confidence(
         }
     
     # Bootstrap confidence intervals for both P@10 and MRR
-    def bootstrap_ci(values: list[float]) -> tuple[float, float, float]:
+    def bootstrap_ci(values: list[float], metric_name: str = "metric") -> tuple[float, float, float]:
         """Compute bootstrap CI for a list of values"""
         if not values:
             return 0.0, 0.0, 0.0
+        
+        # Optimize: use vectorized operations when possible
+        values_array = np.array(values)
+        n = len(values)
+        
+        if verbose:
+            print(f"    Computing bootstrap CI for {metric_name} (n={n}, n_bootstrap={n_bootstrap})...")
+        
+        # Vectorized bootstrap: sample all at once
+        # Generate all bootstrap samples in one go (memory efficient for large n_bootstrap)
         bootstrap_means = []
-        for _ in range(n_bootstrap):
-            sample = np.random.choice(values, size=len(values), replace=True)
-            bootstrap_means.append(np.mean(sample))
+        chunk_size = min(1000, n_bootstrap)  # Process in chunks to avoid memory issues
+        
+        for chunk_start in range(0, n_bootstrap, chunk_size):
+            chunk_end = min(chunk_start + chunk_size, n_bootstrap)
+            # Generate chunk_size samples at once
+            samples = np.random.choice(values_array, size=(chunk_end - chunk_start, n), replace=True)
+            bootstrap_means.extend(np.mean(samples, axis=1).tolist())
         
         alpha = 1 - confidence
-        mean_val = float(np.mean(values))
+        mean_val = float(np.mean(values_array))
         ci_lower = float(np.percentile(bootstrap_means, 100 * alpha / 2))
         ci_upper = float(np.percentile(bootstrap_means, 100 * (1 - alpha / 2)))
         return mean_val, ci_lower, ci_upper
     
-    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores)
-    mrr_mean, mrr_ci_lower, mrr_ci_upper = bootstrap_ci(mrrs)
+    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores, "P@10")
+    mrr_mean, mrr_ci_lower, mrr_ci_upper = bootstrap_ci(mrrs, "MRR")
     
     # Return format compatible with both evaluation.py and calling code
     # Include both formats for compatibility

@@ -1,0 +1,85 @@
+---
+description: Data lineage architecture and 7-order hierarchy rules (Order 0-6)
+alwaysApply: false
+globs:
+  - "scripts/data_processing/**"
+  - "src/ml/scripts/**"
+  - "data/**"
+---
+
+# Data Lineage Architecture
+
+**CRITICAL**: All data follows a strict 7-order hierarchy (Order 0-6). See `docs/LLM_LABELS_LINEAGE.md` and `data/DATA_LINEAGE_METADATA.json` for documentation.
+
+## Order 0: Primary Source Data (IMMUTABLE)
+- Raw extracted collections from external sources (APIs, websites)
+- Locations: `s3://games-collections/games/{game}/{dataset}/` or `src/backend/data-full/games/{game}/{dataset}/`
+- Format: JSON `Collection` objects (one per file)
+- **NEVER modify Order 0 data** - it is the source of truth
+- Tools: `go run cmd/dataset/main.go extract <dataset>`
+
+## Order 1: Exported Decks (depends on Order 0)
+- Flattened JSONL format for Python processing
+- Location: `data/processed/decks_{game}_{source}.jsonl`
+- Tools: 
+  - `bin/export-blob` (PREFERRED): Reads directly from S3 or local blob storage, no intermediate .zst files needed
+  - `bin/export-hetero` (LEGACY): Requires local .zst files, cannot read from S3 directly
+- Can be regenerated from Order 0
+
+## Order 2: Co-occurrence Pairs (depends on Order 1)
+- Card co-occurrence pairs from decks
+- Location: `data/processed/pairs_{game}_{source}.csv`
+- Tool: `scripts/data_processing/generate_pairs_for_games.py`
+- Can be regenerated from Order 1
+
+## Order 3: Incremental Graph (depends on Order 1/2)
+- Temporal co-occurrence graph with edge weights
+- Location: `data/graphs/incremental_graph.db` (SQLite) or `.json`
+- Tool: `ml.scripts.update_graph_incremental`
+- Can be regenerated from Order 1/2
+
+## Order 4: Embeddings (depends on Order 2/3)
+- Vector representations (Word2Vec, GNN, Instruction-tuned)
+- Location: `data/embeddings/{component}_v{version}.*`
+- Tools: `ml.scripts.train_hybrid_full`, `ml.scripts.train_gnn`
+- Can be regenerated from Order 2/3
+
+## Order 5: Test Sets (depends on Order 1/4)
+- Evaluation queries with ground truth labels
+- Location: `experiments/test_set_unified_{game}.json`
+- Tool: `scripts/test_sets/create_test_sets_for_new_games.py`, `ml.scripts.expand_test_set_with_llm`
+- Can be regenerated from Order 1/4
+- **LLM labels**: LLM generates ground truth labels (highly_relevant, relevant, etc.) for test set queries
+
+## Order 6: Annotations (depends on Order 1/4)
+- Similarity/substitution judgments (LLM-generated or human)
+- Location: `annotations/{game}_llm_annotations.jsonl` or `experiments/annotations_llm/`
+- Tool: `scripts/annotations/generate_llm_annotations.py`, `ml.annotation.llm_annotator`
+- Can be regenerated from Order 1/4
+- **Conversion path**: Order 6 → Order 2 (substitution pairs) → Order 4 (embeddings)
+- **LLM labels dual purpose**: Evaluation labels (Order 5) and training labels (Order 6, converted to substitution pairs with 2x weight)
+
+## Lineage Rules
+1. Order 0 is immutable - never modify primary source data
+2. Order 1+ can be regenerated - all derived data rebuildable from dependencies
+3. Explicit dependencies - each order depends only on previous orders
+4. Versioning - derived data versioned when structure changes
+5. Validation - use `scripts/data_processing/validate_lineage.py` to check dependencies
+6. Regeneration - use `scripts/data_processing/regenerate_derived.py` to rebuild from scratch
+
+## Script Documentation
+All data processing scripts MUST include lineage comments:
+```python
+"""
+DATA LINEAGE: Order N (depends on Order M: Dependency Name)
+- Input: path/to/input (Order M)
+- Output: path/to/output (Order N)
+- Can be regenerated from Order M data
+"""
+```
+
+## Lineage Enforcement
+- Before processing Order N data, validate that Order N-1 dependencies exist
+- Use `validate_lineage.py` in automation scripts
+- Never write to Order 0 locations (immutable)
+- Document input/output orders in all data processing scripts

@@ -111,7 +111,8 @@ def test_jaccard_filters_lands_by_default(tmp_path):
     pairs_csv.write_text(pairs_content)
     from ..similarity.similarity_methods import jaccard_similarity, load_graph
 
-    adj, _ = load_graph(str(pairs_csv), filter_lands=True)
+    # Force CSV loading by passing csv_path and None for graph_db
+    adj, _ = load_graph(csv_path=str(pairs_csv), graph_db=None, filter_lands=True)
     similar = jaccard_similarity("Card A", adj)
     names = [c for c, _ in similar]
     assert "Island" not in names
@@ -126,7 +127,8 @@ def test_jaccard_can_include_lands(tmp_path):
 
     from ..similarity.similarity_methods import jaccard_similarity, load_graph
 
-    adj, _ = load_graph(str(pairs_csv), filter_lands=False)
+    # Force CSV loading by passing csv_path and None for graph_db
+    adj, _ = load_graph(csv_path=str(pairs_csv), graph_db=None, filter_lands=False)
     similar = jaccard_similarity("Card A", adj)
     names = [c for c, _ in similar]
     assert "Island" in names

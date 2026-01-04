@@ -6,11 +6,11 @@ Judges similarity predictions at scale without human annotation.
 Enables large-scale evaluation of model performance.
 
 Usage:
-    python -m src.ml.annotation.llm_judge_batch \
-        --test-set experiments/test_set_canonical_magic.json \
-        --predictions predictions.json \
-        --output judgments.json \
-        --top-k 20
+ python -m src.ml.annotation.llm_judge_batch \
+ --test-set experiments/test_set_canonical_magic.json \
+ --predictions predictions.json \
+ --output judgments.json \
+ --top-k 20
 """
 
 from __future__ import annotations
@@ -22,17 +22,17 @@ from pathlib import Path
 from typing import Any
 
 try:
-    from dotenv import load_dotenv
+ from dotenv import load_dotenv
 
-    load_dotenv()
+ load_dotenv()
 except Exception:
-    pass
+ pass
 
 try:
-    from pydantic import BaseModel, Field
-    from pydantic_ai import Agent
+ from pydantic import BaseModel, Field
+ from pydantic_ai import Agent
 
-    HAS_PYDANTIC_AI = True
+ HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
     print("Install pydantic-ai: pip install pydantic-ai")
@@ -41,31 +41,31 @@ from ..utils.paths import PATHS
 
 
 class SimilarityJudgment(BaseModel):
-    """LLM judgment of card similarity (expanded with synergy strength and combo piece identification)."""
+ """LLM judgment of card similarity (expanded with synergy strength and combo piece identification)."""
 
-    query: str
-    candidate: str
-    relevance: int = Field(ge=0, le=4, description="0-4 relevance score")
-    reasoning: str = Field(description="Why this score?")
-    confidence: float = Field(ge=0.0, le=1.0, description="Confidence in judgment")
-    similarity_type: str = Field(
-        description="substitute|synergy|archetype|unrelated"
-    )
-    synergy_strength: int | None = Field(
-        None, ge=0, le=4,
-        description="0-4: If cards appear together, rate synergy strength (0=no synergy, 4=combo piece)"
-    )
-    combo_piece_identification: int | None = Field(
-        None, ge=0, le=4,
-        description="0-4: If combo-related, rate how essential this is as a combo piece (0=not combo, 4=essential combo piece)"
-    )
+ query: str
+ candidate: str
+ relevance: int = Field(ge=0, le=4, description="0-4 relevance score")
+ reasoning: str = Field(description="Why this score?")
+ confidence: float = Field(ge=0.0, le=1.0, description="Confidence in judgment")
+ similarity_type: str = Field(
+ description="substitute|synergy|archetype|unrelated"
+ )
+ synergy_strength: int | None = Field(
+ None, ge=0, le=4,
+ description="0-4: If cards appear together, rate synergy strength (0=no synergy, 4=combo piece)"
+ )
+ combo_piece_identification: int | None = Field(
+ None, ge=0, le=4,
+ description="0-4: If combo-related, rate how essential this is as a combo piece (0=not combo, 4=essential combo piece)"
+ )
 
 
 class BatchJudgment(BaseModel):
-    """Batch of judgments for a query."""
+ """Batch of judgments for a query."""
 
-    query: str
-    judgments: list[SimilarityJudgment]
+ query: str
+ judgments: list[SimilarityJudgment]
 
 
 def make_judge_agent() -> "Agent[SimilarityJudgment]":
@@ -82,8 +82,7 @@ def make_judge_agent() -> "Agent[SimilarityJudgment]":
     try:
         from ..evaluation.improved_judge_prompts import SIMILARITY_JUDGE_PROMPT
         system = SIMILARITY_JUDGE_PROMPT
-    except ImportError:
-        # Fallback to original if improved prompts not available
+    except ImportError:  # Fallback to original if improved prompts not available
         system = (
             "You are an expert TCG judge evaluating card similarity.\n"
             "Given a query card and candidate card, judge similarity on 0-4 scale:\n"
@@ -94,7 +93,7 @@ def make_judge_agent() -> "Agent[SimilarityJudgment]":
             "0: Irrelevant (different function, color, or archetype)\n"
             "Be consistent and provide clear reasoning."
         )
-
+    
     return _make(model, SimilarityJudgment, system)
 
 
@@ -111,16 +110,16 @@ def judge_predictions(
     Judge similarity predictions using LLM.
     
     Args:
-        test_set: Test set with queries
-        predictions: Dict mapping query -> list of (card, score) tuples
-        top_k: Number of top predictions to judge per query
-        max_queries: Limit number of queries (for testing)
-        verbose: Print progress
-        retry_on_failure: Retry failed judgments
-        max_retries: Maximum retry attempts
+    test_set: Test set with queries
+    predictions: Dict mapping query -> list of (card, score) tuples
+    top_k: Number of top predictions to judge per query
+    max_queries: Limit number of queries (for testing)
+    verbose: Print progress
+    retry_on_failure: Retry failed judgments
+    max_retries: Maximum retry attempts
     
     Returns:
-        List of BatchJudgment objects
+    List of BatchJudgment objects
     """
     if not HAS_PYDANTIC_AI:
         raise ImportError("pydantic-ai required")
@@ -147,13 +146,13 @@ def judge_predictions(
         for candidate, score in top_predictions:
             # Use system prompt from agent, only provide query/candidate in user message
             prompt = (
-                f"Query card: {query}\n"
-                f"Candidate card: {candidate}\n"
-                f"Model predicted similarity score: {score:.3f}\n\n"
-                "Evaluate the similarity between these cards using the criteria provided. "
+ f"Query card: {query}\n"
+ f"Candidate card: {candidate}\n"
+ f"Model predicted similarity score: {score:.3f}\n\n"
+ "Evaluate the similarity between these cards using the criteria provided. "
                 "Consider functional similarity, substitutability, and distinguish similarity from synergy."
             )
-
+            
             # Retry logic for failed judgments
             judgment = None
             for attempt in range(max_retries + 1):
@@ -163,7 +162,7 @@ def judge_predictions(
                     # Validate result structure
                     if not hasattr(result, 'output'):
                         if verbose and attempt == max_retries:
-                            print(f"  ⚠️ Invalid result structure for {candidate}: {result}")
+                            print(f" Warning: Invalid result structure for {candidate}: {result}")
                         continue
                     
                     judgment = result.output
@@ -171,7 +170,7 @@ def judge_predictions(
                     # Validate judgment object
                     if not isinstance(judgment, SimilarityJudgment):
                         if verbose and attempt == max_retries:
-                            print(f"  ⚠️ Invalid judgment type for {candidate}: {type(judgment)}")
+                            print(f" Warning: Invalid judgment type for {candidate}: {type(judgment)}")
                         continue
                     
                     # Ensure required fields are set
@@ -181,7 +180,7 @@ def judge_predictions(
                     # Validate relevance score
                     if not (0 <= judgment.relevance <= 4):
                         if verbose and attempt == max_retries:
-                            print(f"  ⚠️ Invalid relevance score for {candidate}: {judgment.relevance}")
+                            print(f" Warning: Invalid relevance score for {candidate}: {judgment.relevance}")
                         continue
                     
                     # Success - break retry loop
@@ -190,12 +189,12 @@ def judge_predictions(
                 except Exception as e:
                     if attempt < max_retries and retry_on_failure:
                         if verbose:
-                            print(f"  ⚠️ Attempt {attempt + 1} failed for {candidate}, retrying...")
+                            print(f" Warning: Attempt {attempt + 1} failed for {candidate}, retrying...")
                         continue
                     else:
                         if verbose:
                             import traceback
-                            print(f"  ⚠️ Judgment failed for {candidate} after {attempt + 1} attempts: {e}")
+                            print(f" Warning: Judgment failed for {candidate} after {attempt + 1} attempts: {e}")
                             if verbose:
                                 traceback.print_exc()
                         judgment = None
@@ -204,7 +203,7 @@ def judge_predictions(
             if judgment is not None:
                 batch_judgments.append(judgment)
             elif verbose:
-                print(f"  ❌ Failed to get judgment for {candidate} after all retries")
+                print(f" Error: Failed to get judgment for {candidate} after all retries")
 
         if batch_judgments:
             judgments.append(
@@ -334,7 +333,7 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
+ import sys
 
-    sys.exit(main())
+ sys.exit(main())
 

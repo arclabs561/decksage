@@ -1,0 +1,6303 @@
+{
+  "queries": {
+    "Khenra Eternal": {
+      "highly_relevant": [
+        "Colossapede",
+        "Glyph Keeper",
+        "Grim Strider",
+        "Honed Khopesh",
+        "Honored Hydra",
+        "Zenith Seeker",
+        "Grasping Dunes",
+        "Hapatra's Mark",
+        "Painted Bluffs",
+        "Plague Belcher",
+        "Stir the Sands",
+        "Violent Impact",
+        "Hazoret's Favor",
+        "Time to Reflect",
+        "Trueheart Twins",
+        "Consuming Fervor",
+        "Decimator Beetle",
+        "Embalmer's Tools",
+        "Open into Wonder",
+        "Devoted Crop-Mate",
+        "Luxa River Shrine",
+        "Sacred Excavation",
+        "Channeler Initiate",
+        "Emberhorn Minotaur",
+        "Illusory Wrappings",
+        "Lay Bare the Heart",
+        "Weaver of Currents",
+        "Tah-Crop Skirmisher",
+        "Limits of Solidarity",
+        "Scribe of the Mindful",
+        "Cradle of the Accursed",
+        "Pyramid of the Pantheon",
+        "Manticore of the Gauntlet",
+        "Angler Drake",
+        "Benefaction of Rhonas"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Swamp": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Michiko's Reign of Truth // Portrait of Michiko",
+        "Behold the Unspeakable // Vision of the Unspeakable",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Sage of Ancient Lore // Werewolf of Ancient Hunger"
+      ],
+      "relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Hermit of the Natterknolls // Lone Wolf of the Natterknolls",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost",
+        "Liliana, Heretical Healer // Liliana, Defiant Necromancer"
+      ],
+      "somewhat_relevant": [
+        "Nicol Bolas, the Ravager // Nicol Bolas, the Arisen",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Curse of the Fire Penguin // Curse of the Fire Penguin Creature",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Robatumbas nezumi // Ojos nocturnos el profanador"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury": {
+      "highly_relevant": [
+        "Wrenn and Seven",
+        "Teferi, Who Slows the Sunset"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Dorothea, Vengeful Victim // Dorothea's Retribution": {
+      "highly_relevant": [
+        "Odric, Blood-Cursed",
+        "Persistent Specimen",
+        "Runo Stromkirk // Krothuss, Lord of the Deep",
+        "No Way Out",
+        "Gavony Silversmith"
+      ],
+      "relevant": [
+        "Overgrown Farmland",
+        "Moonsilver Key",
+        "Voldaren Bloodcaster // Bloodbat Summoner",
+        "Raze the Effigy",
+        "Organ Hoarder"
+      ],
+      "somewhat_relevant": [
+        "Saryth, the Viper's Fang",
+        "Ghoulish Procession",
+        "Rem Karolus, Stalwart Slayer",
+        "Flare of Faith",
+        "Falkenrath Celebrants"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Jadzi, Oracle of Arcavios // Journey to the Oracle": {
+      "highly_relevant": [
+        "Sequence Engine",
+        "Tivash, Gloom Summoner",
+        "Pest Infestation",
+        "Mascot Interception",
+        "Overgrown Farmland"
+      ],
+      "relevant": [
+        "The First Sliver",
+        "Shaile, Dean of Radiance // Embrose, Dean of Shadow",
+        "Yedora, Grave Gardener",
+        "Pilgrim of the Ages",
+        "Treasure Chest"
+      ],
+      "somewhat_relevant": [
+        "Oversimplify",
+        "Kianne, Dean of Substance // Imbraham, Dean of Theory",
+        "Promising Duskmage",
+        "Thunderous Orator",
+        "Loyal Warhound"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Harvesttide Infiltrator // Harvesttide Assailant": {
+      "highly_relevant": [
+        "Odric, Blood-Cursed",
+        "Persistent Specimen",
+        "Runo Stromkirk // Krothuss, Lord of the Deep",
+        "No Way Out",
+        "Overgrown Farmland"
+      ],
+      "relevant": [
+        "Moonsilver Key",
+        "Voldaren Bloodcaster // Bloodbat Summoner",
+        "Raze the Effigy",
+        "Organ Hoarder",
+        "Saryth, the Viper's Fang"
+      ],
+      "somewhat_relevant": [
+        "Rem Karolus, Stalwart Slayer",
+        "Hopeful Initiate",
+        "Spiked Ripsaw",
+        "Storm Skreelix",
+        "Morbid Opportunist"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Katilda, Dawnhart Martyr // Katilda's Rising Dawn": {
+      "highly_relevant": [
+        "Sigardian Paladin",
+        "Tainted Adversary",
+        "Tavern Ruffian // Tavern Smasher",
+        "Loyal Gryff",
+        "Odric, Blood-Cursed"
+      ],
+      "relevant": [
+        "Shady Traveler // Stalking Predator",
+        "Vilespawn Spider",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Retrieve",
+        "Necroduality"
+      ],
+      "somewhat_relevant": [
+        "Sanguine Statuette",
+        "Nature's Embrace",
+        "Wake to Slaughter",
+        "Persistent Specimen",
+        "Piercing Light"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mila, Crafty Companion // Lukka, Wayward Bonder": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Radiant Performer",
+        "Sequence Engine",
+        "Strict Proctor",
+        "Shadrix Silverquill"
+      ],
+      "relevant": [
+        "Tivash, Gloom Summoner",
+        "Secret Rendezvous",
+        "Pyre of Heroes",
+        "Mishra's Factory",
+        "Wish"
+      ],
+      "somewhat_relevant": [
+        "Quandrix Campus",
+        "Pest Infestation",
+        "Twinscroll Shaman",
+        "Shadewing Laureate",
+        "Team Pennant"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Plargg, Dean of Chaos // Augusta, Dean of Order": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Radiant Performer",
+        "Sequence Engine",
+        "Strict Proctor",
+        "Shadrix Silverquill"
+      ],
+      "relevant": [
+        "Tivash, Gloom Summoner",
+        "Secret Rendezvous",
+        "Pyre of Heroes",
+        "Quandrix Cultivator",
+        "Wish"
+      ],
+      "somewhat_relevant": [
+        "Quandrix Campus",
+        "Twinscroll Shaman",
+        "Veyran, Voice of Duality",
+        "Shadewing Laureate",
+        "Team Pennant"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Reidane, God of the Worthy // Valkmira, Protector's Shield": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Undersea Invader",
+        "Weigh Down",
+        "Strict Proctor",
+        "Sequence Engine"
+      ],
+      "relevant": [
+        "Shadrix Silverquill",
+        "Tuskeri Firewalker",
+        "Tivash, Gloom Summoner",
+        "Sulfurous Mire",
+        "Roots of Wisdom"
+      ],
+      "somewhat_relevant": [
+        "Veyran, Voice of Duality",
+        "Wish",
+        "Sarulf, Realm Eater",
+        "Witherbloom Command",
+        "The Bloodsky Massacre"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Behold the Unspeakable // Vision of the Unspeakable": {
+      "highly_relevant": [
+        "Kami of Industry",
+        "Virus Beetle",
+        "Seven-Tail Mentor",
+        "Jukai Trainee",
+        "Twinshot Sniper"
+      ],
+      "relevant": [
+        "Naomi, Pillar of Order",
+        "Suit Up",
+        "Repel the Vile",
+        "Oni-Cult Anvil",
+        "Dokuchi Shadow-Walker"
+      ],
+      "somewhat_relevant": [
+        "Discover the Impossible",
+        "Kaito's Pursuit",
+        "Brute Suit",
+        "Boseiju Reaches Skyward // Branch of Boseiju",
+        "Swiftwater Cliffs"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Chandra, Fire of Kaladesh // Chandra, Roaring Flame": {
+      "highly_relevant": [
+        "Mizzium Meddler",
+        "Embermaw Hellion",
+        "Gideon's Phalanx"
+      ],
+      "relevant": [
+        "Outland Colossus",
+        "Jace, Vryn's Prodigy // Jace, Telepath Unbound",
+        "Nissa, Vastwood Seer // Nissa, Sage Animist"
+      ],
+      "somewhat_relevant": [
+        "Dark Petition",
+        "Chandra's Ignition"
+      ],
+      "marginally_relevant": [
+        "Willbreaker",
+        "Scab-Clan Berserker"
+      ]
+    },
+    "Rowan, Scholar of Sparks // Will, Scholar of Frost": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Sequence Engine",
+        "Strict Proctor",
+        "Shadrix Silverquill",
+        "Tivash, Gloom Summoner"
+      ],
+      "relevant": [
+        "Secret Rendezvous",
+        "Veyran, Voice of Duality",
+        "Wish",
+        "Twinscroll Shaman",
+        "Shadewing Laureate"
+      ],
+      "somewhat_relevant": [
+        "Team Pennant",
+        "Sarulf, Realm Eater",
+        "Tangletrap",
+        "Thrilling Discovery",
+        "Witherbloom Command"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Hermit of the Natterknolls // Lone Wolf of the Natterknolls": {
+      "highly_relevant": [
+        "Stoic Builder",
+        "Inner Struggle",
+        "Tormenting Voice",
+        "Rottenheart Ghoul",
+        "Throttle"
+      ],
+      "relevant": [
+        "Slayer's Plate",
+        "Obsessive Skinner",
+        "Thornhide Wolves",
+        "Odric, Lunarch Marshal",
+        "Olivia, Mobilized for War"
+      ],
+      "somewhat_relevant": [
+        "Skin Invasion // Skin Shedder",
+        "Thing in the Ice // Awoken Horror",
+        "Hinterland Logger // Timber Shredder",
+        "Relentless Dead",
+        "Ulvenwald Hydra"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Liliana, Heretical Healer // Liliana, Defiant Necromancer": {
+      "highly_relevant": [
+        "Weight of the Underworld",
+        "Thornbow Archer",
+        "Murder Investigation",
+        "Mage-Ring Bully",
+        "Sword of the Animist"
+      ],
+      "relevant": [
+        "Reave Soul",
+        "Priest of the Blood Rite",
+        "Valeron Wardens",
+        "Revenant",
+        "Valor in Akros"
+      ],
+      "somewhat_relevant": [
+        "Shadows of the Past",
+        "Nantuko Husk",
+        "War Oracle",
+        "Send to Sleep",
+        "Sigil of Valor"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Nicol Bolas, the Ravager // Nicol Bolas, the Arisen": {
+      "highly_relevant": [
+        "Switcheroo",
+        "Poison-Tip Archer",
+        "Tormenting Voice",
+        "Skyrider Patrol",
+        "Scapeshift"
+      ],
+      "relevant": [
+        "Thornhide Wolves",
+        "Volcanic Dragon",
+        "Open the Graves",
+        "Strangling Spores",
+        "Smelt"
+      ],
+      "somewhat_relevant": [
+        "Transmogrifying Wand",
+        "Surge Mare",
+        "Novice Knight",
+        "Wall of Vines",
+        "Snapping Drake"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Michiko's Reign of Truth // Portrait of Michiko": {
+      "highly_relevant": [
+        "Virus Beetle",
+        "Seven-Tail Mentor",
+        "Twinshot Sniper",
+        "Naomi, Pillar of Order",
+        "Suit Up"
+      ],
+      "relevant": [
+        "Repel the Vile",
+        "Oni-Cult Anvil",
+        "Swiftwater Cliffs",
+        "Wanderer's Intervention",
+        "Tamiyo's Compleation"
+      ],
+      "somewhat_relevant": [
+        "Walking Skyscraper",
+        "Roadside Reliquary",
+        "Soul Transfer",
+        "Reito Sentinel",
+        "Runaway Trash-Bot"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "The Restoration of Eiganjo // Architect of Restoration": {
+      "highly_relevant": [
+        "Thundering Raiju",
+        "Weaver of Harmony",
+        "Thousand-Faced Shadow",
+        "Tribute to Horobi // Echo of Death's Wail"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Curse of the Fire Penguin // Curse of the Fire Penguin Creature": {
+      "highly_relevant": [
+        "Mise",
+        "Emcee",
+        "Mana Screw",
+        "Fascist Art Director",
+        "Magical Hacker"
+      ],
+      "relevant": [
+        "Who // What // When // Where // Why",
+        "Name Dropping",
+        "Now I Know My ABC's",
+        "Rare-B-Gone",
+        "Yet Another Aether Vortex"
+      ],
+      "somewhat_relevant": [
+        "Goblin Mime",
+        "Head to Head",
+        "Granny's Payback",
+        "R&D's Secret Lair",
+        "Toy Boat"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sage of Ancient Lore // Werewolf of Ancient Hunger": {
+      "highly_relevant": [
+        "Stoic Builder",
+        "Tormenting Voice",
+        "Throttle",
+        "Slayer's Plate",
+        "Thornhide Wolves"
+      ],
+      "relevant": [
+        "Skin Invasion // Skin Shedder",
+        "Thing in the Ice // Awoken Horror",
+        "Ulvenwald Hydra",
+        "Village Messenger // Moonrise Intruder",
+        "Stromkirk Mentor"
+      ],
+      "somewhat_relevant": [
+        "To the Slaughter",
+        "Silent Observer",
+        "Soul Swallower",
+        "Sleep Paralysis",
+        "Stallion of Ashmouth"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge": {
+      "highly_relevant": [
+        "Voldaren Epicure",
+        "Vampire's Kiss",
+        "Undead Butler",
+        "Vengeful Strangler // Strangling Grasp",
+        "Vivisection"
+      ],
+      "relevant": [
+        "Voltaic Visionary // Volt-Charged Berserker",
+        "Vilespawn Spider",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Wash Away",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Vampire Slayer",
+        "Wedding Security",
+        "Winged Portent",
+        "Wake to Slaughter",
+        "Vanquish the Horde"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Valentin, Dean of the Vein // Lisette, Dean of the Root": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Werewolf Pack Leader",
+        "Wandering Archaic // Explore the Vastlands",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [
+        "Veyran, Voice of Duality",
+        "Wish",
+        "Witherbloom Apprentice",
+        "Waterfall Aerialist",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Yuan-Ti Malison",
+        "Veinwitch Coven",
+        "Witherbloom Command",
+        "Volcanic Island",
+        "Vega, the Watcher"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Uvilda, Dean of Perfection // Nassari, Dean of Expression": {
+      "highly_relevant": [
+        "Willowdusk, Essence Seer",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Werewolf Pack Leader",
+        "Wandering Archaic // Explore the Vastlands",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [
+        "Veyran, Voice of Duality",
+        "Wish",
+        "Witherbloom Apprentice",
+        "Waterfall Aerialist",
+        "Wrenn and Seven"
+      ],
+      "somewhat_relevant": [
+        "Yuan-Ti Malison",
+        "Veinwitch Coven",
+        "Witherbloom Command",
+        "Volcanic Island",
+        "Vega, the Watcher"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Rune-Tail, Kitsune Ascendant // Rune-Tail's Essence": {
+      "highly_relevant": [
+        "Secretkeeper",
+        "Witchbane Orb",
+        "Starke of Rath",
+        "Spike Feeder",
+        "Tomb of Urami"
+      ],
+      "relevant": [
+        "Undying Flames",
+        "Spiraling Embers",
+        "Triskelion",
+        "White Knight",
+        "Stampeding Serow"
+      ],
+      "somewhat_relevant": [
+        "Shifting Borders",
+        "Sakura-Tribe Scout",
+        "Spectral Force",
+        "Wear // Tear",
+        "Sosuke's Summons"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Our Market Research Shows That Players Like Really Long Card Names So We Made this Card to Have the Absolute Longest Card Name Ever Elemental": {
+      "highly_relevant": [
+        "Punctuate",
+        "Stop That",
+        "Six-y Beast",
+        "Zombie Fanboy",
+        "Swamp"
+      ],
+      "relevant": [
+        "Vile Bile",
+        "Staying Power",
+        "Rod of Spanking",
+        "Rocket-Powered Turbo Slug",
+        "Wordmail"
+      ],
+      "somewhat_relevant": [
+        "Plains",
+        "World-Bottling Kit",
+        "When Fluffy Bunnies Attack",
+        "Who // What // When // Where // Why",
+        "Save Life"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tales of Master Seshiro // Seshiro's Living Legacy": {
+      "highly_relevant": [
+        "Teachings of the Kirin // Kirin-Touched Orochi",
+        "Touch the Spirit Realm",
+        "Virus Beetle",
+        "Twisted Embrace",
+        "The Fall of Lord Konda // Fragment of Konda"
+      ],
+      "relevant": [
+        "Twinshot Sniper",
+        "The Wandering Emperor",
+        "Thousand-Faced Shadow",
+        "Thundering Raiju",
+        "Undercity Scrounger"
+      ],
+      "somewhat_relevant": [
+        "Tatsunari, Toad Rider",
+        "Tamiyo's Safekeeping",
+        "The Reality Chip",
+        "Wind-Scarred Crag",
+        "The Kami War // O-Kagachi Made Manifest"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "The Long Reach of Night // Animus of Night's Reach": {
+      "highly_relevant": [
+        "Touch the Spirit Realm",
+        "Virus Beetle",
+        "Twisted Embrace",
+        "Twinshot Sniper",
+        "The Wandering Emperor"
+      ],
+      "relevant": [
+        "Thousand-Faced Shadow",
+        "Thundering Raiju",
+        "Undercity Scrounger",
+        "The Reality Chip",
+        "Wind-Scarred Crag"
+      ],
+      "somewhat_relevant": [
+        "Michiko's Reign of Truth // Portrait of Michiko",
+        "Wanderer's Intervention",
+        "Walking Skyscraper",
+        "Unstoppable Ogre",
+        "Unforgiving One"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ulrich of the Krallenhorde // Ulrich, Uncontested Alpha": {
+      "highly_relevant": [
+        "Whispers of Emrakul",
+        "Woodcutter's Grit",
+        "Weirded Vampire",
+        "Vexing Scuttler",
+        "Unsubstantiate"
+      ],
+      "relevant": [
+        "Woodland Patrol",
+        "Waxing Moon",
+        "Ulvenwald Captive // Ulvenwald Abomination",
+        "Weaver of Lightning",
+        "Ulvenwald Observer"
+      ],
+      "somewhat_relevant": [
+        "Wharf Infiltrator",
+        "Wretched Gryff",
+        "Vildin-Pack Outcast // Dronepack Kindred",
+        "Voldaren Pariah // Abolisher of Bloodlines",
+        "Wailing Ghoul"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "A-Alrund, God of the Cosmos // A-Hakka, Whispering Raven": {
+      "highly_relevant": [
+        "A-Canopy Tactician",
+        "A-Fall of the Impostor",
+        "A-Elderleaf Mentor",
+        "A-Skemfar Avenger",
+        "A-Cosmos Charger"
+      ],
+      "relevant": [
+        "A-Skemfar Elderhall",
+        "A-Thornmantle Striker",
+        "A-Bretagard Stronghold",
+        "A-Elven Bow",
+        "A-Harald Unites the Elves"
+      ],
+      "somewhat_relevant": [
+        "A-Harald, King of Skemfar",
+        "A-Tyvar Kell",
+        "A-Elderfang Ritualist",
+        "A-Vega, the Watcher",
+        "A-Cosmos Elixir"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Forest": {
+      "highly_relevant": [
+        "Mountain",
+        "Plains",
+        "Island",
+        "Swamp",
+        "Foresta",
+        "Monta\u00f1a",
+        "Llanura",
+        "Llanowar Elves",
+        "Montagna",
+        "Giant Growth",
+        "Terramorphic Expanse",
+        "Rampant Growth",
+        "Wrath of God",
+        "Serra Angel"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tapis volant": {
+      "highly_relevant": [
+        "Lich",
+        "Ice Storm",
+        "Raging River",
+        "Psionic Blast",
+        "Word of Command",
+        "Natural Selection",
+        "Two-Headed Giant of Foriys",
+        "Forcefield",
+        "Copper Tablet",
+        "Blaze of Glory",
+        "Cyclopean Tomb",
+        "Consecrate Land",
+        "Chaos Orb",
+        "Camouflage"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mountain": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Michiko's Reign of Truth // Portrait of Michiko",
+        "Behold the Unspeakable // Vision of the Unspeakable",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution"
+      ],
+      "relevant": [
+        "Hermit of the Natterknolls // Lone Wolf of the Natterknolls",
+        "Liliana, Heretical Healer // Liliana, Defiant Necromancer",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Curse of the Fire Penguin // Curse of the Fire Penguin Creature",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Island": {
+      "highly_relevant": [
+        "Plains",
+        "Swamp",
+        "Mountain",
+        "Pantano",
+        "Llanura",
+        "Terramorphic Expanse",
+        "Vedalken Entrancer",
+        "Pacifism",
+        "Sol Ring",
+        "Wrath of God"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Plains": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Michiko's Reign of Truth // Portrait of Michiko",
+        "Behold the Unspeakable // Vision of the Unspeakable",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution"
+      ],
+      "relevant": [
+        "Hermit of the Natterknolls // Lone Wolf of the Natterknolls",
+        "Liliana, Heretical Healer // Liliana, Defiant Necromancer",
+        "Nicol Bolas, the Ravager // Nicol Bolas, the Arisen",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Curse of the Fire Penguin // Curse of the Fire Penguin Creature"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier"
+      ],
+      "relevant": [
+        "Ratchet, Field Medic // Ratchet, Rescue Racer",
+        "Jetfire, Ingenious Scientist // Jetfire, Air Guardian",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+        "Starscream, Power Hungry // Starscream, Seeker Leader"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout": {
+      "highly_relevant": [
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier",
+        "Ratchet, Field Medic // Ratchet, Rescue Racer"
+      ],
+      "relevant": [
+        "Jetfire, Ingenious Scientist // Jetfire, Air Guardian",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant",
+        "Starscream, Power Hungry // Starscream, Seeker Leader"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier"
+      ],
+      "relevant": [
+        "Ratchet, Field Medic // Ratchet, Rescue Racer",
+        "Jetfire, Ingenious Scientist // Jetfire, Air Guardian",
+        "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant",
+        "Starscream, Power Hungry // Starscream, Seeker Leader"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Flamewar, Brash Veteran // Flamewar, Streetwise Operative": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier",
+        "Ratchet, Field Medic // Ratchet, Rescue Racer"
+      ],
+      "relevant": [
+        "Jetfire, Ingenious Scientist // Jetfire, Air Guardian",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant",
+        "Starscream, Power Hungry // Starscream, Seeker Leader"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Megatron, Tyrant // Megatron, Destructive Force": {
+      "highly_relevant": [
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier",
+        "Ratchet, Field Medic // Ratchet, Rescue Racer"
+      ],
+      "relevant": [
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Optimus Prime, Hero // Optimus Prime, Autobot Leader",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant",
+        "Starscream, Power Hungry // Starscream, Seeker Leader",
+        "Prowl, Stoic Strategist // Prowl, Pursuit Vehicle"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Prowl, Stoic Strategist // Prowl, Pursuit Vehicle": {
+      "highly_relevant": [
+        "Soundwave, Sonic Spy // Soundwave, Superior Captain",
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier"
+      ],
+      "relevant": [
+        "Ratchet, Field Medic // Ratchet, Rescue Racer",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant",
+        "Starscream, Power Hungry // Starscream, Seeker Leader",
+        "Slicer, Hired Muscle // Slicer, High-Speed Antagonist"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wrenn and Seven": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution"
+      ],
+      "relevant": [
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Uvilda, Dean of Perfection // Nassari, Dean of Expression",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Triskaidekaphile": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Robatumbas nezumi // Ojos nocturnos el profanador": {
+      "highly_relevant": [
+        "Skullsnatcher",
+        "Roem\u00e9dulas",
+        "Sever Soul",
+        "Secuestracr\u00e1neos",
+        "Traici\u00f3n de la carne"
+      ],
+      "relevant": [
+        "Swarm of Rats",
+        "Tormenta sepulcral",
+        "Suprimir",
+        "Swamp",
+        "Tutor diab\u00f3lico"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sol Ring": {
+      "highly_relevant": [
+        "Mana Crypt",
+        "Mana Vault",
+        "Arcane Signet"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Counterspell": {
+      "highly_relevant": [
+        "Mana Leak",
+        "Arcane Denial",
+        "Memory Lapse"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Lightning Bolt": {
+      "highly_relevant": [
+        "Chain Lightning",
+        "Lava Spike",
+        "Rift Bolt"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Dark Ritual": {
+      "highly_relevant": [
+        "Cabal Ritual",
+        "Songs of the Damned",
+        "Culling the Weak"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Force of Will": {
+      "highly_relevant": [
+        "Pact of Negation",
+        "Force of Negation",
+        "Fierce Guardianship"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Isla": {
+      "highly_relevant": [
+        "Island",
+        "Swamp",
+        "Pantano",
+        "Llanura",
+        "Plains",
+        "Vedalken Entrancer"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Brainstorm": {
+      "highly_relevant": [
+        "Ponder",
+        "Preordain",
+        "Serum Visions"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Tarmogoyf": {
+      "highly_relevant": [
+        "Scavenging Ooze",
+        "Hexdrinker",
+        "Territorial Kavu"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Delver of Secrets": {
+      "highly_relevant": [
+        "Pteramander",
+        "Curious Obsession",
+        "Dragon's Rage Channeler"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Arcane Signet": {
+      "highly_relevant": [
+        "Sol Ring",
+        "Mind Stone",
+        "Fellwar Stone"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Lotus Petal": {
+      "highly_relevant": [
+        "Black Lotus",
+        "Mox Diamond",
+        "Chrome Mox"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Demonic Tutor": {
+      "highly_relevant": [
+        "Vampiric Tutor",
+        "Imperial Seal",
+        "Diabolic Intent"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Chrome Mox": {
+      "highly_relevant": [
+        "Mox Diamond",
+        "Mox Opal",
+        "Lotus Petal"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Mana Vault": {
+      "highly_relevant": [
+        "Grim Monolith",
+        "Sol Ring"
+      ],
+      "relevant": [
+        "Ancient Tomb",
+        "Mana Crypt"
+      ],
+      "somewhat_relevant": [
+        "Basalt Monolith"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Bosque": {
+      "highly_relevant": [
+        "Forest",
+        "Mountain",
+        "Monta\u00f1a",
+        "Llanura",
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Evolving Wilds": {
+      "highly_relevant": [
+        "Swamp",
+        "Forest",
+        "Plains",
+        "Island",
+        "Mountain"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Vanishing Verse": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Verdant Mastery": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Vineglimmer Snarl": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Venerable Warsinger": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Witherbloom Command": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wandering Archaic // Explore the Vastlands": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Velomachus Lorehold": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Rushed Rebirth": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Semester's End": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Strict Proctor": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "The Biblioplex": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sedgemoor Witch": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sparring Regimen": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Shineshadow Snarl": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Strixhaven Stadium": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Silverquill Command": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sorin the Mirthless": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tempted by the Oriq": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Silverquill Silencer": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Teachings of the Archaics": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Selfless Glyphweaver // Deadly Vanity": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Torrent Sculptor // Flamethrower Sonata": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Shaile, Dean of Radiance // Embrose, Dean of Shadow": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sundown Pass": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tanazir Quandrix": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Shattered Sanctum": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sigarda's Summons": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Stormcarved Coast": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Shadrix Silverquill": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Rowan, Scholar of Sparks // Will, Scholar of Frost"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Teferi, Who Slows the Sunset": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Vadrik, Astral Archmage": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Shipwreck Marsh": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Retriever Phoenix": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ratchet, Field Medic // Ratchet, Rescue Racer": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Soundwave, Sonic Spy // Soundwave, Superior Captain": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Slicer, Hired Muscle // Slicer, High-Speed Antagonist": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Starscream, Power Hungry // Starscream, Seeker Leader": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ultra Magnus, Tactician // Ultra Magnus, Armored Carrier": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Voldaren Bloodcaster // Bloodbat Summoner": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "The Three Weird Sisters // Fiends of Darkest Night"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Rockfall Vale": {
+      "highly_relevant": [
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Willow Geist": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Unnatural Growth": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wake to Slaughter": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Vanquish the Horde": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Welcoming Vampire": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Toxrill, the Corrosive": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Village Watch // Village Reavers": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Varragoth, Bloodsky Sire": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Vorinclex, Monstrous Raider": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Valki, God of Lies // Tibalt, Cosmic Impostor": {
+      "highly_relevant": [
+        "Valentin, Dean of the Vein // Lisette, Dean of the Root",
+        "Mila, Crafty Companion // Lukka, Wayward Bonder",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield",
+        "Jadzi, Oracle of Arcavios // Journey to the Oracle",
+        "Plargg, Dean of Chaos // Augusta, Dean of Order"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Torens, Fist of the Angels": {
+      "highly_relevant": [
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant",
+        "The Three Weird Sisters // Fiends of Darkest Night",
+        "Arlinn, the Pack's Hope // Arlinn, the Moon's Fury"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Optimus Prime, Hero // Optimus Prime, Autobot Leader": {
+      "highly_relevant": [
+        "Goldbug, Humanity's Ally // Goldbug, Scrappy Scout",
+        "Megatron, Tyrant // Megatron, Destructive Force",
+        "Flamewar, Brash Veteran // Flamewar, Streetwise Operative",
+        "Cyclonus, the Saboteur // Cyclonus, Cybertronian Fighter",
+        "Blitzwing, Cruel Tormentor // Blitzwing, Adaptive Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Unruly Mob": {
+      "highly_relevant": [
+        "Sage of Ancient Lore // Werewolf of Ancient Hunger",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Hermit of the Natterknolls // Lone Wolf of the Natterknolls",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Winged Portent": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Voldaren Estate": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Voice of the Blessed": {
+      "highly_relevant": [
+        "The Restoration of Eiganjo // Architect of Restoration",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Dorothea, Vengeful Victim // Dorothea's Retribution",
+        "Katilda, Dawnhart Martyr // Katilda's Rising Dawn",
+        "Harvesttide Infiltrator // Harvesttide Assailant"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mental Misstep": {
+      "highly_relevant": [
+        "Force of Will",
+        "Daze"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Boseiju, Who Endures": {
+      "highly_relevant": [
+        "Otawara, Soaring City",
+        "Eiganjo, Seat of the Empire"
+      ],
+      "relevant": [
+        "The Mycosynth Gardens"
+      ],
+      "somewhat_relevant": [
+        "Strip Mine"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fellwar Stone": {
+      "highly_relevant": [
+        "Mind Stone",
+        "Arcane Signet"
+      ],
+      "relevant": [
+        "Thought Vessel"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Disenchant": {
+      "highly_relevant": [
+        "Plains",
+        "Mountain",
+        "Forest",
+        "Island"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Giant Growth": {
+      "highly_relevant": [
+        "Mountain",
+        "Swamp",
+        "Island",
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Expressive Iteration": {
+      "highly_relevant": [
+        "Consider",
+        "Impulse"
+      ],
+      "relevant": [
+        "See Beyond"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fatal Push": {
+      "highly_relevant": [
+        "Terminate",
+        "Go for the Throat"
+      ],
+      "relevant": [
+        "Dismember"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Flusterstorm": {
+      "highly_relevant": [
+        "Spell Pierce",
+        "Dispel"
+      ],
+      "relevant": [
+        "Force of Will"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Pantano": {
+      "highly_relevant": [
+        "Swamp",
+        "Secuestracr\u00e1neos",
+        "Skullsnatcher"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Llanura": {
+      "highly_relevant": [
+        "Plains",
+        "Mountain",
+        "Monta\u00f1a"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fleshbag Marauder": {
+      "highly_relevant": [
+        "Swamp",
+        "Plains",
+        "Mountain",
+        "Forest",
+        "Island",
+        "Sol Ring",
+        "Sign in Blood"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Gideon Blackblade": {
+      "highly_relevant": [
+        "Nicol Bolas, Dragon-God",
+        "Ral, Storm Conduit",
+        "Ugin, the Ineffable",
+        "Teferi, Time Raveler",
+        "Karn, the Great Creator",
+        "Sorin, Vengeful Bloodlord",
+        "Jace, Wielder of Mysteries",
+        "Tamiyo, Collector of Tales",
+        "Liliana, Dreadhorde General",
+        "Nissa, Who Shakes the World",
+        "Vivien, Champion of the Wilds",
+        "The Wanderer",
+        "Teyo, the Shieldmage",
+        "Samut, Tyrant Smasher",
+        "Kaya, Bane of the Dead",
+        "Nahiri, Storm of Stone",
+        "Sarkhan the Masterless",
+        "Huatli, the Sun's Heart",
+        "Narset, Parter of Veils",
+        "Jaya, Venerated Firemage",
+        "Kiora, Behemoth Beckoner",
+        "Vraska, Swarm's Eminence",
+        "Jiang Yanggu, Wildcrafter",
+        "Kasmina, Enigmatic Mentor",
+        "Tibalt, Rakish Instigator",
+        "Saheeli, Sublime Artificer",
+        "Ob Nixilis, the Hate-Twisted"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Arcanis the Omnipotent": {
+      "highly_relevant": [
+        "Mountain",
+        "Swamp",
+        "Island",
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Forgotten Ancient": {
+      "highly_relevant": [
+        "Sol Ring",
+        "Solemn Simulacrum",
+        "Temple of the False God"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Fountain of Youth": {
+      "highly_relevant": [
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Garruk, Unleashed": {
+      "highly_relevant": [
+        "Teferi, Master of Time",
+        "Ugin, the Spirit Dragon",
+        "Liliana, Waker of the Dead"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Go for the Throat": {
+      "highly_relevant": [
+        "Plains",
+        "Sol Ring",
+        "Swords to Plowshares"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Asmodeus the Archfiend": {
+      "highly_relevant": [
+        "Wish",
+        "Flumph",
+        "Demilich",
+        "Long Rest",
+        "Flameskull",
+        "Froghemoth",
+        "Eye of Vecna",
+        "Meteor Swarm",
+        "Vorpal Sword",
+        "Dancing Sword",
+        "Hand of Vecna",
+        "Loyal Warhound",
+        "Treasure Chest",
+        "True Polymorph",
+        "Yuan-Ti Malison",
+        "Forsworn Paladin",
+        "Guardian of Faith",
+        "Orb of Dragonkind",
+        "Skeletal Swarming",
+        "Wizard's Spellbook",
+        "Teleportation Circle",
+        "Werewolf Pack Leader",
+        "Hobgoblin Bandit Lord",
+        "Triumphant Adventurer",
+        "Circle of Dreams Druid",
+        "Sphere of Annihilation",
+        "Instrument of the Bards",
+        "The Deck of Many Things",
+        "Xanathar, Guild Kingpin",
+        "Orcus, Prince of Undeath",
+        "Tasha's Hideous Laughter",
+        "The Book of Exalted Deeds",
+        "The Book of Vile Darkness",
+        "The Blackstaff of Waterdeep"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Bloodthirsty Adversary": {
+      "highly_relevant": [
+        "The Celestus",
+        "Willow Geist",
+        "Memory Deluge",
+        "Consuming Blob",
+        "Pithing Needle",
+        "Siphon Insight",
+        "Sludge Monster",
+        "Can't Stay Away",
+        "Fateful Absence",
+        "Moonveil Regent",
+        "Patrician Geist",
+        "Rite of Harmony",
+        "Curse of Silence",
+        "Grafted Identity",
+        "Hallowed Respite",
+        "Primal Adversary",
+        "Sigardian Savior",
+        "Sungold Sentinel",
+        "Triskaidekaphile",
+        "Unnatural Growth",
+        "Sunstreak Phoenix",
+        "Tainted Adversary",
+        "Wake to Slaughter",
+        "Galvanic Iteration",
+        "Intrepid Adversary",
+        "Light Up the Night",
+        "Sigarda's Splendor",
+        "Spectral Adversary",
+        "Storm the Festival",
+        "Vanquish the Horde",
+        "Briarbridge Tracker",
+        "Burn Down the House",
+        "Dire-Strain Rampage",
+        "Mask of Griselbrand",
+        "Croaking Counterpart",
+        "Geistflame Reservoir",
+        "Lord of the Forsaken",
+        "Slaughter Specialist",
+        "Curse of Shaken Faith",
+        "Curse of Surveillance",
+        "Ghoulcaller's Harvest",
+        "The Meathook Massacre",
+        "Falkenrath Pit Fighter",
+        "Champion of the Perished"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Chandra, Heart of Fire": {
+      "highly_relevant": [
+        "Garruk, Unleashed",
+        "Teferi, Master of Time",
+        "Ugin, the Spirit Dragon",
+        "Liliana, Waker of the Dead"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Circle of Dreams Druid": {
+      "highly_relevant": [
+        "Wish",
+        "Flumph",
+        "Demilich",
+        "Long Rest",
+        "Flameskull",
+        "Froghemoth",
+        "Eye of Vecna",
+        "Meteor Swarm",
+        "Vorpal Sword",
+        "Dancing Sword",
+        "Hand of Vecna",
+        "Loyal Warhound",
+        "Treasure Chest",
+        "True Polymorph",
+        "Yuan-Ti Malison",
+        "Forsworn Paladin",
+        "Guardian of Faith",
+        "Orb of Dragonkind",
+        "Skeletal Swarming",
+        "Wizard's Spellbook",
+        "Teleportation Circle",
+        "Werewolf Pack Leader",
+        "Hobgoblin Bandit Lord",
+        "Triumphant Adventurer",
+        "Sphere of Annihilation",
+        "Instrument of the Bards",
+        "The Deck of Many Things",
+        "Xanathar, Guild Kingpin",
+        "Orcus, Prince of Undeath",
+        "Tasha's Hideous Laughter",
+        "The Book of Exalted Deeds",
+        "The Book of Vile Darkness",
+        "The Blackstaff of Waterdeep"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Hidetsugu Consumes All // Vessel of the All-Consuming": {
+      "highly_relevant": [
+        "Lion Sash",
+        "Mirror Box",
+        "Scrap Welder",
+        "Lizard Blades",
+        "Mindlink Mech",
+        "Soul Transfer",
+        "Invoke Despair",
+        "Invoke Justice",
+        "Mechtitan Core",
+        "Ogre-Head Helm",
+        "Satoru Umezawa",
+        "Invoke Calamity",
+        "Invoke the Winds",
+        "Surgehacker Mech",
+        "The Reality Chip",
+        "Thundering Raiju",
+        "Weaver of Harmony",
+        "Kami of Transience",
+        "Mukotai Soulripper",
+        "Invoke the Ancients",
+        "Reckoner Bankbuster",
+        "Spring-Leaf Avenger",
+        "Hinata, Dawn-Crowned",
+        "Raiyuu, Storm's Edge",
+        "Spirit-Sister's Call",
+        "March of Reckless Joy",
+        "Tatsunari, Toad Rider",
+        "Thousand-Faced Shadow",
+        "March of Swirling Mist",
+        "Kodama of the West Tree",
+        "Risona, Asari Commander"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Swords to Plowshares": {
+      "highly_relevant": [
+        "Path to Exile",
+        "Condemn",
+        "Oust"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Accumulated Knowledge": {
+      "highly_relevant": [
+        "Think Twice",
+        "Deep Analysis",
+        "Brainstorm"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Ancient Tomb": {
+      "highly_relevant": [
+        "City of Traitors",
+        "Crystal Vein",
+        "Sol Ring"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Urza's Saga": {
+      "highly_relevant": [
+        "Trinket Mage",
+        "Inventors' Fair",
+        "Tolaria West"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Illusionist's Stratagem": {
+      "highly_relevant": [
+        "Peema Aether-Seer",
+        "Weldfast Engineer",
+        "Thopter Arrest"
+      ],
+      "relevant": [
+        "Sly Requisitioner",
+        "Aethersphere Harvester",
+        "Dark Intimations"
+      ],
+      "somewhat_relevant": [
+        "Restoration Specialist",
+        "Precise Strike"
+      ],
+      "marginally_relevant": [
+        "Pacification Array",
+        "Narnam Renegade"
+      ]
+    },
+    "Vish Kal, Blood Arbiter": {
+      "highly_relevant": [
+        "Eye of Ugin",
+        "Signal Pest",
+        "Lashknife Barrier"
+      ],
+      "relevant": [
+        "Sylvok Explorer",
+        "Strength of the Tajuru",
+        "Enchanted Evening"
+      ],
+      "somewhat_relevant": [
+        "Oracle of Nectars",
+        "Wydwen, the Biting Gale"
+      ],
+      "marginally_relevant": [
+        "Darksteel Gargoyle",
+        "Skinwing"
+      ]
+    },
+    "Leafdrake Roost": {
+      "highly_relevant": [
+        "Kazandu Tuskcaller",
+        "Leonin Bladetrap",
+        "Sword of the Paruns"
+      ],
+      "relevant": [
+        "Djinn of Infinite Deceits",
+        "Aerie Mystics",
+        "Lu Xun, Scholar General"
+      ],
+      "somewhat_relevant": [
+        "Restore",
+        "Curse of Predation"
+      ],
+      "marginally_relevant": [
+        "Hada Spy Patrol",
+        "Thousand-Year Elixir"
+      ]
+    },
+    "Redwood Treefolk": {
+      "highly_relevant": [
+        "Familiar Ground",
+        "Nature's Resurgence",
+        "Razortooth Rats"
+      ],
+      "relevant": [
+        "Call of the Wild",
+        "Strands of Night",
+        "Gerrard's Wisdom"
+      ],
+      "somewhat_relevant": [
+        "Serra's Blessing",
+        "Heavy Ballista"
+      ],
+      "marginally_relevant": [
+        "Ardent Militia",
+        "Agonizing Memories"
+      ]
+    },
+    "Rhoda, Geist Avenger": {
+      "highly_relevant": [
+        "Drogskol Reinforcements",
+        "Haunted Library",
+        "Midnight Arsonist"
+      ],
+      "relevant": [
+        "Donal, Herald of Wings",
+        "Strefan, Maurer Progenitor",
+        "Timothar, Baron of Bats"
+      ],
+      "somewhat_relevant": [
+        "Markov Enforcer",
+        "Millicent, Restless Revenant"
+      ],
+      "marginally_relevant": [
+        "Predators' Hour",
+        "Olivia's Wrath"
+      ]
+    },
+    "Retreat to Kazandu": {
+      "highly_relevant": [
+        "Scythe Leopard",
+        "Blighted Cataract",
+        "Stasis Snare"
+      ],
+      "relevant": [
+        "Ruination Guide",
+        "Shrine of the Forsaken Gods",
+        "Serpentine Spike"
+      ],
+      "somewhat_relevant": [
+        "Prism Array",
+        "Gideon, Ally of Zendikar"
+      ],
+      "marginally_relevant": [
+        "Dust Stalker",
+        "Planar Outburst"
+      ]
+    },
+    "Phyrexian Arena": {
+      "highly_relevant": [
+        "Reviving Dose",
+        "Brass Herald",
+        "Recruiter of the Guard"
+      ],
+      "relevant": [
+        "Crown-Hunter Hireling",
+        "Spy Kit",
+        "Aura of Silence"
+      ],
+      "somewhat_relevant": [
+        "Stunt Double",
+        "Akroan Hoplite"
+      ],
+      "marginally_relevant": [
+        "Dreadbringer Lampads",
+        "Expropriate"
+      ]
+    },
+    "Gluttonous Troll": {
+      "highly_relevant": [
+        "Taste of Death",
+        "Fated Return",
+        "Expose to Daylight"
+      ],
+      "relevant": [
+        "Reito Lantern",
+        "Ohran Frostfang",
+        "Jwari Shapeshifter"
+      ],
+      "somewhat_relevant": [
+        "K'rrik, Son of Yawgmoth",
+        "Suffer the Past"
+      ],
+      "marginally_relevant": [
+        "Orzhova, the Church of Deals",
+        "Prismatic Strands"
+      ]
+    },
+    "Squee, Dubious Monarch": {
+      "highly_relevant": [
+        "Cosmic Epiphany",
+        "Balmor, Battlemage Captain",
+        "Jhoira, Ageless Innovator"
+      ],
+      "relevant": [
+        "Serra Redeemer",
+        "Tyrannical Pitlord",
+        "The World Spell"
+      ],
+      "somewhat_relevant": [
+        "Bortuk Bonerattle",
+        "Briar Hydra"
+      ],
+      "marginally_relevant": [
+        "Golden Argosy",
+        "Llanowar Greenwidow"
+      ]
+    },
+    "Kodama of the East Tree": {
+      "highly_relevant": [
+        "Radiant, Serra Archangel",
+        "Akroma, Vision of Ixidor",
+        "Toggo, Goblin Weaponsmith"
+      ],
+      "relevant": [
+        "Lathiel, the Bounteous Dawn",
+        "Alharu, Solemn Ritualist",
+        "Breeches, Brazen Plunderer"
+      ],
+      "somewhat_relevant": [
+        "Alena, Kessig Trapper",
+        "Amareth, the Lustrous"
+      ],
+      "marginally_relevant": [
+        "Blim, Comedic Genius",
+        "Zara, Renegade Recruiter"
+      ]
+    },
+    "Gold Myr": {
+      "highly_relevant": [
+        "Darksteel Sentinel",
+        "Silver Myr",
+        "Argent Sphinx"
+      ],
+      "relevant": [
+        "Vedalken Certarch",
+        "Vulshok Gauntlets",
+        "Grand Architect"
+      ],
+      "somewhat_relevant": [
+        "Slagwurm Armor",
+        "Myrsmith"
+      ],
+      "marginally_relevant": [
+        "Stoic Rebuttal",
+        "Geth, Lord of the Vault"
+      ]
+    },
+    "Reverberate": {
+      "highly_relevant": [
+        "Harbor Serpent",
+        "Redirect",
+        "Cudgel Troll"
+      ],
+      "relevant": [
+        "Cemetery Reaper",
+        "Garruk's Companion",
+        "Sacred Wolf"
+      ],
+      "somewhat_relevant": [
+        "Deploy to the Front",
+        "Fabricate"
+      ],
+      "marginally_relevant": [
+        "Disentomb",
+        "Memorial to Glory"
+      ]
+    },
+    "Turn the Earth": {
+      "highly_relevant": [
+        "Ecstatic Awakener // Awoken Demon",
+        "Soul-Guide Gryff",
+        "Neonate's Rush"
+      ],
+      "relevant": [
+        "Defenestrate",
+        "Sungold Barrage",
+        "Infernal Grasp"
+      ],
+      "somewhat_relevant": [
+        "Arcane Infusion",
+        "Haunted Ridge"
+      ],
+      "marginally_relevant": [
+        "Fangblade Brigand // Fangblade Eviscerator",
+        "Florian, Voldaren Scion"
+      ]
+    },
+    "Traveler's Cloak": {
+      "highly_relevant": [
+        "Gustcloak Savior",
+        "Orzhov Cluestone",
+        "Warriors' Lesson"
+      ],
+      "relevant": [
+        "Colossal Might",
+        "Thundersong Trumpeter",
+        "Sigil Captain"
+      ],
+      "somewhat_relevant": [
+        "Bone Miser",
+        "Agent of Masks"
+      ],
+      "marginally_relevant": [
+        "Rix Maadi, Dungeon Palace",
+        "Serrated Biskelion"
+      ]
+    },
+    "Sprouting Thrinax": {
+      "highly_relevant": [
+        "Tower Gargoyle",
+        "Woolly Thoctar",
+        "Scourge Devil"
+      ],
+      "relevant": [
+        "Dregscape Zombie",
+        "Corpse Connoisseur",
+        "Rhox War Monk"
+      ],
+      "somewhat_relevant": [
+        "Ranger of Eos",
+        "Vithian Stinger"
+      ],
+      "marginally_relevant": [
+        "Sedraxis Specter",
+        "Goblin Assault"
+      ]
+    },
+    "\u6df7\u6c8c\u306e\u8239\u9577\u3001\u30a2\u30f3\u30b0\u30e9\u30b9": {
+      "highly_relevant": [
+        "\u30d3\u30d2\u30e2\u30b9\u3092\u62db\u304f\u8005\u3001\u30ad\u30aa\u30fc\u30e9",
+        "\u30dc\u30fc\u30e9\u30b9\u306e\u58ca\u4e71\u8005\u3001\u30c9\u30e0\u30ea",
+        "\u91ce\u7363\u306e\u64c1\u8b77\u8005\u3001\u30d3\u30d3\u30a2\u30f3"
+      ],
+      "relevant": [
+        "\u652f\u914d\u306e\u7247\u8155\u3001\u30c9\u30d3\u30f3",
+        "\u4f1d\u627f\u306e\u53ce\u96c6\u8005\u3001\u30bf\u30df\u30e8\u30a6",
+        "\u66b4\u541b\u6f70\u3057\u3001\u30b5\u30e0\u30c8"
+      ],
+      "somewhat_relevant": [
+        "\u8986\u3044\u3092\u5272\u304f\u8005\u3001\u30ca\u30fc\u30bb\u30c3\u30c8",
+        "\u592a\u967d\u306e\u7fa9\u58eb\u3001\u30d5\u30a1\u30fc\u30c8\u30ea"
+      ],
+      "marginally_relevant": [
+        "\u6b7b\u8005\u306e\u707d\u5384\u3001\u30b1\u30a4\u30e4",
+        "\u7fa4\u96c6\u306e\u5a01\u5149\u3001\u30f4\u30e9\u30b9\u30ab"
+      ]
+    },
+    "Oakshade Stalker // Moonlit Ambusher": {
+      "highly_relevant": [
+        "Alluring Suitor // Deadly Dancer",
+        "Gift of Fangs",
+        "Skulking Killer"
+      ],
+      "relevant": [
+        "Blood Servitor",
+        "Fleeting Spirit",
+        "Reckless Impulse"
+      ],
+      "somewhat_relevant": [
+        "Estwald Shieldbasher",
+        "Arm the Cathars"
+      ],
+      "marginally_relevant": [
+        "Biolume Egg // Biolume Serpent",
+        "Brine Comber // Brinebound Gift"
+      ]
+    },
+    "Lens Flare": {
+      "highly_relevant": [
+        "World-Weary",
+        "Jade Avenger",
+        "Flametongue Yearling"
+      ],
+      "relevant": [
+        "Road // Ruin",
+        "Blossoming Calm",
+        "Ethersworn Sphinx"
+      ],
+      "somewhat_relevant": [
+        "Gargadon",
+        "Fairgrounds Patrol"
+      ],
+      "marginally_relevant": [
+        "Phantasmal Dreadmaw",
+        "Storm God's Oracle"
+      ]
+    },
+    "Rem Karolus, Stalwart Slayer": {
+      "highly_relevant": [
+        "Silver Bolt",
+        "Cathartic Pyre",
+        "Deserted Beach"
+      ],
+      "relevant": [
+        "Otherworldly Gaze",
+        "Tovolar, Dire Overlord // Tovolar, the Midnight Scourge",
+        "Infernal Grasp"
+      ],
+      "somewhat_relevant": [
+        "Shady Traveler // Stalking Predator",
+        "Olivia's Midnight Ambush"
+      ],
+      "marginally_relevant": [
+        "Pack's Betrayal",
+        "Kessig Naturalist // Lord of the Ulvenwald"
+      ]
+    },
+    "Old Fogey": {
+      "highly_relevant": [
+        "Richard Garfield, Ph.D.",
+        "Emcee",
+        "Blast from the Past"
+      ],
+      "relevant": [
+        "Duh",
+        "Who // What // When // Where // Why",
+        "Enter the Dungeon"
+      ],
+      "somewhat_relevant": [
+        "AWOL",
+        "Six-y Beast"
+      ],
+      "marginally_relevant": [
+        "Water Gun Balloon Game",
+        "Staying Power"
+      ]
+    },
+    "Leonin Scimitar": {
+      "highly_relevant": [
+        "Primal Rage",
+        "Cho-Manno, Revolutionary",
+        "Dragon Roost"
+      ],
+      "relevant": [
+        "Molimo, Maro-Sorcerer",
+        "Cloud Sprite",
+        "Might Weaver"
+      ],
+      "somewhat_relevant": [
+        "Ancestor's Chosen",
+        "Rootwater Commando"
+      ],
+      "marginally_relevant": [
+        "Nomad Mythmaker",
+        "Ghitu Encampment"
+      ]
+    },
+    "Spikeshot Goblin": {
+      "highly_relevant": [
+        "Nettle Sentinel",
+        "Heavy Arbalest",
+        "Retraction Helix"
+      ],
+      "relevant": [
+        "Ember Weaver",
+        "Skirk Commando",
+        "Genju of the Spires"
+      ],
+      "somewhat_relevant": [
+        "Loyal Sentry",
+        "Nyx-Fleece Ram"
+      ],
+      "marginally_relevant": [
+        "Phantasmal Bear",
+        "Jackal Pup"
+      ]
+    },
+    "Witty Demon": {
+      "highly_relevant": [
+        "Seek Bolas's Counsel",
+        "Sunimret",
+        "Form of the Mulldrifter"
+      ],
+      "relevant": [
+        "Visitor from Planet Q",
+        "Whammy Burn",
+        "Gold Mine"
+      ],
+      "somewhat_relevant": [
+        "Command the Chaff",
+        "Swarm of Locus"
+      ],
+      "marginally_relevant": [
+        "Lazier Goblin",
+        "Transcantation"
+      ]
+    },
+    "Insolent Neonate": {
+      "highly_relevant": [
+        "Angelic Purge",
+        "Manic Scribe",
+        "Incorrigible Youths"
+      ],
+      "relevant": [
+        "Heir of Falkenrath // Heir to the Night",
+        "Bear Cub",
+        "Stoic Builder"
+      ],
+      "somewhat_relevant": [
+        "Farbog Revenant",
+        "Survive the Night"
+      ],
+      "marginally_relevant": [
+        "Gone Missing",
+        "Merciless Resolve"
+      ]
+    },
+    "Fortified Area": {
+      "highly_relevant": [
+        "White Mana Battery",
+        "Murk Dwellers",
+        "Tempest Efreet"
+      ],
+      "relevant": [
+        "Uncle Istvan",
+        "Black Mana Battery",
+        "Marsh Viper"
+      ],
+      "somewhat_relevant": [
+        "The Brute",
+        "Brainwash"
+      ],
+      "marginally_relevant": [
+        "Morale",
+        "Wall of Dust"
+      ]
+    },
+    "Pillardrop Rescuer": {
+      "highly_relevant": [
+        "Bury in Books",
+        "Campus Guide",
+        "Combat Professor"
+      ],
+      "relevant": [
+        "Reckless Amplimancer",
+        "Sudden Breakthrough",
+        "Multiple Choice"
+      ],
+      "somewhat_relevant": [
+        "Pilgrim of the Ages",
+        "Accomplished Alchemist"
+      ],
+      "marginally_relevant": [
+        "Extus, Oriq Overlord // Awaken the Blood Avatar",
+        "Culling Ritual"
+      ]
+    },
+    "Gnostro, Voice of the Crags": {
+      "highly_relevant": [
+        "Esior, Wardwing Familiar",
+        "Ardenn, Intrepid Archaeologist",
+        "Hans Eriksson"
+      ],
+      "relevant": [
+        "Soul of Eternity",
+        "Tuya Bearclaw",
+        "Sengir, the Dark Baron"
+      ],
+      "somewhat_relevant": [
+        "Kwain, Itinerant Meddler",
+        "Flamekin Herald"
+      ],
+      "marginally_relevant": [
+        "Nymris, Oona's Trickster",
+        "Szat's Will"
+      ]
+    },
+    "Soul's Attendant": {
+      "highly_relevant": [
+        "Not of This World",
+        "Sarkhan the Mad",
+        "Immortal Phoenix"
+      ],
+      "relevant": [
+        "Angelic Guardian",
+        "Savannah Sage",
+        "Chandra, Flame's Fury"
+      ],
+      "somewhat_relevant": [
+        "Wildfire Elemental",
+        "Lucky Clover"
+      ],
+      "marginally_relevant": [
+        "Wolfir Silverheart",
+        "Edgewall Innkeeper"
+      ]
+    },
+    "Gaea's Blessing": {
+      "highly_relevant": [
+        "Cabal Therapy",
+        "Dream Twist",
+        "Seal of Strength"
+      ],
+      "relevant": [
+        "Flame-Kin Zealot",
+        "Zealous Persecution",
+        "The Eldest Reborn"
+      ],
+      "somewhat_relevant": [
+        "Commune with the Gods",
+        "Ancestral Mask"
+      ],
+      "marginally_relevant": [
+        "Flame Jab",
+        "Skulking Ghost"
+      ]
+    },
+    "Khalni Garden": {
+      "highly_relevant": [
+        "Phyrexian Delver",
+        "Vision Skeins",
+        "Baloth Woodcrasher"
+      ],
+      "relevant": [
+        "Charnelhoard Wurm",
+        "Thundersong Trumpeter",
+        "Vedalken Plotter"
+      ],
+      "somewhat_relevant": [
+        "Spawning Grounds",
+        "Skyscribing"
+      ],
+      "marginally_relevant": [
+        "Jace's Archivist",
+        "Bloodhusk Ritualist"
+      ]
+    },
+    "Ulamog, the Infinite Gyre": {
+      "highly_relevant": [
+        "Kozilek, Butcher of Truth",
+        "Emrakul, the Aeons Torn",
+        "Bitterblossom"
+      ],
+      "relevant": [
+        "Wilt-Leaf Liege",
+        "Lord of Extinction",
+        "Imperial Seal"
+      ],
+      "somewhat_relevant": [
+        "Labyrinth Champion",
+        "Surgical Extraction"
+      ],
+      "marginally_relevant": [
+        "Allosaurus Shepherd",
+        "Mammoth Umbra"
+      ]
+    },
+    "Gearseeker Serpent": {
+      "highly_relevant": [
+        "Inventor's Goggles",
+        "Ornamental Courage",
+        "Empyreal Voyager"
+      ],
+      "relevant": [
+        "Sky Skiff",
+        "Wispweaver Angel",
+        "Dukhara Peafowl"
+      ],
+      "somewhat_relevant": [
+        "Commencement of Festivities",
+        "Spirebluff Canal"
+      ],
+      "marginally_relevant": [
+        "Maulfist Squad",
+        "Tezzeret's Ambition"
+      ]
+    },
+    "Giantbaiting": {
+      "highly_relevant": [
+        "Goblin Assault",
+        "Grixis Slavedriver",
+        "Rubblebelt Maaka"
+      ],
+      "relevant": [
+        "Spire Monitor",
+        "Madcap Skills",
+        "Wake the Reflections"
+      ],
+      "somewhat_relevant": [
+        "Corpse Connoisseur",
+        "Stoic Angel"
+      ],
+      "marginally_relevant": [
+        "Boros Reckoner",
+        "Hanweir Lancer"
+      ]
+    },
+    "Old-Growth Dryads": {
+      "highly_relevant": [
+        "Dire Fleet Ravager",
+        "Dreamcaller Siren",
+        "Deathgorge Scavenger"
+      ],
+      "relevant": [
+        "Repeating Barrage",
+        "Priest of the Wakening Sun",
+        "Ruin Raider"
+      ],
+      "somewhat_relevant": [
+        "Sanguine Sacrament",
+        "Fell Flagship"
+      ],
+      "marginally_relevant": [
+        "Overflowing Insight",
+        "Fleet Swallower"
+      ]
+    },
+    "Xantid Swarm": {
+      "highly_relevant": [
+        "Carbonize",
+        "Crosis's Catacombs",
+        "Goblin Medics"
+      ],
+      "relevant": [
+        "Living Wish",
+        "Spectral Lynx",
+        "Terravore"
+      ],
+      "somewhat_relevant": [
+        "Illusion // Reality",
+        "Improvised Armor"
+      ],
+      "marginally_relevant": [
+        "Aether Mutation",
+        "Triangle of War"
+      ]
+    },
+    "Lobos de la tundra": {
+      "highly_relevant": [
+        "Muro de lanzas",
+        "Fuerza sagrada",
+        "\u00c1ngel de Serra"
+      ],
+      "relevant": [
+        "Fuerza imp\u00eda",
+        "Elemental de tierra",
+        "El potro"
+      ],
+      "somewhat_relevant": [
+        "Muro de ramas",
+        "Hurac\u00e1n"
+      ],
+      "marginally_relevant": [
+        "Drag\u00f3n shivano",
+        "Jinetes \u00e9lficos"
+      ]
+    },
+    "Sleep": {
+      "highly_relevant": [
+        "Centaur Courser",
+        "Bountiful Harvest",
+        "Oakenform"
+      ],
+      "relevant": [
+        "Stormtide Leviathan",
+        "Smelt",
+        "Dungrove Elder"
+      ],
+      "somewhat_relevant": [
+        "Hired Blade",
+        "Hostile Minotaur"
+      ],
+      "marginally_relevant": [
+        "Scroll Thief",
+        "War Priest of Thune"
+      ]
+    },
+    "Vedalken Entrancer": {
+      "highly_relevant": [
+        "Belltower Sphinx",
+        "Vedalken Dismisser",
+        "Auratouched Mage"
+      ],
+      "relevant": [
+        "\u68ee",
+        "Totem-Guide Hartebeest",
+        "Take Up Arms"
+      ],
+      "somewhat_relevant": [
+        "Oni-Cult Anvil",
+        "Steam Augury"
+      ],
+      "marginally_relevant": [
+        "Nightguard Patrol",
+        "Soratami Rainshaper"
+      ]
+    },
+    "Frogmite": {
+      "highly_relevant": [
+        "Grim Affliction",
+        "Somber Hoverguard",
+        "Vapor Snag"
+      ],
+      "relevant": [
+        "Terashi's Grasp",
+        "Blinding Souleater",
+        "Court Homunculus"
+      ],
+      "somewhat_relevant": [
+        "Gut Shot",
+        "Ethercaste Knight"
+      ],
+      "marginally_relevant": [
+        "Instill Infection",
+        "Mortarpod"
+      ]
+    },
+    "Viridian Longbow": {
+      "highly_relevant": [
+        "Bone Miser",
+        "Taste of Death",
+        "Power Conduit"
+      ],
+      "relevant": [
+        "Grave Peril",
+        "Dread Statuary",
+        "Fist of Suns"
+      ],
+      "somewhat_relevant": [
+        "Mass Mutiny",
+        "Vulshok Sorcerer"
+      ],
+      "marginally_relevant": [
+        "Kuldotha Phoenix",
+        "Dross Harvester"
+      ]
+    },
+    "Grey Knight Paragon": {
+      "highly_relevant": [
+        "Old One Eye",
+        "Genestealer Patriarch",
+        "Primaris Eliminator"
+      ],
+      "relevant": [
+        "Belisarius Cawl",
+        "Out of the Tombs",
+        "Pink Horror"
+      ],
+      "somewhat_relevant": [
+        "Exalted Flamer of Tzeentch",
+        "Biotransference"
+      ],
+      "marginally_relevant": [
+        "Ghyrson Starn, Kelermorph",
+        "Zephyrim"
+      ]
+    },
+    "Vastwood Zendikon": {
+      "highly_relevant": [
+        "Archon of Valor's Reach",
+        "Twinblade Assassins",
+        "Evangel of Heliod"
+      ],
+      "relevant": [
+        "Deathsprout",
+        "Zndrsplt's Judgment",
+        "Wilderness Reclamation"
+      ],
+      "somewhat_relevant": [
+        "Ordeal of Heliod",
+        "Ob Nixilis, the Fallen"
+      ],
+      "marginally_relevant": [
+        "Taste of Death",
+        "Custodi Lich"
+      ]
+    },
+    "Sarkhan's Unsealing": {
+      "highly_relevant": [
+        "Lena, Selfless Champion",
+        "Mystic Archaeologist",
+        "Resplendent Angel"
+      ],
+      "relevant": [
+        "Mistcaller",
+        "Dismissive Pyromancer",
+        "Ajani, Adversary of Tyrants"
+      ],
+      "somewhat_relevant": [
+        "Liliana's Contract",
+        "Nicol Bolas, the Ravager // Nicol Bolas, the Arisen"
+      ],
+      "marginally_relevant": [
+        "Graveyard Marshal",
+        "Fraying Omnipotence"
+      ]
+    },
+    "Longshot Squad": {
+      "highly_relevant": [
+        "Meandering Towershell",
+        "Rakshasa's Secret",
+        "Disowned Ancestor"
+      ],
+      "relevant": [
+        "Mardu Roughrider",
+        "Krumar Bond-Kin",
+        "Mardu Hordechief"
+      ],
+      "somewhat_relevant": [
+        "Kin-Tree Invocation",
+        "Barrage of Boulders"
+      ],
+      "marginally_relevant": [
+        "Leaping Master",
+        "Warden of the Eye"
+      ]
+    },
+    "Oona's Prowler": {
+      "highly_relevant": [
+        "Impervious Greatwurm",
+        "Necrotic Ooze",
+        "Mindwrack Liege"
+      ],
+      "relevant": [
+        "Twinflame",
+        "Phyrexian Tyranny",
+        "Wasitora, Nekoru Queen"
+      ],
+      "somewhat_relevant": [
+        "Monastery Mentor",
+        "Kederekt Leviathan"
+      ],
+      "marginally_relevant": [
+        "Arjun, the Shifting Flame",
+        "Mayael's Aria"
+      ]
+    },
+    "The Red Terror": {
+      "highly_relevant": [
+        "Tallyman of Nurgle",
+        "Out of the Tombs",
+        "Thunderhawk Gunship"
+      ],
+      "relevant": [
+        "Chaos Terminator Lord",
+        "Mutalith Vortex Beast",
+        "Biophagus"
+      ],
+      "somewhat_relevant": [
+        "Goliath Truck",
+        "Bloodthirster"
+      ],
+      "marginally_relevant": [
+        "Blood for the Blood God!",
+        "Birth of the Imperium"
+      ]
+    },
+    "Goryo's Vengeance": {
+      "highly_relevant": [
+        "Platinum Emperion",
+        "Leovold, Emissary of Trest",
+        "Nourishing Shoal"
+      ],
+      "relevant": [
+        "Shirei, Shizo's Caretaker",
+        "Stream of Consciousness",
+        "Mikaeus, the Unhallowed"
+      ],
+      "somewhat_relevant": [
+        "Disrupting Shoal",
+        "Through the Breach"
+      ],
+      "marginally_relevant": [
+        "Gaddock Teeg",
+        "Celestial Colonnade"
+      ]
+    },
+    "Undead Slayer": {
+      "highly_relevant": [
+        "Burning Inquiry",
+        "\u30bb\u30e9\u306e\u5929\u4f7f",
+        "Ignite Disorder"
+      ],
+      "relevant": [
+        "Serum Powder",
+        "Flash Counter",
+        "\u5bfe\u6297\u546a\u6587"
+      ],
+      "somewhat_relevant": [
+        "Yisan, the Wanderer Bard",
+        "Sensei Golden-Tail"
+      ],
+      "marginally_relevant": [
+        "Cadaverous Knight",
+        "Feral Throwback"
+      ]
+    },
+    "Jorn, God of Winter // Kaldring, the Rimestaff": {
+      "highly_relevant": [
+        "Aegar, the Freezing Flame",
+        "Search for Glory",
+        "Koma, Cosmos Serpent"
+      ],
+      "relevant": [
+        "Tyvar Kell",
+        "Vega, the Watcher",
+        "Sarulf, Realm Eater"
+      ],
+      "somewhat_relevant": [
+        "Battle for Bretagard",
+        "Reidane, God of the Worthy // Valkmira, Protector's Shield"
+      ],
+      "marginally_relevant": [
+        "Halvar, God of Battle // Sword of the Realms",
+        "Draugr Necromancer"
+      ]
+    },
+    "Reclamation Sage": {
+      "highly_relevant": [
+        "O-Naginata",
+        "Michiko Konda, Truth Seeker",
+        "Haru-Onna"
+      ],
+      "relevant": [
+        "Novice Knight",
+        "Rune-Tail, Kitsune Ascendant // Rune-Tail's Essence",
+        "Tezzeret, Artifice Master"
+      ],
+      "somewhat_relevant": [
+        "Reki, the History of Kamigawa",
+        "Mercurial Pretender"
+      ],
+      "marginally_relevant": [
+        "Unquestioned Authority",
+        "Stoke the Flames"
+      ]
+    },
+    "One with the Machine": {
+      "highly_relevant": [
+        "Vivien Reid",
+        "Resplendent Angel",
+        "Amulet of Safekeeping"
+      ],
+      "relevant": [
+        "Palladia-Mors, the Ruiner",
+        "Metamorphic Alteration",
+        "Graveyard Marshal"
+      ],
+      "somewhat_relevant": [
+        "Bone Dragon",
+        "Detection Tower"
+      ],
+      "marginally_relevant": [
+        "Ajani, Adversary of Tyrants",
+        "Chromium, the Mutable"
+      ]
+    },
+    "Snarespinner": {
+      "highly_relevant": [
+        "Wall of Runes",
+        "Makeshift Battalion",
+        "Regress"
+      ],
+      "relevant": [
+        "Sphere of Safety",
+        "Muddle the Mixture",
+        "Angel of Retribution"
+      ],
+      "somewhat_relevant": [
+        "Turret Ogre",
+        "Goblin Mountaineer"
+      ],
+      "marginally_relevant": [
+        "Fortress Crab",
+        "Mana Maze"
+      ]
+    },
+    "Wildest Dreams": {
+      "highly_relevant": [
+        "Fateful Showdown",
+        "Aviary Mechanic",
+        "Paradoxical Outcome"
+      ],
+      "relevant": [
+        "Bastion Mastodon",
+        "Maulfist Squad",
+        "Veteran Motorist"
+      ],
+      "somewhat_relevant": [
+        "Angel of Invention",
+        "Commencement of Festivities"
+      ],
+      "marginally_relevant": [
+        "Glint-Nest Crane",
+        "Embraal Bruiser"
+      ]
+    },
+    "Skullbriar, the Walking Grave": {
+      "highly_relevant": [
+        "The Mimeoplasm",
+        "Intet, the Dreamer",
+        "Ezuri, Claw of Progress"
+      ],
+      "relevant": [
+        "Ghave, Guru of Spores",
+        "Mathas, Fiend Seeker",
+        "Food Chain"
+      ],
+      "somewhat_relevant": [
+        "Teneb, the Harvester",
+        "Phyrexian Tyranny"
+      ],
+      "marginally_relevant": [
+        "Disciple of the Ring",
+        "Shattergang Brothers"
+      ]
+    },
+    "Herd Baloth": {
+      "highly_relevant": [
+        "Arcbound Mouser",
+        "Squirrel Sanctuary",
+        "Wren's Run Hydra"
+      ],
+      "relevant": [
+        "Soul of Migration",
+        "Abiding Grace",
+        "Faithless Salvaging"
+      ],
+      "somewhat_relevant": [
+        "Slag Strider",
+        "Necromancer's Familiar"
+      ],
+      "marginally_relevant": [
+        "Graceful Restoration",
+        "Batterbone"
+      ]
+    },
+    "Nissa, Worldwaker": {
+      "highly_relevant": [
+        "Jace, the Living Guildpact",
+        "Ajani Steadfast",
+        "Garruk, Apex Predator"
+      ],
+      "relevant": [
+        "Liliana Vess",
+        "Chandra, the Firebrand",
+        "Brittle Effigy"
+      ],
+      "somewhat_relevant": [
+        "Dark Favor",
+        "Earth Servant"
+      ],
+      "marginally_relevant": [
+        "Jace, Memory Adept",
+        "Stormtide Leviathan"
+      ]
+    },
+    "Manic Scribe": {
+      "highly_relevant": [
+        "Heir of Falkenrath // Heir to the Night",
+        "Stitchwing Skaab",
+        "Indulgent Aristocrat"
+      ],
+      "relevant": [
+        "Just the Wind",
+        "Angelic Purge",
+        "Hanweir Militia Captain // Westvale Cult Leader"
+      ],
+      "somewhat_relevant": [
+        "Call the Bloodline",
+        "Gone Missing"
+      ],
+      "marginally_relevant": [
+        "Clip Wings",
+        "Diregraf Colossus"
+      ]
+    },
+    "Jund Panorama": {
+      "highly_relevant": [
+        "Savage Lands",
+        "Jund Charm",
+        "Gahiji, Honored One"
+      ],
+      "relevant": [
+        "Skullmulcher",
+        "Naya Panorama",
+        "Tidehollow Strix"
+      ],
+      "somewhat_relevant": [
+        "Grixis Charm",
+        "Cruel Ultimatum"
+      ],
+      "marginally_relevant": [
+        "Grixis Panorama",
+        "Drumhunter"
+      ]
+    },
+    "Nyx Lotus": {
+      "highly_relevant": [
+        "Purphoros, Bronze-Blooded",
+        "Haktos the Unscarred",
+        "The First Iroan Games"
+      ],
+      "relevant": [
+        "Eidolon of Obstruction",
+        "Uro, Titan of Nature's Wrath",
+        "Thassa's Oracle"
+      ],
+      "somewhat_relevant": [
+        "Phoenix of Ash",
+        "Heliod's Intervention"
+      ],
+      "marginally_relevant": [
+        "Kiora Bests the Sea God",
+        "Dryad of the Ilysian Grove"
+      ]
+    },
+    "Mutavault": {
+      "highly_relevant": [
+        "Bloodscent",
+        "Stealer of Secrets",
+        "Mitotic Slime"
+      ],
+      "relevant": [
+        "Wake Thrasher",
+        "Heavenly Blademaster",
+        "Armory Guard"
+      ],
+      "somewhat_relevant": [
+        "Gustcloak Savior",
+        "Bogardan Rager"
+      ],
+      "marginally_relevant": [
+        "Fathom Fleet Cutthroat",
+        "Moonmist"
+      ]
+    },
+    "Visitor from Planet Q": {
+      "highly_relevant": [
+        "Taiga Stadium",
+        "Witty Demon",
+        "Seek Bolas's Counsel"
+      ],
+      "relevant": [
+        "Frontier Explorer",
+        "Bind // Liberate",
+        "Form of the Mulldrifter"
+      ],
+      "somewhat_relevant": [
+        "Jasconian Isle",
+        "Lazier Goblin"
+      ],
+      "marginally_relevant": [
+        "Command the Chaff",
+        "Bucket List"
+      ]
+    },
+    "Old One Eye": {
+      "highly_relevant": [
+        "Grey Knight Paragon",
+        "Kill! Maim! Burn!",
+        "Commissar Severina Raine"
+      ],
+      "relevant": [
+        "Heralds of Tzeentch",
+        "Necron Overlord",
+        "Ultramarines Honour Guard"
+      ],
+      "somewhat_relevant": [
+        "Termagant Swarm",
+        "Primaris Eliminator"
+      ],
+      "marginally_relevant": [
+        "Mandate of Abaddon",
+        "Pink Horror"
+      ]
+    },
+    "Sliver Legion": {
+      "highly_relevant": [
+        "Glittering Wish",
+        "Pact of the Titan",
+        "Stronghold Rats"
+      ],
+      "relevant": [
+        "Lymph Sliver",
+        "Gathan Raiders",
+        "Sarcomite Myr"
+      ],
+      "somewhat_relevant": [
+        "Mass of Ghouls",
+        "Char-Rumbler"
+      ],
+      "marginally_relevant": [
+        "Heartwood Storyteller",
+        "Virulent Sliver"
+      ]
+    },
+    "Nightveil Specter": {
+      "highly_relevant": [
+        "Skarrg Goliath",
+        "Zameck Guildmage",
+        "Dimir Charm"
+      ],
+      "relevant": [
+        "Cloudfin Raptor",
+        "Miming Slime",
+        "Gyre Sage"
+      ],
+      "somewhat_relevant": [
+        "Lazav, Dimir Mastermind",
+        "Zhur-Taa Swine"
+      ],
+      "marginally_relevant": [
+        "Weapon Surge",
+        "Elusive Krasis"
+      ]
+    },
+    "Word of Seizing": {
+      "highly_relevant": [
+        "Ruby Medallion",
+        "Hammerfist Giant",
+        "Desolation Giant"
+      ],
+      "relevant": [
+        "Sunrise Sovereign",
+        "Meteor Blast",
+        "Flamekin Village"
+      ],
+      "somewhat_relevant": [
+        "Boros Cluestone",
+        "Anya, Merciless Angel"
+      ],
+      "marginally_relevant": [
+        "Dormant Volcano",
+        "Hunted Dragon"
+      ]
+    },
+    "Volcanic Fallout": {
+      "highly_relevant": [
+        "Grixis Illusionist",
+        "Barrage of Expendables",
+        "Nightshade Stinger"
+      ],
+      "relevant": [
+        "Goblin Commando",
+        "Face of Divinity",
+        "Ancient Ziggurat"
+      ],
+      "somewhat_relevant": [
+        "Infectious Horror",
+        "Tezzeret the Seeker"
+      ],
+      "marginally_relevant": [
+        "Scroll of Avacyn",
+        "Vedalken Archmage"
+      ]
+    },
+    "Surge of Strength": {
+      "highly_relevant": [
+        "False Demise",
+        "Urborg Skeleton",
+        "Kjeldoran Pride"
+      ],
+      "relevant": [
+        "Insidious Bookworms",
+        "Phyrexian Dreadnought",
+        "Personal Tutor"
+      ],
+      "somewhat_relevant": [
+        "Ritual of the Machine",
+        "Casting of Bones"
+      ],
+      "marginally_relevant": [
+        "Nature's Blessing",
+        "Winter's Night"
+      ]
+    },
+    "Psychic Venom": {
+      "highly_relevant": [
+        "Thicket Basilisk",
+        "Reverse Damage",
+        "Phantasmal Terrain"
+      ],
+      "relevant": [
+        "Nether Shadow",
+        "Volcanic Eruption",
+        "Burning Inquiry"
+      ],
+      "somewhat_relevant": [
+        "Animate Wall",
+        "Gloom"
+      ],
+      "marginally_relevant": [
+        "Crusade",
+        "Instill Energy"
+      ]
+    },
+    "Braingeyser": {
+      "highly_relevant": [
+        "Contract from Below",
+        "Vesuvan Doppelganger",
+        "Word of Command"
+      ],
+      "relevant": [
+        "Sedge Troll",
+        "Blaze of Glory",
+        "Fastbond"
+      ],
+      "somewhat_relevant": [
+        "Kudzu",
+        "Farmstead"
+      ],
+      "marginally_relevant": [
+        "Savannah",
+        "Earthbind"
+      ]
+    },
+    "Frontier Explorer": {
+      "highly_relevant": [
+        "Gorilla Tactics",
+        "Sarah's Wings",
+        "Mana Abundance"
+      ],
+      "relevant": [
+        "Gunk Slug",
+        "Visitor from Planet Q",
+        "Problematic Volcano"
+      ],
+      "somewhat_relevant": [
+        "Animate Spell",
+        "Biting Remark"
+      ],
+      "marginally_relevant": [
+        "Zyym, Mesmeric Lord",
+        "Ral's Vanguard"
+      ]
+    },
+    "Telekinesis": {
+      "highly_relevant": [
+        "Psychic Purge",
+        "Crookshank Kobolds",
+        "Adun Oakenshield"
+      ],
+      "relevant": [
+        "Righteous Avengers",
+        "Jacques le Vert",
+        "Spinal Villain"
+      ],
+      "somewhat_relevant": [
+        "Alchor's Tomb",
+        "Planar Gate"
+      ],
+      "marginally_relevant": [
+        "In the Eye of Chaos",
+        "Wood Elemental"
+      ]
+    },
+    "Kor Chant": {
+      "highly_relevant": [
+        "Shackles",
+        "Cataclysm",
+        "Death's Duet"
+      ],
+      "relevant": [
+        "Dauthi Jackal",
+        "Pandemonium",
+        "Exalted Dragon"
+      ],
+      "somewhat_relevant": [
+        "Spellshock",
+        "Ogre Shaman"
+      ],
+      "marginally_relevant": [
+        "Dauthi Warlord",
+        "Killer Whale"
+      ]
+    },
+    "Masterful Ninja": {
+      "highly_relevant": [
+        "Oddly Uneven",
+        "Do-It-Yourself Seraph",
+        "Rules Lawyer"
+      ],
+      "relevant": [
+        "Hot Fix",
+        "Dr. Julius Jumblemorph",
+        "Clocknapper"
+      ],
+      "somewhat_relevant": [
+        "Baron Von Count",
+        "Three-Headed Goblin"
+      ],
+      "marginally_relevant": [
+        "Mary O'Kill",
+        "Jackknight"
+      ]
+    },
+    "Snakeform": {
+      "highly_relevant": [
+        "Wistful Selkie",
+        "Mistral Charger",
+        "Hero of Leina Tower"
+      ],
+      "relevant": [
+        "Evangel of Heliod",
+        "Boros Locket",
+        "Nyx Weaver"
+      ],
+      "somewhat_relevant": [
+        "Bone Miser",
+        "Devout Chaplain"
+      ],
+      "marginally_relevant": [
+        "Hero of Iroas",
+        "Lavinia of the Tenth"
+      ]
+    },
+    "Mishra's Self-Replicator": {
+      "highly_relevant": [
+        "Naru Meha, Master Wizard",
+        "Rona, Disciple of Gix",
+        "Goblin Chainwhirler"
+      ],
+      "relevant": [
+        "Grunn, the Lonely King",
+        "Sylvan Awakening",
+        "Yawgmoth's Vile Offering"
+      ],
+      "somewhat_relevant": [
+        "Multani, Yavimaya's Avatar",
+        "Urgoros, the Empty One"
+      ],
+      "marginally_relevant": [
+        "Marwyn, the Nurturer",
+        "Haphazard Bombardment"
+      ]
+    },
+    "Investigator's Journal": {
+      "highly_relevant": [
+        "Path of Peril",
+        "Sundown Pass",
+        "Cemetery Desecrator"
+      ],
+      "relevant": [
+        "Wedding Announcement // Wedding Festivity",
+        "Alchemist's Gambit",
+        "Voldaren Estate"
+      ],
+      "somewhat_relevant": [
+        "Fell Stinger",
+        "Child of the Pack // Savage Packmate"
+      ],
+      "marginally_relevant": [
+        "Weaver of Blossoms // Blossom-Clad Werewolf",
+        "Stensia Uprising"
+      ]
+    },
+    "Talisman of Hierarchy": {
+      "highly_relevant": [
+        "Defile",
+        "Talisman of Creativity",
+        "Cave of Temptation"
+      ],
+      "relevant": [
+        "Death's Presence",
+        "Changeling Outcast",
+        "Decree of Pain"
+      ],
+      "somewhat_relevant": [
+        "Memorial to Glory",
+        "Bastion Protector"
+      ],
+      "marginally_relevant": [
+        "Endless Atlas",
+        "Hull Breach"
+      ]
+    },
+    "Serendib Djinn": {
+      "highly_relevant": [
+        "Elephant Graveyard",
+        "Drop of Honey",
+        "Moorish Cavalry"
+      ],
+      "relevant": [
+        "Ali from Cairo",
+        "Guardian Beast",
+        "Army of Allah"
+      ],
+      "somewhat_relevant": [
+        "Flying Men",
+        "Stone-Throwing Devils"
+      ],
+      "marginally_relevant": [
+        "Holy Light",
+        "Tivadar's Crusade"
+      ]
+    },
+    "Interplanar Brushwagg": {
+      "highly_relevant": [
+        "Growth Charm",
+        "Xyru Specter",
+        "One with Death"
+      ],
+      "relevant": [
+        "Celestine Cave Witch",
+        "Bucket List",
+        "Form of the Mulldrifter"
+      ],
+      "somewhat_relevant": [
+        "Khod, Etlan Shiis Envoy",
+        "Smelt // Herd // Saw"
+      ],
+      "marginally_relevant": [
+        "Puresteel Angel",
+        "Bone Rattler"
+      ]
+    },
+    "Chandra, Dressed to Kill": {
+      "highly_relevant": [
+        "Cobbled Lancer",
+        "Lightning Wolf",
+        "Courier Bat"
+      ],
+      "relevant": [
+        "Diver Skaab",
+        "Brine Comber // Brinebound Gift",
+        "Gift of Fangs"
+      ],
+      "somewhat_relevant": [
+        "Torens, Fist of the Angels",
+        "Massive Might"
+      ],
+      "marginally_relevant": [
+        "Weary Prisoner // Wrathful Jailbreaker",
+        "Archghoul of Thraben"
+      ]
+    },
+    "Jagged Poppet": {
+      "highly_relevant": [
+        "Rakdos the Defiler",
+        "Lyzolda, the Blood Witch",
+        "Cackling Flames"
+      ],
+      "relevant": [
+        "Crypt Champion",
+        "Avatar of Discord",
+        "Riot Spikes"
+      ],
+      "somewhat_relevant": [
+        "Rakdos Pit Dragon",
+        "Demonfire"
+      ],
+      "marginally_relevant": [
+        "Rakdos Guildmage",
+        "Train of Thought"
+      ]
+    },
+    "Steward of Solidarity": {
+      "highly_relevant": [
+        "Consign // Oblivion",
+        "Imminent Doom",
+        "Sidewinder Naga"
+      ],
+      "relevant": [
+        "Eternal of Harsh Truths",
+        "God-Pharaoh's Gift",
+        "Fraying Sanity"
+      ],
+      "somewhat_relevant": [
+        "The Scorpion God",
+        "Vizier of the Anointed"
+      ],
+      "marginally_relevant": [
+        "Seer of the Last Tomorrow",
+        "Thorned Moloch"
+      ]
+    },
+    "Primaris Chaplain": {
+      "highly_relevant": [
+        "Belisarius Cawl",
+        "The Flesh Is Weak",
+        "Lokhust Heavy Destroyer"
+      ],
+      "relevant": [
+        "Knight Paladin",
+        "Seeker of Slaanesh",
+        "Their Name Is Death"
+      ],
+      "somewhat_relevant": [
+        "Shard of the Void Dragon",
+        "Pink Horror"
+      ],
+      "marginally_relevant": [
+        "Sporocyst",
+        "Primaris Eliminator"
+      ]
+    },
+    "Goblin Elite Infantry": {
+      "highly_relevant": [
+        "Uktabi Wildcats",
+        "Ancestral Memories",
+        "Phyrexian Vault"
+      ],
+      "relevant": [
+        "Reckless Embermage",
+        "Femeref Archers",
+        "Crimson Hellkite"
+      ],
+      "somewhat_relevant": [
+        "Sunweb",
+        "Patagia Golem"
+      ],
+      "marginally_relevant": [
+        "Enfeeblement",
+        "Agonizing Memories"
+      ]
+    },
+    "Weldfast Monitor": {
+      "highly_relevant": [
+        "Fabrication Module",
+        "Bastion Mastodon",
+        "Woodweaver's Puzzleknot"
+      ],
+      "relevant": [
+        "Dukhara Peafowl",
+        "Quicksmith Genius",
+        "Revoke Privileges"
+      ],
+      "somewhat_relevant": [
+        "Glint-Nest Crane",
+        "Midnight Oil"
+      ],
+      "marginally_relevant": [
+        "Oviya Pashiri, Sage Lifecrafter",
+        "Aviary Mechanic"
+      ]
+    },
+    "Knight Rampager": {
+      "highly_relevant": [
+        "Seeker of Slaanesh",
+        "Arco-Flagellant",
+        "Haruspex"
+      ],
+      "relevant": [
+        "Shard of the Void Dragon",
+        "Malanthrope",
+        "Great Unclean One"
+      ],
+      "somewhat_relevant": [
+        "Zoanthrope",
+        "Defenders of Humanity"
+      ],
+      "marginally_relevant": [
+        "Purestrain Genestealer",
+        "Lokhust Heavy Destroyer"
+      ]
+    },
+    "Sundering Growth": {
+      "highly_relevant": [
+        "Traitorous Instinct",
+        "Centaur Healer",
+        "Desecration Demon"
+      ],
+      "relevant": [
+        "Trostani, Selesnya's Voice",
+        "Druid's Deliverance",
+        "Ogre Jailbreaker"
+      ],
+      "somewhat_relevant": [
+        "Call of the Conclave",
+        "Niv-Mizzet, Dracogenius"
+      ],
+      "marginally_relevant": [
+        "Slime Molding",
+        "Teleportal"
+      ]
+    },
+    "Manifestation Sage": {
+      "highly_relevant": [
+        "Gnarled Professor",
+        "Rushed Rebirth",
+        "Mavinda, Students' Advocate"
+      ],
+      "relevant": [
+        "Pestilent Cauldron // Restorative Burst",
+        "Dragonsguard Elite",
+        "Radiant Scrollwielder"
+      ],
+      "somewhat_relevant": [
+        "Professor Onyx",
+        "Lorehold Command"
+      ],
+      "marginally_relevant": [
+        "Ecological Appreciation",
+        "Archmage Emeritus"
+      ]
+    },
+    "Spore Crawler": {
+      "highly_relevant": [
+        "Into the Night",
+        "Sigarda's Imprisonment",
+        "Piercing Light"
+      ],
+      "relevant": [
+        "Crawling Infestation",
+        "Courier Bat",
+        "Belligerent Guest"
+      ],
+      "somewhat_relevant": [
+        "Pyre Spawn",
+        "Edgar's Awakening"
+      ],
+      "marginally_relevant": [
+        "Wandering Mind",
+        "Deathcap Glade"
+      ]
+    },
+    "Scour the Laboratory": {
+      "highly_relevant": [
+        "Insatiable Gorgers",
+        "Haunted Dead",
+        "Markov Crusader"
+      ],
+      "relevant": [
+        "Furyblade Vampire",
+        "Soul Separator",
+        "Distemper of the Blood"
+      ],
+      "somewhat_relevant": [
+        "Bloodhall Priest",
+        "Lashweed Lurker"
+      ],
+      "marginally_relevant": [
+        "Mercurial Geists",
+        "Cryptbreaker"
+      ]
+    },
+    "Metropolis Sprite": {
+      "highly_relevant": [
+        "Sage's Row Denizen",
+        "Oppressive Rays",
+        "Reaper King"
+      ],
+      "relevant": [
+        "Gleeful Sabotage",
+        "Cosi's Ravager",
+        "Kulrath Knight"
+      ],
+      "somewhat_relevant": [
+        "Pili-Pala",
+        "Puca's Mischief"
+      ],
+      "marginally_relevant": [
+        "Haazda Officer",
+        "Bonds of Quicksilver"
+      ]
+    },
+    "Steel Wall": {
+      "highly_relevant": [
+        "Tower of Eons",
+        "Vulshok Gauntlets",
+        "Vedalken Certarch"
+      ],
+      "relevant": [
+        "Darksteel Sentinel",
+        "Myr Incubator",
+        "Gold Myr"
+      ],
+      "somewhat_relevant": [
+        "Clockwork Condor",
+        "Furnace Dragon"
+      ],
+      "marginally_relevant": [
+        "Leveler",
+        "Welding Jar"
+      ]
+    },
+    "Repeating Barrage": {
+      "highly_relevant": [
+        "Priest of the Wakening Sun",
+        "Dreamcaller Siren",
+        "Fathom Fleet Captain"
+      ],
+      "relevant": [
+        "Fell Flagship",
+        "Waker of the Wilds",
+        "Deadeye Tracker"
+      ],
+      "somewhat_relevant": [
+        "Tilonalli's Skinshifter",
+        "Rampaging Ferocidon"
+      ],
+      "marginally_relevant": [
+        "Vraska's Contempt",
+        "Sanguine Sacrament"
+      ]
+    },
+    "Inexorable Tide": {
+      "highly_relevant": [
+        "Chimeric Mass",
+        "Rusted Relic",
+        "Tumble Magnet"
+      ],
+      "relevant": [
+        "Spikeshot Elder",
+        "Glint Hawk Idol",
+        "Stoic Rebuttal"
+      ],
+      "somewhat_relevant": [
+        "Goblin Gaveleer",
+        "Glassdust Hulk"
+      ],
+      "marginally_relevant": [
+        "Myrsmith",
+        "Darksteel Axe"
+      ]
+    },
+    "Lithoform Engine": {
+      "highly_relevant": [
+        "Jace, Mirror Mage",
+        "Myriad Construct",
+        "Throne of Makindi"
+      ],
+      "relevant": [
+        "Inscription of Ruin",
+        "Yasharn, Implacable Earth",
+        "Shatterskull Charger"
+      ],
+      "somewhat_relevant": [
+        "Clearwater Pathway // Murkwater Pathway",
+        "Orah, Skyclave Hierophant"
+      ],
+      "marginally_relevant": [
+        "Inscription of Insight",
+        "Nighthawk Scavenger"
+      ]
+    },
+    "Paladin en-Vec": {
+      "highly_relevant": [
+        "Angelic Blessing",
+        "High Ground",
+        "Mirri, Cat Warrior"
+      ],
+      "relevant": [
+        "Treasure Hunter",
+        "Robe of Mirrors",
+        "Thrull Surgeon"
+      ],
+      "somewhat_relevant": [
+        "Volrath's Dungeon",
+        "Coat of Arms"
+      ],
+      "marginally_relevant": [
+        "Primal Rage",
+        "Soltari Visionary"
+      ]
+    },
+    "Giver of Runes": {
+      "highly_relevant": [
+        "Echo of Eons",
+        "Sword of Sinew and Steel",
+        "Nurturing Peatland"
+      ],
+      "relevant": [
+        "Magmatic Sinkhole",
+        "Talisman of Curiosity",
+        "Plague Engineer"
+      ],
+      "somewhat_relevant": [
+        "Sword of Truth and Justice",
+        "Deep Forest Hermit"
+      ],
+      "marginally_relevant": [
+        "Ice-Fang Coatl",
+        "Hall of Heliod's Generosity"
+      ]
+    },
+    "Skophos Reaver": {
+      "highly_relevant": [
+        "Arcbound Mouser",
+        "Gouged Zealot",
+        "Necromancer's Familiar"
+      ],
+      "relevant": [
+        "Scour the Desert",
+        "Spreading Insurrection",
+        "Smell Fear"
+      ],
+      "somewhat_relevant": [
+        "Myr Scrapling",
+        "Slag Strider"
+      ],
+      "marginally_relevant": [
+        "Herd Baloth",
+        "Lightning Spear"
+      ]
+    },
+    "Glorious Anthem": {
+      "highly_relevant": [
+        "Bereavement",
+        "Hibernation",
+        "Citanul Flute"
+      ],
+      "relevant": [
+        "Transmogrify",
+        "Hollow Dogs",
+        "Animal Sanctuary"
+      ],
+      "somewhat_relevant": [
+        "Reflexes",
+        "Chandra, Heart of Fire"
+      ],
+      "marginally_relevant": [
+        "Bull Hippo",
+        "Disorder"
+      ]
+    },
+    "Undercover Operative": {
+      "highly_relevant": [
+        "Shadow of Mortality",
+        "Ob Nixilis, the Adversary",
+        "Getaway Car"
+      ],
+      "relevant": [
+        "Topiary Stomper",
+        "Xander's Lounge",
+        "Luxior, Giada's Gift"
+      ],
+      "somewhat_relevant": [
+        "Devilish Valet",
+        "Gala Greeters"
+      ],
+      "marginally_relevant": [
+        "Halo Fountain",
+        "Park Heights Pegasus"
+      ]
+    },
+    "Warchief Giant": {
+      "highly_relevant": [
+        "Anya, Merciless Angel",
+        "Meteor Blast",
+        "Herald of the Host"
+      ],
+      "relevant": [
+        "Magma Giant",
+        "Staff of Nin",
+        "Sunrise Sovereign"
+      ],
+      "somewhat_relevant": [
+        "Kalemne, Disciple of Iroas",
+        "Victory's Herald"
+      ],
+      "marginally_relevant": [
+        "Gisela, Blade of Goldnight",
+        "Kalemne's Captain"
+      ]
+    },
+    "Gorilla Chieftain": {
+      "highly_relevant": [
+        "Storm Cauldron",
+        "Reprisal",
+        "Storm Crow"
+      ],
+      "relevant": [
+        "Razortooth Rats",
+        "Nature's Resurgence",
+        "Familiar Ground"
+      ],
+      "somewhat_relevant": [
+        "Strands of Night",
+        "Agonizing Memories"
+      ],
+      "marginally_relevant": [
+        "Aether Flash",
+        "Redwood Treefolk"
+      ]
+    },
+    "Murkfiend Liege": {
+      "highly_relevant": [
+        "Roon of the Hidden Realm",
+        "Shattergang Brothers",
+        "Moonhold"
+      ],
+      "relevant": [
+        "Pillar of the Paruns",
+        "Intet, the Dreamer",
+        "Dauntless Escort"
+      ],
+      "somewhat_relevant": [
+        "Uril, the Miststalker",
+        "Conqueror's Flail"
+      ],
+      "marginally_relevant": [
+        "Leonin Arbiter",
+        "Elsha of the Infinite"
+      ]
+    },
+    "Nevinyrral, Urborg Tyrant": {
+      "highly_relevant": [
+        "Falthis, Shadowcat Familiar",
+        "Radiant, Serra Archangel",
+        "Nadier, Agent of the Duskenel"
+      ],
+      "relevant": [
+        "Zara, Renegade Recruiter",
+        "Sakashima of a Thousand Faces",
+        "Keleth, Sunmane Familiar"
+      ],
+      "somewhat_relevant": [
+        "Slurrk, All-Ingesting",
+        "Halana, Kessig Ranger"
+      ],
+      "marginally_relevant": [
+        "Rograkh, Son of Rohgahh",
+        "Imoti, Celebrant of Bounty"
+      ]
+    },
+    "The Royal Scions": {
+      "highly_relevant": [
+        "Faerie Guidemother // Gift of the Fae",
+        "Castle Vantress",
+        "Giant Killer // Chop Down"
+      ],
+      "relevant": [
+        "Charming Prince",
+        "Fervent Champion",
+        "Sundering Stroke"
+      ],
+      "somewhat_relevant": [
+        "Torbran, Thane of Red Fell",
+        "Garruk, Cursed Huntsman"
+      ],
+      "marginally_relevant": [
+        "Animating Faerie // Bring to Life",
+        "Clackbridge Troll"
+      ]
+    },
+    "Wooden Sphere": {
+      "highly_relevant": [
+        "Iron Star",
+        "Reverse Damage",
+        "Throne of Bone"
+      ],
+      "relevant": [
+        "Verduran Enchantress",
+        "Dingus Egg",
+        "Samite Healer"
+      ],
+      "somewhat_relevant": [
+        "Shanodin Dryads",
+        "Wall of Swords"
+      ],
+      "marginally_relevant": [
+        "Stream of Life",
+        "Soul Net"
+      ]
+    },
+    "Catapult Fodder // Catapult Captain": {
+      "highly_relevant": [
+        "Lightning Wolf",
+        "Alchemist's Retrieval",
+        "Brine Comber // Brinebound Gift"
+      ],
+      "relevant": [
+        "Massive Might",
+        "Torens, Fist of the Angels",
+        "Falkenrath Celebrants"
+      ],
+      "somewhat_relevant": [
+        "Diver Skaab",
+        "Geistlight Snare"
+      ],
+      "marginally_relevant": [
+        "Wretched Throng",
+        "Distracting Geist // Clever Distraction"
+      ]
+    },
+    "Quirion Beastcaller": {
+      "highly_relevant": [
+        "The Cruelty of Gix",
+        "Stronghold Arena",
+        "Weatherlight Compleated"
+      ],
+      "relevant": [
+        "The World Spell",
+        "Anointed Peacekeeper",
+        "Timeless Lotus"
+      ],
+      "somewhat_relevant": [
+        "Threats Undetected",
+        "Danitha, Benalia's Hope"
+      ],
+      "marginally_relevant": [
+        "Meria, Scholar of Antiquity",
+        "Aether Channeler"
+      ]
+    },
+    "Prosperous Thief": {
+      "highly_relevant": [
+        "Inkrise Infiltrator",
+        "Selfless Samurai",
+        "Nezumi Bladeblesser"
+      ],
+      "relevant": [
+        "Upriser Renegade",
+        "Jukai Trainee",
+        "Blade-Blizzard Kitsune"
+      ],
+      "somewhat_relevant": [
+        "Covert Technician",
+        "Imperial Subduer"
+      ],
+      "marginally_relevant": [
+        "Heir of the Ancient Fang",
+        "Moon-Circuit Hacker"
+      ]
+    },
+    "Nicol Bolas, God-Pharaoh": {
+      "highly_relevant": [
+        "Ambuscade",
+        "Bloodwater Entity",
+        "Ammit Eternal"
+      ],
+      "relevant": [
+        "Apocalypse Demon",
+        "Djeru, With Eyes Open",
+        "Mirage Mirror"
+      ],
+      "somewhat_relevant": [
+        "Uncage the Menagerie",
+        "Hour of Eternity"
+      ],
+      "marginally_relevant": [
+        "Endless Sands",
+        "Dauntless Aven"
+      ]
+    },
+    "Thousand-Year Storm": {
+      "highly_relevant": [
+        "Assassin's Trophy",
+        "Divine Visitation",
+        "Glowspore Shaman"
+      ],
+      "relevant": [
+        "Lava Coil",
+        "Goblin Banneret",
+        "Severed Strands"
+      ],
+      "somewhat_relevant": [
+        "League Guildmage",
+        "Arclight Phoenix"
+      ],
+      "marginally_relevant": [
+        "Pelt Collector",
+        "Connive // Concoct"
+      ]
+    },
+    "Ghor-Clan Rampager": {
+      "highly_relevant": [
+        "Death-Hood Cobra",
+        "Rhox War Monk",
+        "Giantbaiting"
+      ],
+      "relevant": [
+        "Spire Monitor",
+        "Voice of Resurgence",
+        "Grixis Slavedriver"
+      ],
+      "somewhat_relevant": [
+        "Sin Collector",
+        "Wake the Reflections"
+      ],
+      "marginally_relevant": [
+        "Boros Reckoner",
+        "Hanweir Lancer"
+      ]
+    },
+    "Mawloc": {
+      "highly_relevant": [
+        "Anrakyr the Traveller",
+        "Necron Deathmark",
+        "Tyranid Invasion"
+      ],
+      "relevant": [
+        "Lokhust Heavy Destroyer",
+        "Birth of the Imperium",
+        "Primaris Eliminator"
+      ],
+      "somewhat_relevant": [
+        "Epistolary Librarian",
+        "Out of the Tombs"
+      ],
+      "marginally_relevant": [
+        "Broodlord",
+        "Ghyrson Starn, Kelermorph"
+      ]
+    },
+    "Deathcap Glade": {
+      "highly_relevant": [
+        "Bloodcrazed Socialite",
+        "Blood Servitor",
+        "Piercing Light"
+      ],
+      "relevant": [
+        "Spore Crawler",
+        "Sigarda's Imprisonment",
+        "Diregraf Scavenger"
+      ],
+      "somewhat_relevant": [
+        "Path of Peril",
+        "Dawnhart Geist"
+      ],
+      "marginally_relevant": [
+        "Crawling Infestation",
+        "Gift of Fangs"
+      ]
+    },
+    "Voltaic Key": {
+      "highly_relevant": [
+        "Temporal Aperture",
+        "Mishra's Helix",
+        "Priest of Gix"
+      ],
+      "relevant": [
+        "Brand",
+        "Witch Engine",
+        "Endoskeleton"
+      ],
+      "somewhat_relevant": [
+        "Sanguine Guard",
+        "Argothian Elder"
+      ],
+      "marginally_relevant": [
+        "Order of Yawgmoth",
+        "Starlit Angel"
+      ]
+    },
+    "Horizon Scholar": {
+      "highly_relevant": [
+        "Wild Celebrants",
+        "Trusty Packbeast",
+        "Soul's Might"
+      ],
+      "relevant": [
+        "Skilled Animator",
+        "Cage of Hands",
+        "Ordeal of Nylea"
+      ],
+      "somewhat_relevant": [
+        "Interpret the Signs",
+        "Null Caller"
+      ],
+      "marginally_relevant": [
+        "Ripscale Predator",
+        "Silverback Shaman"
+      ]
+    },
+    "\u30d3\u30d2\u30e2\u30b9\u3092\u62db\u304f\u8005\u3001\u30ad\u30aa\u30fc\u30e9": {
+      "highly_relevant": [
+        "\u7fa4\u96c6\u306e\u5a01\u5149\u3001\u30f4\u30e9\u30b9\u30ab",
+        "\u8986\u3044\u3092\u5272\u304f\u8005\u3001\u30ca\u30fc\u30bb\u30c3\u30c8",
+        "\u4f1d\u627f\u306e\u53ce\u96c6\u8005\u3001\u30bf\u30df\u30e8\u30a6"
+      ],
+      "relevant": [
+        "\u91ce\u7363\u306e\u64c1\u8b77\u8005\u3001\u30d3\u30d3\u30a2\u30f3",
+        "\u5d50\u306e\u4f1d\u5c0e\u8005\u3001\u30e9\u30eb",
+        "\u6df7\u6c8c\u306e\u8239\u9577\u3001\u30a2\u30f3\u30b0\u30e9\u30b9"
+      ],
+      "somewhat_relevant": [
+        "\u66b4\u541b\u6f70\u3057\u3001\u30b5\u30e0\u30c8",
+        "\u91ce\u751f\u9020\u308a\u3001\u30b8\u30a2\u30f3\u30fb\u30e4\u30f3\u30b0\u30fc"
+      ],
+      "marginally_relevant": [
+        "\u30dc\u30fc\u30e9\u30b9\u306e\u58ca\u4e71\u8005\u3001\u30c9\u30e0\u30ea",
+        "\u652f\u914d\u306e\u7247\u8155\u3001\u30c9\u30d3\u30f3"
+      ]
+    },
+    "Primitive Justice": {
+      "highly_relevant": [
+        "Floodwater Dam",
+        "Wild Aesthir",
+        "Gorilla War Cry"
+      ],
+      "relevant": [
+        "Serra Aviary",
+        "Leeches",
+        "Clockwork Swarm"
+      ],
+      "somewhat_relevant": [
+        "Ebony Rhino",
+        "Mystic Decree"
+      ],
+      "marginally_relevant": [
+        "Clockwork Gnomes",
+        "Didgeridoo"
+      ]
+    },
+    "Wolf Strike": {
+      "highly_relevant": [
+        "Flame-Blessed Bolt",
+        "End the Festivities",
+        "Pyre Spawn"
+      ],
+      "relevant": [
+        "Sawblade Slinger",
+        "Piercing Light",
+        "Falkenrath Celebrants"
+      ],
+      "somewhat_relevant": [
+        "Honeymoon Hearse",
+        "Kindly Ancestor // Ancestor's Embrace"
+      ],
+      "marginally_relevant": [
+        "Weary Prisoner // Wrathful Jailbreaker",
+        "Radiant Grace // Radiant Restraints"
+      ]
+    },
+    "Liesa, Shroud of Dusk": {
+      "highly_relevant": [
+        "Kediss, Emberclaw Familiar",
+        "Slurrk, All-Ingesting",
+        "Radiant, Serra Archangel"
+      ],
+      "relevant": [
+        "Ghen, Arcanum Weaver",
+        "Halana, Kessig Ranger",
+        "Lathiel, the Bounteous Dawn"
+      ],
+      "somewhat_relevant": [
+        "Sengir, the Dark Baron",
+        "Sakashima of a Thousand Faces"
+      ],
+      "marginally_relevant": [
+        "Livio, Oathsworn Sentinel",
+        "Obeka, Brute Chronologist"
+      ]
+    },
+    "Semblance Anvil": {
+      "highly_relevant": [
+        "Elsewhere Flask",
+        "Journeyer's Kite",
+        "Thorn of Amethyst"
+      ],
+      "relevant": [
+        "Sword of the Meek",
+        "Unwinding Clock",
+        "Soul-Guide Lantern"
+      ],
+      "somewhat_relevant": [
+        "Lodestone Golem",
+        "Adaptive Automaton"
+      ],
+      "marginally_relevant": [
+        "Quicksilver Amulet",
+        "Runechanter's Pike"
+      ]
+    },
+    "Shape the Sands": {
+      "highly_relevant": [
+        "Cunning Breezedancer",
+        "Defeat",
+        "Youthful Scholar"
+      ],
+      "relevant": [
+        "Dirgur Nemesis",
+        "Glint",
+        "Dragon-Scarred Bear"
+      ],
+      "somewhat_relevant": [
+        "Kolaghan Stormsinger",
+        "Conifer Strider"
+      ],
+      "marginally_relevant": [
+        "Ojutai Interceptor",
+        "Vandalize"
+      ]
+    },
+    "Nishoba Brawler": {
+      "highly_relevant": [
+        "Resolute Reinforcements",
+        "Cut Down",
+        "Micromancer"
+      ],
+      "relevant": [
+        "Raff, Weatherlight Stalwart",
+        "Nael, Avizoa Aeronaut",
+        "Uurg, Spawn of Turg"
+      ],
+      "somewhat_relevant": [
+        "Rona, Sheoldred's Faithful",
+        "Weatherlight Compleated"
+      ],
+      "marginally_relevant": [
+        "Vohar, Vodalian Desecrator",
+        "Serra Redeemer"
+      ]
+    },
+    "Grand Master of Flowers": {
+      "highly_relevant": [
+        "Sphere of Annihilation",
+        "Demilich",
+        "Adult Gold Dragon"
+      ],
+      "relevant": [
+        "Asmodeus the Archfiend",
+        "Skeletal Swarming",
+        "Mordenkainen"
+      ],
+      "somewhat_relevant": [
+        "Zariel, Archduke of Avernus",
+        "The Book of Vile Darkness"
+      ],
+      "marginally_relevant": [
+        "Vorpal Sword",
+        "Wish"
+      ]
+    },
+    "Brilliant Restoration": {
+      "highly_relevant": [
+        "Sokenzan, Crucible of Defiance",
+        "Otawara, Soaring City",
+        "Tameshi, Reality Architect"
+      ],
+      "relevant": [
+        "Satsuki, the Living Lore",
+        "Ogre-Head Helm",
+        "Isshin, Two Heavens as One"
+      ],
+      "somewhat_relevant": [
+        "Eater of Virtue",
+        "Jugan Defends the Temple // Remnant of the Rising Star"
+      ],
+      "marginally_relevant": [
+        "Biting-Palm Ninja",
+        "Invoke Justice"
+      ]
+    },
+    "Minamo, School at Water's Edge": {
+      "highly_relevant": [
+        "Sosuke, Son of Seshiro",
+        "Nezumi Shortfang // Stabwhisker the Odious",
+        "Myojin of Life's Web"
+      ],
+      "relevant": [
+        "Shizo, Death's Storehouse",
+        "Tenza, Godo's Maul",
+        "Honor-Worn Shaku"
+      ],
+      "somewhat_relevant": [
+        "Marrow-Gnawer",
+        "Isamaru, Hound of Konda"
+      ],
+      "marginally_relevant": [
+        "Returned Reveler",
+        "Towering-Wave Mystic"
+      ]
+    },
+    "Calibrated Blast": {
+      "highly_relevant": [
+        "Inevitable Betrayal",
+        "Out of Time",
+        "Glimpse of Tomorrow"
+      ],
+      "relevant": [
+        "Timeless Dragon",
+        "Asmoranomardicadaistinaculdacar",
+        "Carth the Lion"
+      ],
+      "somewhat_relevant": [
+        "Rishadan Dockhand",
+        "Void Mirror"
+      ],
+      "marginally_relevant": [
+        "Endurance",
+        "Grief"
+      ]
+    },
+    "Phyrexian Broodlings": {
+      "highly_relevant": [
+        "Bone Shredder",
+        "Stand Firm",
+        "Phyrexian Denouncer"
+      ],
+      "relevant": [
+        "Goblin Psychopath",
+        "Phyrexian Defiler",
+        "Valor"
+      ],
+      "somewhat_relevant": [
+        "Fire Whip",
+        "Second Thoughts"
+      ],
+      "marginally_relevant": [
+        "Decree of Annihilation",
+        "Strength of Night"
+      ]
+    },
+    "Red Dragon": {
+      "highly_relevant": [
+        "Black Dragon",
+        "Gnoll Hunter",
+        "Displacer Beast"
+      ],
+      "relevant": [
+        "Owlbear",
+        "Sylvan Shepherd",
+        "Shessra, Death's Whisper"
+      ],
+      "somewhat_relevant": [
+        "Krydle of Baldur's Gate",
+        "Kalain, Reclusive Painter"
+      ],
+      "marginally_relevant": [
+        "Rimeshield Frost Giant",
+        "Trelasarra, Moon Dancer"
+      ]
+    },
+    "Quakebringer": {
+      "highly_relevant": [
+        "Starnheim Unleashed",
+        "Narfi, Betrayer King",
+        "Toralf, God of Fury // Toralf's Hammer"
+      ],
+      "relevant": [
+        "Immersturm Predator",
+        "King Narfi's Betrayal",
+        "The Raven's Warning"
+      ],
+      "somewhat_relevant": [
+        "Showdown of the Skalds",
+        "Orvar, the All-Form"
+      ],
+      "marginally_relevant": [
+        "Cosmos Charger",
+        "Tyvar Kell"
+      ]
+    },
+    "Predatory Impetus": {
+      "highly_relevant": [
+        "Steelbane Hydra",
+        "Workshop Elders",
+        "Molten Echoes"
+      ],
+      "relevant": [
+        "Stitcher Geralf",
+        "Plaxmanta",
+        "Evangel of Heliod"
+      ],
+      "somewhat_relevant": [
+        "Wistful Selkie",
+        "Soul's Majesty"
+      ],
+      "marginally_relevant": [
+        "Agent of Masks",
+        "Drown in Filth"
+      ]
+    },
+    "Herd Gnarr": {
+      "highly_relevant": [
+        "Detainment Spell",
+        "Savage Thallid",
+        "Sprout"
+      ],
+      "relevant": [
+        "Magus of the Candelabra",
+        "Sporesower Thallid",
+        "Primal Forcemage"
+      ],
+      "somewhat_relevant": [
+        "Thallid Germinator",
+        "Deep-Sea Kraken"
+      ],
+      "marginally_relevant": [
+        "Jaya Ballard, Task Mage",
+        "Thallid Shell-Dweller"
+      ]
+    },
+    "Word of Binding": {
+      "highly_relevant": [
+        "Sisters of the Flame",
+        "Hurr Jackal",
+        "Mind Bomb"
+      ],
+      "relevant": [
+        "Brainwash",
+        "White Mana Battery",
+        "Venom"
+      ],
+      "somewhat_relevant": [
+        "Leviathan",
+        "The Brute"
+      ],
+      "marginally_relevant": [
+        "Psionic Entity",
+        "Land Leeches"
+      ]
+    },
+    "Lightning Spear": {
+      "highly_relevant": [
+        "Soul of Migration",
+        "Spreading Insurrection",
+        "Altar of the Goyf"
+      ],
+      "relevant": [
+        "Graceful Restoration",
+        "Strike It Rich",
+        "Abiding Grace"
+      ],
+      "somewhat_relevant": [
+        "Arcbound Shikari",
+        "Recalibrate"
+      ],
+      "marginally_relevant": [
+        "Arcbound Mouser",
+        "Smell Fear"
+      ]
+    },
+    "Rip-Clan Crasher": {
+      "highly_relevant": [
+        "Banewasp Affliction",
+        "Onyx Goblet",
+        "Sangrite Surge"
+      ],
+      "relevant": [
+        "Bull Cerodon",
+        "Grixis Battlemage",
+        "Obelisk of Grixis"
+      ],
+      "somewhat_relevant": [
+        "Deft Duelist",
+        "Sky Ruin Drake"
+      ],
+      "marginally_relevant": [
+        "Kazandu Blademaster",
+        "Tidehollow Strix"
+      ]
+    },
+    "Glen Elendra Archmage": {
+      "highly_relevant": [
+        "Mothdust Changeling",
+        "Walker of the Grove",
+        "Woodfall Primus"
+      ],
+      "relevant": [
+        "War-Spike Changeling",
+        "Countryside Crusher",
+        "Arcbound Wanderer"
+      ],
+      "somewhat_relevant": [
+        "Mind Funeral",
+        "Meadowboon"
+      ],
+      "marginally_relevant": [
+        "Latchkey Faerie",
+        "Earwig Squad"
+      ]
+    },
+    "Mayor of Avabruck // Howlpack Alpha": {
+      "highly_relevant": [
+        "Ludevic's Test Subject // Ludevic's Abomination",
+        "Runic Repetition",
+        "Bump in the Night"
+      ],
+      "relevant": [
+        "Elite Inquisitor",
+        "Bloodcrazed Neonate",
+        "Global Ruin"
+      ],
+      "somewhat_relevant": [
+        "Unworthy Dead",
+        "Curse of the Bloody Tome"
+      ],
+      "marginally_relevant": [
+        "Skinthinner",
+        "Okina Nightwatch"
+      ]
+    },
+    "Stupefying Touch": {
+      "highly_relevant": [
+        "Cabal Ritual",
+        "Teroh's Faithful",
+        "Putrid Imp"
+      ],
+      "relevant": [
+        "Ichorid",
+        "Centaur Chieftain",
+        "Ring of Gix"
+      ],
+      "somewhat_relevant": [
+        "Sudden Strength",
+        "Aquamoeba"
+      ],
+      "marginally_relevant": [
+        "Memory Jar",
+        "Quiet Speculation"
+      ]
+    },
+    "Hunt the Weak": {
+      "highly_relevant": [
+        "Pressure Point",
+        "Take Down",
+        "Refurbish"
+      ],
+      "relevant": [
+        "Giant Spectacle",
+        "Dukhara Scavenger",
+        "Larger Than Life"
+      ],
+      "somewhat_relevant": [
+        "Wayward Giant",
+        "Venom Sliver"
+      ],
+      "marginally_relevant": [
+        "Tidy Conclusion",
+        "Curio Vendor"
+      ]
+    },
+    "Phantom Wurm": {
+      "highly_relevant": [
+        "Sidewinder Sliver",
+        "Spell Burst",
+        "Mindstab"
+      ],
+      "relevant": [
+        "Jhoira's Timebug",
+        "Dream Stalker",
+        "Greenseeker"
+      ],
+      "somewhat_relevant": [
+        "Errant Doomsayers",
+        "Drifter il-Dal"
+      ],
+      "marginally_relevant": [
+        "Spiketail Drakeling",
+        "Might Sliver"
+      ]
+    },
+    "Valakut Predator": {
+      "highly_relevant": [
+        "Wave-Wing Elemental",
+        "Makindi Sliderunner",
+        "Angel of Renewal"
+      ],
+      "relevant": [
+        "Reclaiming Vines",
+        "Broodhunter Wurm",
+        "Mire's Malice"
+      ],
+      "somewhat_relevant": [
+        "Eldrazi Devastator",
+        "Breaker of Armies"
+      ],
+      "marginally_relevant": [
+        "Stone Haven Medic",
+        "Drana's Emissary"
+      ]
+    },
+    "Mons's Goblin Raiders": {
+      "highly_relevant": [
+        "Jump",
+        "Mana Flare",
+        "War Mammoth"
+      ],
+      "relevant": [
+        "Wall of Ice",
+        "Wall of Brambles",
+        "Black Vise"
+      ],
+      "somewhat_relevant": [
+        "Ironroot Treefolk",
+        "Thoughtlace"
+      ],
+      "marginally_relevant": [
+        "Scavenging Ghoul",
+        "Roc of Kher Ridges"
+      ]
+    },
+    "Gurmag Drowner": {
+      "highly_relevant": [
+        "Marsh Hulk",
+        "Glade Watcher",
+        "Pinion Feast"
+      ],
+      "relevant": [
+        "Vandalize",
+        "Youthful Scholar",
+        "Glint"
+      ],
+      "somewhat_relevant": [
+        "Cunning Breezedancer",
+        "Kolaghan Stormsinger"
+      ],
+      "marginally_relevant": [
+        "Aerie Bowmasters",
+        "Monastery Loremaster"
+      ]
+    },
+    "Shining Armor": {
+      "highly_relevant": [
+        "Rosethorn Halberd",
+        "Syr Elenora, the Discerning",
+        "Triton Shorestalker"
+      ],
+      "relevant": [
+        "Renegade Demon",
+        "Sorcerer's Broom",
+        "Bartered Cow"
+      ],
+      "somewhat_relevant": [
+        "Augury Owl",
+        "Blow Your House Down"
+      ],
+      "marginally_relevant": [
+        "Groundswell",
+        "Exsanguinate"
+      ]
+    },
+    "Reckless One": {
+      "highly_relevant": [
+        "Goblin Cohort",
+        "Boggart Shenanigans",
+        "Emberwilde Augur"
+      ],
+      "relevant": [
+        "Skirk Fire Marshal",
+        "Skirk Drill Sergeant",
+        "Clickslither"
+      ],
+      "somewhat_relevant": [
+        "Akki Coalflinger",
+        "Goblin Sledder"
+      ],
+      "marginally_relevant": [
+        "Goblin Burrows",
+        "Deftblade Elite"
+      ]
+    },
+    "Heavy Infantry": {
+      "highly_relevant": [
+        "Enlightened Ascetic",
+        "Thornbow Archer",
+        "Suppression Bonds"
+      ],
+      "relevant": [
+        "Citadel Castellan",
+        "Calculated Dismissal",
+        "Akroan Sergeant"
+      ],
+      "somewhat_relevant": [
+        "Bounding Krasis",
+        "Weight of the Underworld"
+      ],
+      "marginally_relevant": [
+        "Healing Hands",
+        "Iroas's Champion"
+      ]
+    },
+    "Llanowar Behemoth": {
+      "highly_relevant": [
+        "Natural Affinity",
+        "Chastise",
+        "Blinding Angel"
+      ],
+      "relevant": [
+        "Gluttonous Zombie",
+        "Emperor Crocodile",
+        "Glory Seeker"
+      ],
+      "somewhat_relevant": [
+        "Giant Cockroach",
+        "Oracle's Attendants"
+      ],
+      "marginally_relevant": [
+        "Crossbow Infantry",
+        "Fleeting Image"
+      ]
+    },
+    "Kor Firewalker": {
+      "highly_relevant": [
+        "Browbeat",
+        "Chartooth Cougar",
+        "Genju of the Spires"
+      ],
+      "relevant": [
+        "Nettle Sentinel",
+        "Skirk Commando",
+        "Spikeshot Goblin"
+      ],
+      "somewhat_relevant": [
+        "Questing Phelddagrif",
+        "Invigorate"
+      ],
+      "marginally_relevant": [
+        "Court Hussar",
+        "Karona's Zealot"
+      ]
+    },
+    "Phylath, World Sculptor": {
+      "highly_relevant": [
+        "Omnath, Locus of Creation",
+        "Sea Gate Restoration // Sea Gate, Reborn",
+        "Inscription of Ruin"
+      ],
+      "relevant": [
+        "Skyclave Relic",
+        "Taborax, Hope's Demise",
+        "Forsaken Monument"
+      ],
+      "somewhat_relevant": [
+        "Verazol, the Split Current",
+        "Valakut Awakening // Valakut Stoneforge"
+      ],
+      "marginally_relevant": [
+        "Myriad Construct",
+        "Branchloft Pathway // Boulderloft Pathway"
+      ]
+    },
+    "Torrent Elemental": {
+      "highly_relevant": [
+        "Daghatar the Adamant",
+        "Mardu Strike Leader",
+        "Flamewake Phoenix"
+      ],
+      "relevant": [
+        "Shu Yun, the Silent Tempest",
+        "Shaman of the Great Hunt",
+        "Yasova Dragonclaw"
+      ],
+      "somewhat_relevant": [
+        "Soulfire Grand Master",
+        "Sandsteppe Mastodon"
+      ],
+      "marginally_relevant": [
+        "Warden of the First Tree",
+        "Arcbond"
+      ]
+    },
+    "Infernal Scarring": {
+      "highly_relevant": [
+        "Iroas's Champion",
+        "Bounding Krasis",
+        "Akroan Sergeant"
+      ],
+      "relevant": [
+        "Healing Hands",
+        "Enlightened Ascetic",
+        "Aven Battle Priest"
+      ],
+      "somewhat_relevant": [
+        "Heavy Infantry",
+        "Sphinx's Tutelage"
+      ],
+      "marginally_relevant": [
+        "Ringwarden Owl",
+        "Rhox Maulers"
+      ]
+    },
+    "Lich": {
+      "highly_relevant": [
+        "Contract from Below",
+        "Fastbond",
+        "Earthbind"
+      ],
+      "relevant": [
+        "Camouflage",
+        "Rock Hydra",
+        "Demonic Hordes"
+      ],
+      "somewhat_relevant": [
+        "Veteran Bodyguard",
+        "Forcefield"
+      ],
+      "marginally_relevant": [
+        "Roc of Kher Ridges",
+        "Blaze of Glory"
+      ]
+    },
+    "Show of Valor": {
+      "highly_relevant": [
+        "Liliana of the Dark Realms",
+        "Trollhide",
+        "Wild Guess"
+      ],
+      "relevant": [
+        "Jace, Memory Adept",
+        "Dark Favor",
+        "Tireless Missionaries"
+      ],
+      "somewhat_relevant": [
+        "Glorious Charge",
+        "Wring Flesh"
+      ],
+      "marginally_relevant": [
+        "Garruk's Horde",
+        "Indestructibility"
+      ]
+    },
+    "Slith Strider": {
+      "highly_relevant": [
+        "Pedantic Learning",
+        "Venser, the Sojourner",
+        "Aggravated Assault"
+      ],
+      "relevant": [
+        "Midnight Haunting",
+        "Brass Squire",
+        "Joraga Visionary"
+      ],
+      "somewhat_relevant": [
+        "Budoka Gardener // Dokai, Weaver of Life",
+        "Gustcloak Savior"
+      ],
+      "marginally_relevant": [
+        "Heavenly Blademaster",
+        "Mago del Gremio Golgari"
+      ]
+    },
+    "Savage Swipe": {
+      "highly_relevant": [
+        "Good-Fortune Unicorn",
+        "Bladeback Sliver",
+        "Thundering Djinn"
+      ],
+      "relevant": [
+        "Mist-Syndicate Naga",
+        "Irregular Cohort",
+        "Igneous Elemental"
+      ],
+      "somewhat_relevant": [
+        "Spinehorn Minotaur",
+        "Ruination Rioter"
+      ],
+      "marginally_relevant": [
+        "Graveshifter",
+        "Segovian Angel"
+      ]
+    },
+    "Jester's Mask": {
+      "highly_relevant": [
+        "Icy Prison",
+        "Minion of Leshrac",
+        "Earthlink"
+      ],
+      "relevant": [
+        "Demonic Consultation",
+        "Forgotten Lore",
+        "Krovikan Vampire"
+      ],
+      "somewhat_relevant": [
+        "Brine Shaman",
+        "Icequake"
+      ],
+      "marginally_relevant": [
+        "Adarkar Sentinel",
+        "Glacial Crevasses"
+      ]
+    },
+    "Siege Veteran": {
+      "highly_relevant": [
+        "Rescue Retriever",
+        "Titania, Gaea Incarnate",
+        "Artificer's Dragon"
+      ],
+      "relevant": [
+        "The Stone Brain",
+        "Mishra, Lost to Phyrexia",
+        "Geology Enthusiast"
+      ],
+      "somewhat_relevant": [
+        "Teferi, Temporal Pilgrim",
+        "Loran of the Third Path"
+      ],
+      "marginally_relevant": [
+        "Gixian Puppeteer",
+        "Fateful Handoff"
+      ]
+    },
+    "Temple Acolyte": {
+      "highly_relevant": [
+        "Royal Trooper",
+        "Overwhelming Forces",
+        "Merieke Ri Berit"
+      ],
+      "relevant": [
+        "Claws of Gix",
+        "Mycosynth Lattice",
+        "Giant Oyster"
+      ],
+      "somewhat_relevant": [
+        "Moon-Eating Dog",
+        "Visions of Beyond"
+      ],
+      "marginally_relevant": [
+        "Feral Throwback",
+        "Cadaverous Knight"
+      ]
+    },
+    "Sai, Master Thopterist": {
+      "highly_relevant": [
+        "One with the Machine",
+        "Palladia-Mors, the Ruiner",
+        "Isareth the Awakener"
+      ],
+      "relevant": [
+        "Infernal Reckoning",
+        "Resplendent Angel",
+        "Chromium, the Mutable"
+      ],
+      "somewhat_relevant": [
+        "Remorseful Cleric",
+        "Supreme Phantom"
+      ],
+      "marginally_relevant": [
+        "Vivien Reid",
+        "Patient Rebuilding"
+      ]
+    },
+    "Meddle": {
+      "highly_relevant": [
+        "Hair-Strung Koto",
+        "Oni-Cult Anvil",
+        "Spellheart Chimera"
+      ],
+      "relevant": [
+        "Necrogen Scudder",
+        "Gloomwidow",
+        "Festerhide Boar"
+      ],
+      "somewhat_relevant": [
+        "Mind Sludge",
+        "Firespout"
+      ],
+      "marginally_relevant": [
+        "Disciple of Griselbrand",
+        "Gainsay"
+      ]
+    },
+    "Tormenting Voice": {
+      "highly_relevant": [
+        "Cryptic Serpent",
+        "Destined // Lead",
+        "Trial of Solidarity"
+      ],
+      "relevant": [
+        "Decision Paralysis",
+        "Sixth Sense",
+        "Greater Sandwurm"
+      ],
+      "somewhat_relevant": [
+        "Hazoret's Monument",
+        "Spring // Mind"
+      ],
+      "marginally_relevant": [
+        "Crocodile of the Crossing",
+        "Cruel Reality"
+      ]
+    },
+    "Stone Giant": {
+      "highly_relevant": [
+        "Mesa Pegasus",
+        "Nether Shadow",
+        "Power Leak"
+      ],
+      "relevant": [
+        "Siren's Call",
+        "Plague Rats",
+        "Chaoslace"
+      ],
+      "somewhat_relevant": [
+        "Wall of Brambles",
+        "Jump"
+      ],
+      "marginally_relevant": [
+        "Timber Wolves",
+        "Scavenging Ghoul"
+      ]
+    },
+    "Necrogoyf": {
+      "highly_relevant": [
+        "Zabaz, the Glimmerwasp",
+        "Sanctum Weaver",
+        "Aeve, Progenitor Ooze"
+      ],
+      "relevant": [
+        "Territorial Kavu",
+        "Blazing Rootwalla",
+        "Nettlecyst"
+      ],
+      "somewhat_relevant": [
+        "Marble Gargoyle",
+        "Galvanic Relay"
+      ],
+      "marginally_relevant": [
+        "Brainstone",
+        "Ornithopter of Paradise"
+      ]
+    },
+    "In the Eye of Chaos": {
+      "highly_relevant": [
+        "Alchor's Tomb",
+        "Mana Matrix",
+        "Planar Gate"
+      ],
+      "relevant": [
+        "Wood Elemental",
+        "Acid Rain",
+        "Al-abara's Carpet"
+      ],
+      "somewhat_relevant": [
+        "Adun Oakenshield",
+        "Scarwood Bandits"
+      ],
+      "marginally_relevant": [
+        "Psychic Purge",
+        "Telekinesis"
+      ]
+    },
+    "Galestrike": {
+      "highly_relevant": [
+        "Scaled Behemoth",
+        "Decision Paralysis",
+        "Spidery Grasp"
+      ],
+      "relevant": [
+        "Bloodrage Brawler",
+        "Cursed Minotaur",
+        "Minotaur Sureshot"
+      ],
+      "somewhat_relevant": [
+        "Vow of Torment",
+        "Bitterblade Warrior"
+      ],
+      "marginally_relevant": [
+        "Hyena Pack",
+        "River Serpent"
+      ]
+    },
+    "Goblin Sky Raider": {
+      "highly_relevant": [
+        "Severed Legion",
+        "Dragon Roost",
+        "Ascendant Evincar"
+      ],
+      "relevant": [
+        "Cloud Sprite",
+        "Threaten",
+        "Cho-Manno, Revolutionary"
+      ],
+      "somewhat_relevant": [
+        "Contaminated Bond",
+        "Steadfast Guard"
+      ],
+      "marginally_relevant": [
+        "Gaea's Herald",
+        "Skyhunter Prowler"
+      ]
+    },
+    "Moonmist": {
+      "highly_relevant": [
+        "Drift of Phantasms",
+        "Mindmoil",
+        "Mago del Gremio Golgari"
+      ],
+      "relevant": [
+        "Ghostfire",
+        "Spurnmage Advocate",
+        "Entreat the Dead"
+      ],
+      "somewhat_relevant": [
+        "Shinka, the Bloodsoaked Keep",
+        "Warriors' Lesson"
+      ],
+      "marginally_relevant": [
+        "Shared Animosity",
+        "Loxodon Gatekeeper"
+      ]
+    },
+    "Soul Warden": {
+      "highly_relevant": [
+        "Vampire Aristocrat",
+        "High Ground",
+        "Coat of Arms"
+      ],
+      "relevant": [
+        "Stronghold Discipline",
+        "Graceful Reprieve",
+        "Crafty Pathmage"
+      ],
+      "somewhat_relevant": [
+        "Plagiarize",
+        "Shunt"
+      ],
+      "marginally_relevant": [
+        "Darksteel Colossus",
+        "Plated Rootwalla"
+      ]
+    },
+    "Funeral Charm": {
+      "highly_relevant": [
+        "Conspiracy",
+        "Undertaker",
+        "Honorable Passage"
+      ],
+      "relevant": [
+        "Shadow Guildmage",
+        "Undead Warchief",
+        "Orcish Settlers"
+      ],
+      "somewhat_relevant": [
+        "Warrior's Charge",
+        "Hand of Death"
+      ],
+      "marginally_relevant": [
+        "Teferi's Veil",
+        "Phyrexian Furnace"
+      ]
+    },
+    "Hollow Dogs": {
+      "highly_relevant": [
+        "Bull Hippo",
+        "Bereavement",
+        "Disorder"
+      ],
+      "relevant": [
+        "Okk",
+        "Reflexes",
+        "Persecute"
+      ],
+      "somewhat_relevant": [
+        "Wildfire",
+        "Hibernation"
+      ],
+      "marginally_relevant": [
+        "Oppression",
+        "Vernal Bloom"
+      ]
+    },
+    "Mobilization": {
+      "highly_relevant": [
+        "Ancestor's Chosen",
+        "Nomad Mythmaker",
+        "Steadfast Guard"
+      ],
+      "relevant": [
+        "Ghitu Encampment",
+        "Spark Elemental",
+        "Sky Weaver"
+      ],
+      "somewhat_relevant": [
+        "Primal Rage",
+        "Arcane Teachings"
+      ],
+      "marginally_relevant": [
+        "Razormane Masticore",
+        "Rage Weaver"
+      ]
+    },
+    "Slith Ascendant": {
+      "highly_relevant": [
+        "Ruthless Deathfang",
+        "Stonehorn Dignitary",
+        "Burning Anger"
+      ],
+      "relevant": [
+        "Twisted Image",
+        "Ohran Frostfang",
+        "Preeminent Captain"
+      ],
+      "somewhat_relevant": [
+        "Spontaneous Mutation",
+        "Lys Alana Bowmaster"
+      ],
+      "marginally_relevant": [
+        "Cursecatcher",
+        "Clock of Omens"
+      ]
+    },
+    "Tomb Robber": {
+      "highly_relevant": [
+        "Profane Procession // Tomb of the Dusk Rose",
+        "Journey to Eternity // Atzal, Cave of Eternity",
+        "Azor, the Lawbringer"
+      ],
+      "relevant": [
+        "Champion of Dusk",
+        "Form of the Dinosaur",
+        "Tendershoot Dryad"
+      ],
+      "somewhat_relevant": [
+        "Protean Raider",
+        "Release to the Wind"
+      ],
+      "marginally_relevant": [
+        "Timestream Navigator",
+        "Radiant Destiny"
+      ]
+    },
+    "March of Swirling Mist": {
+      "highly_relevant": [
+        "Risona, Asari Commander",
+        "Farewell",
+        "Goro-Goro, Disciple of Ryusei"
+      ],
+      "relevant": [
+        "Greasefang, Okiba Boss",
+        "Tribute to Horobi // Echo of Death's Wail",
+        "Lion Sash"
+      ],
+      "somewhat_relevant": [
+        "Mechtitan Core",
+        "Tezzeret, Betrayer of Flesh"
+      ],
+      "marginally_relevant": [
+        "Tatsunari, Toad Rider",
+        "Explosive Singularity"
+      ]
+    },
+    "Shatter the Sky": {
+      "highly_relevant": [
+        "Thassa, Deep-Dwelling",
+        "Uro, Titan of Nature's Wrath",
+        "Gallia of the Endless Dance"
+      ],
+      "relevant": [
+        "Elspeth, Sun's Nemesis",
+        "Purphoros, Bronze-Blooded",
+        "Kunoros, Hound of Athreos"
+      ],
+      "somewhat_relevant": [
+        "The Akroan War",
+        "Erebos, Bleak-Hearted"
+      ],
+      "marginally_relevant": [
+        "Haktos the Unscarred",
+        "The First Iroan Games"
+      ]
+    },
+    "The Golden Throne": {
+      "highly_relevant": [
+        "Resurrection Orb",
+        "Mortarion, Daemon Primarch",
+        "Keeper of Secrets"
+      ],
+      "relevant": [
+        "The Flesh Is Weak",
+        "Tyranid Prime",
+        "Out of the Tombs"
+      ],
+      "somewhat_relevant": [
+        "Bloodthirster",
+        "Thunderwolf Cavalry"
+      ],
+      "marginally_relevant": [
+        "Canoptek Spyder",
+        "Lokhust Heavy Destroyer"
+      ]
+    },
+    "Punishing Fire": {
+      "highly_relevant": [
+        "Sky Ruin Drake",
+        "Stonebrow, Krosan Hero",
+        "Mire Blight"
+      ],
+      "relevant": [
+        "Augury Adept",
+        "Bladetusk Boar",
+        "Ursapine"
+      ],
+      "somewhat_relevant": [
+        "Blade of the Bloodchief",
+        "Goblin Cadets"
+      ],
+      "marginally_relevant": [
+        "Spidersilk Net",
+        "Bogardan Rager"
+      ]
+    },
+    "Nekusar, the Mindrazer": {
+      "highly_relevant": [
+        "Ludevic, Necro-Alchemist",
+        "Tana, the Bloodsower",
+        "Akiri, Line-Slinger"
+      ],
+      "relevant": [
+        "Kydele, Chosen of Kruphix",
+        "Najeela, the Blade-Blossom",
+        "Rakdos, Lord of Riots"
+      ],
+      "somewhat_relevant": [
+        "Marath, Will of the Wild",
+        "Imoti, Celebrant of Bounty"
+      ],
+      "marginally_relevant": [
+        "Kraum, Ludevic's Opus",
+        "Tymna the Weaver"
+      ]
+    },
+    "Phyrexian War Beast": {
+      "highly_relevant": [
+        "Contagion",
+        "Yavimaya Ants",
+        "Phyrexian Boon"
+      ],
+      "relevant": [
+        "Phelddagrif",
+        "Shield Sphere",
+        "Feast or Famine"
+      ],
+      "somewhat_relevant": [
+        "Varchild's War-Riders",
+        "Bestial Fury"
+      ],
+      "marginally_relevant": [
+        "Exile",
+        "Energy Arc"
+      ]
+    },
+    "Savage Knuckleblade": {
+      "highly_relevant": [
+        "Mardu Hordechief",
+        "Kin-Tree Invocation",
+        "Leaping Master"
+      ],
+      "relevant": [
+        "Disowned Ancestor",
+        "Meandering Towershell",
+        "Rakshasa's Secret"
+      ],
+      "somewhat_relevant": [
+        "Longshot Squad",
+        "Shambling Attendants"
+      ],
+      "marginally_relevant": [
+        "Mardu Roughrider",
+        "Siegecraft"
+      ]
+    },
+    "Sapseep Forest": {
+      "highly_relevant": [
+        "Last Kiss",
+        "Marrow Bats",
+        "Mask of Avacyn"
+      ],
+      "relevant": [
+        "River Kelpie",
+        "Trip Noose",
+        "Three Dreams"
+      ],
+      "somewhat_relevant": [
+        "Fire-Belly Changeling",
+        "Hall of Gemstone"
+      ],
+      "marginally_relevant": [
+        "Voyager Staff",
+        "Giant Badger"
+      ]
+    },
+    "Swarm Intelligence": {
+      "highly_relevant": [
+        "Scavenger Grounds",
+        "Desert of the Fervent",
+        "The Locust God"
+      ],
+      "relevant": [
+        "Desert of the Mindful",
+        "Hazoret's Undying Fury",
+        "Ramunap Hydra"
+      ],
+      "somewhat_relevant": [
+        "Chaos Maw",
+        "Endless Sands"
+      ],
+      "marginally_relevant": [
+        "Uncage the Menagerie",
+        "Sidewinder Naga"
+      ]
+    },
+    "Staff of the Death Magus": {
+      "highly_relevant": [
+        "Staff of the Mind Magus",
+        "Staff of the Flame Magus",
+        "Verdant Haven"
+      ],
+      "relevant": [
+        "Hydrosurge",
+        "Show of Valor",
+        "Hoarding Dragon"
+      ],
+      "somewhat_relevant": [
+        "Staff of the Sun Magus",
+        "Tireless Missionaries"
+      ],
+      "marginally_relevant": [
+        "Ajani's Sunstriker",
+        "Back to Nature"
+      ]
+    },
+    "Ruthless Deathfang": {
+      "highly_relevant": [
+        "Ohran Frostfang",
+        "Taste of Death",
+        "Slith Ascendant"
+      ],
+      "relevant": [
+        "Kuldotha Phoenix",
+        "Crumbling Colossus",
+        "K'rrik, Son of Yawgmoth"
+      ],
+      "somewhat_relevant": [
+        "Spearbreaker Behemoth",
+        "Reito Lantern"
+      ],
+      "marginally_relevant": [
+        "Fated Return",
+        "Power Conduit"
+      ]
+    },
+    "Ravenous Chupacabra": {
+      "highly_relevant": [
+        "Dusk Legion Zealot",
+        "Perilous Myr",
+        "Cloudshift"
+      ],
+      "relevant": [
+        "Raging Regisaur",
+        "Orazca Frillback",
+        "Ambassador Oak"
+      ],
+      "somewhat_relevant": [
+        "Curious Obsession",
+        "Aggressive Urge"
+      ],
+      "marginally_relevant": [
+        "Waterknot",
+        "Skymarcher Aspirant"
+      ]
+    },
+    "Wild Mongrel": {
+      "highly_relevant": [
+        "Basking Rootwalla",
+        "Armadillo Cloak",
+        "Blastoderm"
+      ],
+      "relevant": [
+        "Quiet Speculation",
+        "Phantom Centaur",
+        "Circular Logic"
+      ],
+      "somewhat_relevant": [
+        "Genju of the Cedars",
+        "Goblin Game"
+      ],
+      "marginally_relevant": [
+        "Carrion Feeder",
+        "Cabal Ritual"
+      ]
+    },
+    "Necrotic Sliver": {
+      "highly_relevant": [
+        "Shivan Meteor",
+        "Gossamer Phantasm",
+        "Sinew Sliver"
+      ],
+      "relevant": [
+        "Rough // Tumble",
+        "Blightspeaker",
+        "Dead // Gone"
+      ],
+      "somewhat_relevant": [
+        "Extirpate",
+        "Reflex Sliver"
+      ],
+      "marginally_relevant": [
+        "Erratic Mutation",
+        "Porphyry Nodes"
+      ]
+    },
+    "Squadron Hawk": {
+      "highly_relevant": [
+        "Leatherback Baloth",
+        "Quirion Ranger",
+        "Sapphire Charm"
+      ],
+      "relevant": [
+        "Pyre Charger",
+        "Carbonize",
+        "Shoreline Ranger"
+      ],
+      "somewhat_relevant": [
+        "Cabal Therapy",
+        "Saproling Cluster"
+      ],
+      "marginally_relevant": [
+        "Wild Nacatl",
+        "Flame Javelin"
+      ]
+    },
+    "Snarling Wolf": {
+      "highly_relevant": [
+        "Bramble Armor",
+        "Graf Reaver",
+        "Inspired Idea"
+      ],
+      "relevant": [
+        "Howling Moon",
+        "Demonic Bargain",
+        "Savior of Ollenbock"
+      ],
+      "somewhat_relevant": [
+        "Curse of Hospitality",
+        "Kessig Wolfrider"
+      ],
+      "marginally_relevant": [
+        "Headless Rider",
+        "Patchwork Crawler"
+      ]
+    },
+    "Grand Crescendo": {
+      "highly_relevant": [
+        "Vivien's Stampede",
+        "Mezzio Mugger",
+        "Skyway Robber"
+      ],
+      "relevant": [
+        "Agent's Toolkit",
+        "Rose Room Treasurer",
+        "Body Count"
+      ],
+      "somewhat_relevant": [
+        "Bribe Taker",
+        "Seize the Spotlight"
+      ],
+      "marginally_relevant": [
+        "Cabaretti Confluence",
+        "Next of Kin"
+      ]
+    },
+    "Tempest Efreet": {
+      "highly_relevant": [
+        "Piety",
+        "Rebirth",
+        "White Mana Battery"
+      ],
+      "relevant": [
+        "Pit Scorpion",
+        "Sunken City",
+        "The Brute"
+      ],
+      "somewhat_relevant": [
+        "Sisters of the Flame",
+        "Abomination"
+      ],
+      "marginally_relevant": [
+        "Land Leeches",
+        "Green Mana Battery"
+      ]
+    },
+    "Seize the Spoils": {
+      "highly_relevant": [
+        "Swamp Mosquito",
+        "Hail Storm",
+        "Angel"
+      ],
+      "relevant": [
+        "Spirit",
+        "Familiar's Ruse",
+        "Shinka, the Bloodsoaked Keep"
+      ],
+      "somewhat_relevant": [
+        "Selesnya Keyrune",
+        "Carrion Beetles"
+      ],
+      "marginally_relevant": [
+        "Festering Evil",
+        "Loxodon Gatekeeper"
+      ]
+    },
+    "Painful Memories": {
+      "highly_relevant": [
+        "Illicit Auction",
+        "Abyssal Hunter",
+        "Lead Golem"
+      ],
+      "relevant": [
+        "Pearl Dragon",
+        "Unseen Walker",
+        "Harmattan Efreet"
+      ],
+      "somewhat_relevant": [
+        "Amber Prison",
+        "Psychic Transfer"
+      ],
+      "marginally_relevant": [
+        "Fallow Earth",
+        "Ekundu Griffin"
+      ]
+    },
+    "Orcish Settlers": {
+      "highly_relevant": [
+        "Firestorm",
+        "Noble Benefactor",
+        "Vodalian Illusionist"
+      ],
+      "relevant": [
+        "Necratog",
+        "Living Wish",
+        "Lightning Reflexes"
+      ],
+      "somewhat_relevant": [
+        "Honorable Passage",
+        "Ovinomancer"
+      ],
+      "marginally_relevant": [
+        "Stand // Deliver",
+        "Peace Talks"
+      ]
+    },
+    "Thoughtlace": {
+      "highly_relevant": [
+        "Mana Flare",
+        "Phantasmal Forces",
+        "Conservator"
+      ],
+      "relevant": [
+        "Holy Armor",
+        "Earthbind",
+        "Burrowing"
+      ],
+      "somewhat_relevant": [
+        "Uthden Troll",
+        "Dwarven Weaponsmith"
+      ],
+      "marginally_relevant": [
+        "Dwarven Warriors",
+        "Wall of Ice"
+      ]
+    },
+    "Honorable Passage": {
+      "highly_relevant": [
+        "Fallen Askari",
+        "Orcish Settlers",
+        "Ovinomancer"
+      ],
+      "relevant": [
+        "Shadow Guildmage",
+        "Firestorm",
+        "Funeral Charm"
+      ],
+      "somewhat_relevant": [
+        "Suq'Ata Lancer",
+        "Undiscovered Paradise"
+      ],
+      "marginally_relevant": [
+        "Noble Benefactor",
+        "Vodalian Illusionist"
+      ]
+    },
+    "Waker of the Wilds": {
+      "highly_relevant": [
+        "Bishop of Rebirth",
+        "Dreamcaller Siren",
+        "Fell Flagship"
+      ],
+      "relevant": [
+        "Fathom Fleet Captain",
+        "Rampaging Ferocidon",
+        "Settle the Wreckage"
+      ],
+      "somewhat_relevant": [
+        "Ruin Raider",
+        "Priest of the Wakening Sun"
+      ],
+      "marginally_relevant": [
+        "Vona, Butcher of Magan",
+        "Shadowed Caravel"
+      ]
+    },
+    "Masked Vandal": {
+      "highly_relevant": [
+        "Frost Bite",
+        "Usher of the Fallen",
+        "Poison the Cup"
+      ],
+      "relevant": [
+        "Reflections of Littjara",
+        "Skemfar Avenger",
+        "Koll, the Forgemaster"
+      ],
+      "somewhat_relevant": [
+        "Mystic Reflection",
+        "Harald, King of Skemfar"
+      ],
+      "marginally_relevant": [
+        "Blood on the Snow",
+        "Halvar, God of Battle // Sword of the Realms"
+      ]
+    },
+    "Wojek Bodyguard": {
+      "highly_relevant": [
+        "Goblin Locksmith",
+        "Bartizan Bats",
+        "Leapfrog"
+      ],
+      "relevant": [
+        "Dazzling Lights",
+        "Cosmotronic Wave",
+        "Mephitic Vapors"
+      ],
+      "somewhat_relevant": [
+        "Barging Sergeant",
+        "Join Shields"
+      ],
+      "marginally_relevant": [
+        "Ochran Assassin",
+        "Maximize Velocity"
+      ]
+    }
+  }
+}

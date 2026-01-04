@@ -23,21 +23,21 @@ def export_decks_metadata() -> bool:
     export_cmd = backend_dir / "cmd" / "export-hetero" / "main.go"
     
     if not export_cmd.exists():
-        print(f"❌ Export command not found: {export_cmd}")
+        print(f"Error: Export command not found: {export_cmd}")
         return False
-    
+ 
     # Find data directory
     data_dir = backend_dir / "data-full" / "games" / "magic"
     if not data_dir.exists():
-        print(f"❌ Data directory not found: {data_dir}")
+        print(f"Error: Data directory not found: {data_dir}")
         return False
     
     output_file = PATHS.decks_with_metadata
     output_file.parent.mkdir(parents=True, exist_ok=True)
     
     print(f"Exporting decks with metadata...")
-    print(f"  Data dir: {data_dir}")
-    print(f"  Output: {output_file}")
+    print(f" Data dir: {data_dir}")
+    print(f" Output: {output_file}")
     
     try:
         result = subprocess.run(
@@ -55,16 +55,16 @@ def export_decks_metadata() -> bool:
             print(f"✓ Exported {count} decks to {output_file}")
             return True
         else:
-            print("❌ Output file not created")
+            print("Error: Output file not created")
             return False
-            
+    
     except subprocess.CalledProcessError as e:
-        print(f"❌ Export failed: {e}")
-        print(f"  stdout: {e.stdout}")
-        print(f"  stderr: {e.stderr}")
+        print(f"Error: Export failed: {e}")
+        print(f" stdout: {e.stdout}")
+        print(f" stderr: {e.stderr}")
         return False
     except FileNotFoundError:
-        print("❌ Go not found. Install Go to export decks.")
+        print("Error: Go not found. Install Go to export decks.")
         return False
 
 
@@ -83,14 +83,14 @@ def main() -> int:
     if export_decks_metadata():
         return 0
     else:
-        print("\n❌ Failed to export decks metadata")
-        print("  You may need to:")
-        print("  1. Ensure Go is installed")
-        print("  2. Ensure data exists in src/backend/data-full/games/magic/")
-        print("  3. Run manually: cd src/backend && go run cmd/export-hetero/main.go data-full/games/magic ../../data/processed/decks_with_metadata.jsonl")
+        print("\nError: Failed to export decks metadata")
+        print(" You may need to:")
+        print(" 1. Ensure Go is installed")
+        print(" 2. Ensure data exists in src/backend/data-full/games/magic/")
+        print(" 3. Run manually: cd src/backend && go run cmd/export-hetero/main.go data-full/games/magic ../../data/processed/decks_with_metadata.jsonl")
         return 1
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+ sys.exit(main())
 

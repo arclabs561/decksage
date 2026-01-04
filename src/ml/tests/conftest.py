@@ -1,121 +1,151 @@
-"""Pytest configuration and fixtures.
+"""Pytest configuration and shared fixtures for Tier 0 & Tier 1 tests."""
 
-Centralizes environment loading and provides an API state isolation fixture.
-"""
+from __future__ import annotations
 
-import os
-import sys
-from contextlib import contextmanager
+import json
+import tempfile
 from pathlib import Path
+from typing import Any
 
 import pytest
 
-try:
-    # Load .env once for all tests (respects user's preference to use dotenv)
-    from dotenv import load_dotenv
-
-    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
-except Exception:
-    # dotenv is optional for unit tests
-    pass
+# Set up project paths
+from ml.utils.path_setup import setup_project_paths
+setup_project_paths()
 
 
-@contextmanager
-def _snapshot_api_state():
-    """Capture and restore ml.api state to avoid cross-test leakage."""
-    st = None
-    snapshot = {}
-    try:
-        try:
-            import api as api_mod
-        except Exception:
-            # API module not needed for all tests; skip snapshotting
-            yield None
-            return
-
-        st = api_mod.get_state()
-        snapshot = {
-            "embeddings": getattr(st, "embeddings", None),
-            "graph_data": getattr(st, "graph_data", None),
-            "model_info": getattr(st, "model_info", None),
-            "fusion_default_weights": getattr(st, "fusion_default_weights", None),
-            "card_attrs": getattr(st, "card_attrs", None),
-        }
-        yield st
-    finally:
-        if st and snapshot:
-            try:
-                st.embeddings = snapshot.get("embeddings")
-                st.graph_data = snapshot.get("graph_data")
-                if "model_info" in snapshot:
-                    st.model_info = snapshot["model_info"]
-                if "fusion_default_weights" in snapshot:
-                    st.fusion_default_weights = snapshot["fusion_default_weights"]
-                if "card_attrs" in snapshot:
-                    st.card_attrs = snapshot["card_attrs"]
-            except Exception:
-                # If state shape changed, ignore
-                pass
-
-
-@pytest.fixture()
-def api_state_isolation(monkeypatch):
-    """Isolate ml.api global state and clear env that flips readiness.
-
-    - Clears envs that toggle startup behavior.
-    - Restores ml.api state after each test.
+@pytest.fixture
+def temp_test_set(tmp_path: Path) -> Path:
+    """Create a temporary test set file for testing."""
+    test_set_path = tmp_path / "test_set.json"
     
-    NOTE: Not autouse. Explicitly request this fixture in API tests that need isolation.
-    Removed autouse=True because it was causing slow collection by importing api module
-    for ALL tests, even those that don't use the API.
-    """
-    # Ensure startup loader does not try to load embeddings/graph from env
-    monkeypatch.delenv("EMBEDDINGS_PATH", raising=False)
-    monkeypatch.delenv("PAIRS_PATH", raising=False)
+    test_data = {
+        "version": "test",
+        "game": "magic",
+        "queries": {
+            f"query_{i}": {
+                "highly_relevant": [f"card_{i}_1", f"card_{i}_2"],
+                "relevant": [f"card_{i}_3"],
+                "somewhat_relevant": [],
+            }
+            for i in range(100)
+        },
+    }
+    
+    with open(test_set_path, "w") as f:
+        json.dump(test_data, f)
+    
+    return test_set_path
 
-    with _snapshot_api_state():
-        # Normalize CWD to repository root so top-level scripts resolve
-        try:
-            # Repo root is three levels up from src/ml/tests (→ decksage)
-            repo_root = Path(__file__).resolve().parents[3]
-            os.chdir(repo_root)
-        except Exception:
-            # Fallback to original behavior
-            os.chdir(Path(__file__).parent)
-        yield
+
+@pytest.fixture
+def temp_decks_file(tmp_path: Path) -> Path:
+    """Create a temporary decks file for testing."""
+    decks_path = tmp_path / "decks.jsonl"
+    
+    decks = [
+        {
+            "source": "magic_tournament",
+            "partitions": [
+                {
+                    "name": "Main",
+                    "cards": [
+                        {"name": f"Card_{i}", "count": 4}
+                        for i in range(30)
+                    ],
+                }
+            ],
+        }
+        for _ in range(20)
+    ]
+    
+    with open(decks_path, "w") as f:
+        for deck in decks:
+            f.write(json.dumps(deck) + "\n")
+    
+    return decks_path
+
+
+@pytest.fixture
+def sample_deck() -> dict[str, Any]:
+    """Create a sample deck for testing."""
+    return {
+        "source": "magic_tournament",
+        "partitions": [
+            {
+                "name": "Main",
+                "cards": [
+                    {"name": "Lightning Bolt", "count": 4},
+                    {"name": "Rift Bolt", "count": 4},
+                    {"name": "Lava Spike", "count": 4},
+                    {"name": "Chain Lightning", "count": 4},
+                    {"name": "Mountain", "count": 20},
+                ],
+            },
+            {
+                "name": "Sideboard",
+                "cards": [
+                    {"name": "Smash to Smithereens", "count": 3},
+                ],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def mock_fusion_system():
+    """Create a mock fusion similarity system."""
+    from unittest.mock import MagicMock
+    
+    mock_fusion = MagicMock()
+    mock_fusion.similar = MagicMock(
+        return_value=[
+            ("Rift Bolt", 0.95),
+            ("Chain Lightning", 0.90),
+            ("Lava Spike", 0.85),
+            ("Fireblast", 0.80),
+            ("Lightning Strike", 0.75),
+        ]
+    )
+    
+    return mock_fusion
+
+
+@pytest.fixture
+def mock_tag_set_fn():
+    """Create a mock functional tagger."""
+    def tag_fn(card: str) -> set[str]:
+        tags = {
+            "Lightning Bolt": {"burn", "removal", "instant"},
+            "Rift Bolt": {"burn", "sorcery"},
+            "Lava Spike": {"burn", "sorcery"},
+            "Chain Lightning": {"burn", "instant"},
+            "Mountain": {"land", "basic"},
+        }
+        return tags.get(card, set())
+    
+    return tag_fn
+
+
+@pytest.fixture
+def mock_cmc_fn():
+    """Create a mock CMC function."""
+    def cmc_fn(card: str) -> int | None:
+        cmcs = {
+            "Lightning Bolt": 1,
+            "Rift Bolt": 2,
+            "Lava Spike": 1,
+            "Chain Lightning": 2,
+            "Mountain": 0,
+        }
+        return cmcs.get(card)
+    
+    return cmc_fn
 
 
 @pytest.fixture()
 def api_client():
-    """Yield a FastAPI TestClient with isolated ml.api state."""
-    try:
-        from fastapi.testclient import TestClient
-    except Exception:
-        pytest.skip("fastapi not installed")
-
-    # Initialize through the shim to ensure the router is mounted
-    from ..api import api
-
-    with _snapshot_api_state():
-        # Ensure env-driven startup does not load embeddings/graph
-        os.environ.pop("EMBEDDINGS_PATH", None)
-        os.environ.pop("PAIRS_PATH", None)
-        os.environ.pop("ATTRIBUTES_PATH", None)
-
-        # Explicitly reset state before yielding the client for each test
-        state = api.get_state()
-        state.embeddings = None
-        state.graph_data = None
-        state.card_attrs = None
-        state.fusion_default_weights = None
-        state.model_info = {}
-
-        # Also clear legacy module-level globals so adoption doesn't leak across tests
-        try:
-            api.embeddings = None
-            api.graph_data = None
-            api.model_info = {}
-        except Exception:
-            pass
-
-        yield TestClient(api.app)
+    """Create a test client for the API."""
+    from ml.api.api import app
+    from fastapi.testclient import TestClient
+    return TestClient(app)

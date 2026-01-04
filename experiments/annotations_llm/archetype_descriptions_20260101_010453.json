@@ -1,0 +1,133 @@
+[
+  {
+    "archetype_name": "Raging Bolt Ogerpon",
+    "format": "Standard",
+    "description": "A multi-energy type control deck that leverages Raging Bolt and Ogerpon ex as primary attackers, supported by a robust utility engine featuring Fezandipiti ex for energy acceleration and Mew ex for versatile attacking options. The deck uses Area Zero Underdepths for draw consistency and multiple energy types (Fighting, Grass, Lightning) to power diverse threats.",
+    "strategy": "This deck wins through sustained pressure with versatile attackers that can adapt to different matchups. Raging Bolt provides powerful Lightning-based offense, while Ogerpon ex offers Grass-type aggression. Fezandipiti ex serves as both an energy accelerator and secondary attacker. The deck uses Ditto as a flexible starter that can evolve into whatever the matchup requires, while Mew ex provides additional attacking versatility. Earthen Vessel and Energy Retrieval maintain energy flow, and Boss's Orders/Crispin provide crucial knockout timings. The deck grinds out wins through resource advantage and flexible threat deployment.",
+    "core_cards": [
+      "Raging Bolt ex",
+      "Ogerpon ex",
+      "Area Zero Underdepths",
+      "Boss's Orders",
+      "Crispin",
+      "Ditto",
+      "Earthen Vessel",
+      "Energy Retrieval",
+      "Fan Rotom",
+      "Fezandipiti ex",
+      "Fighting Energy",
+      "Grass Energy",
+      "Latias ex",
+      "Lightning Energy",
+      "Mew ex",
+      "Nest Ball",
+      "Hoothoot"
+    ],
+    "flex_slots": [
+      "Iono",
+      "Jamming Tower",
+      "Squawkabilly ex",
+      "Professor Turo's Scenario"
+    ],
+    "key_features": [
+      "Multi-energy toolbox strategy",
+      "Flexible attacker selection based on matchup",
+      "Energy acceleration through Fezandipiti ex",
+      "High utility with Ditto/Mew ex adaptation",
+      "Resource-focused grinding gameplan",
+      "Stadium control with Area Zero Underdepths",
+      "Medium-paced setup with sustained pressure"
+    ],
+    "typical_mana_curve": "Medium curve",
+    "interaction_level": "Medium interaction",
+    "budget_range": "Expensive"
+  },
+  {
+    "archetype_name": "Gholdengo ex Toolbox",
+    "format": "Standard",
+    "description": "A control-oriented deck built around Gholdengo ex's ability to use different Energy types from the discard pile to attack, paired with powerful utility attackers like Genesect ex and Fezandipiti ex. The deck leverages Ciphermaniac's Codebreaking to mill Energy into the discard pile and uses Arven/Energy Search Pro for consistency. Gimmighoul evolves into Gholdengo ex as the primary attacker, utilizing multiple Energy types (Darkness, Fighting, Fire, Grass) to enable flexible offensive options.",
+    "strategy": "The deck wins by establishing Gholdengo ex as a versatile attacker that can hit different Pok\u00e9mon weaknesses by utilizing diverse Energy types from the discard pile. It uses Ciphermaniac's Codebreaking to mill Energy into discard, then leverages Gholdengo ex's attacks which draw power from discarded Energy. Genesect ex and Fezandipiti ex serve as secondary attackers to handle specific matchups. The deck controls the board with Boss's Orders for KO gust targets while maintaining Energy acceleration through Earthen Vessel and Energy Search Pro. Tool options like Air Balloon provide mobility and switching flexibility.",
+    "core_cards": [
+      "Gholdengo ex",
+      "Gimmighoul",
+      "Ciphermaniac's Codebreaking",
+      "Arven",
+      "Boss's Orders",
+      "Buddy-Buddy Poffin",
+      "Energy Search Pro",
+      "Genesect ex",
+      "Fezandipiti ex",
+      "Earthen Vessel",
+      "Air Balloon",
+      "Darkness Energy",
+      "Fighting Energy",
+      "Fire Energy",
+      "Grass Energy"
+    ],
+    "flex_slots": [
+      "Gholdengo (non-ex)",
+      "Tool Scrapper",
+      "Ultra Ball",
+      "Additional tech attackers",
+      "Additional Tool cards",
+      "Additional Energy ratios"
+    ],
+    "key_features": [
+      "Multi-type Energy toolbox strategy",
+      "Self-mill Engine with Ciphermaniac's Codebreaking",
+      "Versatile attacker coverage against multiple weaknesses",
+      "High consistency through Arven chains",
+      "Control elements via Boss's Orders",
+      "Flexible tech attacker slots (Genesect ex, Fezandipiti ex)",
+      "Mid-game setup focused"
+    ],
+    "typical_mana_curve": "Medium curve",
+    "interaction_level": "medium interaction",
+    "budget_range": "expensive"
+  },
+  {
+    "archetype_name": "Dragapult Dusknoir",
+    "format": "Standard",
+    "description": "A Stage 2 evolution-focused control deck that uses Dragapult ex's spread damage alongside Dusknoir's \"Panic Program\" ability to manipulate damage counters for targeted knockouts. The deck combines damage spread, counter manipulation, and disruption through gust effects to control the pace of the game and pick off key threats efficiently.",
+    "strategy": "The deck wins through a multi-pronged control strategy: Dragapult ex spreads damage across the opponent's bench with \"Phantom Dive,\" then Dusknoir's ability moves these damage counters to secure precise knockouts on high-value targets. Bloodmoon Ursaluna ex provides additional offensive pressure and energy disruption. The deck uses Buddy-Buddy Poffin and Budew for consistent setup, while Boss's Orders and Counter Catcher enable surgical removal of threats. Fezandipiti ex offers healing and additional attacker options. The strategy is to establish board control through spread damage, then convert accumulated damage into eliminating key Pokemon at critical moments.",
+    "core_cards": [
+      "Dragapult ex",
+      "Drakloak",
+      "Dreepy",
+      "Dusknoir",
+      "Dusclops",
+      "Duskull",
+      "Bloodmoon Ursaluna ex",
+      "Fezandipiti ex",
+      "Buddy-Buddy Poffin",
+      "Budew",
+      "Boss's Orders",
+      "Counter Catcher",
+      "Hawlucha",
+      "Hilda",
+      "Fire Energy"
+    ],
+    "flex_slots": [
+      "Nest Ball",
+      "Rare Candy",
+      "additional gust effects",
+      "additional draw supporters",
+      "switching cards",
+      "tech attackers"
+    ],
+    "key_features": [
+      "Stage 2 evolution heavy",
+      "Damage counter manipulation",
+      "Spread damage strategy",
+      "Control-oriented gameplay",
+      "High setup requirement",
+      "Multi-type attacker options",
+      "Disruption through gust effects",
+      "Requires precise sequencing",
+      "Strong mid-to-late game"
+    ],
+    "typical_mana_curve": "High curve",
+    "interaction_level": "heavy interaction",
+    "budget_range": "expensive"
+  }
+]

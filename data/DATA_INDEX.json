@@ -1,0 +1,50 @@
+{
+  "timestamp": "2025-12-30T20:03:03.215768",
+  "test_sets": {
+    "yugioh": {
+      "file": "experiments/test_set_unified_yugioh.json",
+      "queries": 58,
+      "total_labels": 1065
+    },
+    "magic": {
+      "file": "experiments/test_set_unified_magic.json",
+      "queries": 940,
+      "total_labels": 10569
+    },
+    "pokemon": {
+      "file": "experiments/test_set_unified_pokemon.json",
+      "queries": 58,
+      "total_labels": 1175
+    }
+  },
+  "embeddings": {
+    "total": 1,
+    "directory": "data/embeddings",
+    "files": [
+      "production.wv"
+    ]
+  },
+  "annotations": {
+    "total": 0,
+    "directory": "data/annotations",
+    "files": []
+  },
+  "processed_data": {
+    "total": 3,
+    "directory": "data/processed",
+    "files": [
+      {
+        "name": "card_attributes_enriched.csv",
+        "size_mb": 6.0
+      },
+      {
+        "name": "card_attributes_minimal.csv",
+        "size_mb": 0.6
+      },
+      {
+        "name": "pairs_large.csv",
+        "size_mb": 265.8
+      }
+    ]
+  }
+}

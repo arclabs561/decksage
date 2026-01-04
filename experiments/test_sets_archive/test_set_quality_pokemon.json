@@ -1,0 +1,654 @@
+{
+  "game": "pokemon",
+  "sources": {
+    "stratified_sampling": 100,
+    "difficulty_distributed": 2
+  },
+  "queries": {
+    "Subtle Strike": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gush": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Snuff Out": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Talons of Wildwood": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skyspear Cavalry": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sword of Vengeance": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sparkmage Apprentice": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Nantuko Cultivator": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Maelstrom Archangel": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sunrise Cavalier": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kami of Transience": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Cosmos Charger": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Quakefoot Cyclops": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Urza's Factory": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Thoughtseize": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mire Triton": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "The Shattered States Era // Nameless Conqueror": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Generator Servant": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Territorial Scythecat": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mirari's Wake": {
+      "type": "stratified_tier_1_very_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pyromancer's Goggles": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heavenly Blademaster": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Triassic Egg": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Portcullis Vine": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Heroic Reinforcements": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gingerbrute": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Rock Sled": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "The Circle of Loyalty": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Soldevi Machinist": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tuinvale Treefolk // Oaken Boon": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rain of Thorns": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Fyndhorn Brownie": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Liliana's Specter": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Snarespinner": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Squadron Hawk": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tightening Coils": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Two-Headed Sliver": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Thoughtlace": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Selvala, Explorer Returned": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Saheeli, Sublime Artificer": {
+      "type": "stratified_tier_2_popular",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Wicked Akuba": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Standing Army": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Orbe invernal": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Magma Giant": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hearth Charm": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Jaded Response": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skyclave Sentinel": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Jedit Ojanen": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Perplexing Chimera": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Varchild's Crusader": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ruin Raider": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kyscu Drake": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Scarecrone": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Karoo": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tidal Courier": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Stronghold Biologist": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ghastly Demise": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Graverobber Spider": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Skirsdag Cultist": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Two-Headed Zombie": {
+      "type": "stratified_tier_3_medium",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Font of Ire": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Rampage of the Clans": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ulamog, the Ceaseless Hunger": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mageta the Lion": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Relic Golem": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Undergrowth Champion": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Teleportal": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mind's Dilation": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Underworld Fires": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Cradle of Safety": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Llanowar Druid": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Kitesail Scout": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Shadow Alley Denizen": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Holy Mantle": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Mischievous Quanar": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Cleric of the Forward Order": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Vivien's Grizzly": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Teferi's Time Twist": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Nikya of the Old Ways": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Overwhelming Remorse": {
+      "type": "stratified_tier_4_uncommon",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Treespring Lorian": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Spawnbinder Mage": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Symbol of Unsummoning": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tyrannize": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Temp\u00eate fracassante": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Tori D'Avenant, Fury Rider": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goblin Freerunner": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Synod Sanctum": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Psychic Transfer": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Hedron Crawler": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Swooping Talon": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Goring Ceratops": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Sootstoke Kindler": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Pilfer": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Gravelgill Axeshark": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Toxic Abomination": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Molderhulk": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Ideas Unbound": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Psychogenic Probe": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Nirkana Cutthroat": {
+      "type": "stratified_tier_5_rare",
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": []
+    },
+    "Fleshbag Marauder": {
+      "type": "difficulty_medium",
+      "highly_relevant": [],
+      "relevant": [
+        "Swamp"
+      ],
+      "somewhat_relevant": [],
+      "difficulty": "medium"
+    },
+    "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom": {
+      "type": "edge_case_rare_combo",
+      "highly_relevant": [
+        "Zndrsplt, Eye of Wisdom // Zndrsplt, Eye of Wisdom"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "difficulty": "hard"
+    }
+  },
+  "quality_validation": {
+    "total_queries": 102,
+    "coverage": {
+      "in_training_data": 22,
+      "not_in_training_data": 80,
+      "coverage_percentage": 21.568627450980394
+    },
+    "label_distribution": {
+      "avg_highly_relevant": 0.5,
+      "avg_relevant": 0.5,
+      "avg_somewhat_relevant": 0.0
+    },
+    "difficulty_distribution": {
+      "unknown": 100,
+      "medium": 1,
+      "hard": 1
+    },
+    "type_distribution": {
+      "stratified_tier_1_very_popular": 20,
+      "stratified_tier_2_popular": 20,
+      "stratified_tier_3_medium": 20,
+      "stratified_tier_4_uncommon": 20,
+      "stratified_tier_5_rare": 20,
+      "difficulty_medium": 1,
+      "edge_case_rare_combo": 1
+    }
+  }
+}

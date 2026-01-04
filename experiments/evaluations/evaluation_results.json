@@ -1,0 +1,397 @@
+{
+  "test_set": "experiments/test_set_canonical_magic.json",
+  "results": {
+    "multitask_embeddings": {
+      "p@10": 0.15000000000000002,
+      "mrr": 1.0,
+      "num_queries": 5,
+      "num_evaluated": 2,
+      "num_skipped": 3,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 2,
+        "mapped_found": 0,
+        "not_in_vocab": 3,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_validated": {
+      "p@10": 0.01,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "deepwalk": {
+      "p@10": 0.015000000000000003,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "node2vec_default": {
+      "p@10": 0.01,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "node2vec_bfs": {
+      "p@10": 0.025,
+      "mrr": 0.02857142857142857,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "node2vec_dfs": {
+      "p@10": 0.005,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "magic_128d_test_pecanpy": {
+      "p@10": 0.0,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "multitask_sub5": {
+      "p@10": 0.04,
+      "mrr": 0.16666666666666666,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_triplet_substitution": {
+      "p@10": 0.05,
+      "mrr": 0.5,
+      "num_queries": 5,
+      "num_evaluated": 2,
+      "num_skipped": 3,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 2,
+        "mapped_found": 0,
+        "not_in_vocab": 3,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "yugioh_game_specific": {
+      "p@10": 0.09,
+      "mrr": 0.2333333333333333,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_functional_improved": {
+      "p@10": 0.0,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_contrastive_substitution": {
+      "p@10": 0.02,
+      "mrr": 0.05,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_functional_substitution": {
+      "p@10": 0.0,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_functional_text": {
+      "p@10": 0.03,
+      "mrr": 0.2,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_contrastive_substitution_v2": {
+      "p@10": 0.02,
+      "mrr": 0.06666666666666667,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "production": {
+      "p@10": 0.05,
+      "mrr": 0.5,
+      "num_queries": 5,
+      "num_evaluated": 2,
+      "num_skipped": 3,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 2,
+        "mapped_found": 0,
+        "not_in_vocab": 3,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_functional": {
+      "p@10": 0.0,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "multitask_sub10": {
+      "p@10": 0.09500000000000001,
+      "mrr": 0.7,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "multitask_sub3": {
+      "p@10": 0.025,
+      "mrr": 0.03333333333333333,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "pokemon_game_specific": {
+      "p@10": 0.085,
+      "mrr": 0.4666666666666667,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "multitask_sub7": {
+      "p@10": 0.08,
+      "mrr": 0.33333333333333337,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained_heterogeneous_substitution": {
+      "p@10": 0.05,
+      "mrr": 0.5,
+      "num_queries": 5,
+      "num_evaluated": 2,
+      "num_skipped": 3,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 2,
+        "mapped_found": 0,
+        "not_in_vocab": 3,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "trained": {
+      "p@10": 0.0,
+      "mrr": 0.0,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "magic_game_specific": {
+      "p@10": 0.02,
+      "mrr": 0.03333333333333333,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "multitask_sub2": {
+      "p@10": 0.02,
+      "mrr": 0.1,
+      "num_queries": 5,
+      "num_evaluated": 5,
+      "num_skipped": 0,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_vocab": 5,
+        "mapped_found": 0,
+        "not_in_vocab": 0,
+        "no_relevant_labels": 0,
+        "evaluation_errors": 0
+      }
+    },
+    "jaccard": {
+      "p@10": 0.15000000000000002,
+      "mrr": 1.0,
+      "num_queries": 5,
+      "num_evaluated": 2,
+      "num_skipped": 3,
+      "vocab_coverage": {
+        "total_queries": 5,
+        "found_in_graph": 2,
+        "not_in_graph": 3,
+        "no_relevant_labels": 0
+      }
+    }
+  },
+  "summary": {
+    "best_p@10": 0.15000000000000002,
+    "best_method": "multitask_embeddings"
+  }
+}

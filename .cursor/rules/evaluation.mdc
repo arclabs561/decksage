@@ -1,0 +1,30 @@
+---
+description: Evaluation standards, test sets, downstream tasks, and data leakage prevention
+globs:
+  - "src/ml/scripts/evaluate_*.py"
+  - "experiments/test_set_*.json"
+  - "scripts/evaluation/**"
+alwaysApply: false
+---
+
+# Evaluation
+
+- Use unified test sets for production (`test_set_unified_*.json` via PATHS.test_*)
+- Canonical test sets (`test_set_canonical_*.json`) kept for reference only
+- All evaluation scripts should use `load_test_set()` from `ml.utils.data_loading` or PATHS.test_*
+- Evaluate on downstream tasks, not just similarity
+  - **Downstream tasks**: Deck completion, refinement (add/remove/replace/move), substitution, contextual discovery (synergies/alternatives/upgrades), quality assessment
+  - Use `evaluate_downstream_complete.py` for comprehensive evaluation across all tasks
+- Track Inter-Annotator Agreement (IAA) for labels
+- Use confidence intervals for metrics
+- **Performance critique**: Evaluation scripts should critique results and provide actionable recommendations
+- **Temporal splits**: For graph data, use temporal splits (not random) to respect time ordering
+- **Cross-validation**: Use k-Fold CV for hyperparameter tuning, nested CV for final evaluation
+- **Ablation studies**: Test each component (co-occurrence, instruction-tuned, GNN) independently and in combinations
+- **Train/Val/Test**: 70/15/15 split by default, use temporal ordering for graph data
+- **Data leakage prevention**: CRITICAL - Always use temporal splits before graph construction. Run `ml.evaluation.leakage_analysis` to detect leakage (`just check-leakage`).
+  - **Graph construction**: Use `--use-temporal-split` (default) in `train_hybrid_full.py` to exclude test period
+  - **GNN training**: Graph is already split, edgelist export uses train/val only
+  - **Co-occurrence training**: Use `filter_pairs_by_timestamp.py` to filter pairs CSV before Node2Vec training
+  - **Evaluation**: Use `--use-temporal-split` (default) in `evaluate_hybrid_with_runctl.py` to use train-only graph for Jaccard
+  - **Always verify**: Run leakage analysis before reporting metrics

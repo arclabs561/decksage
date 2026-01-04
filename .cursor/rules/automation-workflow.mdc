@@ -1,0 +1,29 @@
+---
+description: Automation utilities, dry-run mode, validation, logging, and retry logic
+globs:
+  - "scripts/automation/**"
+  - "src/ml/utils/validation.py"
+  - "src/ml/utils/structured_logging.py"
+  - "src/ml/utils/retry.py"
+  - "src/ml/utils/path_resolution.py"
+alwaysApply: false
+---
+
+# Automation & Workflow Utilities
+
+- **Dry-run mode**: All automation scripts support `--dry-run` flag for testing without execution
+  - `scripts/automation/daily_update.sh --dry-run`
+  - `scripts/automation/weekly_retrain.sh --dry-run`
+- **Pre-flight validation**: Use `ml.utils.validation` for file, instance, and dependency checks before execution
+- **Structured logging**: Use `ml.utils.structured_logging.StructuredLogger` for JSON logs alongside human-readable logs
+- **Retry logic**: Use `@retry_with_backoff` decorator or `retry_command()` from `ml.utils.retry` for transient failures
+- **Path resolution**: Use `ml.utils.path_resolution` for centralized path handling (S3/absolute/local)
+  - `resolve_path()`: Resolve relative/absolute/S3 paths
+  - `version_path()`: Version paths consistently
+  - `get_current_embedding()` / `get_versioned_embedding()`: Get embedding paths
+- **Environment variables**: Load from `.env` files automatically (use `python-dotenv` or `ml.utils.env`)
+  - Check for required variables and provide clear error messages if missing
+  - Document required environment variables in script docstrings
+  - Use `os.getenv()` with defaults: `os.getenv("VAR", "default")` or raise if required
+  - Never hardcode secrets or API keys - always use environment variables
+- **Auto-rollback**: Weekly automation automatically rolls back on regression detection (P@10 drop >10%)
