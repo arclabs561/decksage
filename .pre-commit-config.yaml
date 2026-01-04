@@ -14,6 +14,12 @@
 # Manual run:
 #   - just pre-commit-run (all files)
 #   - pre-commit run (staged files only)
+#
+# NOTE FOR AI AGENTS:
+#   - Review docs/DEVELOPMENT_RULES.md for common rules and themes
+#   - Check .cursor/rules/*.mdc for detailed project-specific rules
+#   - All hooks are optimized to check only changed files (fast execution)
+#   - Custom hooks review recent changes and enforce project patterns
 
 repos:
   # Python: Ruff (linter + formatter)
@@ -246,6 +252,18 @@ repos:
         always_run: true
         stages: [commit]
         verbose: true
+
+      # Review recently edited files for common rule violations
+      # This helps both humans and AI agents catch issues early
+      - id: review-recent-changes
+        name: Review recent changes
+        entry: bash -c 'python3 scripts/validation/review_recent_changes.py --staged || true'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+        verbose: true
+        fail_fast: false  # Non-blocking, informational
 
       # Check for hardcoded paths (should use PATHS utility)
       # Non-blocking: warns but doesn't fail (many existing instances)
