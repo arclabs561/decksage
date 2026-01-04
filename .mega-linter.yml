@@ -87,19 +87,16 @@ PYTHON_BLACK_ARGUMENTS:
 GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
 
 # golangci-lint: Meta-linter that runs multiple Go linters
+# Note: .golangci.yml uses v2 config format, so linters are configured there
+# These args are for MegaLinter's wrapper only
 GO_GOLANGCI_LINT_ARGUMENTS:
   - "--timeout=5m"
-  - "--enable=errcheck,gosimple,govet,ineffassign,staticcheck,unused"
-  - "--enable=misspell,revive"
-  # Note: gofmt and goimports are formatters in v2, not linters - handled separately
   - "--path-prefix=src/backend"
   - "src/backend/..."
 GO_GOLANGCI_LINT_CONFIG_FILE: WORKSPACE  # Will look for .golangci.yml
 
-# revive: Fast, configurable Go linter
-GO_REVIVE_ARGUMENTS:
-  - "-config"
-  - ".revive.toml"
+# revive: Fast, configurable Go linter (disabled - using golangci-lint instead)
+# Note: revive is included in golangci-lint, no separate config needed
 GO_REVIVE_DISABLE_ERRORS: true  # Don't fail build, golangci-lint is primary
 
 # ─────────────────────────────────────────────────────────────
