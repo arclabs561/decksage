@@ -1,0 +1,37 @@
+{
+  "Lightning Bolt": {
+    "highly_relevant": [
+      "Chain Lightning",
+      "Shock",
+      "Lava Spike"
+    ],
+    "relevant": [
+      "Burst Lightning",
+      "Lightning Strike"
+    ],
+    "somewhat_relevant": [
+      "Electrolyze",
+      "Forked Bolt"
+    ],
+    "marginally_relevant": [],
+    "irrelevant": []
+  },
+  "Brainstorm": {
+    "highly_relevant": [
+      "Ponder",
+      "Preordain",
+      "Serum Visions"
+    ],
+    "relevant": [
+      "Opt",
+      "Consider",
+      "Thought Scour"
+    ],
+    "somewhat_relevant": [
+      "Gitaxian Probe",
+      "Peek"
+    ],
+    "marginally_relevant": [],
+    "irrelevant": []
+  }
+}

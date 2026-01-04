@@ -108,10 +108,10 @@ Use the `notes` field to document:
 ## Quality Checks
 
 Before merging, ensure:
-- ✅ All candidates have relevance scores (0-4)
-- ✅ No validation errors
-- ✅ Relevance distribution is reasonable (not all 0s or 4s)
-- ✅ Notes added for edge cases
+- All candidates have relevance scores (0-4)
+- No validation errors
+- Relevance distribution is reasonable (not all 0s or 4s)
+- Notes added for edge cases
 
 ## Files
 

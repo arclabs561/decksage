@@ -13,9 +13,9 @@ import logging
 import subprocess
 import sys
 from pathlib import Path
+from ..utils.logging_config import setup_script_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_script_logging()
 
 
 def run_analysis_script(script_name: str, args: list[str] = None) -> dict:

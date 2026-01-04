@@ -30,6 +30,9 @@ from typing import Any
 # Sources: OpenRouter pricing, OpenAI pricing, Anthropic pricing
 PRICING_DATA = {
     # OpenAI models
+    "openai/gpt-5.2": {"input": 5.00, "output": 15.00},  # Estimated (GPT-5.2 pricing not yet public)
+    "openai/gpt-5.1": {"input": 4.50, "output": 13.00},  # Estimated
+    "openai/gpt-5": {"input": 4.00, "output": 12.00},  # Estimated
     "openai/gpt-4o": {"input": 2.50, "output": 10.00},
     "openai/gpt-4o-mini": {"input": 0.15, "output": 0.60},
     "openai/gpt-4-turbo": {"input": 10.00, "output": 30.00},

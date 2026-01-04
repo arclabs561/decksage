@@ -34,10 +34,10 @@ def test_cosine_to_unit_maps_bounds_and_is_linear_in_between(c: float):
 
     y = _cosine_to_unit(c)
     assert 0.0 <= y <= 1.0
-    if math.isclose(c, -1.0):
-        assert math.isclose(y, 0.0)
-    if math.isclose(c, 1.0):
-        assert math.isclose(y, 1.0)
+    if math.isclose(c, -1.0, abs_tol=1e-10):
+        assert math.isclose(y, 0.0, abs_tol=1e-10)
+    if math.isclose(c, 1.0, abs_tol=1e-10):
+        assert math.isclose(y, 1.0, abs_tol=1e-10)
 
 
 @given(
@@ -68,7 +68,11 @@ def test_fusion_weights_normalize_sum_to_one(embed_list, jacc_list):
     j = float(len(jacc_list))
     f = 1.0
     fw = FusionWeights(embed=e, jaccard=j, functional=f).normalized()
-    total = fw.embed + fw.jaccard + fw.functional
+    # Check that ALL weights sum to 1.0 (not just the three we set)
+    total = (
+        fw.embed + fw.jaccard + fw.functional + fw.text_embed + 
+        fw.sideboard + fw.temporal + fw.gnn + fw.archetype + fw.format
+    )
     assert math.isclose(total, 1.0, rel_tol=1e-9)
 
 

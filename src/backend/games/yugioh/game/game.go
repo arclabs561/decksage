@@ -96,6 +96,33 @@ type CollectionTypeDeck struct {
 	Event     string `json:"event,omitempty"`     // Tournament name
 	Placement string `json:"placement,omitempty"` // "Top 16", "Winner", etc.
 	EventDate string `json:"eventDate,omitempty"` // Tournament date
+	
+	// Enhanced tournament metadata
+	TournamentType   string  `json:"tournamentType,omitempty"`   // "Regional", "YCS", "WCQ", "Local"
+	TournamentSize   int     `json:"tournamentSize,omitempty"`   // Number of players
+	Location         string  `json:"location,omitempty"`         // City, State/Country
+	Region           string  `json:"region,omitempty"`           // "North America", "Europe", "Asia-Pacific"
+	TournamentID     string  `json:"tournamentId,omitempty"`     // Unique tournament identifier
+	RoundCount       int     `json:"roundCount,omitempty"`       // Swiss rounds
+	TopCutSize       int     `json:"topCutSize,omitempty"`       // Top 8, Top 16, etc.
+	
+	// Temporal context (computed)
+	DaysSinceRotation  int     `json:"daysSinceRotation,omitempty"`  // Days since last format rotation (N/A for YGO)
+	DaysSinceBanUpdate int     `json:"daysSinceBanUpdate,omitempty"` // Days since last ban list
+	MetaShare           float64 `json:"metaShare,omitempty"`          // Deck's meta share at event time (%)
+	
+	// Round-by-round results
+	RoundResults []RoundResult `json:"roundResults,omitempty"`
+}
+
+// RoundResult represents a single round/match result
+type RoundResult struct {
+	RoundNumber  int    `json:"roundNumber"`
+	Opponent     string `json:"opponent,omitempty"`      // Opponent player name
+	OpponentDeck string `json:"opponentDeck,omitempty"` // Opponent archetype
+	Result       string `json:"result"`                  // "W", "L", "T", "BYE"
+	GameWins     int    `json:"gameWins,omitempty"`      // 2-0, 2-1, etc.
+	GameLosses   int    `json:"gameLosses,omitempty"`
 }
 
 type CollectionTypeCollection struct {

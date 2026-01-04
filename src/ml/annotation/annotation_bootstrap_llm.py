@@ -19,33 +19,33 @@ from pathlib import Path
 from typing import Any, Dict, List
 
 try:
-    from dotenv import load_dotenv  # type: ignore
+ from dotenv import load_dotenv # type: ignore
 
-    load_dotenv()
+ load_dotenv()
 except Exception:
-    pass
+ pass
 
 try:
-    from pydantic import BaseModel, Field
-    from pydantic_ai import Agent
+ from pydantic import BaseModel, Field
+ from pydantic_ai import Agent
 
-    HAS_PYDANTIC_AI = True
+ HAS_PYDANTIC_AI = True
 except Exception:
-    HAS_PYDANTIC_AI = False
+ HAS_PYDANTIC_AI = False
 
 from .utils.paths import PATHS
 
 
 class CandidateDraft(BaseModel):
-    card: str
-    similarity_type: str = Field(description="substitute|synergy|upgrade|downgrade|archetype|unrelated")
-    relevance: int = Field(ge=0, le=4, description="0-4 relevance (draft)")
-    notes: str = Field(description="Short rationale")
+ card: str
+ similarity_type: str = Field(description="substitute|synergy|upgrade|downgrade|archetype|unrelated")
+ relevance: int = Field(ge=0, le=4, description="0-4 relevance (draft)")
+ notes: str = Field(description="Short rationale")
 
 
 class QueryDraft(BaseModel):
-    query: str
-    candidates: List[CandidateDraft]
+ query: str
+ candidates: List[CandidateDraft]
 
 
 def make_agent() -> "Agent[QueryDraft]":
@@ -127,9 +127,9 @@ def main() -> int:
     parser.add_argument("--num", type=int, default=20, help="Number of queries to bootstrap")
     parser.add_argument(
         "--output",
-        type=str,
-        default=str(Path(__file__).parent.parent.parent / "annotations" / "batch_002_expansion.yaml"),
-    )
+ type=str,
+ default=str(Path(__file__).parent.parent.parent / "annotations" / "batch_002_expansion.yaml"),
+ )
 
     args = parser.parse_args()
 
@@ -155,7 +155,7 @@ def main() -> int:
             result = agent.run_sync(prompt)
             drafts.append(result.output)
         except Exception as e:
-            print(f"  ⚠️ LLM draft failed for {q}: {e}")
+            print(f" Warning: LLM draft failed for {q}: {e}")
             continue
 
     if not drafts:
@@ -167,9 +167,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    import sys
+ import sys
 
-    sys.exit(main())
+ sys.exit(main())
 
 
 

@@ -1,0 +1,14 @@
+{
+  "timestamp": "20260101_092420",
+  "annotations_created": {
+    "similarity_pairs": 63,
+    "archetype_descriptions": 0,
+    "substitutions": 0
+  },
+  "coverage": {
+    "unique_cards_in_similarity": 126,
+    "archetypes_described": [],
+    "substitutions_for": []
+  },
+  "estimated_cost_usd": 0.63
+}

@@ -1,33 +1,80 @@
-# Modern Python linting with Ruff
-# See https://docs.astral.sh/ruff/
+# Pre-commit hooks: Fast checks that run on every commit
+# Pre-push hooks: Slower checks (tests, type checking) run before push
+# See: https://pre-commit.com/hooks.html
+
 repos:
+  # Python: Ruff (linter + formatter)
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.14.10  # Updated to match ruff 0.14.x
+    rev: v0.14.10
     hooks:
-      # Run the linter
       - id: ruff
         args: [--fix]
-      # Run the formatter
+        stages: [commit]
       - id: ruff-format
+        stages: [commit]
 
+  # Go: golangci-lint (comprehensive Go linter)
+  - repo: https://github.com/golangci/golangci-lint
+    rev: v1.60.1
+    hooks:
+      - id: golangci-lint
+        stages: [commit]
+        args: [--timeout=5m]
+        files: ^src/backend/.*\.go$
+
+  # Shell: shellcheck (shell script linter)
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        stages: [commit]
+        args: [-e, SC1091]  # Allow sourcing files without checking
+
+  # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v6.0.0  # Updated to latest
+    rev: v6.0.0
     hooks:
       - id: trailing-whitespace
+        stages: [commit]
       - id: end-of-file-fixer
+        stages: [commit]
       - id: check-yaml
+        stages: [commit]
+      - id: check-json
+        stages: [commit]
       - id: check-added-large-files
         args: ['--maxkb=1000']
+        stages: [commit]
       - id: check-merge-conflict
+        stages: [commit]
       - id: check-toml
+        stages: [commit]
       - id: mixed-line-ending
+        stages: [commit]
+      - id: check-executables-have-shebangs
+        stages: [commit]
+      - id: check-shebang-scripts-are-executable
+        stages: [commit]
 
+  # Pre-push: Fast tests (unit tests only, no slow/integration)
   - repo: local
     hooks:
-      - id: pytest
-        name: pytest
+      - id: pytest-fast
+        name: pytest (fast tests only)
+        entry: bash -c 'cd src/ml && uv run pytest tests/ -v -m "not slow and not integration" --maxfail=1 || true'
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [push]
+        verbose: true
+
+  # Manual: Full test suite (run with --hook-stage manual)
+  - repo: local
+    hooks:
+      - id: pytest-full
+        name: pytest (full suite)
         entry: bash -c 'cd src/ml && uv run pytest tests/ -v || true'
         language: system
         pass_filenames: false
         always_run: false
-        stages: [manual]  # Run with --hook-stage manual
+        stages: [manual]

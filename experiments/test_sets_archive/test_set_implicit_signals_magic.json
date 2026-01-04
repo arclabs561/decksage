@@ -1,0 +1,9 @@
+{
+  "game": "magic",
+  "sources": {
+    "sideboard_patterns": 0,
+    "temporal_patterns": 0,
+    "substitution_patterns": 0
+  },
+  "queries": {}
+}

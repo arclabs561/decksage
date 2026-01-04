@@ -380,13 +380,19 @@ app = FastAPI(
 )
 
 # CORS for web frontends (env-driven)
-_cors_origins_env = os.getenv("CORS_ORIGINS", "*")
+# SECURITY: Default to empty list (no CORS) unless explicitly configured
+# Use CORS_ORIGINS env var to specify allowed origins (comma-separated)
+# Example: CORS_ORIGINS=http://localhost:3000,https://decksage.com
+_cors_origins_env = os.getenv("CORS_ORIGINS", "")
 _parsed = [o.strip() for o in _cors_origins_env.split(",") if o.strip()]
 if (not _parsed) or ("*" in _parsed):
-    _cors_origins = ["*"]
+    # Only allow * in development - warn in production
+    if os.getenv("ENVIRONMENT", "development") == "production" and "*" in _parsed:
+        logger.warning("CORS_ORIGINS='*' is insecure for production. Specify exact origins.")
+    _cors_origins = ["*"] if _parsed and "*" in _parsed else []
 else:
     _cors_origins = _parsed
-_allow_credentials = _cors_origins != ["*"]
+_allow_credentials = _cors_origins != ["*"] and len(_cors_origins) > 0
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,

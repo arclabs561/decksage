@@ -1,0 +1,18 @@
+{
+  "timestamp": "20260101_010453",
+  "annotations_created": {
+    "similarity_pairs": 50,
+    "archetype_descriptions": 3,
+    "substitutions": 0
+  },
+  "coverage": {
+    "unique_cards_in_similarity": 100,
+    "archetypes_described": [
+      "Raging Bolt Ogerpon",
+      "Gholdengo ex Toolbox",
+      "Dragapult Dusknoir"
+    ],
+    "substitutions_for": []
+  },
+  "estimated_cost_usd": 0.56
+}

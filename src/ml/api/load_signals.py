@@ -22,11 +22,18 @@ except ImportError:
     CardTextEmbedder = None
 
 try:
-    from ..similarity.gnn_embeddings import GNNEmbedder
+    from ..similarity.gnn_embeddings import CardGNNEmbedder
     HAS_GNN = True
 except ImportError:
     HAS_GNN = False
-    GNNEmbedder = None
+    CardGNNEmbedder = None
+
+try:
+    from ..similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
+    HAS_INSTRUCTION_EMBED = True
+except ImportError:
+    HAS_INSTRUCTION_EMBED = False
+    InstructionTunedCardEmbedder = None
 
 from .api import ApiState, get_state
 from ..utils.paths import PATHS
@@ -99,16 +106,21 @@ def load_signals_to_state(
         logger.debug(f"Temporal signal not found: {temporal_path}")
         state.temporal_cooccurrence = None
     
-    # Load GNN embeddings
+    # Load GNN embeddings (hybrid system)
     if gnn_path is None:
-        gnn_path = signals_dir / "gnn_embeddings.json"
+        # Try multiple default paths
+        gnn_path = PATHS.embeddings / "gnn_graphsage.json"
+        if not gnn_path.exists():
+            gnn_path = signals_dir / "gnn_graphsage.json"
+        if not gnn_path.exists():
+            gnn_path = signals_dir / "gnn_embeddings.json"
     
     if isinstance(gnn_path, str):
         gnn_path = Path(gnn_path)
     
-    if gnn_path.exists() and HAS_GNN:
+    if gnn_path.exists() and HAS_GNN and CardGNNEmbedder is not None:
         try:
-            state.gnn_embedder = GNNEmbedder.load_from_json(gnn_path)
+            state.gnn_embedder = CardGNNEmbedder(model_path=gnn_path)
             logger.info(f"Loaded GNN embeddings: {gnn_path}")
         except Exception as e:
             logger.warning(f"Failed to load GNN embeddings: {e}")
@@ -117,15 +129,36 @@ def load_signals_to_state(
         logger.debug(f"GNN embeddings not found or not available: {gnn_path}")
         state.gnn_embedder = None
     
-    # Initialize text embedder (lazy, creates on first use)
-    if text_embedder_model and HAS_TEXT_EMBED:
+    # Initialize text embedder - prefer instruction-tuned (hybrid system)
+    import os
+    instruction_model = os.getenv("INSTRUCTION_EMBEDDER_MODEL", "intfloat/e5-base-v2")
+    
+    # Try instruction-tuned embedder first (better for new cards)
+    if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
+        try:
+            state.text_embedder = InstructionTunedCardEmbedder(model_name=instruction_model)
+            logger.info(f"Initialized instruction-tuned embedder: {instruction_model}")
+        except Exception as e:
+            logger.warning(f"Failed to initialize instruction-tuned embedder: {e}")
+            # Fallback to regular text embedder
+            if text_embedder_model and HAS_TEXT_EMBED:
+                try:
+                    state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
+                    logger.info(f"Initialized fallback text embedder: {text_embedder_model}")
+                except Exception as e2:
+                    logger.warning(f"Failed to initialize fallback text embedder: {e2}")
+                    state.text_embedder = None
+            else:
+                state.text_embedder = None
+    elif text_embedder_model and HAS_TEXT_EMBED:
+        # Fallback to regular text embedder if instruction-tuned not available
         try:
             state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
             logger.info(f"Initialized text embedder: {text_embedder_model}")
         except Exception as e:
             logger.warning(f"Failed to initialize text embedder: {e}")
             state.text_embedder = None
-    elif not HAS_TEXT_EMBED:
+    elif not HAS_TEXT_EMBED and not HAS_INSTRUCTION_EMBED:
         logger.debug("Text embeddings not available (sentence-transformers not installed)")
         state.text_embedder = None
     

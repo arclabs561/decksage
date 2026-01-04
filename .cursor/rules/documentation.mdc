@@ -1,0 +1,22 @@
+---
+description: Documentation standards and practices
+alwaysApply: true
+---
+
+# Documentation
+
+- Don't create excessive MD files for progress
+- Improve code and comments as primary documentation
+- Use code references for existing code, markdown blocks for new code
+- Keep README.md current, archive outdated docs
+- **Lineage documentation**: All data processing scripts MUST include lineage comments (see Data Lineage Architecture section)
+- **Script documentation**: All scripts should include:
+  - Purpose and usage in docstring
+  - Required arguments and options
+  - Example usage
+  - Dependencies (data lineage orders, environment variables)
+  - Error conditions and exit codes
+- **Code comments**: Use comments to explain "why", not "what"
+  - Document non-obvious decisions, performance optimizations, and workarounds
+  - Include references to issues, PRs, or discussions when relevant
+  - Keep comments up-to-date with code changes

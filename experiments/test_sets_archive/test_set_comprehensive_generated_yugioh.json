@@ -1,0 +1,1843 @@
+{
+  "queries": {
+    "Cultivate": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Kodama's Reach",
+        "Three Visits",
+        "Nature's Lore",
+        "Rampant Growth",
+        "Farseek",
+        "Search for Tomorrow",
+        "Into the North",
+        "Primal Growth",
+        "Grow from the Ashes",
+        "Skyshroud Claim",
+        "Nissa's Pilgrimage"
+      ],
+      "relevant": [
+        "Explosive Vegetation",
+        "Migration Path",
+        "Circuitous Route",
+        "Ranger's Path",
+        "Beneath the Sands",
+        "Harrow",
+        "Roiling Regrowth",
+        "Edge of Autumn"
+      ],
+      "somewhat_relevant": [
+        "Wood Elves",
+        "Farhaven Elf",
+        "Springbloom Druid",
+        "Solemn Simulacrum",
+        "Sakura-Tribe Elder",
+        "Yavimaya Elder",
+        "Burnished Hart",
+        "Pilgrim's Eye"
+      ],
+      "marginally_relevant": [
+        "Llanowar Elves",
+        "Birds of Paradise",
+        "Sol Ring",
+        "Arcane Signet",
+        "Mind Stone",
+        "Wayfarer's Bauble"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6121212121212121,
+        "num_cards": 55
+      }
+    },
+    "Brainstorm": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Ponder",
+        "Preordain",
+        "Serum Visions",
+        "Opt",
+        "Consider",
+        "Sleight of Hand",
+        "Portent",
+        "Thought Scour",
+        "Ancestral Recall",
+        "Gitaxian Probe"
+      ],
+      "relevant": [
+        "Index",
+        "Telling Time",
+        "Impulse",
+        "Anticipate",
+        "Strategic Planning",
+        "Careful Study",
+        "Mental Note",
+        "Chart a Course",
+        "See Beyond"
+      ],
+      "somewhat_relevant": [
+        "Faithless Looting",
+        "Jace, the Mind Sculptor",
+        "Sensei's Divining Top",
+        "Scroll Rack",
+        "Frantic Search",
+        "Dig Through Time",
+        "Treasure Cruise"
+      ],
+      "marginally_relevant": [
+        "Delver of Secrets",
+        "Snapcaster Mage",
+        "True-Name Nemesis",
+        "Force of Will",
+        "Daze"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6736111111111112,
+        "num_cards": 48
+      }
+    },
+    "Demonic Tutor": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Vampiric Tutor",
+        "Imperial Seal",
+        "Grim Tutor",
+        "Diabolic Intent",
+        "Cruel Tutor",
+        "Dark Petition",
+        "Scheming Symmetry",
+        "Wishclaw Talisman"
+      ],
+      "relevant": [
+        "Mastermind's Acquisition",
+        "Diabolic Tutor",
+        "Profane Tutor",
+        "Beseech the Queen",
+        "Increasing Ambition",
+        "Doomsday",
+        "Infernal Tutor",
+        "Razaketh's Rite",
+        "Rhystic Tutor",
+        "Sidisi, Undead Vizier"
+      ],
+      "somewhat_relevant": [
+        "Enlightened Tutor",
+        "Mystical Tutor",
+        "Worldly Tutor",
+        "Merchant Scroll",
+        "Entomb",
+        "Buried Alive",
+        "Final Parting"
+      ],
+      "marginally_relevant": [
+        "Night's Whisper",
+        "Sign in Blood",
+        "Read the Bones",
+        "Dark Confidant",
+        "Necropotence",
+        "Phyrexian Arena"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6527777777777778,
+        "num_cards": 48
+      }
+    },
+    "Lightning Bolt": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Chain Lightning",
+        "Lava Spike",
+        "Rift Bolt",
+        "Shard Volley",
+        "Burst Lightning",
+        "Skullcrack",
+        "Searing Blood",
+        "Wizard's Lightning",
+        "Play with Fire"
+      ],
+      "relevant": [
+        "Shock",
+        "Lava Dart",
+        "Searing Blaze",
+        "Wild Slash",
+        "Flame Slash",
+        "Magma Jet",
+        "Fireblast",
+        "Skewer the Critics",
+        "Incinerate"
+      ],
+      "somewhat_relevant": [
+        "Pillar of Flame",
+        "Light Up the Stage",
+        "Roiling Vortex",
+        "Flames of the Blood Hand",
+        "Stoke the Flames",
+        "Exquisite Firecraft",
+        "Needle Drop"
+      ],
+      "marginally_relevant": [
+        "Goblin Guide",
+        "Monastery Swiftspear",
+        "Eidolon of the Great Revel",
+        "Young Pyromancer",
+        "Soul-Scar Mage"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6666666666666666,
+        "num_cards": 47
+      }
+    },
+    "Thoughtseize": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Inquisition of Kozilek",
+        "Duress",
+        "Blackmail",
+        "Despise",
+        "Grief",
+        "Unmask",
+        "Cabal Therapy",
+        "Distress"
+      ],
+      "relevant": [
+        "Ostracize",
+        "Hymn to Tourach",
+        "Agonizing Remorse",
+        "Kitesail Freebooter",
+        "Brain Maggot",
+        "Mesmeric Fiend",
+        "Tidehollow Sculler",
+        "Divest",
+        "Collective Brutality"
+      ],
+      "somewhat_relevant": [
+        "Raven's Crime",
+        "Liliana of the Veil",
+        "Funeral Charm",
+        "Wrench Mind",
+        "Mind Rot",
+        "Tourach, Dread Cantor",
+        "Davriel, Rogue Shadowmage"
+      ],
+      "marginally_relevant": [
+        "Dark Confidant",
+        "Fatal Push",
+        "Dark Ritual",
+        "Phyrexian Arena",
+        "Sign in Blood",
+        "Surgical Extraction"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6111111111111112,
+        "num_cards": 54
+      }
+    },
+    "Wrath of God": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Damnation",
+        "Day of Judgment",
+        "Supreme Verdict",
+        "Wrath of the Skies",
+        "Fumigate",
+        "Farewell",
+        "Terminus",
+        "Shatter the Sky",
+        "Cleansing Nova",
+        "Austere Command"
+      ],
+      "relevant": [
+        "Settle the Wreckage",
+        "Kaya's Wrath",
+        "Vanquish the Horde",
+        "Sunfall",
+        "Blasphemous Act",
+        "Toxic Deluge",
+        "Languish",
+        "Extinction Event"
+      ],
+      "somewhat_relevant": [
+        "Planar Cleansing",
+        "Winds of Abandon",
+        "Merciless Eviction",
+        "Martial Coup",
+        "Rout",
+        "Mass Calcify"
+      ],
+      "marginally_relevant": [
+        "Elesh Norn, Grand Cenobite",
+        "Swords to Plowshares",
+        "Path to Exile",
+        "Oblivion Ring",
+        "Council's Judgment",
+        "Elspeth, Sun's Champion"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5802469135802469,
+        "num_cards": 54
+      }
+    },
+    "Llanowar Elves": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Elvish Mystic",
+        "Fyndhorn Elves",
+        "Arbor Elf",
+        "Elves of Deep Shadow",
+        "Boreal Druid",
+        "Avacyn's Pilgrim",
+        "Birds of Paradise",
+        "Noble Hierarch",
+        "Deathrite Shaman",
+        "Joraga Treespeaker"
+      ],
+      "relevant": [
+        "Priest of Titania",
+        "Elvish Archdruid",
+        "Heritage Druid",
+        "Gilded Goose",
+        "Wild Growth",
+        "Utopia Sprawl",
+        "Elvish Spirit Guide",
+        "Ignoble Hierarch",
+        "Devoted Druid",
+        "Carpet of Flowers"
+      ],
+      "somewhat_relevant": [
+        "Bloom Tender",
+        "Leaf Gilder",
+        "Druid of the Cowl",
+        "Sylvan Caryatid",
+        "Paradise Druid",
+        "Incubation Druid"
+      ],
+      "marginally_relevant": [
+        "Imperious Perfect",
+        "Ezuri, Renegade Leader",
+        "Craterhoof Behemoth",
+        "Collected Company"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.584795321637427,
+        "num_cards": 57
+      }
+    },
+    "Force of Will": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Pact of Negation",
+        "Force of Negation",
+        "Fierce Guardianship",
+        "Misdirection",
+        "Commandeer",
+        "Subtlety",
+        "Foil",
+        "Daze"
+      ],
+      "relevant": [
+        "Counterspell",
+        "Mana Drain",
+        "Mental Misstep",
+        "Swan Song",
+        "Flusterstorm",
+        "Negate",
+        "Spell Pierce",
+        "Dispel",
+        "Arcane Denial",
+        "An Offer You Can't Refuse"
+      ],
+      "somewhat_relevant": [
+        "Cryptic Command",
+        "Mystic Confluence",
+        "Mindbreak Trap",
+        "Delay",
+        "Memory Lapse",
+        "Remand",
+        "Forbid",
+        "Tale's End"
+      ],
+      "marginally_relevant": [
+        "Brainstorm",
+        "Snapcaster Mage",
+        "Vendilion Clique",
+        "Teferi, Time Raveler"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6458333333333334,
+        "num_cards": 48
+      }
+    },
+    "Snapcaster Mage": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Mission Briefing",
+        "Torrential Gearhulk",
+        "Archaeomancer",
+        "Jace, Vryn's Prodigy",
+        "Scholar of the Ages",
+        "Shipwreck Dowser",
+        "Past in Flames",
+        "Underworld Breach"
+      ],
+      "relevant": [
+        "Call to Mind",
+        "Mnemonic Wall",
+        "Lier, Disciple of the Drowned",
+        "Goblin Dark-Dwellers",
+        "Kess, Dissident Mage",
+        "Finale of Promise",
+        "Backdraft Hellkite",
+        "Mystic Retrieval"
+      ],
+      "somewhat_relevant": [
+        "Vendilion Clique",
+        "Brazen Borrower",
+        "Subtlety",
+        "Spellstutter Sprite",
+        "Spell Queller",
+        "Baral, Chief of Compliance",
+        "Ledger Shredder"
+      ],
+      "marginally_relevant": [
+        "Delver of Secrets",
+        "Young Pyromancer",
+        "Counterspell",
+        "Lightning Bolt",
+        "Opt",
+        "Consider"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.559322033898305,
+        "num_cards": 59
+      }
+    },
+    "Sensei's Divining Top": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Scroll Rack",
+        "Crystal Ball",
+        "Soothsaying",
+        "Mirri's Guile",
+        "Sylvan Library",
+        "Mystic Forge"
+      ],
+      "relevant": [
+        "Brainstorm",
+        "Ponder",
+        "Preordain",
+        "Serum Visions",
+        "Opt",
+        "Consider",
+        "Index",
+        "Portent",
+        "Telling Time"
+      ],
+      "somewhat_relevant": [
+        "Future Sight",
+        "Bolas's Citadel",
+        "Jace, the Mind Sculptor",
+        "Experimental Frenzy",
+        "Melek, Izzet Paragon",
+        "Courser of Kruphix",
+        "Oracle of Mul Daya",
+        "Augur of Autumn",
+        "Lim-D\u00fbl's Vault"
+      ],
+      "marginally_relevant": [
+        "Enlightened Tutor",
+        "Sol Ring",
+        "Mishra's Bauble",
+        "Trinket Mage",
+        "Voltaic Key"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5628415300546448,
+        "num_cards": 61
+      }
+    },
+    "Worldly Tutor": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Eladamri's Call",
+        "Finale of Devastation",
+        "Green Sun's Zenith",
+        "Chord of Calling",
+        "Natural Order",
+        "Survival of the Fittest",
+        "Fauna Shaman",
+        "Summoner's Pact",
+        "Sylvan Tutor"
+      ],
+      "relevant": [
+        "Birthing Pod",
+        "Eldritch Evolution",
+        "Neoform",
+        "Time of Need",
+        "Shared Summons",
+        "Fierce Empath",
+        "Defense of the Heart"
+      ],
+      "somewhat_relevant": [
+        "Mystical Tutor",
+        "Enlightened Tutor",
+        "Vampiric Tutor",
+        "Imperial Seal",
+        "Demonic Tutor",
+        "Idyllic Tutor",
+        "Grim Tutor",
+        "Gamble"
+      ],
+      "marginally_relevant": [
+        "Llanowar Elves",
+        "Birds of Paradise",
+        "Craterhoof Behemoth",
+        "Eternal Witness",
+        "Reclamation Sage"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5892857142857143,
+        "num_cards": 56
+      }
+    },
+    "Path to Exile": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Swords to Plowshares",
+        "Prismatic Ending",
+        "Condemn",
+        "Solitude",
+        "March of Otherworldly Light",
+        "Oust",
+        "On Thin Ice",
+        "Declaration in Stone"
+      ],
+      "relevant": [
+        "Generous Gift",
+        "Fateful Absence",
+        "Vanishing Verse",
+        "Angelic Ascension",
+        "Winds of Abandon",
+        "Dispatch",
+        "Crib Swap",
+        "Fatal Push",
+        "Unmake"
+      ],
+      "somewhat_relevant": [
+        "Skyclave Apparition",
+        "Oblivion Ring",
+        "Banishing Light",
+        "Fiend Hunter",
+        "Stasis Snare",
+        "Cast Out"
+      ],
+      "marginally_relevant": [
+        "Wrath of God",
+        "Supreme Verdict",
+        "Day of Judgment",
+        "Terminus",
+        "Elspeth, Sun's Champion"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5595238095238095,
+        "num_cards": 56
+      }
+    },
+    "Urza's Tower": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Urza's Power Plant",
+        "Urza's Mine",
+        "Tower of the Magistrate",
+        "Cloudpost",
+        "Glimmerpost"
+      ],
+      "relevant": [
+        "Eldrazi Temple",
+        "Eye of Ugin",
+        "Ancient Tomb",
+        "City of Traitors",
+        "Temple of the False God",
+        "Shrine of the Forsaken Gods",
+        "Sanctum of Ugin"
+      ],
+      "somewhat_relevant": [
+        "Expedition Map",
+        "Chromatic Star",
+        "Chromatic Sphere",
+        "Karn, the Great Creator",
+        "Wurmcoil Engine",
+        "Ugin, the Spirit Dragon",
+        "Walking Ballista",
+        "Karn Liberated",
+        "Oblivion Stone",
+        "All Is Dust",
+        "Sylvan Scrying"
+      ],
+      "marginally_relevant": [
+        "Wastes",
+        "Ghost Quarter",
+        "Field of Ruin",
+        "Tectonic Edge",
+        "Reliquary Tower"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6747967479674796,
+        "num_cards": 41
+      }
+    },
+    "Counterspell": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Mana Leak",
+        "Mana Drain",
+        "Arcane Denial",
+        "Memory Lapse",
+        "Negate",
+        "Delay",
+        "Remand",
+        "Lose Focus",
+        "Cancel",
+        "Logic Knot"
+      ],
+      "relevant": [
+        "Force of Will",
+        "Force of Negation",
+        "Daze",
+        "Spell Pierce",
+        "Swan Song",
+        "Dispel",
+        "Miscalculation",
+        "Essence Scatter"
+      ],
+      "somewhat_relevant": [
+        "Cryptic Command",
+        "Absorb",
+        "Dissolve",
+        "Disallow",
+        "Dissipate",
+        "An Offer You Can't Refuse"
+      ],
+      "marginally_relevant": [
+        "Glen Elendra Archmage",
+        "Vendilion Clique",
+        "Snapcaster Mage"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5515151515151515,
+        "num_cards": 55
+      }
+    },
+    "Sol Ring": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Mana Crypt",
+        "Mana Vault",
+        "Arcane Signet",
+        "Fellwar Stone",
+        "Mind Stone",
+        "Jeweled Lotus",
+        "Chrome Mox",
+        "Mox Diamond",
+        "Grim Monolith",
+        "Thought Vessel"
+      ],
+      "relevant": [
+        "Coalition Relic",
+        "Thran Dynamo",
+        "Worn Powerstone",
+        "Everflowing Chalice",
+        "Hedron Archive",
+        "Basalt Monolith",
+        "Gilded Lotus",
+        "Lotus Petal",
+        "Lion's Eye Diamond"
+      ],
+      "somewhat_relevant": [
+        "Coldsteel Heart",
+        "Star Compass",
+        "Guardian Idol",
+        "Moss Diamond",
+        "Sky Diamond",
+        "Fire Diamond",
+        "Marble Diamond",
+        "Charcoal Diamond"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.6143790849673202,
+        "num_cards": 51
+      }
+    },
+    "Tarmogoyf": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Goyf",
+        "Territorial Kavu",
+        "Scavenging Ooze",
+        "Hexdrinker",
+        "Grim Flayer",
+        "Quirion Dryad",
+        "Hooting Mandrills",
+        "Nimble Mongoose",
+        "Gurmag Angler"
+      ],
+      "relevant": [
+        "Dark Confidant",
+        "Murktide Regent",
+        "Tombstalker",
+        "Knight of the Reliquary",
+        "Dragon's Rage Channeler",
+        "Sprite Dragon",
+        "Death's Shadow"
+      ],
+      "somewhat_relevant": [
+        "Mishra's Bauble",
+        "Wrenn and Six",
+        "Liliana of the Veil",
+        "Thoughtseize",
+        "Inquisition of Kozilek",
+        "Fatal Push",
+        "Bloodbraid Elf",
+        "Ragavan, Nimble Pilferer",
+        "Abrupt Decay"
+      ],
+      "marginally_relevant": [
+        "Birds of Paradise",
+        "Noble Hierarch"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5595238095238095,
+        "num_cards": 56
+      }
+    },
+    "Command Tower": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Mana Confluence",
+        "City of Brass",
+        "Exotic Orchard",
+        "Reflecting Pool",
+        "Tarnished Citadel",
+        "Forbidden Orchard",
+        "Spire of Industry",
+        "Path of Ancestry"
+      ],
+      "relevant": [
+        "Arcane Sanctum",
+        "Jungle Shrine",
+        "Crumbling Necropolis",
+        "Seaside Citadel",
+        "Savage Lands",
+        "Sandsteppe Citadel",
+        "Opulent Palace",
+        "Nomad Outpost",
+        "Mystic Monastery",
+        "Frontier Bivouac"
+      ],
+      "somewhat_relevant": [
+        "Rupture Spire",
+        "Transguild Promenade",
+        "Gateway Plaza",
+        "Aether Hub",
+        "Grand Coliseum",
+        "Opal Palace"
+      ],
+      "marginally_relevant": [
+        "Terramorphic Expanse",
+        "Evolving Wilds"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5333333333333333,
+        "num_cards": 60
+      }
+    },
+    "Expedition Map": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Sylvan Scrying",
+        "Crop Rotation",
+        "Realms Uncharted",
+        "Tempt with Discovery",
+        "Hour of Promise",
+        "Tolaria West",
+        "Weathered Wayfarer",
+        "Golos, Tireless Pilgrim",
+        "Elvish Reclaimer"
+      ],
+      "relevant": [
+        "Primeval Titan",
+        "Wayfarer's Bauble",
+        "Armillary Sphere",
+        "Solemn Simulacrum",
+        "Knight of the Reliquary",
+        "Ulvenwald Hydra",
+        "Scapeshift",
+        "Reap and Sow",
+        "Pir's Whim"
+      ],
+      "somewhat_relevant": [
+        "Chromatic Star",
+        "Chromatic Sphere",
+        "Trinket Mage",
+        "Urza's Saga",
+        "Inventors' Fair"
+      ],
+      "marginally_relevant": [
+        "Mind Stone",
+        "Sol Ring",
+        "Arcum's Astrolabe"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5555555555555556,
+        "num_cards": 60
+      }
+    },
+    "Liliana of the Veil": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Liliana of the Dark Realms",
+        "Liliana, the Last Hope",
+        "Liliana, Waker of the Dead",
+        "Liliana, Dreadhorde General",
+        "Davriel, Rogue Shadowmage",
+        "Smallpox",
+        "Liliana, Death's Majesty"
+      ],
+      "relevant": [
+        "The Rack",
+        "Waste Not",
+        "Thoughtseize",
+        "Inquisition of Kozilek",
+        "Diabolic Edict",
+        "Innocent Blood",
+        "Wrench Mind",
+        "Hymn to Tourach",
+        "Dark Confidant",
+        "Raven's Crime"
+      ],
+      "somewhat_relevant": [
+        "Gatekeeper of Malakir",
+        "Tarmogoyf",
+        "Kroxa, Titan of Death's Hunger",
+        "Murderous Rider",
+        "Fatal Push",
+        "Bitterblossom",
+        "Phyrexian Arena",
+        "Bloodghast"
+      ],
+      "marginally_relevant": [
+        "Urborg, Tomb of Yawgmoth"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4927536231884058,
+        "num_cards": 69
+      }
+    },
+    "Goblin Guide": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Monastery Swiftspear",
+        "Soul-Scar Mage",
+        "Goblin Bushwhacker",
+        "Zurgo Bellstriker",
+        "Bomat Courier",
+        "Ragavan, Nimble Pilferer",
+        "Fanatical Firebrand",
+        "Jackal Pup",
+        "Firedrinker Satyr",
+        "Vexing Devil"
+      ],
+      "relevant": [
+        "Eidolon of the Great Revel",
+        "Earthshaker Khenra",
+        "Ash Zealot",
+        "Rakdos Cackler",
+        "Spike Jester",
+        "Viashino Pyromancer"
+      ],
+      "somewhat_relevant": [
+        "Lightning Bolt",
+        "Lava Spike",
+        "Rift Bolt",
+        "Searing Blaze",
+        "Light Up the Stage",
+        "Goblin Piledriver",
+        "Searing Blood"
+      ],
+      "marginally_relevant": [
+        "Burning-Tree Emissary",
+        "Goblin Chainwhirler"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5283018867924528,
+        "num_cards": 53
+      }
+    },
+    "Cyclonic Rift": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Devastation Tide",
+        "Evacuation",
+        "Upheaval",
+        "River's Rebuke",
+        "Whelming Wave",
+        "Aetherize",
+        "Hurkyl's Recall",
+        "Consuming Tide"
+      ],
+      "relevant": [
+        "Rebuild",
+        "Engulf the Shore",
+        "Displacement Wave",
+        "Crush of Tentacles",
+        "Chain of Vapor"
+      ],
+      "somewhat_relevant": [
+        "Echoing Truth",
+        "Into the Roil",
+        "Blink of an Eye",
+        "Brazen Borrower",
+        "Disperse",
+        "Stern Dismissal",
+        "Boomerang"
+      ],
+      "marginally_relevant": [
+        "Capsize",
+        "Cryptic Command",
+        "Peregrine Drake",
+        "Reality Shift",
+        "Pongify"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5220125786163522,
+        "num_cards": 53
+      }
+    },
+    "Phyrexian Arena": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Dark Confidant",
+        "Underworld Connections",
+        "Sign in Blood",
+        "Night's Whisper",
+        "Read the Bones",
+        "Greed",
+        "Necropotence",
+        "Painful Truths",
+        "Dark Tutelage",
+        "Arguel's Blood Fast"
+      ],
+      "relevant": [
+        "Ancient Craving",
+        "Ambition's Cost",
+        "Promise of Power",
+        "Syphon Mind",
+        "Bloodgift Demon",
+        "Twilight Prophet",
+        "Ruin Raider",
+        "Erebos, God of the Dead"
+      ],
+      "somewhat_relevant": [
+        "Midnight Reaper",
+        "Castle Locthwain",
+        "Vilis, Broker of Blood",
+        "Harvester of Souls",
+        "Grim Haruspex"
+      ],
+      "marginally_relevant": [
+        "Thoughtseize",
+        "Demonic Tutor"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5277777777777778,
+        "num_cards": 60
+      }
+    },
+    "Dark Confidant": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Phyrexian Arena",
+        "Painful Truths",
+        "Night's Whisper",
+        "Sign in Blood",
+        "Read the Bones",
+        "Mindblade Render"
+      ],
+      "relevant": [
+        "Necropotence",
+        "Sylvan Library",
+        "Glint-Sleeve Siphoner",
+        "Blood Scrivener",
+        "Asylum Visitor",
+        "Pain Seer"
+      ],
+      "somewhat_relevant": [
+        "Liliana of the Veil",
+        "Thoughtseize",
+        "Inquisition of Kozilek",
+        "Tarmogoyf",
+        "Death's Shadow",
+        "Fatal Push",
+        "Deathrite Shaman",
+        "Ragavan, Nimble Pilferer",
+        "Snapcaster Mage"
+      ],
+      "marginally_relevant": [
+        "Orcish Bowmasters",
+        "Grief",
+        "Sedgemoor Witch"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5185185185185185,
+        "num_cards": 63
+      }
+    },
+    "Swords to Plowshares": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Path to Exile",
+        "Condemn",
+        "Oust",
+        "Declaration in Stone",
+        "Fateful Absence",
+        "Unexpectedly Absent",
+        "Solitude",
+        "Dispatch",
+        "Prismatic Ending",
+        "March of Otherworldly Light"
+      ],
+      "relevant": [
+        "Banishing Light",
+        "Oblivion Ring",
+        "Palace Jailer",
+        "Skyclave Apparition",
+        "Generous Gift",
+        "Fiend Hunter"
+      ],
+      "somewhat_relevant": [
+        "Council's Judgment",
+        "Settle the Wreckage",
+        "Elspeth Conquers Death",
+        "Cast Out",
+        "Stasis Snare",
+        "Wrath of God",
+        "Banisher Priest",
+        "Angelic Ascension"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5493827160493827,
+        "num_cards": 54
+      }
+    },
+    "Rhystic Study": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Mystic Remora",
+        "Consecrated Sphinx",
+        "Sylvan Library",
+        "Necropotence",
+        "Phyrexian Arena",
+        "Dark Confidant",
+        "Esper Sentinel"
+      ],
+      "relevant": [
+        "Smothering Tithe",
+        "Verity Circle",
+        "Trouble in Pairs",
+        "Mind's Eye",
+        "Coastal Piracy",
+        "Bident of Thassa",
+        "Curiosity Crafter",
+        "Black Market Connections",
+        "Guardian Project",
+        "Kindred Discovery"
+      ],
+      "somewhat_relevant": [
+        "Windfall",
+        "Propaganda",
+        "Ghostly Prison"
+      ],
+      "marginally_relevant": [
+        "Brainstorm",
+        "Ponder",
+        "Blue Sun's Zenith",
+        "Thought Vessel"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5172413793103449,
+        "num_cards": 58
+      }
+    },
+    "Animate Dead": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Dance of the Dead",
+        "Necromancy",
+        "Reanimate",
+        "Exhume",
+        "Life // Death",
+        "Shallow Grave",
+        "Goryo's Vengeance"
+      ],
+      "relevant": [
+        "Persist",
+        "Unburial Rites",
+        "Dread Return",
+        "Victimize",
+        "Karmic Guide",
+        "Makeshift Mannequin",
+        "Doomed Necromancer",
+        "Beacon of Unrest"
+      ],
+      "somewhat_relevant": [
+        "Recurring Nightmare",
+        "Ever After",
+        "Coffin Queen",
+        "Apprentice Necromancer",
+        "Strands of Night"
+      ],
+      "marginally_relevant": [
+        "Unmarked Grave",
+        "Liliana, Death's Majesty",
+        "Griselbrand",
+        "Dark Ritual"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5493827160493827,
+        "num_cards": 54
+      }
+    },
+    "Thassa's Oracle": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Laboratory Maniac",
+        "Jace, Wielder of Mysteries",
+        "Doomsday",
+        "Demonic Consultation",
+        "Tainted Pact",
+        "Paradigm Shift",
+        "Leveler",
+        "Thought Lash"
+      ],
+      "relevant": [
+        "Mirror of Fate",
+        "Spoils of the Vault",
+        "Mana Severance",
+        "Plunge into Darkness",
+        "Divining Witch",
+        "Hermit Druid",
+        "Selective Memory",
+        "Angel's Grace"
+      ],
+      "somewhat_relevant": [
+        "Gitaxian Probe"
+      ],
+      "marginally_relevant": [
+        "Brainstorm",
+        "Ponder",
+        "Preordain",
+        "Opt",
+        "Serum Visions",
+        "Consider"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.49479166666666663,
+        "num_cards": 64
+      }
+    },
+    "Necropotence": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Ad Nauseam",
+        "Griselbrand",
+        "Yawgmoth's Bargain",
+        "Peer into the Abyss",
+        "Bolas's Citadel",
+        "Dark Confidant",
+        "Phyrexian Arena"
+      ],
+      "relevant": [
+        "Sylvan Library",
+        "Sign in Blood",
+        "Night's Whisper",
+        "Read the Bones",
+        "Erebos, God of the Dead",
+        "Greed",
+        "Arguel's Blood Fast",
+        "Underworld Connections"
+      ],
+      "somewhat_relevant": [
+        "Rhystic Study",
+        "Mystic Remora",
+        "Consecrated Sphinx",
+        "Sensei's Divining Top",
+        "Scroll Rack"
+      ],
+      "marginally_relevant": [
+        "Dark Ritual",
+        "Cabal Coffers",
+        "Waste Not"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5146198830409356,
+        "num_cards": 57
+      }
+    },
+    "Birthing Pod": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Prime Speaker Vannifar",
+        "Neoform",
+        "Eldritch Evolution",
+        "Yisan, the Wanderer Bard",
+        "Survival of the Fittest",
+        "Chord of Calling",
+        "Fiend Artisan"
+      ],
+      "relevant": [
+        "Natural Order",
+        "Green Sun's Zenith",
+        "Collected Company",
+        "Fauna Shaman",
+        "Finale of Devastation",
+        "Eladamri's Call",
+        "Worldly Tutor",
+        "Pattern of Rebirth",
+        "Protean Hulk"
+      ],
+      "somewhat_relevant": [
+        "Evolution Sage",
+        "Woodland Bellower"
+      ],
+      "marginally_relevant": [
+        "Kitchen Finks",
+        "Siege Rhino",
+        "Murderous Redcap",
+        "Melira, Sylvok Outcast",
+        "Voice of Resurgence"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5310734463276836,
+        "num_cards": 59
+      }
+    },
+    "Dockside Extortionist": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Birgi, God of Storytelling",
+        "Storm-Kiln Artist",
+        "Grim Monolith",
+        "Mana Crypt",
+        "Sol Ring",
+        "Jeska's Will",
+        "Treasure Nabber",
+        "Goldspan Dragon",
+        "Ragavan, Nimble Pilferer",
+        "Dockside Chef"
+      ],
+      "relevant": [
+        "Lotus Petal",
+        "Seething Song"
+      ],
+      "somewhat_relevant": [
+        "Imperial Recruiter",
+        "Zealous Conscripts",
+        "Kiki-Jiki, Mirror Breaker",
+        "Xorn",
+        "Academy Manufactor",
+        "Goblin Engineer",
+        "Goblin Matron"
+      ],
+      "marginally_relevant": [
+        "Purphoros, God of the Forge",
+        "Impact Tremors",
+        "Terror of the Peaks",
+        "Goblin Bombardment"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4722222222222222,
+        "num_cards": 60
+      }
+    },
+    "Monastery Swiftspear": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Soul-Scar Mage",
+        "Goblin Guide",
+        "Ghitu Lavarunner",
+        "Bomat Courier",
+        "Zurgo Bellstriker",
+        "Dragon's Rage Channeler",
+        "Slither Blade",
+        "Ragavan, Nimble Pilferer",
+        "Swiftspear Zealot"
+      ],
+      "relevant": [
+        "Stormwing Entity",
+        "Sprite Dragon",
+        "Kiln Fiend",
+        "Vexing Devil",
+        "Eidolon of the Great Revel",
+        "Ash Zealot"
+      ],
+      "somewhat_relevant": [
+        "Young Pyromancer",
+        "Lightning Bolt",
+        "Lava Spike",
+        "Rift Bolt",
+        "Searing Blaze",
+        "Crash Through"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.47777777777777775,
+        "num_cards": 60
+      }
+    },
+    "Hymn to Tourach": {
+      "use_case": "functional",
+      "highly_relevant": [
+        "Mind Twist",
+        "Thoughtseize",
+        "Inquisition of Kozilek",
+        "Wrench Mind",
+        "Mind Rake"
+      ],
+      "relevant": [
+        "Duress",
+        "Skull Raid",
+        "Blackmail",
+        "Stupor",
+        "Augur of Skulls",
+        "Despise"
+      ],
+      "somewhat_relevant": [
+        "Waste Not",
+        "Arterial Flow",
+        "Raven's Crime",
+        "Syphon Mind",
+        "Blightning",
+        "Hypnotic Specter",
+        "Elderfang Disciple"
+      ],
+      "marginally_relevant": [
+        "Dark Ritual",
+        "Dark Confidant",
+        "Phyrexian Arena"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4611111111111111,
+        "num_cards": 60
+      }
+    },
+    "Ulamog, the Ceaseless Hunger": {
+      "use_case": "substitute",
+      "highly_relevant": [
+        "Emrakul, the Promised End",
+        "Kozilek, the Great Distortion",
+        "Ulamog, the Infinite Gyre",
+        "Kozilek, Butcher of Truth",
+        "Emrakul, the Aeons Torn",
+        "Blightsteel Colossus"
+      ],
+      "relevant": [
+        "Worldspine Wurm",
+        "Sundering Titan",
+        "Void Winnower",
+        "Artisan of Kozilek",
+        "It That Betrays",
+        "Karn Liberated",
+        "Pathrazer of Ulamog",
+        "Darksteel Colossus"
+      ],
+      "somewhat_relevant": [
+        "Oblivion Sower",
+        "All Is Dust",
+        "Wurmcoil Engine"
+      ],
+      "marginally_relevant": [
+        "Matter Reshaper",
+        "Ancient Stirrings",
+        "Sanctum of Ugin"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.5178571428571429,
+        "num_cards": 56
+      }
+    },
+    "Teferi, Time Raveler": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Dovin's Veto",
+        "Teferi, Mage of Zhalfir",
+        "Grand Abolisher",
+        "Silence",
+        "City of Solitude",
+        "Defense Grid",
+        "Orim's Chant"
+      ],
+      "relevant": [
+        "Narset, Parter of Veils",
+        "Spell Queller",
+        "Lavinia, Azorius Renegade"
+      ],
+      "somewhat_relevant": [
+        "Supreme Verdict",
+        "Absorb",
+        "Detention Sphere",
+        "Prismatic Ending",
+        "Elspeth, Sun's Champion"
+      ],
+      "marginally_relevant": [
+        "Snapcaster Mage",
+        "Opt",
+        "Brainstorm",
+        "Preordain",
+        "Jace, the Mind Sculptor"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4351851851851852,
+        "num_cards": 72
+      }
+    },
+    "Cabal Coffers": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Nykthos, Shrine to Nyx",
+        "Crypt Ghast",
+        "Nirkana Revenant",
+        "Magus of the Coffers",
+        "Cabal Stronghold",
+        "Lake of the Dead"
+      ],
+      "relevant": [
+        "Caged Sun",
+        "Gauntlet of Power",
+        "Extraplanar Lens",
+        "Black Market",
+        "Thespian's Stage",
+        "Vesuva",
+        "Dark Ritual",
+        "Bubbling Muck"
+      ],
+      "somewhat_relevant": [
+        "Deserted Temple",
+        "Expedition Map",
+        "Tempt with Discovery",
+        "Exsanguinate",
+        "Torment of Hailfire"
+      ],
+      "marginally_relevant": [
+        "Swamp"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4611111111111111,
+        "num_cards": 60
+      }
+    },
+    "Aether Vial": {
+      "use_case": "archetype",
+      "highly_relevant": [
+        "Collected Company",
+        "Cavern of Souls",
+        "Chord of Calling",
+        "Eldritch Evolution",
+        "Birthing Pod"
+      ],
+      "relevant": [
+        "Champion of the Parish",
+        "Thalia, Guardian of Thraben",
+        "Imperial Recruiter",
+        "Unsettled Mariner"
+      ],
+      "somewhat_relevant": [
+        "Cloudstone Curio"
+      ],
+      "marginally_relevant": [
+        "Sol Ring",
+        "Chrome Mox",
+        "Mox Opal",
+        "Arcane Signet",
+        "Mind Stone"
+      ],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.42857142857142855,
+        "num_cards": 63
+      }
+    },
+    "Skullclamp": {
+      "use_case": "synergy",
+      "highly_relevant": [
+        "Glimpse of Nature",
+        "Culling the Weak",
+        "Ashnod's Altar",
+        "Phyrexian Altar",
+        "Mentor of the Meek",
+        "Welcoming Vampire",
+        "Mask of Memory",
+        "Rogue's Gloves"
+      ],
+      "relevant": [
+        "Dark Prophecy",
+        "Midnight Reaper",
+        "Skull Prophet"
+      ],
+      "somewhat_relevant": [
+        "Cranial Plating",
+        "Sword of Fire and Ice",
+        "Blood Artist",
+        "Zulaport Cutthroat"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [],
+      "iaa": {
+        "num_judges": 3,
+        "agreement_rate": 0.4057971014492754,
+        "num_cards": 69
+      }
+    },
+    "Blue-Eyes White Dragon": {
+      "highly_relevant": [
+        "Blue-Eyes Alternative White Dragon",
+        "Blue-Eyes Abyss Dragon"
+      ],
+      "relevant": [
+        "Azure-Eyes Silver Dragon",
+        "Deep-Eyes White Dragon"
+      ],
+      "somewhat_relevant": [
+        "Dragon Spirit of White"
+      ],
+      "marginally_relevant": [
+        "Maiden with Eyes of Blue"
+      ],
+      "irrelevant": [
+        "Dark Magician",
+        "Monster Reborn"
+      ]
+    },
+    "Ash Blossom & Joyous Spring": {
+      "highly_relevant": [
+        "Effect Veiler",
+        "Ghost Ogre & Snow Rabbit"
+      ],
+      "relevant": [
+        "D.D. Crow",
+        "Ghost Belle & Haunted Mansion"
+      ],
+      "somewhat_relevant": [
+        "Skull Meister"
+      ],
+      "marginally_relevant": [
+        "Droll & Lock Bird"
+      ],
+      "irrelevant": [
+        "Pot of Greed"
+      ]
+    },
+    "Pot of Greed": {
+      "highly_relevant": [
+        "Pot of Avarice",
+        "Pot of Desires"
+      ],
+      "relevant": [
+        "Pot of Extravagance",
+        "Pot of Prosperity"
+      ],
+      "somewhat_relevant": [
+        "Upstart Goblin"
+      ],
+      "marginally_relevant": [
+        "Into the Void"
+      ],
+      "irrelevant": [
+        "Monster Reborn"
+      ]
+    },
+    "Monster Reborn": {
+      "highly_relevant": [
+        "Call of the Haunted",
+        "Premature Burial"
+      ],
+      "relevant": [
+        "Back to the Front",
+        "World Legacy Succession"
+      ],
+      "somewhat_relevant": [
+        "Oasis of Dragon Souls"
+      ],
+      "marginally_relevant": [
+        "Rope of Life"
+      ],
+      "irrelevant": [
+        "Pot of Greed"
+      ]
+    },
+    "Dark Magician": {
+      "highly_relevant": [
+        "Dark Magician Girl",
+        "Magician of Black Chaos"
+      ],
+      "relevant": [
+        "Dark Magician the Dragon Knight"
+      ],
+      "somewhat_relevant": [
+        "Illusion Magic"
+      ],
+      "marginally_relevant": [
+        "Eternal Soul"
+      ],
+      "irrelevant": [
+        "Blue-Eyes White Dragon"
+      ]
+    },
+    "Raigeki": {
+      "highly_relevant": [
+        "Dark Hole",
+        "Lightning Storm"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Harpie's Feather Duster": {
+      "highly_relevant": [
+        "Heavy Storm"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mystical Space Typhoon": {
+      "highly_relevant": [
+        "Cosmic Cyclone"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Solemn Judgment": {
+      "highly_relevant": [
+        "Solemn Warning"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Maxx \"C\"": {
+      "highly_relevant": [
+        "Ash Blossom"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Called by the Grave": {
+      "highly_relevant": [
+        "Crossout Designator"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Infinite Impermanence": {
+      "highly_relevant": [
+        "Effect Veiler"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Nibiru, the Primal Being": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fleshbag Marauder": {
+      "highly_relevant": [
+        "Swamp",
+        "Plains",
+        "Mountain",
+        "Forest",
+        "Island",
+        "Sol Ring",
+        "Sign in Blood"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Gideon Blackblade": {
+      "highly_relevant": [
+        "Nicol Bolas, Dragon-God",
+        "Ral, Storm Conduit",
+        "Ugin, the Ineffable",
+        "Teferi, Time Raveler",
+        "Karn, the Great Creator",
+        "Sorin, Vengeful Bloodlord",
+        "Jace, Wielder of Mysteries",
+        "Tamiyo, Collector of Tales",
+        "Liliana, Dreadhorde General",
+        "Nissa, Who Shakes the World",
+        "Vivien, Champion of the Wilds",
+        "The Wanderer",
+        "Teyo, the Shieldmage",
+        "Samut, Tyrant Smasher",
+        "Kaya, Bane of the Dead",
+        "Nahiri, Storm of Stone",
+        "Sarkhan the Masterless",
+        "Huatli, the Sun's Heart",
+        "Narset, Parter of Veils",
+        "Jaya, Venerated Firemage",
+        "Kiora, Behemoth Beckoner",
+        "Vraska, Swarm's Eminence",
+        "Jiang Yanggu, Wildcrafter",
+        "Kasmina, Enigmatic Mentor",
+        "Tibalt, Rakish Instigator",
+        "Saheeli, Sublime Artificer",
+        "Ob Nixilis, the Hate-Twisted"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Arcanis the Omnipotent": {
+      "highly_relevant": [
+        "Mountain",
+        "Swamp",
+        "Island",
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Forgotten Ancient": {
+      "highly_relevant": [
+        "Sol Ring",
+        "Solemn Simulacrum",
+        "Temple of the False God"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Fountain of Youth": {
+      "highly_relevant": [
+        "Plains"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Garruk, Unleashed": {
+      "highly_relevant": [
+        "Teferi, Master of Time",
+        "Ugin, the Spirit Dragon",
+        "Liliana, Waker of the Dead"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Go for the Throat": {
+      "highly_relevant": [
+        "Plains",
+        "Sol Ring",
+        "Swords to Plowshares"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    },
+    "Asmodeus the Archfiend": {
+      "highly_relevant": [
+        "Wish",
+        "Flumph"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": []
+    }
+  }
+}

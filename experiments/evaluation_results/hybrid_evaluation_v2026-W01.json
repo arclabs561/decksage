@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-01T08:53:47.668058",
+  "model_type": "hybrid",
+  "model_version": "2026-W01",
+  "metrics": {
+    "p_at_10": 0.14
+  },
+  "full_results": {
+    "summary": {
+      "avg_p_at_10": 0.14
+    }
+  }
+}

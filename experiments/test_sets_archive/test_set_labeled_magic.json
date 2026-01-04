@@ -1,0 +1,2844 @@
+{
+  "version": "labeled_merged",
+  "queries": {
+    "Lightning Bolt": {
+      "highly_relevant": [
+        "Chain Lightning",
+        "Lava Spike"
+      ],
+      "relevant": [
+        "Fireblast",
+        "Lava Dart"
+      ],
+      "somewhat_relevant": [
+        "Needle Drop",
+        "Rift Bolt"
+      ],
+      "marginally_relevant": [
+        "Skewer the Critics"
+      ],
+      "irrelevant": [
+        "Monastery Swiftspear",
+        "Mountain",
+        "Counterspell"
+      ]
+    },
+    "Brainstorm": {
+      "highly_relevant": [
+        "Ponder",
+        "Preordain"
+      ],
+      "relevant": [
+        "Gitaxian Probe"
+      ],
+      "somewhat_relevant": [
+        "Serum Visions"
+      ],
+      "marginally_relevant": [
+        "Opt"
+      ],
+      "irrelevant": [
+        "Force of Will",
+        "Island"
+      ]
+    },
+    "Sol Ring": {
+      "highly_relevant": [
+        "Mana Crypt",
+        "Mox Diamond"
+      ],
+      "relevant": [
+        "Chrome Mox",
+        "Mox Opal",
+        "Lotus Petal"
+      ],
+      "somewhat_relevant": [
+        "Ancient Tomb",
+        "Mana Vault"
+      ],
+      "marginally_relevant": [
+        "Arcane Signet"
+      ],
+      "irrelevant": [
+        "Hedron Crab",
+        "Command Tower"
+      ]
+    },
+    "Counterspell": {
+      "highly_relevant": [
+        "Mana Leak",
+        "Remand"
+      ],
+      "relevant": [
+        "Spell Snare",
+        "Spell Pierce"
+      ],
+      "somewhat_relevant": [
+        "Memory Lapse"
+      ],
+      "marginally_relevant": [
+        "Force Spike"
+      ],
+      "irrelevant": [
+        "Thought Scour",
+        "Faerie Miscreant"
+      ]
+    },
+    "Dark Ritual": {
+      "highly_relevant": [
+        "Cabal Ritual",
+        "Culling the Weak"
+      ],
+      "relevant": [
+        "Lion's Eye Diamond",
+        "Lotus Petal"
+      ],
+      "somewhat_relevant": [
+        "Dark Petition"
+      ],
+      "marginally_relevant": [
+        "Songs of the Damned"
+      ],
+      "irrelevant": [
+        "Vampiric Tutor",
+        "Swamp"
+      ]
+    },
+    "Tarmogoyf": {
+      "highly_relevant": [
+        "Scavenging Ooze",
+        "Hooting Mandrills"
+      ],
+      "relevant": [
+        "Gurmag Angler"
+      ],
+      "somewhat_relevant": [
+        "Cankerbloom"
+      ],
+      "marginally_relevant": [
+        "Wild Nacatl"
+      ],
+      "irrelevant": [
+        "Blooming Marsh"
+      ]
+    },
+    "Force of Will": {
+      "highly_relevant": [
+        "Force of Negation",
+        "Pact of Negation"
+      ],
+      "relevant": [
+        "Daze",
+        "Flusterstorm"
+      ],
+      "somewhat_relevant": [
+        "Misdirection"
+      ],
+      "marginally_relevant": [
+        "Disrupting Shoal"
+      ],
+      "irrelevant": [
+        "Brainstorm"
+      ]
+    },
+    "Delver of Secrets": {
+      "highly_relevant": [
+        "Monastery Swiftspear",
+        "Dragon's Rage Channeler"
+      ],
+      "relevant": [
+        "Ragavan, Nimble Pilferer"
+      ],
+      "somewhat_relevant": [
+        "Pteramander"
+      ],
+      "marginally_relevant": [
+        "Sprite Dragon"
+      ],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Swords to Plowshares": {
+      "highly_relevant": [
+        "Path to Exile"
+      ],
+      "relevant": [
+        "Generous Gift"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Accumulated Knowledge": {
+      "highly_relevant": [],
+      "relevant": [
+        "Mystic Speculation",
+        "Think Twice"
+      ],
+      "somewhat_relevant": [
+        "Curate"
+      ],
+      "marginally_relevant": [
+        "Deep Analysis"
+      ],
+      "irrelevant": [
+        "Brainstorm"
+      ]
+    },
+    "Arcane Signet": {
+      "highly_relevant": [
+        "Fellwar Stone",
+        "Talisman of Progress"
+      ],
+      "relevant": [
+        "Signets (all)",
+        "Mind Stone"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Lotus Petal": {
+      "highly_relevant": [
+        "Lotus Bloom",
+        "Lion's Eye Diamond"
+      ],
+      "relevant": [
+        "Chrome Mox",
+        "Mox Diamond"
+      ],
+      "somewhat_relevant": [
+        "Dark Ritual"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Sol Ring"
+      ]
+    },
+    "Ancient Tomb": {
+      "highly_relevant": [
+        "City of Traitors"
+      ],
+      "relevant": [
+        "Crystal Vein"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring",
+        "Mana Vault"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Plains"
+      ]
+    },
+    "Demonic Tutor": {
+      "highly_relevant": [
+        "Vampiric Tutor",
+        "Imperial Seal"
+      ],
+      "relevant": [
+        "Diabolic Intent",
+        "Grim Tutor"
+      ],
+      "somewhat_relevant": [
+        "Dark Petition"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Urza's Saga": {
+      "highly_relevant": [
+        "Mishra's Workshop"
+      ],
+      "relevant": [
+        "Inventors' Fair"
+      ],
+      "somewhat_relevant": [
+        "Ancient Tomb"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Island"
+      ]
+    },
+    "Chrome Mox": {
+      "highly_relevant": [
+        "Mox Diamond",
+        "Lotus Petal",
+        "Mox Opal"
+      ],
+      "relevant": [
+        "Lion's Eye Diamond"
+      ],
+      "somewhat_relevant": [
+        "Simian Spirit Guide"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Sol Ring"
+      ]
+    },
+    "Mental Misstep": {
+      "highly_relevant": [
+        "Spell Pierce",
+        "Spell Snare"
+      ],
+      "relevant": [
+        "Flusterstorm"
+      ],
+      "somewhat_relevant": [
+        "Force of Will"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Boseiju, Who Endures": {
+      "highly_relevant": [
+        "Otawara, Soaring City",
+        "Eiganjo, Seat of the Empire"
+      ],
+      "relevant": [
+        "The Mycosynth Gardens"
+      ],
+      "somewhat_relevant": [
+        "Strip Mine"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Forest"
+      ]
+    },
+    "Mana Vault": {
+      "highly_relevant": [
+        "Grim Monolith",
+        "Sol Ring"
+      ],
+      "relevant": [
+        "Ancient Tomb",
+        "Mana Crypt"
+      ],
+      "somewhat_relevant": [
+        "Basalt Monolith"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Lightning Bolt"
+      ]
+    },
+    "Fellwar Stone": {
+      "highly_relevant": [
+        "Mind Stone",
+        "Arcane Signet"
+      ],
+      "relevant": [
+        "Thought Vessel"
+      ],
+      "somewhat_relevant": [
+        "Sol Ring"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": [
+        "Tarmogoyf"
+      ]
+    },
+    "Orcish Bowmasters": {
+      "highly_relevant": [
+        "Brazen Borrower"
+      ],
+      "relevant": [
+        "Subtlety"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Pyroblast": {
+      "highly_relevant": [
+        "Red Elemental Blast",
+        "Hydroblast"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Expressive Iteration": {
+      "highly_relevant": [
+        "Consider",
+        "Impulse"
+      ],
+      "relevant": [
+        "See Beyond"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ledger Shredder": {
+      "highly_relevant": [
+        "Suspicious Stowaway"
+      ],
+      "relevant": [
+        "Search for Azcanta"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fatal Push": {
+      "highly_relevant": [
+        "Terminate",
+        "Go for the Throat"
+      ],
+      "relevant": [
+        "Dismember"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ragavan, Nimble Pilferer": {
+      "highly_relevant": [
+        "Dragon's Rage Channeler"
+      ],
+      "relevant": [
+        "Monastery Swiftspear"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wrenn and Six": {
+      "highly_relevant": [],
+      "relevant": [
+        "Life from the Loam"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Surgical Extraction": {
+      "highly_relevant": [
+        "Extirpate"
+      ],
+      "relevant": [
+        "Leyline of the Void"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Chalice of the Void": {
+      "highly_relevant": [
+        "Trinisphere"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Show and Tell": {
+      "highly_relevant": [
+        "Sneak Attack"
+      ],
+      "relevant": [
+        "Through the Breach"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Tendrils of Agony": {
+      "highly_relevant": [
+        "Grapeshot"
+      ],
+      "relevant": [
+        "Empty the Warrens"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Teferi, Time Raveler": {
+      "highly_relevant": [],
+      "relevant": [
+        "Supreme Verdict"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Thoughtseize": {
+      "highly_relevant": [
+        "Inquisition of Kozilek"
+      ],
+      "relevant": [
+        "Duress"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Aether Vial": {
+      "highly_relevant": [],
+      "relevant": [
+        "Collected Company"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wasteland": {
+      "highly_relevant": [
+        "Strip Mine"
+      ],
+      "relevant": [
+        "Ghost Quarter"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Leyline of Sanctity": {
+      "highly_relevant": [
+        "Leyline of the Void"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Flusterstorm": {
+      "highly_relevant": [
+        "Spell Pierce",
+        "Dispel"
+      ],
+      "relevant": [
+        "Force of Will"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Explore": {
+      "highly_relevant": [
+        "Growth Spiral"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Kiki-Jiki, Mirror Breaker": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Kiki Combo",
+      "reasoning": "Key combo piece that represents an entire archetype in Modern, looking for both combo pieces and value engines that work with copying creatures",
+      "expected_similar": [
+        "Splinter Twin",
+        "Deceiver Exarch",
+        "Zealous Conscripts",
+        "Combat Celebrant"
+      ],
+      "highly_relevant": [
+        "condescend",
+        "groundswell",
+        "domesticated hydra",
+        "frontier mastodon",
+        "caught in the brights",
+        "act on impulse",
+        "vampire envoy",
+        "augury owl",
+        "moment of craving",
+        "crashing tide",
+        "swift kick",
+        "savage punch",
+        "ondu giant",
+        "caustic caterpillar",
+        "alchemists vial"
+      ],
+      "relevant": [
+        "frontier mastodon",
+        "caught in the brights",
+        "act on impulse"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Oko, Thief of Crowns": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Banned in multiple formats, represents extremely versatile planeswalkers that can both create threats and answer opponents' permanents",
+      "expected_similar": [
+        "The Royal Scions",
+        "Ice-Fang Coatl",
+        "Gilded Goose",
+        "Beast Within"
+      ],
+      "highly_relevant": [
+        "the royal scions",
+        "garruk cursed huntsman",
+        "giant killer chop down",
+        "murderous rider swift end",
+        "oakhame ranger bring back",
+        "merchant of the vale haggle",
+        "queen of ice rage of winter",
+        "rimrock knight boulder rush",
+        "silverflame squire on alert",
+        "order of midnight alter fate",
+        "tuinvale treefolk oaken boon",
+        "smitten swordmaster curry favor",
+        "rosethorn acolyte seasonal ritual",
+        "merfolk secretkeeper venture deeper",
+        "shepherd of the flock usher to safety"
+      ],
+      "relevant": [
+        "murderous rider swift end",
+        "oakhame ranger bring back",
+        "merchant of the vale haggle"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Supreme Verdict": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Uncounterable board wipe that represents a specific variant of mass removal, useful for testing both functional equivalence and strict upgrades/downgrades",
+      "expected_similar": [
+        "Wrath of God",
+        "Day of Judgment",
+        "Doomskar",
+        "Shatter the Sky"
+      ],
+      "highly_relevant": [
+        "seeker of the way",
+        "qasali pridemage",
+        "kolaghans command",
+        "bloom tender",
+        "monastery swiftspear",
+        "thought scour",
+        "teferis protection",
+        "anger of the gods",
+        "staggershock",
+        "wall of omens",
+        "doorkeeper",
+        "dead reveler",
+        "azorius charm",
+        "bloodbraid elf",
+        "mishras bauble"
+      ],
+      "relevant": [
+        "bloom tender",
+        "monastery swiftspear",
+        "thought scour"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Thassa's Oracle": {
+      "use_case": "synergy",
+      "format": "Legacy",
+      "archetype": "Doomsday",
+      "reasoning": "Key win condition in combo decks that specifically cares about library manipulation and alternative win conditions",
+      "expected_similar": [
+        "Laboratory Maniac",
+        "Jace, Wielder of Mysteries",
+        "Leveler",
+        "Demonic Consultation"
+      ],
+      "highly_relevant": [
+        "underworld breach",
+        "storm herald",
+        "storms wrath",
+        "treacherous blessing",
+        "thassas intervention",
+        "thassa deepdwelling",
+        "thryx the sudden storm",
+        "nessian boar",
+        "phoenix of ash",
+        "shatter the sky",
+        "nylea keeneyed",
+        "nyxbloom ancient",
+        "setessan champion",
+        "gravebreaker lamia",
+        "mantle of the wolf"
+      ],
+      "relevant": [
+        "treacherous blessing",
+        "thassas intervention",
+        "thassa deepdwelling"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Birds of Paradise": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "The quintessential one-mana mana dork that appears in multiple formats. Perfect for testing similarity with other mana-producing creatures and acceleration effects.",
+      "expected_similar": [
+        "Noble Hierarch",
+        "Llanowar Elves",
+        "Ignoble Hierarch",
+        "Gilded Goose"
+      ],
+      "highly_relevant": [
+        "wall of fire",
+        "giant spider",
+        "millstone",
+        "llanowar elves",
+        "goblin balloon brigade",
+        "orcish oriflamme",
+        "hypnotic specter",
+        "fog",
+        "lure",
+        "ornithopter",
+        "wild growth",
+        "hurricane",
+        "black knight",
+        "pestilence",
+        "prodigal sorcerer"
+      ],
+      "relevant": [
+        "llanowar elves",
+        "goblin balloon brigade",
+        "orcish oriflamme"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Cabal Coffers": {
+      "use_case": "synergy",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Powerful Commander land that demonstrates strong synergistic relationships with specific card types (Swamps) and other mana doublers. Tests for both mana engine pieces and black-focused synergies.",
+      "expected_similar": [
+        "Urborg, Tomb of Yawgmoth",
+        "Crypt Ghast",
+        "Nirkana Revenant",
+        "Magus of the Coffers"
+      ],
+      "highly_relevant": [
+        "ragavan nimble pilferer",
+        "void mirror",
+        "yavimaya cradle of growth",
+        "suspend",
+        "solitude",
+        "subtlety",
+        "sol talisman",
+        "unmarked grave",
+        "timeless dragon",
+        "resurgent belief",
+        "rishadan dockhand",
+        "sanctifier envec",
+        "thrasta tempests roar",
+        "sword of hearth and home",
+        "out of time"
+      ],
+      "relevant": [
+        "suspend",
+        "solitude",
+        "subtlety"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Jace, the Mind Sculptor": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Control",
+      "reasoning": "One of the most powerful planeswalkers ever printed, representing blue-based control strategies. Tests for both high-impact card advantage engines and control finishers.",
+      "expected_similar": [
+        "Teferi, Hero of Dominaria",
+        "Narset, Parter of Veils",
+        "The Wandering Emperor",
+        "Snapcaster Mage"
+      ],
+      "highly_relevant": [
+        "force of will",
+        "councils judgment",
+        "toxic deluge",
+        "brago king eternal",
+        "chrome mox",
+        "sneak attack",
+        "maelstrom wanderer",
+        "blightsteel colossus",
+        "sword of war and peace",
+        "sword of body and mind",
+        "stoneforge mystic",
+        "batterskull",
+        "sword of feast and famine",
+        "atraxa praetors voice",
+        "sword of light and shadow"
+      ],
+      "relevant": [
+        "brago king eternal",
+        "chrome mox",
+        "sneak attack"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Birthing Pod": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Combo",
+      "reasoning": "Banned card that defined its own archetype and demonstrates unique tutoring mechanics. Tests for both creature-based toolbox strategies and sacrifice-based value engines.",
+      "expected_similar": [
+        "Yawgmoth, Thran Physician",
+        "Chord of Calling",
+        "Eldritch Evolution",
+        "Prime Speaker Vannifar"
+      ],
+      "highly_relevant": [
+        "toxic nim",
+        "xenograft",
+        "slag fiend",
+        "spinebiter",
+        "torpor orb",
+        "war report",
+        "mindculling",
+        "mortis dogs",
+        "ogre menial",
+        "razor swine",
+        "viral drake",
+        "necropouncer",
+        "numbing dose",
+        "omen machine",
+        "pith driller"
+      ],
+      "relevant": [
+        "spinebiter",
+        "torpor orb",
+        "war report"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Goblin Guide": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Burn",
+      "reasoning": "Iconic aggressive creature that defines the Modern Burn archetype and represents the aggressive red creature benchmark. Perfect for testing similarity with other efficient red creatures and burn deck staples.",
+      "expected_similar": [
+        "Monastery Swiftspear",
+        "Eidolon of the Great Revel",
+        "Lightning Bolt",
+        "Soul-Scar Mage"
+      ],
+      "highly_relevant": [
+        "stoneforge mystic",
+        "needleverge pathway pillarverge pathway",
+        "cyclonic rift",
+        "verdant catacombs",
+        "scalding tarn",
+        "misty rainforest",
+        "marsh flats",
+        "arid mesa",
+        "blightsteel colossus",
+        "sword of war and peace",
+        "sword of body and mind",
+        "toxic deluge",
+        "sword of fire and ice",
+        "sword of feast and famine",
+        "atraxa praetors voice"
+      ],
+      "relevant": [
+        "verdant catacombs",
+        "scalding tarn",
+        "misty rainforest"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Craterhoof Behemoth": {
+      "use_case": "synergy",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Classic Commander finisher that works specifically in token and creature-based strategies. Essential for testing similarity with other game-ending creatures and mass pump effects.",
+      "expected_similar": [
+        "End-Raze Forerunners",
+        "Finale of Devastation",
+        "Overrun",
+        "Pathbreaker Ibex"
+      ],
+      "highly_relevant": [
+        "scroll of avacyn",
+        "corpse traders",
+        "exquisite blood",
+        "entomber exarch",
+        "hellrider",
+        "linvala keeper of silence",
+        "harvester of souls",
+        "wingcrafter",
+        "thunderous wrath",
+        "ulvenwald tracker",
+        "deadeye navigator",
+        "bonfire of the damned",
+        "dinrova horror",
+        "soul of the harvest",
+        "zealous conscripts"
+      ],
+      "relevant": [
+        "entomber exarch",
+        "hellrider",
+        "linvala keeper of silence"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Urza's Tower": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Tron",
+      "reasoning": "Part of the iconic Tron land package that defines an entire Modern archetype. Perfect for testing land-based synergies and big mana enablers.",
+      "expected_similar": [
+        "Urza's Mine",
+        "Urza's Power Plant",
+        "Expedition Map",
+        "Ancient Stirrings"
+      ],
+      "highly_relevant": [
+        "urzas mine",
+        "urzas power plant",
+        "expedition map",
+        "karn liberated",
+        "bonders enclave",
+        "gadrak the crownscourge",
+        "barrin tolarian archmage",
+        "swarm shambler",
+        "prowling felidar",
+        "magmatic channeler",
+        "canopy baloth",
+        "wavebreak hippocamp",
+        "taranika akroan veteran",
+        "archon of suns grace",
+        "yidaro wandering monster"
+      ],
+      "relevant": [
+        "karn liberated",
+        "bonders enclave",
+        "gadrak the crownscourge"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Blood Moon": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Iconic land hate permanent that tests for similar mana denial and punishment effects.",
+      "expected_similar": [
+        "Magus of the Moon",
+        "Back to Basics",
+        "Alpine Moon",
+        "Price of Progress"
+      ],
+      "highly_relevant": [
+        "sword of light and shadow",
+        "sword of fire and ice",
+        "urzas mine",
+        "urzas tower",
+        "urzas power plant",
+        "academy ruins",
+        "cyclonic rift",
+        "dark confidant",
+        "doubling season",
+        "jace the mind sculptor",
+        "goblin guide",
+        "sword of war and peace",
+        "blightsteel colossus",
+        "ensnaring bridge",
+        "sword of feast and famine"
+      ],
+      "relevant": [
+        "urzas tower",
+        "urzas power plant",
+        "academy ruins"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Yawgmoth's Will": {
+      "use_case": "archetype",
+      "format": "Vintage",
+      "archetype": "Storm",
+      "reasoning": "Powerful graveyard recursion spell that defines vintage storm strategies, testing for similar game-breaking effects.",
+      "expected_similar": [
+        "Past in Flames",
+        "Underworld Breach",
+        "Echo of Eons",
+        "Memory's Journey"
+      ],
+      "highly_relevant": [
+        "lightning dragon",
+        "rescind",
+        "lurking evil",
+        "goblin patrol",
+        "tolarian academy",
+        "falter",
+        "expunge",
+        "brilliant halo",
+        "goblin lackey",
+        "gaeas embrace",
+        "smokestack",
+        "turnabout",
+        "karn silver golem",
+        "skirge familiar",
+        "morphling"
+      ],
+      "relevant": [
+        "goblin patrol",
+        "tolarian academy",
+        "falter"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Stoneforge Mystic": {
+      "use_case": "synergy",
+      "format": "Modern",
+      "archetype": "Equipment",
+      "reasoning": "Equipment tutor that creates its own archetype, perfect for testing equipment-based synergies and tutoring effects.",
+      "expected_similar": [
+        "Steelshaper's Gift",
+        "Open the Armory",
+        "Stonehewer Giant",
+        "Puresteel Paladin"
+      ],
+      "highly_relevant": [
+        "goblin guide",
+        "needleverge pathway pillarverge pathway",
+        "blightsteel colossus",
+        "sword of war and peace",
+        "sword of body and mind",
+        "jace the mind sculptor",
+        "atraxa praetors voice",
+        "sword of feast and famine",
+        "drown in sorrow",
+        "sword of light and shadow",
+        "toxic deluge",
+        "sword of fire and ice",
+        "mox opal",
+        "batterskull",
+        "academy ruins"
+      ],
+      "relevant": [
+        "sword of war and peace",
+        "sword of body and mind",
+        "jace the mind sculptor"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ephemerate": {
+      "use_case": "substitute",
+      "format": "Pauper",
+      "archetype": null,
+      "reasoning": "Common-rarity flicker effect that tests for similar cheap temporary exile effects, particularly relevant in Pauper.",
+      "expected_similar": [
+        "Cloudshift",
+        "Momentary Blink",
+        "Ghostly Flicker",
+        "Semester's End"
+      ],
+      "highly_relevant": [
+        "shenanigans",
+        "approach of the second sun",
+        "smiting helix",
+        "stream of thought",
+        "knight of old benalia",
+        "soulstrike technique",
+        "everdream",
+        "farmstead gleaner",
+        "shardless agent",
+        "essence warden",
+        "mind rake",
+        "warteye witch",
+        "pondering mage",
+        "windcaller aven",
+        "geomancers gambit"
+      ],
+      "relevant": [
+        "stream of thought",
+        "knight of old benalia",
+        "soulstrike technique"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Urza, Lord High Artificer": {
+      "use_case": "archetype",
+      "format": null,
+      "archetype": "Artifacts",
+      "reasoning": "Powerful artifact commander that tests for both artifact synergies and mana generation capabilities.",
+      "expected_similar": [
+        "Emry, Lurker of the Loch",
+        "Sai, Master Thopterist",
+        "Arcum Dagsson",
+        "Jhoira, Weatherlight Captain"
+      ],
+      "highly_relevant": [
+        "sword of sinew and steel",
+        "plague engineer",
+        "nurturing peatland",
+        "echo of eons",
+        "magmatic sinkhole",
+        "deep forest hermit",
+        "hall of heliods generosity",
+        "talisman of curiosity",
+        "talisman of conviction",
+        "sword of truth and justice",
+        "sisay weatherlight captain",
+        "prismatic vista",
+        "giver of runes",
+        "icefang coatl",
+        "weather the storm"
+      ],
+      "relevant": [
+        "echo of eons",
+        "magmatic sinkhole",
+        "deep forest hermit"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Collected Company": {
+      "use_case": "functional",
+      "format": "Modern",
+      "archetype": "Creature Combo",
+      "reasoning": "Instant-speed creature cheating spell that defines several Modern archetypes, testing for similar creature-putting effects.",
+      "expected_similar": [
+        "Chord of Calling",
+        "Eldritch Evolution",
+        "Green Sun's Zenith",
+        "Eladamri's Call"
+      ],
+      "highly_relevant": [
+        "wasp of the bitter end",
+        "censor",
+        "dispossess",
+        "fetid pools",
+        "floodwaters",
+        "naga oracle",
+        "ornery kudu",
+        "sixth sense",
+        "soulstinger",
+        "final reward",
+        "glorious end",
+        "harsh mentor",
+        "pursue glory",
+        "canyon slough",
+        "cruel reality"
+      ],
+      "relevant": [
+        "fetid pools",
+        "floodwaters",
+        "naga oracle"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Lion's Eye Diamond": {
+      "use_case": "synergy",
+      "format": "Legacy",
+      "archetype": "Storm",
+      "reasoning": "Unique zero-cost artifact that tests for both fast mana and discard synergies in combo decks.",
+      "expected_similar": [
+        "Lotus Petal",
+        "Chrome Mox",
+        "Mox Diamond",
+        "Culling the Weak"
+      ],
+      "highly_relevant": [
+        "jungle wurm",
+        "sidar jabari",
+        "armor of thorns",
+        "choking sands",
+        "bad river",
+        "mana prism",
+        "giant mantis",
+        "deranged hermit",
+        "arrogant wurm",
+        "flood plain",
+        "ophidian",
+        "mox jet",
+        "mox ruby",
+        "mox pearl",
+        "time walk"
+      ],
+      "relevant": [
+        "choking sands",
+        "bad river",
+        "mana prism"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Griselbrand": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": "Reanimator",
+      "reasoning": "Premier reanimation target that tests similarity based on powerful creatures often cheated into play",
+      "expected_similar": [
+        "Emrakul, the Aeons Torn",
+        "Iona, Shield of Emeria",
+        "Jin-Gitaxias, Core Augur",
+        "Archon of Cruelty"
+      ],
+      "highly_relevant": [
+        "wingcrafter",
+        "thunderous wrath",
+        "ulvenwald tracker",
+        "deadeye navigator",
+        "bonfire of the damned",
+        "zealous conscripts",
+        "ghostly flicker",
+        "terminus",
+        "banishing stroke",
+        "craterhoof behemoth",
+        "entreat the angels",
+        "alchemists apprentice",
+        "defang",
+        "outwit",
+        "grounded"
+      ],
+      "relevant": [
+        "deadeye navigator",
+        "bonfire of the damned",
+        "zealous conscripts"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Omnath, Locus of Creation": {
+      "use_case": "archetype",
+      "format": "Standard",
+      "archetype": "4C Control",
+      "reasoning": "Multi-color value engine that defines certain Standard and Modern archetypes, testing similarity based on landfall and elementals",
+      "expected_similar": [
+        "Risen Reef",
+        "Omnath, Locus of Rage",
+        "Yarok, the Desecrated",
+        "Tatyova, Benthic Druid"
+      ],
+      "highly_relevant": [
+        "turntimber symbiosis turntimber serpentine wood",
+        "valakut exploration",
+        "wayward guidebeast",
+        "yasharn implacable earth",
+        "zareth san the trickster",
+        "verazol the split current",
+        "zagras thief of heartbeats",
+        "valakut awakening valakut stoneforge",
+        "shatterskull smashing shatterskull the hammer pass",
+        "skyclave relic",
+        "skyclave squid",
+        "spitfire lagac",
+        "tajuru paragon",
+        "skyclave geopede",
+        "skyclave pickaxe"
+      ],
+      "relevant": [
+        "yasharn implacable earth",
+        "zareth san the trickster",
+        "verazol the split current"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Dockside Extortionist": {
+      "use_case": "functional",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Commander staple that generates explosive mana advantage, perfect for testing ramp effects and cards that care about treasure tokens.",
+      "expected_similar": [
+        "Smothering Tithe",
+        "Academy Manufacturer",
+        "Old Gnawbone",
+        "Brass's Bounty"
+      ],
+      "highly_relevant": [
+        "allosaurus shepherd",
+        "bloodforged battleaxe",
+        "grim flayer",
+        "elenda the dusk rose",
+        "bring to light",
+        "thousandyear storm",
+        "force of negation",
+        "assassins trophy",
+        "liliana the last hope",
+        "smothering tithe",
+        "imperial seal",
+        "dragonlord dromoka",
+        "privileged position",
+        "sedris the traitor king",
+        "backdraft hellkite"
+      ],
+      "relevant": [
+        "elenda the dusk rose",
+        "bring to light",
+        "thousandyear storm"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Monastery Swiftspear": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Burn",
+      "reasoning": "Aggressive creature that defines prowess and burn strategies across multiple formats, perfect for testing aggro synergies.",
+      "expected_similar": [
+        "Soul-Scar Mage",
+        "Eidolon of the Great Revel",
+        "Lightning Bolt",
+        "Goblin Guide"
+      ],
+      "highly_relevant": [
+        "seeker of the way",
+        "kolaghans command",
+        "anger of the gods",
+        "bloom tender",
+        "supreme verdict",
+        "thought scour",
+        "teferis protection",
+        "sultai soothsayer",
+        "bears companion",
+        "qasali pridemage",
+        "mishras bauble",
+        "riverwheel aerialists",
+        "ainok bondkin",
+        "weathered wayfarer",
+        "balustrade spy"
+      ],
+      "relevant": [
+        "bloom tender",
+        "supreme verdict",
+        "thought scour"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Wrath of God": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Classic board wipe that has seen numerous variants printed over the years, perfect for testing functional substitutes.",
+      "expected_similar": [
+        "Day of Judgment",
+        "Damnation",
+        "Supreme Verdict",
+        "Kaya's Wrath"
+      ],
+      "highly_relevant": [
+        "bog wraith",
+        "goblin king",
+        "samite healer",
+        "scathe zombies",
+        "orcish artillery",
+        "wall of swords",
+        "grizzly bears",
+        "nevinyrrals disk",
+        "hill giant",
+        "wall of air",
+        "rod of ruin",
+        "fear",
+        "nightmare",
+        "raise dead",
+        "howling mine"
+      ],
+      "relevant": [
+        "scathe zombies",
+        "orcish artillery",
+        "wall of swords"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Atraxa, Praetors' Voice": {
+      "use_case": "archetype",
+      "format": "Commander",
+      "archetype": "Superfriends",
+      "reasoning": "Popular commander that defines specific deck building approaches and has clear mechanical synergies with certain card types.",
+      "expected_similar": [
+        "Vorinclex, Monstrous Raider",
+        "Deepglow Skate",
+        "The Chain Veil",
+        "Doubling Season"
+      ],
+      "highly_relevant": [
+        "ikra shidiqi the usurper",
+        "reyhan last of the abzan",
+        "ishai ojutai dragonspeaker",
+        "tymna the weaver",
+        "vial smasher the fierce",
+        "tana the bloodsower",
+        "thrasios triton hero",
+        "sidar kondo of jamuraa",
+        "ravos soultender",
+        "kraum ludevics opus",
+        "ludevic necroalchemist",
+        "kydele chosen of kruphix",
+        "bruse tarl boorish herder",
+        "akiri lineslinger",
+        "zedruu the greathearted"
+      ],
+      "relevant": [
+        "tymna the weaver",
+        "vial smasher the fierce",
+        "tana the bloodsower"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Rhystic Study": {
+      "use_case": "functional",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Commander staple that demonstrates a unique card advantage engine, useful for finding similar strategic effects.",
+      "expected_similar": [
+        "Mystic Remora",
+        "Esper Sentinel",
+        "Smothering Tithe",
+        "Card Draw"
+      ],
+      "highly_relevant": [
+        "woodborn behemoth",
+        "blessed spirits",
+        "krenko mob boss",
+        "outnumber",
+        "kalastria nightwatch",
+        "sarkhans rage",
+        "storm sculptor",
+        "zendikars roil",
+        "black cat",
+        "aether spellbomb",
+        "domesticated hydra",
+        "groundswell",
+        "frontier mastodon",
+        "moment of craving",
+        "crashing tide"
+      ],
+      "relevant": [
+        "outnumber",
+        "kalastria nightwatch",
+        "sarkhans rage"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Snapcaster Mage": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": "Control",
+      "reasoning": "Format-defining creature that specifically synergizes with instants and sorceries, perfect for testing spell-based synergies.",
+      "expected_similar": [
+        "Mission Briefing",
+        "Torrential Gearhulk",
+        "Archaeomancer",
+        "Dualcaster Mage"
+      ],
+      "highly_relevant": [
+        "nightbirds clutches",
+        "stitchers apprentice",
+        "night terrors",
+        "stony silence",
+        "olivia voldaren",
+        "skirsdag cultist",
+        "balefire dragon",
+        "moan of the unhallowed",
+        "liliana of the veil",
+        "travel preparations",
+        "rolling temblor",
+        "evil twin",
+        "boneyard wurm",
+        "cackling counterpart",
+        "unburial rites"
+      ],
+      "relevant": [
+        "stony silence",
+        "olivia voldaren",
+        "skirsdag cultist"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Cyclonic Rift": {
+      "use_case": "functional",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Commander-defining asymmetric board wipe that tests for similar powerful instant-speed mass removal effects",
+      "expected_similar": [
+        "Evacuation",
+        "Devastation Tide",
+        "River's Rebuke",
+        "All Is Dust"
+      ],
+      "highly_relevant": [
+        "wurmcoil engine",
+        "rakdos lord of riots",
+        "blightsteel colossus",
+        "atraxa praetors voice",
+        "sword of war and peace",
+        "sword of body and mind",
+        "sword of feast and famine",
+        "kaalia of the vast",
+        "goblin guide",
+        "toxic deluge",
+        "sword of light and shadow",
+        "mox opal",
+        "sword of fire and ice",
+        "batterskull",
+        "containment priest"
+      ],
+      "relevant": [
+        "atraxa praetors voice",
+        "sword of war and peace",
+        "sword of body and mind"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Emrakul, the Aeons Torn": {
+      "use_case": "archetype",
+      "format": null,
+      "archetype": "Reanimator",
+      "reasoning": "Ultimate reanimation target that represents the highest end of powerful creatures with cast/cheat effects",
+      "expected_similar": [
+        "Griselbrand",
+        "Progenitus",
+        "Blightsteel Colossus",
+        "Jin-Gitaxias, Core Augur"
+      ],
+      "highly_relevant": [
+        "ulamog the infinite gyre",
+        "kozilek butcher of truth",
+        "wrenn and six",
+        "surgical extraction",
+        "phyrexian altar",
+        "damnation",
+        "cavern of souls",
+        "doran the siege tower",
+        "muldrotha the gravetide",
+        "allosaurus shepherd",
+        "eldrazi temple",
+        "bloodforged battleaxe",
+        "bitterblossom",
+        "the mimeoplasm",
+        "dockside extortionist"
+      ],
+      "relevant": [
+        "surgical extraction",
+        "phyrexian altar",
+        "damnation"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Fury": {
+      "use_case": "substitute",
+      "format": "Modern",
+      "archetype": null,
+      "reasoning": "Free spell with elemental evoke mechanic that serves as premium removal. Important to find similar free interaction spells and creature-based removal.",
+      "expected_similar": [
+        "Solitude",
+        "Force of Vigor",
+        "Grief",
+        "Subtlety",
+        "Foundation Breaker"
+      ],
+      "highly_relevant": [
+        "void mirror",
+        "yavimaya cradle of growth",
+        "suspend",
+        "solitude",
+        "subtlety",
+        "sol talisman",
+        "unmarked grave",
+        "timeless dragon",
+        "resurgent belief",
+        "rishadan dockhand",
+        "sanctifier envec",
+        "thrasta tempests roar",
+        "sword of hearth and home",
+        "out of time",
+        "profane tutor"
+      ],
+      "relevant": [
+        "solitude",
+        "subtlety",
+        "sol talisman"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Phyrexian Arena": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Classic enchantment-based card advantage engine. Important benchmark for finding similar sustained card draw effects.",
+      "expected_similar": [
+        "Dark Confidant",
+        "Painful Truths",
+        "Night's Whisper",
+        "Sign in Blood"
+      ],
+      "highly_relevant": [
+        "viashino sandstalker",
+        "grasp of fate",
+        "lay of the land",
+        "mizzixs mastery",
+        "meren of clan nel toth",
+        "aura of silence",
+        "jungle barrier",
+        "spy kit",
+        "stunt double",
+        "messenger jays",
+        "skittering crustacean",
+        "recruiter of the guard",
+        "lieutenants of the guard",
+        "expropriate",
+        "crownhunter hireling"
+      ],
+      "relevant": [
+        "mizzixs mastery",
+        "meren of clan nel toth",
+        "aura of silence"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Urborg, Tomb of Yawgmoth": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Utility land that enables specific strategies and combos. Tests for both mana-fixing and land-based synergies.",
+      "expected_similar": [
+        "Cabal Coffers",
+        "Nykthos, Shrine to Nyx",
+        "Yavimaya, Cradle of Growth",
+        "Lake of the Dead"
+      ],
+      "highly_relevant": [
+        "dreamscape artist",
+        "conflagrate",
+        "flagstones of trokair",
+        "magus of the bazaar",
+        "heliods pilgrim",
+        "grave scrabbler",
+        "mire boa",
+        "kor dirge",
+        "keen sense",
+        "muck drubb",
+        "mycologist",
+        "timebender",
+        "utopia vow",
+        "piracy charm",
+        "reality acid"
+      ],
+      "relevant": [
+        "magus of the bazaar",
+        "heliods pilgrim",
+        "grave scrabbler"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Living End": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Living End Combo",
+      "reasoning": "Build-around cascade combo card that defines its own archetype. Tests for both cascade spells and mass reanimation effects.",
+      "expected_similar": [
+        "Crashing Footfalls",
+        "Restore Balance",
+        "Living Death",
+        "Glimpse of Tomorrow"
+      ],
+      "highly_relevant": [
+        "mindstab",
+        "snapback",
+        "hivestone",
+        "reiterate",
+        "wipe away",
+        "greenseeker",
+        "sangrophage",
+        "spell burst",
+        "hypergenesis",
+        "phantom wurm",
+        "sudden death",
+        "fungus sliver",
+        "nether traitor",
+        "walk the aeons",
+        "watcher sliver"
+      ],
+      "relevant": [
+        "reiterate",
+        "wipe away",
+        "greenseeker"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Archmage's Charm": {
+      "use_case": "substitute",
+      "format": "Modern",
+      "archetype": "Control",
+      "reasoning": "Flexible control spell that shows the importance of modal spells. Tests for finding similar versatile answers and interaction.",
+      "expected_similar": [
+        "Cryptic Command",
+        "Supreme Will",
+        "Mystic Confluence",
+        "Prismari Command"
+      ],
+      "highly_relevant": [
+        "scale up",
+        "the first sliver",
+        "rangercaptain of eos",
+        "ingenious infiltrator",
+        "etchings of the chosen",
+        "ayula queen among bears",
+        "lavabelly sliver",
+        "soulherder",
+        "zabaz the glimmerwasp",
+        "sanctum weaver",
+        "territorial kavu",
+        "necrogoyf",
+        "nettlecyst",
+        "chitterspitter",
+        "breyas apprentice"
+      ],
+      "relevant": [
+        "ingenious infiltrator",
+        "etchings of the chosen",
+        "ayula queen among bears"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Risen Reef": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Tribal value engine that exemplifies elemental synergies. Important for finding similar tribal payoffs and value creatures.",
+      "expected_similar": [
+        "Mulldrifter",
+        "Omnath, Locus of the Roil",
+        "Cloudkin Seer",
+        "Cloudblazer"
+      ],
+      "highly_relevant": [
+        "battalion foot soldier",
+        "fry",
+        "hard cover",
+        "tales end",
+        "flame sweep",
+        "lotus field",
+        "blightbeetle",
+        "brought back",
+        "growth cycle",
+        "legions end",
+        "pack mastiff",
+        "blood burglar",
+        "corpse knight",
+        "devout decree",
+        "howling giant"
+      ],
+      "relevant": [
+        "tales end",
+        "flame sweep",
+        "lotus field"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mishra's Bauble": {
+      "use_case": "synergy",
+      "format": "Modern",
+      "archetype": "Death's Shadow",
+      "reasoning": "Zero-mana artifact that enables specific synergies and strategies. Tests ability to find cards that enable similar deck velocity and synergy patterns.",
+      "expected_similar": [
+        "Street Wraith",
+        "Urza's Bauble",
+        "Gitaxian Probe",
+        "Manamorphose"
+      ],
+      "highly_relevant": [
+        "seeker of the way",
+        "bloom tender",
+        "kolaghans command",
+        "supreme verdict",
+        "thought scour",
+        "monastery swiftspear",
+        "yavimayas embrace",
+        "anger of the gods",
+        "time sieve",
+        "teferis protection",
+        "weapons trainer",
+        "phyrexian soulgorger",
+        "haakon stromgald scourge",
+        "galvanic blast",
+        "costly plunder"
+      ],
+      "relevant": [
+        "supreme verdict",
+        "thought scour",
+        "monastery swiftspear"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Llanowar Elves": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Iconic one-mana accelerant that defines a whole category of similar effects. Essential for testing the system's ability to identify mana-producing creatures.",
+      "expected_similar": [
+        "Elvish Mystic",
+        "Fyndhorn Elves",
+        "Arbor Elf",
+        "Birds of Paradise"
+      ],
+      "highly_relevant": [
+        "birds of paradise",
+        "wall of fire",
+        "fog",
+        "orcish oriflamme",
+        "millstone",
+        "hypnotic specter",
+        "giant spider",
+        "prodigal sorcerer",
+        "hurricane",
+        "goblin balloon brigade",
+        "fire elemental",
+        "black knight",
+        "pestilence",
+        "lure",
+        "ornithopter"
+      ],
+      "relevant": [
+        "orcish oriflamme",
+        "millstone",
+        "hypnotic specter"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Scavenging Ooze": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Versatile creature that combines graveyard hate with lifegain and growth. Tests system's ability to identify cards with multiple overlapping utilities.",
+      "expected_similar": [
+        "Tarmogoyf",
+        "Knight of the Reliquary",
+        "Wrenn and Six",
+        "Deathrite Shaman"
+      ],
+      "highly_relevant": [
+        "generous gift",
+        "zedruu the greathearted",
+        "coiling oracle",
+        "brash taunter",
+        "primal might",
+        "ikra shidiqi the usurper",
+        "reyhan last of the abzan",
+        "ishai ojutai dragonspeaker",
+        "blasphemous act",
+        "atraxa praetors voice",
+        "commanders sphere",
+        "double vision",
+        "ghostly pilferer",
+        "strionic resonator",
+        "opal palace"
+      ],
+      "relevant": [
+        "brash taunter",
+        "primal might",
+        "ikra shidiqi the usurper"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Survival of the Fittest": {
+      "use_case": "archetype",
+      "format": "Legacy",
+      "archetype": "Creature Toolbox",
+      "reasoning": "Powerful tutor engine that enables creature-based toolbox strategies. Excellent for testing cards that enable consistent access to situational answers.",
+      "expected_similar": [
+        "Fauna Shaman",
+        "Natural Order",
+        "Defense of the Heart",
+        "Pattern of Rebirth"
+      ],
+      "highly_relevant": [
+        "carnophage",
+        "recurring nightmare",
+        "tradewind rider",
+        "oath of druids",
+        "thopter squadron",
+        "thalakos drifters",
+        "ephemeron",
+        "killer whale",
+        "crovax the cursed",
+        "deranged hermit",
+        "arrogant wurm",
+        "scrivener",
+        "ophidian",
+        "hermit druid",
+        "scabland"
+      ],
+      "relevant": [
+        "oath of druids",
+        "thopter squadron",
+        "thalakos drifters"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Entomb": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": "Reanimator",
+      "reasoning": "Key enabler for reanimator strategies across multiple formats. Perfect for testing cards that enable graveyard-based strategies.",
+      "expected_similar": [
+        "Buried Alive",
+        "Unmarked Grave",
+        "Faithless Looting",
+        "Strategic Planning"
+      ],
+      "highly_relevant": [
+        "werebear",
+        "stonetongue basilisk",
+        "nomad decoy",
+        "setons desire",
+        "lieutenant kirtar",
+        "divine sacrament",
+        "reckless charge",
+        "second thoughts",
+        "terravore",
+        "nut collector",
+        "mystic zealot",
+        "mystic enforcer",
+        "karakas",
+        "seize the day",
+        "gamble"
+      ],
+      "relevant": [
+        "setons desire",
+        "lieutenant kirtar",
+        "divine sacrament"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Sanctifier en-Vec": {
+      "use_case": "functional",
+      "format": "Modern",
+      "archetype": null,
+      "reasoning": "Powerful sideboard card that hoses multiple strategies. Excellent test case for evaluating hate cards and silver bullets.",
+      "expected_similar": [
+        "Rest in Peace",
+        "Containment Priest",
+        "Remorseful Cleric",
+        "Soul-Guide Lantern"
+      ],
+      "highly_relevant": [
+        "void mirror",
+        "yavimaya cradle of growth",
+        "suspend",
+        "solitude",
+        "subtlety",
+        "sol talisman",
+        "unmarked grave",
+        "timeless dragon",
+        "resurgent belief",
+        "rishadan dockhand",
+        "thrasta tempests roar",
+        "sword of hearth and home",
+        "out of time",
+        "profane tutor",
+        "piru the volatile"
+      ],
+      "relevant": [
+        "solitude",
+        "subtlety",
+        "sol talisman"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Grave Titan": {
+      "use_case": "archetype",
+      "format": null,
+      "archetype": "Reanimator",
+      "reasoning": "Classic reanimation target that represents both immediate value and ongoing threat. Good test for high-end creatures with similar impact.",
+      "expected_similar": [
+        "Sun Titan",
+        "Inferno Titan",
+        "Frost Titan",
+        "Primeval Titan"
+      ],
+      "highly_relevant": [
+        "teferi temporal archmage",
+        "fiery hellhound",
+        "greater basilisk",
+        "angelic destiny",
+        "phantasmal dragon",
+        "timely reinforcements",
+        "dungrove elder",
+        "diminish",
+        "runescarred demon",
+        "goblin fireslinger",
+        "stormblood berserker",
+        "crystal ball",
+        "phantasmal bear",
+        "blood ogre",
+        "tectonic edge"
+      ],
+      "relevant": [
+        "angelic destiny",
+        "phantasmal dragon",
+        "timely reinforcements"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Ashen Rider": {
+      "use_case": "synergy",
+      "format": "Legacy",
+      "archetype": "Reanimator",
+      "reasoning": "Powerful enter/leave-the-battlefield effect creature that's primarily used in reanimator strategies, testing similarity for both reanimation targets and exile effects.",
+      "expected_similar": [
+        "Angel of Despair",
+        "Terastodon",
+        "Archon of Cruelty",
+        "Agent of Treachery"
+      ],
+      "highly_relevant": [
+        "labyrinth champion",
+        "purphoross emissary",
+        "centaur battlemaster",
+        "chronicler of heroes",
+        "wingsteed rider",
+        "titans strength",
+        "darkdweller oracle",
+        "hostage taker",
+        "fleecemane lion",
+        "warriors oath",
+        "impervious greatwurm",
+        "cryptic spires",
+        "firesong and sunspeaker",
+        "prognostic sphinx",
+        "living lightning"
+      ],
+      "relevant": [
+        "chronicler of heroes",
+        "wingsteed rider",
+        "titans strength"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Xenagos, God of Revels": {
+      "use_case": "functional",
+      "format": "Commander",
+      "archetype": null,
+      "reasoning": "Popular Commander card that tests similarity for both combat enhancers and indestructible enchantment creatures.",
+      "expected_similar": [
+        "Craterhoof Behemoth",
+        "God-Eternal Rhonas",
+        "End-Raze Forerunners",
+        "Terror of Mount Velus"
+      ],
+      "highly_relevant": [
+        "athreos shroudveiled",
+        "obuun mul daya ancestor",
+        "anowon the ruin thief",
+        "karametra god of harvests",
+        "colossification",
+        "turntimber symbiosis turntimber serpentine wood",
+        "vulpikeet",
+        "zagoth triome",
+        "yorion sky nomad",
+        "valakut exploration",
+        "wayward guidebeast",
+        "umori the collector",
+        "whirlwind of thought",
+        "zirda the dawnwaker",
+        "unpredictable cyclone"
+      ],
+      "relevant": [
+        "karametra god of harvests",
+        "colossification",
+        "turntimber symbiosis turntimber serpentine wood"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Street Wraith": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Unique card with cycling for zero mana, testing similarity for both free spells and life payment effects.",
+      "expected_similar": [
+        "Gitaxian Probe",
+        "Death's Shadow",
+        "Edge of Autumn",
+        "Grief"
+      ],
+      "highly_relevant": [
+        "kavu primarch",
+        "grapeshot",
+        "mogg war marshal",
+        "citanul woodreaders",
+        "riftwing cloudskate",
+        "errant ephemeron",
+        "durkwood baloth",
+        "dark withering",
+        "quiet disrepair",
+        "magus of the moat",
+        "darksteel garrison",
+        "coral trickster",
+        "brine elemental",
+        "fathom seer",
+        "fury charm"
+      ],
+      "relevant": [
+        "citanul woodreaders",
+        "riftwing cloudskate",
+        "errant ephemeron"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Intangible Virtue": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": "Tokens",
+      "reasoning": "Classic token enhancement enchantment that tests similarity for both token strategies and anthem effects.",
+      "expected_similar": [
+        "Glorious Anthem",
+        "Honor of the Pure",
+        "Force of Virtue",
+        "Zealous Conviction"
+      ],
+      "highly_relevant": [
+        "burning vengeance",
+        "sever the bloodline",
+        "thragtusk",
+        "victimize",
+        "ambush viper",
+        "deranged assistant",
+        "past in flames",
+        "sentinel spider",
+        "orzhov advokist",
+        "vow of duty",
+        "daring saboteur",
+        "blasphemous act",
+        "divine reckoning",
+        "purify the grave",
+        "runic repetition"
+      ],
+      "relevant": [
+        "victimize",
+        "ambush viper",
+        "deranged assistant"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Inkmoth Nexus": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Infect",
+      "reasoning": "Key land in infect strategies that tests similarity for both creature-lands and poison counter synergies.",
+      "expected_similar": [
+        "Blinkmoth Nexus",
+        "Mutavault",
+        "Mishra's Factory",
+        "Crawling Barrens"
+      ],
+      "highly_relevant": [
+        "oculus",
+        "slagstorm",
+        "mirran spy",
+        "myr welder",
+        "shriekhorn",
+        "gore vassal",
+        "myr turbine",
+        "septic rats",
+        "serum raker",
+        "spin engine",
+        "tangle hulk",
+        "tine shrike",
+        "titan forge",
+        "strandwalker",
+        "into the core"
+      ],
+      "relevant": [
+        "myr welder",
+        "shriekhorn",
+        "gore vassal"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Jace's Ingenuity": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Basic instant-speed card draw spell that tests similarity for standard control deck card advantage options.",
+      "expected_similar": [
+        "Hieroglyphic Illumination",
+        "Chemister's Insight",
+        "Inspiration",
+        "Dig Through Time"
+      ],
+      "highly_relevant": [
+        "circle of flame",
+        "tireless missionaries",
+        "back to nature",
+        "lilianas specter",
+        "hoarding dragon",
+        "stormtide leviathan",
+        "squadron hawk",
+        "shrapnel blast",
+        "liliana vess",
+        "solemn offering",
+        "celestial purge",
+        "mind control",
+        "zodiac rooster",
+        "gargoyle sentinel",
+        "colossal whale"
+      ],
+      "relevant": [
+        "lilianas specter",
+        "hoarding dragon",
+        "stormtide leviathan"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Enlightened Tutor": {
+      "use_case": "substitute",
+      "format": "Legacy",
+      "archetype": null,
+      "reasoning": "Efficient tutor that finds artifacts or enchantments. Tests similarity for tutoring effects across different card types.",
+      "expected_similar": [
+        "Mystical Tutor",
+        "Vampiric Tutor",
+        "Idyllic Tutor",
+        "Fabricate"
+      ],
+      "highly_relevant": [
+        "mystical tutor",
+        "stupor",
+        "worldly tutor",
+        "hammer of bogardan",
+        "gemstone mine",
+        "volcanic geyser",
+        "vampiric tutor",
+        "mana prism",
+        "urborg panther",
+        "cadaverous knight",
+        "lions eye diamond",
+        "grinning totem",
+        "lead golem",
+        "pearl dragon",
+        "unseen walker"
+      ],
+      "relevant": [
+        "hammer of bogardan",
+        "gemstone mine",
+        "volcanic geyser"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Force of Negation": {
+      "use_case": "substitute",
+      "format": "Modern",
+      "archetype": null,
+      "reasoning": "Modern-legal free counterspell that follows Force of Will's design pattern. Tests similarity for free interaction spells.",
+      "expected_similar": [
+        "Force of Will",
+        "Force of Vigor",
+        "Fury",
+        "Subtlety"
+      ],
+      "highly_relevant": [
+        "seasoned pyromancer",
+        "wrenn and six",
+        "allosaurus shepherd",
+        "unearth",
+        "force of vigor",
+        "tribute mage",
+        "grim flayer",
+        "imperial seal",
+        "elenda the dusk rose",
+        "thousandyear storm",
+        "assassins trophy",
+        "bring to light",
+        "liliana the last hope",
+        "smothering tithe",
+        "dockside extortionist"
+      ],
+      "relevant": [
+        "unearth",
+        "force of vigor",
+        "tribute mage"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Esper Sentinel": {
+      "use_case": "substitute",
+      "format": "Modern",
+      "archetype": null,
+      "reasoning": "Modern staple that represents white card draw and tax effects. Important to identify similar effects in white's color pie.",
+      "expected_similar": [
+        "Rhystic Study",
+        "Thalia, Guardian of Thraben",
+        "Strict Proctor",
+        "Remora"
+      ],
+      "highly_relevant": [
+        "so shiny",
+        "parcel myr",
+        "scurry oak",
+        "smell fear",
+        "wavesifter",
+        "herd baloth",
+        "kitchen imp",
+        "monoskelion",
+        "recalibrate",
+        "scuttletide",
+        "unholy heat",
+        "foul watcher",
+        "hell mongrel",
+        "slag strider",
+        "sudden edict"
+      ],
+      "relevant": [
+        "smell fear",
+        "wavesifter",
+        "herd baloth"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Force of Vigor": {
+      "use_case": "substitute",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Free spell that represents efficient artifact/enchantment removal. Tests for both alternate cost spells and similar removal effects.",
+      "expected_similar": [
+        "Force of Will",
+        "Force of Negation",
+        "Natural State",
+        "Nature's Claim"
+      ],
+      "highly_relevant": [
+        "tribute mage",
+        "force of negation",
+        "tyrannical pitlord",
+        "serra redeemer",
+        "ragefire hellkite",
+        "briar hydra",
+        "cosmic epiphany",
+        "woodcaller automaton",
+        "terror ballista",
+        "rescue retriever",
+        "geology enthusiast",
+        "artificers dragon",
+        "universal surveillance",
+        "yoshimaru ever faithful",
+        "research thief"
+      ],
+      "relevant": [
+        "serra redeemer",
+        "ragefire hellkite",
+        "briar hydra"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Amulet of Vigor": {
+      "use_case": "synergy",
+      "format": "Modern",
+      "archetype": "Amulet Titan",
+      "reasoning": "Key combo piece that enables specific land-based strategies. Tests for both combo enablers and land-based synergies.",
+      "expected_similar": [
+        "Primeval Titan",
+        "Dryad of the Ilysian Grove",
+        "Summer Bloom",
+        "Azusa, Lost but Seeking"
+      ],
+      "highly_relevant": [
+        "calcite snapper",
+        "tomb hex",
+        "ruin ghost",
+        "summit apes",
+        "vapor snare",
+        "canopy cover",
+        "hedron rover",
+        "feral contest",
+        "harabaz druid",
+        "horizon drake",
+        "jagwasp swarm",
+        "ricochet trap",
+        "slingbow trap",
+        "talus paladin",
+        "terra eternal"
+      ],
+      "relevant": [
+        "summit apes",
+        "vapor snare",
+        "canopy cover"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Mox Opal": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Powerful artifact-based acceleration that tests for both fast mana and metalcraft mechanics. Important to identify similar fast mana sources.",
+      "expected_similar": [
+        "Chrome Mox",
+        "Mox Amber",
+        "Springleaf Drum",
+        "Lotus Petal"
+      ],
+      "highly_relevant": [
+        "sword of body and mind",
+        "dark confidant",
+        "blightsteel colossus",
+        "sword of war and peace",
+        "wurmcoil engine",
+        "noble hierarch",
+        "tumble magnet",
+        "myrsmith",
+        "sword of light and shadow",
+        "sword of feast and famine",
+        "sword of fire and ice",
+        "atraxa praetors voice",
+        "batterskull",
+        "academy ruins",
+        "darksteel axe"
+      ],
+      "relevant": [
+        "sword of war and peace",
+        "wurmcoil engine",
+        "noble hierarch"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Skullclamp": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": null,
+      "reasoning": "A banned card in multiple formats that represents a powerful draw engine with specific deck building requirements. Tests similarity for cards that generate extreme card advantage through creature sacrifice.",
+      "expected_similar": [
+        "Glimpse of Nature",
+        "Coastal Breeze",
+        "Consecrated Sphinx",
+        "Greater Good"
+      ],
+      "highly_relevant": [
+        "temple of the false god",
+        "bojuka bog",
+        "chaos warp",
+        "thought vessel",
+        "frontier bivouac",
+        "propaganda",
+        "living death",
+        "sol ring",
+        "reliquary tower",
+        "shriekmaw",
+        "beastmaster ascension",
+        "arcane sanctum",
+        "lightning greaves",
+        "orzhov basilica",
+        "forgotten cave"
+      ],
+      "relevant": [
+        "thought vessel",
+        "frontier bivouac",
+        "propaganda"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Bloodbraid Elf": {
+      "use_case": "archetype",
+      "format": "Modern",
+      "archetype": "Jund Midrange",
+      "reasoning": "Cascade creature that exemplifies Jund's value-oriented midrange strategy, perfect for testing both mechanical and strategic similarities.",
+      "expected_similar": [
+        "Seasoned Pyromancer",
+        "Fury",
+        "Shardless Agent",
+        "Violent Outburst"
+      ],
+      "highly_relevant": [
+        "qasali pridemage",
+        "wall of omens",
+        "supreme verdict",
+        "bloom tender",
+        "teferis protection",
+        "kolaghans command",
+        "extract from darkness",
+        "seeker of the way",
+        "monastery swiftspear",
+        "anger of the gods",
+        "thought scour",
+        "bituminous blast",
+        "weathered wayfarer",
+        "nemesis of reason",
+        "coiling oracle"
+      ],
+      "relevant": [
+        "bloom tender",
+        "teferis protection",
+        "kolaghans command"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Necropotence": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "One of the most powerful card advantage engines ever printed, excellent for testing similarity of other powerful draw effects and life-for-cards effects.",
+      "expected_similar": [
+        "Ad Nauseam",
+        "Bolas's Citadel",
+        "Dark Confidant",
+        "Peer into the Abyss"
+      ],
+      "highly_relevant": [
+        "krovikan sorcerer",
+        "hydroblast",
+        "pyroblast",
+        "elkin bottle",
+        "barbed sextant",
+        "panic",
+        "ice floe",
+        "stampede",
+        "time bomb",
+        "sea spirit",
+        "sacred boon",
+        "johtull wurm",
+        "stone spirit",
+        "orcish farmer",
+        "shield bearer"
+      ],
+      "relevant": [
+        "elkin bottle",
+        "barbed sextant",
+        "panic"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Doomsday": {
+      "use_case": "archetype",
+      "format": "Legacy",
+      "archetype": "Doomsday Combo",
+      "reasoning": "Complex combo enabler that tests for both strategic similarity (combo pieces) and functional similarity (deck manipulation effects).",
+      "expected_similar": [
+        "Ad Nauseam",
+        "Demonic Consultation",
+        "Thassa's Oracle",
+        "Spoils of the Vault"
+      ],
+      "highly_relevant": [
+        "tariff",
+        "serenity",
+        "vitalize",
+        "tranquil grove",
+        "mischievous poltergeist",
+        "fatal blow",
+        "fit of rage",
+        "dense foliage",
+        "abduction",
+        "relearn",
+        "flash",
+        "heavy ballista",
+        "strands of night",
+        "natures resurgence",
+        "familiar ground"
+      ],
+      "relevant": [
+        "tranquil grove",
+        "mischievous poltergeist",
+        "fatal blow"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Walking Ballista": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Versatile artifact creature that fits in multiple strategies, testing both +1/+1 counter synergies and damage-dealing abilities.",
+      "expected_similar": [
+        "Hangarback Walker",
+        "Steel Overseer",
+        "Crystalline Crawler",
+        "Triskelion"
+      ],
+      "highly_relevant": [
+        "cogwork assembler",
+        "gleaming barrier",
+        "aerial modification",
+        "woodland champion",
+        "iron bully",
+        "mechanized production",
+        "peacewalker colossus",
+        "kuldotha flamefiend",
+        "soul read",
+        "ossuary rats",
+        "pirated copy",
+        "planar atlas",
+        "giant ladybug",
+        "infernal idol",
+        "launch mishap"
+      ],
+      "relevant": [
+        "woodland champion",
+        "iron bully",
+        "mechanized production"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Archon of Cruelty": {
+      "use_case": "functional",
+      "format": null,
+      "archetype": null,
+      "reasoning": "Premier reanimation target that represents high-impact creatures with strong ETB and attack triggers. Tests similarity across different reanimator finishers.",
+      "expected_similar": [
+        "Sheoldred, the Apocalypse",
+        "Serra's Emissary",
+        "Ashen Rider",
+        "Grief"
+      ],
+      "highly_relevant": [
+        "persist",
+        "lens flare",
+        "lose focus",
+        "moderation",
+        "rift sower",
+        "power depot",
+        "tide shaper",
+        "tragic fall",
+        "worldweary",
+        "knighted myr",
+        "lucid dreams",
+        "road ruin",
+        "said done",
+        "step through",
+        "kaleidoscorch"
+      ],
+      "relevant": [
+        "moderation",
+        "rift sower",
+        "power depot"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Nykthos, Shrine to Nyx": {
+      "use_case": "archetype",
+      "format": "Pioneer",
+      "archetype": "Mono-Green Devotion",
+      "reasoning": "Core engine piece for devotion strategies that tests both mana production and archetype-specific synergies. Represents powerful land-based mana engines.",
+      "expected_similar": [
+        "Gaea's Cradle",
+        "Castle Garenbrig",
+        "Sanctum of All",
+        "Nick's Shrine"
+      ],
+      "highly_relevant": [
+        "hammer of purphoros",
+        "nylea god of the hunt",
+        "hundredhanded one",
+        "trokin high guard",
+        "fractured powerstone",
+        "mooneating dog",
+        "chulane teller of tales",
+        "nyleas presence",
+        "soldier of the pantheon",
+        "thoughtknot seer",
+        "eldrazi displacer",
+        "alpha kavu",
+        "jwari shapeshifter",
+        "tortured existence",
+        "workhorse"
+      ],
+      "relevant": [
+        "trokin high guard",
+        "fractured powerstone",
+        "mooneating dog"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Yawgmoth, Thran Physician": {
+      "use_case": "synergy",
+      "format": null,
+      "archetype": "Aristocrats",
+      "reasoning": "Complex creature that enables multiple synergy-based strategies including -1/-1 counters, sacrifice themes, and combo potential. Tests ability to find both combo pieces and value-oriented similar cards.",
+      "expected_similar": [
+        "Blood Artist",
+        "Viscera Seer",
+        "Grim Haruspex",
+        "Woe Strider",
+        "Geralf's Messenger"
+      ],
+      "highly_relevant": [
+        "pashalik mons",
+        "cloudshredder sliver",
+        "battle screech",
+        "mob",
+        "goatnap",
+        "vesperlark",
+        "mother bear",
+        "reprobation",
+        "winding way",
+        "graveshifter",
+        "savage swipe",
+        "throatseeker",
+        "lancer sliver",
+        "phantom ninja",
+        "putrid goblin"
+      ],
+      "relevant": [
+        "mob",
+        "goatnap",
+        "vesperlark"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Solitude": {
+      "use_case": "functional",
+      "format": "Modern",
+      "archetype": null,
+      "reasoning": "One of the premier free white removal spells, representing the modern Elemental cycle. Tests similarity for both alternate cost mechanics and removal effects.",
+      "expected_similar": [
+        "Force of Vigor",
+        "Fury",
+        "Subtlety",
+        "Path to Exile",
+        "Prismatic Ending"
+      ],
+      "highly_relevant": [
+        "void mirror",
+        "yavimaya cradle of growth",
+        "suspend",
+        "subtlety",
+        "sol talisman",
+        "unmarked grave",
+        "timeless dragon",
+        "resurgent belief",
+        "rishadan dockhand",
+        "sanctifier envec",
+        "thrasta tempests roar",
+        "sword of hearth and home",
+        "out of time",
+        "profane tutor",
+        "piru the volatile"
+      ],
+      "relevant": [
+        "subtlety",
+        "sol talisman",
+        "unmarked grave"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  },
+  "metadata": {
+    "original_labeled": 38,
+    "fallback_added": 62,
+    "total": 100
+  }
+}

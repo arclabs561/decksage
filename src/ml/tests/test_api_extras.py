@@ -35,6 +35,14 @@ class _DummyEmb:
         return [(c, 0.9) for c in self._keys if c != q][:topn]
 
 
+@pytest.fixture
+def api_client():
+    """Create a test client for the API."""
+    from fastapi.testclient import TestClient
+    from ..api.api import app
+    return TestClient(app)
+
+
 @pytest.fixture()
 def client(api_client):
     return api_client

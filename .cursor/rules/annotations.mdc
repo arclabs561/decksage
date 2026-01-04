@@ -1,0 +1,30 @@
+---
+description: Annotation-to-training integration, LLM annotations, and substitution pairs
+globs:
+  - "src/ml/utils/annotation_utils.py"
+  - "scripts/annotations/**"
+  - "annotations/**"
+alwaysApply: false
+---
+
+# Annotation-to-Training Integration
+
+- **LLM annotations create training signal**: Similarity annotations with `is_substitute=True` should feed into training
+- **Conversion utilities**: Use `ml.utils.annotation_utils` for loading/converting annotations
+  - `load_similarity_annotations()`: Load annotations from JSONL
+  - `extract_substitution_pairs_from_annotations()`: Extract pairs with `is_substitute=True`
+  - `convert_annotations_to_substitution_pairs()`: Full conversion pipeline
+- **Training integration**: Training scripts accept both `--substitution-pairs` (JSON) and `--similarity-annotations` (JSONL)
+  - Priority: explicit substitution pairs file > similarity annotations
+  - Annotations automatically converted to substitution pairs format
+  - **Substitution weight**: Default 2.0 (optimal, tested: 1.0-5.0, exceeds baseline at 2.0)
+  - **Optimal annotation count**: ~50-60 pairs (quality > quantity, 74 pairs performed worse than 55)
+- **Annotation schema**: Use unified format (0-4 int scale for relevance, 0-1 float for similarity scores)
+  - Conversion utilities provided in `annotation_utils.py`
+  - Test sets use categorical buckets (highly_relevant, relevant, etc.)
+- **Format/archetype context**: Use deck metadata (format, placement, archetype) in annotation prompts
+  - Format-specific annotations improve quality
+  - Placement metadata used for quality filtering
+- **Temporal validation**: Annotations should respect temporal bounds (same as training data)
+  - Add cutoff dates to test sets
+  - Filter annotations by temporal bounds when loading

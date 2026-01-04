@@ -1,0 +1,32 @@
+---
+description: Development and experimentation workflows, component isolation, and system health checks
+globs:
+  - "src/ml/scripts/train_*.py"
+  - "src/ml/scripts/evaluate_*.py"
+  - "scripts/**"
+alwaysApply: false
+---
+
+# Development & Experimentation Workflow
+
+- **Single component training**: Train individual components separately for experimentation
+  - **GNN only**: `train_hybrid_from_pairs.py --skip-gnn false` (default) or `train_gnn.py` / `train_gnn_with_runctl.py`
+  - **Co-occurrence only**: Use `filter_pairs_by_timestamp.py` then Node2Vec/PecanPy training
+  - **Instruction-tuned**: No training needed (zero-shot), just load model
+- **Component isolation**: Use `--skip-gnn` in `train_hybrid_from_pairs.py` to skip GNN, train only co-occurrence
+- **Quick experiments**: Use `--quick` and `--limit` flags in evaluation for faster iteration
+- **Model comparison**: Use `compare_gnn_models.py` to compare different GNN architectures
+- **Ablation studies**: Test components independently using `evaluate_hybrid_with_runctl.py` with selective component disabling
+- **Checking system health**: 
+  - Run `ml.evaluation.leakage_analysis` to detect data leakage (`just check-leakage`)
+  - Use `test_hybrid_system.py` for end-to-end system validation
+  - Use pre-flight validation before training (`ml.utils.validation`)
+  - Check model registry for version history (`ModelRegistry.list_versions()`)
+  - Review structured logs for errors/warnings (`training_progress/` directory)
+  - Check dataset health: `scripts/dataset_health_check.py`
+- **New model experimentation**:
+  1. Train component separately (e.g., `train_gnn.py --model-type LightGCN`)
+  2. Evaluate with `--quick --limit 100` for fast feedback
+  3. Compare with existing models using `compare_model_versions.py`
+  4. Register in model registry if promising
+  5. Promote to production if performance improves

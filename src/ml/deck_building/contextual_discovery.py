@@ -87,10 +87,22 @@ class ContextualCardDiscovery:
         """
         synergies: list[CardSynergy] = []
         
+        # Use fusion similarity with "synergy" task type to find synergistic cards
+        # First try using fusion.similar() for better task-specific results
+        try:
+            similar_cards = self.fusion.similar(card, k=top_k * 2, task_type="synergy")
+            # Extract card names from similar results
+            similar_card_names = {card_name for card_name, _ in similar_cards}
+        except Exception:
+            similar_card_names = set()
+        
         # Use fusion similarity to find similar cards
         if self.fusion.adj:
             # Get Jaccard similarity (co-occurrence)
             query_neighbors = self.fusion.adj.get(card, set())
+            # Combine with fusion.similar() results if available
+            if similar_card_names:
+                query_neighbors = query_neighbors | similar_card_names
             if query_neighbors:
                 # Score by co-occurrence frequency
                 for neighbor in query_neighbors:
@@ -160,13 +172,12 @@ class ContextualCardDiscovery:
         if self.tag_set_fn:
             current_role = self.tag_set_fn(card)
         
-        # Use fusion to find similar cards
-        if self.fusion.embeddings:
-            try:
-                # Get embedding similarity
-                similar = self.fusion.embeddings.most_similar(card, topn=top_k * 2)
-                
-                for alt_card, embed_score in similar:
+        # Use fusion to find similar cards with "similar" task type for alternatives
+        try:
+            # Use fusion.similar() with task_type="similar" for finding alternatives
+            similar = self.fusion.similar(card, k=top_k * 2, task_type="similar")
+            
+            for alt_card, embed_score in similar:
                     if alt_card == card:
                         continue
                     
@@ -190,8 +201,8 @@ class ContextualCardDiscovery:
                         score=score,
                         reasoning=reasoning,
                     ))
-            except (KeyError, AttributeError):
-                pass
+        except (KeyError, AttributeError):
+            pass
         
         # Sort by score
         alternatives.sort(key=lambda x: x.score, reverse=True)

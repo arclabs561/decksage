@@ -2,6 +2,9 @@
 """
 Train GraphSAGE model for card similarity (based on expert guidance).
 
+Note: For AWS/cloud training, use train_gnn_with_runctl.py instead.
+This script is for local-only training.
+
 Uses:
 - GraphSAGE (best for co-occurrence graphs)
 - Shallow architecture (2 layers)
@@ -17,9 +20,9 @@ from pathlib import Path
 
 from ..similarity.gnn_embeddings import CardGNNEmbedder
 from ..utils.paths import PATHS
+from ..utils.logging_config import setup_script_logging, log_exception
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_script_logging()
 
 
 def main():
@@ -132,7 +135,7 @@ def main():
         logger.info(f"✓ Training complete! Model saved to: {output_path}")
         return 0
     except Exception as e:
-        logger.error(f"Training failed: {e}", exc_info=True)
+        log_exception(logger, "Training failed", e, include_context=True)
         return 1
 
 

@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from typing import Callable, cast, Iterable, Literal, Sequence
+from typing import Callable, cast, Iterable, Literal, Sequence, Union, Optional
 
 # from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
 # TODO: deck_patch module not found, commenting out for now
@@ -35,19 +35,19 @@ logger = logging.getLogger("decksage.completion")
 
 
 CandidateFn = Callable[[str, int], list[tuple[str, float]]]
-PriceFn = Callable[[str], float | None]
+PriceFn = Callable[[str], Optional[float]]
 TagSetFn = Callable[[str], set[str]]
 TagWeightFn = Callable[[str], float]
-CMCFn = Callable[[str], int | None]
+CMCFn = Callable[[str], Optional[int]]
 
 
 @dataclass
 class CompletionConfig:
     game: Literal["magic", "yugioh", "pokemon"] = "magic"
-    target_main_size: int | None = None  # If None, rely on validator rules
+    target_main_size: Optional[int] = None  # If None, rely on validator rules
     top_k_per_gap: int = 10
     max_steps: int = 60
-    budget_max: float | None = None
+    budget_max: Optional[float] = None
     method: Literal["embedding", "jaccard", "fusion"] = "fusion"
     coverage_weight: float = 0.15  # boost per new functional tag
 
@@ -142,18 +142,18 @@ def suggest_additions(
     candidate_fn: CandidateFn,
     top_k: int = 20,
     *,
-    price_fn: PriceFn | None = None,
-    max_unit_price: float | None = None,
-    tag_set_fn: TagSetFn | None = None,
+    price_fn: Optional[PriceFn] = None,
+    max_unit_price: Optional[float] = None,
+    tag_set_fn: Optional[TagSetFn] = None,
     tag_weight_fn: TagWeightFn | None = None,
     coverage_weight: float = 0.0,
-    cmc_fn: CMCFn | None = None,
-    curve_target: dict[int, float] | None = None,
+    cmc_fn: Optional[CMCFn] = None,
+    curve_target: Optional[dict[int, float]] = None,
     curve_weight: float = 0.0,
     return_metrics: bool = False,
     # New parameters for role-aware, archetype-aware suggestions
-    archetype: str | None = None,
-    archetype_staples: dict[str, dict[str, float]] | None = None,
+    archetype: Optional[str] = None,
+    archetype_staples: Optional[dict[str, dict[str, float]]] = None,
     role_aware: bool = True,
     max_suggestions: int = 10,
 ) -> list[tuple[str, float]] | tuple[list[tuple[str, float]], dict]:
@@ -351,16 +351,42 @@ def greedy_complete(
     game: Literal["magic", "yugioh", "pokemon"],
     deck: dict,
     candidate_fn: CandidateFn,
-    cfg: CompletionConfig | None = None,
+    cfg: Optional[CompletionConfig] = None,
     *,
-    price_fn: PriceFn | None = None,
-    tag_set_fn: TagSetFn | None = None,
-) -> tuple[dict, list[dict]]:
+    price_fn: Optional[PriceFn] = None,
+    tag_set_fn: Optional[TagSetFn] = None,
+    assess_quality: bool = False,
+    quality_threshold: Optional[float] = None,
+) -> tuple[dict, list[dict], Optional[dict[str, Any]]]:
+    """
+    Complete deck using greedy algorithm with optional quality assessment.
+    
+    Returns:
+        (completed_deck, steps, quality_metrics)
+        quality_metrics is None if assess_quality=False
+    """
     cfg = cfg or CompletionConfig(game=game)
     target_main = cfg.target_main_size
     main_name = _main_partition_name(game)
     steps: list[dict] = []
     state = deck
+    quality_metrics = None
+
+    # Assess initial quality if requested
+    if assess_quality:
+        try:
+            from ..deck_building.deck_quality import assess_deck_quality
+            def cmc_fn(card: str) -> Optional[int]:
+                # Placeholder - would load from card database
+                return None
+            initial_quality = assess_deck_quality(
+                deck=state,
+                game=game,
+                tag_set_fn=tag_set_fn or (lambda x: set()),
+                cmc_fn=cmc_fn,
+            )
+        except Exception:
+            initial_quality = None
 
     # Loop until validator constraints satisfied (size goal heuristic if provided)
     for _ in range(cfg.max_steps):
@@ -398,7 +424,49 @@ def greedy_complete(
         steps.append({"op": "add_card", "partition": main_name, "card": cand, "count": 1})
         state = res.deck
 
-    return state, steps
+        # Check quality threshold if set
+        if assess_quality and quality_threshold is not None:
+            try:
+                current_quality = assess_deck_quality(
+                    deck=state,
+                    game=game,
+                    tag_set_fn=tag_set_fn or (lambda x: set()),
+                    cmc_fn=cmc_fn,
+                )
+                if current_quality.overall_score >= quality_threshold:
+                    logger.info(f"Quality threshold reached: {current_quality.overall_score:.2f}")
+                    break
+            except Exception:
+                pass
+
+    # Assess final quality if requested
+    if assess_quality:
+        try:
+            final_quality = assess_deck_quality(
+                deck=state,
+                game=game,
+                tag_set_fn=tag_set_fn or (lambda x: set()),
+                cmc_fn=cmc_fn,
+            )
+            quality_metrics = {
+                "initial": {
+                    "overall_score": initial_quality.overall_score if initial_quality else None,
+                    "mana_curve_score": initial_quality.mana_curve_score if initial_quality else None,
+                    "tag_balance_score": initial_quality.tag_balance_score if initial_quality else None,
+                    "synergy_score": initial_quality.synergy_score if initial_quality else None,
+                } if initial_quality else None,
+                "final": {
+                    "overall_score": final_quality.overall_score,
+                    "mana_curve_score": final_quality.mana_curve_score,
+                    "tag_balance_score": final_quality.tag_balance_score,
+                    "synergy_score": final_quality.synergy_score,
+                },
+                "improvement": final_quality.overall_score - (initial_quality.overall_score if initial_quality else 0.0),
+            }
+        except Exception as e:
+            logger.warning(f"Failed to assess final quality: {e}")
+
+    return state, steps, quality_metrics
 
 
 def suggest_removals(
@@ -406,9 +474,9 @@ def suggest_removals(
     deck: dict,
     candidate_fn: CandidateFn,
     *,
-    archetype: str | None = None,
-    archetype_staples: dict[str, dict[str, float]] | None = None,
-    tag_set_fn: TagSetFn | None = None,
+    archetype: Optional[str] = None,
+    archetype_staples: Optional[dict[str, dict[str, float]]] = None,
+    tag_set_fn: Optional[TagSetFn] = None,
     preserve_roles: bool = True,
     max_suggestions: int = 10,
 ) -> list[tuple[str, float, str]]:
@@ -523,11 +591,11 @@ def suggest_replacements(
     candidate_fn: CandidateFn,
     top_k: int = 10,
     *,
-    price_fn: PriceFn | None = None,
-    max_unit_price: float | None = None,
-    tag_set_fn: TagSetFn | None = None,
-    archetype: str | None = None,
-    archetype_staples: dict[str, dict[str, float]] | None = None,
+    price_fn: Optional[PriceFn] = None,
+    max_unit_price: Optional[float] = None,
+    tag_set_fn: Optional[TagSetFn] = None,
+    archetype: Optional[str] = None,
+    archetype_staples: Optional[dict[str, dict[str, float]]] = None,
     upgrade: bool = False,  # If True, prefer better (more expensive) cards
     downgrade: bool = False,  # If True, prefer cheaper alternatives
 ) -> list[tuple[str, float, str]]:

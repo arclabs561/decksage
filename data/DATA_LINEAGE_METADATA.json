@@ -1,0 +1,112 @@
+{
+  "data_lineage": {
+    "orders": {
+      "0": {
+        "name": "Primary Source Data",
+        "immutable": true,
+        "locations": {
+          "s3": "s3://games-collections/games/",
+          "local": "src/backend/data-full/games/"
+        },
+        "tools": [
+          "go run cmd/dataset/main.go extract"
+        ]
+      },
+      "1": {
+        "name": "Exported Decks",
+        "depends_on": [
+          "0"
+        ],
+        "locations": {
+          "local": "data/processed/decks_*.jsonl"
+        },
+        "tools": [
+          "bin/export-blob",
+          "bin/export-hetero"
+        ]
+      },
+      "2": {
+        "name": "Co-occurrence Pairs",
+        "depends_on": [
+          "1"
+        ],
+        "locations": {
+          "local": "data/processed/pairs_*.csv"
+        },
+        "tools": [
+          "scripts/data_processing/generate_pairs_for_games.py"
+        ]
+      },
+      "3": {
+        "name": "Incremental Graph",
+        "depends_on": [
+          "1",
+          "2"
+        ],
+        "locations": {
+          "local": "data/graphs/incremental_graph.db"
+        },
+        "tools": [
+          "ml.scripts.update_graph_incremental"
+        ]
+      },
+      "4": {
+        "name": "Embeddings",
+        "depends_on": [
+          "2",
+          "3"
+        ],
+        "locations": {
+          "local": "data/embeddings/"
+        },
+        "tools": [
+          "ml.scripts.train_hybrid_full",
+          "ml.scripts.train_gnn"
+        ]
+      },
+      "5": {
+        "name": "Test Sets",
+        "depends_on": [
+          "1",
+          "4"
+        ],
+        "locations": {
+          "local": "experiments/test_set_unified_*.json"
+        },
+        "tools": [
+          "scripts/test_sets/create_test_sets_for_new_games.py"
+        ],
+        "description": "Test Sets with ground truth labels. Labels can be LLM-generated (via expand_test_set_with_llm) or human-annotated.",
+        "llm_labels": true
+      },
+      "6": {
+        "name": "Annotations",
+        "depends_on": [
+          "1",
+          "4"
+        ],
+        "locations": {
+          "local": "annotations/*.jsonl"
+        },
+        "tools": [
+          "scripts/annotations/generate_llm_annotations.py"
+        ],
+        "description": "Similarity/substitution annotations (LLM or human). Can be converted to substitution pairs (Order 2) for training.",
+        "conversion_path": {
+          "to_order": 2,
+          "tool": "ml.utils.annotation_utils.convert_annotations_to_substitution_pairs",
+          "purpose": "Training signal (2x weight in embeddings)"
+        },
+        "llm_labels": true
+      }
+    },
+    "validation": {
+      "script": "scripts/data_processing/validate_lineage.py",
+      "regeneration": "scripts/data_processing/regenerate_derived.py"
+    },
+    "documentation": {
+      "main": "docs/DATA_LINEAGE.md",
+      "flow": "docs/DATA_LINEAGE_FLOW.txt"
+    }
+  }
+}

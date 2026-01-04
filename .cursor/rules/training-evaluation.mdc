@@ -1,0 +1,27 @@
+---
+description: Training and evaluation workflows, runctl configuration, and AWS/cloud setup
+globs:
+  - "scripts/training/**"
+  - "scripts/evaluation/**"
+  - "runctl.toml"
+  - "src/ml/scripts/train_*.py"
+  - "src/ml/scripts/evaluate_*.py"
+alwaysApply: false
+---
+
+# Training & Evaluation
+
+- Use `runctl` for all training/evaluation (local, AWS, RunPod): `../runctl/target/release/runctl` (build: `cd ../runctl && cargo build --release`)
+- **Configuration**: `runctl.toml` for defaults (instance types, regions, volumes)
+  - Organized by platform (`[aws]`, `[runpod]`, `[local]`) and feature (`[checkpoint]`, `[monitoring]`)
+  - Set sensible defaults, allow CLI flag overrides
+- **AWS instances**: Default to spot (`--spot`), use SSM + SSH, `--auto-stop`/`--auto-terminate` after training
+- **EBS volumes**: `--data-volume-size` (default 500GB) - critical for performance (10-30 min → <1 min startup)
+  - Auto-mounted at `/mnt/data`, pre-warm with `scripts/evaluation/pre_warm_ebs_volume.sh`
+  - **Data loading priority**: EBS (`/mnt/data`) > local paths > S3 download
+  - Check for existing volumes before creating new ones
+- **Cloud training**: Always use `--data-s3` and `--output-s3`, enable checkpointing (`--checkpoint-interval`), use `--resume-from` to resume
+- **Training data**: `pairs_large.csv` (7.5M pairs) or `decks_all_final.jsonl` (69K decks)
+- **Progress**: Don't pipe to tail/head - show all progress
+- **Status checking**: `runctl aws monitor` may hang - use SSH/SSM/S3 checks or `scripts/monitor_s3_outputs.sh`
+- **Progress tracking**: `training_progress/` directory (metrics, state, checkpoints)

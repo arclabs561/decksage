@@ -1,0 +1,57 @@
+
+# Data Lineage Flow
+
+```
+Order 0: PRIMARY SOURCE DATA (Immutable)
+├── S3: s3://games-collections/games/{game}/{dataset}/
+├── Local: src/backend/data-full/games/{game}/{dataset}/
+└── Format: JSON Collection objects
+    └── [Extract: go run cmd/dataset/main.go extract]
+        │
+        ▼
+Order 1: EXPORTED DECKS
+├── Location: data/processed/decks_{game}_{source}.jsonl
+├── Format: JSONL (flattened)
+└── Tools: export-blob, export-hetero
+    └── [Generate: generate_pairs_for_games.py]
+        │
+        ▼
+Order 2: CO-OCCURRENCE PAIRS
+├── Location: data/processed/pairs_{game}_{source}.csv
+├── Format: CSV
+└── Columns: NAME_1, NAME_2, GAME_1, GAME_2, COUNT, DECK_ID, SOURCE
+    └── [Update: update_graph_incremental]
+        │
+        ▼
+Order 3: INCREMENTAL GRAPH
+├── Location: data/graphs/incremental_graph.db (SQLite)
+├── Format: Graph (nodes + edges with weights)
+└── Features: Temporal tracking, edge weights
+    └── [Train: train_hybrid_full, train_gnn]
+        │
+        ▼
+Order 4: EMBEDDINGS
+├── Location: data/embeddings/{component}_v{version}.*
+├── Formats: .wv (Word2Vec), .json (GNN), checkpoints
+└── Components: Co-occurrence, Instruction-tuned, GNN
+    │
+    ├── [Create: create_test_sets_for_new_games.py]
+    │   ▼
+    │   Order 5: TEST SETS
+    │   ├── Location: experiments/test_set_unified_{game}.json
+    │   └── Format: JSON queries with labels
+    │
+    └── [Generate: generate_llm_annotations.py]
+        ▼
+        Order 6: ANNOTATIONS
+        ├── Location: annotations/{game}_llm_annotations.jsonl
+        └── Format: JSONL similarity judgments
+```
+
+## Dependency Rules
+
+1. **Order 0 is immutable** - Never modify primary source data
+2. **Order 1+ can be regenerated** - All derived data rebuildable
+3. **Explicit dependencies** - Each order depends only on previous orders
+4. **Versioning** - Derived data versioned when structure changes
+5. **Validation** - Each order validates input dependencies exist

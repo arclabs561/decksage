@@ -3,3052 +3,3052 @@
     "format": "Standard",
     "archetype": "Other - Combo",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Bant Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Artifacts Prison",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WURG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Painter",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Hive Mind",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Golgari Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Arcum Dagsson",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner W",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "The Ur-Dragon",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Emmara, Soul of the Accord",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Daretti, Scrap Savant",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Broccoli Soup (BG Aggro)",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Morska, Undersea Sleuth",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Klothys, God Of Destiny",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Loot, the Pathfinder",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Orzhov Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Creativity",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Gruul Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Chatterfang, Squirrel General",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Scapeshift",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Jeskai Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Esper Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Niv-Mizzet Reborn",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Other - Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Grixis Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "The Ur-Dragon",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Old Rutstein",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Cradle Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Jeskai Ascendancy",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Shifting Woodland",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Oswald Fiddlebender",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Kuldotha",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Humans",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Deadguy Ale",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Lagrella, the Magpie",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Emet-Selch, Unsundered",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Koma, World-Eater",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WUB",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Prossh, Skyraider of Kher",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Gretchen Titchwillow",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Azusa, Lost but Seeking",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kotis, the Fangkeeper",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Mm'menon, the Right Hand",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Kellan, Planar Trailblazer",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Retraction Helix",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Death's Shadow",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Mono White Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Yusri, Fortune's Flame",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ashling, Flame Dancer",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Atla Palani, Nest Tender",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Shorikai, Genesis Engine",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Evelyn, the Covetous",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Karador, Ghost Chieftain",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Omnath Ramp",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Grow",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Edgar Markov",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Noctis, Prince of Lucis",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Yisan, the Wanderer Bard",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Zimone and Dina",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Nymris, Oona's Trickster",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Gwen Stacy",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Marchesa, Dealer of Death",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ezio Auditore da Firenze",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Gwenom, Remorseless",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Vivi Ornitier",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WRG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Discover",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Other - Combo",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "Naya Zoo",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Celes, Rune Knight",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Dimir Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Familar",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kozilek, the Great Distortion",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Chulane, Teller of Tales",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Iron Man, Titan of Innovation",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WBRG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WURG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Gev, Scaled Scorch",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Flubs, the Fool",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Zinnia, Valley's Voice",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Omnath, Locus of Creation",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Child of Alara",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Tifa Lockhart",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Jetmir, Nexus of Revels",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Halana and Alena, Partners",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kuja, Genome Sorcerer",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Braids, Arisen Nightmare",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Reaping the Song",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Alesha, Who Laughs at Fate",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Reanimator",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Jund",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Jeskai Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Auras",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Transmogrify",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Black Sinkhole",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Jackal, Genius Geneticist",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Esper Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Niv-Mizzet, Parun",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "UR Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Malcolm, Alluring Scoundrel",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Errant and Giada",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Emmara, Soul Of The Accord",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Pia Nalaar, Consul of Revival",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Obyra, Dreaming Duelist",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Persistent Petitioners",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "Other - Combo",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "Grixis Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "4c Midrange",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner UG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Jeskai Midrange",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Fires of Yavimaya",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Yawgmoth, Thran Physician",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Will, Scion of Peace",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Sygg, River Cutthroat",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Ulamog, the Ceaseless Hunger",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Flamewar, Brash Veteran",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WBR",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Fish",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Merfolk",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Other - Combo",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Dogmeat, Ever Loyal",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Jund",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Oswald Fiddlebender",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Aminatou, the Fateshifter",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Scion of the Ur-Dragon",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Tellah, Great Sage",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Sergeant John Benton",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Hearthhull, the Worldseed",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Mendicant Core, Guidelight",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Eluge, the Shoreless Sea",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Sidar Jabari of Zhalfir",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Saffi Eriksdotter",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Eddie Brock",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner BR",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Magda, Brazen Outlaw",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Naya Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Terra, Herald of Hope",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Shanna, Purifying Blade",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Wee Bee",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "High Tide",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Xyris, the Writhing Storm",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Ghyrson Starn, Kelermorph",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Dredge",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Aluren",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Arcum Dagsson",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Alaundo the Seer",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Zada, Hedron Grinder",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Rakdos, the Muscle",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kenrith, the Returned King",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ellivere of the Wild Court",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Temur Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Grixis Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "4/5c Control",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Death's Shadow",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WRG",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Baylen, the Haymaker",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Anje Falkenrath",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Light-Paws, Emperor's Voice",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Plagon, Lord of the Beach",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Bane, Lord of Darkness",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Satoru Umezawa",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Atemsis, All-Seeing",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Mississippi River",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Lord Windgrace",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Hot Dogs",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Plagon, Lord of the Beach",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Kroxa, Titan Of Death's Hunger",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Baral, Chief of Compliance",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Asmoranomardicadaistinaculdacar",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Sultai Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kadena, Slinking Sorcerer",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Meren of Clan Nel Toth",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Brago, King Eternal",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ragost, Deft Gastronaut",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "RG Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Relic of Legends - Acererak",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Azorius Aggro",
     "current": 1,
-    "needed": 19,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Pox",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Mardu Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Tiamat",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Vohar, Vodalian Desecrator",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Stoneblade",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Amalia Benavides Aguirre",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Bazaar Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Mono Blue Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Gruul Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Eladamri, Korvecdal",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Selvala, Explorer Returned",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Cecil, Dark Knight",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Kaalia of the Vast",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Roxanne, Starfall Savant",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Grist, The Hunger Tide",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Breya, Etherium Shaper",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Daretti, Scrap Savant",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Ill-Gotten Gains",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Humans",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Jund Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Storm",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Infect",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Celes, Rune Knight",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "UR Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Lumra, Bellow of the Woods",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Ral, Monsoon Mage",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Sultai Control",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Korvold, Fae-Cursed King",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Lady Octopus, Inspired Inventor",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Mono Black Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Vintage",
     "archetype": "Underworld Breach",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Dennick, Pious Apprentice",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Stompy",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WUR",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner BR",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner UB",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner BRG",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Norman Osborn",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "The Gitrog Monster",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WBG",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Jhoira, Ageless Innovator",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "BW Control",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Nic Fit",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "The Rock",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Narset, Enlightened Master",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ob Nixilis, Captive Kingpin",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Krenko, Mob Boss",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Hollow One",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Esper Vial",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "Reanimator",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Highlander",
     "archetype": "Other - Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Broodscale Combo",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ratadrabik of Urborg",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Niv-Mizzet, Parun",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Hashaton, Scarab's Fist",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Tameshi, Reality Architect",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Selvala, Heart of the Wilds",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Bello, Bard of the Brambles",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Peasant",
     "archetype": "Delver",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Deep Hours Midrange",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Hammer Time",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Elves",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Mono Black Control",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Jenson Carthalion, Druid Exile",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "BUG Control",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Cascade Crash",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Ms. Bumbleflower",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Mono Black Combo",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Teval, the Balanced Scale",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Y'shtola, Night's Blessed",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Niv-Mizzet Reborn",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Rakdos Aggro",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "The Master of Keys",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Dihada, Binder of Wills",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Welder Tinker",
     "current": 2,
-    "needed": 18,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Marath, Will of the Wild",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Phlage, Titan Of Fire's Fury",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Creativity",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Weenie White",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Merfolk",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Burn",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Najeela, the Blade-Blossom",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Loam",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Merfolk",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Satya, Aetherflux Genius",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Deadguy Ale",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner UBG",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Ertai Resurrected",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Red Deck Wins",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "UR Control",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Other - Control",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Lonis, Cryptozoologist",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Glarb, Calamity's Augur",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Standard",
     "archetype": "Dimir Control",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Acererak the Archlich",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Spider-Man 2099",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Full English Breakfast",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Goblins",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Initiative Stompy",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WUB",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Cycling Control",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Goblins",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Zhulodok, Void Gorger",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "UB Delver",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Eldrazi Aggro",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner UBR",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Devotion to Green",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Godo, Bandit Warlord",
     "current": 3,
-    "needed": 17,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Dredge",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Ketramose, the New Dawn",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Reanimator",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Mono Blue Storm",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Slivers",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Derevi, Empyrial Tactician",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Inalla, Archmage Ritualist",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Zur the Enchanter",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Weenie White",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Dimir Aggro",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "The Gitrog Monster",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Ninja",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Rowan, Scion of War",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Canadian Threshold",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Taii Wakeen, Perfect Shot",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Terra, Magical Adept",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Other - Combo",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Rocco, Cabaretti Caterer",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Stella Lee, Wild Card",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Partner UR",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Orzhov Aggro",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Bant Control",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pauper",
     "archetype": "Other - Aggro",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Mono Red Control",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Winota, Joiner of Forces",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Talion, the Kindly Lord",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Esika, God of the Tree",
     "current": 4,
-    "needed": 16,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Living End",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Modern",
     "archetype": "Mono Black Aggro",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Enigmatic Incarnation",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "The Solution (UW/UWR)",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Tivit, Seller Of Secrets",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Artifacts Blue",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Glarb, Calamity's Augur",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Mono White Control",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Terrageddon",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Madness",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Premodern",
     "archetype": "Psychatog",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Dark Depths",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Golgari Aggro",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WUR",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Cosmic Spider-Man",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Atraxa, Grand Unifier",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Terra, Magical Adept",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "The Wandering Minstrel",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Legacy",
     "archetype": "Boros Aggro",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "cEDH",
     "archetype": "Heliod, the Radiant Dawn",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Pioneer",
     "archetype": "Other - Aggro",
     "current": 5,
-    "needed": 15,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "high"
   },
   {
     "format": "Duel Commander",
     "archetype": "Light-Paws, Emperor's Voice",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner BRG",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "Turbo Fog",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Sheoldred, the Apocalypse",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "K'rrik, Son of Yawgmoth",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Machine Head",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "Walls Combo",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pioneer",
     "archetype": "Weenie White",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "Mardu Aggro",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Mono Black Aggro",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Esper Aggro",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WUG",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Zirda, the Dawnwaker",
     "current": 6,
-    "needed": 14,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Simic Birthing Ritual",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Lumra, Bellow of the Woods",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "4/5c Control",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pioneer",
     "archetype": "UR Aggro",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Atraxa, Grand Unifier",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Partner UBG",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "White Weenie",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Jeskai Control",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Esper Control",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Golgari Aggro",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Azorius Aggro",
     "current": 7,
-    "needed": 13,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pioneer",
     "archetype": "Selesnya Aggro",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pioneer",
     "archetype": "Gruul Aggro",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Mono Green Aggro",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WBR",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Stiflenought",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Stasis",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Vintage",
     "archetype": "Gifts Control",
     "current": 8,
-    "needed": 12,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "UR Control",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Jeskai Control",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Reanimator",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Vivi Ornitier",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Yuriko, the Tiger's Shadow",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "UB Mill",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Other - Control",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Marneus Calgar",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Tayam, Luminous Enigma",
     "current": 9,
-    "needed": 11,
-    "priority": "critical"
+    "needed": 20,
+    "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Simic Aggro",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Other - Aggro",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Maverick",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Vintage",
     "archetype": "Doomsday",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Tifa Lockhart",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Juri, Master Of The Revue",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Landstill (UW Control)",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Elves",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Zurgo Bellstriker",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Vintage",
     "archetype": "Coveted Jewel",
     "current": 10,
-    "needed": 10,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Magda, the Hoardmaster",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Creatures Toolbox",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "Aura Aggro",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Survival",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Mono Black Control",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Pioneer",
     "archetype": "Spirit Aggro",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Pauper",
     "archetype": "Boros Aggro",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "",
     "current": 11,
-    "needed": 9,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Temur Aggro",
     "current": 12,
-    "needed": 8,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Grixis Control",
     "current": 12,
-    "needed": 8,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Broodscale Bloodchief",
     "current": 12,
-    "needed": 8,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Hidetsugu And Kairi",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Other - Aggro",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Storm",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Azusa, Lost But Seeking",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Painter",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Selesnya Aggro",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Mono Blue Control",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Doomsday",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Omniscience Combo",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Tivit, Seller of Secrets",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Standard",
     "archetype": "Boros Aggro",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "cEDH",
     "archetype": "Ral, Monsoon Mage",
     "current": 13,
-    "needed": 7,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Modern",
     "archetype": "Ruby Storm",
     "current": 14,
-    "needed": 6,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WUBG",
     "current": 14,
-    "needed": 6,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Duel Commander",
     "archetype": "Lier, Disciple of the Drowned",
     "current": 14,
-    "needed": 6,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Replenish",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Stiflenought",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Oops, All Spells!",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Vintage",
     "archetype": "Dredge",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Vintage",
     "archetype": "BUG Midrange",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Premodern",
     "archetype": "Enchantress",
     "current": 15,
-    "needed": 5,
+    "needed": 20,
     "priority": "moderate"
   },
   {
     "format": "Legacy",
     "archetype": "Lands",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Premodern",
     "archetype": "Tinker Fling",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Pauper",
     "archetype": "Weenie White",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "cEDH",
     "archetype": "Kefka, Court Mage",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "cEDH",
     "archetype": "Magda, Brazen Outlaw",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Duel Commander",
     "archetype": "Elminster",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "cEDH",
     "archetype": "Etali, Primal Conqueror",
     "current": 16,
-    "needed": 4,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Pioneer",
     "archetype": "Greasefang Parhelion",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Premodern",
     "archetype": "Oath of Druids",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Vintage",
     "archetype": "Paradoxical Outcome",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Pauper",
     "archetype": "Gates",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Standard",
     "archetype": "4/5C Control",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Duel Commander",
     "archetype": "Cloud, Midgar Mercenary",
     "current": 17,
-    "needed": 3,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Duel Commander",
     "archetype": "Partner WR",
     "current": 18,
-    "needed": 2,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Pioneer",
     "archetype": "Lotus Field",
     "current": 18,
-    "needed": 2,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Legacy",
     "archetype": "Death & Taxes",
     "current": 18,
-    "needed": 2,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Modern",
     "archetype": "Reanimator",
     "current": 18,
-    "needed": 2,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "cEDH",
     "archetype": "Partner WUBG",
     "current": 18,
-    "needed": 2,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Legacy",
     "archetype": "Show and Tell",
     "current": 19,
-    "needed": 1,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   },
   {
     "format": "Pauper",
     "archetype": "Golgari / Jund Garden",
     "current": 19,
-    "needed": 1,
-    "priority": "moderate"
+    "needed": 20,
+    "priority": "low"
   }
 ]

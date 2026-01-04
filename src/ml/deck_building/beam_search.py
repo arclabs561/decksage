@@ -11,7 +11,7 @@ from __future__ import annotations
 import logging
 from collections import deque
 from dataclasses import dataclass
-from typing import Callable, Literal
+from typing import Callable, Literal, Optional
 
 from .deck_completion import (
     CompletionConfig,
@@ -22,10 +22,12 @@ from .deck_completion import (
     _current_size,
     _cards_in_partition,
     _legal_add,
-    apply_deck_patch,
-    DeckPatch,
 )
-from ..validation.validators.models import Partition
+try:
+    from .deck_patch import DeckPatch, apply_deck_patch
+except ImportError:
+    DeckPatch = None
+    apply_deck_patch = None
 
 logger = logging.getLogger("decksage.beam_search")
 
@@ -77,7 +79,7 @@ def compute_coverage_bonus(
 def compute_curve_bonus(
     deck: dict,
     cmc_fn: CMCFn | None,
-    curve_target: dict[int, float] | None,
+    curve_target: Optional[dict[int, float]],
     main_partition: str,
     curve_weight: float,
 ) -> float:
@@ -173,12 +175,21 @@ def beam_search_completion(
                 next_beam.append(state)
                 continue
             
-            # Generate candidates
+            # Generate candidates - need seed card from deck
+            seed_card = None
+            main_partition = _main_partition_name(config.game)
+            for p in state.deck.get("partitions", []) or []:
+                if p.get("name") == main_partition:
+                    cards = p.get("cards", []) or []
+                    if cards:
+                        seed_card = cards[0].get("name")
+                        break
+            
+            if not seed_card:
+                continue
+            
             try:
-                candidates = candidate_fn(
-                    state.deck,
-                    config.top_k_per_gap,
-                )
+                candidates = candidate_fn(seed_card, config.top_k_per_gap)
             except Exception as e:
                 logger.warning(f"Error generating candidates: {e}")
                 continue
@@ -190,14 +201,18 @@ def beam_search_completion(
                     continue
                 
                 # Create patch to add card
+                if DeckPatch is None or apply_deck_patch is None:
+                    logger.warning("DeckPatch not available, skipping beam search")
+                    continue
+                
                 patch = DeckPatch(ops=[{
-                    "op": "add",
+                    "op": "add_card",
                     "partition": main_partition,
                     "card": card,
                     "count": 1,
                 }])
                 
-                # Apply patch (already imported at top)
+                # Apply patch
                 result = apply_deck_patch(config.game, state.deck, patch)
                 
                 if not result.is_valid or not result.deck:

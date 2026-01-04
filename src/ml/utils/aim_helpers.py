@@ -13,7 +13,11 @@ except ImportError:
     HAS_AIM = False
     aim = None
 
-logger = logging.getLogger(__name__)
+try:
+    from .logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 # Default Aim repository location
 AIM_REPO = Path(".aim")
@@ -24,20 +28,54 @@ def create_training_run(
     hparams: dict[str, Any],
     tags: list[str] | None = None,
     repo: Path | str | None = None,
+    correlation_id: str | None = None,
 ) -> aim.Run | None:
-    """Create an Aim run for training experiments."""
+    """Create an Aim run for training experiments.
+    
+    Args:
+        experiment_name: Name of the experiment
+        hparams: Hyperparameters dictionary
+        tags: Optional tags for the run
+        repo: Aim repository path (default: .aim)
+        correlation_id: Correlation ID from logging system for tracking
+        
+    Returns:
+        Aim Run object or None if AimStack not available
+    """
     if not HAS_AIM:
         logger.warning("AimStack not available, skipping tracking")
         return None
     
     try:
+        # Get correlation ID from logging system if not provided
+        if correlation_id is None:
+            try:
+                from .logging_config import get_correlation_id
+                correlation_id = get_correlation_id()
+            except ImportError:
+                pass
+        
+        # Add correlation ID to tags if available
+        run_tags = list(tags) if tags else []
+        if correlation_id:
+            run_tags.append(f"corr_id:{correlation_id}")
+        
         run = aim.Run(
             experiment=experiment_name,
             repo=str(repo or AIM_REPO),
-            hparams=hparams,
-            tags=tags or [],
+            tags=run_tags,
         )
-        logger.info(f"Created Aim run: {experiment_name}")
+        
+        # Set correlation ID as a property for easy querying
+        if correlation_id:
+            run["correlation_id"] = correlation_id
+        
+        # Set hyperparameters separately (newer Aim API)
+        if hparams:
+            for key, value in hparams.items():
+                run.set(key, value, strict=False)
+        
+        logger.info(f"Created Aim run: {experiment_name} [correlation_id={correlation_id}]")
         return run
     except Exception as e:
         logger.error(f"Failed to create Aim run: {e}")

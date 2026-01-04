@@ -13,7 +13,7 @@ from __future__ import annotations
 import logging
 import random
 from dataclasses import dataclass
-from typing import Any, Literal
+from typing import Any, Literal, Optional
 
 from .deck_patch import DeckPatch, apply_deck_patch
 from ..validation.validators.models import DeckCard
@@ -23,7 +23,7 @@ logger = logging.getLogger("decksage.deck_env")
 
 # Simplified Deck model for the environment; real validation happens elsewhere
 class Deck:
-    def __init__(self, game: Literal["magic", "yugioh", "pokemon"], target_main_size: int | None = None):
+    def __init__(self, game: Literal["magic", "yugioh", "pokemon"], target_main_size: Optional[int] = None):
         self.game = game
         self.target_main_size = target_main_size
         self._deck: dict | None = None

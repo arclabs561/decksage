@@ -16,18 +16,18 @@ validators/
 
 ### What Validators Do
 
-✅ **Deterministic structural validation**
+Deterministic structural validation
 - Card name quality (Unicode normalization, no control chars)
 - Deck size constraints (60-card, 100-card, etc.)
 - Copy limits (4-of rule, singleton, etc.)
 - Format-specific construction rules
 
-✅ **Deterministic legality checking**
+Deterministic legality checking
 - Ban lists from authoritative sources (Scryfall, YGOProDeck API)
 - Format legality (set rotation, rarity restrictions)
 - Cached for performance (7-day TTL)
 
-✅ **Type safety**
+Type safety
 - Pydantic models ensure type correctness
 - Validation errors show exact field and reason
 - IDE autocomplete and type checking
@@ -44,9 +44,9 @@ These require LLMs and should be **optional batch processes**, not in the critic
 ## ⚠️ Important: Which Data File to Use
 
 **Use:** `data/processed/decks_with_metadata.jsonl`
-- ✅ format field populated (Modern, Legacy, Standard, Pauper, etc.)
-- ✅ archetype field populated (UR Aggro, Burn, Control, etc.)
-- ✅ ~500K decks with full metadata
+- format field populated (Modern, Legacy, Standard, Pauper, etc.)
+- archetype field populated (UR Aggro, Burn, Control, etc.)
+- ~500K decks with full metadata
 - Success rate: ~96% (validators catch bad decks)
 
 **Don't use:** `src/backend/decks_hetero.jsonl`

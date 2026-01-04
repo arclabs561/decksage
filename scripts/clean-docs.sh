@@ -5,7 +5,7 @@
 # Usage: ./scripts/clean-docs.sh [date]
 # Example: ./scripts/clean-docs.sh 2025-10-05
 
-set -e
+set -euo pipefail
 
 # Get date parameter or use today
 SESSION_DATE=${1:-$(date +%Y-%m-%d)}
@@ -35,7 +35,7 @@ for pattern in "${PATTERNS[@]}"; do
 done
 
 if [ $count -eq 0 ]; then
-    echo "✅ No session documents to clean up!"
+    echo "No session documents to clean up!"
     exit 0
 fi
 
@@ -52,7 +52,7 @@ for pattern in "${PATTERNS[@]}"; do
     fi
 done
 
-echo "✅ Moved $count files to $ARCHIVE_DIR"
+echo "Moved $count files to $ARCHIVE_DIR"
 echo ""
 echo "Remaining root-level docs:"
 ls -1 *.md 2>/dev/null | grep -v README.md | head -10 || echo "  Just README.md and essential docs!"
@@ -60,5 +60,5 @@ ls -1 *.md 2>/dev/null | grep -v README.md | head -10 || echo "  Just README.md 
 # Check if we should remind about .doc-guard
 if [ ! -f .doc-guard ]; then
     echo ""
-    echo "💡 Tip: Consider reading .doc-guard for documentation principles"
+    echo "Tip: Consider reading .doc-guard for documentation principles"
 fi

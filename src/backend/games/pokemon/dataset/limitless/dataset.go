@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -76,6 +77,17 @@ type apiDeckType struct {
 	Icons []string `json:"icons"` // card identifiers
 }
 
+// apiMatch represents a single match/round result
+type apiMatch struct {
+	RoundNumber int    `json:"roundNumber"`
+	PhaseNumber int    `json:"phaseNumber"`
+	TableNumber int    `json:"tableNumber,omitempty"`
+	Player1     string `json:"player1"`
+	Player2     string `json:"player2"`
+	Winner      string `json:"winner,omitempty"` // Player ID of winner
+	MatchLabel  string `json:"matchLabel,omitempty"`
+}
+
 func (d *Dataset) Extract(
 	ctx context.Context,
 	sc *scraper.Scraper,
@@ -116,13 +128,35 @@ func (d *Dataset) Extract(
 			continue
 		}
 
+		// Fetch match data for round results
+		matches, err := d.fetchMatches(ctx, sc, tournament.ID, opts)
+		if err != nil {
+			d.log.Field("tournament_id", tournament.ID).Warnf(ctx, "Failed to fetch matches: %v (continuing without round results)", err)
+			matches = nil
+		}
+		
+		// Create lookup map: player ID -> matches
+		playerMatches := make(map[string][]apiMatch)
+		if matches != nil {
+			for _, match := range matches {
+				playerMatches[match.Player1] = append(playerMatches[match.Player1], match)
+				playerMatches[match.Player2] = append(playerMatches[match.Player2], match)
+			}
+		}
+
 		// Store each decklist as a collection
 		for _, standing := range standings {
 			if limit, ok := opts.ItemLimit.Get(); ok && totalDecks >= limit {
 				break
 			}
 
-			if err := d.storeDecklist(ctx, tournament, standing, opts); err != nil {
+			// Get round results for this player
+			var roundResults []game.RoundResult
+			if playerMatches != nil {
+				roundResults = d.buildRoundResults(standing.Player, playerMatches, standings)
+			}
+
+			if err := d.storeDecklist(ctx, tournament, standing, roundResults, opts); err != nil {
 				d.log.Field("player", standing.Player).Errorf(ctx, "Failed to store decklist: %v", err)
 				continue
 			}
@@ -194,10 +228,116 @@ func (d *Dataset) fetchStandings(
 	return standings, nil
 }
 
+func (d *Dataset) fetchMatches(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	tournamentID string,
+	opts games.ResolvedUpdateOptions,
+) ([]apiMatch, error) {
+	// API endpoint: GET /tournaments/{id}/matches
+	url := fmt.Sprintf("https://play.limitlesstcg.com/api/tournaments/%s/matches", tournamentID)
+
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("X-Access-Key", d.apiKey)
+
+	resp, err := games.Do(ctx, sc, &opts, req)
+	if err != nil {
+		return nil, err
+	}
+
+	var matches []apiMatch
+	if err := json.Unmarshal(resp.Response.Body, &matches); err != nil {
+		return nil, fmt.Errorf("failed to parse matches response: %w", err)
+	}
+
+	return matches, nil
+}
+
+func (d *Dataset) buildRoundResults(
+	playerID string,
+	playerMatches map[string][]apiMatch,
+	standings []apiStanding,
+) []game.RoundResult {
+	matches := playerMatches[playerID]
+	if len(matches) == 0 {
+		return nil
+	}
+
+	// Create lookup maps for efficient lookup
+	playerNameMap := make(map[string]string)      // playerID -> playerName
+	playerArchetypeMap := make(map[string]string) // playerID -> archetype
+	
+	for _, standing := range standings {
+		if standing.Player != "" {
+			playerNameMap[standing.Player] = standing.Name
+			if standing.Deck != nil && standing.Deck.Name != "" {
+				playerArchetypeMap[standing.Player] = standing.Deck.Name
+			}
+		}
+	}
+
+	var roundResults []game.RoundResult
+	for _, match := range matches {
+		// Validate match data
+		if match.RoundNumber <= 0 {
+			continue // Skip invalid round numbers
+		}
+		
+		// Determine opponent
+		var opponentID string
+		if match.Player1 == playerID {
+			opponentID = match.Player2
+		} else if match.Player2 == playerID {
+			opponentID = match.Player1
+		} else {
+			continue // Match doesn't involve this player
+		}
+		
+		// Get opponent name and archetype from lookup maps
+		opponentName := playerNameMap[opponentID]
+		if opponentName == "" {
+			opponentName = opponentID // Fallback to ID if name not found
+		}
+		opponentDeck := playerArchetypeMap[opponentID]
+
+		// Determine result
+		result := "T" // Default to tie
+		if match.Winner != "" {
+			if match.Winner == playerID {
+				result = "W"
+			} else if match.Winner == opponentID {
+				result = "L"
+			}
+			// If winner is neither player, keep as tie
+		}
+
+		roundResults = append(roundResults, game.RoundResult{
+			RoundNumber:  match.RoundNumber,
+			Opponent:     opponentName,
+			OpponentDeck: opponentDeck,
+			Result:       result,
+			// GameWins/GameLosses not available from API, would need match detail endpoint
+		})
+	}
+
+	// Sort by round number (using Go's sort package for efficiency)
+	if len(roundResults) > 1 {
+		sort.Slice(roundResults, func(i, j int) bool {
+			return roundResults[i].RoundNumber < roundResults[j].RoundNumber
+		})
+	}
+
+	return roundResults
+}
+
 func (d *Dataset) storeDecklist(
 	ctx context.Context,
 	tournament apiTournament,
 	standing apiStanding,
+	roundResults []game.RoundResult,
 	opts games.ResolvedUpdateOptions,
 ) error {
 	// Build unique ID: tournament_id:player_id
@@ -235,6 +375,12 @@ func (d *Dataset) storeDecklist(
 		archetype = standing.Deck.Name
 	}
 
+	// Extract tournament type from name
+	tournamentType := extractTournamentType(tournament.Name)
+	
+	// Extract location from tournament name (e.g., "Regional Pittsburgh, PA")
+	location := extractLocation(tournament.Name)
+	
 	// Build collection metadata
 	deckType := &game.CollectionTypeDeck{
 		Name:      fmt.Sprintf("%s - %s", tournament.Name, standing.Name),
@@ -242,9 +388,15 @@ func (d *Dataset) storeDecklist(
 		Archetype: archetype,
 		Player:    standing.Name,
 		// Add custom metadata
-		Event:     tournament.Name,
-		Placement: standing.Placing,
-		EventDate: tournament.Date.Format("2006-01-02"),
+		Event:          tournament.Name,
+		Placement:      standing.Placing,
+		EventDate:      tournament.Date.Format("2006-01-02"),
+		TournamentType: tournamentType,
+		TournamentSize: tournament.Players,
+		TournamentID:   tournament.ID,
+		Location:       location,
+		Country:        standing.Country,
+		RoundResults:   roundResults,
 	}
 
 	tw := game.CollectionTypeWrapper{
@@ -274,6 +426,60 @@ func (d *Dataset) storeDecklist(
 	}
 
 	return d.blob.Write(ctx, bkey, b)
+}
+
+// extractTournamentType extracts tournament type from tournament name
+func extractTournamentType(name string) string {
+	nameLower := strings.ToLower(name)
+	
+	// Check for common tournament types
+	if strings.Contains(nameLower, "regional") {
+		return "Regional"
+	}
+	if strings.Contains(nameLower, "championship") || strings.Contains(nameLower, "worlds") {
+		return "Championship"
+	}
+	if strings.Contains(nameLower, "league cup") {
+		return "League Cup"
+	}
+	if strings.Contains(nameLower, "league challenge") {
+		return "League Challenge"
+	}
+	if strings.Contains(nameLower, "international") {
+		return "International"
+	}
+	if strings.Contains(nameLower, "special event") {
+		return "Special Event"
+	}
+	
+	return ""
+}
+
+// extractLocation extracts location from tournament name
+// Examples: "Regional Pittsburgh, PA", "Championship Las Vegas, NV"
+func extractLocation(name string) string {
+	// Look for patterns like "City, State" or "City, Country"
+	// Common patterns: "Regional Pittsburgh, PA", "Championship Las Vegas, NV"
+	
+	// Try to find comma-separated location
+	parts := strings.Split(name, ",")
+	if len(parts) >= 2 {
+		// Check if last part looks like a state/country (2-3 letters or full country name)
+		lastPart := strings.TrimSpace(parts[len(parts)-1])
+		if len(lastPart) <= 3 || strings.Contains(strings.ToLower(lastPart), "united states") {
+			// Likely a location
+			city := strings.TrimSpace(parts[len(parts)-2])
+			// Remove tournament type prefix if present
+			city = strings.TrimPrefix(city, "Regional")
+			city = strings.TrimPrefix(city, "Championship")
+			city = strings.TrimPrefix(city, "League Cup")
+			city = strings.TrimPrefix(city, "League Challenge")
+			city = strings.TrimSpace(city)
+			return fmt.Sprintf("%s, %s", city, lastPart)
+		}
+	}
+	
+	return ""
 }
 
 var prefix = filepath.Join("pokemon", "limitless")

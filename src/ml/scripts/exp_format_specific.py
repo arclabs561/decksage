@@ -14,6 +14,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from utils.evaluation import compute_precision_at_k, jaccard_similarity
+from ml.utils.shared_operations import jaccard_similarity
+
 
 
 def load_decks_by_format(jsonl_path):
@@ -93,7 +95,7 @@ def evaluate_on_test_set(graph, test_set_path):
 def main():
     # Paths
     data_path = Path("../../data/processed/decks_with_metadata.jsonl")
-    test_set_path = Path("../../experiments/test_set_canonical_magic.json")
+    test_set_path = Path("../../experiments/test_set_unified_magic.json")
 
     print("Loading decks by format...")
     decks_by_format = load_decks_by_format(data_path)

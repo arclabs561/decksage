@@ -6,11 +6,17 @@ import (
 	"github.com/spf13/cobra"
 
 	"collections/games"
-	"collections/games/magic/dataset"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
+	digimonlimitless "collections/games/digimon/dataset/limitless"
+	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
+	onepiecelimitless "collections/games/onepiece/dataset/limitless"
+	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
+	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
+	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
+	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
 	"collections/scraper"
 )
 
@@ -48,31 +54,55 @@ func runHealth(cmd *cobra.Command, args []string) error {
 	if len(args) > 0 {
 		datasetsToCheck = []string{strings.ToLower(args[0])}
 	} else {
-		datasetsToCheck = []string{"mtgtop8", "goldfish", "scryfall", "deckbox"}
+		datasetsToCheck = []string{"mtgtop8", "goldfish", "scryfall", "deckbox", "digimon-limitless-web", "onepiece-limitless-web", "riftbound-riftboundgg"}
 	}
 
 	for _, datasetName := range datasetsToCheck {
 		config.Log.Infof(config.Ctx, "🔍 Checking health of dataset: %s", datasetName)
 
-		var d dataset.Dataset
+		var d games.Dataset
 		switch datasetName {
 		case "deckbox":
-			d = deckbox.NewDataset(config.Log, gamesBlob)
+			d = wrapMTGDataset(deckbox.NewDataset(config.Log, gamesBlob))
 		case "scryfall":
-			d = scryfall.NewDataset(config.Log, gamesBlob)
+			d = wrapMTGDataset(scryfall.NewDataset(config.Log, gamesBlob))
 		case "goldfish":
-			d = goldfish.NewDataset(config.Log, gamesBlob)
+			d = wrapMTGDataset(goldfish.NewDataset(config.Log, gamesBlob))
 		case "mtgtop8":
-			d = mtgtop8.NewDataset(config.Log, gamesBlob)
+			d = wrapMTGDataset(mtgtop8.NewDataset(config.Log, gamesBlob))
+		case "digimon-limitless", "digimonlimitless":
+			d = digimonlimitless.NewDataset(config.Log, gamesBlob)
+		case "digimon-limitless-web", "digimonlimitlessweb":
+			d = digimonlimitlessweb.NewDataset(config.Log, gamesBlob)
+		case "onepiece-limitless", "onepiecelimitless":
+			d = onepiecelimitless.NewDataset(config.Log, gamesBlob)
+		case "onepiece-limitless-web", "onepiecelimitlessweb":
+			d = onepiecelimitlessweb.NewDataset(config.Log, gamesBlob)
+		case "riftbound-riftmana", "riftboundriftmana":
+			dataset, err := riftboundriftmana.NewDataset(config.Log, gamesBlob)
+			if err != nil {
+				config.Log.Errorf(config.Ctx, "Failed to create riftmana dataset: %v", err)
+				continue
+			}
+			d = dataset
+		case "riftbound-riftcodex", "riftboundriftcodex":
+			d = riftboundriftcodex.NewDataset(config.Log, gamesBlob)
+		case "riftbound-riftboundgg", "riftboundriftboundgg", "riftbound-gg":
+			dataset, err := riftboundriftboundgg.NewDataset(config.Log, gamesBlob)
+			if err != nil {
+				config.Log.Errorf(config.Ctx, "Failed to create riftbound.gg dataset: %v", err)
+				continue
+			}
+			d = dataset
 		default:
 			config.Log.Warnf(config.Ctx, "⚠️  Unknown dataset: %s, skipping", datasetName)
 			continue
 		}
 
 		// Run a small test extraction
-		opts := []dataset.UpdateOption{
-			&dataset.OptExtractItemLimit{Limit: limit},
-			&dataset.OptExtractParallel{Parallel: 2}, // Use fewer workers for health check
+		opts := []games.UpdateOption{
+			&games.OptExtractItemLimit{Limit: limit},
+			&games.OptExtractParallel{Parallel: 2}, // Use fewer workers for health check
 		}
 
 		stats := games.NewExtractStats(config.Log)
