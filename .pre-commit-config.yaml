@@ -249,12 +249,14 @@ repos:
 
       # Check for hardcoded paths (should use PATHS utility)
       # Non-blocking: warns but doesn't fail (many existing instances)
+      # Only runs on changed files for speed
       - id: check-hardcoded-paths
         name: Check for hardcoded paths
         entry: bash -c 'python3 scripts/validation/check_hardcoded_paths.py "$@" || true'
         language: system
         types: [python]
         stages: [commit]
+        pass_filenames: true  # Only check changed files
         exclude: |
           (?x)^(
             src/ml/utils/paths\.py|
@@ -268,24 +270,26 @@ repos:
           )
 
       # Check for TODO/FIXME in committed code (warn, don't fail)
+      # Only runs on changed files for speed
       - id: check-todo
         name: Check for TODO/FIXME
-        entry: bash -c 'grep -rn "TODO\|FIXME\|XXX\|HACK" "$@" | grep -v ".git" | head -10 || true'
+        entry: bash -c 'for f in "$@"; do grep -Hn "TODO\|FIXME\|XXX\|HACK" "$f" 2>/dev/null | head -3; done || true'
         language: system
         types: [python]
         stages: [commit]
-        verbose: true
-        pass_filenames: true
+        pass_filenames: true  # Only check changed files
+        verbose: false  # Reduce noise
 
       # Validate Python file permissions (shebang vs executable)
+      # Only runs on changed files for speed
       - id: check-python-permissions
         name: Check Python file permissions
-        entry: bash -c 'for f in "$@"; do if head -1 "$f" | grep -q "^#!/usr/bin/env python"; then test -x "$f" || echo "⚠️  $f has shebang but is not executable"; fi; done || true'
+        entry: bash -c 'for f in "$@"; do if head -1 "$f" 2>/dev/null | grep -q "^#!/usr/bin/env python"; then test -x "$f" || echo "⚠️  $f has shebang but is not executable"; fi; done || true'
         language: system
         types: [python]
         stages: [commit]
-        pass_filenames: true
-        verbose: true
+        pass_filenames: true  # Only check changed files
+        verbose: false  # Reduce noise
 
   # Pre-push: Fast tests (unit tests only, no slow/integration)
   - repo: local
