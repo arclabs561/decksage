@@ -2,10 +2,10 @@
 
 ## What We Fixed
 
-✅ **Metadata parsing bug** - JSON structure mismatch resolved  
-✅ **Experiment logs** - Consolidated to single source  
-✅ **Test coverage** - Added 13 new Python tests  
-✅ **Paths** - Canonical configuration  
+✅ **Metadata parsing bug** - JSON structure mismatch resolved
+✅ **Experiment logs** - Consolidated to single source
+✅ **Test coverage** - Added 13 new Python tests
+✅ **Paths** - Canonical configuration
 
 **Data exported**: 4,718 decks with 100% metadata coverage (382 archetypes, 11 formats)
 
@@ -37,7 +37,7 @@ Ran 3 experiments to verify the fix:
 
 ### Claimed Performance
 - exp_025: P@10 = 0.15
-- exp_021: P@10 = 0.14  
+- exp_021: P@10 = 0.14
 - Baseline: P@10 = 0.12
 
 ### Actual Performance (38-query test set)
@@ -78,7 +78,7 @@ Even with metadata, simple methods cap at **~0.08 P@10**. Papers claim 42-68% wi
 - Learning-to-rank
 - Deep learning
 
-We're doing: Basic co-occurrence graphs.  
+We're doing: Basic co-occurrence graphs.
 Gap is real, not a parsing bug.
 
 ---
@@ -164,6 +164,3 @@ This is why you:
 2. Test honestly (we did)
 3. Accept results (we're doing)
 4. Don't fool yourself (hardest part)
-
-
-

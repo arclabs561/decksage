@@ -47,4 +47,3 @@ func TestCategorizeError(t *testing.T) {
 		})
 	}
 }
-

@@ -17,23 +17,22 @@ Orchestrates the full pipeline:
 from __future__ import annotations
 
 import argparse
-import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 from ml.utils.path_setup import setup_project_paths
 from ml.utils.paths import PATHS
+
 
 setup_project_paths()
 
 
 def run_step(description: str, cmd: list[str], check: bool = True) -> bool:
     """Run a workflow step."""
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"{description}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode == 0:
         print(result.stdout)
@@ -50,10 +49,19 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Complete multi-task workflow")
     parser.add_argument("--pairs", type=Path, default=PATHS.pairs_large, help="Pairs CSV")
     parser.add_argument("--test-set", type=Path, default=PATHS.test_magic, help="Test set")
-    parser.add_argument("--substitution-pairs", type=Path, default=PATHS.substitution_pairs_combined, help="Substitution pairs")
-    parser.add_argument("--weights", nargs="+", type=float, default=[2.0, 5.0], help="Weights to test")
+    parser.add_argument(
+        "--substitution-pairs",
+        type=Path,
+        default=PATHS.substitution_pairs_combined,
+        help="Substitution pairs",
+    )
+    parser.add_argument(
+        "--weights", nargs="+", type=float, default=[2.0, 5.0], help="Weights to test"
+    )
     parser.add_argument("--skip-training", action="store_true", help="Skip training, only evaluate")
-    parser.add_argument("--output-dir", type=Path, default=PATHS.experiments, help="Output directory")
+    parser.add_argument(
+        "--output-dir", type=Path, default=PATHS.experiments, help="Output directory"
+    )
     args = parser.parse_args()
 
     print("╔" + "═" * 68 + "╗")
@@ -65,11 +73,17 @@ def main() -> int:
         success = run_step(
             "Step 1: Generate Multi-Task Test Sets",
             [
-                sys.executable, "-m", "src.ml.scripts.generate_multitask_test_sets",
-                "--pairs", str(args.pairs),
-                "--canonical-test-set", str(args.test_set),
-                "--substitution-pairs", str(args.substitution_pairs),
-                "--output", str(args.output_dir / "test_set_multitask.json"),
+                sys.executable,
+                "-m",
+                "src.ml.scripts.generate_multitask_test_sets",
+                "--pairs",
+                str(args.pairs),
+                "--canonical-test-set",
+                str(args.test_set),
+                "--substitution-pairs",
+                str(args.substitution_pairs),
+                "--output",
+                str(args.output_dir / "test_set_multitask.json"),
             ],
             check=False,
         )
@@ -81,12 +95,19 @@ def main() -> int:
             success = run_step(
                 f"Step 2.{int(weight)}: Train Multi-Task (weight={weight}x)",
                 [
-                    sys.executable, "-m", "src.ml.scripts.train_multitask_refined",
-                    "--pairs", str(args.pairs),
-                    "--substitution-pairs", str(args.substitution_pairs),
-                    "--output", str(PATHS.embeddings / output_name),
-                    "--substitution-weight", str(weight),
-                    "--epochs", "10",
+                    sys.executable,
+                    "-m",
+                    "src.ml.scripts.train_multitask_refined",
+                    "--pairs",
+                    str(args.pairs),
+                    "--substitution-pairs",
+                    str(args.substitution_pairs),
+                    "--output",
+                    str(PATHS.embeddings / output_name),
+                    "--substitution-weight",
+                    str(weight),
+                    "--epochs",
+                    "10",
                 ],
                 check=False,  # Continue even if one fails
             )
@@ -98,12 +119,19 @@ def main() -> int:
         success = run_step(
             "Step 3.0: Evaluate Baseline",
             [
-                sys.executable, "-m", "src.ml.scripts.evaluate_multitask",
-                "--embedding", str(baseline_path),
-                "--pairs", str(args.pairs),
-                "--test-set", str(args.test_set),
-                "--substitution-pairs", str(args.substitution_pairs),
-                "--output", str(args.output_dir / "multitask_evaluation_baseline.json"),
+                sys.executable,
+                "-m",
+                "src.ml.scripts.evaluate_multitask",
+                "--embedding",
+                str(baseline_path),
+                "--pairs",
+                str(args.pairs),
+                "--test-set",
+                str(args.test_set),
+                "--substitution-pairs",
+                str(args.substitution_pairs),
+                "--output",
+                str(args.output_dir / "multitask_evaluation_baseline.json"),
             ],
             check=False,
         )
@@ -114,12 +142,19 @@ def main() -> int:
             success = run_step(
                 f"Step 3.{int(weight)}: Evaluate Multi-Task (weight={weight}x)",
                 [
-                    sys.executable, "-m", "src.ml.scripts.evaluate_multitask",
-                    "--embedding", str(embedding_path),
-                    "--pairs", str(args.pairs),
-                    "--test-set", str(args.test_set),
-                    "--substitution-pairs", str(args.substitution_pairs),
-                    "--output", str(args.output_dir / f"multitask_evaluation_sub{int(weight)}.json"),
+                    sys.executable,
+                    "-m",
+                    "src.ml.scripts.evaluate_multitask",
+                    "--embedding",
+                    str(embedding_path),
+                    "--pairs",
+                    str(args.pairs),
+                    "--test-set",
+                    str(args.test_set),
+                    "--substitution-pairs",
+                    str(args.substitution_pairs),
+                    "--output",
+                    str(args.output_dir / f"multitask_evaluation_sub{int(weight)}.json"),
                 ],
                 check=False,
             )
@@ -128,10 +163,15 @@ def main() -> int:
     run_step(
         "Step 4: Compare Variants",
         [
-            sys.executable, "-m", "src.ml.scripts.compare_multitask_variants",
-            "--pairs", str(args.pairs),
-            "--test-set", str(args.test_set),
-            "--output", str(args.output_dir / "multitask_comparison.json"),
+            sys.executable,
+            "-m",
+            "src.ml.scripts.compare_multitask_variants",
+            "--pairs",
+            str(args.pairs),
+            "--test-set",
+            str(args.test_set),
+            "--output",
+            str(args.output_dir / "multitask_comparison.json"),
         ],
         check=False,
     )
@@ -140,8 +180,11 @@ def main() -> int:
     run_step(
         "Step 5: Create Final Report",
         [
-            sys.executable, "-m", "src.ml.scripts.create_final_multitask_report",
-            "--output", str(args.output_dir / "FINAL_MULTITASK_REPORT.json"),
+            sys.executable,
+            "-m",
+            "src.ml.scripts.create_final_multitask_report",
+            "--output",
+            str(args.output_dir / "FINAL_MULTITASK_REPORT.json"),
         ],
         check=False,
     )

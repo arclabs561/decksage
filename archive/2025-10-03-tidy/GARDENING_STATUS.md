@@ -115,7 +115,7 @@ uv run python data_gardening.py
 ## Gardening Principles Applied
 
 **Plant strategically**: Target gaps, don't collect blindly
-**Water regularly**: Monitor health continuously  
+**Water regularly**: Monitor health continuously
 **Weed consistently**: Remove bad data (currently zero)
 **Prune carefully**: Keep quality high (99.9/100)
 **Harvest thoughtfully**: Build useful tools

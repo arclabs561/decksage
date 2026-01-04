@@ -32,7 +32,7 @@ if [[ -f "$SSH_KEY" ]] && [[ -n "$INSTANCE_IP" ]]; then
     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=5 ec2-user@"$INSTANCE_IP" \
         "ps aux | grep -E '(python|evaluate|downstream)' | grep -v grep | head -5" 2>&1 || echo "  Could not check processes"
     echo ""
-    
+
     echo "Recent Log (last 20 lines):"
     ssh -i "$SSH_KEY" -o StrictHostKeyChecking=no -o ConnectTimeout=5 ec2-user@"$INSTANCE_IP" \
         "find /home/ec2-user -name 'training.log' -o -name '*.log' 2>/dev/null | head -1 | xargs tail -20 2>/dev/null" 2>&1 || echo "  Could not read logs"

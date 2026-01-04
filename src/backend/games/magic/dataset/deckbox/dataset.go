@@ -334,7 +334,7 @@ func (d *Dataset) parseCollection(
 		// Also try getting text from parent or next sibling
 		parentText := strings.TrimSpace(sel.Parent().Text())
 		nextText := strings.TrimSpace(sel.Next().Text())
-		
+
 		// Format might be abbreviated (com, mod, sta) or full name
 		// Try to extract full format name from surrounding context
 		var format string
@@ -346,7 +346,7 @@ func (d *Dataset) parseCollection(
 		} else {
 			format = formatText
 		}
-		
+
 		// Map common abbreviations to full names
 		formatMap := map[string]string{
 			"com": "Commander",
@@ -360,12 +360,12 @@ func (d *Dataset) parseCollection(
 		if mapped, ok := formatMap[strings.ToLower(format)]; ok {
 			format = mapped
 		}
-		
+
 		format = strings.TrimSpace(format)
 		if format == "" {
 			return true // Continue searching
 		}
-		
+
 		switch strings.ToLower(format) {
 		case "cube", "cub":
 			t = &game.CollectionTypeCube{
@@ -380,7 +380,7 @@ func (d *Dataset) parseCollection(
 		formatFound = true
 		return false // Stop searching
 	})
-	
+
 	// Fallback: try old selector
 	if !formatFound {
 		doc.Find("#validity span.dt.note").EachWithBreak(func(i int, sel *goquery.Selection) bool {
@@ -407,7 +407,7 @@ func (d *Dataset) parseCollection(
 			return false
 		})
 	}
-	
+
 	if err != nil {
 		return err
 	}
@@ -434,7 +434,7 @@ func (d *Dataset) parseCollection(
 		// Use map to merge duplicate cards (case-insensitive)
 		cardMap := make(map[string]int)
 		cardNameMap := make(map[string]string) // normalized -> original (for consistent naming)
-		
+
 		sel.NextUntil(".section_title").
 			Find(".set_cards .card_name a").
 			Each(func(i int, sel *goquery.Selection) {
@@ -457,7 +457,7 @@ func (d *Dataset) parseCollection(
 					cardNameMap[normalizedLower] = normalizedName
 				}
 			})
-		
+
 		// Convert map to slice
 		var cards []game.CardDesc
 		for normalizedLower, count := range cardMap {
@@ -503,12 +503,12 @@ func (d *Dataset) parseCollection(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return err
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()
 	}
-	
+
 	return nil
 }
 

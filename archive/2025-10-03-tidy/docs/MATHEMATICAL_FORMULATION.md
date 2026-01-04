@@ -100,7 +100,7 @@ def improve_deck(request: DeckImprovementRequest):
       current_deck: List[str] (cards in deck)
       format: str (Modern, Legacy, etc.)
       budget: float (optional)
-      
+
     Output:
       suggestions: List[{
         remove: str,
@@ -109,10 +109,10 @@ def improve_deck(request: DeckImprovementRequest):
         reason: str
       }]
     """
-    
+
     # 1. Analyze deck
     deck_vector = embed_deck(current_deck)
-    
+
     # 2. For each possible swap:
     for card_in_deck in current_deck:
         for candidate in card_pool:
@@ -124,7 +124,7 @@ def improve_deck(request: DeckImprovementRequest):
                 mana_curve_improvement(candidate, deck),
                 ...
             ])
-            
+
     # 3. Rank by improvement
     # 4. Return top-k
 ```
@@ -157,5 +157,3 @@ This is FUNDAMENTALLY different from what we're doing!
 4. Evaluate on deck improvement task
 
 Current experiments are solving wrong problem!
-
-

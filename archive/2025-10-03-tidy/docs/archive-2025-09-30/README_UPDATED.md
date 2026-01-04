@@ -1,7 +1,7 @@
 # DeckSage - Multi-Game Card Similarity Platform
 
-**Status**: ✅ Multi-game architecture validated with MTG + Yu-Gi-Oh!  
-**Quality**: B+ (8/10) - Solid foundation, needs diverse data for production  
+**Status**: ✅ Multi-game architecture validated with MTG + Yu-Gi-Oh!
+**Quality**: B+ (8/10) - Solid foundation, needs diverse data for production
 **Last Updated**: 2025-09-30
 
 ---
@@ -174,21 +174,21 @@ cd ../ml
 
 ### 1. Data Quality > Algorithm Sophistication
 
-**Tried**: PyTorch Geometric, fastnode2vec, PecanPy  
-**Found**: All work fine, but data quality was the real issue  
+**Tried**: PyTorch Geometric, fastnode2vec, PecanPy
+**Found**: All work fine, but data quality was the real issue
 **Learning**: Clean simple algorithm on good data beats SOTA on bad data
 
 ### 2. Domain Expertise is Non-Negotiable
 
-**Technical validation**: "Graph builds, embeddings train" ✅  
+**Technical validation**: "Graph builds, embeddings train" ✅
 **Domain validation**: "Wait, Brainstorm shouldn't be similar to Snow-Covered Swamp" 🔴
 
-**Found**: 36.5% edge contamination from card sets  
+**Found**: 36.5% edge contamination from card sets
 **Lesson**: Can't ship card game ML without card game expertise
 
 ### 3. Set ≠ Deck (Semantic Difference)
 
-**Sets**: Cards printed together (design theme)  
+**Sets**: Cards printed together (design theme)
 **Decks**: Cards played together (strategy synergy)
 
 **Mixing them**: Creates meaningless co-occurrence
@@ -197,7 +197,7 @@ cd ../ml
 
 ### 4. Format Balance Matters
 
-**Legacy**: 44 decks, 100% coverage of staples ✅  
+**Legacy**: 44 decks, 100% coverage of staples ✅
 **Modern**: 16 decks, 60% coverage, missing Tarmogoyf ❌
 
 **Impact**: Format-biased recommendations
@@ -212,7 +212,7 @@ cd ../ml
 
 ### Architecture
 - `ARCHITECTURE.md` - System design
-- `ADDING_A_NEW_GAME.md` - Implementation guide  
+- `ADDING_A_NEW_GAME.md` - Implementation guide
 - `MULTI_GAME_VALIDATED.md` - Two-game proof
 
 ### Critical Analysis
@@ -285,12 +285,12 @@ go run ./cmd/dataset extract ygoprodeck
 
 ## Citations
 
-**PecanPy**:  
-Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_  
+**PecanPy**:
+Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btab202
 
-**node2vec+**:  
-Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_  
+**node2vec+**:
+Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btad047
 
 ---

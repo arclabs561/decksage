@@ -19,11 +19,11 @@ Model cards follow modern best practices:
 # ///
 
 import json
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
+
 
 S3_BUCKET = "games-collections"
 S3_PREFIX = "model-cards/"
@@ -45,7 +45,7 @@ def create_embedding_model_card(
             "method": method,
             "dimensions": dimensions,
             "version": "1.0.0",
-            "date": datetime.now(timezone.utc).isoformat(),
+            "date": datetime.now(UTC).isoformat(),
         },
         "training": {
             "data_source": training_data,
@@ -56,7 +56,8 @@ def create_embedding_model_card(
                 "method_specific": "See training script for full hyperparameters",
             },
         },
-        "performance": performance or {
+        "performance": performance
+        or {
             "metrics": "P@10, MRR (see evaluation results)",
             "baseline_comparison": "Compared against Jaccard similarity",
         },
@@ -80,7 +81,7 @@ def create_embedding_model_card(
         ],
         "usage": {
             "load_command": f"from gensim.models import KeyedVectors; model = KeyedVectors.load('{name}.wv')",
-            "similarity_example": f"model.most_similar('CardName', topn=10)",
+            "similarity_example": "model.most_similar('CardName', topn=10)",
             "s3_location": f"s3://{S3_BUCKET}/embeddings/{name}.wv",
         },
         "notes": notes,
@@ -102,7 +103,7 @@ def create_signal_model_card(
             "type": "similarity_signal",
             "signal_type": signal_type,
             "version": "1.0.0",
-            "date": datetime.now(timezone.utc).isoformat(),
+            "date": datetime.now(UTC).isoformat(),
         },
         "description": description,
         "computation": {
@@ -110,7 +111,8 @@ def create_signal_model_card(
             "data_source": data_source,
             "frequency": "Pre-computed and cached",
         },
-        "performance": performance or {
+        "performance": performance
+        or {
             "metrics": "Integrated into fusion similarity (see fusion weights)",
         },
         "intended_use": {
@@ -283,4 +285,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-

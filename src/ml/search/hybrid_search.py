@@ -15,7 +15,7 @@ from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
-from pydantic import BaseModel
+
 
 logger = logging.getLogger("decksage.search")
 
@@ -92,7 +92,9 @@ class HybridSearch:
             logger.warning("Meilisearch not available")
             self.meilisearch = None
         else:
-            meilisearch_url = meilisearch_url or os.getenv("MEILISEARCH_URL", "http://localhost:7700")
+            meilisearch_url = meilisearch_url or os.getenv(
+                "MEILISEARCH_URL", "http://localhost:7700"
+            )
             self.meilisearch = MeilisearchClient(
                 url=meilisearch_url,
                 api_key=meilisearch_key or os.getenv("MEILISEARCH_KEY"),
@@ -167,7 +169,9 @@ class HybridSearch:
                     distance=models.Distance.COSINE,
                 ),
             )
-            logger.info(f"Created Qdrant collection '{self.collection_name}' with size {vector_size}")
+            logger.info(
+                f"Created Qdrant collection '{self.collection_name}' with size {vector_size}"
+            )
         except Exception as e:
             if "already exists" not in str(e).lower():
                 logger.error(f"Failed to create Qdrant collection: {e}")
@@ -223,7 +227,9 @@ class HybridSearch:
                     if card_name in self.embeddings:
                         vector = self.embeddings[card_name]
                     else:
-                        logger.warning(f"Card '{card_name}' not in embeddings, skipping Qdrant index")
+                        logger.warning(
+                            f"Card '{card_name}' not in embeddings, skipping Qdrant index"
+                        )
                         return
 
                 if vector is not None:
@@ -368,4 +374,3 @@ class HybridSearch:
     def search_vector_only(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Vector-only search using Qdrant."""
         return self.search(query, limit=limit, text_weight=0.0, vector_weight=1.0)
-

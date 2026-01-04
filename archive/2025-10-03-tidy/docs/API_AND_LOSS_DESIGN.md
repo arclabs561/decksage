@@ -62,22 +62,22 @@ $$\Delta Q(D, c_{out}, c_{in}) = Q(D \setminus \{c_{out}\} \cup \{c_{in}\}) - Q(
     # Similarity features
     jaccard_sim(c_in, D \ {c_out}),           # How well it fits
     embedding_sim(c_in, D),                    # Semantic fit
-    
+
     # Meta features (if available)
     win_rate(c_in) - win_rate(c_out),         # Quality diff
     pick_rate(c_in) - pick_rate(c_out),       # Popularity diff
-    
+
     # Deck context features
     color_match(c_in, D),                      # Fits mana base
     cmc_curve_improvement(c_in, c_out, D),    # Mana curve
     function_coverage(c_in, D),                # Fills gap
-    
+
     # Archetype features
     archetype_coherence(c_in, D),             # Matches strategy
-    
+
     # Redundancy features
     num_similar_cards_in_deck(c_in, D),       # Avoid redundancy
-    
+
     # Price features (if budget constrained)
     price(c_in) - price(c_out),               # Cost
 ]
@@ -87,7 +87,7 @@ $$\Delta Q(D, c_{out}, c_{in}) = Q(D \setminus \{c_{out}\} \cup \{c_{in}\}) - Q(
 
 Training data: $\{(D_i, S_i, y_i)\}$ where
 - $D_i$ = deck
-- $S_i$ = candidate swaps  
+- $S_i$ = candidate swaps
 - $y_i$ = improvement labels (from tournament results, win rate changes, or expert)
 
 For deck $D$, swaps $(s_i, s_j)$ with $y_i > y_j$:
@@ -141,7 +141,7 @@ Output: One deck per line with full structure:
 2. **Build heterogeneous graph:**
 ```python
 Card --in_deck--> Deck
-Deck --has_archetype--> Archetype  
+Deck --has_archetype--> Archetype
 Deck --placed_in--> Event
 ```
 
@@ -191,7 +191,7 @@ Integrate 17lands.com or compute from our data:
 card_stats = {
     'Lightning Bolt': {
         'pick_rate': 0.85,      # How often picked
-        'win_rate': 0.52,       # Win rate when in deck  
+        'win_rate': 0.52,       # Win rate when in deck
         'games_played': 10000,  # Sample size
         'archetype_win_rates': {
             'Burn': 0.54,
@@ -231,7 +231,7 @@ Use as features in LTR model.
 
 ## Loss Function Summary
 
-**Current:** 
+**Current:**
 $$L = 1 - P@10_{similarity}$$
 
 **Correct:**
@@ -240,5 +240,3 @@ $$L = \sum_{decks, swaps} \lambda_{ij} \log(1 + \exp(-(\hat{\Delta Q}_i - \hat{\
 Where $\hat{\Delta Q}$ = predicted deck improvement
 
 This changes the entire problem from similarity search to decision making.
-
-

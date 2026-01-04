@@ -6,6 +6,7 @@ from collections import defaultdict
 
 import pandas as pd
 
+
 # Load graph
 df = pd.read_csv("../backend/pairs_500decks.csv")
 adj = defaultdict(set)

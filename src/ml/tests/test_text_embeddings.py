@@ -32,13 +32,13 @@ def test_text_embedder_initialization():
 def test_card_to_text():
     """Test card dict to text conversion."""
     embedder = CardTextEmbedder()
-    
+
     card = {
         "name": "Lightning Bolt",
         "type_line": "Instant",
         "oracle_text": "Deal 3 damage to any target.",
     }
-    
+
     text = embedder._card_to_text(card)
     assert "Lightning Bolt" in text
     assert "Instant" in text
@@ -49,13 +49,13 @@ def test_card_to_text():
 def test_embed_card():
     """Test embedding a card."""
     embedder = CardTextEmbedder()
-    
+
     card = {
         "name": "Lightning Bolt",
         "type_line": "Instant",
         "oracle_text": "Deal 3 damage to any target.",
     }
-    
+
     embedding = embedder.embed_card(card)
     assert embedding is not None
     assert len(embedding.shape) == 1
@@ -66,19 +66,19 @@ def test_embed_card():
 def test_similarity():
     """Test similarity between two cards."""
     embedder = CardTextEmbedder()
-    
+
     card1 = {
         "name": "Lightning Bolt",
         "type_line": "Instant",
         "oracle_text": "Deal 3 damage to any target.",
     }
-    
+
     card2 = {
         "name": "Shock",
         "type_line": "Instant",
         "oracle_text": "Deal 2 damage to any target.",
     }
-    
+
     similarity = embedder.similarity(card1, card2)
     assert 0.0 <= similarity <= 1.0
     # Similar cards should have high similarity
@@ -90,7 +90,7 @@ def test_normalize_weights():
     """Test weight normalization."""
     weights = {"a": 0.2, "b": 0.3, "c": 0.5}
     normalized = normalize_weights(weights)
-    
+
     assert sum(normalized.values()) == pytest.approx(1.0)
     assert normalized["a"] == 0.2
     assert normalized["b"] == 0.3
@@ -105,19 +105,19 @@ def test_fusion_with_text():
         "jaccard": 0.6,
         "functional": 0.7,
     }
-    
+
     weights = get_default_weights_with_text()
-    
+
     card1 = {"name": "Lightning Bolt", "oracle_text": "Deal 3 damage."}
     card2 = {"name": "Shock", "oracle_text": "Deal 2 damage."}
-    
+
     fused = compute_fusion_with_text(
         similarities,
         weights,
         card1=card1,
         card2=card2,
     )
-    
+
     assert 0.0 <= fused <= 1.0
     # Should be weighted combination
     assert fused > 0.0
@@ -128,13 +128,6 @@ def test_global_embedder():
     """Test global embedder singleton."""
     embedder1 = get_text_embedder()
     embedder2 = get_text_embedder()
-    
+
     # Should be same instance
     assert embedder1 is embedder2
-
-
-
-
-
-
-

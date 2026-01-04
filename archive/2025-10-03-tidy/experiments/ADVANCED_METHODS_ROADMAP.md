@@ -105,7 +105,7 @@ nodes = {
     'player': ['user_123', ...]
 }
 
-# Edge types  
+# Edge types
 edges = {
     ('card', 'cooccurs', 'card'),
     ('card', 'played_in', 'format'),
@@ -145,34 +145,34 @@ For each new technique, follow scientific method:
   "experiment_id": "exp_XXX",
   "phase": "Node-Attributed GNN",
   "date": "2025-XX-XX",
-  
+
   "hypothesis": "Adding node features will improve over unattributed Node2Vec",
-  
+
   "method": {
     "algorithm": "GAT",
     "hyperparameters": {"hidden_dim": 128, "num_layers": 2},
     "features": ["color", "type", "cmc"]
   },
-  
+
   "data": {
     "graphs": ["MTG_500decks", "YGO_cards", "Pokemon_cards"],
     "node_features": "scryfall_metadata",
     "splits": {"train": 0.7, "val": 0.15, "test": 0.15}
   },
-  
+
   "baselines": ["Jaccard", "Node2Vec_unattributed"],
-  
+
   "evaluation": {
     "metrics": ["P@5", "P@10", "NDCG@10", "MRR"],
     "test_set": "diverse_queries_v2.json",
     "num_queries": 20
   },
-  
+
   "results": {
     "GAT_attributed": {"P@10": null},
     "baseline_comparison": null
   },
-  
+
   "learnings": [],
   "issues_found": [],
   "next_experiments": []
@@ -256,6 +256,3 @@ python experiment_runner.py \
 # - Compares to baselines
 # - Generates HTML report
 ```
-
-
-

@@ -1,6 +1,7 @@
-import json
 import threading
+
 from fastapi.testclient import TestClient
+
 from ..api import api
 
 
@@ -21,7 +22,7 @@ class DummyEmb:
 
     def most_similar(self, q, topn=10):
         cands = [("Lava Spike", 0.9), ("Rift Bolt", 0.85), ("Boros Charm", 0.8)]
-        return [(c, s) for c, s in cands if c != q][: topn]
+        return [(c, s) for c, s in cands if c != q][:topn]
 
 
 def setup_dummy_state():

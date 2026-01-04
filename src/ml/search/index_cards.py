@@ -16,8 +16,10 @@ from gensim.models import KeyedVectors
 
 from .hybrid_search import HybridSearch
 
+
 try:
     from ..utils.logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger("decksage.search.index")
@@ -124,6 +126,7 @@ def main() -> int:
         return 0
     except Exception as e:
         from ..utils.logging_config import log_exception
+
         log_exception(logger, "Indexing failed", e, include_context=True)
         return 1
 
@@ -132,4 +135,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-

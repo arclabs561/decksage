@@ -105,4 +105,3 @@ func (a *mtgDatasetAdapter) IterItems(
 func wrapMTGDataset(d magicdataset.Dataset) games.Dataset {
 	return &mtgDatasetAdapter{inner: d}
 }
-

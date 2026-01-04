@@ -2,11 +2,11 @@
 
 ## What We Have Now
 
-✅ **Fixed metadata bug** - 4,718 decks with 100% metadata coverage  
-✅ **Honest baseline** - P@10 = 0.08 (not inflated)  
-✅ **Specific use cases** - Format-specific, archetype staples, budget substitutes  
-✅ **LLM validation system** - Ready to check data quality at scale  
-✅ **Scraping expansion plan** - Path to 20K+ decks  
+✅ **Fixed metadata bug** - 4,718 decks with 100% metadata coverage
+✅ **Honest baseline** - P@10 = 0.08 (not inflated)
+✅ **Specific use cases** - Format-specific, archetype staples, budget substitutes
+✅ **LLM validation system** - Ready to check data quality at scale
+✅ **Scraping expansion plan** - Path to 20K+ decks
 
 ---
 
@@ -150,15 +150,15 @@ def suggest_for_format(card: str, format: str, top_k: int = 10):
 ## Decision Points
 
 ### After Data Expansion
-**If P@10 improves to 0.12+**: More data helps! Keep expanding.  
+**If P@10 improves to 0.12+**: More data helps! Keep expanding.
 **If P@10 stays at 0.08**: Plateau is real, focus on use cases.
 
 ### After LLM Validation
-**If quality score > 0.85**: Dataset is good, proceed.  
+**If quality score > 0.85**: Dataset is good, proceed.
 **If quality score < 0.80**: Clean data first, then re-evaluate.
 
 ### After Use Case Tests
-**If format-specific works well**: Focus here, ship it.  
+**If format-specific works well**: Focus here, ship it.
 **If use cases also struggle**: Rethink problem formulation.
 
 ---
@@ -186,14 +186,14 @@ uv run python exp_057_expanded_baseline.py
 
 ## Philosophy
 
-**Accept reality**: Co-occurrence alone → P@10 ~ 0.08  
-**Add context**: Format + archetype + use case → Better results  
-**Measure honestly**: Use case-specific metrics, not generic  
-**Ship incrementally**: Format-specific first, then expand  
+**Accept reality**: Co-occurrence alone → P@10 ~ 0.08
+**Add context**: Format + archetype + use case → Better results
+**Measure honestly**: Use case-specific metrics, not generic
+**Ship incrementally**: Format-specific first, then expand
 
 **Don't**:
 - Chase papers' 42% without their features
-- Claim "production ready" prematurely  
+- Claim "production ready" prematurely
 - Inflate metrics with small test sets
 - Build features users don't need
 
@@ -202,6 +202,3 @@ uv run python exp_057_expanded_baseline.py
 - Measure what matters
 - Be honest about limitations
 - Iterate based on data
-
-
-

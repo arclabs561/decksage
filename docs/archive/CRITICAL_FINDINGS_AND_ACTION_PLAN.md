@@ -1,7 +1,7 @@
 # Critical Findings and Data-Driven Action Plan
 
-**Date**: November 10, 2025  
-**Analysis**: Scientific, error-review motivated  
+**Date**: November 10, 2025
+**Analysis**: Scientific, error-review motivated
 **Status**: Ready for implementation
 
 ---
@@ -33,7 +33,7 @@
 
 ### Q1: Why is Fusion Worse Than Baseline?
 **Current**: Fusion (0.0882) < Jaccard alone (0.089)
-**Hypothesis**: 
+**Hypothesis**:
 - Weights are wrong (functional=0.7 may be too high)
 - Signals are correlated (redundant information)
 - One signal is hurting (embed or functional)
@@ -65,7 +65,7 @@
 ```python
 # Measure P@10 for each signal alone:
 # - embed only
-# - jaccard only  
+# - jaccard only
 # - functional only
 # - Compare to fusion (0.0882) and baseline (0.089)
 ```
@@ -84,7 +84,7 @@
 ### Step 2: Find What Made P@10=0.15 Work
 **Why**: Best result is 70% better - need to replicate
 
-**Action**: 
+**Action**:
 - Search experiment log for P@10=0.15
 - Identify method/weights that worked
 - Understand why it worked
@@ -149,7 +149,7 @@
 3. Find P@10=0.15 experiment (search log)
 4. Analyze failures (script ready)
 
-**Time**: 2-4 hours  
+**Time**: 2-4 hours
 **Outcome**: Understand system scientifically
 
 ### Phase 2: Small Fixes (Based on Data)
@@ -158,7 +158,7 @@
 3. Remove low-quality signals (if data shows)
 4. Replicate best method (if found)
 
-**Time**: 1-2 hours  
+**Time**: 1-2 hours
 **Outcome**: Small, evidence-based improvements
 
 ### Phase 3: New Signals (Only If Justified)
@@ -166,7 +166,7 @@
 2. GNN: Only if graph structure helps
 3. Beam search: Only if greedy fails specific cases
 
-**Time**: Variable  
+**Time**: Variable
 **Outcome**: Data-justified additions
 
 ---
@@ -193,10 +193,3 @@
 6. ✅ `CRITICAL_FINDINGS_AND_ACTION_PLAN.md` - This file
 
 **Status**: Analysis tools ready, need to run when files readable.
-
-
-
-
-
-
-

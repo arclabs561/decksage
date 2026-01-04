@@ -13,7 +13,7 @@
 
 ## Unknown / Need Verification ⚠️
 
-1. **Labeled Test Set File**: 
+1. **Labeled Test Set File**:
    - Script said it saved to `experiments/test_set_labeled_magic.json`
    - File not found at that location
    - **Check**: Maybe saved to different location or needs re-run
@@ -45,4 +45,3 @@
 - **Compilation**: Has errors (needs fixing)
 - **Alternative**: Use existing AWS scripts for now
 - **Plan**: Fix trainctl OR proceed with existing scripts
-

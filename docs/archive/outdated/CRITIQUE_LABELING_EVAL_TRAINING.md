@@ -1,6 +1,6 @@
 # Critique: Labeling, Evaluation, and Training Pipeline
 
-**Date**: 2025-12-27  
+**Date**: 2025-12-27
 **Status**: Comprehensive analysis with actionable recommendations
 
 ---
@@ -90,8 +90,8 @@ fallback_labeling.py uses embedding similarity → labels → evaluate embedding
 
 ### Current State
 
-**Metrics**: P@10, MRR  
-**Test Set**: 38 queries (inconsistent coverage across methods)  
+**Metrics**: P@10, MRR
+**Test Set**: 38 queries (inconsistent coverage across methods)
 **Methods**: 6 embedding methods + Jaccard baseline
 
 **Issues Identified**:
@@ -174,8 +174,8 @@ def compute_ci(metrics, n_bootstrap=1000, confidence=0.95):
 
 ### Current State
 
-**Validation**: Node overlap (checks if validation nodes in vocab)  
-**Early Stopping**: Based on overlap score  
+**Validation**: Node overlap (checks if validation nodes in vocab)
+**Early Stopping**: Based on overlap score
 **Split**: 80% train, 10% val, 10% test
 
 **Issues Identified**:

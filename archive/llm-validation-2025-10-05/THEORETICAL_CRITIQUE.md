@@ -41,7 +41,7 @@ Model generates all fields somewhat independently from same context.
 **What theory suggests:**
 ```
 P(card_ratings | query, cards)
-→ P(issues | card_ratings, context)  
+→ P(issues | card_ratings, context)
 → P(missing | card_ratings, issues, domain_knowledge)
 → P(biases | issues, missing, card_ratings)
 → P(overall_quality | card_ratings, issues, biases)
@@ -239,14 +239,14 @@ To validate theoretical concerns:
 
 **Grade:** B for implementation, C for theoretical alignment
 
-**Recommendation:** 
+**Recommendation:**
 Either accept current approach as "good enough" or redesign to explicitly chain local dependencies per theory.
 
 Given 4 hours already spent and diminishing returns, documenting this theoretical limitation is probably correct choice.
 
 ---
 
-**Key insight from theory:** 
+**Key insight from theory:**
 Structured *output* ≠ Structured *reasoning*
 
 We have the former, not necessarily the latter.

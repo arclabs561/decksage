@@ -39,26 +39,26 @@ func (it *IncrementalTracker) Load(ctx context.Context) error {
 		it.log.Debugf(ctx, "No existing tracking data found, starting fresh")
 		return nil
 	}
-	
+
 	data, err := it.blob.Read(ctx, key)
 	if err != nil {
 		return fmt.Errorf("failed to read tracking data: %w", err)
 	}
-	
+
 	var trackingData struct {
 		Seen map[string]string `json:"seen"` // URL -> ISO timestamp
 	}
 	if err := json.Unmarshal(data, &trackingData); err != nil {
 		return fmt.Errorf("failed to parse tracking data: %w", err)
 	}
-	
+
 	// Parse timestamps
 	for url, tsStr := range trackingData.Seen {
 		if ts, err := time.Parse(time.RFC3339, tsStr); err == nil {
 			it.seen[url] = ts
 		}
 	}
-	
+
 	it.log.Infof(ctx, "Loaded tracking data: %d URLs already seen", len(it.seen))
 	return nil
 }
@@ -70,22 +70,22 @@ func (it *IncrementalTracker) Save(ctx context.Context) error {
 	}{
 		Seen: make(map[string]string),
 	}
-	
+
 	// Convert timestamps to ISO strings
 	for url, ts := range it.seen {
 		trackingData.Seen[url] = ts.Format(time.RFC3339)
 	}
-	
+
 	data, err := json.Marshal(trackingData)
 	if err != nil {
 		return fmt.Errorf("failed to marshal tracking data: %w", err)
 	}
-	
+
 	key := it.trackingKey()
 	if err := it.blob.Write(ctx, key, data); err != nil {
 		return fmt.Errorf("failed to write tracking data: %w", err)
 	}
-	
+
 	return nil
 }
 
@@ -95,11 +95,11 @@ func (it *IncrementalTracker) ShouldExtract(url string, maxAge time.Duration) bo
 	if !exists {
 		return true // Never seen, should extract
 	}
-	
+
 	if maxAge > 0 && time.Since(lastSeen) > maxAge {
 		return true // Too old, should re-extract
 	}
-	
+
 	return false // Recently seen, skip
 }
 
@@ -123,4 +123,3 @@ func (it *IncrementalTracker) GetStats() (total, recent int) {
 func (it *IncrementalTracker) trackingKey() string {
 	return fmt.Sprintf("%s/.incremental_tracker.json", it.prefix)
 }
-

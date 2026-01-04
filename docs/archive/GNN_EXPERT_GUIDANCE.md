@@ -1,6 +1,6 @@
 # GNN Expert Guidance - What Actually Works
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Based on**: Expert research and best practices for graph embedding and similarity tasks
 
 ---
@@ -21,7 +21,7 @@
 
 **Finding**: Adding more layers to GCN or GraphSAGE did NOT yield performance gains
 
-**Recommendation**: 
+**Recommendation**:
 - Use **2 layers** (not deeper)
 - Focus on better features/attributes rather than depth
 
@@ -57,7 +57,7 @@
 
 **Finding**: Edge attributes (co-occurrence counts, weights) improve performance
 
-**Recommendation**: 
+**Recommendation**:
 - Use edge weights in attention/aggregation
 - Consider edge type information if available
 
@@ -125,4 +125,3 @@ Instead of one-hot identity matrix:
 1. Expert analysis: GraphSAGE vs GCN vs GAT for co-occurrence graphs
 2. Best practices: GNN training for node similarity and embedding
 3. PyTorch Geometric documentation and examples
-

@@ -14,9 +14,6 @@ from __future__ import annotations
 import json
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
-
-import pandas as pd
 
 
 def compute_sideboard_cooccurrence(
@@ -39,9 +36,7 @@ def compute_sideboard_cooccurrence(
 
             # Extract sideboard cards
             sideboard_cards = [
-                c["name"]
-                for c in cards
-                if c.get("partition", "").lower() == "sideboard"
+                c["name"] for c in cards if c.get("partition", "").lower() == "sideboard"
             ]
 
             if len(sideboard_cards) < 2:
@@ -121,9 +116,7 @@ def compute_mainboard_vs_sideboard_signal(
             continue
 
         flexibility = stats["both"] / total if total > 0 else 0.0
-        sideboard_only_freq = (
-            (stats["sideboard"] - stats["both"]) / total if total > 0 else 0.0
-        )
+        sideboard_only_freq = (stats["sideboard"] - stats["both"]) / total if total > 0 else 0.0
 
         signals[card] = {
             "flexibility": flexibility,  # Appears in both = flexible
@@ -162,9 +155,7 @@ def sideboard_similarity(
         # Boost if both are flexible (appear in both MB and SB)
         if mainboard_sb_signals:
             query_flex = mainboard_sb_signals.get(query, {}).get("flexibility", 0.0)
-            cand_flex = mainboard_sb_signals.get(candidate, {}).get(
-                "flexibility", 0.0
-            )
+            cand_flex = mainboard_sb_signals.get(candidate, {}).get("flexibility", 0.0)
             flexibility_boost = (query_flex + cand_flex) / 2.0 * 0.1
             sb_score += flexibility_boost
 
@@ -196,4 +187,3 @@ if __name__ == "__main__":
     print(f"\nSideboard similarity for '{query}':")
     for card, score in scores:
         print(f"  {card}: {score:.3f}")
-

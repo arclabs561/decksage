@@ -3,14 +3,14 @@
 ## Process Summary
 
 1. **Initial build** → LLM validators with Pydantic AI
-2. **Backwards review** → Found 5 critical bugs  
+2. **Backwards review** → Found 5 critical bugs
 3. **Cycle 2 refinement** → Fixed 5 issues
 4. **Cycle 3 consolidation** → Cleaned up tests and docs
 
-**Total time:** ~3 hours  
+**Total time:** ~3 hours
 **Bugs found:** 5 (via backwards review)
-**Bugs fixed:** 5  
-**Tests added:** 4 real LLM tests  
+**Bugs fixed:** 5
+**Tests added:** 4 real LLM tests
 **Tests total:** 95 (91 passing, 4 skipped)
 
 ## What Changed
@@ -19,7 +19,7 @@
 - ✅ Fixed Pydantic AI API compatibility (`.data` → `.output`)
 - ✅ Switched to OpenAI for JSON reliability
 - ✅ Removed unused imports
-- ✅ Fixed line length violations  
+- ✅ Fixed line length violations
 - ✅ Fixed test collection errors
 - ✅ Added warnings to non-working cache code
 
@@ -41,7 +41,7 @@
 $ pytest src/ml/tests/ -m "not slow"
 91 passed, 7 skipped in 70s ✅
 
-$ pytest src/ml/tests/test_llm_validators_real.py -m llm  
+$ pytest src/ml/tests/test_llm_validators_real.py -m llm
 4 passed in 44s ✅
 
 All tests passing!

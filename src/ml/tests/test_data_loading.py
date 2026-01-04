@@ -54,6 +54,7 @@ class TestDataLoading:
     def test_adjacency_graph_building(self):
         """Build adjacency graph from pairs"""
         import pandas as pd
+
         from ..utils.data_loading import build_adjacency_dict
 
         # Create small test graph

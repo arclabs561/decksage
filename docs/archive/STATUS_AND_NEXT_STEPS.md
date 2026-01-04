@@ -10,7 +10,7 @@
 
 ## 🔄 In Progress / Unknown
 
-1. **Hyperparameter Search**: 
+1. **Hyperparameter Search**:
    - Instance terminated (completed)
    - Results not found in S3
    - Need to check local files or re-run
@@ -19,10 +19,10 @@
    - CSV has 26,960 lines
    - Need to verify how many are actually enriched (not just empty rows)
 
-3. **AWS Instance**: 
+3. **AWS Instance**:
    - i-08a5531b40be4c511 running but idle (no recent SSM commands)
 
-4. **trainctl**: 
+4. **trainctl**:
    - Compiling (rustc process running)
 
 ## 🎯 Immediate Next Steps
@@ -58,4 +58,3 @@
 3. **Verify card enrichment** - Data quality check
 4. **Train with trainctl** - Modernize workflow
 5. **Multi-game export** - Future expansion
-

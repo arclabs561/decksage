@@ -14,7 +14,7 @@ func TestResponseSizeLimit(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	// Create test blob storage
 	tmpDir := t.TempDir()
 	bucketURL := "file://" + tmpDir
@@ -23,7 +23,7 @@ func TestResponseSizeLimit(t *testing.T) {
 		t.Fatalf("failed to create blob: %v", err)
 	}
 	defer blob.Close(ctx)
-	
+
 	// Create a test server that returns large response
 	largeBody := make([]byte, 11*1024*1024) // 11MB, exceeds 10MB limit
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -31,14 +31,14 @@ func TestResponseSizeLimit(t *testing.T) {
 		w.Write(largeBody)
 	}))
 	defer server.Close()
-	
+
 	sc := NewScraper(log, blob)
-	
+
 	req, err := http.NewRequest("GET", server.URL, nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	
+
 	_, err = sc.Do(ctx, req)
 	if err == nil {
 		t.Error("Expected error for response exceeding size limit, got nil")
@@ -52,7 +52,7 @@ func TestResponseSizeWithinLimit(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	tmpDir := t.TempDir()
 	bucketURL := "file://" + tmpDir
 	blob, err := blob.NewBucket(ctx, log, bucketURL)
@@ -60,7 +60,7 @@ func TestResponseSizeWithinLimit(t *testing.T) {
 		t.Fatalf("failed to create blob: %v", err)
 	}
 	defer blob.Close(ctx)
-	
+
 	// Create a test server that returns small response
 	smallBody := []byte("test response")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -68,14 +68,14 @@ func TestResponseSizeWithinLimit(t *testing.T) {
 		w.Write(smallBody)
 	}))
 	defer server.Close()
-	
+
 	sc := NewScraper(log, blob)
-	
+
 	req, err := http.NewRequest("GET", server.URL, nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	
+
 	page, err := sc.Do(ctx, req)
 	if err != nil {
 		t.Fatalf("Unexpected error for response within size limit: %v", err)
@@ -92,7 +92,7 @@ func TestCaching(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	tmpDir := t.TempDir()
 	bucketURL := "file://" + tmpDir
 	blob, err := blob.NewBucket(ctx, log, bucketURL)
@@ -100,7 +100,7 @@ func TestCaching(t *testing.T) {
 		t.Fatalf("failed to create blob: %v", err)
 	}
 	defer blob.Close(ctx)
-	
+
 	requestCount := 0
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		requestCount++
@@ -108,14 +108,14 @@ func TestCaching(t *testing.T) {
 		w.Write([]byte("cached response"))
 	}))
 	defer server.Close()
-	
+
 	sc := NewScraper(log, blob)
-	
+
 	req, err := http.NewRequest("GET", server.URL, nil)
 	if err != nil {
 		t.Fatalf("failed to create request: %v", err)
 	}
-	
+
 	// First request should hit server
 	page1, err := sc.Do(ctx, req)
 	if err != nil {
@@ -124,7 +124,7 @@ func TestCaching(t *testing.T) {
 	if requestCount != 1 {
 		t.Errorf("First request: requestCount = %d, want 1", requestCount)
 	}
-	
+
 	// Second request should use cache
 	req2, err := http.NewRequest("GET", server.URL, nil)
 	if err != nil {
@@ -141,4 +141,3 @@ func TestCaching(t *testing.T) {
 		t.Error("Cached response should match original")
 	}
 }
-

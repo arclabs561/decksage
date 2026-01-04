@@ -70,7 +70,7 @@ func main() {
 
 	errorCount := 0
 	maxErrorsToLog := 10
-	
+
 	for _, file := range files {
 		col, err := loadCollection(file)
 		if err != nil {

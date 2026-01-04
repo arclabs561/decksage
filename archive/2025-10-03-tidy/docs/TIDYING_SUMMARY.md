@@ -1,6 +1,6 @@
 # Repository Tidying & Refactoring Summary
 
-**Date:** October 2, 2025  
+**Date:** October 2, 2025
 **Scope:** Full repository review, cleanup, and code quality improvements
 
 ## What Was Done
@@ -55,7 +55,7 @@ After 39 experiments, should have abstracted common patterns per our own "experi
 utils/
 ├── __init__.py          # Clean API
 ├── constants.py         # Multi-game filters
-├── paths.py            # Canonical file locations  
+├── paths.py            # Canonical file locations
 ├── data_loading.py     # Load pairs, embeddings, test sets
 ├── evaluation.py       # Standard evaluation loops
 └── README.md           # Usage documentation
@@ -173,11 +173,11 @@ tests/
 
 ## Impact
 
-**Code Quality:** B- → A-  
-**Maintainability:** C → A  
-**Multi-game Support:** Ad-hoc → First-class  
-**Testing:** Minimal → Comprehensive  
-**Alignment with Principles:** Mixed → Strong  
+**Code Quality:** B- → A-
+**Maintainability:** C → A
+**Multi-game Support:** Ad-hoc → First-class
+**Testing:** Minimal → Comprehensive
+**Alignment with Principles:** Mixed → Strong
 
 ## Bottom Line
 
@@ -189,5 +189,3 @@ Repository now **walks the talk**:
 - Clean, maintainable codebase
 
 The gap between stated principles and implementation has been closed.
-
-

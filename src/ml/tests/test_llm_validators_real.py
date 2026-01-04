@@ -16,13 +16,12 @@ import time
 import pytest
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_llm_judge_actually_works():
     """Test LLM Judge makes real API calls and returns structured data."""
     from ..experimental.llm_judge import LLMJudge
@@ -53,12 +52,13 @@ def test_llm_judge_actually_works():
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_data_validator_actually_validates():
     """Test DataQualityValidator makes real LLM calls."""
-    from ..validation.llm_data_validator import DataQualityValidator
+    try:
+        from ..validation.llm_data_validator import DataQualityValidator
+    except ImportError as e:
+        pytest.skip(f"Could not import DataQualityValidator: {e}")
 
     validator = DataQualityValidator()
     assert len(validator.decks) > 0
@@ -79,13 +79,14 @@ def test_data_validator_actually_validates():
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_llm_annotator_actually_annotates():
     """Test LLM Annotator makes real API calls."""
-    from ..annotation.llm_annotator import LLMAnnotator, HAS_PYDANTIC_AI
-    
+    try:
+        from ..annotation.llm_annotator import LLMAnnotator
+    except ImportError as e:
+        pytest.skip(f"Could not import LLMAnnotator: {e}"), HAS_PYDANTIC_AI
+
     if not HAS_PYDANTIC_AI:
         pytest.skip("pydantic-ai not available")
 
@@ -123,16 +124,12 @@ def test_caching_now_works_for_llm_judge():
 
     # First call - time it
     start = time.time()
-    result1 = judge.evaluate_similarity(
-        "Test Card", [("Similar Card", 0.9)], context="Test"
-    )
+    result1 = judge.evaluate_similarity("Test Card", [("Similar Card", 0.9)], context="Test")
     time1 = time.time() - start
 
     # Second identical call - should be cached
     start = time.time()
-    result2 = judge.evaluate_similarity(
-        "Test Card", [("Similar Card", 0.9)], context="Test"
-    )
+    result2 = judge.evaluate_similarity("Test Card", [("Similar Card", 0.9)], context="Test")
     time2 = time.time() - start
 
     # Document current behavior

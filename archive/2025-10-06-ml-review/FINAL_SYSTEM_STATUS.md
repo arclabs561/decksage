@@ -1,6 +1,6 @@
 # DeckSage: Final System Status & Multi-Game Reality
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Status**: Production-ready for MTG; Experimental for Pokemon/YGO
 
 ---
@@ -115,9 +115,9 @@ data/embeddings/
 ## Critical Findings
 
 ### Finding 1: No Pokemon/YGO Deck Data
-**Severity**: Critical  
-**Impact**: Can't train deck completion policies for these games  
-**Root cause**: Backend extraction incomplete (Pokemon: 1.2K files but 0 decks in hetero; YGO: 20 files)  
+**Severity**: Critical
+**Impact**: Can't train deck completion policies for these games
+**Root cause**: Backend extraction incomplete (Pokemon: 1.2K files but 0 decks in hetero; YGO: 20 files)
 **Fix**: Run backend extractors:
 ```bash
 cd src/backend
@@ -128,19 +128,19 @@ go run cmd/export-hetero --output yugioh_decks.jsonl --game yugioh
 ```
 
 ### Finding 2: Cross-Game Contamination is Minimal
-**Severity**: Low (for MTG)  
-**Impact**: Lightning Bolt top-20 has no Pokemon cards; 9.8% of mixed embeddings are non-MTG but don't pollute results  
-**Implication**: Mixed embeddings might be acceptable for MTG-heavy use cases  
+**Severity**: Low (for MTG)
+**Impact**: Lightning Bolt top-20 has no Pokemon cards; 9.8% of mixed embeddings are non-MTG but don't pollute results
+**Implication**: Mixed embeddings might be acceptable for MTG-heavy use cases
 **Decision**: Still recommend per-game for clean evaluation
 
 ### Finding 3: Deck Completion Works for MTG Only
-**Severity**: High  
-**Impact**: Pokemon/YGO completion will give bad results (wrong taggers, no pricing, wrong curve logic)  
+**Severity**: High
+**Impact**: Pokemon/YGO completion will give bad results (wrong taggers, no pricing, wrong curve logic)
 **Fix**: Wire per-game taggers/pricing/curve into API
 
 ### Finding 4: API Lacks Game Routing
-**Severity**: Medium  
-**Impact**: Can't serve per-game models; all requests use same embeddings  
+**Severity**: Medium
+**Impact**: Can't serve per-game models; all requests use same embeddings
 **Fix**: Add game parameter and load multiple models on startup
 
 ---
@@ -156,7 +156,7 @@ go run cmd/export-hetero --output yugioh_decks.jsonl --game yugioh
        "magic": KeyedVectors.load("magic_64d.wv"),
        "pokemon": KeyedVectors.load("pokemon_64d.wv"),
    }
-   
+
    # Route by game
    state.models_by_game = models
    ```

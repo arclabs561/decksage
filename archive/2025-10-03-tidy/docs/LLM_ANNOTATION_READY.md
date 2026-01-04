@@ -2,8 +2,8 @@
 
 ## Status
 
-**Code complete**: ✅  
-**OpenRouter configured**: ✅  
+**Code complete**: ✅
+**OpenRouter configured**: ✅
 **Python env issue**: ⚠️ gensim incompatible with Python 3.13
 
 ## Files Created
@@ -145,7 +145,7 @@ archetype_desc = get_archetype_description("Burn")
 substitutions = get_substitutions("Lightning Bolt", budget=5)
 
 # Filter by archetype fit
-recommendations = [s for s in substitutions 
+recommendations = [s for s in substitutions
                   if s.matches_strategy(archetype_desc)]
 ```
 
@@ -189,6 +189,3 @@ All code is written and uses:
 - ✅ Cost tracking
 
 **Just needs Python 3.12 environment to run.**
-
-
-

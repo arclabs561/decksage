@@ -52,7 +52,7 @@ with open(test_path) as f:
  else:
  print(0)
 " 2>/dev/null || echo "0")
- 
+
  if [ "$PAIR_COUNT" -gt "$MIN_PAIRS" ]; then
  echo "═══════════════════════════════════════════════════════════════════════"
  echo "Warning: LARGE EVALUATION DETECTED: $PAIR_COUNT pairs"
@@ -72,4 +72,3 @@ fi
 
 # Continue with original command
 exec uv run python src/ml/scripts/evaluate_downstream_complete.py "$@"
-

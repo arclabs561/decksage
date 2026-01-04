@@ -11,8 +11,8 @@ Ran `./scripts/expand_scraping.sh quick` with goals:
 
 ### MTGTop8: Processed but No Net Gain ⚠️
 
-**Pages Processed**: 100 pages at ~328 pages/second  
-**Items Parsed**: 2,475 items  
+**Pages Processed**: 100 pages at ~328 pages/second
+**Items Parsed**: 2,475 items
 **Current Total**: 55,293 decks (unchanged from before)
 
 **Analysis**: The scraper successfully fetched and processed pages, but no new unique decks were added. This indicates:
@@ -31,9 +31,9 @@ go run cmd/dataset/main.go --bucket file://./data-full extract mtgtop8 --section
 
 ### MTGGoldfish: Parser Completely Broken ❌
 
-**Issue**: Parser extracting 0 cards from every deck page  
-**Error Pattern**: `failed to parse collection: collection is invalid: partition Main has no cards`  
-**Decks Attempted**: 6,000+ URLs  
+**Issue**: Parser extracting 0 cards from every deck page
+**Error Pattern**: `failed to parse collection: collection is invalid: partition Main has no cards`
+**Decks Attempted**: 6,000+ URLs
 **Success Rate**: 0%
 
 **Root Cause**: MTGGoldfish likely changed their HTML structure and our parser no longer works
@@ -56,7 +56,7 @@ go run cmd/dataset/main.go --bucket file://./data-full extract goldfish --limit 
 
 Script was canceled before Pokemon card scraping phase due to time.
 
-**Status**: Still at ~3,000 cards (incomplete)  
+**Status**: Still at ~3,000 cards (incomplete)
 **Next Action**: Run independently:
 ```bash
 cd src/backend
@@ -107,7 +107,7 @@ cd src/backend
 # Pioneer (currently 15 decks)
 go run cmd/dataset/main.go --bucket file://./data-full extract mtgtop8 --section pioneer --limit 50
 
-# Vintage (currently 20 decks)  
+# Vintage (currently 20 decks)
 go run cmd/dataset/main.go --bucket file://./data-full extract mtgtop8 --section vintage --limit 50
 
 # Modern (older tournaments - need different page ranges)
@@ -138,7 +138,7 @@ go run cmd/dataset/main.go --bucket file://./data-full extract mtgtop8 --section
 | **Pokemon Decks** | 0 | - | +500 (Limitless API) | 500 |
 | **YGO Decks** | 0 | - | +200 (scraper) | 200 |
 
-**Total Immediate**: +9,200-9,500 items (mostly cards + some decks)  
+**Total Immediate**: +9,200-9,500 items (mostly cards + some decks)
 **Total 2-Week**: +12,700 items (includes Pokemon/YGO tournament decks)
 
 ## Technical Debt Identified

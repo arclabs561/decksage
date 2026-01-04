@@ -68,5 +68,3 @@ echo "  1. Review evaluation_report.html"
 echo "  2. Create annotated test set if results look good"
 echo "  3. Run full model comparison"
 echo "  4. Deploy best model"
-
-

@@ -2,7 +2,8 @@
 
 from collections.abc import Callable
 from math import log2
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
+
 
 try:
     import numpy as np
@@ -15,10 +16,10 @@ from .constants import RELEVANCE_WEIGHTS
 
 
 def compute_precision_at_k(
-    predictions: List[str],
-    labels: Dict[str, List[str]],
+    predictions: list[str],
+    labels: dict[str, list[str]],
     k: int = 10,
-    weights: Optional[Dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
     """
     Compute weighted precision@K.
@@ -46,10 +47,10 @@ def compute_precision_at_k(
 
 
 def compute_recall_at_k(
-    predictions: List[str],
-    labels: Dict[str, List[str]],
+    predictions: list[str],
+    labels: dict[str, list[str]],
     k: int = 10,
-    weights: Optional[Dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
     """
     Compute weighted recall@K.
@@ -87,10 +88,10 @@ def compute_recall_at_k(
 
 
 def compute_map(
-    predictions: List[str],
-    labels: Dict[str, List[str]],
+    predictions: list[str],
+    labels: dict[str, list[str]],
     k: int = 10,
-    weights: Optional[Dict[str, float]] = None,
+    weights: dict[str, float] | None = None,
 ) -> float:
     """
     Compute Mean Average Precision (MAP)@K.
@@ -130,11 +131,11 @@ def compute_map(
 
 
 def evaluate_similarity(
-    test_set: Dict[str, Any],
-    similarity_func: Callable[[str, int], List[Tuple[str, float]]],
+    test_set: dict[str, Any],
+    similarity_func: Callable[[str, int], list[tuple[str, float]]],
     top_k: int = 10,
     verbose: bool = False,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Standard evaluation loop.
 
@@ -182,7 +183,7 @@ def evaluate_similarity(
             maps.append(map_score)
 
             # Compute nDCG@k
-            def rel_gain(card: str, _labels: Dict[str, Any] = labels) -> float:
+            def rel_gain(card: str, _labels: dict[str, Any] = labels) -> float:
                 # Map relevance levels to weights; fall back to RELEVANCE_WEIGHTS
                 if card in _labels.get("highly_relevant", []):
                     return RELEVANCE_WEIGHTS["highly_relevant"]
@@ -194,7 +195,7 @@ def evaluate_similarity(
                     return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
                 return 0.0
 
-            def dcg(items: List[str]) -> float:
+            def dcg(items: list[str]) -> float:
                 val = 0.0
                 for i, c in enumerate(items[:top_k], 1):
                     val += rel_gain(c) / (log2(i + 1))
@@ -221,7 +222,9 @@ def evaluate_similarity(
             mrrs.append(rr)
 
             if verbose:
-                print(f"  {query}: P@{top_k}={score:.3f}, R@{top_k}={recall:.3f}, MAP={map_score:.3f}")
+                print(
+                    f"  {query}: P@{top_k}={score:.3f}, R@{top_k}={recall:.3f}, MAP={map_score:.3f}"
+                )
 
         except Exception as e:
             if verbose:
@@ -259,13 +262,13 @@ def evaluate_similarity(
 
 
 def evaluate_with_confidence(
-    test_set: Dict[str, Any],
-    similarity_func: Callable[[str, int], List[Tuple[str, float]]],
+    test_set: dict[str, Any],
+    similarity_func: Callable[[str, int], list[tuple[str, float]]],
     top_k: int = 10,
     n_bootstrap: int = 1000,
     confidence: float = 0.95,
     verbose: bool = False,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Evaluate similarity function with bootstrap confidence intervals.
 
@@ -328,7 +331,7 @@ def evaluate_with_confidence(
             maps.append(map_score)
 
             # Compute nDCG@k
-            def rel_gain(card: str, _labels: Dict[str, Any] = labels) -> float:
+            def rel_gain(card: str, _labels: dict[str, Any] = labels) -> float:
                 if card in _labels.get("highly_relevant", []):
                     return RELEVANCE_WEIGHTS["highly_relevant"]
                 if card in _labels.get("relevant", []):
@@ -339,7 +342,7 @@ def evaluate_with_confidence(
                     return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
                 return 0.0
 
-            def dcg(items: List[str]) -> float:
+            def dcg(items: list[str]) -> float:
                 val = 0.0
                 for i, c in enumerate(items[:top_k], 1):
                     val += rel_gain(c) / (log2(i + 1))
@@ -366,7 +369,9 @@ def evaluate_with_confidence(
             mrrs.append(rr)
 
             if verbose:
-                print(f"  {query}: P@{top_k}={score:.3f}, R@{top_k}={recall:.3f}, MAP={map_score:.3f}")
+                print(
+                    f"  {query}: P@{top_k}={score:.3f}, R@{top_k}={recall:.3f}, MAP={map_score:.3f}"
+                )
 
         except Exception as e:
             if verbose:
@@ -396,7 +401,7 @@ def evaluate_with_confidence(
         }
 
     # Bootstrap confidence intervals
-    def bootstrap_ci(values: List[float]) -> Tuple[float, float]:
+    def bootstrap_ci(values: list[float]) -> tuple[float, float]:
         """Compute bootstrap CI for a list of values"""
         bootstrap_means = []
         for _ in range(n_bootstrap):
@@ -439,11 +444,21 @@ def evaluate_with_confidence(
     }
 
     if verbose:
-        print(f"\n  P@{top_k}: {results[f'p@{top_k}']:.4f} (95% CI: {p_ci_lower:.4f}, {p_ci_upper:.4f})")
-        print(f"  R@{top_k}: {results[f'r@{top_k}']:.4f} (95% CI: {r_ci_lower:.4f}, {r_ci_upper:.4f})")
-        print(f"  MAP@{top_k}: {results[f'map@{top_k}']:.4f} (95% CI: {map_ci_lower:.4f}, {map_ci_upper:.4f})")
-        print(f"  nDCG@{top_k}: {results[f'ndcg@{top_k}']:.4f} (95% CI: {ndcg_ci_lower:.4f}, {ndcg_ci_upper:.4f})")
-        print(f"  MRR@{top_k}: {results[f'mrr@{top_k}']:.4f} (95% CI: {mrr_ci_lower:.4f}, {mrr_ci_upper:.4f})")
+        print(
+            f"\n  P@{top_k}: {results[f'p@{top_k}']:.4f} (95% CI: {p_ci_lower:.4f}, {p_ci_upper:.4f})"
+        )
+        print(
+            f"  R@{top_k}: {results[f'r@{top_k}']:.4f} (95% CI: {r_ci_lower:.4f}, {r_ci_upper:.4f})"
+        )
+        print(
+            f"  MAP@{top_k}: {results[f'map@{top_k}']:.4f} (95% CI: {map_ci_lower:.4f}, {map_ci_upper:.4f})"
+        )
+        print(
+            f"  nDCG@{top_k}: {results[f'ndcg@{top_k}']:.4f} (95% CI: {ndcg_ci_lower:.4f}, {ndcg_ci_upper:.4f})"
+        )
+        print(
+            f"  MRR@{top_k}: {results[f'mrr@{top_k}']:.4f} (95% CI: {mrr_ci_lower:.4f}, {mrr_ci_upper:.4f})"
+        )
         print(f"  Evaluated: {len(scores)}/{len(test_set)}")
         if skipped:
             print(f"  Skipped: {skipped}")

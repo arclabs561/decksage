@@ -22,9 +22,9 @@ func CategorizeError(err error) ErrorCategory {
 	if err == nil {
 		return ErrorCategoryUnknown
 	}
-	
+
 	errStr := strings.ToLower(err.Error())
-	
+
 	// Network errors
 	if strings.Contains(errStr, "connection") ||
 		strings.Contains(errStr, "timeout") ||
@@ -34,7 +34,7 @@ func CategorizeError(err error) ErrorCategory {
 		strings.Contains(errStr, "no such host") {
 		return ErrorCategoryNetwork
 	}
-	
+
 	// Rate limiting
 	if strings.Contains(errStr, "rate limit") ||
 		strings.Contains(errStr, "throttle") ||
@@ -42,7 +42,7 @@ func CategorizeError(err error) ErrorCategory {
 		strings.Contains(errStr, "429") {
 		return ErrorCategoryRateLimit
 	}
-	
+
 	// Parsing errors
 	if strings.Contains(errStr, "parse") ||
 		strings.Contains(errStr, "unmarshal") ||
@@ -51,7 +51,7 @@ func CategorizeError(err error) ErrorCategory {
 		strings.Contains(errStr, "malformed") {
 		return ErrorCategoryParsing
 	}
-	
+
 	// Validation errors
 	if strings.Contains(errStr, "invalid") ||
 		strings.Contains(errStr, "validation") ||
@@ -60,7 +60,7 @@ func CategorizeError(err error) ErrorCategory {
 		strings.Contains(errStr, "required") {
 		return ErrorCategoryValidation
 	}
-	
+
 	return ErrorCategoryUnknown
 }
 
@@ -75,7 +75,7 @@ func (s *ExtractStats) RecordCategorizedError(ctx context.Context, url, dataset 
 func (s *ExtractStats) GetErrorSummary() map[ErrorCategory]int {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	summary := make(map[ErrorCategory]int)
 	for _, extractErr := range s.Errors {
 		category := CategorizeError(errors.New(extractErr.Error))
@@ -83,4 +83,3 @@ func (s *ExtractStats) GetErrorSummary() map[ErrorCategory]int {
 	}
 	return summary
 }
-

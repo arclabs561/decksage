@@ -1,6 +1,6 @@
 # Embedding Methods Evaluation Results
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Test Set**: `experiments/test_set_canonical_magic.json` (38 queries, 35-36 evaluated)
 
 ---
@@ -68,4 +68,3 @@
 ---
 
 **Status**: ✅ Evaluation complete, Node2Vec-Default is best
-

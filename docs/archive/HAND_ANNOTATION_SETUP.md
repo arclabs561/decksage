@@ -98,4 +98,3 @@ nDCG@10: 0.1234 (95% CI: 0.1100, 0.1368)
 - `src/ml/scripts/generate_all_annotation_batches.py` - Batch generator
 - `annotations/README.md` - Workflow documentation
 - `src/ml/utils/evaluation.py` - Enhanced with CI support
-

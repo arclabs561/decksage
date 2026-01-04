@@ -249,6 +249,3 @@ python analyze_experiments.py
 - Compare to previous best
 - Document everything
 - Test on diverse queries (not cherry-picked!)
-
-
-

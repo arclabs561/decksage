@@ -11,17 +11,17 @@ import json
 import logging
 import subprocess
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 from ml.data.card_name_normalizer import (
     find_best_match,
-    fuzzy_match_card_name,
     normalize_for_comparison,
-    normalize_card_name,
 )
+
 
 try:
     from ..utils.logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger(__name__)
@@ -29,12 +29,12 @@ except ImportError:
 
 class CardDatabase:
     """Multi-game card database with lookup capabilities."""
-    
-    def __init__(self, data_dir: Optional[Path] = None):
+
+    def __init__(self, data_dir: Path | None = None):
         """Initialize card database from backend data."""
         if data_dir is None:
             data_dir = Path(__file__).parent.parent.parent / "backend" / "data-full"
-        
+
         self.data_dir = data_dir
         self._magic_cards: set[str] = set()
         self._pokemon_cards: set[str] = set()
@@ -50,7 +50,7 @@ class CardDatabase:
         self._digimon_lower: set[str] | None = None
         self._onepiece_lower: set[str] | None = None
         self._riftbound_lower: set[str] | None = None
-    
+
     def _load_magic_cards(self) -> set[str]:
         """Load Magic card names from Scryfall data."""
         cards: set[str] = set()
@@ -58,19 +58,25 @@ class CardDatabase:
         possible_paths = [
             self.data_dir / "games" / "magic" / "scryfall" / "cards",
             self.data_dir / "magic" / "scryfall" / "cards",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "magic" / "scryfall" / "cards",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "magic"
+            / "scryfall"
+            / "cards",
         ]
-        
+
         scryfall_dir = None
         for path in possible_paths:
             if path.exists():
                 scryfall_dir = path
                 break
-        
+
         if not scryfall_dir:
             logger.warning(f"Scryfall directory not found in any of: {possible_paths}")
             return cards
-        
+
         # Try JSON files first (uncompressed)
         json_files = list(scryfall_dir.glob("*.json"))
         if json_files:
@@ -94,7 +100,7 @@ class CardDatabase:
                                         cards.add(card["name"])
                 except Exception:
                     continue
-        
+
         # Try zst files (compressed) - these are the actual data files
         zst_files = list(scryfall_dir.glob("*.json.zst"))
         if zst_files:
@@ -126,27 +132,32 @@ class CardDatabase:
                                         cards.add(card["name"])
                 except Exception:
                     continue
-        
+
         logger.info(f"Loaded {len(cards)} Magic cards")
         return cards
-    
+
     def _load_pokemon_cards(self) -> set[str]:
         """Load Pokémon card names from backend data."""
         cards: set[str] = set()
-        
+
         # Try multiple possible paths
         possible_paths = [
             self.data_dir / "games" / "pokemon" / "pokemontcg-data",
             self.data_dir / "pokemon" / "pokemontcg-data",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "pokemon" / "pokemontcg-data",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "pokemon"
+            / "pokemontcg-data",
         ]
-        
+
         pokemon_dir = None
         for path in possible_paths:
             if path.exists():
                 pokemon_dir = path
                 break
-        
+
         if pokemon_dir:
             for json_file in list(pokemon_dir.glob("**/*.json"))[:500]:
                 try:
@@ -160,14 +171,19 @@ class CardDatabase:
                                     cards.add(item["name"])
                 except Exception:
                     continue
-        
+
         # Try limitless-web (decks with card names)
         limitless_paths = [
             self.data_dir / "games" / "pokemon" / "limitless-web",
             self.data_dir / "pokemon" / "limitless-web",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "pokemon" / "limitless-web",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "pokemon"
+            / "limitless-web",
         ]
-        
+
         for limitless_dir in limitless_paths:
             if limitless_dir.exists():
                 zst_files = list(limitless_dir.glob("*.json.zst"))
@@ -190,10 +206,10 @@ class CardDatabase:
                     except Exception:
                         continue
                 break  # Only process first matching directory
-        
+
         logger.info(f"Loaded {len(cards)} Pokémon cards")
         return cards
-    
+
     def _load_yugioh_cards(self) -> set[str]:
         """Load Yu-Gi-Oh! card names from ygoprodeck data."""
         cards: set[str] = set()
@@ -202,20 +218,33 @@ class CardDatabase:
             self.data_dir / "games" / "yugioh" / "ygoprodeck" / "cards",
             self.data_dir / "games" / "games" / "yugioh" / "ygoprodeck" / "cards",
             self.data_dir / "yugioh" / "ygoprodeck" / "cards",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "games" / "yugioh" / "ygoprodeck" / "cards",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "yugioh" / "ygoprodeck" / "cards",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "games"
+            / "yugioh"
+            / "ygoprodeck"
+            / "cards",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "yugioh"
+            / "ygoprodeck"
+            / "cards",
         ]
-        
+
         ygo_dir = None
         for path in possible_paths:
             if path.exists():
                 ygo_dir = path
                 break
-        
+
         if not ygo_dir:
             logger.warning(f"Yu-Gi-Oh! directory not found in any of: {possible_paths}")
             return cards
-        
+
         # Try JSON files
         json_files = list(ygo_dir.glob("*.json"))
         if json_files:
@@ -227,7 +256,7 @@ class CardDatabase:
                             cards.add(data["name"])
                 except Exception:
                     continue
-        
+
         # Try zst files
         zst_files = list(ygo_dir.glob("*.json.zst"))
         if zst_files:
@@ -246,21 +275,26 @@ class CardDatabase:
                             cards.add(data["name"])
                 except Exception:
                     continue
-        
+
         logger.info(f"Loaded {len(cards)} Yu-Gi-Oh! cards")
         return cards
-    
+
     def _load_digimon_cards(self) -> set[str]:
         """Load Digimon card names from backend data."""
         cards: set[str] = set()
-        
+
         # Try multiple possible paths
         possible_paths = [
             self.data_dir / "games" / "digimon" / "limitless",
             self.data_dir / "digimon" / "limitless",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "digimon" / "limitless",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "digimon"
+            / "limitless",
         ]
-        
+
         for digimon_dir in possible_paths:
             if digimon_dir.exists():
                 # Load from deck collections (extract card names)
@@ -277,21 +311,26 @@ class CardDatabase:
                     except Exception:
                         continue
                 break
-        
+
         logger.info(f"Loaded {len(cards)} Digimon cards")
         return cards
-    
+
     def _load_onepiece_cards(self) -> set[str]:
         """Load One Piece card names from backend data."""
         cards: set[str] = set()
-        
+
         # Try multiple possible paths
         possible_paths = [
             self.data_dir / "games" / "onepiece" / "limitless",
             self.data_dir / "onepiece" / "limitless",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "onepiece" / "limitless",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "onepiece"
+            / "limitless",
         ]
-        
+
         for onepiece_dir in possible_paths:
             if onepiece_dir.exists():
                 # Load from deck collections (extract card names)
@@ -308,21 +347,26 @@ class CardDatabase:
                     except Exception:
                         continue
                 break
-        
+
         logger.info(f"Loaded {len(cards)} One Piece cards")
         return cards
-    
+
     def _load_riftbound_cards(self) -> set[str]:
         """Load Riftbound card names from backend data."""
         cards: set[str] = set()
-        
+
         # Try multiple possible paths
         possible_paths = [
             self.data_dir / "games" / "riftbound" / "riftdecks",
             self.data_dir / "riftbound" / "riftdecks",
-            Path(__file__).parent.parent.parent / "backend" / "data-full" / "games" / "riftbound" / "riftdecks",
+            Path(__file__).parent.parent.parent
+            / "backend"
+            / "data-full"
+            / "games"
+            / "riftbound"
+            / "riftdecks",
         ]
-        
+
         for riftbound_dir in possible_paths:
             if riftbound_dir.exists():
                 # Load from deck collections (extract card names)
@@ -339,22 +383,22 @@ class CardDatabase:
                     except Exception:
                         continue
                 break
-        
+
         logger.info(f"Loaded {len(cards)} Riftbound cards")
         return cards
-    
+
     def load(self) -> None:
         """Load all card databases."""
         if self._loaded:
             return
-        
+
         self._magic_cards = self._load_magic_cards()
         self._pokemon_cards = self._load_pokemon_cards()
         self._yugioh_cards = self._load_yugioh_cards()
         self._digimon_cards = self._load_digimon_cards()
         self._onepiece_cards = self._load_onepiece_cards()
         self._riftbound_cards = self._load_riftbound_cards()
-        
+
         # Pre-compute lowercase sets for performance
         self._magic_lower = {c.lower().strip() for c in self._magic_cards}
         self._pokemon_lower = {c.lower().strip() for c in self._pokemon_cards}
@@ -362,43 +406,43 @@ class CardDatabase:
         self._digimon_lower = {c.lower().strip() for c in self._digimon_cards}
         self._onepiece_lower = {c.lower().strip() for c in self._onepiece_cards}
         self._riftbound_lower = {c.lower().strip() for c in self._riftbound_cards}
-        
+
         self._loaded = True
-    
-    def get_game(self, card_name: str, fuzzy: bool = False) -> Optional[str]:
+
+    def get_game(self, card_name: str, fuzzy: bool = False) -> str | None:
         """
         Determine which game a card belongs to.
-        
+
         Args:
             card_name: Card name to look up
             fuzzy: If True, try fuzzy matching if exact match fails
-        
+
         Returns:
             Game name ("magic", "pokemon", "yugioh", "digimon", "onepiece", "riftbound") or None
         """
         self.load()
-        
+
         card_norm = normalize_for_comparison(card_name)
-        
+
         # Try exact match first (fast)
         if self._magic_lower and card_norm in self._magic_lower:
             return "magic"
-        
+
         if self._pokemon_lower and card_norm in self._pokemon_lower:
             return "pokemon"
-        
+
         if self._yugioh_lower and card_norm in self._yugioh_lower:
             return "yugioh"
-        
+
         if self._digimon_lower and card_norm in self._digimon_lower:
             return "digimon"
-        
+
         if self._onepiece_lower and card_norm in self._onepiece_lower:
             return "onepiece"
-        
+
         if self._riftbound_lower and card_norm in self._riftbound_lower:
             return "riftbound"
-        
+
         # Try fuzzy matching if enabled
         if fuzzy:
             # Try each game's card list
@@ -413,17 +457,19 @@ class CardDatabase:
                 if card_set:
                     match, score = find_best_match(card_name, list(card_set), threshold=0.85)
                     if match:
-                        logger.debug(f"Fuzzy match: '{card_name}' -> '{match}' ({game_name}, score={score:.2f})")
+                        logger.debug(
+                            f"Fuzzy match: '{card_name}' -> '{match}' ({game_name}, score={score:.2f})"
+                        )
                         return game_name
-        
+
         return None
-    
+
     def is_valid_card(self, card_name: str, game: str) -> bool:
         """Check if card name is valid for the specified game."""
         self.load()
-        
+
         card_lower = card_name.strip().lower()
-        
+
         # Use cached lowercase sets for performance
         if game == "magic":
             return self._magic_lower is not None and card_lower in self._magic_lower
@@ -437,45 +483,45 @@ class CardDatabase:
             return self._onepiece_lower is not None and card_lower in self._onepiece_lower
         elif game == "riftbound":
             return self._riftbound_lower is not None and card_lower in self._riftbound_lower
-        
+
         return False
-    
+
     def filter_cards_by_game(self, cards: list[str], game: str) -> tuple[list[str], list[str]]:
         """
         Filter cards to only include those from the specified game.
-        
+
         Returns:
             (valid_cards, invalid_cards)
         """
         self.load()
-        
+
         valid = []
         invalid = []
-        
+
         for card in cards:
             card_game = self.get_game(card)
             if card_game == game:
                 valid.append(card)
             else:
                 invalid.append(card)
-        
+
         return valid, invalid
-    
+
     def get_card_data(self, card_name: str, game: str | None = None) -> dict[str, Any] | None:
         """
         Get full card data for a card (if available in database).
-        
+
         Currently returns basic info. Can be extended to return full card data.
         """
         self.load()
-        
+
         # If game not provided, detect it
         if not game:
             game = self.get_game(card_name)
-        
+
         if not game:
             return None
-        
+
         # For now, return basic info
         # In future, could load full card data from database files
         return {
@@ -486,7 +532,7 @@ class CardDatabase:
 
 
 # Global instance (lazy-loaded)
-_global_db: Optional[CardDatabase] = None
+_global_db: CardDatabase | None = None
 
 
 def get_card_database() -> CardDatabase:
@@ -495,4 +541,3 @@ def get_card_database() -> CardDatabase:
     if _global_db is None:
         _global_db = CardDatabase()
     return _global_db
-

@@ -67,7 +67,7 @@ Week 1 (This Week):
 4. Soft launch with beta label
 
 Week 2-3:
-5. Split graph by format  
+5. Split graph by format
 6. Train format-specific embeddings
 7. Add card type filtering
 8. Re-evaluate
@@ -78,7 +78,7 @@ Week 4:
 ## Honest Timeline
 
 **MVP (with disclaimers):** 2-3 days
-**Beta (filtered, known issues):** 1 week  
+**Beta (filtered, known issues):** 1 week
 **Production (format-aware):** 3 weeks
 
 Current state: Not ready for production without filtering.
@@ -107,4 +107,3 @@ Don't:
 - [ ] ~~Claim "production ready"~~
 - [ ] ~~Deploy without filtering~~
 - [ ] ~~Ignore format mixing~~
-

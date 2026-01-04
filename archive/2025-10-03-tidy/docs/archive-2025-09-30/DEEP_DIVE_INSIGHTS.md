@@ -1,6 +1,6 @@
 # 🔍 Deep Dive - Architectural Insights & Hidden Patterns
 
-**Date**: October 1, 2025  
+**Date**: October 1, 2025
 **Analysis Level**: Implementation details, performance characteristics, edge cases
 
 **Key Findings**:
@@ -56,7 +56,7 @@ Total max time: ~130 seconds across 7 attempts
 ```go
 func (s *Scraper) blobKey(req *http.Request) (string, []byte, error) {
     buf := new(bytes.Buffer)
-    
+
     // Hash components:
     buf.WriteString(req.URL.String())       // URL
     buf.WriteString(".")
@@ -66,11 +66,11 @@ func (s *Scraper) blobKey(req *http.Request) (string, []byte, error) {
     buf.WriteString(".")
     buf.Write(body)                         // Request body
     buf.WriteString(".")
-    
+
     h := sha256.Sum256(buf.Bytes())
     henc := base64.RawURLEncoding.EncodeToString(h[:])
     bkey := filepath.Join(req.URL.Hostname(), henc) + ".json"
-    
+
     return bkey, body, nil
 }
 ```
@@ -95,11 +95,11 @@ if reSilentThrottle != nil && reSilentThrottle.Match(body) {
     n := requests.Load()
     rate := float64(n) / float64(time.Since(veryStart).Minutes())
     s.log.Fieldf("rate", "%0.3f/m", rate).Warnf(ctx, "silently throttled")
-    
+
     if lastAttempt {
         return nil, &ErrFetchThrottled{}
     }
-    
+
     s.log.Fieldf("attempt", "%d", i).Warnf(ctx, "response is silently throttled, retrying")
     time.Sleep(10 * time.Second)  // Extra delay before retry
     wait(i)                       // Then exponential backoff
@@ -198,10 +198,10 @@ blob.Read(ctx, "games/pokemon/pokemontcg/cards/base1-1.json")
 YGO API Response:
   Uncompressed: 26.7 MB (JSON)
   Compressed:   Stored in single .zst file
-  
+
 Pokemon Cards (50 cards):
   Average per card: ~2-3 KB compressed
-  
+
 MTG Collections (198 collections):
   Average per deck: ~5-10 KB compressed
 ```
@@ -312,7 +312,7 @@ for it.Next(ctx) {
     go func() {
         defer wg.Done()
         defer func() { <-sem }()  // Release
-        
+
         data, err := b.Read(ctx, key)
         item, err := de(key, data)
         fn(item)
@@ -433,7 +433,7 @@ var reBadCardName = regexp.MustCompile(`(^\s*$)|(\p{Cc})`)
 func (t *Transform) worker(item dataset.Item) error {
     for _, partition := range item.Collection.Partitions {
         n := len(partition.Cards)
-        
+
         // Self-edges (for cards with count > 1)
         for i := 0; i < n; i++ {
             c := partition.Cards[i]
@@ -444,7 +444,7 @@ func (t *Transform) worker(item dataset.Item) error {
                     Multiset: c.Count - 1, // Count duplicates
                 })
             }
-            
+
             // Pair-wise combinations
             for j := i + 1; j < n; j++ {
                 d := partition.Cards[j]
@@ -461,7 +461,7 @@ func (t *Transform) worker(item dataset.Item) error {
 
 **Example**:
 ```
-Deck: 
+Deck:
   4x Lightning Bolt
   4x Lava Spike
   2x Rift Bolt
@@ -487,10 +487,10 @@ Pairs generated:
 ```go
 func (t *Transform) add(k tkey, v tval) error {
     kb, err := msgpack.Marshal(k)
-    
+
     t.mu.Lock()  // Global lock for badger updates
     defer t.mu.Unlock()
-    
+
     err = t.db.Update(func(txn *badger.Txn) error {
         item, err := txn.Get(kb)
         if err == badger.ErrKeyNotFound {
@@ -498,7 +498,7 @@ func (t *Transform) add(k tkey, v tval) error {
             vb, _ := msgpack.Marshal(v)
             return txn.Set(kb, vb)
         }
-        
+
         // Existing pair - increment counts
         item.Value(func(wb []byte) error {
             var w tval
@@ -524,7 +524,7 @@ func (t *Transform) add(k tkey, v tval) error {
 With 198 collections, ~100 cards each:
   ~20,000 cards total
   ~200,000,000 pairs (worst case)
-  
+
 Actual pairs (unique): Likely ~50,000-100,000
   → Each pair requires mutex + badger transaction
   → Serial bottleneck in otherwise parallel pipeline
@@ -604,7 +604,7 @@ if parseErr != nil {
 func (t *Transform) add(k tkey, v tval) error {
     t.mu.Lock()    // GLOBAL LOCK
     defer t.mu.Unlock()
-    
+
     // Badger transaction here
 }
 ```

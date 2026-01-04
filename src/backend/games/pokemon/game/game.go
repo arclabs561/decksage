@@ -46,7 +46,7 @@ type Card struct {
 	NationalDex int          `json:"nationalPokedexNumber,omitempty"`
 	Images      []CardImage  `json:"images,omitempty"`
 	References  []CardRef    `json:"references,omitempty"`
-	
+
 	// Enrichment data
 	Prices      CardPrices `json:"prices,omitempty"`      // Market pricing
 	Set         string     `json:"set,omitempty"`         // Set code
@@ -104,7 +104,7 @@ type CollectionTypeDeck struct {
 	Event     string `json:"event,omitempty"`     // Tournament name
 	Placement int    `json:"placement,omitempty"` // Finishing position (1 = 1st place)
 	EventDate string `json:"eventDate,omitempty"` // Tournament date
-	
+
 	// Enhanced tournament metadata
 	TournamentType   string  `json:"tournamentType,omitempty"`   // "Regional", "Championship", "League Cup", "League Challenge"
 	TournamentSize   int     `json:"tournamentSize,omitempty"`   // Number of players (from Limitless API)
@@ -112,12 +112,12 @@ type CollectionTypeDeck struct {
 	Region           string  `json:"region,omitempty"`           // "North America", "Europe", "Asia-Pacific"
 	TournamentID     string  `json:"tournamentId,omitempty"`     // Unique tournament identifier
 	Country          string  `json:"country,omitempty"`          // Player country (from Limitless API)
-	
+
 	// Temporal context (computed)
 	DaysSinceRotation  int     `json:"daysSinceRotation,omitempty"`  // Days since last format rotation
 	DaysSinceBanUpdate int     `json:"daysSinceBanUpdate,omitempty"` // Days since last ban list
 	MetaShare           float64 `json:"metaShare,omitempty"`          // Deck's meta share at event time (%)
-	
+
 	// Round-by-round results
 	RoundResults []RoundResult `json:"roundResults,omitempty"`
 }

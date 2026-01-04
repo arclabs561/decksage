@@ -99,4 +99,3 @@ uv run --script src/ml/scripts/run_evaluation_on_aws.py
 - S3 as data source/destination
 - Spot instances for cost savings
 - Consistent environment
-

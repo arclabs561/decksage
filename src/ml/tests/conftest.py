@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -11,6 +10,8 @@ import pytest
 
 # Set up project paths
 from ml.utils.path_setup import setup_project_paths
+
+
 setup_project_paths()
 
 
@@ -18,7 +19,7 @@ setup_project_paths()
 def temp_test_set(tmp_path: Path) -> Path:
     """Create a temporary test set file for testing."""
     test_set_path = tmp_path / "test_set.json"
-    
+
     test_data = {
         "version": "test",
         "game": "magic",
@@ -31,10 +32,10 @@ def temp_test_set(tmp_path: Path) -> Path:
             for i in range(100)
         },
     }
-    
+
     with open(test_set_path, "w") as f:
         json.dump(test_data, f)
-    
+
     return test_set_path
 
 
@@ -42,27 +43,24 @@ def temp_test_set(tmp_path: Path) -> Path:
 def temp_decks_file(tmp_path: Path) -> Path:
     """Create a temporary decks file for testing."""
     decks_path = tmp_path / "decks.jsonl"
-    
+
     decks = [
         {
             "source": "magic_tournament",
             "partitions": [
                 {
                     "name": "Main",
-                    "cards": [
-                        {"name": f"Card_{i}", "count": 4}
-                        for i in range(30)
-                    ],
+                    "cards": [{"name": f"Card_{i}", "count": 4} for i in range(30)],
                 }
             ],
         }
         for _ in range(20)
     ]
-    
+
     with open(decks_path, "w") as f:
         for deck in decks:
             f.write(json.dumps(deck) + "\n")
-    
+
     return decks_path
 
 
@@ -96,7 +94,7 @@ def sample_deck() -> dict[str, Any]:
 def mock_fusion_system():
     """Create a mock fusion similarity system."""
     from unittest.mock import MagicMock
-    
+
     mock_fusion = MagicMock()
     mock_fusion.similar = MagicMock(
         return_value=[
@@ -107,13 +105,14 @@ def mock_fusion_system():
             ("Lightning Strike", 0.75),
         ]
     )
-    
+
     return mock_fusion
 
 
 @pytest.fixture
 def mock_tag_set_fn():
     """Create a mock functional tagger."""
+
     def tag_fn(card: str) -> set[str]:
         tags = {
             "Lightning Bolt": {"burn", "removal", "instant"},
@@ -123,13 +122,14 @@ def mock_tag_set_fn():
             "Mountain": {"land", "basic"},
         }
         return tags.get(card, set())
-    
+
     return tag_fn
 
 
 @pytest.fixture
 def mock_cmc_fn():
     """Create a mock CMC function."""
+
     def cmc_fn(card: str) -> int | None:
         cmcs = {
             "Lightning Bolt": 1,
@@ -139,13 +139,15 @@ def mock_cmc_fn():
             "Mountain": 0,
         }
         return cmcs.get(card)
-    
+
     return cmc_fn
 
 
 @pytest.fixture()
 def api_client():
     """Create a test client for the API."""
-    from ml.api.api import app
     from fastapi.testclient import TestClient
+
+    from ml.api.api import app
+
     return TestClient(app)

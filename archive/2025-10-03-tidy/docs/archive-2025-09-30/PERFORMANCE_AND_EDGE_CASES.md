@@ -1,6 +1,6 @@
 # ⚡ Performance Analysis & Edge Case Handling
 
-**Date**: October 1, 2025  
+**Date**: October 1, 2025
 **Focus**: Concurrency, error handling, edge cases, failure modes
 
 ---
@@ -58,13 +58,13 @@ for it.Next(ctx) {
         break LOOP
     default:
     }
-    
+
     wg.Add(1)
     sem <- struct{}{}  // Acquire
     go func() {
         defer wg.Done()
         defer func() { <-sem }()  // Release
-        
+
         // Work here
         if err := fn(item); err != nil {
             errs <- err
@@ -84,7 +84,7 @@ for it.Next(ctx) {
 func (t *Transform) add(k tkey, v tval) error {
     t.mu.Lock()
     defer t.mu.Unlock()
-    
+
     // Critical section: badger read-modify-write
     err = t.db.Update(func(txn *badger.Txn) error {
         // Get existing value
@@ -307,7 +307,7 @@ if apiCard.ATK != nil {
 **Reason**: Not all cards have these fields
 - Spell/Trap cards: No ATK/DEF
 - Normal monsters: Have Level but not Rank
-- Xyz monsters: Have Rank but not Level  
+- Xyz monsters: Have Rank but not Level
 - Link monsters: Have LinkRating but not Level/Rank
 
 **Insight**: API design reflects game rules correctly
@@ -655,7 +655,7 @@ func newKey(name1, name2 string) tkey {
 ```go
 for i, item := range items {
     process(item)
-    
+
     if (i+1) % 1000 == 0 {
         log.Infof(ctx, "Processed %d/%d items...", i+1, total)
     }
@@ -719,7 +719,7 @@ for i, item := range items {
 
 ## 9. Surprising Discoveries
 
-### 9.1 Badger Cache is 556MB! 
+### 9.1 Badger Cache is 556MB!
 
 **For only ~198 MTG collections**:
 ```
@@ -1010,4 +1010,3 @@ sem := make(chan struct{}, 512)
 | Performance | B+ | Good for most cases, known bottlenecks |
 
 **Overall**: **A** - Production-quality with room for optimization
-

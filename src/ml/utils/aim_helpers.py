@@ -6,8 +6,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
+
 try:
     import aim
+
     HAS_AIM = True
 except ImportError:
     HAS_AIM = False
@@ -15,6 +17,7 @@ except ImportError:
 
 try:
     from .logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger(__name__)
@@ -31,50 +34,51 @@ def create_training_run(
     correlation_id: str | None = None,
 ) -> aim.Run | None:
     """Create an Aim run for training experiments.
-    
+
     Args:
         experiment_name: Name of the experiment
         hparams: Hyperparameters dictionary
         tags: Optional tags for the run
         repo: Aim repository path (default: .aim)
         correlation_id: Correlation ID from logging system for tracking
-        
+
     Returns:
         Aim Run object or None if AimStack not available
     """
     if not HAS_AIM:
         logger.warning("AimStack not available, skipping tracking")
         return None
-    
+
     try:
         # Get correlation ID from logging system if not provided
         if correlation_id is None:
             try:
                 from .logging_config import get_correlation_id
+
                 correlation_id = get_correlation_id()
             except ImportError:
                 pass
-        
+
         # Add correlation ID to tags if available
         run_tags = list(tags) if tags else []
         if correlation_id:
             run_tags.append(f"corr_id:{correlation_id}")
-        
+
         run = aim.Run(
             experiment=experiment_name,
             repo=str(repo or AIM_REPO),
             tags=run_tags,
         )
-        
+
         # Set correlation ID as a property for easy querying
         if correlation_id:
             run["correlation_id"] = correlation_id
-        
+
         # Set hyperparameters separately (newer Aim API)
         if hparams:
             for key, value in hparams.items():
                 run.set(key, value, strict=False)
-        
+
         logger.info(f"Created Aim run: {experiment_name} [correlation_id={correlation_id}]")
         return run
     except Exception as e:
@@ -94,7 +98,7 @@ def track_training_metrics(
     """Track standard training metrics."""
     if run is None:
         return
-    
+
     try:
         if train_loss is not None:
             run.track(train_loss, name="loss", context={"subset": "train"}, step=epoch)
@@ -121,12 +125,12 @@ def track_evaluation_metrics(
     """Track evaluation metrics."""
     if run is None:
         return
-    
+
     try:
         ctx = context or {}
         if method:
             ctx["method"] = method
-        
+
         run.track(p10, name="p10", context=ctx)
         if ndcg is not None:
             run.track(ndcg, name="ndcg", context=ctx)
@@ -144,12 +148,12 @@ def track_hyperparameter_result(
     """Track hyperparameter search results."""
     if run is None:
         return
-    
+
     try:
         # Track all hyperparameters
         for key, value in params.items():
             run.track(value, name="hyperparameter", context={"param": key})
-        
+
         # Track all results
         for metric, value in results.items():
             run.track(value, name=metric, context={"config": str(params)})
@@ -166,9 +170,8 @@ def track_artifact(
     """Track an artifact (file) in Aim."""
     if run is None:
         return
-    
+
     try:
         run.track(str(artifact_path), name=name, context=context or {})
     except Exception as e:
         logger.error(f"Failed to track artifact: {e}")
-

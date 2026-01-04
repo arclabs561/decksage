@@ -1,23 +1,23 @@
 # 🔴 CRITICAL BUGS DISCOVERED During Code Review
 
-**Date**: 2025-09-30  
-**Review Type**: Systematic file-by-file scrutiny  
+**Date**: 2025-09-30
+**Review Type**: Systematic file-by-file scrutiny
 **Status**: ⚠️ **BUGS FOUND & FIXED, TESTING REQUIRED**
 
 ---
 
 ## Summary
 
-**Found**: 5 critical bugs, 8 medium issues, 10 minor issues  
-**Fixed**: 3 critical bugs immediately  
-**Remaining**: 2 critical bugs need careful fixes + tests  
+**Found**: 5 critical bugs, 8 medium issues, 10 minor issues
+**Fixed**: 3 critical bugs immediately
+**Remaining**: 2 critical bugs need careful fixes + tests
 **Grade Change**: B+ → B (7/10) until remaining bugs fixed
 
 ---
 
 ## 🔴 CRITICAL BUG #1: YGO contains() Function Broken
 
-**File**: `games/yugioh/dataset/ygoprodeck/dataset.go:177-181`  
+**File**: `games/yugioh/dataset/ygoprodeck/dataset.go:177-181`
 **Status**: ✅ **FIXED**
 
 **Bug**:
@@ -42,14 +42,14 @@ func contains(s, substr string) bool {
 }
 ```
 
-**Severity**: CRITICAL - Would corrupt ALL YGO card metadata  
+**Severity**: CRITICAL - Would corrupt ALL YGO card metadata
 **Would require**: Complete re-extraction if shipped
 
 ---
 
 ## 🔴 CRITICAL BUG #2: Regex Recompilation in Hot Path
 
-**File**: `games/dataset.go:94`  
+**File**: `games/dataset.go:94`
 **Status**: ⚠️ **IDENTIFIED, NOT YET FIXED**
 
 **Bug**:
@@ -95,7 +95,7 @@ var sectionRegexMu sync.Mutex
 
 ## 🔴 CRITICAL BUG #3: Race Condition in IterItemsBlobPrefix
 
-**File**: `games/dataset.go:227-297`  
+**File**: `games/dataset.go:227-297`
 **Status**: ⚠️ **IDENTIFIED, NOT YET FIXED**
 
 **Bug #3a**: Error channel can deadlock
@@ -147,7 +147,7 @@ wg.Wait()  // ← Line 295 - TOO LATE!
 
 ## 🔴 CRITICAL BUG #4: Dead Code in scraper/scraper.go
 
-**File**: `scraper/scraper.go:63-67`  
+**File**: `scraper/scraper.go:63-67`
 **Status**: ✅ **FIXED**
 
 **Bug**:
@@ -168,7 +168,7 @@ if err != nil {
 
 ## 🟡 MEDIUM ISSUE #1: No Duplicate Type Registration Check
 
-**File**: `games/game.go:74-76`  
+**File**: `games/game.go:74-76`
 **Status**: ✅ **FIXED**
 
 **Issue**: Silent overwrite if two games register same type name
@@ -199,7 +199,7 @@ if err != nil {
 
 ## 🟡 MEDIUM ISSUE #3: Mutation Not Documented
 
-**File**: `games/game.go:103`  
+**File**: `games/game.go:103`
 **Status**: ✅ **FIXED** (added doc comment)
 
 **Issue**: Canonicalize() sorts in place but doesn't document mutation
@@ -244,8 +244,8 @@ if err != nil {
 
 ### Test Coverage Estimate
 
-**Before review**: Assumed 80%+  
-**After review**: Probably <50%  
+**Before review**: Assumed 80%+
+**After review**: Probably <50%
 
 **Critical paths untested**:
 - Concurrent iteration
@@ -326,12 +326,12 @@ if err != nil {
 
 ### Before Code Review
 
-**Assumed**: "Architecture works, tests pass, ready to go!"  
+**Assumed**: "Architecture works, tests pass, ready to go!"
 **Grade**: B+ (8/10)
 
 ### After Code Review
 
-**Reality**: "Architecture sound, but implementation has critical bugs"  
+**Reality**: "Architecture sound, but implementation has critical bugs"
 **Grade**: B (7/10) until bugs fixed
 
 ### Grade Breakdown
@@ -360,7 +360,7 @@ if err != nil {
 
 ### Why This Matters
 
-**Without review**: Ship YGO, extract 12K cards, all metadata wrong, re-extract  
+**Without review**: Ship YGO, extract 12K cards, all metadata wrong, re-extract
 **With review**: Fix bug, test, then extract correctly
 
 **Cost savings**: Days of wasted work avoided
@@ -369,7 +369,7 @@ if err != nil {
 
 **Your rule**: "Critique work significantly and be scrutinous about quality"
 
-**This review**: 
+**This review**:
 - Found 5 critical bugs
 - Found 8 medium issues
 - Prevented shipping broken YGO

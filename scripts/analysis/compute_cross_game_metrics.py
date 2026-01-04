@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, Iterable, List, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,8 +14,8 @@ def load_json(path: Path) -> dict:
         return json.load(f)
 
 
-def build_adjacency(pairs_csv: Path) -> Dict[str, set]:
-    adj: Dict[str, set] = defaultdict(set)
+def build_adjacency(pairs_csv: Path) -> dict[str, set]:
+    adj: dict[str, set] = defaultdict(set)
     with pairs_csv.open("r", encoding="utf-8") as f:
         header = True
         for line in f:
@@ -36,11 +35,11 @@ def build_adjacency(pairs_csv: Path) -> Dict[str, set]:
     return adj
 
 
-def jaccard_topk(query: str, adj: Dict[str, set], top_k: int = 10) -> List[Tuple[str, float]]:
+def jaccard_topk(query: str, adj: dict[str, set], top_k: int = 10) -> list[tuple[str, float]]:
     if query not in adj:
         return []
     qn = adj[query]
-    scores: List[Tuple[str, float]] = []
+    scores: list[tuple[str, float]] = []
     for other, on in adj.items():
         if other == query:
             continue
@@ -63,6 +62,7 @@ def jaccard_topk(query: str, adj: Dict[str, set], top_k: int = 10) -> List[Tuple
 def evaluate_games() -> dict:
     # Import evaluation helper
     import sys
+
     sys.path.insert(0, str(ROOT / "src" / "ml"))
     from utils.evaluation import evaluate_similarity  # type: ignore
 
@@ -87,7 +87,7 @@ def evaluate_games() -> dict:
         data = load_json(tpath)
         test_set = data.get("queries", {})
 
-        def sim_func(q: str, k: int) -> List[Tuple[str, float]]:
+        def sim_func(q: str, k: int) -> list[tuple[str, float]]:
             return jaccard_topk(q, adj, top_k=k)
 
         res = evaluate_similarity(test_set, sim_func, top_k=10, verbose=False)
@@ -95,13 +95,16 @@ def evaluate_games() -> dict:
         nq = int(res.get("num_evaluated", 0))
         p10 = float(res.get("p@10", 0.0))
         if nq > 0:
-            totals += int(data.get("queries") and len(test_set) or nq)
+            totals += int((data.get("queries") and len(test_set)) or nq)
             num_weighted += p10 * nq
 
     if totals > 0:
-        results["weighted"]["p@10"] = num_weighted / sum(
-            results["games"][g].get("num_evaluated", 0) or 0 for g in results["games"]
-        ) if any(results["games"][g].get("num_evaluated", 0) for g in results["games"]) else 0.0
+        results["weighted"]["p@10"] = (
+            num_weighted
+            / sum(results["games"][g].get("num_evaluated", 0) or 0 for g in results["games"])
+            if any(results["games"][g].get("num_evaluated", 0) for g in results["games"])
+            else 0.0
+        )
 
     return results
 
@@ -116,5 +119,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

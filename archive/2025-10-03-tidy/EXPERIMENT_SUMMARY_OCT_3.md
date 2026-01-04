@@ -3,29 +3,29 @@
 ## What We Tested
 
 ### Test 1: Fix "Failing" Test Suite
-**Hypothesis**: Major integration failure  
-**Reality**: One linter error (redundant `\n`)  
-**Result**: ✅ All tests passing  
+**Hypothesis**: Major integration failure
+**Reality**: One linter error (redundant `\n`)
+**Result**: ✅ All tests passing
 **Lesson**: Check before assuming catastrophe
 
 ### Test 2: Format-Specific Similarity
-**Hypothesis**: Filtering to format improves P@10  
-**Test**: Modern-only, Legacy-only vs all formats  
+**Hypothesis**: Filtering to format improves P@10
+**Test**: Modern-only, Legacy-only vs all formats
 **Results**:
 - Baseline (all): P@10 = 0.0829
 - Modern only: P@10 = 0.0045 (-94.6%)
-- Legacy only: P@10 = 0.0342 (-58.7%)  
-**Result**: ❌ FAILED - dramatically worse  
+- Legacy only: P@10 = 0.0342 (-58.7%)
+**Result**: ❌ FAILED - dramatically worse
 **Why**: Test set has generic queries, format filtering reduces data 5x
 
 ### Test 3: Archetype Staples Analysis
-**Approach**: Frequency analysis instead of similarity  
-**Test**: Find cards appearing in 70%+ of archetype decks  
+**Approach**: Frequency analysis instead of similarity
+**Test**: Find cards appearing in 70%+ of archetype decks
 **Results**:
 - Red Deck Wins: 99.6% Mountain, 71% Burst Lightning ✓
 - Reanimator: 89% Archon of Cruelty, 81% Reanimate ✓
-- Boros Aggro: 70% Ocelot Pride, Guide of Souls ✓  
-**Result**: ✅ SUCCESS - useful, accurate data  
+- Boros Aggro: 70% Ocelot Pride, Guide of Souls ✓
+**Result**: ✅ SUCCESS - useful, accurate data
 **Why**: Uses co-occurrence's strength (frequency), not weakness (similarity)
 
 ## Key Discoveries

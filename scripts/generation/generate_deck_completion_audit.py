@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-import json
 import sys
 from pathlib import Path
-from typing import Any
 
 
 HERE = Path(__file__).resolve().parent
@@ -38,7 +36,7 @@ def build_deck_grid(title: str, deck: dict) -> str:
         count = int(c.get("count", 0))
         img = scryfall_img_url(name)
         tiles.append(
-            f"<div class=\"tile\"><img loading=\"lazy\" src=\"{img}\" alt=\"{escape_html(name)}\"/><div class=\"tile-name\">{escape_html(name)} ×{count}</div></div>"
+            f'<div class="tile"><img loading="lazy" src="{img}" alt="{escape_html(name)}"/><div class="tile-name">{escape_html(name)} ×{count}</div></div>'
         )
     grid = "".join(tiles)
     return f"""
@@ -51,7 +49,7 @@ def build_deck_grid(title: str, deck: dict) -> str:
 
 def build_steps_list(steps: list[dict]) -> str:
     if not steps:
-        return "<div class=\"steps-empty\">No steps applied</div>"
+        return '<div class="steps-empty">No steps applied</div>'
     lis = []
     for s in steps:
         op = escape_html(str(s.get("op", "")))
@@ -59,7 +57,7 @@ def build_steps_list(steps: list[dict]) -> str:
         part = escape_html(str(s.get("partition", "")))
         cnt = escape_html(str(s.get("count", 1)))
         lis.append(f"<li><code>{op}</code> {card} ×{cnt} → {part}</li>")
-    return f"<ol class=\"steps\">{''.join(lis)}</ol>"
+    return f'<ol class="steps">{"".join(lis)}</ol>'
 
 
 def main() -> int:
@@ -96,8 +94,12 @@ def main() -> int:
         ]
         return pool[:k]
 
-    cfg = CompletionConfig(game="magic", target_main_size=32, max_steps=4, budget_max=5.0, coverage_weight=0.2)
-    out, steps = greedy_complete("magic", seed, dummy_candidate_fn, cfg, price_fn=lambda _: 0.5, tag_set_fn=lambda _: set())
+    cfg = CompletionConfig(
+        game="magic", target_main_size=32, max_steps=4, budget_max=5.0, coverage_weight=0.2
+    )
+    out, steps = greedy_complete(
+        "magic", seed, dummy_candidate_fn, cfg, price_fn=lambda _: 0.5, tag_set_fn=lambda _: set()
+    )
 
     before_html = build_deck_grid("Before", seed)
     after_html = build_deck_grid("After", out)
@@ -129,5 +131,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -28,27 +27,35 @@ def escape(s: str) -> str:
     )
 
 
-def section_similarity(game: str, test_path: Path) -> Tuple[str, int]:
+def section_similarity(game: str, test_path: Path) -> tuple[str, int]:
     data = load_json(test_path)
     queries = data.get("queries", {})
     qcount = len(queries)
 
     # Build tiles per query
-    blocks: List[str] = []
+    blocks: list[str] = []
     for q, buckets in queries.items():
         q_safe = escape(q)
         q_img = scryfall_img(q)
-        rows: List[str] = []
-        for label in ("highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"):
-            names: List[str] = buckets.get(label, []) or []
+        rows: list[str] = []
+        for label in (
+            "highly_relevant",
+            "relevant",
+            "somewhat_relevant",
+            "marginally_relevant",
+            "irrelevant",
+        ):
+            names: list[str] = buckets.get(label, []) or []
             if not names:
                 continue
             cards = "".join(
-                f"<div class=\"tile\"><img loading=\"lazy\" src=\"{scryfall_img(n)}\" alt=\"{escape(n)}\"/><div class=\"t\">{escape(n)}</div></div>"
+                f'<div class="tile"><img loading="lazy" src="{scryfall_img(n)}" alt="{escape(n)}"/><div class="t">{escape(n)}</div></div>'
                 for n in names
             )
             header = label.replace("_", " ")
-            rows.append(f"<div class=\"bucket\"><div class=\"bh\">{escape(header)}</div><div class=\"tiles\">{cards}</div></div>")
+            rows.append(
+                f'<div class="bucket"><div class="bh">{escape(header)}</div><div class="tiles">{cards}</div></div>'
+            )
 
         buckets_html = "".join(rows)
         blocks.append(
@@ -62,10 +69,8 @@ def section_similarity(game: str, test_path: Path) -> Tuple[str, int]:
 
     game_title = escape(game.capitalize())
     return (
-        f"<section class=\"game game-{escape(game)}\">"
-        f"<h2 class=\"gt\">{game_title} similarity</h2>"
-        + "".join(blocks)
-        + "</section>"
+        f'<section class="game game-{escape(game)}">'
+        f'<h2 class="gt">{game_title} similarity</h2>' + "".join(blocks) + "</section>"
     ), qcount
 
 
@@ -88,6 +93,7 @@ def section_deck_completion_inline() -> str:
     }
 
     import sys
+
     ml_dir = ROOT / "src" / "ml"
     sys.path.insert(0, str(ml_dir))
     from deck_completion import CompletionConfig, greedy_complete  # type: ignore
@@ -102,8 +108,12 @@ def section_deck_completion_inline() -> str:
         ]
         return pool[:k]
 
-    cfg = CompletionConfig(game="magic", target_main_size=32, max_steps=4, budget_max=5.0, coverage_weight=0.2)
-    out, steps = greedy_complete("magic", seed, dummy_candidate_fn, cfg, price_fn=lambda _: 0.5, tag_set_fn=lambda _: set())
+    cfg = CompletionConfig(
+        game="magic", target_main_size=32, max_steps=4, budget_max=5.0, coverage_weight=0.2
+    )
+    out, steps = greedy_complete(
+        "magic", seed, dummy_candidate_fn, cfg, price_fn=lambda _: 0.5, tag_set_fn=lambda _: set()
+    )
 
     def deck_grid(title: str, deck: dict) -> str:
         main = next((p for p in deck.get("partitions", []) or [] if p.get("name") == "Main"), None)
@@ -113,9 +123,9 @@ def section_deck_completion_inline() -> str:
             name = str(c.get("name", ""))
             count = int(c.get("count", 0))
             tiles.append(
-                f"<div class=\"tile\"><img loading=\"lazy\" src=\"{scryfall_img(name)}\" alt=\"{escape(name)}\"/><div class=\"t\">{escape(name)} ×{count}</div></div>"
+                f'<div class="tile"><img loading="lazy" src="{scryfall_img(name)}" alt="{escape(name)}"/><div class="t">{escape(name)} ×{count}</div></div>'
             )
-        return f"<div class=\"deck\"><div class=\"dt\">{escape(title)}</div><div class=\"tiles\">{''.join(tiles)}</div></div>"
+        return f'<div class="deck"><div class="dt">{escape(title)}</div><div class="tiles">{"".join(tiles)}</div></div>'
 
     lis = []
     for s in steps:
@@ -124,24 +134,26 @@ def section_deck_completion_inline() -> str:
         part = escape(str(s.get("partition", "")))
         cnt = escape(str(s.get("count", 1)))
         lis.append(f"<li><code>{op}</code> {card} ×{cnt} → {part}</li>")
-    steps_html = f"<ol class=\"steps\">{''.join(lis)}</ol>" if lis else "<div class=\"note\">No steps</div>"
+    steps_html = (
+        f'<ol class="steps">{"".join(lis)}</ol>' if lis else '<div class="note">No steps</div>'
+    )
 
     return (
-        "<section class=\"game game-magic\">"
-        + "<h2 class=\"gt\">Deck completion</h2>"
-        + "<div class=\"grid2\">"
-        + f"<div class=\"panel\">{deck_grid('Before', seed)}</div>"
-        + f"<div class=\"panel\">{deck_grid('After', out)}</div>"
+        '<section class="game game-magic">'
+        + '<h2 class="gt">Deck completion</h2>'
+        + '<div class="grid2">'
+        + f'<div class="panel">{deck_grid("Before", seed)}</div>'
+        + f'<div class="panel">{deck_grid("After", out)}</div>'
         + "</div>"
-        + f"<div class=\"panel\"><div class=\"dt\">Steps</div>{steps_html}</div>"
+        + f'<div class="panel"><div class="dt">Steps</div>{steps_html}</div>'
         + "</section>"
     )
 
 
-def compute_averages(test_sets: Dict[str, Path]) -> str:
+def compute_averages(test_sets: dict[str, Path]) -> str:
     # Prefer cross_game_metrics.json if present; fallback to fusion file for magic only
     cross = ROOT / "experiments" / "cross_game_metrics.json"
-    metrics: Dict[str, Dict] = {}
+    metrics: dict[str, dict] = {}
     if cross.exists():
         try:
             data = load_json(cross)
@@ -162,14 +174,16 @@ def compute_averages(test_sets: Dict[str, Path]) -> str:
         s = None
         if metrics.get(game):
             s = metrics[game].get("p@10")
-        s_str = (f"{float(s):.3f}" if s is not None else "n/a")
-        rows.append(f"<tr><td>{escape(game)}</td><td class=\"m\">{s_str}</td><td class=\"m\">{qcount}</td></tr>")
+        s_str = f"{float(s):.3f}" if s is not None else "n/a"
+        rows.append(
+            f'<tr><td>{escape(game)}</td><td class="m">{s_str}</td><td class="m">{qcount}</td></tr>'
+        )
 
-    overall = f"<tr><th>overall</th><th class=\"m\">{(f'{float(weighted_p10):.3f}' if weighted_p10 is not None else 'n/a')}</th><th class=\"m\">{total_q}</th></tr>"
+    overall = f'<tr><th>overall</th><th class="m">{(f"{float(weighted_p10):.3f}" if weighted_p10 is not None else "n/a")}</th><th class="m">{total_q}</th></tr>'
     table = f"""
     <table>
       <thead><tr><th>game</th><th>P@10 (Jaccard)</th><th>#queries</th></tr></thead>
-      <tbody>{overall}{''.join(rows)}</tbody>
+      <tbody>{overall}{"".join(rows)}</tbody>
     </table>
     """
     return table
@@ -184,7 +198,7 @@ def main() -> int:
     }
     present = {g: p for g, p in tests.items() if p.exists()}
 
-    sections: List[str] = []
+    sections: list[str] = []
     # Header metrics
     sections.append("<h2>Averages</h2>" + compute_averages(present))
 
@@ -240,5 +254,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
-

@@ -4,10 +4,10 @@
 
 Complete deck-building system with JSON-Patch-style action interface, policy-optimizable action space, and REST API for incomplete deck completion across MTG/Pokemon/YGO.
 
-**Status**: Production-ready with real-data validation  
-**Tests**: 22/22 passing  
-**Performance**: 450ms avg latency under 20× concurrent load  
-**Data**: 4,660 cards, 380K edges, 57K decks  
+**Status**: Production-ready with real-data validation
+**Tests**: 22/22 passing
+**Performance**: 450ms avg latency under 20× concurrent load
+**Data**: 4,660 cards, 380K edges, 57K decks
 
 ---
 
@@ -53,7 +53,7 @@ Loaded: 4,660 cards, 6,623 graph nodes
 
 Similarity Performance:
 - Embedding:  ~0-5ms per query
-- Jaccard:    ~80ms per query  
+- Jaccard:    ~80ms per query
 - Fusion:     ~200-400ms per query (tagger overhead)
 
 Deck Completion:
@@ -69,10 +69,10 @@ Concurrent Load (20 threads, fusion mode):
 
 ### Functional Validation
 
-**Embedding Mode**: Lightning Bolt → Chain Lightning, Thermo-Alchemist, Fireblast  
-**Jaccard Mode**: Iono → Boss's Orders, Night Stretcher, Ultra Ball  
-**Fusion Mode**: Sensitive to weights (B over C when embed-heavy, C over B when jaccard-heavy)  
-**Strict vs Lenient**: Strict rejects size violations; lenient returns partial with `constraints_relaxed=['size']`  
+**Embedding Mode**: Lightning Bolt → Chain Lightning, Thermo-Alchemist, Fireblast
+**Jaccard Mode**: Iono → Boss's Orders, Night Stretcher, Ultra Ball
+**Fusion Mode**: Sensitive to weights (B over C when embed-heavy, C over B when jaccard-heavy)
+**Strict vs Lenient**: Strict rejects size violations; lenient returns partial with `constraints_relaxed=['size']`
 
 ---
 
@@ -154,17 +154,17 @@ curl -X POST http://localhost:8000/v1/deck/complete \
 
 ## Prerequisites Checklist
 
-✅ **Action schema**: DeckPatch with 6 op types  
-✅ **Patch interpreter**: atomic apply with validation  
-✅ **Candidate generator**: similarity + legality filtering  
-✅ **Budget constraints**: price filtering with fallback  
-✅ **Coverage scoring**: functional tag diversity  
-✅ **Curve heuristics**: CMC distribution fit  
-✅ **API endpoints**: apply/suggest/complete  
-✅ **Environment**: Gym-like for future RL  
-✅ **Evaluation helpers**: coverage delta, price totals  
-✅ **Tests**: unit, property (Hypothesis), API, stress (22 passing)  
-✅ **Real-data validation**: Node2Vec, 4.6K cards, sensible suggestions  
+✅ **Action schema**: DeckPatch with 6 op types
+✅ **Patch interpreter**: atomic apply with validation
+✅ **Candidate generator**: similarity + legality filtering
+✅ **Budget constraints**: price filtering with fallback
+✅ **Coverage scoring**: functional tag diversity
+✅ **Curve heuristics**: CMC distribution fit
+✅ **API endpoints**: apply/suggest/complete
+✅ **Environment**: Gym-like for future RL
+✅ **Evaluation helpers**: coverage delta, price totals
+✅ **Tests**: unit, property (Hypothesis), API, stress (22 passing)
+✅ **Real-data validation**: Node2Vec, 4.6K cards, sensible suggestions
 
 ---
 
@@ -276,4 +276,3 @@ We built a complete deck-completion system aligned with the goal of policy-optim
 7. **Performance**: <500ms latency, scales to 4.6K cards
 
 **Next**: Train supervised policy on masked decks or use for human-in-the-loop deck builder UI.
-

@@ -21,7 +21,7 @@ Check status:
 # Labeling
 python3 -c "import json; f=open('experiments/test_set_labeled_magic.json'); d=json.load(f); queries=d.get('queries', d); labeled=sum(1 for q in queries.values() if q.get('highly_relevant') or q.get('relevant')); print(f'{labeled}/100')"
 
-# Card enrichment  
+# Card enrichment
 python3 -c "import csv; f=open('data/processed/card_attributes_enriched.csv'); r=csv.DictReader(f); rows=list(r); enriched=sum(1 for row in rows if row.get('type') and row['type'].strip()); print(f'{enriched}/26959')"
 
 # Multi-game export
@@ -42,4 +42,3 @@ ps aux | grep -E "(enrich|label|hyperparameter|export-multi)" | grep -v grep
 - **Multi-game export**: ~5-10 minutes
 
 **All tasks proceeding! 🚀**
-

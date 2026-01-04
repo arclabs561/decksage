@@ -50,7 +50,7 @@ echo "----------------------------------------"
 if [ -f "data/graphs/incremental_graph.json" ]; then
  JSON_SIZE=$(du -h data/graphs/incremental_graph.json | cut -f1)
  echo "Found JSON graph: $JSON_SIZE"
- 
+
  if [ -f "data/graphs/incremental_graph.db" ]; then
  DB_SIZE=$(du -h data/graphs/incremental_graph.db | cut -f1)
  echo "SQLite graph exists: $DB_SIZE"
@@ -87,4 +87,3 @@ echo " 2. Migrate graph: Run migrate_graph_to_sqlite.sh"
 echo " 3. Update training scripts to use SQLite graph"
 echo ""
 echo "See docs/DATASET_IMPROVEMENTS_2025-01-03.md for details"
-

@@ -2,7 +2,7 @@
 
 This directory contains outdated documentation files from previous sessions.
 
-**Archived**: 2025-12-29  
+**Archived**: 2025-12-29
 **Total files**: 30
 
 ## Archived Files

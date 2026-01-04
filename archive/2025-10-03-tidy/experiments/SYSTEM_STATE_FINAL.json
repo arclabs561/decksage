@@ -14,7 +14,7 @@
   },
   "discoveries": [
     "Wrong objective: similarity vs improvement",
-    "Wrong structure: homogeneous vs heterogeneous",  
+    "Wrong structure: homogeneous vs heterogeneous",
     "Export bug: collapses deck context",
     "Metadata parsing: blocked after 7 attempts"
   ],

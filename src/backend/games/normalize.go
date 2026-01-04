@@ -17,17 +17,17 @@ import (
 func NormalizeCardName(name string) string {
 	// Trim whitespace
 	name = strings.TrimSpace(name)
-	
+
 	// Decode HTML entities (e.g., &amp; -> &, &quot; -> ")
 	name = html.UnescapeString(name)
-	
+
 	// Unicode normalization (NFC - Canonical Decomposition followed by Canonical Composition)
 	name = norm.NFC.String(name)
-	
+
 	// Collapse multiple spaces to single space
 	fields := strings.Fields(name)
 	name = strings.Join(fields, " ")
-	
+
 	return name
 }
 
@@ -35,7 +35,7 @@ func NormalizeCardName(name string) string {
 func NormalizeFormatName(format string) string {
 	format = strings.TrimSpace(format)
 	format = strings.ToLower(format)
-	
+
 	// Map common variations to canonical names
 	formatMap := map[string]string{
 		"std":     "standard",
@@ -54,11 +54,11 @@ func NormalizeFormatName(format string) string {
 		"highlander": "highlander",
 		"peasant": "peasant",
 	}
-	
+
 	if canonical, ok := formatMap[format]; ok {
 		return canonical
 	}
-	
+
 	// Capitalize first letter of each word for unknown formats
 	words := strings.Fields(format)
 	for i, word := range words {
@@ -83,4 +83,3 @@ func IsValidCardName(name string) bool {
 	}
 	return true
 }
-

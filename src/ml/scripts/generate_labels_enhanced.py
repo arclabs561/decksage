@@ -36,9 +36,11 @@ import os
 from pathlib import Path
 from typing import Any
 
+
 try:
-    from pydantic_ai import Agent
     from pydantic import BaseModel, Field
+    from pydantic_ai import Agent
+
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
@@ -49,6 +51,7 @@ logger = logging.getLogger(__name__)
 # Import expanded judge criteria for better prompts
 try:
     from ml.evaluation.expanded_judge_criteria import EXPANDED_SIMILARITY_JUDGE_PROMPT
+
     USE_EXPANDED_CRITERIA = True
 except ImportError:
     USE_EXPANDED_CRITERIA = False
@@ -56,6 +59,7 @@ except ImportError:
 # Cost tracking (optional)
 try:
     from ml.utils.pydantic_ai_helpers import run_with_tracking
+
     HAS_PYDANTIC_AI_HELPERS = True
 except ImportError:
     HAS_PYDANTIC_AI_HELPERS = False
@@ -63,6 +67,7 @@ except ImportError:
 
 try:
     from ml.utils.llm_cost_tracker import LLMCostTracker  # noqa: F401
+
     HAS_COST_TRACKER = True
 except ImportError:
     HAS_COST_TRACKER = False
@@ -185,7 +190,9 @@ Generate labels for the query card with this enhanced understanding, using ALL a
 
 # Use expanded criteria if available, otherwise use base
 if USE_EXPANDED_CRITERIA:
-    ENHANCED_LABEL_GENERATION_PROMPT = EXPANDED_SIMILARITY_JUDGE_PROMPT + """
+    ENHANCED_LABEL_GENERATION_PROMPT = (
+        EXPANDED_SIMILARITY_JUDGE_PROMPT
+        + """
 
 **Additional Context for Label Generation**:
 You are generating labels organized by relevance levels (highly_relevant, relevant, somewhat_relevant, marginally_relevant, irrelevant).
@@ -199,13 +206,16 @@ For each relevance level, provide 5-10 card names that match that level of simil
 - Example: "Chain Lightning" for "Lightning Bolt" should be "highly_relevant" (4), not also in "relevant" (3)
 
 **Output Format**: Return a JSON object with arrays for each relevance level containing card names, plus a reasoning field explaining the similarity patterns."""
+    )
 else:
     ENHANCED_LABEL_GENERATION_PROMPT = ENHANCED_LABEL_GENERATION_PROMPT_BASE
 
 
 if HAS_PYDANTIC_AI:
+
     class EnhancedCardLabels(BaseModel):
         """Enhanced card similarity labels with reasoning."""
+
         highly_relevant: list[str] = Field(
             description="Direct functional substitutes and perfect role equivalents (5-10 cards)"
         )
@@ -230,14 +240,17 @@ else:
         pass
 
 
-def load_card_context(card_name: str, card_attrs_path: Path | None = None, game: str | None = None) -> dict[str, Any]:
+def load_card_context(
+    card_name: str, card_attrs_path: Path | None = None, game: str | None = None
+) -> dict[str, Any]:
     """Load card attributes for context from multiple sources."""
     context = {}
-    
+
     # Try card attributes CSV first (if path provided)
     if card_attrs_path and card_attrs_path.exists():
         try:
             import pandas as pd
+
             df = pd.read_csv(card_attrs_path)
             # Handle both "NAME" and "name" column names (case-insensitive)
             name_col = None
@@ -245,16 +258,17 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                 if col.upper() == "NAME" or col.lower() == "name":
                     name_col = col
                     break
-            
+
             if name_col:
                 # Use case-insensitive comparison
                 card_row = df[df[name_col].astype(str).str.lower() == card_name.lower()]
             else:
                 # Fallback: try first column
                 card_row = df[df.iloc[:, 0].astype(str).str.lower() == card_name.lower()]
-            
+
             if not card_row.empty:
                 row = card_row.iloc[0]
+
                 # Safely get columns (handle missing columns gracefully)
                 def safe_get(col_name: str, default: str = "") -> str:
                     """Get column value, handling case variations and missing columns."""
@@ -268,14 +282,14 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                             val = row[col]
                             return str(val) if pd.notna(val) else default
                     return default
-                
+
                 # Handle CMC conversion (might be string or float)
                 cmc_val = safe_get("cmc", "0")
                 try:
                     cmc = float(cmc_val) if cmc_val else 0.0
                 except (ValueError, TypeError):
                     cmc = 0.0
-                
+
                 context = {
                     "oracle_text": safe_get("oracle_text", ""),
                     "type": safe_get("type", ""),
@@ -293,11 +307,12 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                 return context
         except Exception as e:
             logger.debug(f"Could not load card context from CSV: {e}")
-    
+
     # Try loading from card database based on game
     if game:
         try:
             from ml.data.card_database import get_card_database
+
             card_db = get_card_database()
             # Validate card exists in database
             if card_db.is_valid_card(card_name, game):
@@ -306,14 +321,18 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                 pass
         except ImportError:
             pass
-    
+
     # Try loading from Scryfall API for Magic cards (if available)
     if game == "magic" and not context:
         try:
             from ml.scripts.enrich_attributes_with_scryfall import get_card_from_scryfall
+
             card_data = get_card_from_scryfall(card_name)
             if card_data:
-                from ml.scripts.enrich_attributes_with_scryfall import extract_attributes_from_scryfall
+                from ml.scripts.enrich_attributes_with_scryfall import (
+                    extract_attributes_from_scryfall,
+                )
+
                 attrs = extract_attributes_from_scryfall(card_data)
                 context = {
                     "oracle_text": attrs.get("oracle_text", ""),
@@ -325,14 +344,16 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                 }
         except (ImportError, Exception) as e:
             logger.debug(f"Could not load from Scryfall API: {e}")
-    
+
     # Default: try standard path
     if not context:
         from ml.utils.paths import PATHS
+
         default_path = PATHS.card_attributes
         if default_path.exists():
             try:
                 import pandas as pd
+
                 df = pd.read_csv(default_path)
                 card_row = df[df["NAME"].str.lower() == card_name.lower()]
                 if not card_row.empty:
@@ -347,7 +368,7 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
                     }
             except Exception as e:
                 logger.debug(f"Could not load card context from default path: {e}")
-    
+
     return context
 
 
@@ -358,13 +379,14 @@ def make_enhanced_label_agent(
     """Create enhanced LLM agent with better model selection."""
     if not HAS_PYDANTIC_AI:
         return None
-    
+
     try:
         # Load .env
         env_file = Path(__file__).parent.parent.parent.parent / ".env"
         if env_file.exists():
             try:
                 from dotenv import load_dotenv
+
                 load_dotenv(env_file)
             except ImportError:
                 # Manual parse
@@ -373,7 +395,7 @@ def make_enhanced_label_agent(
                         if "=" in line and not line.strip().startswith("#"):
                             key, value = line.split("=", 1)
                             os.environ[key.strip()] = value.strip().strip('"').strip("'")
-        
+
         # Model selection: prefer frontier models from leaderboard
         # Top models: gemini-3-pro (#1), claude-opus-4-5 (#5), grok-4.1-thinking (#3)
         if model_name:
@@ -381,27 +403,27 @@ def make_enhanced_label_agent(
         elif use_best_model:
             # Try frontier models first (from leaderboard)
             selected_model = (
-                os.getenv("ANNOTATOR_MODEL_BEST") or
-                os.getenv("ANNOTATOR_MODEL") or
-                "anthropic/claude-opus-4.5"  # Top quality (#5 text, #1 webdev on leaderboard)
+                os.getenv("ANNOTATOR_MODEL_BEST")
+                or os.getenv("ANNOTATOR_MODEL")
+                or "anthropic/claude-opus-4.5"  # Top quality (#5 text, #1 webdev on leaderboard)
             )
         else:
             selected_model = (
-                os.getenv("ANNOTATOR_MODEL") or
-                os.getenv("OPENROUTER_MODEL") or
-                "anthropic/claude-opus-4-5-20251101"  # High quality default
+                os.getenv("ANNOTATOR_MODEL")
+                or os.getenv("OPENROUTER_MODEL")
+                or "anthropic/claude-opus-4-5-20251101"  # High quality default
             )
-        
+
         provider = os.getenv("LLM_PROVIDER", "openrouter")
-        
+
         logger.info(f"Using model: {provider}:{selected_model}")
-        
+
         agent = Agent(
             f"{provider}:{selected_model}",
             output_type=EnhancedCardLabels,
             system_prompt=ENHANCED_LABEL_GENERATION_PROMPT,
         )
-        
+
         return agent
     except Exception as e:
         logger.error(f"Failed to create enhanced agent: {e}")
@@ -418,16 +440,20 @@ def generate_labels_with_context(
     """Generate labels with enhanced context."""
     # Build enhanced prompt with context
     game_name = game or "Magic: The Gathering"  # Default to Magic if not specified
-    game_display = {"magic": "Magic: The Gathering", "pokemon": "Pokémon TCG", "yugioh": "Yu-Gi-Oh!"}.get(game, game_name)
+    game_display = {
+        "magic": "Magic: The Gathering",
+        "pokemon": "Pokémon TCG",
+        "yugioh": "Yu-Gi-Oh!",
+    }.get(game, game_name)
     prompt_parts = [f"Generate similarity labels for {game_display} card: **{query}**"]
-    
+
     if use_case:
         prompt_parts.append(f"\n**Use Case**: {use_case}")
-    
+
     # Always try to load card context if not provided
     if not card_context:
         card_context = load_card_context(query, game=game)
-    
+
     if card_context:
         prompt_parts.append("\n**Card Context**:")
         if card_context.get("oracle_text"):
@@ -441,41 +467,49 @@ def generate_labels_with_context(
         if card_context.get("colors"):
             prompt_parts.append(f"- Colors: {card_context['colors']}")
     else:
-        prompt_parts.append("\n**Note**: Card context not available. Use your knowledge of this card.")
-    
+        prompt_parts.append(
+            "\n**Note**: Card context not available. Use your knowledge of this card."
+        )
+
     # Add game context if available (CRITICAL for multi-game system)
     if game:
-        prompt_parts.append(f"\n**CRITICAL: Game Context**")
+        prompt_parts.append("\n**CRITICAL: Game Context**")
         prompt_parts.append(f"You are evaluating cards for {game_display}.")
-        prompt_parts.append(f"ONLY include cards from {game_display}. Do not include cards from other games.")
-        prompt_parts.append(f"This is a critical constraint - cross-game contamination is a serious error.")
-    
-    prompt_parts.append("\nGenerate comprehensive labels considering functional similarity, role, archetype, and format context.")
-    
+        prompt_parts.append(
+            f"ONLY include cards from {game_display}. Do not include cards from other games."
+        )
+        prompt_parts.append(
+            "This is a critical constraint - cross-game contamination is a serious error."
+        )
+
+    prompt_parts.append(
+        "\nGenerate comprehensive labels considering functional similarity, role, archetype, and format context."
+    )
+
     prompt = "\n".join(prompt_parts)
-    
+
     try:
         # Use tracking wrapper if available
         if HAS_COST_TRACKER and HAS_PYDANTIC_AI_HELPERS and run_with_tracking:
             result = run_with_tracking(
                 agent=agent,
                 prompt=prompt,
-                model=model_name if 'model_name' in locals() else "unknown",
-                provider=provider if 'provider' in locals() else "openrouter",
+                model=model_name if "model_name" in locals() else "unknown",
+                provider=provider if "provider" in locals() else "openrouter",
                 operation="label_generation",
             )
         else:
             result = agent.run_sync(prompt)
-        
+
         # Handle different Pydantic AI result formats
-        if hasattr(result, 'data') and result.data:
+        if hasattr(result, "data") and result.data:
             data = result.data
-        elif hasattr(result, 'output') and result.output:
+        elif hasattr(result, "output") and result.output:
             data = result.output
         else:
             logger.error(f"Unexpected result format: {result}")
             return {}
-        
+
         # Convert to standard format
         labels = {
             "highly_relevant": data.highly_relevant,
@@ -483,31 +517,41 @@ def generate_labels_with_context(
             "somewhat_relevant": data.somewhat_relevant,
             "marginally_relevant": data.marginally_relevant,
             "irrelevant": data.irrelevant,
-            "_reasoning": getattr(data, 'reasoning', ''),
+            "_reasoning": getattr(data, "reasoning", ""),
         }
-        
+
         # Validate and filter cross-game contamination if game is known
         if game:
             try:
                 from ml.data.card_database import get_card_database
+
                 card_db = get_card_database()
-                
-                for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+
+                for level in [
+                    "highly_relevant",
+                    "relevant",
+                    "somewhat_relevant",
+                    "marginally_relevant",
+                    "irrelevant",
+                ]:
                     cards = labels[level]
                     valid_cards, invalid_cards = card_db.filter_cards_by_game(cards, game)
                     if invalid_cards:
-                        logger.warning(f"Filtered {len(invalid_cards)} cross-game cards from {level} for {query}: {invalid_cards[:3]}")
+                        logger.warning(
+                            f"Filtered {len(invalid_cards)} cross-game cards from {level} for {query}: {invalid_cards[:3]}"
+                        )
                     labels[level] = valid_cards
             except ImportError:
                 # Card database not available, skip filtering
                 pass
             except Exception as e:
                 logger.warning(f"Could not filter cross-game cards: {e}")
-        
+
         return labels
     except Exception as e:
         logger.error(f"Failed to generate labels: {e}")
         import traceback
+
         logger.debug(traceback.format_exc())
         return {}
 
@@ -520,28 +564,28 @@ def main() -> int:
     parser.add_argument("--card-attrs", type=str, help="Path to card_attributes_enriched.csv")
     parser.add_argument("--model", type=str, help="Specific model to use")
     parser.add_argument("--use-best", action="store_true", help="Use best available model")
-    
+
     args = parser.parse_args()
-    
+
     if not HAS_PYDANTIC_AI:
         logger.error("pydantic-ai required")
         return 1
-    
+
     # Load context
     card_context = None
     if args.card_attrs:
         card_context = load_card_context(args.query, Path(args.card_attrs))
-    
+
     # Create agent
     agent = make_enhanced_label_agent(
         model_name=args.model,
         use_best_model=args.use_best or not args.model,
     )
-    
+
     if not agent:
         logger.error("Failed to create agent")
         return 1
-    
+
     # Generate labels
     labels = generate_labels_with_context(
         agent,
@@ -549,12 +593,12 @@ def main() -> int:
         use_case=args.use_case,
         card_context=card_context,
     )
-    
+
     print(json.dumps(labels, indent=2))
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

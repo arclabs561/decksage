@@ -1,10 +1,9 @@
 import csv
 import random
-
 from itertools import islice
 
-class CollectionsCorpus(object):
 
+class CollectionsCorpus:
     def __init__(self, path, limit=None):
         self.path = path
         self.limit = limit

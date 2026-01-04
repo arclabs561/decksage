@@ -55,7 +55,7 @@ Based on research and current state analysis, here's a systematic plan to improv
 
 #### 1.2 Better Training
 - **Research Finding**: More epochs help, proper evaluation during training
-- **Action**: 
+- **Action**:
   - Increase epochs (5-10)
   - Add validation split
   - Add early stopping
@@ -149,4 +149,3 @@ Based on research and current state analysis, here's a systematic plan to improv
 - **Current**: Jaccard best (P@10 = 0.0833)
 - **Target**: Fusion P@10 = 0.20-0.25 (meet README goal)
 - **Methods**: Better embeddings + optimized fusion weights
-

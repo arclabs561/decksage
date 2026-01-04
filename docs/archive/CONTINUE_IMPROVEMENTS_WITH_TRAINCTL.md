@@ -66,4 +66,3 @@ trainctl aws train <instance-id> src/ml/scripts/train_multi_game_embeddings.py \
 - 🔄 trainctl compiling
 - ⏳ Need to test locally first
 - ⏳ Then migrate AWS scripts
-

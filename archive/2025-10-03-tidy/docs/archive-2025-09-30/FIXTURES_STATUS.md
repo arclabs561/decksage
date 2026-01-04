@@ -37,7 +37,7 @@ ok   collections/games/magic/dataset/scryfall 0.521s
 
 **Test Coverage**:
 - ✅ Deck name extraction
-- ✅ Format extraction  
+- ✅ Format extraction
 - ✅ Card parsing (2 sections: Main, Sideboard)
 - ✅ ID regex validation
 
@@ -191,7 +191,7 @@ The fixtures contain actual HTML/JSON from live sources and successfully test:
 
 ```
 mtgtop8/   182 KB  ✅ Good
-scryfall/  447 KB  ✅ Acceptable  
+scryfall/  447 KB  ✅ Acceptable
 goldfish/   19 B   ⚠️ 404 error
 deckbox/     -     ❌ Missing
 ```

@@ -18,6 +18,7 @@ def heterogeneous_similarity(test_set, config):
 
     # Load heterogeneous structure
     import pathlib
+
     base = pathlib.Path(__file__).resolve()
     default = base.parent.parent.parent / "src" / "backend" / "decks_hetero.jsonl"
     fixture = base.parent.parent / "tests" / "fixtures" / "decks_export_hetero_small.jsonl"

@@ -282,6 +282,3 @@ python exp_057_expanded_baseline.py  # Check if P@10 > 0.08
 ```
 
 **Expected outcome**: Richer dataset (20K decks + LLM annotations) → Better results
-
-
-

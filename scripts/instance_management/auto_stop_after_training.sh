@@ -30,16 +30,16 @@ while true; do
     # Check for completion
     GNN_EXISTS=$(s5cmd ls "$GNN_OUTPUT" 2>&1 | grep -q "gnn_graphsage.json" && echo "yes" || echo "no")
     EVAL_EXISTS=$(s5cmd ls "$EVAL_OUTPUT" 2>&1 | grep -q "hybrid_evaluation_results.json" && echo "yes" || echo "no")
-    
+
     if [[ "$GNN_EXISTS" == "yes" ]] && [[ "$EVAL_EXISTS" == "yes" ]]; then
         echo "✓ Training complete! Waiting $WAIT_MINUTES minutes before stopping..."
         sleep $((WAIT_MINUTES * 60))
-        
+
         echo "Stopping instance $INSTANCE_ID..."
         "$RUNCTL_BIN" aws stop "$INSTANCE_ID"
         echo "✓ Instance stopped"
         exit 0
     fi
-    
+
     sleep 60  # Check every minute
 done

@@ -33,7 +33,7 @@
 
 ### 2. **Baseline Claims Don't Reproduce**
 
-**Claimed**: P@10 = 0.12-0.15  
+**Claimed**: P@10 = 0.12-0.15
 **Actual**: P@10 = 0.08 (38-query test set)
 
 **Cause**: Previous high scores on smaller test sets (10-20 queries)
@@ -258,8 +258,8 @@ def modern_burn_suggestions(current_deck):
 
 ## Grade Evolution
 
-**Start**: C+ (great backend, poor ML, inflated claims)  
-**After fixes**: B+ (fixed bugs, honest metrics, ready to scale)  
+**Start**: C+ (great backend, poor ML, inflated claims)
+**After fixes**: B+ (fixed bugs, honest metrics, ready to scale)
 **Potential**: A- (if LLM annotations + more data → actual improvements)
 
 ---
@@ -283,6 +283,3 @@ def modern_burn_suggestions(current_deck):
 **Next 24 hours**: Expand to 6K+ decks, create 100+ LLM annotations, test if it helps.
 
 **Philosophy applied**: Debug first, design second. Measure honestly, report accurately. Experience complexity, then abstract. Walk the talk.
-
-
-

@@ -1,14 +1,16 @@
-from fastnode2vec import Graph, Node2Vec
+import argparse
 import csv
 from itertools import islice
-import argparse
+
+from fastnode2vec import Graph, Node2Vec
+
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('infile')
-    parser.add_argument('-o', '--outfile', default='vectors.kv')
-    parser.add_argument('-l', '--limit', default=None, type=int)
-    parser.add_argument('-e', '--epochs', default=100)
+    parser.add_argument("infile")
+    parser.add_argument("-o", "--outfile", default="vectors.kv")
+    parser.add_argument("-l", "--limit", default=None, type=int)
+    parser.add_argument("-e", "--epochs", default=100)
     args = parser.parse_args()
 
     edges = iter_edges(args.infile, limit=args.limit)
@@ -25,6 +27,7 @@ def main():
     model.train(epochs=args.epochs)
     model.wv.save(args.outfile)
 
+
 def iter_edges(infile, limit=None):
     with open(infile) as f:
         r = csv.reader(f)
@@ -34,5 +37,5 @@ def iter_edges(infile, limit=None):
             yield (n, m, int(count_set))
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

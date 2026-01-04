@@ -98,11 +98,11 @@ go run cmd/export-hetero/main.go data-full/games/yugioh/ygoprodeck-tournament ..
 
 ## Timeline
 
-**Start**: 7:24 PM Oct 4, 2025  
-**Pokemon ETA**: 9:00 PM (90 min)  
-**YGO ETA**: 8:00 PM (35 min)  
-**MTG Pioneer ETA**: 7:45 PM (20 min)  
-**MTG Vintage ETA**: 7:45 PM (20 min)  
+**Start**: 7:24 PM Oct 4, 2025
+**Pokemon ETA**: 9:00 PM (90 min)
+**YGO ETA**: 8:00 PM (35 min)
+**MTG Pioneer ETA**: 7:45 PM (20 min)
+**MTG Vintage ETA**: 7:45 PM (20 min)
 **All Complete ETA**: ~9:00 PM
 
 ## Success Metrics

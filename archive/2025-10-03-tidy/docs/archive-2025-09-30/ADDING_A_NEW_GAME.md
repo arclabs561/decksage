@@ -1,6 +1,6 @@
 # Adding a New Game to DeckSage
 
-**Status**: Architecture validated with MTG implementation  
+**Status**: Architecture validated with MTG implementation
 **Time Required**: ~2-3 days for a new game with 2-3 data sources
 
 ## Architecture Overview
@@ -13,7 +13,7 @@ games/                    # Shared (all games)
 └── dataset.go           # Dataset interface, update options, iteration
 
 games/{game}/            # Game-specific
-├── game/               
+├── game/
 │   └── game.go          # Card struct, CollectionType implementations
 └── dataset/
     ├── {source1}/       # First data source (e.g., ygoprodeck)
@@ -51,11 +51,11 @@ import "collections/games"
 
 // Register Yu-Gi-Oh! collection types
 func init() {
-	games.RegisterCollectionType("YGODeck", func() games.CollectionType { 
-		return new(CollectionTypeDeck) 
+	games.RegisterCollectionType("YGODeck", func() games.CollectionType {
+		return new(CollectionTypeDeck)
 	})
-	games.RegisterCollectionType("YGOCollection", func() games.CollectionType { 
-		return new(CollectionTypeCollection) 
+	games.RegisterCollectionType("YGOCollection", func() games.CollectionType {
+		return new(CollectionTypeCollection)
 	})
 }
 
@@ -298,7 +298,7 @@ import (
 func TestYuGiOhDatasets(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger()
-	
+
 	// Create temp blob storage
 	tmpBlob, err := blob.NewBucket(ctx, "file://./testdata")
 	if err != nil {
@@ -345,14 +345,14 @@ go test ./games/yugioh/...
 
 ### Partition Names
 
-**MTG**: Main Deck, Sideboard, Command Zone  
-**Yu-Gi-Oh!**: Main Deck, Extra Deck, Side Deck  
+**MTG**: Main Deck, Sideboard, Command Zone
+**Yu-Gi-Oh!**: Main Deck, Extra Deck, Side Deck
 **Pokemon**: Deck, Prizes
 
 ### Collection Types
 
-**MTG**: Set (with set code), Deck (with format), Cube  
-**Yu-Gi-Oh!**: Deck (TCG/OCG format), Collection (user lists)  
+**MTG**: Set (with set code), Deck (with format), Cube
+**Yu-Gi-Oh!**: Deck (TCG/OCG format), Collection (user lists)
 **Pokemon**: Deck, Set, Binder
 
 ### Card Fields
@@ -381,11 +381,11 @@ Each game has unique fields:
 
 ## Benefits of This Architecture
 
-✅ **Shared infrastructure** - Scraper, storage, CLI work for all games  
-✅ **Type safety** - Compile-time checks for interfaces  
-✅ **Easy extension** - Add game in ~2-3 days  
-✅ **Isolated changes** - Game-specific code doesn't affect others  
-✅ **Testable** - Each game has independent tests  
+✅ **Shared infrastructure** - Scraper, storage, CLI work for all games
+✅ **Type safety** - Compile-time checks for interfaces
+✅ **Easy extension** - Add game in ~2-3 days
+✅ **Isolated changes** - Game-specific code doesn't affect others
+✅ **Testable** - Each game has independent tests
 
 ## Next Steps
 

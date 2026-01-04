@@ -1,21 +1,24 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from dataclasses import asdict
-
 import pytest
-from hypothesis import assume, given, strategies as st
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
 
 @st.composite
 def mtg_card(draw):
-    name = draw(st.sampled_from([
-        "Lightning Bolt",
-        "Goblin Guide",
-        "Lava Spike",
-        "Mountain",
-        "Forest",
-    ]))
+    name = draw(
+        st.sampled_from(
+            [
+                "Lightning Bolt",
+                "Goblin Guide",
+                "Lava Spike",
+                "Mountain",
+                "Forest",
+            ]
+        )
+    )
     count = draw(st.integers(min_value=1, max_value=4))
     return {"name": name, "count": count}
 
@@ -41,7 +44,7 @@ def mtg_deck_small(draw):
 
 def _canonicalize(deck_dict: dict) -> dict:
     # Re-validate through Pydantic and dump; this is our canonical form
-    from ..validation.validators.models import MTGDeck
+    from ..validation.validators import MTGDeck
 
     try:
         d = MTGDeck.model_validate(deck_dict)
@@ -64,10 +67,12 @@ def ygo_deck_small(draw):
     ygo_names = ["Blue-Eyes White Dragon"] + [f"Card {i}" for i in range(1, 10)]
     main_cards = draw(
         st.lists(
-            st.fixed_dictionaries({
-                "name": st.sampled_from(ygo_names),
-                "count": st.integers(min_value=1, max_value=3),
-            }),
+            st.fixed_dictionaries(
+                {
+                    "name": st.sampled_from(ygo_names),
+                    "count": st.integers(min_value=1, max_value=3),
+                }
+            ),
             min_size=1,
             max_size=40,
         )
@@ -98,10 +103,12 @@ def pkmn_deck_small(draw):
     pkmn_names = ["Pikachu", "Lightning Energy"] + [f"Trainer {i}" for i in range(1, 10)]
     main_cards = draw(
         st.lists(
-            st.fixed_dictionaries({
-                "name": st.sampled_from(pkmn_names),
-                "count": st.integers(min_value=1, max_value=4),
-            }),
+            st.fixed_dictionaries(
+                {
+                    "name": st.sampled_from(pkmn_names),
+                    "count": st.integers(min_value=1, max_value=4),
+                }
+            ),
             min_size=1,
             max_size=60,
         )
@@ -143,12 +150,14 @@ def test_random_edits_preserve_invariants(deck):
     add_allowed = max(0, 4 - current)
     if add_allowed == 0:
         pytest.skip("no room for more copies without violating 4-of")
-    ops = [{
-        "op": "add_card",
-        "partition": "Main",
-        "card": "Lightning Bolt",
-        "count": min(3, add_allowed),
-    }]
+    ops = [
+        {
+            "op": "add_card",
+            "partition": "Main",
+            "card": "Lightning Bolt",
+            "count": min(3, add_allowed),
+        }
+    ]
     res = apply_deck_patch("magic", deck, DeckPatch(ops=ops))
     assert res.is_valid
     out = res.deck or deck
@@ -157,5 +166,3 @@ def test_random_edits_preserve_invariants(deck):
         for c in p.get("cards", []):
             assert isinstance(c["name"], str) and c["name"].strip() == c["name"]
             assert int(c["count"]) >= 1
-
-

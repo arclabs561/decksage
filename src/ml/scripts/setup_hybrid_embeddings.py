@@ -45,40 +45,40 @@ def setup_gnn_embeddings(
 ) -> CardGNNEmbedder | None:
     """Initialize GNN embedder from graph."""
     logger.info("Setting up GNN embeddings...")
-    
+
     if not graph_path.exists():
         logger.warning(f"Graph not found: {graph_path}")
         logger.warning("  Run update_graph_incremental.py first")
         return None
-    
+
     graph = IncrementalCardGraph(graph_path)
     if len(graph.nodes) == 0:
         logger.warning("Graph is empty")
         return None
-    
+
     logger.info(f"  Graph: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
     logger.info(f"  Model type: {model_type}")
-    
+
     # Export edgelist
     edgelist_path = graph.export_edgelist(
         PATHS.data / "graphs" / "temp_edgelist.edg",
         min_weight=2,
     )
-    
+
     # Train GNN
     embedder = CardGNNEmbedder(
         model_type=model_type,
         hidden_dim=hidden_dim,
         num_layers=num_layers,
     )
-    
+
     logger.info("Training GNN (this may take a while)...")
     embedder.train(
         edgelist_path,
         epochs=100,
         output_path=gnn_model_path,
     )
-    
+
     logger.info("✓ GNN embedder ready")
     return embedder
 
@@ -111,18 +111,18 @@ def main() -> int:
         action="store_true",
         help="Skip GNN setup (use existing or setup later)",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("="*60)
     logger.info("Setting up Hybrid Embedding System")
     logger.info("="*60)
-    
+
     # 1. Instruction-tuned embeddings (always setup - zero-shot)
     instruction_embedder = setup_instruction_tuned_embeddings(
         model_name=args.instruction_model,
     )
-    
+
     # 2. GNN embeddings (optional, requires graph)
     gnn_embedder = None
     if not args.skip_gnn:
@@ -130,7 +130,7 @@ def main() -> int:
             graph_path=args.graph_path,
             gnn_model_path=args.gnn_model,
         )
-    
+
     logger.info("\n" + "="*60)
     logger.info("Setup Complete")
     logger.info("="*60)
@@ -143,10 +143,9 @@ def main() -> int:
     logger.info("  1. Use update_graph_incremental.py to add new decks")
     logger.info("  2. Use update_embeddings_hybrid.py for daily/weekly updates")
     logger.info("  3. Integrate into fusion system via API")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     exit(main())
-

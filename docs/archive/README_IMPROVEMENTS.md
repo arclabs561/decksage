@@ -59,10 +59,3 @@
 
 **All improvements are data-justified and methodology-sound.**
 No speculative changes - only evidence-based improvements.
-
-
-
-
-
-
-

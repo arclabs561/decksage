@@ -1,6 +1,6 @@
 # DeckSage Testing & Status Report
 
-**Date**: 2025-09-30  
+**Date**: 2025-09-30
 **Go Version**: 1.25.1
 
 ## Project Overview
@@ -61,7 +61,7 @@
 **Dataset Tests**:
 - ✅ Scryfall - Card parsing, set parsing, regex validation
 - ✅ MTGGoldfish - Deck parsing, URL handling, regex tests
-- ✅ MTGTop8 - Deck parsing, ID extraction, regex tests  
+- ✅ MTGTop8 - Deck parsing, ID extraction, regex tests
 - ⚠️ Deckbox - Needs test implementation
 
 **Core Tests**:
@@ -254,7 +254,7 @@ go run ./cmd/dataset extract mtgtop8 --only="https://mtgtop8.com/event?e=12345&d
 
 ### Phase 1: Stabilize MTG (Current)
 - ✅ Fix broken tests
-- ✅ Fix known bugs  
+- ✅ Fix known bugs
 - ⏳ Expand test coverage
 - ⏳ Document architecture
 - ⏳ Validate data quality
@@ -298,7 +298,7 @@ From README.md:
 > Goals:
 > - Finish parsing deckbox, goldfish, mtgtop8, and scryfall, and verify quality.
 
-**Status**: 
+**Status**:
 - ✅ Parsers implemented for all 4 sources
 - ❌ Quality verification incomplete (tests broken)
 - ❌ No systematic validation of parsing accuracy

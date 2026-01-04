@@ -93,7 +93,7 @@ All the experiments that failed due to "metadata parsing fails":
 
 Can now be re-run successfully with:
 - Archetype-aware similarity
-- Format-specific embeddings  
+- Format-specific embeddings
 - Heterogeneous graph (Card-Deck-Archetype)
 - All designs from design documents
 
@@ -110,6 +110,3 @@ With metadata now accessible:
 1. Re-implement heterogeneous graph properly
 2. Run archetype-aware experiments
 3. Expected: P@10 > 0.14 (beat 53-experiment baseline)
-
-
-

@@ -110,7 +110,7 @@ cacheOpts := badger.DefaultOptions(opt.Dir)
 $ grep "cache" scripts/expand_scraping.sh
 # NO RESULTS
 
-$ grep "\-\-cache" scripts/expand_scraping.sh  
+$ grep "\-\-cache" scripts/expand_scraping.sh
 # NO RESULTS
 ```
 
@@ -333,8 +333,8 @@ rm -rf src/backend/cache/
 mv src/backend/cache/ src/backend/cache-2023-03-archived/
 ```
 
-**Effort:** 1 minute  
-**Impact:** Frees 5.5GB  
+**Effort:** 1 minute
+**Impact:** Frees 5.5GB
 **Risk:** None (cache is optional)
 
 ### Fix #2: Add GC Routine (High Priority)
@@ -344,10 +344,10 @@ func (b *Bucket) RunGC(ctx context.Context) error {
     if b.cache == nil {
         return nil
     }
-    
+
     ticker := time.NewTicker(5 * time.Minute)
     defer ticker.Stop()
-    
+
     for {
         select {
         case <-ctx.Done():
@@ -363,7 +363,7 @@ func (b *Bucket) RunGC(ctx context.Context) error {
 }
 ```
 
-**Effort:** 30 minutes  
+**Effort:** 30 minutes
 **Impact:** Prevents unbounded growth
 
 ### Fix #3: Configure Size Limits (Medium Priority)
@@ -375,7 +375,7 @@ cacheOpts.NumMemtables = 2               // Limit memory usage
 cacheOpts.NumLevelZeroTables = 2         // Compact more aggressively
 ```
 
-**Effort:** 10 minutes  
+**Effort:** 10 minutes
 **Impact:** Reduces cache footprint
 
 ### Fix #4: Add TTL Support (Optional)
@@ -387,7 +387,7 @@ err := b.cache.Update(func(txn *badger.Txn) error {
 })
 ```
 
-**Effort:** 15 minutes  
+**Effort:** 15 minutes
 **Impact:** Automatic cleanup of old data
 
 ### Fix #5: Document When to Use Cache (Immediate)
@@ -408,7 +408,7 @@ err := b.cache.Update(func(txn *badger.Txn) error {
 **Default:** NO CACHE (let blob storage handle caching)
 ```
 
-**Effort:** 5 minutes  
+**Effort:** 5 minutes
 **Impact:** Prevents misuse
 
 ---
@@ -425,7 +425,7 @@ err := b.cache.Update(func(txn *badger.Txn) error {
 
 **For s3:// buckets:**
 - Blob storage: S3 over network
-- Cache: Badger DB on disk  
+- Cache: Badger DB on disk
 - **Net effect:** Network → Disk → Memory
 - **Value:** HIGH (avoids network calls)
 
@@ -476,7 +476,7 @@ err := b.cache.Update(func(txn *badger.Txn) error {
 
 ### Priority 1 (This Week)
 3. **Add GC routine** - Prevent future unbounded growth
-4. **Configure size limits** - Reduce memory footprint  
+4. **Configure size limits** - Reduce memory footprint
 5. **Add metrics** - Measure cache effectiveness
 
 ### Priority 2 (Future)
@@ -568,7 +568,7 @@ HTTP → Scraper Cache (SHA256-keyed) → Badger Cache (optional)
 - Requires maintenance (GC, TTL, monitoring)
 - Current implementation broken (5.5GB stale data)
 
-**Recommendation:** 
+**Recommendation:**
 - **Keep the feature** (useful for S3)
 - **Fix the implementation** (GC, TTL, size limits)
 - **Document usage** (when to use --cache)
@@ -629,11 +629,11 @@ func (b *Bucket) StartGC(ctx context.Context) {
     if b.cache == nil {
         return
     }
-    
+
     go func() {
         ticker := time.NewTicker(5 * time.Minute)
         defer ticker.Stop()
-        
+
         for {
             select {
             case <-ctx.Done():
@@ -666,9 +666,9 @@ func (b *Bucket) CacheStats(ctx context.Context) map[string]interface{} {
     if b.cache == nil {
         return nil
     }
-    
+
     lsmSize, vlogSize := b.cache.Size()
-    
+
     return map[string]interface{}{
         "lsm_size_mb":  float64(lsmSize) / (1024 * 1024),
         "vlog_size_mb": float64(vlogSize) / (1024 * 1024),
@@ -823,13 +823,13 @@ for {
 
 ---
 
-**Analysis Date:** October 4, 2025  
-**Cache Age:** March 18, 2023 (19+ months old!)  
-**Cache Size:** 5.5GB  
-**Issues Found:** 10  
-**Critical Issues:** 4  
+**Analysis Date:** October 4, 2025
+**Cache Age:** March 18, 2023 (19+ months old!)
+**Cache Size:** 5.5GB
+**Issues Found:** 10
+**Critical Issues:** 4
 **Recommended Action:** Clean up immediately, fix implementation before re-enabling
 
-**Status:** ⚠️ **BROKEN** (stale, unbounded, unmaintained)  
-**Impact:** LOW (not currently used)  
+**Status:** ⚠️ **BROKEN** (stale, unbounded, unmaintained)
+**Impact:** LOW (not currently used)
 **Fix Effort:** 2-3 hours for complete solution

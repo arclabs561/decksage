@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 from __future__ import annotations
 
-from collections import defaultdict
-
 import pandas as pd
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 
 @given(
@@ -38,5 +37,3 @@ def test_build_adjacency_bidirectional(pairs):
             # Allowed if explicitly present in data
             continue
         assert u not in nbrs
-
-

@@ -12,10 +12,11 @@ Based on meta-evaluation findings, these are improved prompts that:
 """
 
 from .expanded_judge_criteria import (
+    EXPANDED_CONTEXTUAL_DISCOVERY_JUDGE_PROMPT,
     EXPANDED_DECK_MODIFICATION_JUDGE_PROMPT,
     EXPANDED_SIMILARITY_JUDGE_PROMPT,
-    EXPANDED_CONTEXTUAL_DISCOVERY_JUDGE_PROMPT,
 )
+
 
 # Use expanded prompts as the default
 DECK_MODIFICATION_JUDGE_PROMPT = EXPANDED_DECK_MODIFICATION_JUDGE_PROMPT
@@ -115,10 +116,9 @@ def get_improved_prompt(task: str) -> str:
 
 
 __all__ = [
+    "CALIBRATION_TEST_CASES",
+    "CONTEXTUAL_DISCOVERY_JUDGE_PROMPT",
     "DECK_MODIFICATION_JUDGE_PROMPT",
     "SIMILARITY_JUDGE_PROMPT",
-    "CONTEXTUAL_DISCOVERY_JUDGE_PROMPT",
-    "CALIBRATION_TEST_CASES",
     "get_improved_prompt",
 ]
-

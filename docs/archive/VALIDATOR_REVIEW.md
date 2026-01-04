@@ -3,8 +3,8 @@
 
 ## 🎯 Dataset to Validate
 
-**Total:** 314,196 decks (recovered from cache)  
-**With metadata:** 55,318 decks (17.6%)  
+**Total:** 314,196 decks (recovered from cache)
+**With metadata:** 55,318 decks (17.6%)
 **Sources:** mtgtop8, goldfish, deckbox
 
 ---
@@ -62,8 +62,8 @@ if badCardName(card.Name) { return error }  // Line 160
 - ✅ Card count < 1
 - ✅ Bad card names (regex check)
 
-**Issue:** Count validation is `< 1` not `<= 0 || > 100`  
-→ Allows counts > 100 at this layer  
+**Issue:** Count validation is `< 1` not `<= 0 || > 100`
+→ Allows counts > 100 at this layer
 → But parser layer already filtered these out
 
 ---
@@ -71,8 +71,8 @@ if badCardName(card.Name) { return error }  // Line 160
 ## 🔬 Validation Against Recovered Data
 
 ### Test 1: Card Count Bounds
-**Sample:** 100 random decks  
-**Result:** 0 decks with invalid counts  
+**Sample:** 100 random decks
+**Result:** 0 decks with invalid counts
 **Status:** ✅ Validation working
 
 ### Test 2: Source Field Population
@@ -97,11 +97,11 @@ if badCardName(card.Name) { return error }  // Line 160
 
 ### Issue #1: Inconsistent Count Validation
 
-**Parser says:** `count <= 0 || count > 100`  
+**Parser says:** `count <= 0 || count > 100`
 **Canonicalize says:** `count < 1`
 
-**Problem:** Upper bound not enforced in Canonicalize  
-**Impact:** LOW (parser already filters)  
+**Problem:** Upper bound not enforced in Canonicalize
+**Impact:** LOW (parser already filters)
 **Fix:** Harmonize validation
 
 ```go
@@ -124,7 +124,7 @@ if card.Count < 1 || card.Count > 100 {
 - Placement (could be negative)
 - EventDate format (free-form string)
 
-**Impact:** LOW (not critical for deck validity)  
+**Impact:** LOW (not critical for deck validity)
 **Recommendation:** Add if metadata becomes important
 
 ### Issue #3: Source Field Not Validated

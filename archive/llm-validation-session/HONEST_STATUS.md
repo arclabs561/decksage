@@ -69,7 +69,7 @@ assert len(validator.decks) > 0  # Just checks file loads
 
 **Doesn't test:**
 - LLM API calls
-- OpenRouter connectivity  
+- OpenRouter connectivity
 - Structured outputs
 - Error handling
 
@@ -129,7 +129,7 @@ Run with: `pytest -v -m llm` (requires OPENROUTER_API_KEY)
 - ❌ Each dev session costs $1-10 in API calls
 
 ### For Production (With Current Code)
-**Rating:** 6/10  
+**Rating:** 6/10
 - ✅ Functionally correct
 - ✅ Type-safe
 - ✅ Multiple models

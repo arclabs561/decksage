@@ -10,6 +10,7 @@ from collections import defaultdict
 
 import pandas as pd
 
+
 # Common basics and fetches to filter
 LANDS = {
     "Plains",

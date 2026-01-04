@@ -24,7 +24,7 @@ func contains(s, substr string) bool {
 **Example**:
 ```go
 contains("Effect Monster", "Effect")   // ✅ true (prefix)
-contains("Fusion Monster", "Fusion")   // ✅ true (prefix)  
+contains("Fusion Monster", "Fusion")   // ✅ true (prefix)
 contains("Synchro Tuner Monster", "Tuner")  // ❌ FALSE! (middle)
 ```
 
@@ -139,9 +139,9 @@ Level   *int   `json:"level"`
 
 ## Grade
 
-**Code Correctness**: D (4/10) - Core logic broken  
-**Test Coverage**: F (0/10) - No tests  
-**API Design**: B+ (8/10) - Good structure  
+**Code Correctness**: D (4/10) - Core logic broken
+**Test Coverage**: F (0/10) - No tests
+**API Design**: B+ (8/10) - Good structure
 
 **Overall**: **D+ (5/10)** - BROKEN, needs immediate fixes before use
 

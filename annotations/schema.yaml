@@ -1,5 +1,5 @@
 # Annotation Schema v1.0
-# 
+#
 # Best practices for building high-quality similarity datasets:
 # - Multiple annotators per query (inter-annotator agreement)
 # - Version control for annotations
@@ -11,7 +11,7 @@ metadata:
   schema_version: "1.0"
   created: "2025-10-01"
   game: "magic"
-  
+
 annotators:
   - id: "annotator_001"
     name: "Expert MTG Player"
@@ -19,8 +19,8 @@ annotators:
     formats: ["Modern", "Legacy", "Pauper"]
     date_joined: "2025-10-01"
     annotations_completed: 0
-  
-  - id: "annotator_002"  
+
+  - id: "annotator_002"
     name: "Second Annotator"
     expertise_level: "competitive"
     formats: ["Modern", "Pioneer"]
@@ -34,14 +34,14 @@ guidelines:
     2: "Synergy - works well together but different role (Monastery Swiftspear + Lightning Bolt)"
     1: "Related - same archetype/color but different function (Rift Bolt, sorcery speed)"
     0: "Irrelevant - completely different (Counterspell)"
-  
+
   similarity_types:
     substitute: "Functional replacement (same card type, similar effect)"
     synergy: "Cards that work well together"
     upgrade: "Strictly better or meta improvement"
     downgrade: "Budget alternative"
     archetype: "Common in same deck archetype"
-  
+
   annotation_process:
     - "Read query card carefully"
     - "For each candidate, consider: function, cost, format legality"
@@ -50,6 +50,3 @@ guidelines:
     - "Flag uncertain annotations for review"
 
 annotations: []  # Will be populated below
-
-
-

@@ -19,6 +19,7 @@ from pathlib import Path
 import pandas as pd
 from gensim.models import KeyedVectors
 
+
 # Diverse test queries (different card types, rarities, archetypes)
 TEST_QUERIES = [
     # Burn spells

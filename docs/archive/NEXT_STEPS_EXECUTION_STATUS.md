@@ -27,7 +27,7 @@
 ### Blocker: scipy Build Issue
 - **Issue**: scipy fails to build due to missing OpenBLAS (Python 3.13 compatibility)
 - **Impact**: Blocks scripts that depend on `sentence-transformers` (which requires scipy)
-- **Workaround**: 
+- **Workaround**:
   - Created standalone scripts that avoid scipy
   - Can use AWS EC2 for computation-heavy tasks
   - Alternative: Use pre-built wheels or conda environment
@@ -35,7 +35,7 @@
 ### Missing: decks_with_metadata.jsonl
 - **Status**: Not found locally or on S3
 - **Impact**: Blocks signal computation (sideboard, temporal, archetype, format)
-- **Solution**: 
+- **Solution**:
   - Export from raw data using `export-hetero` command (requires data directory)
   - Or generate on AWS EC2 if data exists there
 
@@ -80,4 +80,3 @@
 - ⏳ Evaluation testing pending (waiting for mapping)
 - ⏳ Signal computation pending (waiting for metadata)
 - ⏳ Temporal implementation pending
-

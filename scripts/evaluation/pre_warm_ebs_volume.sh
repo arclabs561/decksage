@@ -45,16 +45,16 @@ if [[ -z "$INSTANCE_ID" ]]; then
     echo "   Creating temporary instance for pre-warming..."
     CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --instance-type t3.medium --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek 2>&1)
     INSTANCE_ID=$(echo "$CREATE_OUTPUT" | grep -oE 'i-[a-z0-9]+' | head -1 || echo "")
-    
+
     if [[ -z "$INSTANCE_ID" ]]; then
         echo "Error: Could not create instance for pre-warming"
         exit 1
     fi
-    
+
     echo "   Created instance: $INSTANCE_ID"
     echo "   Waiting for instance to be running..."
     sleep 30
-    
+
     # Attach volume
     echo "   Attaching volume to instance..."
     "$RUNCTL_BIN" aws ebs attach "$VOLUME_ID" --instance-id "$INSTANCE_ID" --device /dev/sdf || {
@@ -62,9 +62,9 @@ if [[ -z "$INSTANCE_ID" ]]; then
         "$RUNCTL_BIN" aws terminate "$INSTANCE_ID" --force || true
         exit 1
     }
-    
+
     sleep 10  # Wait for attachment
-    
+
     TEMP_INSTANCE=true
 else
     echo "   Using existing instance: $INSTANCE_ID"
@@ -100,5 +100,3 @@ echo ""
 echo "To use this volume:"
 echo "  $RUNCTL_BIN aws ebs attach $VOLUME_ID --instance-id <instance-id> --device /dev/sdf"
 echo "  (Volume will be auto-mounted at /mnt/data by user-data script)"
-
-

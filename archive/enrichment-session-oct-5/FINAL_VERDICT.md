@@ -2,7 +2,7 @@
 
 ## The Process
 1. Built LLM validators forward (appeared to work)
-2. Reviewed backward (found bugs)  
+2. Reviewed backward (found bugs)
 3. Added real tests
 4. Documented honestly
 

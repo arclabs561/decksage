@@ -151,7 +151,7 @@ All working, all validated:
 
 **Not**: Impressive similarity scores with insufficient signals
 
-**Instead**: 
+**Instead**:
 - Clean, honest, working repository ✅
 - Tools that provide actual value ✅
 - Dataset ready for thoughtful cultivation ✅
@@ -162,9 +162,9 @@ All working, all validated:
 We asked for comprehensive critique and scrutiny.
 We got it, accepted it, and acted on it.
 
-Repository is now: 
+Repository is now:
 - Focused (not scattered)
-- Honest (not inflated)  
+- Honest (not inflated)
 - Working (not theorizing)
 - Ready (not "almost")
 

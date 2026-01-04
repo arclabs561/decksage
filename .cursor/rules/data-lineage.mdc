@@ -21,7 +21,7 @@ globs:
 ## Order 1: Exported Decks (depends on Order 0)
 - Flattened JSONL format for Python processing
 - Location: `data/processed/decks_{game}_{source}.jsonl`
-- Tools: 
+- Tools:
   - `bin/export-blob` (PREFERRED): Reads directly from S3 or local blob storage, no intermediate .zst files needed
   - `bin/export-hetero` (LEGACY): Requires local .zst files, cannot read from S3 directly
 - Can be regenerated from Order 0

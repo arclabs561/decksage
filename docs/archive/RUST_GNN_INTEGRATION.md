@@ -1,6 +1,6 @@
 # Rust GNN Integration
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Infrastructure ready, training placeholder
 
 ---
@@ -276,4 +276,3 @@ cargo test gnn::tests
 - **Future**: Native Rust training with candle/burn (if needed)
 - **Pragmatic**: Python training + Rust inference is a solid approach
 - **Performance**: Rust inference is fast, Python training is acceptable for batch jobs
-

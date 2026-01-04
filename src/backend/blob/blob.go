@@ -190,7 +190,7 @@ func (b *Bucket) Write(ctx context.Context, key string, data []byte) error {
 	defer cancel()
 
 	key += ".zst"
-	
+
 	// Retry blob writes up to 3 times with exponential backoff
 	var lastErr error
 	for attempt := 0; attempt < 3; attempt++ {
@@ -205,7 +205,7 @@ func (b *Bucket) Write(ctx context.Context, key string, data []byte) error {
 			backoff := time.Duration(100*(1<<uint(attempt-1))) * time.Millisecond
 			time.Sleep(backoff)
 		}
-		
+
 		var opts *blob.WriterOptions
 		w, err := b.bucket.NewWriter(writeCtx, key, opts)
 		if err != nil {
@@ -240,7 +240,7 @@ func (b *Bucket) Write(ctx context.Context, key string, data []byte) error {
 		lastErr = nil
 		break
 	}
-	
+
 	if lastErr != nil {
 		return fmt.Errorf("failed to write after 3 attempts: %w", lastErr)
 	}

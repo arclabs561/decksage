@@ -1,7 +1,7 @@
 # Strategy Shift: PyG + LLM Judge for Rapid Validation
 
-**Date:** October 1, 2025  
-**Current:** Stuck on gensim/pecanpy dependency hell  
+**Date:** October 1, 2025
+**Current:** Stuck on gensim/pecanpy dependency hell
 **Solution:** PyTorch Geometric + LLM-assisted annotation
 
 ## 🚨 Current Blocker
@@ -65,7 +65,7 @@ class CardGNN(torch.nn.Module):
         super().__init__()
         self.conv1 = SAGEConv(in_channels, hidden_channels)
         self.conv2 = SAGEConv(hidden_channels, out_channels)
-    
+
     def forward(self, x, edge_index, edge_weight):
         x = self.conv1(x, edge_index, edge_weight).relu()
         x = self.conv2(x, edge_index, edge_weight)
@@ -106,14 +106,14 @@ judge = LLMJudge()  # Uses Claude/GPT via OpenRouter
 # Evaluate 100 cards in parallel
 for query_card in sample_cards:
     similar = model.get_similar(query_card, k=10)
-    
+
     # LLM provides expert analysis
     result = judge.evaluate_similarity(
         query_card=query_card,
         similar_cards=similar,
         context="Magic: The Gathering"
     )
-    
+
     # Returns:
     # - overall_quality: 0-10
     # - card_ratings: [relevance 0-4 for each]
@@ -132,11 +132,11 @@ for query_card in sample_cards:
 
 ### Advantages
 
-✅ **Speed:** 10-100x faster than manual  
-✅ **Consistency:** No annotator fatigue  
-✅ **Insight:** Detects biases/patterns  
-✅ **Scale:** Can process full dataset  
-✅ **Cost:** ~$0.50 for 100 cards @ Claude Sonnet  
+✅ **Speed:** 10-100x faster than manual
+✅ **Consistency:** No annotator fatigue
+✅ **Insight:** Detects biases/patterns
+✅ **Scale:** Can process full dataset
+✅ **Cost:** ~$0.50 for 100 cards @ Claude Sonnet
 
 ## 🎯 Revised Action Plan
 
@@ -250,14 +250,14 @@ python llm_judge.py \
   --output ../../experiments/llm_baseline.json
 ```
 
-**Expected time to first results:** 1 hour  
+**Expected time to first results:** 1 hour
 **Expected quality improvement:** Significant (modern GNNs + LLM feedback)
 
 ---
 
 ## 💭 Why This Works
 
-**Problem:** Can't get Node2Vec dependencies working  
+**Problem:** Can't get Node2Vec dependencies working
 **Solution:** Use better tools (PyG) + LLM to accelerate validation
 
 **Key insight:** We don't need 100% manual annotation. LLM can:
@@ -269,8 +269,3 @@ python llm_judge.py \
 **We validate LLM with spot checks, not the other way around.**
 
 This is **faster, cheaper, and likely better** than pure manual annotation.
-
-
-
-
-

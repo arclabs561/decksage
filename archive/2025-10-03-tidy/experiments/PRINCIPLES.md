@@ -7,7 +7,7 @@
 # Each experiment has:
 {
   "keywords": [...],      # Key concepts
-  "tags": [...],          # Categories  
+  "tags": [...],          # Categories
   "context": "...",       # Rich description
   "embedding": vec        # For similarity
 }
@@ -165,5 +165,3 @@ The system KNOWS what it needs and can guide to solution.
 We just need to execute the engineering work (fix parsing OR use external data).
 
 **This session's achievement:** Not just results, but a **self-sustaining scientific process** that will continue discovering long after this chat ends.
-
-

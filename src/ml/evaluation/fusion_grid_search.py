@@ -7,10 +7,8 @@ Designed for programmatic use in tests and small experiments.
 
 from __future__ import annotations
 
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, Tuple
-
-import numpy as np
 
 from .fusion import FusionWeights, WeightedLateFusion
 from .utils.evaluation import evaluate_similarity
@@ -20,7 +18,7 @@ from .utils.evaluation import evaluate_similarity
 class GridSearchResult:
     best_weights: FusionWeights
     best_score: float
-    results: Dict[Tuple[float, float, float], float]
+    results: dict[tuple[float, float, float], float]
 
 
 def grid_search_weights(
@@ -47,7 +45,7 @@ def grid_search_weights(
             yield round(x, 6)
             x += inc
 
-    scores: Dict[Tuple[float, float, float], float] = {}
+    scores: dict[tuple[float, float, float], float] = {}
     best_w = FusionWeights()
     best_score = -1.0
 
@@ -73,9 +71,4 @@ def grid_search_weights(
     return GridSearchResult(best_weights=best_w, best_score=best_score, results=scores)
 
 
-__all__ = ["grid_search_weights", "GridSearchResult"]
-
-
-
-
-
+__all__ = ["GridSearchResult", "grid_search_weights"]

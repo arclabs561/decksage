@@ -17,7 +17,7 @@
 - **Progress**: Check current test set
 - **Action**: Continue monitoring
 
-### 2. Card Enrichment  
+### 2. Card Enrichment
 - **Status**: Running with optimized script
 - **Progress**: Check current status
 - **Action**: Continue monitoring
@@ -78,4 +78,3 @@ just hyperparam-search
 5. ⏳ Apply research-backed hyperparameter ranges (after search completes)
 
 **All tasks continuing with trainctl ready to use!**
-

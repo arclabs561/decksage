@@ -1,7 +1,7 @@
 # Scientific Analysis Findings
 
-**Date**: November 10, 2025  
-**Approach**: Data-driven, error-review motivated  
+**Date**: November 10, 2025
+**Approach**: Data-driven, error-review motivated
 **Status**: Analysis in progress
 
 ---
@@ -39,7 +39,7 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 
 ### Question 1: Why is Fusion Worse Than Baseline?
 **Hypothesis**: Weight combination is suboptimal
-**Data Needed**: 
+**Data Needed**:
 - Individual signal P@10 (embed, jaccard, functional alone)
 - Weight sensitivity analysis
 - Correlation between signals
@@ -52,7 +52,7 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 - Frequency-based methods underperform
 - Graph structure signals don't help
 
-**Hypothesis**: 
+**Hypothesis**:
 - Signals may be correlated (redundant)
 - Some signals may have low quality
 - Test set may be biased
@@ -61,7 +61,7 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 
 ### Question 3: Is Test Set Size Sufficient?
 **Current**: 38 queries
-**Statistical Power**: 
+**Statistical Power**:
 - 95% CI width ≈ ±0.05 for P@10=0.09 with n=38
 - Need n=100+ for ±0.02 CI width
 
@@ -72,12 +72,12 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 ## Evidence-Based Improvements (Small, Quintessential)
 
 ### Improvement 1: Add Confidence Intervals ✅
-**Why**: 
+**Why**:
 - Test set is small (38 queries)
 - Current P@10=0.0882 has no uncertainty
 - Can't tell if 0.088 vs 0.089 is meaningful
 
-**Change**: 
+**Change**:
 - Use `evaluation_with_ci.py` for all metrics
 - Report: "P@10 = 0.0882 (95% CI: 0.075, 0.101)"
 
@@ -85,12 +85,12 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 **Effort**: Small (already implemented)
 
 ### Improvement 2: Measure Individual Signal Performance
-**Why**: 
+**Why**:
 - Fusion (0.0882) is worse than baseline (0.089)
 - Need to know which signals help/hurt
 - May find one signal is much better
 
-**Change**: 
+**Change**:
 - Run `measure_signal_performance.py`
 - Measure P@10 for embed, jaccard, functional alone
 - Compare to fusion
@@ -99,12 +99,12 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 **Effort**: Medium (need to implement similarity function imports)
 
 ### Improvement 3: Fix Weight Normalization
-**Why**: 
+**Why**:
 - Current weights: embed=0.1, jaccard=0.2, functional=0.7 (sum=1.0)
 - But fusion may not normalize properly
 - Small normalization errors can hurt performance
 
-**Change**: 
+**Change**:
 - Ensure weights sum to 1.0 in fusion code
 - Use `normalize_weights()` from fusion_integration.py
 
@@ -112,12 +112,12 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 **Effort**: Minimal (one-line fix when code readable)
 
 ### Improvement 4: Analyze Why Experiments Failed
-**Why**: 
+**Why**:
 - Many experiments made things worse
 - Need to understand failure modes
 - Avoid repeating failed approaches
 
-**Change**: 
+**Change**:
 - Run `analyze_failures.py` on test set
 - Categorize failure types
 - Identify systematic issues
@@ -126,12 +126,12 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 **Effort**: Medium (need predictions or similarity function)
 
 ### Improvement 5: Weight Sensitivity Analysis
-**Why**: 
+**Why**:
 - Current weights may be suboptimal
 - Small adjustments might help
 - Need to understand weight space
 
-**Change**: 
+**Change**:
 - Run `weight_sensitivity.py` on grid search results
 - Identify if current weights are in optimal region
 - Suggest small adjustments
@@ -200,10 +200,10 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
    ```bash
    # Measure individual signals
    python src/ml/analysis/measure_signal_performance.py
-   
+
    # Analyze failures
    python src/ml/analysis/analyze_failures.py
-   
+
    # Weight sensitivity
    python src/ml/analysis/weight_sensitivity.py --suggest
    ```
@@ -226,22 +226,15 @@ From `EXPERIMENT_LOG_CANONICAL.jsonl`:
 
 ## Principle: No Changes Without Data
 
-**Current State**: 
+**Current State**:
 - Fusion (0.0882) < Baseline (0.089)
 - Many experiments failed
 - Test set is small (38 queries)
 
-**Action**: 
+**Action**:
 - Measure first
 - Understand why
 - Fix specific issues
 - Re-measure
 
 **No speculative improvements** - only data-justified changes.
-
-
-
-
-
-
-

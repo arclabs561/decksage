@@ -18,21 +18,19 @@ Usage:
 """
 
 import argparse
+import json
 import logging
 import os
 from contextlib import asynccontextmanager
-
 from enum import Enum
-
 from pathlib import Path
-import json
 from typing import Any
 
 from dotenv import load_dotenv
-from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
+from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
 # Local application imports
@@ -41,6 +39,8 @@ from ..deck_building.deck_completion import (
     greedy_complete,
     suggest_additions,
 )
+
+
 # deck_patch module - optional dependency
 try:
     from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
@@ -51,13 +51,17 @@ except ImportError:
 from ..similarity.fusion import FusionWeights, WeightedLateFusion
 from ..similarity.similarity_methods import (
     jaccard_similarity as sm_jaccard,
+)
+from ..similarity.similarity_methods import (
     load_graph as sm_load_graph,
 )
 from ..utils.paths import PATHS
 
+
 # Search integration
 try:
     from ..search import HybridSearch
+
     HAS_SEARCH = True
 except ImportError:
     HybridSearch = None
@@ -71,22 +75,25 @@ except Exception:  # pragma: no cover
 
 try:
     from gensim.models import KeyedVectors
+
     HAS_GENSIM = True
 except ImportError:  # pragma: no cover
     KeyedVectors = None  # type: ignore[assignment]
     HAS_GENSIM = False
 
 try:
-    from ..enrichment.card_functional_tagger import FunctionalTagger  # type: ignore[import-not-found]
+    from ..enrichment.card_functional_tagger import (
+        FunctionalTagger,  # type: ignore[import-not-found]
+    )
 except Exception:  # pragma: no cover
     FunctionalTagger = None  # type: ignore[assignment]
 
 try:
     from ..similarity.similarity_methods import (
-        load_card_attributes_csv as sm_load_attrs,
+        jaccard_similarity_faceted as sm_jaccard_faceted,
     )
     from ..similarity.similarity_methods import (
-        jaccard_similarity_faceted as sm_jaccard_faceted,
+        load_card_attributes_csv as sm_load_attrs,
     )
 except Exception:  # pragma: no cover
     sm_load_attrs = None  # type: ignore
@@ -97,6 +104,7 @@ except Exception:  # pragma: no cover
 
 try:
     from ..utils.logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger("decksage.api")
@@ -237,11 +245,11 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
         weights_path = PATHS.experiments / "optimized_fusion_weights_latest.json"
         if not weights_path.exists():
             weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
-        
+
         if weights_path.exists():
             with open(weights_path) as fh:
                 data = json.load(fh)
-            
+
             # Handle both formats
             if "recommendation" in data:
                 rec = data["recommendation"]
@@ -261,17 +269,25 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
                 # Use recommended defaults if legacy format missing fields
                 bw = data.get("best_weights", {})
                 fw = FusionWeights(
-                    embed=float(bw.get("embed", 0.20)),  # Co-occurrence (default from recommended weights)
-                    jaccard=float(bw.get("jaccard", 0.15)),  # Jaccard (default from recommended weights)
-                    functional=float(bw.get("functional", 0.10)),  # Functional (default from recommended weights)
-                    text_embed=float(bw.get("text_embed", 0.25)),  # Instruction-tuned (default from recommended weights)
+                    embed=float(
+                        bw.get("embed", 0.20)
+                    ),  # Co-occurrence (default from recommended weights)
+                    jaccard=float(
+                        bw.get("jaccard", 0.15)
+                    ),  # Jaccard (default from recommended weights)
+                    functional=float(
+                        bw.get("functional", 0.10)
+                    ),  # Functional (default from recommended weights)
+                    text_embed=float(
+                        bw.get("text_embed", 0.25)
+                    ),  # Instruction-tuned (default from recommended weights)
                     sideboard=float(bw.get("sideboard", 0.0)),
                     temporal=float(bw.get("temporal", 0.0)),
                     gnn=float(bw.get("gnn", 0.30)),  # GNN (default from recommended weights)
                     archetype=float(bw.get("archetype", 0.0)),
                     format=float(bw.get("format", 0.0)),
                 ).normalized()
-            
+
             state.fusion_default_weights = fw
             state.model_info["fusion_default_weights"] = {
                 "embed": fw.embed,
@@ -303,7 +319,11 @@ def _adopt_legacy_globals() -> None:
     if state.embeddings is None and embeddings is not None:
         state.embeddings = embeddings
         if not state.model_info:
-            state.model_info = {"methods": ["embedding"], "num_cards": len(embeddings), "embedding_dim": getattr(embeddings, "vector_size", 0)}  # type: ignore[arg-type]
+            state.model_info = {
+                "methods": ["embedding"],
+                "num_cards": len(embeddings),
+                "embedding_dim": getattr(embeddings, "vector_size", 0),
+            }  # type: ignore[arg-type]
     if state.graph_data is None and graph_data is not None:
         state.graph_data = graph_data
         if "methods" in state.model_info and "jaccard" not in state.model_info["methods"]:
@@ -337,12 +357,15 @@ async def lifespan(app: FastAPI):
         try:
             state = get_state()
             state.card_attrs = sm_load_attrs(attrs_path)
-            logger.info("Loaded card attributes from %s (count=%d)", attrs_path, len(state.card_attrs))
+            logger.info(
+                "Loaded card attributes from %s (count=%d)", attrs_path, len(state.card_attrs)
+            )
         except Exception:
             logger.exception("Failed to load attributes CSV: %s", attrs_path)
     # Load additional signals (sideboard, temporal, GNN, text embeddings)
     try:
         from .load_signals import load_signals_to_state
+
         text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
         load_signals_to_state(text_embedder_model=text_embedder_model)
     except Exception:
@@ -413,7 +436,7 @@ def root(request: Request):
     # Browsers send "text/html" or "*/*", API clients send "application/json"
     # Default to HTML unless explicitly requesting JSON
     wants_json = "application/json" in accept and "text/html" not in accept
-    
+
     # Serve HTML for browsers (default)
     if not wants_json:
         # Serve HTML landing page for browsers
@@ -422,8 +445,9 @@ def root(request: Request):
             return FileResponse(str(_landing_html), media_type="text/html")
         # Fallback to redirect
         from fastapi.responses import RedirectResponse
+
         return RedirectResponse(url="/search.html")
-    
+
     # Return JSON for API clients that explicitly request it
     return {
         "name": "DeckSage Similarity API",
@@ -439,7 +463,7 @@ def root(request: Request):
             "cards": "/v1/cards",
             "search": "/v1/search",
             "deck_complete": "/v1/deck/complete",
-        }
+        },
     }
 
 
@@ -477,7 +501,11 @@ def ready():
     available = ["embedding"] + (["jaccard"] if state.graph_data is not None else [])
     if state.graph_data is not None:
         available.append("fusion")
-    if state.graph_data is not None and state.card_attrs is not None and sm_jaccard_faceted is not None:
+    if (
+        state.graph_data is not None
+        and state.card_attrs is not None
+        and sm_jaccard_faceted is not None
+    ):
         available.append("jaccard_faceted")
     resp = {"status": "ready", "available_methods": available}
     if state.fusion_default_weights is not None:
@@ -536,7 +564,9 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     tagger = FunctionalTagger() if FunctionalTagger is not None else None
     w = request.weights or {}
-    base_fw = state.fusion_default_weights or FusionWeights()  # Uses recommended defaults (30% GNN, 25% Instruction, 20% Co-occurrence, 15% Jaccard, 10% Functional)
+    base_fw = (
+        state.fusion_default_weights or FusionWeights()
+    )  # Uses recommended defaults (30% GNN, 25% Instruction, 20% Co-occurrence, 15% Jaccard, 10% Functional)
     fw = FusionWeights(
         embed=float(w.get("embed", base_fw.embed)),
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
@@ -548,7 +578,7 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         archetype=float(w.get("archetype", base_fw.archetype)),
         format=float(w.get("format", base_fw.format)),
     ).normalized()
-    
+
     # Map use_case to task_type for instruction-tuned embeddings
     use_case_to_task = {
         UseCaseEnum.substitute: "substitution",
@@ -556,7 +586,7 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         UseCaseEnum.meta: "similar",  # Meta uses general similarity
     }
     task_type = use_case_to_task.get(request.use_case, "substitution")
-    
+
     fusion = WeightedLateFusion(
         state.embeddings,
         state.graph_data["adj"],
@@ -628,6 +658,7 @@ def find_similar_v1(request: SimilarityRequest):
     # Log query for analytics
     try:
         from .query_history import log_query
+
         user_id = getattr(request, "user_id", None)
         session_id = getattr(request, "session_id", None)
         log_query(
@@ -638,7 +669,9 @@ def find_similar_v1(request: SimilarityRequest):
             metadata={
                 "method": getattr(request, "mode", None),
                 "top_k": request.top_k,
-                "use_case": request.use_case.value if hasattr(request.use_case, "value") else str(request.use_case),
+                "use_case": request.use_case.value
+                if hasattr(request.use_case, "value")
+                else str(request.use_case),
             },
         )
     except Exception:
@@ -655,6 +688,7 @@ def get_similar_v1(
     # Log query for analytics
     try:
         from .query_history import log_query
+
         log_query(
             endpoint="/v1/cards/{name}/similar",
             query=name,
@@ -686,6 +720,7 @@ def get_contextual_suggestions(
     # Log query for analytics
     try:
         from .query_history import log_query
+
         log_query(
             endpoint="/v1/cards/{card}/contextual",
             query=card,
@@ -695,16 +730,16 @@ def get_contextual_suggestions(
         )
     except Exception:
         pass  # Non-fatal
-    
+
     game_lower = game.lower()
     if game_lower not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
-    
+
     state = get_state()
-    
+
     # Build fusion instance for similarity with task-specific instructions
-    from ..similarity.fusion import WeightedLateFusion, FusionWeights
-    
+    from ..similarity.fusion import FusionWeights, WeightedLateFusion
+
     # Contextual discovery uses different task types per category
     # We'll use "synergy" as default, but each method can override
     fusion = WeightedLateFusion(
@@ -713,41 +748,52 @@ def get_contextual_suggestions(
         weights=FusionWeights(),  # Use defaults
         task_type="synergy",  # Default for contextual discovery
     )
-    
+
     # Get price function
     price_fn = None
     try:
-        from ..enrichment.card_market_data import MarketDataManager  # type: ignore[import-not-found]
+        from ..enrichment.card_market_data import (
+            MarketDataManager,  # type: ignore[import-not-found]
+        )
+
         _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
         app.state.price_manager = _pm
-        
+
         def price_fn(card_name: str) -> float | None:
             p = _pm.get_price(card_name)
             return float(p.usd) if p and p.usd else None
     except Exception:
         price_fn = None
-    
+
     # Get tag function
     tag_set_fn = None
     if FunctionalTagger is not None and game_lower == "magic":
         try:
             _tagger = getattr(app.state, "mtg_tagger", None) or FunctionalTagger()
             app.state.mtg_tagger = _tagger
-            
+
             def tag_set_fn(card_name: str) -> set[str]:
                 dc = _tagger.tag_card(card_name)
-                return {k for k, v in dc.__dict__.items() if k != "card_name" and isinstance(v, bool) and v}
+                return {
+                    k
+                    for k, v in dc.__dict__.items()
+                    if k != "card_name" and isinstance(v, bool) and v
+                }
         except Exception:
             tag_set_fn = None
-    
+
     # Get archetype data
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
-    archetype_cooccurrence = state.archetype_cooccurrence if hasattr(state, "archetype_cooccurrence") else None
-    format_cooccurrence = state.format_cooccurrence if hasattr(state, "format_cooccurrence") else None
-    
+    archetype_cooccurrence = (
+        state.archetype_cooccurrence if hasattr(state, "archetype_cooccurrence") else None
+    )
+    format_cooccurrence = (
+        state.format_cooccurrence if hasattr(state, "format_cooccurrence") else None
+    )
+
     # Create discovery instance
     from ..deck_building.contextual_discovery import ContextualCardDiscovery
-    
+
     discovery = ContextualCardDiscovery(
         fusion=fusion,
         price_fn=price_fn,
@@ -756,7 +802,7 @@ def get_contextual_suggestions(
         archetype_cooccurrence=archetype_cooccurrence,
         format_cooccurrence=format_cooccurrence,
     )
-    
+
     # Find all contextual relationships
     synergies = discovery.find_synergies(
         card,
@@ -764,11 +810,11 @@ def get_contextual_suggestions(
         archetype=archetype,
         top_k=top_k,
     )
-    
+
     alternatives = discovery.find_alternatives(card, top_k=top_k)
     upgrades = discovery.find_upgrades(card, top_k=top_k)
     downgrades = discovery.find_downgrades(card, top_k=top_k)
-    
+
     # Convert to dict format for JSON response
     return ContextualResponse(
         synergies=[
@@ -894,45 +940,51 @@ def search_cards_v1(request: SearchRequest):
     then combines results based on weights.
     """
     client = _get_search_client()
-    
+
     # Fallback to embeddings-only search if hybrid search unavailable
     if client is None:
         state = get_state()
-        if not hasattr(state, 'embeddings') or not state.embeddings:
+        if not hasattr(state, "embeddings") or not state.embeddings:
             raise HTTPException(
                 status_code=503,
                 detail="Search not available. Embeddings not loaded.",
             )
-        
+
         # Use embeddings for simple name matching
         try:
             from gensim.models import KeyedVectors
-            
+
             embeddings = state.embeddings
             if embeddings and isinstance(embeddings, KeyedVectors):
                 # Simple fallback: find cards with query in name using embeddings
                 query_lower = request.query.lower()
                 matching_cards = [
-                    card for card in embeddings.key_to_index.keys()
-                    if query_lower in card.lower()
-                ][:request.limit]
-                
+                    card for card in embeddings.key_to_index.keys() if query_lower in card.lower()
+                ][: request.limit]
+
                 # Create fallback results from embeddings
                 results = []
                 for i, card_name in enumerate(matching_cards):
                     # Try to get full metadata from card attributes if available
                     metadata = {}
                     if state.card_attrs:
-                        card_data = state.card_attrs.get(card_name) or state.card_attrs.get(card_name.lower())
+                        card_data = state.card_attrs.get(card_name) or state.card_attrs.get(
+                            card_name.lower()
+                        )
                         if card_data and isinstance(card_data, dict):
                             # Extract all available metadata
                             metadata = {
                                 "image_url": (
-                                    card_data.get("image_url") or
-                                    card_data.get("image") or
-                                    (card_data.get("images", {}).get("large") if isinstance(card_data.get("images"), dict) else None)
+                                    card_data.get("image_url")
+                                    or card_data.get("image")
+                                    or (
+                                        card_data.get("images", {}).get("large")
+                                        if isinstance(card_data.get("images"), dict)
+                                        else None
+                                    )
                                 ),
-                                "ref_url": card_data.get("ref_url") or card_data.get("scryfall_uri"),
+                                "ref_url": card_data.get("ref_url")
+                                or card_data.get("scryfall_uri"),
                                 "type": card_data.get("type") or card_data.get("type_line", ""),
                                 "mana_cost": card_data.get("mana_cost", ""),
                                 "cmc": card_data.get("cmc", 0),
@@ -950,14 +1002,16 @@ def search_cards_v1(request: SearchRequest):
                             }
                             # Remove empty values
                             metadata = {k: v for k, v in metadata.items() if v}
-                    
-                    results.append(SearchResultItem(
-                        card_name=card_name,
-                        score=max(0.5, 1.0 - (i * 0.05)),  # Decreasing scores, min 0.5
-                        source="embedding_fallback",
-                        metadata=metadata if metadata else {"image_url": None, "ref_url": None}
-                    ))
-                
+
+                    results.append(
+                        SearchResultItem(
+                            card_name=card_name,
+                            score=max(0.5, 1.0 - (i * 0.05)),  # Decreasing scores, min 0.5
+                            source="embedding_fallback",
+                            metadata=metadata if metadata else {"image_url": None, "ref_url": None},
+                        )
+                    )
+
                 if results:
                     return SearchResponse(query=request.query, total=len(results), results=results)
                 else:
@@ -969,7 +1023,7 @@ def search_cards_v1(request: SearchRequest):
             raise
         except Exception as e:
             logger.warning(f"Fallback search failed: {e}")
-        
+
         raise HTTPException(
             status_code=503,
             detail="Search not available. Ensure Meilisearch and Qdrant are running and embeddings are loaded.",
@@ -1005,7 +1059,9 @@ def search_cards_get_v1(
     vector_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for vector search"),
 ):
     """GET version of card search endpoint."""
-    request = SearchRequest(query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight)
+    request = SearchRequest(
+        query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight
+    )
     return search_cards_v1(request)
 
 
@@ -1106,6 +1162,7 @@ def suggest_actions(req: SuggestActionsRequest):
     # Log query for analytics
     try:
         from .query_history import log_query
+
         user_id = getattr(req, "user_id", None)
         session_id = getattr(req, "session_id", None)
         log_query(
@@ -1117,7 +1174,7 @@ def suggest_actions(req: SuggestActionsRequest):
         )
     except Exception:
         pass  # Non-fatal
-    
+
     game = req.game.lower()
     if game not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
@@ -1127,7 +1184,9 @@ def suggest_actions(req: SuggestActionsRequest):
     # Optional price and tag hooks
     price_fn = None
     try:
-        from ..enrichment.card_market_data import MarketDataManager  # type: ignore[import-not-found]
+        from ..enrichment.card_market_data import (
+            MarketDataManager,  # type: ignore[import-not-found]
+        )
 
         _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
         app.state.price_manager = _pm
@@ -1147,16 +1206,22 @@ def suggest_actions(req: SuggestActionsRequest):
 
             def tag_set_fn(card_name: str) -> set[str]:
                 dc = _tagger.tag_card(card_name)
-                return {k for k, v in dc.__dict__.items() if k != "card_name" and isinstance(v, bool) and v}
+                return {
+                    k
+                    for k, v in dc.__dict__.items()
+                    if k != "card_name" and isinstance(v, bool) and v
+                }
 
         except Exception:
             tag_set_fn = None
 
     # Use greedy candidate generation (top additions) without applying
     import time
+
     t0 = time.time()
     # Build tag weight fn if provided
     tw = req.tag_weights or {}
+
     def tag_weight_fn(tag: str) -> float:
         return float(tw.get(tag, 1.0))
 
@@ -1177,11 +1242,11 @@ def suggest_actions(req: SuggestActionsRequest):
     archetype = getattr(req, "archetype", None)
     state = get_state()
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
-    
+
     part = {"magic": "Main", "yugioh": "Main Deck"}.get(game, "Main Deck")
     actions = []
     action_type = (req.action_type or "add").lower()
-    
+
     # Map action_type to task_type for instruction-tuned embeddings
     action_to_task = {
         "add": "completion",
@@ -1191,11 +1256,11 @@ def suggest_actions(req: SuggestActionsRequest):
     }
     task_type = action_to_task.get(action_type, "substitution")
     cand_fn = _make_candidate_fn(req.mode, task_type=task_type)
-    
+
     # Handle different action types
     if action_type in ("add", "suggest"):
         from ..deck_building.deck_completion import suggest_additions
-        
+
         pairs_or = suggest_additions(
             game,  # type: ignore[arg-type]
             req.deck,
@@ -1219,24 +1284,24 @@ def suggest_actions(req: SuggestActionsRequest):
             pairs, s_metrics = pairs_or
         else:
             pairs, s_metrics = pairs_or, {}
-        
+
         # Get score reasons from metrics if available
         score_reasons = s_metrics.get("score_reasons", {})
         for c, s in pairs:
             reason_parts = []
-            
+
             # Use score reason if available (archetype staple, role gap, etc.)
             if c in score_reasons:
                 reason_parts.append(score_reasons[c])
-            
+
             # Add budget info if applicable
             if req.budget_max is not None:
                 reason_parts.append(f"budget<=${req.budget_max}")
-            
+
             # Add coverage info if applicable
             if req.coverage_weight:
                 reason_parts.append("coverage+")
-            
+
             actions.append(
                 SuggestedAction(
                     op="add_card",
@@ -1247,10 +1312,10 @@ def suggest_actions(req: SuggestActionsRequest):
                     reason=", ".join(reason_parts) if reason_parts else "Similarity match",
                 )
             )
-    
+
     if action_type in ("remove", "suggest"):
         from ..deck_building.deck_completion import suggest_removals
-        
+
         removals = suggest_removals(
             game,  # type: ignore[arg-type]
             req.deck,
@@ -1261,7 +1326,7 @@ def suggest_actions(req: SuggestActionsRequest):
             preserve_roles=True,
             max_suggestions=min(req.top_k, 10),
         )
-        
+
         for card, score, reason in removals:
             actions.append(
                 SuggestedAction(
@@ -1273,10 +1338,10 @@ def suggest_actions(req: SuggestActionsRequest):
                     reason=reason,
                 )
             )
-    
+
     if action_type == "replace" and req.seed_card:
         from ..deck_building.deck_completion import suggest_replacements
-        
+
         replacements = suggest_replacements(
             game,  # type: ignore[arg-type]
             req.deck,
@@ -1289,7 +1354,7 @@ def suggest_actions(req: SuggestActionsRequest):
             archetype=archetype,
             archetype_staples=archetype_staples,
         )
-        
+
         for replacement, score, reason in replacements:
             actions.append(
                 SuggestedAction(
@@ -1302,14 +1367,14 @@ def suggest_actions(req: SuggestActionsRequest):
                     target=req.seed_card,
                 )
             )
-    
+
     # Sort all actions by score (descending)
     actions.sort(key=lambda a: a.score, reverse=True)
-    
+
     # Limit total actions
     if len(actions) > req.top_k:
-        actions = actions[:req.top_k]
-    
+        actions = actions[: req.top_k]
+
     elapsed_ms = int((time.time() - t0) * 1000)
     metrics = {
         "top_k": req.top_k,
@@ -1320,7 +1385,7 @@ def suggest_actions(req: SuggestActionsRequest):
         "coverage_weight": req.coverage_weight,
         "facets_available": bool(get_state().card_attrs is not None),
     }
-    
+
     return SuggestActionsResponse(actions=actions, metrics=metrics, feedback_url="/v1/feedback")
 
 
@@ -1350,6 +1415,7 @@ def complete_deck(req: CompleteRequest):
     # Log query for analytics
     try:
         from .query_history import log_query
+
         user_id = getattr(req, "user_id", None)
         session_id = getattr(req, "session_id", None)
         deck_size = len(req.deck.get("Main", [])) if isinstance(req.deck, dict) else 0
@@ -1358,11 +1424,16 @@ def complete_deck(req: CompleteRequest):
             query=f"deck_completion_{req.game}",
             user_id=user_id,
             session_id=session_id,
-            metadata={"game": req.game, "target_size": req.target_main_size, "current_size": deck_size, "method": req.method},
+            metadata={
+                "game": req.game,
+                "target_size": req.target_main_size,
+                "current_size": deck_size,
+                "method": req.method,
+            },
         )
     except Exception:
         pass  # Non-fatal
-    
+
     game = req.game.lower()
     if game not in {"magic", "yugioh", "pokemon"}:
         raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
@@ -1380,7 +1451,9 @@ def complete_deck(req: CompleteRequest):
     # Optional price and tag hooks
     price_fn = None
     try:
-        from ..enrichment.card_market_data import MarketDataManager  # type: ignore[import-not-found]
+        from ..enrichment.card_market_data import (
+            MarketDataManager,  # type: ignore[import-not-found]
+        )
 
         _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
         app.state.price_manager = _pm
@@ -1400,18 +1473,23 @@ def complete_deck(req: CompleteRequest):
 
             def tag_set_fn(card_name: str) -> set[str]:
                 dc = _tagger.tag_card(card_name)
-                return {k for k, v in dc.__dict__.items() if k != "card_name" and isinstance(v, bool) and v}
+                return {
+                    k
+                    for k, v in dc.__dict__.items()
+                    if k != "card_name" and isinstance(v, bool) and v
+                }
 
         except Exception:
             tag_set_fn = None
 
     import time
+
     t0 = time.time()
-    
+
     # Choose completion method
     if req.method == "beam":
         from ..deck_building.beam_search import beam_search_completion
-        
+
         # Build CMC function for beam search
         def cmc_fn(card: str) -> int | None:
             state = get_state()
@@ -1425,7 +1503,7 @@ def complete_deck(req: CompleteRequest):
                 return int(data.get("cmc", 0))
             except Exception:
                 return None
-        
+
         # Convert candidate_fn to beam search format
         def beam_candidate_fn(deck: dict, top_k: int) -> list[tuple[str, float]]:
             result = suggest_additions(
@@ -1444,7 +1522,7 @@ def complete_deck(req: CompleteRequest):
             else:
                 candidates = result
             return candidates
-        
+
         deck_out = beam_search_completion(
             initial_deck=req.deck,
             candidate_fn=beam_candidate_fn,  # type: ignore[arg-type]
@@ -1484,13 +1562,13 @@ def complete_deck(req: CompleteRequest):
             strict_errors = ["strict_validation_exception"]
 
     elapsed_ms = int((time.time() - t0) * 1000)
-    
+
     # Assess deck quality if we have the necessary functions
     quality_metrics = None
     if tag_set_fn:
         try:
             from ..deck_building.deck_quality import assess_deck_quality
-            
+
             # Build CMC function from card attributes
             def cmc_fn(card: str) -> int | None:
                 state = get_state()
@@ -1504,7 +1582,7 @@ def complete_deck(req: CompleteRequest):
                     return int(data.get("cmc", 0))
                 except Exception:
                     return None
-            
+
             # Assess quality (reference decks optional for now)
             quality = assess_deck_quality(
                 deck=deck_out,
@@ -1524,7 +1602,7 @@ def complete_deck(req: CompleteRequest):
             }
         except Exception as e:
             logger.debug("Failed to assess deck quality: %s", e, exc_info=True)
-    
+
     metrics = {
         "steps": len(steps),
         "elapsed_ms": elapsed_ms,
@@ -1536,8 +1614,10 @@ def complete_deck(req: CompleteRequest):
     }
     if quality_metrics:
         metrics["quality"] = quality_metrics
-    
-    return CompleteResponse(deck=deck_out, steps=steps, metrics=metrics, feedback_url="/v1/feedback")
+
+    return CompleteResponse(
+        deck=deck_out, steps=steps, metrics=metrics, feedback_url="/v1/feedback"
+    )
 
 
 # Ensure router is mounted after routes are defined
@@ -1546,6 +1626,7 @@ app.include_router(router)
 # Include feedback router
 try:
     from .feedback import router as feedback_router
+
     app.include_router(feedback_router)
 except ImportError:
     logger.debug("Feedback router not available (optional)")
@@ -1562,16 +1643,18 @@ if _static_dir.exists():
 # Serve main search interface at /search.html
 _search_html = Path(__file__).parent.parent.parent.parent / "test_search.html"
 if _search_html.exists():
+
     @app.get("/search.html")
     def search_html():
         """Serve the main search interface."""
         return FileResponse(str(_search_html))
-    
+
     # Also serve at root if no other root handler
     @app.get("/search")
     def search_redirect():
         """Redirect to search interface."""
         from fastapi.responses import RedirectResponse
+
         return RedirectResponse(url="/search.html")
 
 

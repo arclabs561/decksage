@@ -30,16 +30,3 @@ Steps:
 3. Create the A and AAAA records above
 4. Wait for DNS propagation (5-60 minutes)
 5. Check certificate: fly certs check decksage.cards -a decksage
-
-
-
-
-
-
-
-
-
-
-
-
-

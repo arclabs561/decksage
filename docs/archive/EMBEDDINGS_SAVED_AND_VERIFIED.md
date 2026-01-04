@@ -11,7 +11,7 @@
 - **Size**: 14 MB
 - **Status**: Verified and accessible
 
-### ✅ S3 Storage  
+### ✅ S3 Storage
 - **Path**: `s3://games-collections/embeddings/magic_128d_test_pecanpy.wv`
 - **Size**: 14.2 MB
 - **Status**: Uploaded and verified
@@ -32,7 +32,7 @@
 
 The embeddings are integrated into the system:
 
-1. **API Loading**: 
+1. **API Loading**:
    - Set `EMBEDDINGS_PATH=data/embeddings/magic_128d_test_pecanpy.wv`
    - Or use `--embeddings` CLI argument
 
@@ -67,4 +67,3 @@ python -m src.ml.api.api \
 ---
 
 **✅ Data is saved and ready for use!**
-

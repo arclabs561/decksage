@@ -1,6 +1,6 @@
 # GNN and AWS Status
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Library**: **PyTorch Geometric** (torch_geometric)
 
 ---
@@ -131,4 +131,3 @@ aws s3 cp experiments/signals/gnn_embeddings.json s3://games-collections/embeddi
 ---
 
 **Status**: ✅ **PyTorch Geometric** - Code ready, environment issue blocking
-

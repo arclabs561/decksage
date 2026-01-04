@@ -49,7 +49,7 @@ cd src/backend/cmd/analyze-decks
 
 Shows:
 - Format distribution
-- Source distribution  
+- Source distribution
 - Metadata coverage
 - Top players
 - Recommendations

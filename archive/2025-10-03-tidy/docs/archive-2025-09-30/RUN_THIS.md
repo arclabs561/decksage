@@ -4,7 +4,7 @@
 
 - Repository reorganized ✅
 - Go tests passing ✅
-- Python environment ready ✅  
+- Python environment ready ✅
 - API key loaded ✅
 - Embeddings exist (from previous training) ✅
 - Quality dashboard created ✅
@@ -29,7 +29,7 @@ Open `debug/gaps.html` and answer these 3 questions:
 **Q1: Primary use case?**
 - [ ] A) Deck building aid (find card alternatives)
 - [ ] B) Meta analysis (track trends)
-- [ ] C) Budget optimizer (cheaper alternatives)  
+- [ ] C) Budget optimizer (cheaper alternatives)
 - [ ] D) Learning tool (understand relationships)
 
 **Q2: Success metric?**
@@ -59,7 +59,7 @@ import os
 if os.path.exists('../../data/embeddings/magic_pecanpy.wv'):
     wv = KeyedVectors.load('../../data/embeddings/magic_pecanpy.wv')
     print(f'✅ Loaded {len(wv):,} card embeddings')
-    
+
     # Test some queries
     test_cards = ['Lightning Bolt', 'Brainstorm', 'Counterspell']
     for card in test_cards:
@@ -215,8 +215,3 @@ open debug/similarity-demo.html
 **Bottom line:** We have a B+ system ready to test. Review the dashboard, check if recommendations make sense, then decide: ship it, fix data, or modernize with PyG.
 
 You're in a good spot - just need to validate quality and choose direction! 🎴
-
-
-
-
-

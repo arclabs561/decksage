@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """exp_049: Using Consolidated Shared Code (Actually Fixed)"""
 
-import pandas as pd
 from dotenv import load_dotenv
 
 from ..similarity.similarity_methods import (
@@ -10,6 +9,7 @@ from ..similarity.similarity_methods import (
     load_graph,
 )
 from .true_closed_loop import ClosedLoopExperiment
+
 
 load_dotenv()
 

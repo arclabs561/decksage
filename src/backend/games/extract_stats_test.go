@@ -13,18 +13,18 @@ func TestExtractStats(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic") // Suppress output in tests
-	
+
 	stats := NewExtractStats(log)
-	
+
 	// Record successes
 	stats.RecordSuccess()
 	stats.RecordSuccess()
 	stats.RecordSuccess()
-	
+
 	// Record errors
 	stats.RecordError(ctx, "http://example.com/1", "test-dataset", errors.New("test error 1"))
 	stats.RecordError(ctx, "http://example.com/2", "test-dataset", errors.New("test error 2"))
-	
+
 	// Check counts
 	if stats.Total != 5 {
 		t.Errorf("Total = %d, want 5", stats.Total)
@@ -35,19 +35,19 @@ func TestExtractStats(t *testing.T) {
 	if stats.Failed != 2 {
 		t.Errorf("Failed = %d, want 2", stats.Failed)
 	}
-	
+
 	// Check errors stored
 	errors := stats.GetErrors()
 	if len(errors) != 2 {
 		t.Errorf("GetErrors() returned %d errors, want 2", len(errors))
 	}
-	
+
 	// Check summary
 	summary := stats.Summary()
 	if summary == "" {
 		t.Error("Summary() returned empty string")
 	}
-	
+
 	// Verify summary contains expected information
 	if !contains(summary, "5") {
 		t.Errorf("Summary should contain total count, got: %s", summary)
@@ -64,9 +64,9 @@ func TestExtractStatsQualityMetrics(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	stats := NewExtractStats(log)
-	
+
 	// Record quality metrics
 	stats.RecordNormalization()
 	stats.RecordNormalization()
@@ -76,7 +76,7 @@ func TestExtractStatsQualityMetrics(t *testing.T) {
 	stats.RecordCacheHit()
 	stats.RecordCacheHit()
 	stats.RecordCacheMiss()
-	
+
 	// Check metrics
 	if stats.NormalizedCount != 2 {
 		t.Errorf("NormalizedCount = %d, want 2", stats.NormalizedCount)
@@ -93,7 +93,7 @@ func TestExtractStatsQualityMetrics(t *testing.T) {
 	if stats.CacheMisses != 1 {
 		t.Errorf("CacheMisses = %d, want 1", stats.CacheMisses)
 	}
-	
+
 	// Check cache hit rate
 	hitRate := stats.GetCacheHitRate()
 	expectedRate := 2.0 / 3.0
@@ -106,24 +106,24 @@ func TestExtractStatsExportJSON(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	stats := NewExtractStats(log)
 	stats.RecordSuccess()
 	stats.RecordError(ctx, "http://example.com/error", "test", errors.New("test error"))
 	stats.RecordNormalization()
 	stats.RecordCacheHit()
-	
+
 	jsonData, err := stats.ExportJSON()
 	if err != nil {
 		t.Fatalf("ExportJSON() error = %v", err)
 	}
-	
+
 	// Verify it's valid JSON
 	var export map[string]interface{}
 	if err := json.Unmarshal(jsonData, &export); err != nil {
 		t.Fatalf("ExportJSON() returned invalid JSON: %v", err)
 	}
-	
+
 	// Check required fields
 	if export["total"] == nil {
 		t.Error("ExportJSON() missing 'total' field")
@@ -140,14 +140,14 @@ func TestExtractStatsErrorLimit(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	stats := NewExtractStats(log)
-	
+
 	// Record more than 100 errors
 	for i := 0; i < 150; i++ {
 		stats.RecordError(ctx, "http://example.com/test", "test", errors.New("error"))
 	}
-	
+
 	// Should only keep last 100
 	errors := stats.GetErrors()
 	if len(errors) > 100 {
@@ -156,9 +156,9 @@ func TestExtractStatsErrorLimit(t *testing.T) {
 }
 
 func contains(s, substr string) bool {
-	return len(s) >= len(substr) && (s == substr || len(substr) == 0 || 
-		(len(s) > len(substr) && (s[:len(substr)] == substr || 
-		 s[len(s)-len(substr):] == substr || 
+	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
+		(len(s) > len(substr) && (s[:len(substr)] == substr ||
+		 s[len(s)-len(substr):] == substr ||
 		 containsMiddle(s, substr))))
 }
 

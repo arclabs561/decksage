@@ -13,10 +13,10 @@ This script is kept for reference but should not be used for testing.
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+
 
 # Add src to path
 script_dir = Path(__file__).parent
@@ -26,6 +26,7 @@ if str(src_dir) not in sys.path:
 
 from ml.data.incremental_graph import IncrementalCardGraph
 from ml.utils.paths import PATHS
+
 
 print("=" * 70)
 print("TEMPORAL INTEGRATION VERIFICATION")
@@ -51,9 +52,9 @@ try:
     test_graph_path = PATHS.graphs / "test_integration_verify.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     # Simulate real deck with metadata
     deck = {
         "type": {
@@ -75,49 +76,55 @@ try:
             },
         ],
     }
-    
+
     deck_id = "test_deck_001"
     timestamp = datetime(2024, 6, 15)
-    
+
     # Set metadata (as update_graph_incremental.py does)
-    graph.set_deck_metadata(deck_id, {
-        "format": "Modern",
-        "event_date": "2024-06-15",
-        "tournament_type": "GP",
-        "tournament_size": 500,
-    })
-    
+    graph.set_deck_metadata(
+        deck_id,
+        {
+            "format": "Modern",
+            "event_date": "2024-06-15",
+            "tournament_type": "GP",
+            "tournament_size": 500,
+        },
+    )
+
     # Add deck (should extract format from metadata and call update_temporal)
     graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
-    
+
     # Verify edge has temporal data
     edge_key = tuple(sorted(["Lightning Bolt", "Lava Spike"]))
     if edge_key in graph.edges:
         edge = graph.edges[edge_key]
         check("Edge created with temporal tracking", True)
-        check("Format extracted from metadata", "Modern" in str(edge.format_periods) or len(edge.format_periods) > 0)
+        check(
+            "Format extracted from metadata",
+            "Modern" in str(edge.format_periods) or len(edge.format_periods) > 0,
+        )
         check("Monthly count added", "2024-06" in edge.monthly_counts)
         check("Format period created", len(edge.format_periods) > 0)
-        
+
         # Check format period structure
         for period_key, period_data in edge.format_periods.items():
             check(f"Format period '{period_key}' has monthly data", len(period_data) > 0)
             check(f"Format period '{period_key}' includes June", "2024-06" in period_data)
     else:
         check("Edge created", False, "Edge not found")
-    
+
     graph.save()
-    
+
     # Test reload
     graph2 = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
     if edge_key in graph2.edges:
         edge2 = graph2.edges[edge_key]
         check("Reload preserves monthly_counts", "2024-06" in edge2.monthly_counts)
         check("Reload preserves format_periods", len(edge2.format_periods) > 0)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("Deck metadata integration", False, str(e))
 
@@ -128,9 +135,9 @@ try:
     test_graph_path = PATHS.graphs / "test_multi_format.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     # Add same cards in different formats
     base_date = datetime(2024, 1, 1)
     for i, format_name in enumerate(["Modern", "Standard", "Legacy"]):
@@ -147,16 +154,18 @@ try:
         }
         deck_id = f"deck_{format_name}_{i}"
         timestamp = base_date + timedelta(days=i * 60)
-        
+
         graph.set_deck_metadata(deck_id, {"format": format_name})
         graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
-    
+
     edge_key = tuple(sorted(["Lightning Bolt", "Shock"]))
     if edge_key in graph.edges:
         edge = graph.edges[edge_key]
         check("Multiple formats tracked", len(edge.format_periods) >= 3)
-        check("All formats have data", all(len(period) > 0 for period in edge.format_periods.values()))
-        
+        check(
+            "All formats have data", all(len(period) > 0 for period in edge.format_periods.values())
+        )
+
         # Check each format period
         format_names = set()
         for period_key in edge.format_periods.keys():
@@ -167,10 +176,10 @@ try:
             if "Legacy" in period_key:
                 format_names.add("Legacy")
         check("All three formats present", len(format_names) == 3)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("Multiple formats", False, str(e))
 
@@ -181,9 +190,9 @@ try:
     test_graph_path = PATHS.graphs / "test_temporal_accumulation.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     # Add same deck multiple times across months
     base_date = datetime(2024, 1, 15)
     for i in range(6):
@@ -200,23 +209,23 @@ try:
         }
         deck_id = f"accum_deck_{i}"
         timestamp = base_date + timedelta(days=i * 30)  # Monthly
-        
+
         graph.set_deck_metadata(deck_id, {"format": "Modern"})
         graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
-    
+
     edge_key = tuple(sorted(["Test Card A", "Test Card B"]))
     if edge_key in graph.edges:
         edge = graph.edges[edge_key]
         check("Temporal accumulation works", len(edge.monthly_counts) >= 3)
         check("Multiple months tracked", sum(edge.monthly_counts.values()) >= 6)
-        
+
         # Check that counts increase
         total_count = sum(edge.monthly_counts.values())
         check("Counts accumulate correctly", total_count >= 6)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("Temporal accumulation", False, str(e))
 
@@ -227,9 +236,9 @@ try:
     test_graph_path = PATHS.graphs / "test_no_format.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     # Add deck without format metadata
     deck = {
         "partitions": [
@@ -242,9 +251,9 @@ try:
             },
         ],
     }
-    
+
     graph.add_deck(deck, timestamp=datetime(2024, 1, 15), deck_id="no_format_deck")
-    
+
     edge_key = tuple(sorted(["Card X", "Card Y"]))
     if edge_key in graph.edges:
         edge = graph.edges[edge_key]
@@ -252,10 +261,10 @@ try:
         check("Monthly counts still tracked", "2024-01" in edge.monthly_counts)
         # Format periods may be empty, which is OK
         check("Handles missing format gracefully", True)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("No format handling", False, str(e))
 
@@ -266,9 +275,9 @@ try:
     test_graph_path = PATHS.graphs / "test_round_results.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     deck = {
         "partitions": [
             {
@@ -284,23 +293,26 @@ try:
             {"roundNumber": 2, "opponentDeck": "Burn", "result": "L"},
         ],
     }
-    
+
     deck_id = "round_results_deck"
-    graph.set_deck_metadata(deck_id, {
-        "format": "Modern",
-        "round_results": deck["roundResults"],
-    })
+    graph.set_deck_metadata(
+        deck_id,
+        {
+            "format": "Modern",
+            "round_results": deck["roundResults"],
+        },
+    )
     graph.add_deck(deck, timestamp=datetime(2024, 1, 15), deck_id=deck_id)
-    
+
     # Check that deck metadata was stored
     metadata = graph._deck_metadata_cache.get(deck_id, {})
     check("Round results stored in metadata", "round_results" in metadata)
     if "round_results" in metadata:
         check("Round results preserved", len(metadata["round_results"]) == 2)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("Round results handling", False, str(e))
 
@@ -311,9 +323,9 @@ try:
     test_graph_path = PATHS.graphs / "test_nested_structure.db"
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
     graph = IncrementalCardGraph(graph_path=test_graph_path, use_sqlite=True)
-    
+
     # Real deck structure from scrapers
     deck = {
         "type": {
@@ -336,31 +348,33 @@ try:
             },
         ],
     }
-    
+
     deck_id = "nested_deck_001"
     timestamp = datetime(2024, 8, 1)
-    
+
     # Extract format (as update_graph_incremental.py does)
-    format_value = (
-        deck.get("format")
-        or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("format")
+    format_value = deck.get("format") or (
+        deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+    ).get("format")
+
+    graph.set_deck_metadata(
+        deck_id,
+        {
+            "format": format_value,
+            "event_date": deck["type"]["inner"]["eventDate"],
+        },
     )
-    
-    graph.set_deck_metadata(deck_id, {
-        "format": format_value,
-        "event_date": deck["type"]["inner"]["eventDate"],
-    })
     graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
-    
+
     edge_key = tuple(sorted(["Lightning Strike", "Shock"]))
     if edge_key in graph.edges:
         edge = graph.edges[edge_key]
         check("Nested structure handled", "2024-08" in edge.monthly_counts)
         check("Format extracted from nested", len(edge.format_periods) > 0)
-    
+
     if test_graph_path.exists():
         test_graph_path.unlink()
-    
+
 except Exception as e:
     check("Nested structure", False, str(e))
 
@@ -378,4 +392,3 @@ if issues:
 else:
     print("\n✓ All integration checks passed!")
     sys.exit(0)
-

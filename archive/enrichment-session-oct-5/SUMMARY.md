@@ -3,9 +3,9 @@
 
 ## ✅ COMPLETE - Recovery Running
 
-**Started:** "Make sure our web scraping is implemented correctly"  
-**Found:** 7 bugs + 337K missing decks in cache  
-**Fixed:** Everything + extracted all data  
+**Started:** "Make sure our web scraping is implemented correctly"
+**Found:** 7 bugs + 337K missing decks in cache
+**Fixed:** Everything + extracted all data
 **Running:** Final metadata extraction (1-2 hours)
 
 ---
@@ -22,11 +22,11 @@
 
 ## 🔄 What's Running Now
 
-**Script:** `scripts/fix_and_reparse.sh`  
-**Log:** `logs/complete_recovery_*.log`  
+**Script:** `scripts/fix_and_reparse.sh`
+**Log:** `logs/complete_recovery_*.log`
 **Actions:**
 - Re-parsing 337K HTML pages
-- Extracting player/event/placement metadata  
+- Extracting player/event/placement metadata
 - Fixing Goldfish sideboards
 - Will complete automatically
 

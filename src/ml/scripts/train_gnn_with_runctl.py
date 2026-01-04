@@ -20,13 +20,12 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
 import sys
 from pathlib import Path
 
 from ..similarity.gnn_embeddings import CardGNNEmbedder
-from ..utils.paths import PATHS
-from ..utils.logging_config import setup_script_logging, log_exception
+from ..utils.logging_config import log_exception, setup_script_logging
+
 
 logger = setup_script_logging()
 
@@ -44,7 +43,7 @@ def train_gnn(
 ) -> int:
     """
     Train GNN embeddings.
-    
+
     Args:
         edgelist_path: Path to edgelist file (local or s3://)
         output_path: Path to save model (local or s3://)
@@ -55,23 +54,23 @@ def train_gnn(
         learning_rate: Learning rate
         checkpoint_interval: Save checkpoint every N epochs
         resume_from: Resume from checkpoint
-    
+
     Returns:
         Exit code
     """
     edgelist_path = Path(edgelist_path)
     output_path = Path(output_path)
-    
+
     # Handle S3 paths (runctl should handle this, but check)
     if str(edgelist_path).startswith("s3://"):
         logger.info(f"Using S3 edgelist: {edgelist_path}")
         # runctl should sync this, but we'll note it
         edgelist_path = Path("/tmp/edgelist.edg")  # runctl syncs here
-    
+
     if str(output_path).startswith("s3://"):
         logger.info(f"Output will be synced to S3: {output_path}")
         output_path = Path("/tmp/gnn_model.json")  # runctl syncs from here
-    
+
     # Create embedder
     logger.info(f"Creating {model_type} embedder...")
     embedder = CardGNNEmbedder(
@@ -79,7 +78,7 @@ def train_gnn(
         hidden_dim=hidden_dim,
         num_layers=num_layers,
     )
-    
+
     # Resume from checkpoint if provided
     if resume_from:
         resume_path = Path(resume_from)
@@ -88,14 +87,14 @@ def train_gnn(
             embedder.load(resume_path)
         else:
             logger.warning(f"Checkpoint not found: {resume_path}, starting fresh")
-    
+
     # Train
     logger.info(f"Training on: {edgelist_path}")
     logger.info(f"  Model: {model_type}")
     logger.info(f"  Hidden dim: {hidden_dim}")
     logger.info(f"  Layers: {num_layers}")
     logger.info(f"  Epochs: {epochs}")
-    
+
     try:
         embedder.train(
             edgelist_path,
@@ -105,9 +104,9 @@ def train_gnn(
             checkpoint_interval=checkpoint_interval,
             resume_from=resume_from,
         )
-        
+
         logger.info(f"✓ Training complete: {output_path}")
-        
+
         # Save metadata
         metadata = {
             "model_type": model_type,
@@ -117,13 +116,13 @@ def train_gnn(
             "learning_rate": learning_rate,
             "edgelist_path": str(edgelist_path),
         }
-        
+
         metadata_path = output_path.parent / f"{output_path.stem}_metadata.json"
         with open(metadata_path, "w") as f:
             json.dump(metadata, f, indent=2)
-        
+
         return 0
-        
+
     except Exception as e:
         log_exception(logger, "Training failed", e, include_context=True)
         return 1
@@ -184,9 +183,9 @@ def main() -> int:
         type=Path,
         help="Resume from checkpoint",
     )
-    
+
     args = parser.parse_args()
-    
+
     return train_gnn(
         edgelist_path=args.edgelist,
         output_path=args.output,
@@ -202,4 +201,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

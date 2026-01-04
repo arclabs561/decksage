@@ -10,14 +10,15 @@
 """Comprehensive evaluation in chunks with validation."""
 
 import json
-import sys
 from pathlib import Path
 
 from ml.utils.path_setup import setup_project_paths
 from ml.utils.paths import PATHS
 
+
 setup_project_paths()
 from gensim.models import KeyedVectors
+
 
 # Embeddings to evaluate
 embeddings = {
@@ -55,7 +56,7 @@ for emb_name, emb_path in embeddings.items():
     total_found = 0
 
     for i in range(0, len(queries_list), chunk_size):
-        chunk = queries_list[i:i+chunk_size]
+        chunk = queries_list[i : i + chunk_size]
         chunk_num = i // chunk_size + 1
         total_chunks = (len(queries_list) + chunk_size - 1) // chunk_size
         print(f" Chunk {chunk_num}/{total_chunks}...", end=" ")
@@ -69,9 +70,9 @@ for emb_name, emb_path in embeddings.items():
 
             # Get relevant cards
             relevant = (
-                labels.get("highly_relevant", []) +
-                labels.get("relevant", []) +
-                labels.get("somewhat_relevant", [])
+                labels.get("highly_relevant", [])
+                + labels.get("relevant", [])
+                + labels.get("somewhat_relevant", [])
             )
             if not relevant:
                 continue

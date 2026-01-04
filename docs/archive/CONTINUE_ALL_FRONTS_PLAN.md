@@ -13,7 +13,7 @@
 ### Priority Assessment
 
 #### 1. Embeddings (Highest Impact)
-**Current**: P@10 = 0.0278 (very weak)  
+**Current**: P@10 = 0.0278 (very weak)
 **Target**: P@10 = 0.15-0.20 (5-7x improvement)
 
 **Best Approach**:
@@ -22,7 +22,7 @@
 - **Next**: Train improved embeddings with best hyperparameters using trainctl
 
 #### 2. Data (High Impact)
-**Current**: Basic co-occurrence graph  
+**Current**: Basic co-occurrence graph
 **Target**: Enriched graph with attributes, temporal info
 
 **Best Approach**:
@@ -32,7 +32,7 @@
 - **Next**: Scale Scryfall enrichment to all cards (background job)
 
 #### 3. Labeling (Medium Impact)
-**Current**: 98 queries, 60 labeled  
+**Current**: 98 queries, 60 labeled
 **Target**: 100+ queries, all labeled
 
 **Best Approach**:
@@ -41,7 +41,7 @@
 - **Next**: Continue expansion to 100+, generate remaining labels
 
 #### 4. Training (High Impact)
-**Current**: Basic training (1 epoch, no validation)  
+**Current**: Basic training (1 epoch, no validation)
 **Target**: Proper training loop with validation
 
 **Best Approach**:
@@ -49,7 +49,7 @@
 - **Next**: Use trainctl to run improved training with validation
 
 #### 5. Multi-Game (Future Impact)
-**Current**: MTG only  
+**Current**: MTG only
 **Target**: Unified multi-game embeddings
 
 **Best Approach**:
@@ -178,4 +178,3 @@ train-multigame:
 9. ⏳ Train multi-game embeddings with trainctl
 
 **All fronts proceeding with trainctl integration!**
-

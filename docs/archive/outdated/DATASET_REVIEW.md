@@ -27,7 +27,7 @@ This review covers all datasets in the DeckSage project, including raw data, pro
 - **`data/decks/yugioh_decks.jsonl`**: 20 Yu-Gi-Oh decks
   - Format: JSONL with deck metadata, archetype, format, source URL, and card lists
   - Issue: Very small sample (only 20 decks)
-  
+
 - **`data/processed/decks_pokemon.jsonl`**: 0 Pokemon decks
   - Issue: File is empty
 
@@ -35,7 +35,7 @@ This review covers all datasets in the DeckSage project, including raw data, pro
 - **`data/processed/card_attributes_enriched.csv`**: 47,131 cards
   - Columns: name, type, colors, mana_cost, cmc, rarity, power, toughness, set, set_name, oracle_text, keywords
   - Status: Well-structured, comprehensive attributes
-  
+
 - **`data/processed/card_attributes_minimal.csv`**: 26,960 cards
   - Status: Subset of enriched attributes
 
@@ -45,7 +45,7 @@ This review covers all datasets in the DeckSage project, including raw data, pro
 - **`data/processed/pairs_large.csv`**: 7,541,436 pairs
   - Format: NAME_1, NAME_2, COUNT, DECK_ID, SOURCE
   - Status: Large dataset, appears to be MTG-only despite name
-  
+
 - **`data/processed/pairs_multi_game.csv`**: 24,605,118 pairs
   - Format: NAME_1, NAME_2, GAME_1, GAME_2, COUNT, DECK_ID, SOURCE
   - Issue: Despite name, appears to contain only MTG data (GAME_1/GAME_2 columns exist but all values are "MTG" in sample)
@@ -57,10 +57,10 @@ This review covers all datasets in the DeckSage project, including raw data, pro
 - **`experiments/test_set_canonical_magic.json`**: 38 queries, 156 total labels
   - Format: Query card → relevance categories (highly_relevant, relevant, somewhat_relevant, marginally_relevant, irrelevant)
   - Status: Well-structured, good coverage for MTG
-  
+
 - **`experiments/test_set_canonical_pokemon.json`**: 10 queries, 38 total labels
   - Issue: Small size (target is 25+ queries)
-  
+
 - **`experiments/test_set_canonical_yugioh.json`**: 13 queries, 43 total labels
   - Issue: Small size (target is 25+ queries)
 

@@ -1,6 +1,3 @@
-import pytest
-
-
 def test_apply_patch_partial_deck_ok(api_client):
     client = api_client
 
@@ -9,9 +6,7 @@ def test_apply_patch_partial_deck_ok(api_client):
         "deck": {
             "deck_id": "ex1",
             "format": "Modern",
-            "partitions": [
-                {"name": "Main", "cards": [{"name": "Lightning Bolt", "count": 4}]}
-            ],
+            "partitions": [{"name": "Main", "cards": [{"name": "Lightning Bolt", "count": 4}]}],
         },
         "patch": {
             "ops": [

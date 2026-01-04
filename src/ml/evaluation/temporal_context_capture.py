@@ -27,7 +27,7 @@ def capture_temporal_context(
 ) -> TemporalContext:
     """
     Capture temporal context for a recommendation.
-    
+
     Args:
         recommendation_timestamp: When the recommendation is being made (defaults to now)
         format_name: Format name (e.g., "modern", "standard")
@@ -37,35 +37,35 @@ def capture_temporal_context(
         price_state: Card prices at recommendation time
         format_rotation_dates: Upcoming format rotation dates
         recent_ban_list_changes: Recent ban/unban changes
-    
+
     Returns:
         TemporalContext object
     """
     if recommendation_timestamp is None:
         recommendation_timestamp = datetime.now()
-    
+
     # If format_state not provided, try to load from data
     if format_state is None:
         format_state = _load_format_state(format_name, game, recommendation_timestamp)
-    
+
     # If meta_state not provided, try to load from data
     if meta_state is None:
         meta_state = _load_meta_state(format_name, game, recommendation_timestamp)
-    
+
     # If price_state not provided, try to load from data
     if price_state is None:
         price_state = _load_price_state(game, recommendation_timestamp)
-    
+
     # If format_rotation_dates not provided, try to load from data
     if format_rotation_dates is None:
         format_rotation_dates = _load_format_rotation_dates(format_name, game)
-    
+
     # If recent_ban_list_changes not provided, try to load from data
     if recent_ban_list_changes is None:
         recent_ban_list_changes = _load_recent_ban_list_changes(
             format_name, game, recommendation_timestamp
         )
-    
+
     return TemporalContext(
         recommendation_timestamp=recommendation_timestamp,
         format_state_at_time=format_state,
@@ -156,7 +156,7 @@ def save_temporal_context(
         ),
         "recent_ban_list_changes": context.recent_ban_list_changes,
     }
-    
+
     with open(output_path, "w") as f:
         json.dump(data, f, indent=2)
 
@@ -167,7 +167,7 @@ def load_temporal_context(
     """Load temporal context from JSON file."""
     with open(input_path) as f:
         data = json.load(f)
-    
+
     return TemporalContext(
         recommendation_timestamp=datetime.fromisoformat(data["recommendation_timestamp"]),
         format_state_at_time=data["format_state_at_time"],
@@ -184,7 +184,6 @@ def load_temporal_context(
 
 __all__ = [
     "capture_temporal_context",
-    "save_temporal_context",
     "load_temporal_context",
+    "save_temporal_context",
 ]
-

@@ -79,4 +79,3 @@ just hyperparam-search
 4. **Train improved embeddings** - After hyperparameter results
 
 **trainctl integration ready! Just need to fix compilation error.**
-

@@ -1,6 +1,6 @@
 # Next Steps - Implementation Complete
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ All integration complete, ready for data generation and testing
 
 ---
@@ -130,7 +130,7 @@ curl -X POST http://localhost:8000/v1/similar \
 
 ### GraphSAGE for Co-Occurrence Graphs
 
-**Why**: 
+**Why**:
 - Best for low-homophily graphs (co-occurrence networks)
 - Outperforms GCN on large graphs
 - Learnable aggregators adapt to data
@@ -211,4 +211,3 @@ All code is complete and ready. Next steps are data generation and testing:
 2. (Optional) Train GNN model
 3. Test API with all signals
 4. Evaluate performance impact
-

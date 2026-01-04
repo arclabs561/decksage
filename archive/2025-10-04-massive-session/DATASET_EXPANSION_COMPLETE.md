@@ -126,8 +126,8 @@ make check     # Lint + test
 ## 🎯 Key Technical Achievements
 
 ### 1. No-API-Key Solution for Limitless
-**Problem**: Limitless TCG API requires manual approval (1-3 days wait)  
-**Solution**: Scrape public website directly (like MTGTop8)  
+**Problem**: Limitless TCG API requires manual approval (1-3 days wait)
+**Solution**: Scrape public website directly (like MTGTop8)
 **Impact**: Immediate access to 401 tournament decks
 
 **Clever Design**:
@@ -137,14 +137,14 @@ make check     # Lint + test
 - Proper rate limiting (30 req/min)
 
 ### 2. Multi-Partition YGO Deck Support
-**Challenge**: Yu-Gi-Oh has 3 deck zones (Main/Extra/Side)  
-**Solution**: Proper partition handling from day 1  
+**Challenge**: Yu-Gi-Oh has 3 deck zones (Main/Extra/Side)
+**Solution**: Proper partition handling from day 1
 **Result**: Clean data model that matches game rules
 
 ### 3. MTGGoldfish Hidden Form Input (Your Discovery!)
-**Problem**: Deck table JavaScript-rendered  
-**Your Solution**: Extract from `input[name="deck_input[deck]"]` value  
-**Impact**: Parser now works without browser automation  
+**Problem**: Deck table JavaScript-rendered
+**Your Solution**: Extract from `input[name="deck_input[deck]"]` value
+**Impact**: Parser now works without browser automation
 **Lesson**: Always check for hidden form inputs before giving up
 
 ### 4. Modern Linting with Ruff
@@ -302,7 +302,7 @@ uv run python data_gardening.py
 - **Lesson**: Check public website first before requesting API access
 
 ### 2. Hidden Form Inputs Are Gold
-- MTGGoldfish hid deck list in `<input name="deck_input[deck]">` 
+- MTGGoldfish hid deck list in `<input name="deck_input[deck]">`
 - YGOPRODeck might have similar patterns
 - **Lesson**: Always inspect full page source, not just visible elements
 
@@ -445,15 +445,15 @@ limiter = ratelimit.New(30, ratelimit.Per(time.Minute))
 
 ## 🏆 Bottom Line
 
-**Started**: Fragmented dataset, MTG-only tournament decks, no linting  
+**Started**: Fragmented dataset, MTG-only tournament decks, no linting
 **Ended**: **Cross-game tournament coverage**, **401 Pokemon decks**, **20 YGO decks**, **modern linting infrastructure**
 
-**Time Invested**: ~6 hours  
-**Code Written**: ~1,200 lines (scrapers + config)  
-**Issues Fixed**: 7 major problems  
-**Documentation**: ~5,000 lines  
-**Data Added**: 421 tournament decks  
-**Linting Issues Fixed**: 3,032 automatically  
+**Time Invested**: ~6 hours
+**Code Written**: ~1,200 lines (scrapers + config)
+**Issues Fixed**: 7 major problems
+**Documentation**: ~5,000 lines
+**Data Added**: 421 tournament decks
+**Linting Issues Fixed**: 3,032 automatically
 
 **Result**: 🎉 **MISSION COMPLETE - ALL GAMES NOW HAVE TOURNAMENT DECK COVERAGE**
 
@@ -498,12 +498,12 @@ make format
 
 ## 🎉 Final Status
 
-✅ **All scrapers working**  
-✅ **Cross-game parity achieved**  
-✅ **Modern linting configured**  
-✅ **Comprehensive documentation**  
-✅ **Production-ready code**  
-✅ **No blockers remaining**  
+✅ **All scrapers working**
+✅ **Cross-game parity achieved**
+✅ **Modern linting configured**
+✅ **Comprehensive documentation**
+✅ **Production-ready code**
+✅ **No blockers remaining**
 
 **The dataset is ready to grow. The infrastructure is solid. The code is clean.**
 

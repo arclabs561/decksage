@@ -1,5 +1,5 @@
 # Web Scraping Implementation Audit
-**Date:** October 4, 2025  
+**Date:** October 4, 2025
 **Status:** ✅ Core infrastructure correct, ⚠️ Minor issues identified
 
 ## Executive Summary
@@ -18,8 +18,8 @@ The web scraping infrastructure is **fundamentally sound** with proper architect
 ## 1. Script Fixes
 
 ### ✅ `expand_scraping.sh` - FIXED
-**Issue:** Script was previously passing wrong dataset names  
-**Status:** Now corrected - uses proper names (`mtgtop8`, `goldfish` without `magic/` prefix)  
+**Issue:** Script was previously passing wrong dataset names
+**Status:** Now corrected - uses proper names (`mtgtop8`, `goldfish` without `magic/` prefix)
 **Verification:** CLI accepts these dataset names correctly
 
 ---
@@ -38,8 +38,8 @@ The web scraping infrastructure is **fundamentally sound** with proper architect
 ```
 
 ### ⚠️ Test Coverage - MISSING
-**Issue:** No test files in `src/backend/scraper/` (400+ lines untested)  
-**Risk:** Medium - core functionality works but lacks safety net  
+**Issue:** No test files in `src/backend/scraper/` (400+ lines untested)
+**Risk:** Medium - core functionality works but lacks safety net
 **Recommendation:** Add integration tests for:
 - Cache hit/miss behavior
 - Rate limiting enforcement
@@ -114,7 +114,7 @@ $ go run cmd/dataset/main.go --bucket file://./data-full --log debug extract mtg
 **Location:** `src/backend/games/magic/dataset/goldfish/dataset.go`
 
 #### Issue: HTML Selector Mismatch
-**Selector used:** `#tab-paper .deck-view-deck-table .card_name` (line 308)  
+**Selector used:** `#tab-paper .deck-view-deck-table .card_name` (line 308)
 **Error:** `collection is invalid: partition Main has no cards`
 
 #### Root Cause Analysis:

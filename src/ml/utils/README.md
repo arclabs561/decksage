@@ -173,5 +173,3 @@ See `tests/` directory for unit tests covering:
 - Evaluation metric correctness
 - Path resolution
 - Multi-game filtering
-
-

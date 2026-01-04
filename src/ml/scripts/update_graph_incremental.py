@@ -10,13 +10,13 @@ from __future__ import annotations
 
 import argparse
 import json
-import logging
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 
 from ..data.incremental_graph import IncrementalCardGraph
-from ..utils.paths import PATHS
 from ..utils.logging_config import setup_script_logging
+from ..utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -39,22 +39,24 @@ def update_graph_incremental(
 ) -> IncrementalCardGraph:
     """
     Update graph incrementally with new decks.
-    
+
     Args:
         graph_path: Path to graph database
         new_decks_path: Path to new decks JSONL file
         decks: List of deck dicts (alternative to file path)
-    
+
     Returns:
         Updated graph
     """
     # Load existing graph (auto-detect SQLite from extension)
     if graph_path:
-        use_sqlite = use_sqlite if graph_path.suffix == ".db" else (not graph_path.suffix == ".json")
+        use_sqlite = (
+            use_sqlite if graph_path.suffix == ".db" else (not graph_path.suffix == ".json")
+        )
     graph = IncrementalCardGraph(graph_path, use_sqlite=use_sqlite)
-    
+
     logger.info(f"Loaded graph: {len(graph.nodes)} nodes, {len(graph.edges)} edges")
-    
+
     # Load new decks
     if new_decks_path:
         logger.info(f"Loading new decks from: {new_decks_path}")
@@ -63,17 +65,17 @@ def update_graph_incremental(
         new_decks = decks
     else:
         raise ValueError("Must provide either new_decks_path or decks")
-    
+
     logger.info(f"Processing {len(new_decks)} new decks...")
-    
+
     # Add decks incrementally
     for i, deck in enumerate(new_decks):
         deck_id = deck.get("deck_id") or deck.get("id") or f"deck_{i}"
-        
+
         # Extract timestamp
         timestamp_str = (
-            deck.get("timestamp") 
-            or deck.get("date") 
+            deck.get("timestamp")
+            or deck.get("date")
             or deck.get("scraped_at")
             or deck.get("event_date")
         )
@@ -82,13 +84,13 @@ def update_graph_incremental(
                 # Handle various timestamp formats
                 if isinstance(timestamp_str, str):
                     # Remove timezone Z and convert to datetime
-                    timestamp_str = timestamp_str.replace('Z', '+00:00')
+                    timestamp_str = timestamp_str.replace("Z", "+00:00")
                 timestamp = datetime.fromisoformat(timestamp_str)
             except Exception:
                 timestamp = datetime.now()
         else:
             timestamp = datetime.now()
-        
+
         # Extract format from deck structure (multiple possible locations)
         format_value = None
         if "format" in deck:
@@ -97,62 +99,72 @@ def update_graph_incremental(
             inner = deck["type"].get("inner")
             if isinstance(inner, dict) and "format" in inner:
                 format_value = inner["format"]
-        
+
         # Extract other metadata
         event_date = (
             deck.get("event_date")
             or deck.get("eventDate")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("eventDate")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("eventDate")
         )
-        placement = (
-            deck.get("placement")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("placement")
-        )
-        archetype = (
-            deck.get("archetype")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("archetype")
-        )
-        
+        placement = deck.get("placement") or (
+            deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+        ).get("placement")
+        archetype = deck.get("archetype") or (
+            deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+        ).get("archetype")
+
         # Extract enhanced tournament metadata
         tournament_type = (
             deck.get("tournament_type")
             or deck.get("tournamentType")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("tournamentType")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("tournamentType")
         )
         tournament_size = (
             deck.get("tournament_size")
             or deck.get("tournamentSize")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("tournamentSize")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("tournamentSize")
         )
-        location = (
-            deck.get("location")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("location")
-        )
-        region = (
-            deck.get("region")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("region")
-        )
+        location = deck.get("location") or (
+            deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+        ).get("location")
+        region = deck.get("region") or (
+            deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+        ).get("region")
         tournament_id = (
             deck.get("tournament_id")
             or deck.get("tournamentId")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("tournamentId")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("tournamentId")
         )
         days_since_rotation = (
             deck.get("days_since_rotation")
             or deck.get("daysSinceRotation")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("daysSinceRotation")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("daysSinceRotation")
         )
         days_since_ban = (
             deck.get("days_since_ban_update")
             or deck.get("daysSinceBanUpdate")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("daysSinceBanUpdate")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("daysSinceBanUpdate")
         )
         meta_share = (
             deck.get("meta_share")
             or deck.get("metaShare")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("metaShare")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("metaShare")
         )
-        
+
         # Set deck metadata before adding deck (so format is available for temporal tracking)
         deck_metadata = {}
         if format_value:
@@ -179,40 +191,40 @@ def update_graph_incremental(
             deck_metadata["days_since_ban_update"] = days_since_ban
         if meta_share is not None:
             deck_metadata["meta_share"] = meta_share
-        
+
         # Extract round results if available
         round_results = (
             deck.get("roundResults")
             or deck.get("round_results")
-            or (deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}).get("roundResults")
+            or (
+                deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
+            ).get("roundResults")
         )
         if round_results:
             deck_metadata["round_results"] = round_results
-        
+
         if deck_metadata:
             graph.set_deck_metadata(deck_id, deck_metadata)
-        
+
         # Add deck to graph (will use metadata for temporal tracking)
         graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
-        
+
         if (i + 1) % 1000 == 0:
             logger.info(f"  Processed {i + 1}/{len(new_decks)} decks...")
-    
+
     # Save updated graph
     graph.save(graph_path)
-    
+
     stats = graph.get_statistics()
     logger.info(f"✓ Graph updated: {stats['num_nodes']} nodes, {stats['num_edges']} edges")
     logger.info(f"  Total decks processed: {stats['total_decks_processed']}")
-    
+
     return graph
 
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Update card co-occurrence graph incrementally"
-    )
+    parser = argparse.ArgumentParser(description="Update card co-occurrence graph incrementally")
     parser.add_argument(
         "--graph-path",
         type=Path,
@@ -258,9 +270,9 @@ def main() -> int:
         default=2,
         help="Minimum edge weight for export",
     )
-    
+
     args = parser.parse_args()
-    
+
     if args.rebuild:
         logger.info("Rebuilding graph from scratch...")
         all_decks = load_decks_from_jsonl(args.decks_file)
@@ -272,19 +284,19 @@ def main() -> int:
         if not args.new_decks:
             logger.error("Must provide --new-decks for incremental update (or use --rebuild)")
             return 1
-        
+
         graph = update_graph_incremental(
             graph_path=args.graph_path,
             new_decks_path=args.new_decks,
             use_sqlite=args.use_sqlite,
         )
-    
+
     # Export edgelist if requested
     if args.export_edgelist:
         logger.info(f"Exporting edgelist to: {args.export_edgelist}")
         graph.export_edgelist(args.export_edgelist, min_weight=args.min_weight)
         logger.info("✓ Edgelist exported")
-    
+
     # Print statistics
     stats = graph.get_statistics()
     logger.info("\nGraph Statistics:")
@@ -293,10 +305,9 @@ def main() -> int:
     logger.info(f"  Avg degree: {stats['avg_degree']:.2f}")
     logger.info(f"  Avg edge weight: {stats['avg_edge_weight']:.2f}")
     logger.info(f"  Total decks: {stats['total_decks_processed']:,}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     exit(main())
-

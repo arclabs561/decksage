@@ -19,20 +19,20 @@ def add_temporal_context_to_recommendation(
 ) -> dict[str, Any]:
     """
     Add temporal context to a recommendation.
-    
+
     Args:
         recommendation: Recommendation dict
         format_state: Format state (ban list, legal sets, etc.)
         meta_state: Meta state (top decks, meta share, etc.)
         price_state: Price state (card prices)
-    
+
     Returns:
         Recommendation with temporal context added
     """
     # Add timestamp if not present
     if "timestamp" not in recommendation:
         recommendation["timestamp"] = datetime.now().isoformat()
-    
+
     # Add temporal context
     recommendation["temporal_context"] = {
         "format_state": format_state or {},
@@ -40,7 +40,7 @@ def add_temporal_context_to_recommendation(
         "price_state": price_state or {},
         "timestamp": recommendation["timestamp"],
     }
-    
+
     return recommendation
 
 
@@ -55,4 +55,3 @@ __all__ = [
     "add_temporal_context_to_recommendation",
     "extract_temporal_context_from_recommendation",
 ]
-

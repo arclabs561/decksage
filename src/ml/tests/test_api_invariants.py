@@ -1,6 +1,4 @@
 #!/usr/bin/env python3
-import importlib
-import math
 
 import pytest
 
@@ -8,7 +6,6 @@ import pytest
 @pytest.fixture()
 def client(api_client):
     # Minimal embeddings and graph via existing mock from test_api_smoke
-    from ..api import api
     return api_client
 
 
@@ -42,5 +39,3 @@ def test_similar_returns_sorted(client):
         pytest.skip("not ready")
     scores = [res["similarity"] for res in r.json()["results"]]
     assert scores == sorted(scores, reverse=True)
-
-

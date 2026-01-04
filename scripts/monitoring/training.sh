@@ -49,14 +49,14 @@ while true; do
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$iteration] $timestamp"
     echo "----------------------------------------------------------------------"
-    
+
     # Check instance status
     if "$RUNCTL_BIN" aws processes "$INSTANCE_ID" > /dev/null 2>&1; then
         echo "✓ Instance: Accessible"
     else
         echo "✗ Instance: Not accessible"
     fi
-    
+
     # Check S3 outputs
     if aws s3 ls "$GNN_OUTPUT" > /dev/null 2>&1; then
         echo "✓ GNN embeddings: Found in S3"
@@ -66,14 +66,13 @@ while true; do
     else
         echo "⏳ GNN embeddings: Not found in S3"
     fi
-    
+
     # Check progress files
     if aws s3 ls "${PROGRESS_DIR}/training_progress.json" > /dev/null 2>&1; then
         echo "✓ Progress file: Available"
     fi
-    
+
     echo ""
     echo "Next check in ${CHECK_INTERVAL}s..."
     sleep "$CHECK_INTERVAL"
 done
-
