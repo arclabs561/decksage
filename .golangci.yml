@@ -139,10 +139,6 @@ issues:
   # Maximum issues count per one linter. 0 means unlimited
   max-issues-per-linter: 0
 
-output:
-  # v2 format: formats is a list of format names
-  formats:
-    - colored-line-number  # Default colored output with line numbers
-  print-issued-lines: true
-  print-linter-name: true
-  sort-results: true
+# Output configuration - using defaults for v2
+# Removed custom output config to avoid unmarshal errors
+# Default behavior: colored line-number output to stdout
