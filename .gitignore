@@ -177,3 +177,14 @@ experiments/downstream_tests/*.jsonl
 # Large data files (accidentally committed)
 src/backend/data/processed/pairs_large.csv
 data/processed/pairs_multi_game.csv.*
+
+# Large data files - prevent accidental commits
+**/*.wv
+**/*.kv
+**/*.edg
+**/*.db
+data/processed/*.csv
+data/graphs/*
+data/embeddings/**/*
+src/backend/data/processed/*.csv
+src/backend/data/embeddings/*
