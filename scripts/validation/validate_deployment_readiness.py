@@ -126,7 +126,7 @@ def main() -> int:
             print(f"   • {issue}")
         print("")
         print("💡 Fix these before deploying to production.")
-        print("   See: docs/AGENT_DEPLOYMENT_GUIDE.md")
+        print("   See: docs/DEPLOYMENT.md")
         return 1
 
     print("✅ Deployment readiness checks passed")
