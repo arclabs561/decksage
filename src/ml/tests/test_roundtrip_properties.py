@@ -87,7 +87,7 @@ def ygo_deck_small(draw):
 
 @given(ygo_deck_small())
 def test_roundtrip_canonicalization_ygo(deck):
-    from ..validation.validators.models import YugiohDeck
+    from ..validation.validators import YugiohDeck
 
     try:
         d = YugiohDeck.model_validate(deck)
@@ -123,7 +123,7 @@ def pkmn_deck_small(draw):
 
 @given(pkmn_deck_small())
 def test_roundtrip_canonicalization_pkmn(deck):
-    from ..validation.validators.models import PokemonDeck
+    from ..validation.validators import PokemonDeck
 
     try:
         d = PokemonDeck.model_validate(deck)
