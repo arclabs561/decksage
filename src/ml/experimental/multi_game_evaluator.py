@@ -191,9 +191,14 @@ def main():
         for game, p10 in scores["by_game"].items():
             print(f"    {game}: {p10:.4f}")
 
-    print(
-        f"\nTotal experiments logged: {sum(1 for _ in open('../../experiments/EXPERIMENT_LOG.jsonl'))}"
-    )
+    # Count experiments with proper file handling
+    exp_log_path = Path("../../experiments/EXPERIMENT_LOG.jsonl")
+    if exp_log_path.exists():
+        with open(exp_log_path) as f:
+            count = sum(1 for _ in f)
+        print(f"\nTotal experiments logged: {count}")
+    else:
+        print("\nTotal experiments logged: 0 (log file not found)")
 
 
 if __name__ == "__main__":
