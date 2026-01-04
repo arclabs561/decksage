@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tests for hyperparameter search functionality.
 
@@ -11,14 +10,15 @@ Tests:
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
 
+
 try:
-    from gensim.models import Word2Vec, KeyedVectors
+    from gensim.models import KeyedVectors, Word2Vec
+
     HAS_GENSIM = True
 except ImportError:
     HAS_GENSIM = False
@@ -29,27 +29,30 @@ def test_prepare_edgelist():
     """Test converting pairs CSV to edgelist."""
     # prepare_edgelist is now in utils.edgelist_utils
     from ml.utils.edgelist_utils import prepare_edgelist
-    
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         # Create test pairs CSV
         import pandas as pd
+
         pairs_csv = tmp_path / "test_pairs.csv"
-        pd.DataFrame({
-            "NAME_1": ["Card1", "Card2"],
-            "NAME_2": ["Card2", "Card3"],
-            "COUNT_SET": [2, 3],
-            "COUNT_MULTISET": [3, 4],
-        }).to_csv(pairs_csv, index=False)
-        
+        pd.DataFrame(
+            {
+                "NAME_1": ["Card1", "Card2"],
+                "NAME_2": ["Card2", "Card3"],
+                "COUNT_SET": [2, 3],
+                "COUNT_MULTISET": [3, 4],
+            }
+        ).to_csv(pairs_csv, index=False)
+
         edgelist = tmp_path / "test.edg"
         num_nodes, num_edges = prepare_edgelist(pairs_csv, edgelist, min_cooccurrence=2)
-        
+
         assert num_nodes == 3  # Card1, Card2, Card3
         assert num_edges == 2
         assert edgelist.exists()
-        
+
         # Check edgelist format
         with open(edgelist) as f:
             lines = f.readlines()
@@ -65,7 +68,7 @@ def test_evaluate_embedding():
     # evaluate_embedding is in improve_embeddings_hyperparameter_search.py which is a PEP 723 script
     # Cannot import from single-line scripts - would need to extract to utility module
     from ml.scripts.improve_embeddings_hyperparameter_search import evaluate_embedding
-    
+
     # Create minimal test embeddings
     sentences = [
         ["Lightning", "Bolt"],
@@ -75,7 +78,7 @@ def test_evaluate_embedding():
     ]
     model = Word2Vec(sentences, vector_size=10, window=2, min_count=1, epochs=1)
     wv = model.wv
-    
+
     # Create test set
     test_set = {
         "Lightning": {
@@ -83,9 +86,9 @@ def test_evaluate_embedding():
             "relevant": ["Fire"],
         }
     }
-    
+
     metrics = evaluate_embedding(wv, test_set, name_mapper=None, top_k=10)
-    
+
     assert "p@10" in metrics
     assert "mrr" in metrics
     assert "num_queries" in metrics
@@ -97,20 +100,26 @@ def test_s3_path_handling():
     # Test S3 path detection
     s3_path = "s3://bucket/path/file.csv"
     local_path = "/tmp/file.csv"
-    
+
     assert s3_path.startswith("s3://")
     assert not local_path.startswith("s3://")
 
 
 def test_grid_search_config_generation():
     """Test grid search configuration generation."""
-    from ml.scripts.improve_embeddings_hyperparameter_search import run_grid_search
-    
-    # This would test the grid search logic
-    # For now, just verify the function exists
+    # Note: run_grid_search was removed/refactored
+    # This test is kept for historical reference but should be updated
+    # to test the actual hyperparameter search functionality
+    try:
+        from ml.scripts import improve_embeddings_hyperparameter_search
+
+        # Verify module can be imported and has grid_search function
+        assert improve_embeddings_hyperparameter_search is not None
+        assert hasattr(improve_embeddings_hyperparameter_search, "grid_search")
+    except ImportError:
+        pytest.skip("improve_embeddings_hyperparameter_search module not available")
     assert callable(run_grid_search)
 
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

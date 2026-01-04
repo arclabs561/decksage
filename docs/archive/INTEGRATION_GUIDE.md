@@ -1,6 +1,6 @@
 # Integration Guide: Text Embeddings and Beam Search
 
-**Date**: November 10, 2025  
+**Date**: November 10, 2025
 **Status**: Implementation files created, ready for integration
 
 ---
@@ -48,17 +48,17 @@ from ..similarity.fusion_integration import (
 # In your fusion function:
 def compute_fusion_similarity(card1, card2, method="fusion", weights=None):
     # ... existing code for embed, jaccard, functional ...
-    
+
     similarities = {
         "embed": embed_sim,
         "jaccard": jaccard_sim,
         "functional": functional_sim,
     }
-    
+
     # Add text embedding if weights include it
     if weights is None:
         weights = get_default_weights_with_text()
-    
+
     if "text_embed" in weights:
         fused = compute_fusion_with_text(
             similarities,
@@ -72,7 +72,7 @@ def compute_fusion_similarity(card1, card2, method="fusion", weights=None):
         total_weight = sum(weights.get(s, 0) for s in similarities)
         if total_weight > 0:
             fused /= total_weight
-    
+
     return fused
 ```
 
@@ -97,12 +97,12 @@ async def get_similar_cards(
     use_text_embed: bool = True,  # New parameter
 ):
     # ... existing code ...
-    
+
     if mode == "fusion" and use_text_embed:
         weights = get_default_weights_with_text()
     else:
         weights = get_legacy_weights()  # Without text
-    
+
     # Use fusion with text embeddings
     # ...
 ```
@@ -128,7 +128,7 @@ def complete_deck(
     beam_width: int = 3,
 ) -> dict:
     """Complete deck with optional beam search."""
-    
+
     if use_beam_search:
         return beam_search_completion(
             deck,
@@ -310,10 +310,3 @@ rm -rf .cache/text_embeddings/
 4. How is API structured for similarity queries?
 
 These will be answered when files are readable.
-
-
-
-
-
-
-

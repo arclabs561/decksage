@@ -57,7 +57,7 @@ def test_fusion_basic_ranking():
     assert len(top_cards) > 0
     # Assert monotonicity by score
     scores = [s for _, s in results]
-    assert all(scores[i] >= scores[i+1] for i in range(len(scores)-1))
+    assert all(scores[i] >= scores[i + 1] for i in range(len(scores) - 1))
 
 
 @pytest.mark.skip(reason="Fusion ranking is non-deterministic with current weights")
@@ -65,8 +65,12 @@ def test_fusion_rrf_aggregator_changes_order():
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
 
     emb, adj, tagger = _make_dummy_env()
-    f_weighted = WeightedLateFusion(embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="weighted")
-    f_rrf = WeightedLateFusion(embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="rrf", rrf_k=10)
+    f_weighted = WeightedLateFusion(
+        embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="weighted"
+    )
+    f_rrf = WeightedLateFusion(
+        embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="rrf", rrf_k=10
+    )
 
     r1 = [c for c, _ in f_weighted.similar("A", k=3)]
     r2 = [c for c, _ in f_rrf.similar("A", k=3)]
@@ -81,8 +85,22 @@ def test_fusion_mmr_diversifies_results():
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
 
     emb, adj, tagger = _make_dummy_env()
-    f_no_mmr = WeightedLateFusion(embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="weighted", mmr_lambda=0.0)
-    f_mmr = WeightedLateFusion(embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), aggregator="weighted", mmr_lambda=0.7)
+    f_no_mmr = WeightedLateFusion(
+        embeddings=emb,
+        adj=adj,
+        tagger=tagger,
+        weights=FusionWeights(),
+        aggregator="weighted",
+        mmr_lambda=0.0,
+    )
+    f_mmr = WeightedLateFusion(
+        embeddings=emb,
+        adj=adj,
+        tagger=tagger,
+        weights=FusionWeights(),
+        aggregator="weighted",
+        mmr_lambda=0.7,
+    )
 
     r_no = f_no_mmr.similar("A", k=3)
     r_yes = f_mmr.similar("A", k=3)
@@ -131,7 +149,13 @@ def test_fusion_candidate_topn_affects_candidates_but_not_top1(candidate_topn):
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
 
     emb, adj, tagger = _make_dummy_env()
-    f = WeightedLateFusion(embeddings=emb, adj=adj, tagger=tagger, weights=FusionWeights(), candidate_topn=candidate_topn)
+    f = WeightedLateFusion(
+        embeddings=emb,
+        adj=adj,
+        tagger=tagger,
+        weights=FusionWeights(),
+        candidate_topn=candidate_topn,
+    )
     top = f.similar("A", k=1)
     assert len(top) == 1
     assert top[0][0] in {"B", "C"}
@@ -148,8 +172,3 @@ def test_fusion_unknown_query_returns_empty():
     # Ensure results are within adjacency neighborhood when only jaccard active
     neighbor_set = set(adj["A"]) if "A" in adj else set()
     assert all(c in neighbor_set for c, _ in results)
-
-
-
-
-

@@ -19,23 +19,29 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
+
 try:
     import pandas as pd
+
     HAS_PANDAS = True
 except ImportError:
     HAS_PANDAS = False
 
 # Set up project paths
 import sys
+
 from ml.utils.path_setup import setup_project_paths
+
+
 setup_project_paths()
 
 try:
-    from ml.utils.constants import get_filter_set, RELEVANCE_WEIGHTS
+    from ml.utils.constants import RELEVANCE_WEIGHTS, get_filter_set
+
     HAS_CONSTANTS = True
 except ImportError:
     HAS_CONSTANTS = False
@@ -49,6 +55,7 @@ except ImportError:
 
     def get_filter_set(game: str, level: str = "basic") -> set:
         return set()
+
 
 # ... existing code ...
 def analyze_test_set_quality(
@@ -112,11 +119,13 @@ def analyze_test_set_quality(
         # Check if query is filtered (common card)
         if query in filter_set:
             analysis["query_quality"]["filtered_queries"] += 1
-            analysis["quality_issues"].append({
-                "query": query,
-                "issue": "filtered_common_card",
-                "severity": "high",
-            })
+            analysis["quality_issues"].append(
+                {
+                    "query": query,
+                    "issue": "filtered_common_card",
+                    "severity": "high",
+                }
+            )
             continue
 
         # Count labels
@@ -144,12 +153,14 @@ def analyze_test_set_quality(
         if highly_rel > 0 or relevant > 0:
             analysis["query_quality"]["queries_for_mrr"] += 1
         else:
-            analysis["quality_issues"].append({
-                "query": query,
-                "issue": "no_highly_relevant_or_relevant",
-                "severity": "high",
-                "detail": "MRR and MAP require at least highly_relevant or relevant labels",
-            })
+            analysis["quality_issues"].append(
+                {
+                    "query": query,
+                    "issue": "no_highly_relevant_or_relevant",
+                    "severity": "high",
+                    "detail": "MRR and MAP require at least highly_relevant or relevant labels",
+                }
+            )
 
         # Substitution task needs highly_relevant + relevant
         if highly_rel > 0 and relevant > 0:
@@ -168,12 +179,14 @@ def analyze_test_set_quality(
                     missing_cooccurrence.append(card)
 
             if len(missing_cooccurrence) > len(highly_rel_cards) * 0.5:  # >50% missing
-                analysis["quality_issues"].append({
-                    "query": query,
-                    "issue": "low_cooccurrence_validation",
-                    "severity": "medium",
-                    "detail": f"{len(missing_cooccurrence)}/{len(highly_rel_cards)} highly_relevant cards don't co-occur",
-                })
+                analysis["quality_issues"].append(
+                    {
+                        "query": query,
+                        "issue": "low_cooccurrence_validation",
+                        "severity": "medium",
+                        "detail": f"{len(missing_cooccurrence)}/{len(highly_rel_cards)} highly_relevant cards don't co-occur",
+                    }
+                )
 
     # Convert Counter to dict for JSON serialization
     for key in analysis["label_distribution"]:
@@ -187,36 +200,46 @@ def print_analysis_report(analysis: dict[str, Any]) -> None:
     print("=" * 70)
     print("EVALUATION DATA QUALITY ANALYSIS")
     print("=" * 70)
-    print(f"\n Summary")
+    print("\n Summary")
     print(f" Total queries: {analysis['total_queries']}")
 
-    print(f"\n Format Compatibility")
+    print("\n Format Compatibility")
     fmt = analysis["format_compatibility"]
     print(f" Has version: {fmt['has_version']}")
     print(f" Has game: {fmt['has_game']}")
     print(f" Has queries: {fmt['has_queries']}")
 
-    print(f"\n📈 Query Quality")
+    print("\n📈 Query Quality")
     qq = analysis["query_quality"]
     print(f" Filtered queries (common cards): {qq['filtered_queries']}")
-    print(f" Queries with 10+ labels: {qq['queries_with_sufficient_labels']}/{analysis['total_queries']}")
-    print(f" Queries with highly_relevant: {qq['queries_with_highly_relevant']}/{analysis['total_queries']}")
+    print(
+        f" Queries with 10+ labels: {qq['queries_with_sufficient_labels']}/{analysis['total_queries']}"
+    )
+    print(
+        f" Queries with highly_relevant: {qq['queries_with_highly_relevant']}/{analysis['total_queries']}"
+    )
     print(f" Queries with relevant: {qq['queries_with_relevant']}/{analysis['total_queries']}")
     print(f" Queries usable for MRR/MAP: {qq['queries_for_mrr']}/{analysis['total_queries']}")
-    print(f" Queries usable for substitution: {qq['queries_for_substitution']}/{analysis['total_queries']}")
+    print(
+        f" Queries usable for substitution: {qq['queries_for_substitution']}/{analysis['total_queries']}"
+    )
 
-    print(f"\n📋 Label Distribution")
+    print("\n📋 Label Distribution")
     for level, dist in analysis["label_distribution"].items():
         if dist:
             avg = sum(count * num for num, count in dist.items()) / sum(dist.values())
-            print(f" {level}: avg {avg:.1f} per query (range: {min(dist.keys())}-{max(dist.keys())})")
+            print(
+                f" {level}: avg {avg:.1f} per query (range: {min(dist.keys())}-{max(dist.keys())})"
+            )
 
-    print(f"\n Downstream Task Coverage")
+    print("\n Downstream Task Coverage")
     dtc = analysis["downstream_task_coverage"]
     print(f" Substitution-ready: {dtc['substitution_ready']}/{analysis['total_queries']}")
-    print(f" Contextual discovery-ready: {dtc['contextual_discovery_ready']}/{analysis['total_queries']}")
+    print(
+        f" Contextual discovery-ready: {dtc['contextual_discovery_ready']}/{analysis['total_queries']}"
+    )
 
-    print(f"\nWarning: Quality Issues")
+    print("\nWarning: Quality Issues")
     issues = analysis["quality_issues"]
     if not issues:
         print(" No issues found")
@@ -238,17 +261,23 @@ def print_analysis_report(analysis: dict[str, Any]) -> None:
 
     # Overall assessment
     print(f"\n{'=' * 70}")
-    usable_for_mrr = qq['queries_for_mrr'] / analysis['total_queries'] if analysis['total_queries'] > 0 else 0
-    usable_for_substitution = qq['queries_for_substitution'] / analysis['total_queries'] if analysis['total_queries'] > 0 else 0
+    usable_for_mrr = (
+        qq["queries_for_mrr"] / analysis["total_queries"] if analysis["total_queries"] > 0 else 0
+    )
+    usable_for_substitution = (
+        qq["queries_for_substitution"] / analysis["total_queries"]
+        if analysis["total_queries"] > 0
+        else 0
+    )
 
-    if usable_for_mrr >= 0.9 and usable_for_substitution >= 0.5 and qq['filtered_queries'] == 0:
+    if usable_for_mrr >= 0.9 and usable_for_substitution >= 0.5 and qq["filtered_queries"] == 0:
         print(" QUALITY: EXCELLENT")
     elif usable_for_mrr >= 0.7 and usable_for_substitution >= 0.3:
         print("Warning: QUALITY: GOOD (some issues)")
     else:
         print("Error: QUALITY: NEEDS IMPROVEMENT")
-        print(f" - {usable_for_mrr*100:.1f}% usable for MRR/MAP (target: 90%+)")
-        print(f" - {usable_for_substitution*100:.1f}% usable for substitution (target: 50%+)")
+        print(f" - {usable_for_mrr * 100:.1f}% usable for MRR/MAP (target: 90%+)")
+        print(f" - {usable_for_substitution * 100:.1f}% usable for substitution (target: 50%+)")
         print(f" - {qq['filtered_queries']} filtered queries (target: 0)")
 
 
@@ -290,12 +319,15 @@ def main() -> int:
 
     # Return non-zero if quality is poor
     qq = analysis["query_quality"]
-    usable_for_mrr = qq['queries_for_mrr'] / analysis['total_queries'] if analysis['total_queries'] > 0 else 0
-    if usable_for_mrr < 0.7 or qq['filtered_queries'] > analysis['total_queries'] * 0.1:
+    usable_for_mrr = (
+        qq["queries_for_mrr"] / analysis["total_queries"] if analysis["total_queries"] > 0 else 0
+    )
+    if usable_for_mrr < 0.7 or qq["filtered_queries"] > analysis["total_queries"] * 0.1:
         return 1
     return 0
 
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

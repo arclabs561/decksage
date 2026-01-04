@@ -96,4 +96,3 @@ echo " 1. Review results: cat experiments/hybrid_evaluation_results.json"
 echo " 2. Integrate into API: Set INSTRUCTION_EMBEDDER_MODEL env var"
 echo " 3. Daily updates: uv run python -m ml.scripts.update_embeddings_hybrid --schedule daily"
 echo ""
-

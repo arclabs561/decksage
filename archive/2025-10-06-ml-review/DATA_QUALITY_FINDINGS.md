@@ -3,7 +3,7 @@
 
 ## 🔍 VALIDATION AUDIT RESULTS
 
-**Sampled:** 10,000 decks from recovered cache data  
+**Sampled:** 10,000 decks from recovered cache data
 **Found:** Multiple data quality issues
 
 ---
@@ -22,8 +22,8 @@ deck:3508554.json.zst: "Shock" (0)
 deck:3616687.json.zst: "Bloodchief's Thirst" (0)
 ```
 
-**Root Cause:** Old goldfish parser from March 2023 had bugs  
-**Impact:** 13 decks (0.08% of goldfish) invalid  
+**Root Cause:** Old goldfish parser from March 2023 had bugs
+**Impact:** 13 decks (0.08% of goldfish) invalid
 **Status:** Caught by NEW validation (count <= 0 || count > 100)
 
 **Fix Options:**
@@ -42,8 +42,8 @@ deck:3616687.json.zst: "Bloodchief's Thirst" (0)
 - 12 cards
 - 15-19 cards
 
-**Root Cause:** Deckbox data isn't actual decks - it's wishlists/collections  
-**Impact:** ~520 deckbox entries might not be playable decks  
+**Root Cause:** Deckbox data isn't actual decks - it's wishlists/collections
+**Impact:** ~520 deckbox entries might not be playable decks
 **Status:** Not a bug - deckbox is different data type
 
 **Recommendation:** Either:
@@ -56,11 +56,11 @@ deck:3616687.json.zst: "Bloodchief's Thirst" (0)
 ## ⚠️ VALIDATION INCONSISTENCY FIXED
 
 ### Before
-**Parser:** Checks `count <= 0 || count > 100`  
+**Parser:** Checks `count <= 0 || count > 100`
 **Canonicalize:** Checks `count < 1` (no upper bound)
 
-### After  
-**Parser:** `count <= 0 || count > 100` ✅  
+### After
+**Parser:** `count <= 0 || count > 100` ✅
 **Canonicalize:** `count < 1 || count > 100` ✅
 
 **Impact:** Now consistent - both layers enforce 1-100 range
@@ -135,8 +135,8 @@ if c.Source != "" {
 
 ### Fix #3: Test that Failed
 
-**Test:** `games/magic/game` failed after validation change  
-**Cause:** Test might have deck with >100 count  
+**Test:** `games/magic/game` failed after validation change
+**Cause:** Test might have deck with >100 count
 **Fix:** Update test data or adjust validation
 
 ---
@@ -154,7 +154,7 @@ if c.Source != "" {
 
 ### Code Harmonization: ✅ COMPLETE
 - All parsers set source
-- All parsers validate counts (1-100)  
+- All parsers validate counts (1-100)
 - All parsers extract metadata (when available)
 - Validation layers consistent
 

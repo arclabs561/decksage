@@ -76,7 +76,7 @@ func TestParseDateWithValidation(t *testing.T) {
 
 func TestParseDateWithFallback(t *testing.T) {
 	fallback := time.Date(2024, 1, 1, 0, 0, 0, 0, time.UTC)
-	
+
 	tests := []struct {
 		name     string
 		input    string
@@ -108,4 +108,3 @@ func TestParseDateWithFallback(t *testing.T) {
 		})
 	}
 }
-

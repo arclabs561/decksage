@@ -24,7 +24,7 @@
 
 **Test #2: Format-Specific Similarity**
 - Hypothesis: Filtering improves P@10
-- Results: 
+- Results:
   - All formats: P@10 = 0.0829
   - Modern only: P@10 = 0.0045 (-94.6% ❌)
   - Legacy only: P@10 = 0.0342 (-58.7% ❌)

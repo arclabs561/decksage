@@ -8,12 +8,13 @@ Supports two modes:
 
 from __future__ import annotations
 
-import json
 from typing import Any
 from urllib.parse import urljoin
 
+
 try:
     import httpx
+
     HAS_HTTPX = True
 except ImportError:
     httpx = None
@@ -46,6 +47,7 @@ class DeckSageClient:
             # Try to import API state directly
             try:
                 from ..api.api import app, get_state
+
                 self._app = app
                 self._get_state = get_state
                 self._api_state = get_state()
@@ -53,22 +55,28 @@ class DeckSageClient:
                 # Fall back to HTTP mode if direct import fails
                 self.direct_mode = False
 
-    def _request(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Make request (direct or HTTP)."""
         if self.direct_mode and self._api_state:
             return self._request_direct(method, path, body)
         else:
             return self._request_http(method, path, body)
 
-    def _request_direct(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request_direct(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Make request using direct API imports (faster, no HTTP)."""
         # Import API functions directly
         from ..api.api import (
-            _similar_impl,
-            _health_impl,
-            ready as api_ready,
             SimilarityRequest,
             UseCaseEnum,
+            _health_impl,
+            _similar_impl,
+        )
+        from ..api.api import (
+            ready as api_ready,
         )
 
         if path == "/v1/health":
@@ -93,7 +101,11 @@ class DeckSageClient:
             # Parse query params from body or use defaults
             mode = body.get("mode", "substitute") if body else "substitute"
             k = body.get("k", 10) if body else 10
-            use_case = UseCaseEnum(mode) if mode in ["substitute", "synergy", "meta"] else UseCaseEnum.substitute
+            use_case = (
+                UseCaseEnum(mode)
+                if mode in ["substitute", "synergy", "meta"]
+                else UseCaseEnum.substitute
+            )
             req = SimilarityRequest(query=card_name, top_k=k, use_case=use_case)
             resp = _similar_impl(req)
             return {
@@ -111,7 +123,9 @@ class DeckSageClient:
             # Fall back to HTTP for unsupported paths
             return self._request_http(method, path, body)
 
-    def _request_http(self, method: str, path: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+    def _request_http(
+        self, method: str, path: str, body: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Make HTTP request."""
         if not HAS_HTTPX:
             raise RuntimeError("httpx not available. Install with: uv pip install httpx")
@@ -166,7 +180,9 @@ class DeckSageClient:
             }
             return self._request("POST", "/v1/similar", body)
 
-    def search(self, query: str, limit: int = 10, text_weight: float = 0.5, vector_weight: float = 0.5) -> dict[str, Any]:
+    def search(
+        self, query: str, limit: int = 10, text_weight: float = 0.5, vector_weight: float = 0.5
+    ) -> dict[str, Any]:
         """Search cards."""
         body = {
             "query": query,
@@ -176,7 +192,9 @@ class DeckSageClient:
         }
         return self._request("POST", "/v1/search", body)
 
-    def list_cards(self, prefix: str | None = None, limit: int = 100, offset: int = 0) -> dict[str, Any]:
+    def list_cards(
+        self, prefix: str | None = None, limit: int = 100, offset: int = 0
+    ) -> dict[str, Any]:
         """List available cards."""
         params = []
         if prefix:
@@ -187,4 +205,3 @@ class DeckSageClient:
             params.append(f"offset={offset}")
         query = "?" + "&".join(params) if params else ""
         return self._request("GET", f"/v1/cards{query}")
-

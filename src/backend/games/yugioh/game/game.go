@@ -40,7 +40,7 @@ type Card struct {
 	Race        string       `json:"race,omitempty"` // Dragon, Warrior, Spellcaster, etc.
 	Images      []CardImage  `json:"images,omitempty"`
 	References  []CardRef    `json:"references,omitempty"`
-	
+
 	// Enrichment data
 	Prices     CardPrices   `json:"prices,omitempty"`     // Market pricing
 	BanStatus  string       `json:"ban_status,omitempty"` // Forbidden, Limited, Semi-Limited, Unlimited
@@ -96,7 +96,7 @@ type CollectionTypeDeck struct {
 	Event     string `json:"event,omitempty"`     // Tournament name
 	Placement string `json:"placement,omitempty"` // "Top 16", "Winner", etc.
 	EventDate string `json:"eventDate,omitempty"` // Tournament date
-	
+
 	// Enhanced tournament metadata
 	TournamentType   string  `json:"tournamentType,omitempty"`   // "Regional", "YCS", "WCQ", "Local"
 	TournamentSize   int     `json:"tournamentSize,omitempty"`   // Number of players
@@ -105,12 +105,12 @@ type CollectionTypeDeck struct {
 	TournamentID     string  `json:"tournamentId,omitempty"`     // Unique tournament identifier
 	RoundCount       int     `json:"roundCount,omitempty"`       // Swiss rounds
 	TopCutSize       int     `json:"topCutSize,omitempty"`       // Top 8, Top 16, etc.
-	
+
 	// Temporal context (computed)
 	DaysSinceRotation  int     `json:"daysSinceRotation,omitempty"`  // Days since last format rotation (N/A for YGO)
 	DaysSinceBanUpdate int     `json:"daysSinceBanUpdate,omitempty"` // Days since last ban list
 	MetaShare           float64 `json:"metaShare,omitempty"`          // Deck's meta share at event time (%)
-	
+
 	// Round-by-round results
 	RoundResults []RoundResult `json:"roundResults,omitempty"`
 }

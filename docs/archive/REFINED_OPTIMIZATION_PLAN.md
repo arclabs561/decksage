@@ -4,7 +4,7 @@
 
 ### Priority 1: Embedding Quality (Critical Path)
 
-**Current**: P@10 = 0.0278 (very weak)  
+**Current**: P@10 = 0.0278 (very weak)
 **Target**: P@10 ≥ 0.15 (5x improvement)
 
 **Actions**:
@@ -18,7 +18,7 @@
 
 ### Priority 2: Complete Labeling (Blocking Evaluation)
 
-**Current**: 38/100 queries labeled  
+**Current**: 38/100 queries labeled
 **Target**: 100/100 queries labeled
 
 **Actions**:
@@ -31,7 +31,7 @@
 
 ### Priority 3: Fusion Optimization (After Embeddings Improve)
 
-**Current**: Fusion weights not optimized  
+**Current**: Fusion weights not optimized
 **Target**: Fusion outperforms best individual signal
 
 **Actions**:
@@ -44,7 +44,7 @@
 
 ### Priority 4: Data Quality (Enabling Future Work)
 
-**Current**: 4.3% card enrichment, multi-game export incomplete  
+**Current**: 4.3% card enrichment, multi-game export incomplete
 **Target**: 100% enrichment, complete multi-game graph
 
 **Actions**:
@@ -57,7 +57,7 @@
 
 ### Priority 5: Training Infrastructure (Enabling Quality)
 
-**Current**: Basic training, no validation  
+**Current**: Basic training, no validation
 **Target**: Validation, early stopping, checkpointing
 
 **Actions**:
@@ -120,4 +120,3 @@
 4. Complete labeling with quality checks
 
 **Plan is research-backed and executable. Focus on Priority 1 first.**
-

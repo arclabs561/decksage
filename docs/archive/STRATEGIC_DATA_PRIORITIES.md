@@ -1,6 +1,6 @@
 # Strategic Data Priorities: What Matters Most
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Context**: Identifying critical data gaps, annotation needs, LLM opportunities, and scraping potential
 
 ---
@@ -216,7 +216,7 @@ quality = llm_assess_deck_quality(
 - Archetype rise/fall
 - Ban list impact
 
-**Value**: 
+**Value**:
 - Understand meta evolution
 - Predict future trends
 - Temporal similarity (cards that rise/fall together)
@@ -249,7 +249,7 @@ quality = llm_assess_deck_quality(
 - Large event vs small event (meta relevance)
 - Placement correlation (do winning decks differ?)
 
-**Value**: 
+**Value**:
 - Quality filtering (top players = better decks)
 - Meta relevance (large events = current meta)
 
@@ -536,4 +536,3 @@ universal_pairs = modern_pairs & legacy_pairs  # Strong synergy
    - Format transition analysis
 
 **Total Investment**: ~$50 + 40 hours = **Comprehensive data foundation**
-

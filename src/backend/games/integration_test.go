@@ -13,20 +13,20 @@ func TestExtractStatsIntegration(t *testing.T) {
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	stats := NewExtractStats(log)
-	
+
 	// Simulate extraction process
 	stats.RecordSuccess()
 	stats.RecordSuccess()
-	stats.RecordError(ctx, "http://example.com/error1", "test-dataset", 
+	stats.RecordError(ctx, "http://example.com/error1", "test-dataset",
 		&ValidationError{Message: "test error"})
-	
+
 	summary := stats.Summary()
 	if summary == "" {
 		t.Error("Summary should not be empty")
 	}
-	
+
 	// Verify stats
 	if stats.Total != 3 {
 		t.Errorf("Total = %d, want 3", stats.Total)
@@ -51,7 +51,7 @@ func TestNormalizationIntegration(t *testing.T) {
 		{"multiple spaces", "Lightning   Bolt", "Lightning Bolt"},
 		{"unicode", "José", "José"},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := NormalizeCardName(tt.input)
@@ -76,7 +76,7 @@ func TestDateParsingIntegration(t *testing.T) {
 		{"invalid year", "1980-01-15", true, nil},
 		{"invalid format", "not a date", true, nil},
 	}
-	
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result, err := ParseDateWithValidation(tt.input)
@@ -103,11 +103,11 @@ func TestValidationIntegration(t *testing.T) {
 	// 3. Verify collections pass validation
 	// 4. Check normalization is applied
 	// 5. Verify date parsing works
-	
+
 	ctx := context.Background()
 	log := logger.NewLogger(ctx)
 	log.SetLevel("panic")
-	
+
 	// Create temporary blob storage
 	tmpDir := t.TempDir()
 	bucketURL := "file://" + tmpDir
@@ -116,7 +116,7 @@ func TestValidationIntegration(t *testing.T) {
 		t.Fatalf("failed to create blob: %v", err)
 	}
 	defer blob.Close(ctx)
-	
+
 	// Verify blob storage works
 	exists, err := blob.Exists(ctx, "test-key")
 	if err != nil {
@@ -135,4 +135,3 @@ type ValidationError struct {
 func (e *ValidationError) Error() string {
 	return e.Message
 }
-

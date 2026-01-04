@@ -27,13 +27,13 @@ Without metadata: 258,878 (82.4%)
 
 ## 🚀 FINAL RE-PARSE RUNNING
 
-**Command:** extract mtgtop8 --reparse --parallel 128  
-**Status:** Running in background  
-**Target:** Process all 314K decks  
-**Already done:** 55K with metadata  
-**Remaining:** 259K to process  
-**Rate:** ~90-100 pages/sec  
-**ETA:** ~60-90 minutes  
+**Command:** extract mtgtop8 --reparse --parallel 128
+**Status:** Running in background
+**Target:** Process all 314K decks
+**Already done:** 55K with metadata
+**Remaining:** 259K to process
+**Rate:** ~90-100 pages/sec
+**ETA:** ~60-90 minutes
 
 **Monitor:** `tail -f logs/reparse_complete_*.log`
 
@@ -67,10 +67,10 @@ Deckbox: 2,551 decks
 
 ## 🏁 TO COMPLETION
 
-**Current:** Re-parsing running  
-**ETA:** 60-90 minutes  
-**After:** Goldfish re-parse (30 min), verification (15 min)  
-**Complete by:** ~1 PM today  
+**Current:** Re-parsing running
+**ETA:** 60-90 minutes
+**After:** Goldfish re-parse (30 min), verification (15 min)
+**Complete by:** ~1 PM today
 
 **All critical work done. Final metadata extraction running to completion.**
 

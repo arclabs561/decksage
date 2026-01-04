@@ -23,7 +23,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List
 
 
 def convert(input_path: Path) -> dict:
@@ -33,7 +32,7 @@ def convert(input_path: Path) -> dict:
         data = yaml.safe_load(f)
 
     annotations = data.get("annotations", [])
-    queries: Dict[str, Dict[str, List[str]]] = {}
+    queries: dict[str, dict[str, list[str]]] = {}
 
     for entry in annotations:
         query = entry.get("query_card") or entry.get("query")
@@ -95,8 +94,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-
-
-
-
-

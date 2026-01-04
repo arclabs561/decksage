@@ -456,4 +456,3 @@ func (d *Dataset) Close() error {
 	}
 	return nil
 }
-

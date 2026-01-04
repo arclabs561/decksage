@@ -26,7 +26,7 @@
 
 ### Test Set Expansion
 - **Before**: 38 queries
-- **After**: 49 queries  
+- **After**: 49 queries
 - **Added**: 11 new queries
 - **Coverage**: Improved diversity
 
@@ -42,4 +42,3 @@
 - **Embeddings**: P@10 = 0.15-0.20 (5-7x improvement)
 - **Test Set**: 100+ queries (currently 49, need 51 more)
 - **Overall**: Fusion P@10 = 0.20-0.25 (meet README goal)
-

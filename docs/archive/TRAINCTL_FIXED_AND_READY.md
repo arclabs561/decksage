@@ -54,4 +54,3 @@ just hyperparam-search
 ```
 
 **trainctl is now fixed and ready for all training operations!**
-

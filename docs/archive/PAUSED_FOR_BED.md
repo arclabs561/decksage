@@ -1,6 +1,6 @@
 # Paused for Bed - Resume Guide
 
-**Date**: 2025-12-04  
+**Date**: 2025-12-04
 **Status**: All processes paused
 
 ---
@@ -87,4 +87,3 @@ echo "Resumed all paused processes"
 ---
 
 **All processes paused. Sleep well! 🌙**
-

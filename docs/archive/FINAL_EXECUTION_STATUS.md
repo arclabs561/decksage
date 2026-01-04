@@ -19,7 +19,7 @@
 ### Name Mapping Generation
 - **Script**: `fix_name_normalization_standalone.py` (ready)
 - **Blocked by**: scipy build issue preventing uv from installing dependencies
-- **Solution**: 
+- **Solution**:
   - Fix scipy: `brew install openblas && export OPENBLAS=$(brew --prefix openblas) && uv sync`
   - Or run on AWS EC2
   - Or use conda environment
@@ -36,7 +36,7 @@
 
 ### Signal Computation
 - **Script**: `compute_and_cache_signals.py` (ready)
-- **Blocked by**: 
+- **Blocked by**:
   1. Missing `decks_with_metadata.jsonl`
   2. scipy build issue
 - **Solution**: Run on AWS EC2 after metadata is available
@@ -96,4 +96,3 @@ Once the environment is fixed, all steps can execute sequentially:
 1. Generate name mapping → 2. Test evaluation → 3. Export metadata → 4. Compute signals
 
 **Ready for execution** - just needs environment fix or AWS execution.
-

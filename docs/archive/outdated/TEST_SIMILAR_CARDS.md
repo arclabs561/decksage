@@ -40,4 +40,3 @@
 2. Test with real card names from your dataset
 3. Verify similarity scores make sense
 4. Consider grouping by similarity type (embedding, co-occurrence, etc.)
-

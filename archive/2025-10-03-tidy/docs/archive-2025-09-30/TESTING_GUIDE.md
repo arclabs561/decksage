@@ -284,7 +284,7 @@ func TestIntegrationRealAPI(t *testing.T) {
     if err != nil {
         t.Fatalf("API call failed: %v", err)
     }
-    
+
     // Validate result
 }
 ```
@@ -370,7 +370,7 @@ go test -v ./... 2>&1 | tee test_output.log
 
 **Cause**: Integration test making slow HTTP requests
 
-**Solution**: 
+**Solution**:
 ```bash
 # Kill the test
 Ctrl+C

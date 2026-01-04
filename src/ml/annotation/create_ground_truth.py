@@ -10,6 +10,7 @@ from pathlib import Path
 
 import yaml
 
+
 # Hand-crafted ground truth based on MTG expertise
 GROUND_TRUTH = {
     "Lightning Bolt": {

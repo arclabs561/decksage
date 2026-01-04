@@ -1,7 +1,8 @@
 """Canonical paths for data and models."""
 
-from pathlib import Path
 import os
+from pathlib import Path
+
 
 # Project root (src/ml -> src -> root), overridable via env for installed package layouts
 # Also handles runctl execution context (runs from project root)
@@ -12,7 +13,15 @@ else:
     # Try to find project root by looking for markers (works with runctl)
     current = Path(__file__).parent.parent.parent.parent
     # Check if we're already at project root (runctl runs from project root)
-    markers = ["pyproject.toml", "requirements.txt", "setup.py", "Cargo.toml", ".git", "runctl.toml", ".runctl.toml"]
+    markers = [
+        "pyproject.toml",
+        "requirements.txt",
+        "setup.py",
+        "Cargo.toml",
+        ".git",
+        "runctl.toml",
+        ".runctl.toml",
+    ]
     if any((current / m).exists() for m in markers):
         PROJECT_ROOT = current
     else:
@@ -85,7 +94,7 @@ class PATHS:
     decks_all_unified = DECKS_ALL_UNIFIED
     decks_all_enhanced = DECKS_ALL_ENHANCED
     decks_all_final = DECKS_ALL_FINAL
-    
+
     # Graph database
     incremental_graph_db = INCREMENTAL_GRAPH_DB
     incremental_graph_json = INCREMENTAL_GRAPH_JSON

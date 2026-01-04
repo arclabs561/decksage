@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
-from typing import Dict, List
 
 
 BUCKETS = [
@@ -31,9 +30,9 @@ def _as_queries(d: dict) -> dict:
     return d.get("queries", d)
 
 
-def _merge_lists(a: List[str], b: List[str]) -> List[str]:
+def _merge_lists(a: list[str], b: list[str]) -> list[str]:
     seen = set()
-    out: List[str] = []
+    out: list[str] = []
     for lst in (a, b):
         for x in lst:
             if x not in seen:
@@ -42,8 +41,8 @@ def _merge_lists(a: List[str], b: List[str]) -> List[str]:
     return out
 
 
-def merge_test_sets(inputs: List[Path]) -> dict:
-    merged: Dict[str, Dict[str, List[str]]] = {}
+def merge_test_sets(inputs: list[Path]) -> dict:
+    merged: dict[str, dict[str, list[str]]] = {}
 
     for p in inputs:
         with open(p) as f:
@@ -82,8 +81,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-
-
-
-
-

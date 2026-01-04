@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 # Promote versioned models to production
-# 
+#
 # This script:
 # 1. Takes a versioned model path (e.g., gnn_graphsage_v2024-W52.json)
 # 2. Creates symlink or copies to production path (e.g., gnn_graphsage.json)
@@ -67,12 +67,12 @@ promote_model() {
  local versioned_path="$1"
  local production_path="$2"
  local model_type="$3"
- 
+
  if [[ -z "$versioned_path" ]]; then
  echo "Warning: Skipping $model_type (no versioned path provided)"
  return 0
  fi
- 
+
  # Resolve paths (handle S3 or local)
  if [[ "$versioned_path" == s3://* ]]; then
  # S3 path - download first
@@ -84,7 +84,7 @@ promote_model() {
  }
  versioned_path="$temp_path"
  fi
- 
+
  # Check if versioned model exists
  if [[ "$versioned_path" != s3://* ]]; then
  if [[ ! -f "$versioned_path" ]]; then
@@ -105,7 +105,7 @@ promote_model() {
  return 1
  fi
  fi
- 
+
  # Determine production path
  if [[ "$production_path" == s3://* ]]; then
  # S3 production path
@@ -128,7 +128,7 @@ promote_model() {
  # Local production path
  production_path="$PROJECT_ROOT/$production_path"
  production_path="${production_path#./}" # Remove leading ./
- 
+
  # Archive previous production model if it exists
  if [[ "$ARCHIVE_PREVIOUS" == "true" ]] && [[ -f "$production_path" ]]; then
  archive_dir="$(dirname "$production_path")/archive"
@@ -138,10 +138,10 @@ promote_model() {
  cp "$production_path" "$archive_dir/$archive_name"
  echo "✓ Archived to $archive_dir/$archive_name"
  fi
- 
+
  # Create parent directory
  mkdir -p "$(dirname "$production_path")"
- 
+
  # Promote (symlink or copy)
  if [[ "$USE_SYMLINK" == "true" ]]; then
  # Use symlink (faster, but requires versioned file to remain)
@@ -156,18 +156,18 @@ promote_model() {
  echo "✓ Copied to production: $production_path"
  fi
  fi
- 
+
  # Update metadata
  local metadata_path="${production_path%.*}_metadata.json"
  if [[ "$production_path" == s3://* ]]; then
  metadata_path="s3://${S3_BUCKET#s3://}/models/metadata/$(basename "${production_path%.*}")_metadata.json"
  fi
- 
+
  local version_tag=""
  if [[ "$versioned_path" =~ _v([^./]+) ]]; then
  version_tag="${BASH_REMATCH[1]}"
  fi
- 
+
  metadata=$(cat <<EOF
 {
  "model_path": "$production_path",
@@ -179,7 +179,7 @@ promote_model() {
 }
 EOF
 )
- 
+
  if [[ "$metadata_path" == s3://* ]]; then
  echo "$metadata" | s5cmd cp - "$metadata_path" 2>&1 | grep -v "^$" || echo "Warning: Failed to save metadata to S3"
  else
@@ -220,4 +220,3 @@ echo "Next steps:"
 echo " 1. Verify models work: ./scripts/evaluation/eval_hybrid_with_runctl.sh local"
 echo " 2. Sync to S3: s5cmd sync embeddings/ s3://games-collections/embeddings/"
 echo " 3. Update production deployment if needed"
-

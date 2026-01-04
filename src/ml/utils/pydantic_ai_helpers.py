@@ -9,8 +9,10 @@ Reduces duplication and centralizes common patterns.
 import os
 from typing import Any
 
+
 try:
     from pydantic_ai import Agent
+
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
@@ -19,12 +21,13 @@ except ImportError:
 # Import cost tracker (optional)
 try:
     from ml.utils.llm_cost_tracker import get_global_tracker
+
     HAS_COST_TRACKER = True
 except ImportError:
     HAS_COST_TRACKER = False
     get_global_tracker = None
 
-__all__ = ["make_agent", "get_default_model", "HAS_PYDANTIC_AI", "run_with_tracking"]
+__all__ = ["HAS_PYDANTIC_AI", "get_default_model", "make_agent", "run_with_tracking"]
 
 
 def make_agent(

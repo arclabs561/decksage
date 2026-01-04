@@ -41,9 +41,9 @@ TOTAL_EXPORTED=0
 for export_spec in "${EXPORTS[@]}"; do
     read -r game dataset <<< "$export_spec"
     output_file="${OUTPUT_DIR}/decks_${game}_${dataset}.jsonl"
-    
+
     echo "Exporting ${game}/${dataset}..."
-    
+
     if "$EXPORT_BINARY" "$BUCKET_URL" "$game" "$dataset" "$output_file" 2>&1; then
         if [[ -f "$output_file" ]]; then
             count=$(wc -l < "$output_file" | tr -d ' ')
@@ -66,4 +66,3 @@ done
 echo "=" * 80
 echo "Total decks exported: ${TOTAL_EXPORTED}"
 echo "=" * 80
-

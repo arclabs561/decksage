@@ -110,4 +110,3 @@ Can't answer yet - need:
 4. **Week 3:** If Node2Vec wins, switch. If not, stick with Jaccard.
 
 No more speculation. Run experiments, measure, decide.
-

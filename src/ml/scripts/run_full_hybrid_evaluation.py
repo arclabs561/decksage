@@ -15,12 +15,12 @@ Implements recommendation: "Run full hybrid system evaluation on 940-query test 
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 from pathlib import Path
 
-from ml.utils.paths import PATHS
 from ml.scripts.evaluate_hybrid_with_runctl import evaluate_hybrid
+from ml.utils.paths import PATHS
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -70,15 +70,15 @@ def main() -> int:
         action="store_true",
         help="Quick evaluation mode (limit to 100 queries)",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 60)
     logger.info("Full Hybrid System Evaluation")
     logger.info("=" * 60)
     logger.info(f"Test set: {args.test_set}")
     logger.info(f"Output: {args.output}")
-    
+
     # Auto-detect embeddings if not provided
     if not args.gnn_model:
         gnn_candidates = [
@@ -90,7 +90,7 @@ def main() -> int:
                 args.gnn_model = candidate
                 logger.info(f"Auto-detected GNN model: {args.gnn_model}")
                 break
-    
+
     if not args.cooccurrence_embeddings:
         cooc_candidates = [
             PATHS.embeddings / "node2vec_default.wv",
@@ -99,9 +99,11 @@ def main() -> int:
         for candidate in cooc_candidates:
             if candidate.exists():
                 args.cooccurrence_embeddings = candidate
-                logger.info(f"Auto-detected co-occurrence embeddings: {args.cooccurrence_embeddings}")
+                logger.info(
+                    f"Auto-detected co-occurrence embeddings: {args.cooccurrence_embeddings}"
+                )
                 break
-    
+
     # Run evaluation
     return evaluate_hybrid(
         test_set_path=args.test_set,
@@ -117,5 +119,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

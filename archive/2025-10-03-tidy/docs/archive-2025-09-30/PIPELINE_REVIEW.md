@@ -331,7 +331,7 @@ class CardGNN(nn.Module):
     def __init__(self):
         self.conv1 = GATConv(in_channels, 128, edge_dim=edge_features)
         self.conv2 = GATConv(128, 64, edge_dim=edge_features)
-    
+
     def forward(self, x, edge_index, edge_attr):
         x = F.relu(self.conv1(x, edge_index, edge_attr))
         x = self.conv2(x, edge_index, edge_attr)
@@ -449,5 +449,3 @@ embeddings = model(x, edge_index, edge_features)
 2. Re-run pipeline with new data
 3. If Node2Vec still loses → implement attributed version
 4. Don't waste time on unattributed Node2Vec if data doesn't help
-
-

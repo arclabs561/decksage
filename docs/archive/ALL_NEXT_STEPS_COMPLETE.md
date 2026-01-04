@@ -4,7 +4,7 @@
 
 ### 1. Data Download & Verification
 - ✅ Downloaded `magic_128d_test_pecanpy.wv` (14.2 MB) from S3
-- ✅ Downloaded `pairs_large.csv` (266 MB) from S3  
+- ✅ Downloaded `pairs_large.csv` (266 MB) from S3
 - ✅ Verified test set exists: `experiments/test_set_canonical_magic.json` (38 queries)
 
 ### 2. Infrastructure Created
@@ -94,7 +94,7 @@ uv sync
 
 4. **Compute Signals** (~10-30 min)
    - Sideboard co-occurrence
-   - Temporal (monthly) co-occurrence  
+   - Temporal (monthly) co-occurrence
    - Archetype staples and co-occurrence
    - Format-specific patterns
    - Output: `experiments/signals/*.json`

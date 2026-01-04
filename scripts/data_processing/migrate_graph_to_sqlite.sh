@@ -66,4 +66,3 @@ echo "Next steps:"
 echo " 1. Update scripts to use .db extension: data/graphs/incremental_graph.db"
 echo " 2. Test graph loading with SQLite backend"
 echo " 3. Remove JSON file after verification (optional): rm $JSON_GRAPH"
-

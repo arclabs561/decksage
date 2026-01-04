@@ -102,15 +102,15 @@ uv run --script src/ml/scripts/train_multi_game_embeddings.py \
 ## Challenges & Solutions
 
 ### 1. Name Collisions
-**Problem**: Same card name in different games  
+**Problem**: Same card name in different games
 **Solution**: Prefix with game type: `MTG:Lightning Bolt` vs `YGO:Lightning Bolt`
 
 ### 2. Attribute Mismatch
-**Problem**: Different games have different attributes  
+**Problem**: Different games have different attributes
 **Solution**: Normalize to common attributes, use game-specific features
 
 ### 3. Evaluation Complexity
-**Problem**: How to evaluate cross-game similarity?  
+**Problem**: How to evaluate cross-game similarity?
 **Solution**: Separate game-specific metrics, optional cross-game analysis
 
 ## Next Actions
@@ -129,4 +129,3 @@ uv run --script src/ml/scripts/train_multi_game_embeddings.py \
 - `MULTI_GAME_NEXT_STEPS.md` - This summary
 
 **Ready to train on all games!** 🎮
-

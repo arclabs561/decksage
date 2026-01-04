@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import pytest
 
+
 try:
     from fastapi.testclient import TestClient
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -64,5 +66,3 @@ def test_fusion_mode_post(client):
     if len(j["results"]) == 0:
         pytest.skip("fusion produced no candidates in this mocked env")
     assert len(j["results"]) >= 1
-
-

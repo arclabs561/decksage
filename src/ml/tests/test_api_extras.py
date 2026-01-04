@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import pytest
 
+
 try:
     from fastapi.testclient import TestClient
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -39,7 +41,9 @@ class _DummyEmb:
 def api_client():
     """Create a test client for the API."""
     from fastapi.testclient import TestClient
+
     from ..api.api import app
+
     return TestClient(app)
 
 
@@ -55,7 +59,11 @@ def test_ready_advertises_jaccard_faceted_when_attrs_loaded(client):
     state = api_mod.get_state()
     state.embeddings = _DummyEmb(["Bolt", "A", "B"])
     state.graph_data = {"adj": {"Bolt": {"A", "B"}, "A": {"Bolt"}, "B": {"Bolt"}}}
-    state.card_attrs = {"Bolt": {"type_line": "Instant"}, "A": {"type_line": "Instant"}, "B": {"type_line": "Sorcery"}}
+    state.card_attrs = {
+        "Bolt": {"type_line": "Instant"},
+        "A": {"type_line": "Instant"},
+        "B": {"type_line": "Sorcery"},
+    }
 
     r = client.get("/ready")
     assert r.status_code == 200
@@ -123,7 +131,7 @@ def test_legacy_cards_endpoint_behavior(client):
     assert r0.status_code == 503
 
     # With embeddings
-    state.embeddings = _DummyEmb(["Alpha", "Beta", "Gamma"]) 
+    state.embeddings = _DummyEmb(["Alpha", "Beta", "Gamma"])
     r1 = client.get("/cards", params={"limit": 2})
     assert r1.status_code == 200
     assert len(r1.json()) == 2
@@ -155,5 +163,3 @@ def test_ready_adopts_legacy_globals(client):
     r = client.get("/ready")
     assert r.status_code == 200
     assert r.json().get("status") == "ready"
-
-

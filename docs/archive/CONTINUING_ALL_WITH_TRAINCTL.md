@@ -13,7 +13,7 @@
 
 ### Background Tasks Running
 - **Labeling**: Optimized script running (check progress)
-- **Card Enrichment**: Optimized script running (check progress)  
+- **Card Enrichment**: Optimized script running (check progress)
 - **Multi-Game Export**: Running (check progress)
 - **Hyperparameter Search**: AWS instance running (i-0fe3007bf494582ba)
 
@@ -51,4 +51,3 @@ just hyperparam-search
 5. **Complete multi-game export** - Then train with trainctl
 
 **All tasks continuing with trainctl integration complete!**
-

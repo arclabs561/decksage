@@ -25,6 +25,7 @@ from hashlib import sha256
 from pathlib import Path
 from typing import Any, TypeVar
 
+
 try:
     from diskcache import Cache  # type: ignore
 except Exception as _e:  # pragma: no cover
@@ -182,6 +183,3 @@ def make_openrouter_payload(model: str, messages: list[dict], params: dict | Non
         "params": params or {},
         "v": 1,
     }
-
-
-

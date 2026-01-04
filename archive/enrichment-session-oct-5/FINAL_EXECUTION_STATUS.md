@@ -65,6 +65,6 @@ Cost: $0
 
 ---
 
-**Status:** Final processing running  
-**Monitor:** `tail -f logs/complete_recovery_*.log`  
+**Status:** Final processing running
+**Monitor:** `tail -f logs/complete_recovery_*.log`
 **Check back:** In 2 hours for completion

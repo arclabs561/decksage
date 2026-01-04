@@ -158,7 +158,7 @@ Ensure these exist before running validators.
 ```
 LLM Validators
 ├── llm_data_validator.py    - Deck metadata validation
-├── llm_judge.py              - Similarity evaluation  
+├── llm_judge.py              - Similarity evaluation
 ├── llm_annotator.py          - Annotation generation
 ├── utils/
 │   └── pydantic_ai_helpers.py - Shared utilities

@@ -1,6 +1,6 @@
 # Multi-Game Data Extraction - In Progress
 
-**Started**: 2025-12-04  
+**Started**: 2025-12-04
 **Status**: Running in background
 
 ---
@@ -71,4 +71,3 @@ du -sh data-full/games/yugioh
 ---
 
 **Extractions running in background. Monitor progress with commands above.**
-

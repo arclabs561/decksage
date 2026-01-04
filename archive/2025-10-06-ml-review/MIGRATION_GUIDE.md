@@ -124,13 +124,13 @@ def _load_decks(self) -> list[MTGDeck]:
 
 async def validate_archetype_sample(self, sample_size: int = 50):
     sample = random.sample(self.decks, min(sample_size, len(self.decks)))
-    
+
     for deck in sample:
         # Old: deck["cards"]
         # New: deck.get_all_cards()
         cards = [c.name for c in deck.get_all_cards()]
         top_cards = cards[:15]
-        
+
         prompt = f"""
 Deck ID: {deck.deck_id}
 Claimed Archetype: {deck.archetype or "Unknown"}
@@ -159,13 +159,13 @@ def load_decks_jsonl(
             if not line.strip():
                 continue
             deck = json.loads(line)  # ❌ No validation
-            
+
             # Apply filters
             if sources and deck.get("source") not in sources:
                 continue  # ⚠️ Broken: source is always null!
-            
+
             decks.append(deck)
-    
+
     return decks
 ```
 
@@ -182,12 +182,12 @@ def load_decks_jsonl(
 ) -> list[MTGDeck]:
     """
     Load and validate decks from JSONL.
-    
+
     Note: source filtering not supported (source field is null in data).
     """
     if jsonl_path is None:
         jsonl_path = PATHS.decks_with_metadata
-    
+
     # Load with validation
     all_decks = load_decks_lenient(
         jsonl_path,
@@ -195,26 +195,26 @@ def load_decks_jsonl(
         check_legality=False,
         verbose=False,
     )
-    
+
     # Apply filters
     filtered_decks = []
     for deck in all_decks:
         # Source filtering not supported (always null)
         if sources:
             print("Warning: source filtering not supported (source field is null)")
-        
+
         # Placement filter
         if max_placement is not None:
             placement = deck.placement or 0
             if placement <= 0 or placement > max_placement:
                 continue
-        
+
         # Format filter
         if formats and deck.format not in formats:
             continue
-        
+
         filtered_decks.append(deck)
-    
+
     return filtered_decks
 ```
 

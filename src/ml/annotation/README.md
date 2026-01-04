@@ -206,4 +206,3 @@ pairs = convert_annotations_to_substitution_pairs(
 3. **Quality metrics**: Track annotation quality over time
 4. **IAA tracking**: Inter-annotator agreement for LLM judges
 5. **Temporal validation**: Automatic temporal bound checking
-

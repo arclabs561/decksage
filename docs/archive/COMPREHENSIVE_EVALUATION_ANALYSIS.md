@@ -1,6 +1,6 @@
 # Comprehensive Evaluation & Modeling Analysis
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 🔍 **CRITICAL GAPS IDENTIFIED** - Action Required
 
 ---
@@ -107,36 +107,36 @@ After thorough analysis of evaluation systems, modeling design, training status,
 
 class InterAnnotatorAgreement:
     """Compute IAA metrics for annotation quality assessment."""
-    
+
     def cohens_kappa(self, annotator1: list[int], annotator2: list[int]) -> float:
         """Cohen's Kappa for two annotators."""
         # κ = (P_o - P_e) / (1 - P_e)
         # P_o = observed agreement
         # P_e = expected agreement by chance
         pass
-    
+
     def krippendorffs_alpha(
-        self, 
+        self,
         annotations: dict[str, list[int]],  # annotator -> ratings
         metric: str = "nominal"  # nominal|ordinal|interval|ratio
     ) -> float:
         """Krippendorff's Alpha for multiple annotators."""
         # Handles missing data, different metric types
         pass
-    
+
     def intra_annotator_agreement(
-        self, 
-        annotator: str, 
-        annotations1: list[int], 
+        self,
+        annotator: str,
+        annotations1: list[int],
         annotations2: list[int],
         time_interval: float
     ) -> dict[str, float]:
         """Intra-annotator agreement (stability over time)."""
         # Same annotator, same items, different times
         pass
-    
+
     def annotator_confidence_analysis(
-        self, 
+        self,
         annotations: list[dict]  # {rating, confidence, reasoning}
     ) -> dict[str, float]:
         """Analyze relationship between confidence and agreement."""
@@ -156,7 +156,7 @@ class InterAnnotatorAgreement:
 
 class MultiJudgeLLM:
     """Ensemble of LLM judges with agreement analysis."""
-    
+
     def __init__(self, models: list[str] = None):
         self.models = models or [
             "anthropic/claude-3.5-sonnet",
@@ -164,22 +164,22 @@ class MultiJudgeLLM:
             "google/gemini-pro-1.5"
         ]
         self.judges = [make_judge_agent(m) for m in self.models]
-    
+
     def judge_with_consensus(
-        self, 
-        query: str, 
+        self,
+        query: str,
         candidate: str
     ) -> dict[str, Any]:
         """Get judgments from all judges, compute consensus."""
         judgments = [j.run_sync(prompt) for j in self.judges]
-        
+
         # Compute agreement
         ratings = [j.output.relevance for j in judgments]
         kappa = self.compute_agreement(ratings)
-        
+
         # Consensus: median or weighted by confidence
         consensus_rating = self.compute_consensus(judgments)
-        
+
         return {
             "consensus_rating": consensus_rating,
             "agreement": kappa,
@@ -247,10 +247,10 @@ def compute_node_similarity_matrix(
 
 class SimilarityExplainer:
     """Explain similarity scores using gradient-based methods."""
-    
+
     def explain_similarity(
-        self, 
-        query: str, 
+        self,
+        query: str,
         candidate: str,
         fusion_model: WeightedLateFusion
     ) -> dict[str, Any]:
@@ -318,7 +318,7 @@ class SimilarityExplainer:
 
 **T1: Test Set Expansion** (CRITICAL):
 - **Action**: Expand test sets to 50-100 queries per game
-- **Method**: 
+- **Method**:
   - LLM-as-Judge to generate draft annotations
   - Human review and refinement
   - Stratified sampling (card types, archetypes)
@@ -429,4 +429,3 @@ uv run python -m src.ml.scripts.train_gnn \
 ---
 
 **Status**: 🔴 **ACTION REQUIRED** - Critical gaps identified, implementation plan ready.
-

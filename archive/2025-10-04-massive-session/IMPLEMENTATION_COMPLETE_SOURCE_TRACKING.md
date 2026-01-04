@@ -1,6 +1,6 @@
 # Source Tracking & Enhanced Metadata Implementation
-**Date**: October 4, 2025  
-**Status**: ✅ Complete & Tested  
+**Date**: October 4, 2025
+**Status**: ✅ Complete & Tested
 
 ## Summary
 
@@ -28,7 +28,7 @@ type CollectionTypeDeck struct {
     Name      string
     Format    string
     Archetype string
-    
+
     // NEW: Flat fields (not nested structs)
     Player    string `json:"player,omitempty"`
     Event     string `json:"event,omitempty"`
@@ -48,7 +48,7 @@ type CollectionTypeDeck struct {
 - Placement from `#N` prefix in second `div.event_title`
 - Sets `Source: "mtgtop8"` on all collections
 
-**Before**: ~40% of available metadata extracted  
+**Before**: ~40% of available metadata extracted
 **After**: ~80% of structured data captured
 
 ### 4. All Scrapers Updated ✅
@@ -71,12 +71,12 @@ go run ./cmd/backfill-source <data-dir>
 
 Following the design critique, we **avoided**:
 
-❌ V2 types (parallel type system)  
-❌ Enums for sources (using strings)  
-❌ Nested context structs (flat fields instead)  
-❌ Verification/trust scores (not proven necessary)  
-❌ SourceType classification (canonical vs. user)  
-❌ Complex migration system  
+❌ V2 types (parallel type system)
+❌ Enums for sources (using strings)
+❌ Nested context structs (flat fields instead)
+❌ Verification/trust scores (not proven necessary)
+❌ SourceType classification (canonical vs. user)
+❌ Complex migration system
 
 **Why**: These add complexity without proven value. Add them later if pain justifies them.
 
@@ -91,7 +91,7 @@ Following the design critique, we **avoided**:
 ```go
 // GOOD: Flat
 Player    string
-Event     string  
+Event     string
 Placement int
 
 // AVOIDED: Nested
@@ -135,11 +135,11 @@ def load_tournament_decks(data_dir):
     decks = []
     for file in Path(data_dir).glob("**/*.zst"):
         collection = decompress_and_load(file)
-        
+
         # Filter by source
         if collection.get("source") in ["mtgtop8", "goldfish"]:
             decks.append(collection)
-    
+
     return decks
 
 # Usage
@@ -154,7 +154,7 @@ def analyze_tournament_winners(decks):
     winners = []
     for deck in decks:
         deck_info = deck["type"]["inner"]
-        
+
         if deck_info.get("placement") == 1:
             winners.append({
                 "player": deck_info.get("player"),
@@ -162,7 +162,7 @@ def analyze_tournament_winners(decks):
                 "archetype": deck_info.get("archetype"),
                 "format": deck_info.get("format"),
             })
-    
+
     return winners
 ```
 
@@ -221,10 +221,10 @@ MTGTop8 test fixture validates extraction:
 
 ## Metrics
 
-**Lines Added**: ~150 lines (vs. 2,000 in original design)  
-**Complexity**: Minimal (flat fields, strings)  
-**Time**: 1 session (vs. 5 weeks planned)  
-**Value**: Immediate (can filter by source now)  
+**Lines Added**: ~150 lines (vs. 2,000 in original design)
+**Complexity**: Minimal (flat fields, strings)
+**Time**: 1 session (vs. 5 weeks planned)
+**Value**: Immediate (can filter by source now)
 
 ## Lessons Applied
 
@@ -248,4 +248,3 @@ Implemented pragmatic source tracking and tournament metadata extraction using ~
 - Run experiment: Does filtering by source improve P@10?
 - If yes: Document the improvement
 - If no: Consider if source field still useful for other purposes (transparency, debugging)
-

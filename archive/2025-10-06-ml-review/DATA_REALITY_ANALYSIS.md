@@ -1,6 +1,6 @@
 # Data Reality Analysis - Multi-Perspective Introspection
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Context**: Post deck-completion implementation; preparing for multi-game policy optimization
 
 ---
@@ -270,23 +270,23 @@ data/
 ## Critical Issues Found
 
 ### Issue 1: Pairs.csv is Multi-Game Without Labels
-**Impact**: High  
-**Severity**: Critical for evaluation  
+**Impact**: High
+**Severity**: Critical for evaluation
 **Fix**: Split by game OR add game column
 
 ### Issue 2: Embeddings Trained on Mixed Data
-**Impact**: High  
-**Severity**: Evaluation metrics are contaminated  
+**Impact**: High
+**Severity**: Evaluation metrics are contaminated
 **Fix**: Retrain per-game; keep multi-game as separate experiment
 
 ### Issue 3: Completion Only Works for MTG
-**Impact**: Medium  
-**Severity**: Pokemon/YGO completion will fail or give bad results  
+**Impact**: Medium
+**Severity**: Pokemon/YGO completion will fail or give bad results
 **Fix**: Wire per-game taggers, pricing, curve heuristics
 
 ### Issue 4: No Game-Specific Evaluation
-**Impact**: High  
-**Severity**: Can't measure per-game quality  
+**Impact**: High
+**Severity**: Can't measure per-game quality
 **Fix**: Split test sets, run per-game P@K
 
 ---
@@ -346,6 +346,6 @@ data/
 
 The deck completion system is **architecturally sound** but **trained on contaminated data**. The multi-game mixing is not inherently wrong (could be intentional for transfer learning), but it's **undocumented and unevaluated**.
 
-**Immediate fix**: Split data by game, retrain embeddings, add game filtering to API.  
-**Research opportunity**: Evaluate if cross-game embeddings help (e.g., does Pokemon completion improve with MTG knowledge?).  
+**Immediate fix**: Split data by game, retrain embeddings, add game filtering to API.
+**Research opportunity**: Evaluate if cross-game embeddings help (e.g., does Pokemon completion improve with MTG knowledge?).
 **Production path**: Per-game models with optional cross-game mode.

@@ -1,6 +1,6 @@
 # GNN Implementation Status
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Library**: **PyTorch Geometric** (torch_geometric)
 
 ---
@@ -111,4 +111,3 @@ Based on `GNN_EXPERT_GUIDANCE.md`:
 ---
 
 **Status**: ✅ **PyTorch Geometric** - Code ready, needs training
-

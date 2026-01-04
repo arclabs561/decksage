@@ -10,18 +10,19 @@ Measures alignment with goals:
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Optional, Tuple
+from collections.abc import Callable
 
 
 def functional_coverage_delta(
     before: dict,
     after: dict,
-    tag_set_fn: Optional[Callable[[str], set[str]]],
+    tag_set_fn: Callable[[str], set[str]] | None,
     *,
     main_partition: str,
 ) -> int:
     if tag_set_fn is None:
         return 0
+
     def deck_tags(deck) -> set[str]:
         tags: set[str] = set()
         partitions = deck.partitions if hasattr(deck, "partitions") else deck.get("partitions", [])
@@ -32,10 +33,13 @@ def functional_coverage_delta(
             for c in p_dict.get("cards", []) or []:
                 tags |= tag_set_fn(str(c.get("name", "")))
         return tags
+
     return max(0, len(deck_tags(after) - deck_tags(before)))
 
 
-def deck_price_total(deck, price_fn: Optional[Callable[[str], Optional[float]]], *, main_partition: str) -> tuple[Optional[float], list[str]]:
+def deck_price_total(
+    deck, price_fn: Callable[[str], float | None] | None, *, main_partition: str
+) -> tuple[float | None, list[str]]:
     if price_fn is None:
         return None, []
     total = 0.0
@@ -56,9 +60,4 @@ def deck_price_total(deck, price_fn: Optional[Callable[[str], Optional[float]]],
     return round(total, 2), missing
 
 
-__all__ = ["functional_coverage_delta", "deck_price_total"]
-
-
-
-
-
+__all__ = ["deck_price_total", "functional_coverage_delta"]

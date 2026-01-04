@@ -70,4 +70,3 @@ aws s3 cp s3://games-collections/embeddings/ data/embeddings/ --recursive
 # Measure what we can
 python3 src/ml/scripts/measure_with_available_data.py
 ```
-

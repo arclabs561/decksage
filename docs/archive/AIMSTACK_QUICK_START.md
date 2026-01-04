@@ -1,8 +1,8 @@
 # AimStack Quick Start Guide
 
 ## Installation Status
-✅ **Installed**: AimStack 3.29.1  
-✅ **Repository**: Initialized at `.aim/`  
+✅ **Installed**: AimStack 3.29.1
+✅ **Repository**: Initialized at `.aim/`
 ✅ **Integration**: Complete in all scripts
 
 ## Quick Commands
@@ -91,4 +91,3 @@ Available in `src/ml/utils/aim_helpers.py`:
 2. Launch Aim UI: `uv run aim up`
 3. Compare experiments visually
 4. Use AimQL to query and filter runs
-

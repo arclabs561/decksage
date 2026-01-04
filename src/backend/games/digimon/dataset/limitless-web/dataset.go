@@ -376,4 +376,3 @@ func (d *Dataset) IterItems(
 ) error {
 	return games.IterItemsBlobPrefix(ctx, d.blob, prefix, games.DeserializeAsCollection, fn, options...)
 }
-

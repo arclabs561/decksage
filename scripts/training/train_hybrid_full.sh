@@ -56,7 +56,7 @@ case "$MODE" in
  exit 1
  fi
  shift || true
- 
+
  if [[ -n "${RUNCTL_BIN:-}" ]]; then
  echo "Running on AWS using runctl..."
  "$RUNCTL_BIN" aws train "$INSTANCE_ID" \

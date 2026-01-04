@@ -1,6 +1,6 @@
 # EC2 Spot Instance Training - COMPLETE ✅
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ **SUCCESS**
 
 ---
@@ -21,7 +21,7 @@
 - **Graph Nodes**: 269,590 nodes
 - **Embedding Dimensions**: 128
 - **Method**: Node2Vec (PecanPy SparseOTF)
-- **Parameters**: 
+- **Parameters**:
   - p=1.0, q=1.0 (unbiased random walk)
   - num_walks=10, walk_length=80
   - window=10, min_count=0, sg=1, epochs=1
@@ -52,4 +52,3 @@
 ---
 
 **Training completed successfully on EC2 spot instance!**
-

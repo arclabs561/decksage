@@ -1,7 +1,7 @@
 # Code Review: games/dataset.go
 
-**Reviewer**: Systematic scrutiny  
-**Date**: 2025-09-30  
+**Reviewer**: Systematic scrutiny
+**Date**: 2025-09-30
 **File**: `src/backend/games/dataset.go`
 
 ---
@@ -207,11 +207,11 @@ func IterItemsBlobPrefix(..., options ...IterItemsOption) error {
 
 ## Positive Observations
 
-✅ **Good use of context** - Passed through properly  
-✅ **Error wrapping** - Uses %w for error chains  
-✅ **Semaphore pattern** - Limits concurrent goroutines  
-✅ **WaitGroup usage** - Properly waits for goroutines  
-✅ **Interface pattern** - Clean option types  
+✅ **Good use of context** - Passed through properly
+✅ **Error wrapping** - Uses %w for error chains
+✅ **Semaphore pattern** - Limits concurrent goroutines
+✅ **WaitGroup usage** - Properly waits for goroutines
+✅ **Interface pattern** - Clean option types
 
 ---
 
@@ -306,11 +306,11 @@ func IterItemsBlobPrefix(
     }
 
     it := b.List(ctx, &blob.OptListPrefix{Prefix: prefix})
-    
+
     errChan := make(chan error, parallel)
     wg := new(sync.WaitGroup)
     sem := make(chan struct{}, parallel)
-    
+
     // Error tracking
     var firstErr error
     errOnce := new(sync.Once)
@@ -323,7 +323,7 @@ func IterItemsBlobPrefix(
             return ctx.Err()
         default:
         }
-        
+
         // Check for errors
         select {
         case err := <-errChan:
@@ -333,7 +333,7 @@ func IterItemsBlobPrefix(
             }
         default:
         }
-        
+
         if firstErr != nil && !errors.Is(firstErr, ErrIterItemsStop) {
             break
         }
@@ -341,7 +341,7 @@ func IterItemsBlobPrefix(
         key := it.Key()
         wg.Add(1)
         sem <- struct{}{}
-        
+
         go func(k string) {
             defer wg.Done()
             defer func() { <-sem }()
@@ -385,7 +385,7 @@ func IterItemsBlobPrefix(
 
     // Wait for ALL goroutines
     wg.Wait()
-    
+
     // Now check all errors
     if firstErr != nil {
         if errors.Is(firstErr, ErrIterItemsStop) {
@@ -393,11 +393,11 @@ func IterItemsBlobPrefix(
         }
         return firstErr
     }
-    
+
     if err := it.Err(); err != nil {
         return err
     }
-    
+
     // Check for any remaining errors
     select {
     case err := <-errChan:
@@ -406,7 +406,7 @@ func IterItemsBlobPrefix(
         }
     default:
     }
-    
+
     return nil
 }
 ```
@@ -422,10 +422,10 @@ func IterItemsBlobPrefix(
 
 ## Grade
 
-**Code Quality**: B (7/10)  
-**Concurrency Safety**: C+ (6.5/10) - Race conditions  
-**Performance**: B- (regex recompilation)  
-**API Design**: A- (8.5/10)  
+**Code Quality**: B (7/10)
+**Concurrency Safety**: C+ (6.5/10) - Race conditions
+**Performance**: B- (regex recompilation)
+**API Design**: A- (8.5/10)
 
 **Overall**: **B- (7/10)** - Good design, needs concurrency fixes
 

@@ -1,6 +1,6 @@
 # Deep Review: Triaged Next Actions
 
-**Date**: October 6, 2025  
+**Date**: October 6, 2025
 **Context**: Post-critical-fixes deep dive into data pipeline, evaluation, and architecture
 
 ---
@@ -27,8 +27,8 @@ This is a **research-grade system transitioning toward production**. Core infras
 ## Tier 0: Critical Path to Production (Do First)
 
 ### T0.1: Expand Test Set (Evaluation Confidence)
-**Current**: 38 MTG queries, <20 for Pokemon/YGO  
-**Gap**: Statistical significance requires 100+ queries  
+**Current**: 38 MTG queries, <20 for Pokemon/YGO
+**Gap**: Statistical significance requires 100+ queries
 **Impact**: Can't distinguish 0.088 from 0.090 with confidence
 
 **Action**:
@@ -37,19 +37,19 @@ This is a **research-grade system transitioning toward production**. Core infras
 3. Add bootstrapped confidence intervals to evaluation
 4. Document: "P@10 = 0.088 ± 0.015 (95% CI, n=100)"
 
-**Effort**: 4-8 hours annotation + 2 hours code  
+**Effort**: 4-8 hours annotation + 2 hours code
 **Value**: Makes all future evaluation trustworthy
 
 **Files**:
-- Run: `src/ml/add_statistical_rigor.py` 
+- Run: `src/ml/add_statistical_rigor.py`
 - Update: `experiments/test_set_canonical_*.json`
 - Modify: `src/ml/utils/evaluation.py` to add confidence intervals
 
 ---
 
 ### T0.2: Deck Quality Validation (Core Use Case)
-**Current**: Deck completion adds cards but doesn't validate "deck quality"  
-**Gap**: No metrics for whether completed decks resemble tournament decks  
+**Current**: Deck completion adds cards but doesn't validate "deck quality"
+**Gap**: No metrics for whether completed decks resemble tournament decks
 **Impact**: High - this is the primary advertised feature
 
 **Action**:
@@ -60,7 +60,7 @@ This is a **research-grade system transitioning toward production**. Core infras
 2. Add post-completion validation step
 3. Generate report: "Completed deck scores 7.2/10 quality (vs 8.1 tournament avg)"
 
-**Effort**: 6-10 hours  
+**Effort**: 6-10 hours
 **Value**: Validates primary use case works
 
 **Implementation**:
@@ -68,7 +68,7 @@ This is a **research-grade system transitioning toward production**. Core infras
 # New file: src/ml/deck_quality.py
 class DeckQualityMetrics:
     mana_curve_score: float  # KL divergence from archetype average
-    tag_balance_score: float  # Shannon entropy of tag distribution  
+    tag_balance_score: float  # Shannon entropy of tag distribution
     synergy_score: float  # Avg pairwise functional overlap
     overall_score: float  # Weighted combination
 ```
@@ -76,20 +76,20 @@ class DeckQualityMetrics:
 ---
 
 ### T0.3: Unified Quality Dashboard
-**Current**: 3 separate quality validators, no centralized view  
-**Gap**: Can't see data quality trends over time  
+**Current**: 3 separate quality validators, no centralized view
+**Gap**: Can't see data quality trends over time
 **Impact**: Silent degradation possible
 
 **Action**:
 1. Create `src/ml/quality_dashboard.py`
 2. Consolidate metrics from:
    - `enrichment_quality_validator.py` → enrichment quality
-   - `validate_data_quality.py` → raw data quality  
+   - `validate_data_quality.py` → raw data quality
    - `validators/loader.py` → validation success rates
 3. Generate single HTML dashboard with charts
 4. Add to `make quality-report` target
 
-**Effort**: 4-6 hours  
+**Effort**: 4-6 hours
 **Value**: Prevents silent data degradation
 
 **Output**: `experiments/quality_dashboard.html` with:
@@ -103,8 +103,8 @@ class DeckQualityMetrics:
 ## Tier 1: Strategic Improvements (Do Next)
 
 ### T1.1: Implement Multi-Modal Features (Break P@10 Ceiling)
-**Current**: P@10 = 0.088 with fusion  
-**Goal**: P@10 = 0.20-0.25 (as documented in README)  
+**Current**: P@10 = 0.088 with fusion
+**Goal**: P@10 = 0.20-0.25 (as documented in README)
 **Path**: Add new signal types
 
 **Priority Order** (by ROI):
@@ -113,7 +113,7 @@ class DeckQualityMetrics:
    - Captures functional similarity directly
    - Estimated impact: +40-60% (literature shows 0.15-0.20 from text alone)
    - Effort: 8-12 hours
-   
+
 2. **Mana Curve Similarity** (Medium Impact)
    - Cards with similar CMC often substitutable
    - Especially important for limited resources (lands, ramp)
@@ -126,7 +126,7 @@ class DeckQualityMetrics:
    - Estimated impact: +5-10%
    - Effort: 2-3 hours
 
-**Total Effort**: 13-19 hours  
+**Total Effort**: 13-19 hours
 **Expected Result**: P@10 = 0.18-0.22 (achievable with text embeddings)
 
 **Note**: This aligns with your stated README goal of 0.20-0.25
@@ -134,8 +134,8 @@ class DeckQualityMetrics:
 ---
 
 ### T1.2: Add A/B Testing Framework
-**Current**: Grid search over fixed test set, manual weight tuning  
-**Gap**: No way to compare algorithm changes rigorously  
+**Current**: Grid search over fixed test set, manual weight tuning
+**Gap**: No way to compare algorithm changes rigorously
 **Impact**: Medium - slows iteration velocity
 
 **Action**:
@@ -152,14 +152,14 @@ class DeckQualityMetrics:
    ```
 4. Generate comparison reports with statistical significance
 
-**Effort**: 6-8 hours  
+**Effort**: 6-8 hours
 **Value**: Rigorous algorithm comparison
 
 ---
 
 ### T1.3: Deck Completion with Look-Ahead
-**Current**: Greedy (pick best card each step)  
-**Better**: Beam search or Monte Carlo simulation  
+**Current**: Greedy (pick best card each step)
+**Better**: Beam search or Monte Carlo simulation
 **Impact**: Unknown (needs measurement)
 
 **Action**:
@@ -168,7 +168,7 @@ class DeckQualityMetrics:
 3. Compare against greedy baseline
 4. Measure: "Does look-ahead improve final deck quality?"
 
-**Effort**: 10-15 hours  
+**Effort**: 10-15 hours
 **Risk**: Might not improve over greedy (needs testing)
 
 **Decision**: Wait until T0.2 (deck quality metrics) is done
@@ -178,8 +178,8 @@ class DeckQualityMetrics:
 ## Tier 2: Engineering Excellence (Technical Debt)
 
 ### T2.1: Remove Legacy Test Globals
-**Location**: `src/ml/api.py` lines 216-234  
-**Issue**: Module-level globals for backward compatibility  
+**Location**: `src/ml/api.py` lines 216-234
+**Issue**: Module-level globals for backward compatibility
 **Complexity**: Medium (need to update ~5 old tests)
 
 **Action**:
@@ -187,7 +187,7 @@ class DeckQualityMetrics:
 2. Remove `_adopt_legacy_globals()` shim
 3. Simplify ApiState management
 
-**Effort**: 2-3 hours  
+**Effort**: 2-3 hours
 **Value**: Cleaner architecture, easier to understand
 
 ---
@@ -203,13 +203,13 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 2. Add `FUSION_WEIGHTS_PATH` constant
 3. Update all hardcoded paths to use centralized config
 
-**Effort**: 1-2 hours  
+**Effort**: 1-2 hours
 **Value**: Robustness against refactoring
 
 ---
 
 ### T2.3: Add Type Hints to Completion Functions
-**Current**: Duck-typed dicts everywhere in `deck_completion.py`  
+**Current**: Duck-typed dicts everywhere in `deck_completion.py`
 **Better**: Pydantic models for deck operations
 
 **Action**:
@@ -217,7 +217,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 2. Type all functions properly
 3. Get IDE autocomplete and type checking
 
-**Effort**: 3-4 hours  
+**Effort**: 3-4 hours
 **Value**: Fewer bugs, better DX
 
 ---
@@ -225,18 +225,18 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 ## Tier 3: Nice-to-Have (Future Work)
 
 ### T3.1: Dataset Versioning (DVC)
-**When**: Before publishing results or if reproducibility becomes critical  
-**Effort**: 4-6 hours  
+**When**: Before publishing results or if reproducibility becomes critical
+**Effort**: 4-6 hours
 **Value**: Reproducible experiments
 
 ### T3.2: Cost Tracking Dashboard
-**When**: If LLM enrichment budget becomes constrained  
-**Effort**: 2-3 hours  
+**When**: If LLM enrichment budget becomes constrained
+**Effort**: 2-3 hours
 **Value**: Budget management
 
 ### T3.3: Consolidate Functional Taggers
-**When**: If maintenance burden grows (currently acceptable)  
-**Effort**: 8-12 hours  
+**When**: If maintenance burden grows (currently acceptable)
+**Effort**: 8-12 hours
 **Risk**: High (breaks existing code, may not be worth it)
 
 ---
@@ -255,7 +255,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 | **T2.2** | Centralize paths | 1-2h | 🟡 Medium | 🟢 Low | **P3** |
 | **T2.3** | Add type hints | 3-4h | 🟡 Medium | 🟢 Low | **P3** |
 
-**Legend**: 
+**Legend**:
 - Effort: Estimated hours
 - Value: 🔥 Critical / 🟠 High / 🟡 Medium / ⚪ Low
 - Urgency: 🔴 Blocks production / 🟡 Important / 🟢 Can wait
@@ -293,19 +293,19 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 
 ## What NOT to Do (Based on Reality Findings)
 
-❌ **Don't**: Try to improve P@10 with more graph algorithms  
+❌ **Don't**: Try to improve P@10 with more graph algorithms
 **Why**: Co-occurrence ceiling is real, you'll waste time
 
-❌ **Don't**: Implement format-specific filtering for generic queries  
+❌ **Don't**: Implement format-specific filtering for generic queries
 **Why**: Makes performance worse (-58% to -94%)
 
-❌ **Don't**: Add more deck scraping without validation  
+❌ **Don't**: Add more deck scraping without validation
 **Why**: Quality > quantity. Current 56k decks is plenty
 
-❌ **Don't**: Consolidate functional taggers yet  
+❌ **Don't**: Consolidate functional taggers yet
 **Why**: Domain complexity justifies separation (Chesterton's fence)
 
-❌ **Don't**: Refactor directory structure  
+❌ **Don't**: Refactor directory structure
 **Why**: Import fragility makes this risky. Works fine now.
 
 ---
@@ -326,7 +326,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 ---
 
 ### Q2: What is "Good Enough" for Deck Completion?
-**Current**: Adds legal cards until target size reached  
+**Current**: Adds legal cards until target size reached
 **Missing**: Definition of "good deck"
 
 **Questions to answer**:
@@ -340,7 +340,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 ---
 
 ### Q3: Is P@10 = 0.088 Actually Good?
-**Context**: 
+**Context**:
 - Random baseline: P@10 = ~0.001 (1000+ cards)
 - Co-occurrence: P@10 = 0.088 (88x improvement)
 - Papers with text: P@10 = 0.42 (380x improvement)
@@ -372,7 +372,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 - A/B framework (premature)
 - Quality dashboard (manual checks OK for MVP)
 
-**Time**: 10-15 hours  
+**Time**: 10-15 hours
 **Outcome**: Validated deck completion feature ready for users
 
 ---
@@ -386,7 +386,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 3. T1.2: A/B testing framework (measure improvements)
 4. T0.3: Quality dashboard (production monitoring)
 
-**Time**: 35-45 hours  
+**Time**: 35-45 hours
 **Outcome**: Production-grade system meeting README goals
 
 ---
@@ -394,7 +394,7 @@ Path(__file__).resolve().parents[2] / "experiments" / "fusion_grid_search_latest
 ## Specific Code-Level Improvements
 
 ### Improvement 1: Deck Completion Scoring Function
-**Current**: Picks candidate with highest similarity score  
+**Current**: Picks candidate with highest similarity score
 **Better**: Multi-objective scoring
 
 ```python
@@ -413,36 +413,36 @@ def score_candidate(
 ) -> float:
     """
     Multi-objective candidate scoring.
-    
+
     Components:
     1. Base similarity (0.60 weight)
     2. Coverage bonus (0.20 weight) - adds new functional tags
     3. Curve fit bonus (0.20 weight) - improves mana curve
     """
     score = similarity * 0.60
-    
+
     # Coverage bonus
     if tag_set_fn and coverage_weight > 0:
         deck_tags = _get_all_tags(deck, tag_set_fn)
         cand_tags = tag_set_fn(card)
         new_tags = cand_tags - deck_tags
         score += coverage_weight * len(new_tags) * 0.20
-    
-    # Curve fit bonus  
+
+    # Curve fit bonus
     if cmc_fn and curve_target and curve_weight > 0:
         cmc = cmc_fn(card)
         if cmc is not None:
             current_curve = _get_mana_curve(deck, cmc_fn)
             gap = curve_target.get(cmc, 0) - current_curve.get(cmc, 0)
             score += curve_weight * max(0, gap) * 0.20
-    
+
     return score
 ```
 
 ---
 
 ### Improvement 2: Confidence Intervals in Evaluation
-**Current**: `P@10 = 0.088` (point estimate)  
+**Current**: `P@10 = 0.088` (point estimate)
 **Better**: `P@10 = 0.088 ± 0.012 (95% CI)`
 
 ```python
@@ -456,23 +456,23 @@ def evaluate_with_confidence(
 ) -> dict:
     """Evaluate with bootstrapped confidence intervals."""
     import numpy as np
-    
+
     # Compute scores per query
     scores = []
     for query, labels in test_set.items():
         predictions = similarity_func(query, top_k)
         score = compute_precision_at_k(predictions, labels, k=top_k)
         scores.append(score)
-    
+
     # Bootstrap confidence intervals
     bootstrap_means = []
     for _ in range(n_bootstrap):
         sample = np.random.choice(scores, size=len(scores), replace=True)
         bootstrap_means.append(np.mean(sample))
-    
+
     ci_lower = np.percentile(bootstrap_means, 2.5)
     ci_upper = np.percentile(bootstrap_means, 97.5)
-    
+
     return {
         "mean": np.mean(scores),
         "ci_lower": ci_lower,
@@ -495,7 +495,7 @@ class QualityAlert:
         "enrichment_coverage": 0.90,      # 90% should have enrichment
         "llm_confidence_avg": 0.70,       # Avg LLM confidence > 0.70
     }
-    
+
     @staticmethod
     def check_quality(metrics: dict) -> list[str]:
         """Return list of alerts if quality degraded."""
@@ -566,13 +566,13 @@ class QualityAlert:
 - **Meso**: Evaluation is too shallow, algorithms are naive ⚠️
 - **Micro**: Code quality is high, minor technical debt acceptable ✅
 
-**Honest assessment**: 
+**Honest assessment**:
 - This is an **85% complete research system**
 - Needs 15% more work to be production-ready
 - The 15% is in **evaluation rigor** and **algorithmic sophistication**, not infrastructure
 
-**The README says**: "P@10 = 0.20-0.25 expected with multi-modal"  
-**The reality**: P@10 = 0.088 with current signals  
+**The README says**: "P@10 = 0.20-0.25 expected with multi-modal"
+**The reality**: P@10 = 0.088 with current signals
 **The gap**: Text embeddings (biggest missing signal)
 
 **Principle applied**: "All models are wrong, some are useful." The current model IS useful for specific tasks (archetype staples, sideboard analysis), but not for generic similarity. Documentation should reflect this reality.

@@ -43,4 +43,3 @@ Research suggests nesting `data/`, `experiments/`, `annotations/` under services
 - 304 matches across 119 files use `PATHS` from `src/ml/utils/paths.py`
 - Centralized path management is good practice
 - Some hardcoded paths remain (migrate gradually to `PATHS`)
-

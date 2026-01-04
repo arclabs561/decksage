@@ -37,4 +37,3 @@ The `export-all-graph` command uses blob storage and handles multiple games. We 
 3. Either:
    - Download all collections locally, OR
    - Modify export command to read from S3
-

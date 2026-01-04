@@ -206,15 +206,25 @@ Examples:
     # Search command
     search_parser = subparsers.add_parser("search", help="Search cards")
     search_parser.add_argument("query", help="Search query")
-    search_parser.add_argument("--limit", type=int, default=10, help="Number of results (default: 10)")
-    search_parser.add_argument("--text-weight", type=float, default=0.5, help="Text search weight (default: 0.5)")
-    search_parser.add_argument("--vector-weight", type=float, default=0.5, help="Vector search weight (default: 0.5)")
+    search_parser.add_argument(
+        "--limit", type=int, default=10, help="Number of results (default: 10)"
+    )
+    search_parser.add_argument(
+        "--text-weight", type=float, default=0.5, help="Text search weight (default: 0.5)"
+    )
+    search_parser.add_argument(
+        "--vector-weight", type=float, default=0.5, help="Vector search weight (default: 0.5)"
+    )
 
     # List command
     list_parser = subparsers.add_parser("list", help="List available cards")
     list_parser.add_argument("--prefix", help="Filter by prefix")
-    list_parser.add_argument("--limit", type=int, default=100, help="Number of results (default: 100)")
-    list_parser.add_argument("--offset", type=int, default=0, help="Offset for pagination (default: 0)")
+    list_parser.add_argument(
+        "--limit", type=int, default=100, help="Number of results (default: 100)"
+    )
+    list_parser.add_argument(
+        "--offset", type=int, default=0, help="Offset for pagination (default: 0)"
+    )
 
     args = parser.parse_args()
 
@@ -244,4 +254,3 @@ Examples:
 
 if __name__ == "__main__":
     sys.exit(main())
-

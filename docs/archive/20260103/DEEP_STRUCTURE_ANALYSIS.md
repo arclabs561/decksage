@@ -11,12 +11,12 @@
 - `scripts/backfill_metadata.py`: `data/processed/decks_all_enhanced.jsonl` (hardcoded)
 - Many scripts use `experiments/test_set_canonical_*.json` instead of unified versions
 
-**Impact**: 
+**Impact**:
 - 164 files directly reference top-level paths
 - Hardcoded paths break if structure changes
 - Inconsistent test set usage (canonical vs unified)
 
-**Recommendation**: 
+**Recommendation**:
 - Gradually migrate to `PATHS` abstraction
 - Create migration script for test set paths (already exists: `scripts/test_sets/update_all_test_set_paths.sh`)
 
@@ -174,7 +174,7 @@ SUBSTITUTION_PAIRS_COMBINED = EXPERIMENTS_DIR / "substitution_pairs_combined.jso
 - `experiments/hybrid_evaluation_results.json` (4+ references)
 - `experiments/test_set_expanded_*.json` (legacy, should use unified)
 
-**Recommendation**: 
+**Recommendation**:
 - Add common experiment files to PATHS
 - Document which files are canonical vs legacy
 - Create migration guide for experiment file paths
@@ -186,7 +186,7 @@ SUBSTITUTION_PAIRS_COMBINED = EXPERIMENTS_DIR / "substitution_pairs_combined.jso
 
 1. **✅ COMPLETED**: Added missing PATHS entries
    - `PATHS.annotations` - annotations directory
-   - `PATHS.annotations_llm` - LLM annotations directory  
+   - `PATHS.annotations_llm` - LLM annotations directory
    - `PATHS.card_attributes` - card attributes CSV
    - `PATHS.substitution_pairs_combined` - combined substitution pairs
    - `PATHS.substitution_pairs_from_llm` - LLM substitution pairs
@@ -263,7 +263,7 @@ SUBSTITUTION_PAIRS_COMBINED = EXPERIMENTS_DIR / "substitution_pairs_combined.jso
 - Some use `set -e` (basic, missing `-uo pipefail`)
 - Missing error handling in some scripts
 
-**Recommendation**: 
+**Recommendation**:
 - Standardize on `set -euo pipefail` for all bash scripts
 - Add error handling to scripts missing it
 - Document error handling standards
@@ -304,4 +304,3 @@ SUBSTITUTION_PAIRS_COMBINED = EXPERIMENTS_DIR / "substitution_pairs_combined.jso
 - `scripts/utils/` - utility/helper scripts
 
 **Recommendation**: Create missing subdirectories and move scripts
-

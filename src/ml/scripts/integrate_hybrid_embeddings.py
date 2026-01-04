@@ -28,7 +28,7 @@ def load_hybrid_embeddings(
 ) -> dict[str, Any]:
     """
     Load all three embedding types.
-    
+
     Returns:
         Dict with embedders and metadata
     """
@@ -38,7 +38,7 @@ def load_hybrid_embeddings(
         "cooccurrence_embeddings": None,
         "loaded": {},
     }
-    
+
     # 1. Instruction-tuned embeddings (always available - zero-shot)
     try:
         logger.info("Loading instruction-tuned embeddings...")
@@ -50,7 +50,7 @@ def load_hybrid_embeddings(
     except Exception as e:
         logger.warning(f"Failed to load instruction-tuned embeddings: {e}")
         result["loaded"]["instruction"] = False
-    
+
     # 2. GNN embeddings
     if gnn_model_path and gnn_model_path.exists():
         try:
@@ -64,7 +64,7 @@ def load_hybrid_embeddings(
     else:
         logger.info("GNN model not found, skipping")
         result["loaded"]["gnn"] = False
-    
+
     # 3. Co-occurrence embeddings (Node2Vec)
     if cooccurrence_embeddings_path and cooccurrence_embeddings_path.exists():
         try:
@@ -81,7 +81,7 @@ def load_hybrid_embeddings(
     else:
         logger.info("Co-occurrence embeddings not found, skipping")
         result["loaded"]["cooccurrence"] = False
-    
+
     return result
 
 
@@ -93,7 +93,7 @@ def create_fusion_with_hybrid_embeddings(
 ) -> WeightedLateFusion:
     """
     Create fusion system with all three embedding types.
-    
+
     Uses recommended weights based on capabilities:
     - GNN: 30% (multi-hop, new cards)
     - Instruction-tuned: 25% (zero-shot, semantic)
@@ -109,7 +109,7 @@ def create_fusion_with_hybrid_embeddings(
         text_embed=0.25,   # Instruction-tuned (zero-shot, new cards)
         gnn=0.30,          # GraphSAGE (multi-hop, new cards)
     )
-    
+
     fusion = WeightedLateFusion(
         embeddings=embeddings_data.get("cooccurrence_embeddings"),
         adj=adj or {},
@@ -119,7 +119,7 @@ def create_fusion_with_hybrid_embeddings(
         gnn_embedder=embeddings_data.get("gnn_embedder"),
         card_data=card_data or {},
     )
-    
+
     return fusion
 
 
@@ -150,35 +150,35 @@ def main() -> int:
         action="store_true",
         help="Test the integration",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("="*60)
     logger.info("Integrating Hybrid Embeddings")
     logger.info("="*60)
-    
+
     # Load all embeddings
     embeddings_data = load_hybrid_embeddings(
         gnn_model_path=args.gnn_model,
         instruction_model_name=args.instruction_model,
         cooccurrence_embeddings_path=args.cooccurrence_embeddings,
     )
-    
+
     # Print summary
     logger.info("\nLoaded Embeddings:")
     for name, loaded in embeddings_data["loaded"].items():
         status = "✓" if loaded else "✗"
         logger.info(f"  {status} {name}")
-    
+
     # Test if requested
     if args.test:
         logger.info("\nTesting integration...")
         fusion = create_fusion_with_hybrid_embeddings(embeddings_data)
-        
+
         # Test query
         test_card = "Lightning Bolt"
         logger.info(f"\nTesting similarity for: {test_card}")
-        
+
         try:
             results = fusion.find_similar(test_card, topn=5)
             logger.info("Top 5 similar cards:")
@@ -187,16 +187,15 @@ def main() -> int:
         except Exception as e:
             logger.error(f"Test failed: {e}")
             return 1
-    
+
     logger.info("\n✓ Integration complete")
     logger.info("\nTo use in API:")
     logger.info("  1. Load embeddings using load_hybrid_embeddings()")
     logger.info("  2. Create fusion with create_fusion_with_hybrid_embeddings()")
     logger.info("  3. Use fusion.find_similar() for recommendations")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     exit(main())
-

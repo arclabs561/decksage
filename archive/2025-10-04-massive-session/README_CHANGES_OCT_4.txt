@@ -22,4 +22,3 @@ NEW CAPABILITIES DOCUMENTED:
 - Tournament metadata access
 - Python utilities for data loading
 - Enhanced analysis tools
-

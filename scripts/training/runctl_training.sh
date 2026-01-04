@@ -59,7 +59,7 @@ case "$MODE" in
     local)
         echo "Local training mode"
         cd "$PROJECT_ROOT"
-        
+
         # Check if data exists
         if [[ ! -f "$PAIRS_CSV" ]]; then
             echo "Pairs CSV not found: $PAIRS_CSV"
@@ -78,7 +78,7 @@ df.to_csv('$PAIRS_CSV', index=False)
 print('Created test data')
 "
         fi
-        
+
         # Run training
         "$RUNCTL_BIN" local "src/ml/scripts/train_multitask_refined.py" -- \
                 "--pairs" "$PAIRS_CSV" \
@@ -92,12 +92,12 @@ print('Created test data')
                 ${SUBSTITUTION_PAIRS:+--substitution-pairs "$SUBSTITUTION_PAIRS"} \
                 "$@"
         ;;
-    
+
     aws|runpod)
         echo "Cloud training mode: $MODE"
         echo "   S3 data: $S3_DATA"
         echo "   S3 output: $S3_OUTPUT"
-        
+
         # Get instance ID from args or env
         INSTANCE_ID="${INSTANCE_ID:-${1:-}}"
         if [[ -z "$INSTANCE_ID" ]]; then
@@ -106,7 +106,7 @@ print('Created test data')
             exit 1
         fi
         shift || true
-        
+
         # Run training
         "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
             "src/ml/scripts/train_multitask_refined.py" \
@@ -126,7 +126,7 @@ print('Created test data')
                 ${CHECKPOINT_INTERVAL:+--checkpoint-interval "$CHECKPOINT_INTERVAL"} \
                 "$@"
         ;;
-    
+
     *)
         echo "Unknown mode: $MODE"
         echo "   Use: local, aws, or runpod"

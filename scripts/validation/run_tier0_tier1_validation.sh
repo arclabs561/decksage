@@ -58,4 +58,3 @@ else
     echo "ERROR: Validation failed"
     exit 1
 fi
-

@@ -3,7 +3,7 @@
 ## Immediate Next Steps
 
 ### 1. Test Evaluation with Name Mapping ⏳
-**Priority**: High  
+**Priority**: High
 **Status**: Ready (blocked by local dependencies)
 
 **Options**:
@@ -99,7 +99,7 @@ ls -la src/backend/data-full/games/magic/
 
 1. **Local Environment**: Missing pandas, numpy, gensim, scipy
    - **Solution**: Use AWS EC2 for all computation
-   
+
 2. **Decks Metadata**: May not exist locally
    - **Solution**: Check S3, download if available, or generate on AWS
 
@@ -118,4 +118,3 @@ This approach:
 - ✅ Faster computation (better hardware)
 - ✅ Consistent environment
 - ✅ Easy to scale
-

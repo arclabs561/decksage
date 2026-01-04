@@ -53,6 +53,3 @@ Query: "Cards like Lightning Bolt"
 - "Production-ready card similarity"
 - "Finds functional equivalents"
 - "Matches human expert judgment"
-
-
-

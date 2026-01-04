@@ -16,15 +16,18 @@ import os
 import statistics as stats
 from collections import defaultdict
 
+
 try:
     from pydantic import BaseModel, Field
 
     from ...utils.pydantic_ai_helpers import make_agent
+
     HAS_PYDANTIC_AI = True
 except Exception:
     HAS_PYDANTIC_AI = False
     BaseModel = object  # type: ignore[assignment]
     Field = object  # type: ignore[assignment]
+
     def make_agent(*args, **kwargs):  # type: ignore
         raise RuntimeError("pydantic-ai helpers unavailable")
 

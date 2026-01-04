@@ -60,7 +60,7 @@ except Exception:
  print(0)
 PYEOF
 "$TEST_SET" 2>/dev/null || echo "0")
- 
+
  if [ "$PAIR_COUNT" -gt "$MIN_PAIRS" ] && [ "$USE_RUNCTL" != "true" ]; then
  echo "═══════════════════════════════════════════════════════════════════════"
  echo "Warning: LARGE EVALUATION DETECTED: $PAIR_COUNT pairs"
@@ -74,7 +74,7 @@ PYEOF
  echo " 3. Cancel: Ctrl+C"
  echo ""
  read -t 10 -p "Choice [Enter=local, Ctrl+C=cancel]: " choice || choice="local"
- 
+
  if [ "$choice" != "local" ]; then
  echo "Running on AWS..."
  exec "$SCRIPT_DIR/validate_e2e_runctl.sh" "$GAME"
@@ -86,4 +86,3 @@ fi
 
 # Run locally
 exec uv run python src/ml/scripts/evaluate_downstream_complete.py "$@"
-

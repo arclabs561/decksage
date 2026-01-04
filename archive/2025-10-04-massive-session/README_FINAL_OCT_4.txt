@@ -34,7 +34,7 @@ PRODUCTION RECOMMENDATION
 --------------------------
 Use tournament-only filtering (load_tournament_decks())
 - Removes 2,029 cubes
-- Eliminates 13,446 noise cards  
+- Eliminates 13,446 noise cards
 - Improves P@10 significantly
 - Near co-occurrence method ceiling (~0.12)
 

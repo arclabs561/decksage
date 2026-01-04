@@ -1,7 +1,7 @@
 # Dataset Review
 
-**Date**: 2025-01-27  
-**Reviewer**: AI Assistant  
+**Date**: 2025-01-27
+**Reviewer**: AI Assistant
 **Scope**: All datasets in `/data` directory
 
 ## Executive Summary
@@ -34,7 +34,7 @@ The dataset collection has several critical gaps that limit evaluation and model
 - **Limited coverage**: Only covers 5 Magic: The Gathering cards
 - **Single game**: Only MTG, no Pokemon or Yu-Gi-Oh ground truth
 
-**Impact**: 
+**Impact**:
 - Current P@10=0.0882 metric has no statistical validity
 - Cannot detect improvements or regressions reliably
 - Cannot perform cross-game evaluation
@@ -235,7 +235,3 @@ With only 5 ground truth queries:
 - `DATA_ANALYSIS_AND_IMPROVEMENTS.md`: Mentions need for test set analysis
 - `data/DATA_LAYOUT.md`: Documents expected structure
 - `data/README.md`: Documents data directory organization
-
-
-
-

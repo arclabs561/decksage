@@ -34,4 +34,3 @@ fi
 # Start the API
 export EMBEDDINGS_PATH="$EMBEDDINGS_PATH"
 python3 -m src.ml.api.api --embeddings "$EMBEDDINGS_PATH" --port 8000
-

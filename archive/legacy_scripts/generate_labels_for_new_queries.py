@@ -25,7 +25,7 @@ try:
     from pydantic import BaseModel, Field
     import os
     from pathlib import Path
-    
+
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
@@ -79,7 +79,7 @@ def make_label_generation_agent() -> Agent | None:
     """Create LLM agent for generating labels."""
     if not HAS_PYDANTIC_AI:
         return None
-    
+
     try:
         # Load .env
         env_file = Path(__file__).parent.parent.parent.parent / ".env"
@@ -89,7 +89,7 @@ def make_label_generation_agent() -> Agent | None:
                 load_dotenv(env_file)
             except ImportError:
                 pass
-        
+
         # Use frontier models from leaderboard (claude-opus-4-5 is top quality)
         model_name = (
             os.getenv("ANNOTATOR_MODEL_BEST") or
@@ -98,13 +98,13 @@ def make_label_generation_agent() -> Agent | None:
             "anthropic/claude-opus-4.5"  # Top quality (#5 text, #1 webdev)
         )
         provider = os.getenv("LLM_PROVIDER", "openrouter")
-        
+
         agent = Agent(
             f"{provider}:{model_name}",
             output_type=CardLabels,
             system_prompt=LABEL_GENERATION_PROMPT,
         )
-        
+
         return agent
     except Exception as e:
         logger.error(f"Failed to create agent: {e}")
@@ -115,17 +115,17 @@ def generate_labels_for_query(agent: Agent, query: str, use_case: str | None = N
     """Generate labels for a query card."""
     prompt = f"""Generate similarity labels for TCG card: {query}
 """
-    
+
     if use_case:
         prompt += f"\nUse case: {use_case}\n"
-    
+
     prompt += """
 Provide 3-5 cards for each relevance level. Focus on well-known cards that are actually similar.
 """
-    
+
     try:
         result = agent.run_sync(prompt)
-        
+
         if hasattr(result, 'data') and result.data:
             labels = result.data
             if isinstance(labels, CardLabels):
@@ -140,7 +140,7 @@ Provide 3-5 cards for each relevance level. Focus on well-known cards that are a
                 return labels
     except Exception as e:
         logger.error(f"Error generating labels for {query}: {e}")
-    
+
     return {
         "highly_relevant": [],
         "relevant": [],
@@ -159,7 +159,7 @@ def generate_labels_for_test_set(
     if not agent:
         logger.error("Cannot create LLM agent")
         return test_set
-    
+
     # Find queries that need labels
     queries_needing_labels = []
     for query, data in test_set.items():
@@ -171,32 +171,32 @@ def generate_labels_for_test_set(
         )
         if not has_labels:
             queries_needing_labels.append((query, data))
-    
+
     logger.info(f"Found {len(queries_needing_labels)} queries needing labels")
-    
+
     if not queries_needing_labels:
         return test_set
-    
+
     # Generate labels in batches
     updated = test_set.copy()
     processed = 0
-    
+
     for i in range(0, len(queries_needing_labels), batch_size):
         batch = queries_needing_labels[i:i+batch_size]
         logger.info(f"Processing batch {i//batch_size + 1}/{(len(queries_needing_labels)-1)//batch_size + 1} ({len(batch)} queries)...")
-        
+
         for query, data in batch:
             use_case = data.get("use_case")
             labels = generate_labels_for_query(agent, query, use_case)
-            
+
             # Merge labels into existing data
             updated[query] = {**data, **labels}
             processed += 1
-            
+
             logger.debug(f"  Generated labels for {query}: {len(labels['highly_relevant'])} highly relevant")
-    
+
     logger.info(f"✅ Generated labels for {processed} queries")
-    
+
     return updated
 
 
@@ -206,26 +206,26 @@ def main() -> int:
     parser.add_argument("--input", type=str, required=True, help="Test set JSON")
     parser.add_argument("--output", type=str, required=True, help="Output test set JSON")
     parser.add_argument("--batch-size", type=int, default=10, help="Batch size for generation")
-    
+
     args = parser.parse_args()
-    
+
     if not HAS_PYDANTIC_AI:
         logger.error("pydantic-ai not available")
         logger.error("Install with: pip install pydantic-ai")
         return 1
-    
+
     # Load test set
     with open(args.input) as f:
         test_data = json.load(f)
         test_set = test_data.get("queries", test_data)
-    
+
     # Generate labels
     updated = generate_labels_for_test_set(test_set, args.batch_size)
-    
+
     # Save
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     with open(output_path, "w") as f:
         json.dump({
             "version": "labeled",
@@ -235,13 +235,12 @@ def main() -> int:
                 "updated_size": len(updated),
             },
         }, f, indent=2)
-    
+
     logger.info(f"✅ Labeled test set saved to {output_path}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
     sys.exit(main())
-

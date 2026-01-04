@@ -5,19 +5,17 @@ Edge Case Tests for LLM Validators
 Tests unusual inputs, error conditions, and boundary cases.
 """
 
-import asyncio
 import os
 
 import pytest
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 @pytest.mark.skip(reason="experimental.llm_judge module may not exist")
 def test_llm_judge_empty_candidates():
     """Test LLM judge with empty similar_cards list."""
@@ -35,9 +33,7 @@ def test_llm_judge_empty_candidates():
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_llm_judge_unicode_cards():
     """Test LLM judge with unicode/emoji in card names."""
     from ..experimental.llm_judge import LLMJudge
@@ -56,9 +52,7 @@ def test_llm_judge_unicode_cards():
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_llm_judge_very_long_names():
     """Test LLM judge with very long card names."""
     from ..experimental.llm_judge import LLMJudge
@@ -82,10 +76,10 @@ def test_llm_judge_invalid_api_key():
 
     # Init should succeed (validation happens at first API call)
     judge = LLMJudge(api_key="sk-invalid-key-12345", model="openai/gpt-4o-mini")
-    
+
     # First API call should fail or return error
     result = judge.evaluate_similarity("Test", [("Similar", 0.9)])
-    
+
     # Should either raise or return None/error in result
     # Current behavior: returns dict with overall_quality=None
     assert result is not None
@@ -122,7 +116,7 @@ def test_pydantic_ai_helpers_env_override(monkeypatch):
 
     model = get_default_model("judge")
     assert model == "custom/model"
-    
+
     # monkeypatch auto-cleans up
 
 

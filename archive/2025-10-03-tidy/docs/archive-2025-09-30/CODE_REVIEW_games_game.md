@@ -1,7 +1,7 @@
 # Code Review: games/game.go
 
-**Reviewer**: Systematic scrutiny  
-**Date**: 2025-09-30  
+**Reviewer**: Systematic scrutiny
+**Date**: 2025-09-30
 **File**: `src/backend/games/game.go`
 
 ---
@@ -21,7 +21,7 @@ func init() {
     games.RegisterCollectionType("Deck", ...) // Game 1
 }
 func init() {
-    games.RegisterCollectionType("Deck", ...) // Game 2  
+    games.RegisterCollectionType("Deck", ...) // Game 2
 }
 ```
 
@@ -199,11 +199,11 @@ if totalCards > 5000 {  // Reasonable limit
 
 ## Positive Observations
 
-✅ **Good error messages** - Contextual, helpful  
-✅ **Proper use of fmt.Errorf** with %w for wrapping  
-✅ **Regex compiled at package level** - Good performance  
-✅ **Stable sorts** - Preserves original order for equal elements  
-✅ **Validation is thorough** - Checks multiple invariants  
+✅ **Good error messages** - Contextual, helpful
+✅ **Proper use of fmt.Errorf** with %w for wrapping
+✅ **Regex compiled at package level** - Good performance
+✅ **Stable sorts** - Preserves original order for equal elements
+✅ **Validation is thorough** - Checks multiple invariants
 
 ---
 
@@ -215,7 +215,7 @@ if totalCards > 5000 {  // Reasonable limit
 
 ### Should Fix (Quality)
 
-2. **Document mutation in Canonicalize**  
+2. **Document mutation in Canonicalize**
 3. **Improve UnmarshalJSON error message** (list valid types)
 
 ### Nice to Have (Polish)
@@ -244,8 +244,8 @@ if totalCards > 5000 {  // Reasonable limit
 
 ## Grade
 
-**Code Quality**: A- (8.5/10)  
-**Robustness**: B+ (needs duplicate checks)  
-**Documentation**: B (needs mutation docs)  
+**Code Quality**: A- (8.5/10)
+**Robustness**: B+ (needs duplicate checks)
+**Documentation**: B (needs mutation docs)
 
 **Overall**: **B+ (8/10)** - Very good, minor improvements needed

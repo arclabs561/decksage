@@ -24,7 +24,7 @@ Solution: Implemented theory-aligned chained alternative
 - Structured output
 - Default for production
 
-### llm_judge_chained.py (Theory-Aligned)  
+### llm_judge_chained.py (Theory-Aligned)
 - 3 sequential API calls
 - Slower (15-20s)
 - 3x cost ($0.03)

@@ -454,14 +454,14 @@ go run cmd/dataset/main.go extract magic/edhrec --limit 200 --reparse
 ## Questions & Future Work
 
 ### Answered by Enrichment
-✅ "What's a budget alternative to Force of Will?" → Price + functional tags  
-✅ "What removal spells are legal in Pauper?" → Functional tags + rarity + legalities  
-✅ "What are the saltiest cards in EDH?" → EDHREC salt scores  
+✅ "What's a budget alternative to Force of Will?" → Price + functional tags
+✅ "What removal spells are legal in Pauper?" → Functional tags + rarity + legalities
+✅ "What are the saltiest cards in EDH?" → EDHREC salt scores
 ✅ "Which cards have Flash?" → Keywords enrichment
 
 ### Not Yet Answered
-⚠️ "How has the meta shifted over time?" → Need temporal tracking  
-⚠️ "What's the win rate of this deck?" → Need tournament results scraping  
+⚠️ "How has the meta shifted over time?" → Need temporal tracking
+⚠️ "What's the win rate of this deck?" → Need tournament results scraping
 ⚠️ "Is this card trending up in price?" → Need price history
 
 ### Extensibility

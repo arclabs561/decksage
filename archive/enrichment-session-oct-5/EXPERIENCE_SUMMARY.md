@@ -107,7 +107,7 @@ httpx.Client = hishel.CacheClient
 
 The LLM validation system is **production-ready** for the core functionality:
 - ✅ All validators working
-- ✅ Type-safe structured outputs  
+- ✅ Type-safe structured outputs
 - ✅ Multiple models supported
 - ✅ Integration tests passing
 - ⚠️  Caching needs httpx integration for optimal performance

@@ -1,7 +1,7 @@
 # Data Extraction - Initial Success! ✅
 
-**Date**: 2025-09-30  
-**Duration**: ~2 minutes  
+**Date**: 2025-09-30
+**Duration**: ~2 minutes
 **Status**: Phase 1 Complete
 
 ## What We Extracted
@@ -60,7 +60,7 @@ src/backend/data-sample/
 
 **Verified**:
 - ✅ Deck type and format extracted
-- ✅ Main deck and sideboard separated  
+- ✅ Main deck and sideboard separated
 - ✅ Card names and counts accurate
 - ✅ Archetype metadata captured
 
@@ -278,6 +278,6 @@ go run ./cmd/search index \
 
 ---
 
-**Total Time**: ~2 minutes  
-**Total Storage**: 96 KB (12 collections)  
+**Total Time**: ~2 minutes
+**Total Storage**: 96 KB (12 collections)
 **Status**: 🟢 **Ready for Development**

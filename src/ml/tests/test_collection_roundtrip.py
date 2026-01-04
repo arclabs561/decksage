@@ -7,7 +7,10 @@ import pytest
 
 
 def _norm_parts(deck: dict) -> dict:
-    return {p["name"]: sorted([(c["name"], c["count"]) for c in p["cards"]]) for p in deck.get("partitions", [])}
+    return {
+        p["name"]: sorted([(c["name"], c["count"]) for c in p["cards"]])
+        for p in deck.get("partitions", [])
+    }
 
 
 @pytest.mark.skip(reason="validators.loader module not available")
@@ -25,5 +28,3 @@ def test_collection_format_roundtrip_small():
         dd = d.model_dump()
         revalidated = type(d).model_validate(dd).model_dump()
         assert _norm_parts(dd) == _norm_parts(revalidated)
-
-

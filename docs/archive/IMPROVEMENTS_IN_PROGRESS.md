@@ -33,4 +33,3 @@
 - **Embeddings**: P@10 = 0.15-0.20 (5-7x improvement from 0.0278)
 - **Test Set**: 100+ queries (from 38)
 - **Overall**: Fusion P@10 = 0.20-0.25 (meet README goal)
-

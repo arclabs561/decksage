@@ -1,6 +1,6 @@
 # Methodology Critique and Improvements
 
-**Date**: November 10, 2025  
+**Date**: November 10, 2025
 **Based on**: Scientific best practices, bootstrap methods, fusion evaluation
 
 ---
@@ -14,7 +14,7 @@
 
 ### Issue 2: Small Sample Size
 **Problem**: 38 queries is small for statistical power
-**Bootstrap Guidance**: 
+**Bootstrap Guidance**:
 - For n=38, 95% CI width ≈ ±0.05 for P@10=0.09
 - Need n=100+ for ±0.02 CI width
 **Fix**: Report CI, consider expanding test set
@@ -26,7 +26,7 @@
 
 ### Issue 4: Fusion Worse Than Baseline
 **Problem**: Fusion (0.0882) < Jaccard alone (0.089)
-**Hypothesis**: 
+**Hypothesis**:
 - Weights wrong
 - Signals correlated (redundant)
 - One signal hurting
@@ -166,7 +166,7 @@ new_results = evaluate_with_confidence(test_set, improved_similarity)
 ### For Small Samples (n=38)
 - **Bootstrap samples**: 1000+ (we use 1000)
 - **CI method**: Percentile method (2.5th, 97.5th percentiles)
-- **Interpretation**: 
+- **Interpretation**:
   - If CI overlap: Not statistically different
   - If CI don't overlap: Statistically different
 
@@ -270,10 +270,3 @@ P@10 = 0.0882 (95% CI: 0.0751, 0.1013, n=38)
 4. **Document**: Methodology and findings
 
 **Principle**: Measure → Understand → Fix → Validate
-
-
-
-
-
-
-

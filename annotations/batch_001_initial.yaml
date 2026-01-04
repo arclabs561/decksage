@@ -22,37 +22,37 @@ annotations:
         relevance: 4
         similarity_type: "substitute"
         notes: "Functional reprint, sorcery vs instant"
-      
+
       - card: "Lava Spike"
         relevance: 4
-        similarity_type: "substitute"  
+        similarity_type: "substitute"
         notes: "Player-only but same function"
-      
+
       - card: "Fireblast"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Burn finisher, different cost structure"
-      
+
       - card: "Lava Dart"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Repeatable but lower efficiency"
-      
+
       - card: "Monastery Swiftspear"
         relevance: 2
         similarity_type: "synergy"
         notes: "Prowess trigger, creature not spell"
-      
+
       - card: "Mountain"
         relevance: 0
         similarity_type: "irrelevant"
         notes: "Land, not a spell"
-      
+
       - card: "Counterspell"
         relevance: 0
         similarity_type: "irrelevant"
         notes: "Wrong color and function"
-  
+
   - query_id: "q002"
     query_card: "Brainstorm"
     annotator: "annotator_001"
@@ -62,22 +62,22 @@ annotations:
         relevance: 4
         similarity_type: "substitute"
         notes: "Near-identical cantrip"
-      
+
       - card: "Preordain"
         relevance: 4
         similarity_type: "substitute"
         notes: "Slightly different but same role"
-      
+
       - card: "Gitaxian Probe"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Cantrip but with information"
-      
+
       - card: "Force of Will"
         relevance: 2
         similarity_type: "synergy"
         notes: "Often in same decks, different function"
-  
+
   - query_id: "q003"
     query_card: "Dark Ritual"
     annotator: "annotator_001"
@@ -87,17 +87,17 @@ annotations:
         relevance: 4
         similarity_type: "substitute"
         notes: "Similar fast mana in Storm"
-      
+
       - card: "Lion's Eye Diamond"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Fast mana but harder to use"
-      
+
       - card: "Lotus Petal"
         relevance: 3
         similarity_type: "similar_function"
         notes: "One-shot fast mana"
-  
+
   - query_id: "q004"
     query_card: "Force of Will"
     annotator: "annotator_001"
@@ -107,17 +107,17 @@ annotations:
         relevance: 4
         similarity_type: "substitute"
         notes: "Non-combat version"
-      
+
       - card: "Daze"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Free counter, different condition"
-      
+
       - card: "Flusterstorm"
         relevance: 3
         similarity_type: "similar_function"
         notes: "Storm counter"
-  
+
   - query_id: "q005"
     query_card: "Delver of Secrets"
     annotator: "annotator_001"
@@ -127,12 +127,12 @@ annotations:
         relevance: 4
         similarity_type: "substitute"
         notes: "1-drop threat in tempo"
-      
+
       - card: "Dragon's Rage Channeler"
         relevance: 4
         similarity_type: "substitute"
         notes: "Modern Delver equivalent"
-      
+
       - card: "Brainstorm"
         relevance: 2
         similarity_type: "synergy"
@@ -143,6 +143,3 @@ quality_metrics:
   coverage: 5  # queries
   avg_candidates_per_query: 5.2
   validation_status: "initial"
-
-
-

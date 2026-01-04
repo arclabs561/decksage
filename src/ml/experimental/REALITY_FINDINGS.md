@@ -3,14 +3,14 @@
 ## What We Actually Discovered
 
 ### Finding #1: Test Suite "Failure" Was Trivial
-**Claimed**: "Go test suite fails overall, integration issues"  
-**Reality**: One linter error (redundant `\n` in Println)  
-**Fix**: One line change, all tests pass  
+**Claimed**: "Go test suite fails overall, integration issues"
+**Reality**: One linter error (redundant `\n` in Println)
+**Fix**: One line change, all tests pass
 **Lesson**: Dramatic narratives != actual problems. Check first.
 
 ### Finding #2: Format-Specific Similarity Catastrophically Fails
-**Hypothesis**: Filtering to specific format improves P@10  
-**Reality**: 
+**Hypothesis**: Filtering to specific format improves P@10
+**Reality**:
 - All formats: P@10 = 0.0829
 - Modern only: P@10 = 0.0045 (-94.6%)
 - Legacy only: P@10 = 0.0342 (-58.7%)
@@ -31,7 +31,7 @@
 
 ## What This Means
 
-**The honest assessment from critique was correct**: 
+**The honest assessment from critique was correct**:
 - P@10 = 0.08 is a real ceiling for co-occurrence
 - Can't optimize our way past it with format tricks
 - Need new features (card text embeddings, mana curves, card types)

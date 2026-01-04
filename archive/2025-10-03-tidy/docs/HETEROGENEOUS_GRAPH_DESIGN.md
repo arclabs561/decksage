@@ -38,37 +38,37 @@ edges = {
         weight: rarity_adjusted_count,
         attributes: ['rarity', 'pack_type']
     },
-    
+
     # Deck context (MOST IMPORTANT)
     ('card', 'in_deck', 'deck'): {
         weight: count_in_deck,
         attributes: ['partition (main/side)', 'position']
     },
-    
+
     # Archetype
     ('card', 'staple_of', 'archetype'): {
         weight: frequency_in_archetype,
         attributes: ['core (yes/no)', 'flex_slot']
     },
-    
+
     # Format legality
     ('card', 'legal_in', 'format'): {
         weight: 1.0,
         attributes: ['restricted', 'banned']
     },
-    
+
     # Tournament success
     ('deck', 'placed_in', 'event'): {
         weight: 1.0,
         attributes: ['placement (1st, 2nd, top8)', 'num_players']
     },
-    
+
     # Player preferences
     ('player', 'built', 'deck'): {
         weight: 1.0,
         attributes: ['skill_rating']
     },
-    
+
     # Deck archetype
     ('deck', 'is_archetype', 'archetype'): {
         weight: coherence_score
@@ -87,7 +87,7 @@ Card -in_deck-> Deck -in_deck-> Card
 
 Meaning: Cards that appear in same decks (intentional choices)
 
-### Metapath 2: Archetype Staples  
+### Metapath 2: Archetype Staples
 ```
 Card -staple_of-> Archetype -staple_of-> Card
 ```
@@ -203,5 +203,3 @@ exp_042: Heterogeneous graph with Card-Deck-Format structure
   - Should beat homogeneous co-occurrence
 
 Expected: P@10 > 0.12 (finally an improvement!)
-
-

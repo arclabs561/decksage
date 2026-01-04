@@ -52,10 +52,10 @@ case "$MODE" in
     local)
         echo "Local labeling mode"
         cd "$PROJECT_ROOT"
-        
+
         # Ensure output directory exists
         mkdir -p "$OUTPUT_DIR"
-        
+
         # Run labeling (using batch script)
         "$RUNCTL_BIN" local "src/ml/scripts/generate_labels_for_new_queries_optimized.py" -- \
                 "--input" "$QUERIES_JSON" \
@@ -63,12 +63,12 @@ case "$MODE" in
                 "--batch-size" "$BATCH_SIZE" \
                 "$@"
         ;;
-    
+
     aws)
         echo "Cloud labeling mode"
         echo "   S3 data: $S3_DATA"
         echo "   S3 output: $S3_OUTPUT"
-        
+
         # Get instance ID from args or env
         INSTANCE_ID="${INSTANCE_ID:-${1:-}}"
         if [[ -z "$INSTANCE_ID" ]]; then
@@ -77,7 +77,7 @@ case "$MODE" in
             exit 1
         fi
         shift || true
-        
+
         # Run labeling (using batch script)
         "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
             "src/ml/scripts/generate_labels_for_new_queries_optimized.py" \
@@ -88,7 +88,7 @@ case "$MODE" in
                 "--batch-size" "$BATCH_SIZE" \
                 "$@"
         ;;
-    
+
     *)
         echo "Unknown mode: $MODE"
         echo "   Use: local or aws"

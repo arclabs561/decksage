@@ -102,4 +102,3 @@ echo "=" | tr -d '\n' | head -c 70 && echo
 echo "Output: $OUTPUT"
 echo "Size: $FINAL_SIZE queries"
 echo "Synced to S3: s3://games-collections/experiments/$(basename $OUTPUT)"
-

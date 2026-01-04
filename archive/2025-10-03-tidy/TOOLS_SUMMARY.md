@@ -48,7 +48,7 @@ All tools use co-occurrence data's **strength** (frequency analysis), not its we
 
 All tools run instantly on 4,718 decks:
 - Archetype staples: < 1 second
-- Sideboard analysis: < 1 second  
+- Sideboard analysis: < 1 second
 - Card companions: < 1 second
 - Composition stats: < 1 second
 

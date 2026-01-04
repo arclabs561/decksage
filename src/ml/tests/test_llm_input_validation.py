@@ -10,13 +10,12 @@ import os
 import pytest
 from dotenv import load_dotenv
 
+
 load_dotenv()
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_invalid_similarity_scores():
     """Test that invalid similarity scores are handled."""
     from ..experimental.llm_judge import LLMJudge
@@ -33,16 +32,12 @@ def test_invalid_similarity_scores():
     assert result is not None
 
     # Mixed valid/invalid
-    result = judge.evaluate_similarity(
-        "Test", [("A", -0.1), ("B", 0.5), ("C", 2.0)]
-    )
+    result = judge.evaluate_similarity("Test", [("A", -0.1), ("B", 0.5), ("C", 2.0)])
     assert result is not None
 
 
 @pytest.mark.llm
-@pytest.mark.skipif(
-    not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set"
-)
+@pytest.mark.skipif(not os.getenv("OPENROUTER_API_KEY"), reason="OPENROUTER_API_KEY not set")
 def test_special_characters_in_names():
     """Test cards with special characters."""
     from ..experimental.llm_judge import LLMJudge

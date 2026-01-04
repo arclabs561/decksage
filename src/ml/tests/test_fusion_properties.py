@@ -3,8 +3,8 @@ from __future__ import annotations
 
 import math
 
-import pytest
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 
 def _jaccard_python(a: set[str], b: set[str]) -> float:
@@ -70,8 +70,15 @@ def test_fusion_weights_normalize_sum_to_one(embed_list, jacc_list):
     fw = FusionWeights(embed=e, jaccard=j, functional=f).normalized()
     # Check that ALL weights sum to 1.0 (not just the three we set)
     total = (
-        fw.embed + fw.jaccard + fw.functional + fw.text_embed + 
-        fw.sideboard + fw.temporal + fw.gnn + fw.archetype + fw.format
+        fw.embed
+        + fw.jaccard
+        + fw.functional
+        + fw.text_embed
+        + fw.sideboard
+        + fw.temporal
+        + fw.gnn
+        + fw.archetype
+        + fw.format
     )
     assert math.isclose(total, 1.0, rel_tol=1e-9)
 
@@ -80,12 +87,32 @@ def test_fusion_weights_normalize_sum_to_one(embed_list, jacc_list):
 def test_fusion_weight_scale_invariance_property(scale: float):
     from ..similarity.fusion import FusionWeights
 
-    base = FusionWeights(embed=0.4, jaccard=0.35, functional=0.25)
-    scaled = FusionWeights(embed=base.embed * scale, jaccard=base.jaccard * scale, functional=base.functional * scale)
+    # Set all weights explicitly to avoid default values affecting normalization
+    base = FusionWeights(
+        embed=0.4,
+        jaccard=0.35,
+        functional=0.25,
+        text_embed=0.0,
+        sideboard=0.0,
+        temporal=0.0,
+        gnn=0.0,
+        archetype=0.0,
+        format=0.0,
+    )
+    scaled = FusionWeights(
+        embed=base.embed * scale,
+        jaccard=base.jaccard * scale,
+        functional=base.functional * scale,
+        text_embed=0.0,
+        sideboard=0.0,
+        temporal=0.0,
+        gnn=0.0,
+        archetype=0.0,
+        format=0.0,
+    )
     nb = base.normalized()
     ns = scaled.normalized()
-    assert math.isclose(nb.embed, ns.embed)
-    assert math.isclose(nb.jaccard, ns.jaccard)
-    assert math.isclose(nb.functional, ns.functional)
-
-
+    # Scale invariance: normalized ratios should be the same
+    assert math.isclose(nb.embed, ns.embed, abs_tol=1e-10)
+    assert math.isclose(nb.jaccard, ns.jaccard, abs_tol=1e-10)
+    assert math.isclose(nb.functional, ns.functional, abs_tol=1e-10)

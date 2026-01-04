@@ -79,4 +79,3 @@ echo "  - Integration: experiments/integration_validation.json"
 echo "  - Full validation: experiments/tier0_tier1_validation.json"
 echo "  - Dashboard: experiments/quality_dashboard.html"
 echo ""
-

@@ -1,6 +1,6 @@
 # Complete Enrichment Pipeline - Balanced & LLM-Enhanced
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Status**: ✅ All games balanced, LLM/Vision integrated
 
 ---
@@ -34,11 +34,11 @@ DeckSage now has **comprehensive, balanced enrichment across all 3 games** with 
 ```go
 type Card struct {
     // ... existing fields ...
-    
+
     // NEW: Enrichment data
     Prices      CardPrices              // TCGPlayer multi-tier pricing
     Set         string                  // Set code
-    SetName     string                  // Set name  
+    SetName     string                  // Set name
     Regulation  string                  // Regulation mark (rotation)
     Legalities  map[string]string       // Standard, Expanded
 }
@@ -46,7 +46,7 @@ type Card struct {
 type CardPrices struct {
     TCGPlayer     *float64  // Market price
     TCGPlayerLow  *float64  // Low price
-    TCGPlayerMid  *float64  // Mid price  
+    TCGPlayerMid  *float64  // Mid price
     TCGPlayerHigh *float64  // High price
     Cardmarket    *float64  // EUR market
     Ebay          *float64  // eBay average
@@ -58,7 +58,7 @@ type CardPrices struct {
 ```go
 type Card struct {
     // ... existing fields ...
-    
+
     // NEW: Enrichment data
     Prices     CardPrices  // Multi-source pricing
     BanStatus  string      // Forbidden, Limited, Semi-Limited
@@ -142,7 +142,7 @@ print(f"Omni-Negate: {tags.omni_negate}")
 
 ### What Rule-Based Taggers Miss
 
-**Rule-based**: "This card destroys creatures" → `creature_removal = True`  
+**Rule-based**: "This card destroys creatures" → `creature_removal = True`
 **LLM semantic**: "This card is a control staple that trades 1-for-1, fits in Jeskai Control and UW Tempo, synergizes with card draw, weak to aggro pressure"
 
 ### LLM Semantic Features
@@ -152,32 +152,32 @@ print(f"Omni-Negate: {tags.omni_negate}")
 class SemanticCardFeatures:
     card_name: str
     game: str
-    
+
     # Strategic classification
     archetype_role: str        # combo, control, aggro, midrange, tempo, ramp
     play_pattern: str          # early-game, mid-game, late-game
     complexity: int            # 1-5 (skill ceiling)
-    
+
     # Synergy analysis
     synergies: List[str]       # Card names that synergize
     anti_synergies: List[str]  # Cards that conflict
     archetype_fit: List[str]   # Deck archetypes
-    
+
     # Meta-game
     meta_relevance: int        # 1-5 (niche to meta-defining)
     power_level: int           # 1-5
     format_staple: bool
-    
+
     # Human-readable descriptions
     strategy_summary: str
     synergy_explanation: str
     weakness_explanation: str
-    
+
     # Classifications
     win_condition: bool
     enabler: bool
     tech_card: bool
-    
+
     # Confidence
     llm_confidence: float      # 0-1
 ```
@@ -224,7 +224,7 @@ enricher.enrich_batch(cards_list, game="pokemon", output_path=Path("enriched.jso
 class VisionCardFeatures:
     card_name: str
     image_url: str
-    
+
     art_style: str               # realistic, fantasy, etc.
     art_complexity: int          # 1-5
     dominant_colors: List[str]   # ["red", "blue", "gold"]
@@ -375,7 +375,7 @@ meta_cards = ["Charizard ex", "Gardevoir ex", "Lugia VSTAR"]
 for card_name in meta_cards:
     card_data = get_card_data(card_name)
     features = enricher.enrich_card(card_data, "pokemon")
-    
+
     print(f"\n{card_name}:")
     print(f"  Role: {features.archetype_role}")
     print(f"  Strategy: {features.strategy_summary}")
@@ -435,11 +435,11 @@ uv run python unified_enrichment_pipeline.py \
 
 ### Example: Why "Lightning Bolt" vs "Chain Lightning"
 
-**Co-occurrence**: Low (rarely in same deck) → Dissimilar ❌  
-**Functional**: Both creature_removal, instant_speed → Similar ✅  
-**LLM semantic**: Both "aggro burn spells, 1-CMC red removal" → Similar ✅  
-**Vision**: Both red-themed, aggressive art → Similar ✅  
-**Price**: Both $0.25-1.00 (budget staples) → Similar ✅  
+**Co-occurrence**: Low (rarely in same deck) → Dissimilar ❌
+**Functional**: Both creature_removal, instant_speed → Similar ✅
+**LLM semantic**: Both "aggro burn spells, 1-CMC red removal" → Similar ✅
+**Vision**: Both red-themed, aggressive art → Similar ✅
+**Price**: Both $0.25-1.00 (budget staples) → Similar ✅
 
 **Hybrid similarity**: HIGH ✅ (correct!)
 
@@ -528,7 +528,7 @@ uv run python -c "from src.ml.unified_enrichment_pipeline import UnifiedEnrichme
 
 - ✅ **Balanced enrichment** across MTG, Pokemon, Yu-Gi-Oh!
 - ✅ **LLM semantic analysis** for abstract feature extraction
-- ✅ **Vision model support** for card art analysis  
+- ✅ **Vision model support** for card art analysis
 - ✅ **Unified pipeline** with smart cost management
 - ✅ **Multi-modal features** to break P@10 plateau
 

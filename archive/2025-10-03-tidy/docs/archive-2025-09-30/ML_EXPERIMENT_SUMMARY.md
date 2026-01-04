@@ -1,6 +1,6 @@
 # DeckSage ML Experiment Summary
 
-**Date**: 2025-09-30  
+**Date**: 2025-09-30
 **Status**: ✅ **Graph Built Successfully, Python 3.13 Compatibility Issue Found**
 
 ---
@@ -19,7 +19,7 @@
 
 ```
 Collections processed: 198
-Total unique cards: 8,207  
+Total unique cards: 8,207
 Total edges created: 241,583
 Unique card pairs: 186,608
 Compression ratio: 1.3x
@@ -33,7 +33,7 @@ Compression ratio: 1.3x
 2. **[fastnode2vec](https://github.com/louisabraham/fastnode2vec)** - Fast, 96 stars, linear memory
 3. **[PecanPy](https://github.com/krishnanlab/PecanPy)** ⭐ **BEST** - 169 stars, peer-reviewed (Bioinformatics 2021), 3 optimized modes
 
-**Selected: PecanPy** 
+**Selected: PecanPy**
 - Published research (Liu & Krishnan, 2021)
 - Optimized for different graph types (PreComp, SparseOTF, DenseOTF)
 - node2vec+ for weighted graphs (perfect for co-occurrence data)
@@ -130,7 +130,7 @@ MTG Decks → Go Extract → Transform → CSV Graph → Python ML → Embedding
 
 **Working**:
 - Multi-game architecture
-- Graph building pipeline  
+- Graph building pipeline
 - Fast data export
 - ML scripts ready
 
@@ -191,22 +191,22 @@ Based on PecanPy benchmarks:
 ## Citations
 
 **PecanPy**:
-Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_  
+Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btab202
 
 **Node2Vec+**:
-Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_  
+Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btad047
 
 ---
 
 ## Status Summary
 
-✅ **Data pipeline**: Complete  
-✅ **Graph export**: Complete (198 collections → 186K pairs)  
-✅ **ML scripts**: Ready  
-⚠️ **Environment**: Need Python 3.11/3.12  
-⏸️ **Embeddings**: Blocked on Python version  
+✅ **Data pipeline**: Complete
+✅ **Graph export**: Complete (198 collections → 186K pairs)
+✅ **ML scripts**: Ready
+⚠️ **Environment**: Need Python 3.11/3.12
+⏸️ **Embeddings**: Blocked on Python version
 ⏸️ **API**: Pending embeddings
 
 **To unblock**: Install Python 3.12 or wait for gensim Python 3.13 compatibility

@@ -11,6 +11,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 
+
 # Reusable land filter (mentioned in 3+ experiments)
 LANDS = {
     "Plains",
@@ -41,7 +42,7 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
 
     Principle: Don't reload graph in every experiment.
     Default: Uses PATHS.incremental_graph_db (preferred) or PATHS.pairs_large (fallback)
-    
+
     Args:
         csv_path: Path to pairs CSV (legacy option)
         graph_db: Path to incremental graph database (SQLite .db) - preferred
@@ -50,19 +51,21 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
     """
     import os
     from pathlib import Path
+
     from ..utils.paths import PATHS
 
     # Try graph database first (preferred), but only if csv_path not explicitly provided
     # If csv_path is provided, skip graph DB to allow testing with custom CSVs
     use_graph_db = csv_path is None
-    
+
     if use_graph_db:
         if graph_db is None:
             graph_db = PATHS.incremental_graph_db
-        
+
         if graph_db and Path(graph_db).exists():
             try:
                 from ..utils.shared_operations import load_graph_for_jaccard
+
                 adj = load_graph_for_jaccard(graph_db=Path(graph_db), game=game)
                 # Convert to weights dict (simplified - use presence as weight)
                 weights = {}
@@ -78,12 +81,13 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
             except Exception as e:
                 # Fall back to CSV if graph DB fails
                 import warnings
+
                 warnings.warn(f"Could not load from graph database: {e}, falling back to CSV")
-    
+
     # Fallback to CSV (legacy or explicit csv_path)
     if csv_path is None:
         csv_path = str(PATHS.pairs_large)
-    
+
     # Handle different working directories - try PATHS first
     if not os.path.exists(csv_path):
         # Try PATHS canonical path
@@ -104,7 +108,9 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                     csv_path = alt
                     break
             else:
-                raise FileNotFoundError(f"Could not find pairs CSV. Tried: {[csv_path] + alternatives}")
+                raise FileNotFoundError(
+                    f"Could not find pairs CSV. Tried: {[csv_path] + alternatives}"
+                )
 
     df = pd.read_csv(csv_path)
 

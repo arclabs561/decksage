@@ -11,7 +11,7 @@ on:
     branches:
       - main
       - master
-  
+
   # Allow manual trigger
   workflow_dispatch:
 
@@ -24,19 +24,19 @@ jobs:
   megalinter:
     name: MegaLinter
     runs-on: ubuntu-latest
-    
+
     # Grant write permissions for PR comments
     permissions:
       contents: read
       pull-requests: write
       issues: write
-    
+
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0  # Full history for better analysis
-      
+
       - name: MegaLinter
         id: ml
         uses: oxsecurity/megalinter/flavors/cupcake@v9
@@ -44,19 +44,19 @@ jobs:
           # Configuration
           VALIDATE_ALL_CODEBASE: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          
+
           # Apply fixes on main branch only, not on PRs
           APPLY_FIXES: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' && 'all' || 'none' }}
-          
+
           # Reporting
           GITHUB_COMMENT_REPORTER: true
           GITHUB_STATUS_REPORTER: true
           SARIF_REPORTER: true
-          
+
           # Performance
           PARALLEL: true
           LOG_LEVEL: INFO
-      
+
       # Upload MegaLinter artifacts
       - name: Archive MegaLinter Reports
         if: always()
@@ -66,7 +66,7 @@ jobs:
           path: |
             megalinter-reports
             mega-linter.log
-      
+
       # Upload SARIF for GitHub Security tab
       - name: Upload SARIF results
         if: always()
@@ -74,7 +74,7 @@ jobs:
         with:
           sarif_file: megalinter-reports/megalinter.sarif
           category: megalinter
-      
+
       # Create commit with fixes (main branch only)
       - name: Commit and push applied fixes
         if: >

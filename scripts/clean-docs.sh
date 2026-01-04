@@ -56,9 +56,3 @@ echo "Moved $count files to $ARCHIVE_DIR"
 echo ""
 echo "Remaining root-level docs:"
 ls -1 *.md 2>/dev/null | grep -v README.md | head -10 || echo "  Just README.md and essential docs!"
-
-# Check if we should remind about .doc-guard
-if [ ! -f .doc-guard ]; then
-    echo ""
-    echo "Tip: Consider reading .doc-guard for documentation principles"
-fi

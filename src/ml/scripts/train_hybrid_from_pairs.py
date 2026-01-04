@@ -33,7 +33,6 @@ All progress is shown (no tail/head piping per cursor rules).
 from __future__ import annotations
 
 import argparse
-import logging
 import sys
 from pathlib import Path
 
@@ -42,8 +41,9 @@ import pandas as pd
 from ..data.incremental_graph import IncrementalCardGraph
 from ..similarity.gnn_embeddings import CardGNNEmbedder
 from ..similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
+from ..utils.logging_config import log_exception, setup_script_logging
 from ..utils.paths import PATHS
-from ..utils.logging_config import setup_script_logging, log_exception
+
 
 logger = setup_script_logging()
 
@@ -103,6 +103,7 @@ def build_graph_from_pairs(
     logger.info("Processing pairs (optimized with vectorized operations)...")
     # OPTIMIZATION: Use vectorized operations instead of iterrows() (60-200x faster)
     from datetime import datetime
+
     import numpy as np
 
     for chunk in pd.read_csv(pairs_path, chunksize=chunk_size):

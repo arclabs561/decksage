@@ -1,6 +1,6 @@
 # Research Review and Refined Implementation Plan
 
-**Date**: November 10, 2025  
+**Date**: November 10, 2025
 **Context**: Deep research review, codebase analysis, and refined actionable plan
 
 ---
@@ -73,7 +73,7 @@
 **Goal**: Get hands-on experience, validate approach
 
 #### 0.1: Text Embeddings - Simple Implementation
-**Why First**: 
+**Why First**:
 - Biggest expected impact (P@10: 0.08 → 0.15-0.18)
 - No complex dependencies
 - Can integrate immediately
@@ -86,11 +86,11 @@
 # Add to fusion weights
 ```
 
-**Effort**: 4-6 hours  
+**Effort**: 4-6 hours
 **Validation**: Compare P@10 before/after on test set
 
 #### 0.2: Review & Document API Endpoints
-**Why**: 
+**Why**:
 - Understand current HTTP service structure
 - Identify integration points
 - Document for future work
@@ -104,7 +104,7 @@
 **Effort**: 2-3 hours
 
 #### 0.3: Explore Fusion Implementation
-**Why**: 
+**Why**:
 - Need to understand current fusion logic
 - Identify where to add text embeddings
 - See current weight structure
@@ -142,7 +142,7 @@ uv add torch torch-geometric sentence-transformers
 **Effort**: 10-15 hours
 
 #### 1.3: Beam Search for Deck Completion
-**Why**: 
+**Why**:
 - Current greedy is suboptimal
 - Beam search is simpler than full RL
 - Multi-objective scoring (similarity + coverage + curve)
@@ -155,7 +155,7 @@ uv add torch torch-geometric sentence-transformers
 
 **Effort**: 6-10 hours
 
-**Total Phase 1**: 20-31 hours  
+**Total Phase 1**: 20-31 hours
 **Expected Outcome**: P@10 = 0.20-0.28 (meeting README goal)
 
 ---
@@ -182,7 +182,7 @@ uv add torch torch-geometric sentence-transformers
 # Loss: margin ranking (positive closer than negative)
 ```
 
-**Effort**: 15-20 hours  
+**Effort**: 15-20 hours
 **Expected**: P@10 = 0.30-0.35
 
 #### 2.2: RL Agent (If Beam Search Insufficient)
@@ -200,7 +200,7 @@ uv add torch torch-geometric sentence-transformers
 - Functional coverage
 - Mana curve fit
 
-**Effort**: 20-30 hours  
+**Effort**: 20-30 hours
 **Expected**: Long-term optimization vs greedy/beam
 
 #### 2.3: Graph Neural Network Enhancement
@@ -209,10 +209,10 @@ uv add torch torch-geometric sentence-transformers
 - **Message Passing**: Multi-hop card synergies
 - **Hierarchical**: Card → Archetype → Format
 
-**Effort**: 12-18 hours  
+**Effort**: 12-18 hours
 **Expected**: Better synergy modeling
 
-**Total Phase 2**: 47-68 hours  
+**Total Phase 2**: 47-68 hours
 **Expected Outcome**: P@10 = 0.30-0.40 (approaching SOTA)
 
 ---
@@ -278,7 +278,7 @@ uv run python -c "from sentence_transformers import SentenceTransformer; print('
 - Compare P@10 before/after
 - Document results
 
-**Total Today**: 4-6 hours  
+**Total Today**: 4-6 hours
 **Outcome**: Text embeddings working, integrated, measured
 
 ---
@@ -325,7 +325,7 @@ uv run python -c "from sentence_transformers import SentenceTransformer; print('
 # Endpoints:
 # - GET /v1/cards/{card}/similar?mode=fusion
 # - POST /v1/similar (with weights override)
-# 
+#
 # Need to:
 # - Add text_embed to available signals
 # - Update fusion to include text
@@ -336,7 +336,7 @@ uv run python -c "from sentence_transformers import SentenceTransformer; print('
 ```python
 # src/ml/deck_building/deck_completion.py
 # Current: greedy (pick best card each step)
-# 
+#
 # Need to:
 # - Add beam search option
 # - Multi-objective scoring
@@ -370,7 +370,7 @@ uv run python -c "from sentence_transformers import SentenceTransformer; print('
 ## Risk Mitigation
 
 ### Risk 1: Text Embeddings Don't Help
-**Mitigation**: 
+**Mitigation**:
 - Test on small sample first
 - Compare to baseline before full integration
 - Have fallback (keep current fusion)
@@ -403,14 +403,7 @@ uv run python -c "from sentence_transformers import SentenceTransformer; print('
 3. **Iterate**: Add GNN, beam search, then advanced methods
 4. **Document**: Keep track of what works/doesn't
 
-**Estimated Total Effort**: 85-127 hours  
+**Estimated Total Effort**: 85-127 hours
 **Expected Final P@10**: 0.35-0.42 (matching/exceeding SOTA)
 
 **Next Action**: Implement text embeddings today (4-6 hours)
-
-
-
-
-
-
-

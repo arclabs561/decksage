@@ -74,4 +74,3 @@ rm -rf "$TEMP_DIR"
 echo "=" * 80
 echo "Export complete!"
 echo "=" * 80
-

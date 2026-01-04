@@ -1,6 +1,6 @@
 # Evaluation & Modeling Action Plan
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 📋 **READY FOR EXECUTION**
 
 ---
@@ -47,14 +47,14 @@ Comprehensive analysis reveals **critical gaps** in evaluation, training, and mo
 ```python
 class MultiJudgeLLM:
     """Ensemble of LLM judges with agreement analysis."""
-    
+
     def __init__(self, models: list[str] = None):
         self.models = models or [
             "anthropic/claude-3.5-sonnet",
             "openai/gpt-4o",
             "google/gemini-pro-1.5"
         ]
-    
+
     def judge_with_consensus(self, query: str, candidate: str) -> dict:
         """Get judgments from all judges, compute consensus and IAA."""
         # 1. Get judgments from all models
@@ -79,7 +79,7 @@ class MultiJudgeLLM:
 3. Compute IAA on expanded set
 4. Validate coverage (card types, archetypes, formats)
 
-**Output**: 
+**Output**:
 - `experiments/test_set_expanded_magic.json` (50+ queries)
 - `experiments/test_set_expanded_pokemon.json` (50+ queries)
 - `experiments/test_set_expanded_yugioh.json` (50+ queries)
@@ -299,4 +299,3 @@ uv run python -m src.ml.scripts.train_gnn --model GraphSAGE --epochs 100
 ---
 
 **Status**: ✅ **IAA SYSTEM IMPLEMENTED** - Ready for integration and testing!
-

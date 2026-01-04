@@ -31,14 +31,14 @@ while true; do
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
     echo "[$iteration] $timestamp"
     echo "----------------------------------------------------------------------"
-    
+
     # Check instance status
     if "$RUNCTL_BIN" aws processes "$INSTANCE_ID" > /dev/null 2>&1; then
         echo "✓ Instance: Accessible"
     else
         echo "✗ Instance: Not accessible"
     fi
-    
+
     # Check training completion
     if aws s3 ls "$GNN_OUTPUT" > /dev/null 2>&1; then
         if [ "$gnn_found" = false ]; then
@@ -48,7 +48,7 @@ while true; do
     else
         echo "⏳ Training: In progress..."
     fi
-    
+
     # Check evaluation completion
     if aws s3 ls "$EVAL_OUTPUT" > /dev/null 2>&1; then
         if [ "$eval_found" = false ]; then
@@ -62,14 +62,14 @@ while true; do
             echo "⏳ Evaluation: Waiting for training..."
         fi
     fi
-    
+
     # Check progress files
     if aws s3 ls "${PROGRESS_DIR}/training_progress.json" > /dev/null 2>&1; then
         echo "✓ Progress: Available"
     fi
-    
+
     echo ""
-    
+
     # Exit if both complete
     if [ "$gnn_found" = true ] && [ "$eval_found" = true ]; then
         echo "======================================================================"
@@ -77,9 +77,8 @@ while true; do
         echo "======================================================================"
         exit 0
     fi
-    
+
     echo "Next check in ${CHECK_INTERVAL}s..."
     echo ""
     sleep "$CHECK_INTERVAL"
 done
-

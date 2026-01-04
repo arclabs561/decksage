@@ -29,15 +29,15 @@ except ImportError:
 def test_load_multi_game_pairs():
     """Test loading pairs from multiple games."""
     from ml.scripts.train_multi_game_embeddings import load_multi_game_pairs
-    
+
     # Create test data
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         # Create test pairs for different games
         mtg_pairs = tmp_path / "mtg_pairs.csv"
         yugioh_pairs = tmp_path / "yugioh_pairs.csv"
-        
+
         # MTG pairs
         pd.DataFrame({
             "NAME_1": ["Lightning Bolt", "Brainstorm", "Sol Ring"],
@@ -45,7 +45,7 @@ def test_load_multi_game_pairs():
             "COUNT_SET": [10, 8, 5],
             "COUNT_MULTISET": [15, 12, 7],
         }).to_csv(mtg_pairs, index=False)
-        
+
         # Yugioh pairs
         pd.DataFrame({
             "NAME_1": ["Dark Magician", "Blue-Eyes White Dragon"],
@@ -53,22 +53,22 @@ def test_load_multi_game_pairs():
             "COUNT_SET": [5, 3],
             "COUNT_MULTISET": [7, 4],
         }).to_csv(yugioh_pairs, index=False)
-        
+
         pairs_csvs = {
             "MTG": mtg_pairs,
             "YUGIOH": yugioh_pairs,
         }
-        
+
         adj, weights, game_map = load_multi_game_pairs(pairs_csvs)
-        
+
         # Check adjacency list
         assert "Lightning Bolt" in adj
         assert "Dark Magician" in adj
         assert len(adj) > 0
-        
+
         # Check weights
         assert len(weights) > 0
-        
+
         # Check game map
         assert "Lightning Bolt" in game_map
         assert "Dark Magician" in game_map
@@ -77,15 +77,15 @@ def test_load_multi_game_pairs():
 def test_infer_game_from_card_name():
     """Test game inference from card names."""
     from ml.scripts.train_multi_game_embeddings import infer_game_from_card_name
-    
+
     # MTG cards
     assert infer_game_from_card_name("Lightning Bolt") == "MTG"
     assert infer_game_from_card_name("Brainstorm") == "MTG"
-    
+
     # Yugioh cards
     assert infer_game_from_card_name("Dark Magician") == "YUGIOH"
     assert infer_game_from_card_name("Blue-Eyes White Dragon") == "YUGIOH"
-    
+
     # Pokemon (if supported)
     # assert infer_game_from_card_name("Pikachu") == "POKEMON"
 
@@ -93,11 +93,11 @@ def test_infer_game_from_card_name():
 def test_multi_game_embedding_training():
     """Test training embeddings on multi-game data."""
     from ml.scripts.train_multi_game_embeddings import train_unified_embeddings
-    
+
     # Create minimal test data
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp_path = Path(tmpdir)
-        
+
         # Create test pairs
         pairs_file = tmp_path / "test_pairs.csv"
         pd.DataFrame({
@@ -106,9 +106,9 @@ def test_multi_game_embedding_training():
             "COUNT_SET": [2, 2, 2],
             "COUNT_MULTISET": [3, 3, 3],
         }).to_csv(pairs_file, index=False)
-        
+
         output_file = tmp_path / "test_embeddings.wv"
-        
+
         # Train with minimal config
         wv = train_unified_embeddings(
             pairs_file,
@@ -119,11 +119,11 @@ def test_multi_game_embedding_training():
             p=1.0,
             q=1.0,
         )
-        
+
         # Check embeddings exist
         assert wv is not None
         assert len(wv.key_to_index) > 0
-        
+
         # Check all cards have embeddings
         assert "Card1" in wv
         assert "Card2" in wv
@@ -139,4 +139,3 @@ def test_cross_game_similarity():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

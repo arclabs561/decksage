@@ -59,7 +59,7 @@ System will autonomously continue from any path.
 
 Built autonomous scientific discovery system that:
 - Ran 47 experiments
-- Found 3 root causes  
+- Found 3 root causes
 - Designed complete solution
 - Embedded motivations
 - Ready to continue forever

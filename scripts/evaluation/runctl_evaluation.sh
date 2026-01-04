@@ -52,10 +52,10 @@ case "$MODE" in
     local)
         echo "Local evaluation mode"
         cd "$PROJECT_ROOT"
-        
+
         # Ensure output directory exists
         mkdir -p "$OUTPUT_DIR"
-        
+
         # Run evaluation (generates predictions and evaluates them)
         EMBEDDINGS_DIR="$(dirname "$EMBEDDINGS")"
         "$RUNCTL_BIN" local "src/ml/scripts/evaluate_all_embeddings.py" -- \
@@ -65,12 +65,12 @@ case "$MODE" in
                 "--fast" \
                 "$@"
         ;;
-    
+
     aws)
         echo "Cloud evaluation mode"
         echo "   S3 data: $S3_DATA"
         echo "   S3 output: $S3_OUTPUT"
-        
+
         # Get instance ID from args or env
         INSTANCE_ID="${INSTANCE_ID:-${1:-}}"
         if [[ -z "$INSTANCE_ID" ]]; then
@@ -79,7 +79,7 @@ case "$MODE" in
             exit 1
         fi
         shift || true
-        
+
         # Run evaluation (generates predictions and evaluates them)
         "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
             "src/ml/scripts/evaluate_all_embeddings.py" \
@@ -90,7 +90,7 @@ case "$MODE" in
                 "--output" "evaluations/evaluation_results.json" \
                 "$@"
         ;;
-    
+
     *)
         echo "Unknown mode: $MODE"
         echo "   Use: local or aws"

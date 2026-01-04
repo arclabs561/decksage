@@ -1,7 +1,7 @@
 # DeckSage - Synthesis & Path Forward
 
-**Date**: 2025-09-30  
-**Session Type**: Architecture Review + ML Experiment + Critical Analysis  
+**Date**: 2025-09-30
+**Session Type**: Architecture Review + ML Experiment + Critical Analysis
 **Outcome**: ✅ **ARCHITECTURE VALIDATED, DATA STRATEGY REFINED**
 
 ---
@@ -59,8 +59,8 @@ Game-specific:
 3. 🟡 **Archetype clustering**: Same tournament → similar decks
 4. 🟡 **Missing staples**: Tarmogoyf, Ragavan not in graph
 
-**Fixed**: Deck-only model  
-**Validated**: Results now match expert knowledge  
+**Fixed**: Deck-only model
+**Validated**: Results now match expert knowledge
 **Remaining**: Need more diverse data
 
 ---
@@ -69,10 +69,10 @@ Game-specific:
 
 ### Insight #1: Data Quality Trumps Algorithm
 
-**Before**: "Let's use the latest GNN (PyTorch Geometric)!"  
+**Before**: "Let's use the latest GNN (PyTorch Geometric)!"
 **After**: "Simple node2vec on clean data works great"
 
-**Learning**: 
+**Learning**:
 - Contaminated data → garbage embeddings (even with SOTA models)
 - Clean data → excellent embeddings (even with simple models)
 
@@ -110,7 +110,7 @@ Game-specific:
 
 **Mistake**: Used sets for co-occurrence (wrong semantic)
 
-**Correct Approach**: 
+**Correct Approach**:
 - Sets → Card database (lookup, images, text)
 - Decks → Co-occurrence (what plays with what)
 
@@ -232,7 +232,7 @@ For each format:
 
 ### Option A: Fix MTG Data First (Recommended)
 
-**Time**: 1 week  
+**Time**: 1 week
 **Effort**: Data collection + validation
 
 **Steps**:
@@ -241,7 +241,7 @@ For each format:
 3. Balance Vintage/Pioneer
 4. Re-train and validate
 
-**Why**: 
+**Why**:
 - One game done excellently > two games done poorly
 - Establish data quality framework
 - Validate metrics before YGO
@@ -250,7 +250,7 @@ For each format:
 
 ### Option B: Proceed to Yu-Gi-Oh! (As Planned)
 
-**Time**: 2-3 days  
+**Time**: 2-3 days
 **Effort**: Architecture implementation
 
 **Steps**:
@@ -374,7 +374,7 @@ class ProductionMetrics:
 
 **Why**: Building multi-game on shaky MTG foundation = compound errors
 
-**Timeline**: 
+**Timeline**:
 - Week 1: Data quality (MTG)
 - Week 2: Multi-game (YGO)
 - Week 3: Production (API/UI)
@@ -385,7 +385,7 @@ class ProductionMetrics:
 
 ### On "Production Ready"
 
-**Before scrutiny**: "✅ Tests pass, it works!"  
+**Before scrutiny**: "✅ Tests pass, it works!"
 **After scrutiny**: "⚠️ Works but limited by data quality"
 
 **Learning**: **"Working" ≠ "Production Ready"**

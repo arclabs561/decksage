@@ -13,6 +13,7 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent))
 
@@ -32,7 +33,9 @@ def main() -> int:
         print(f"Bootstrapping {num} queries for {game}")
         print(f"{'=' * 60}")
 
-        output = Path(__file__).parent.parent.parent / "annotations" / f"batch_{game}_expansion.yaml"
+        output = (
+            Path(__file__).parent.parent.parent / "annotations" / f"batch_{game}_expansion.yaml"
+        )
 
         # Simulate command line args
         sys.argv = [
@@ -63,4 +66,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

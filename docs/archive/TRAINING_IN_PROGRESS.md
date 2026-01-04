@@ -1,6 +1,6 @@
 # EC2 Spot Instance Training - In Progress
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 🚀 **TRAINING IN PROGRESS**
 
 ---
@@ -64,4 +64,3 @@ aws s3 ls s3://games-collections/embeddings/magic_128d_test_pecanpy.wv
 ---
 
 **Note**: Training is running in the background. Check back in 10-30 minutes for completion.
-

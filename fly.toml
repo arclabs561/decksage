@@ -33,4 +33,3 @@ primary_region = "iad"  # US East (Virginia) - adjust to your preference
 
 [deploy]
   strategy = "immediate"
-

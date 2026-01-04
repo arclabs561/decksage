@@ -172,12 +172,12 @@ func convertToCard(apiCard apiCard) game.Card {
 			URL: img.ImageURL,
 		})
 	}
-	
+
 	// Prices (take first set of prices if available)
 	if len(apiCard.CardPrices) > 0 {
 		prices := apiCard.CardPrices[0]
 		card.Prices = game.CardPrices{}
-		
+
 		if tcg, err := parsePrice(prices.TCGPlayer); err == nil && tcg > 0 {
 			card.Prices.TCGPlayer = &tcg
 		}
@@ -194,12 +194,12 @@ func convertToCard(apiCard apiCard) game.Card {
 			card.Prices.CoolStuff = &cool
 		}
 	}
-	
+
 	// Ban status (TCG)
 	if apiCard.BanlistInfo != nil && apiCard.BanlistInfo.BanTCG != "" {
 		card.BanStatus = apiCard.BanlistInfo.BanTCG
 	}
-	
+
 	// Set info (use first set if available)
 	if len(apiCard.CardSets) > 0 {
 		set := apiCard.CardSets[0]

@@ -12,7 +12,7 @@
 ### 2. Frontend Error Handling
 **File**: `src/frontend/deck-recommender/src/App.js`
 - **Problem**: Errors only logged to console, no user feedback
-- **Solution**: 
+- **Solution**:
   - Added `error` state and `setError`
   - User-visible error messages with helpful tips
   - Differentiates 503 (service unavailable) from other errors
@@ -20,7 +20,7 @@
 - **Result**: Users see actionable error messages
 
 ### 3. Direct Similar Cards Input
-**Files**: 
+**Files**:
 - `src/frontend/deck-recommender/src/App.js`
 - `src/frontend/deck-recommender/src/components/SearchResults.js`
 - **Problem**: Similar cards only accessible via search results
@@ -63,7 +63,7 @@
 
 ### Test Page Available
 - **URL**: http://localhost:8080/test/api_test.html
-- **Features**: 
+- **Features**:
   - Search cards (tests fallback search)
   - Find similar cards (tests similar cards endpoint)
   - Error handling display

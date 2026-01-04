@@ -1,6 +1,6 @@
 # DeckSage - Critical Analysis & Issues Found
 
-**Date**: 2025-09-30  
+**Date**: 2025-09-30
 **Status**: 🔴 **SIGNIFICANT DATA QUALITY ISSUES DISCOVERED**
 
 ---
@@ -30,7 +30,7 @@
 ```
 Format Distribution (MTGTop8):
 - Legacy: 44 decks
-- Pauper: 37 decks  
+- Pauper: 37 decks
 - Vintage: 20 decks
 - Modern: 16 decks
 - Duel Commander: 16 decks
@@ -63,7 +63,7 @@ These are **extremely** common Modern cards. Why missing?
 
 ## Issue #3: Counterspell Results Don't Make Sense
 
-**Query**: Counterspell  
+**Query**: Counterspell
 **Results**: All Faeries/Ninjas (Pauper archetype)
 
 **Expected**: Should cluster with:
@@ -73,7 +73,7 @@ These are **extremely** common Modern cards. Why missing?
 
 **Actual**: Only learns ONE specific Pauper deck archetype (Faeries)
 
-**Root Cause**: 
+**Root Cause**:
 - 37 Pauper decks (many similar archetypes)
 - Only 16 Modern decks (insufficient diversity)
 - Counterspell is Pauper-legal, not Modern-legal
@@ -83,7 +83,7 @@ These are **extremely** common Modern cards. Why missing?
 
 ## Issue #4: Brainstorm + Snow-Covered Swamp?
 
-**Query**: Brainstorm  
+**Query**: Brainstorm
 **Top 5**: Daze (✅), Tamiyo (❓), Ponder (✅), Snow-Covered Swamp (❌), Force of Will (✅)
 
 **Problem**: Snow-Covered Swamp has similarity of 0.880 with Brainstorm
@@ -93,7 +93,7 @@ These are **extremely** common Modern cards. Why missing?
 - Snow-Covered Swamp is a black land
 - These should NOT be similar
 
-**Hypothesis**: 
+**Hypothesis**:
 - Both appear in same sets (recent sets have snow lands)
 - Set-based co-occurrence creating false associations
 
@@ -152,7 +152,7 @@ These have **completely different semantics**:
 
 **All Faeries/Ninjas** - This is ONE specific Pauper deck
 
-**Why**: 
+**Why**:
 - Counterspell appears in 37 Pauper decks
 - Many are Faeries archetype (similar decklists)
 - Creates strong co-occurrence signal
@@ -173,8 +173,8 @@ Need to analyze:
 
 ### 2. Should we exclude sets entirely?
 
-**Option A**: Remove sets from co-occurrence (deck-only)  
-**Option B**: Weight sets differently (lower weight)  
+**Option A**: Remove sets from co-occurrence (deck-only)
+**Option B**: Weight sets differently (lower weight)
 **Option C**: Separate embeddings (deck-based vs set-based)
 
 ### 3. Is the filtering right?
@@ -272,21 +272,21 @@ These are **three different similarity spaces**!
 
 **Query**: Cards that appear in multiple formats
 
-Expected: Should cluster by strategy, not format  
+Expected: Should cluster by strategy, not format
 Test: "Lightning Bolt" should be similar to "Lava Spike" (burn strategy) even if different formats
 
 ### Test 2: Archetype Separation
 
 **Query**: Cards from different archetypes
 
-Expected: "Delver of Secrets" (tempo) should NOT be similar to "Painter's Servant" (combo)  
+Expected: "Delver of Secrets" (tempo) should NOT be similar to "Painter's Servant" (combo)
 Test: Check if different strategies are separated
 
 ### Test 3: Set Contamination
 
 **Query**: Rare cards only in sets, not decks
 
-Expected: Should have low similarity to everything  
+Expected: Should have low similarity to everything
 Test: Find set-only cards and check their neighbors
 
 ---
@@ -315,21 +315,21 @@ Test: Find set-only cards and check their neighbors
 
 ### What's Actually Working
 
-✅ **Pipeline**: Extract → Transform → Train → Search  
-✅ **Performance**: Fast, scalable  
-✅ **Some results**: Delver results are excellent  
+✅ **Pipeline**: Extract → Transform → Train → Search
+✅ **Performance**: Fast, scalable
+✅ **Some results**: Delver results are excellent
 
 ### What's Broken
 
-❌ **Data mixing**: Sets pollute deck co-occurrence  
-❌ **Coverage**: Missing Modern staples  
-❌ **Filtering**: Too aggressive, removes 85%  
-❌ **Format bias**: Pauper over-represented  
+❌ **Data mixing**: Sets pollute deck co-occurrence
+❌ **Coverage**: Missing Modern staples
+❌ **Filtering**: Too aggressive, removes 85%
+❌ **Format bias**: Pauper over-represented
 
 ### Revised Score
 
-**Before scrutiny**: 10/10 ✅  
-**After scrutiny**: 6/10 ⚠️  
+**Before scrutiny**: 10/10 ✅
+**After scrutiny**: 6/10 ⚠️
 
 **Works but needs refinement**
 

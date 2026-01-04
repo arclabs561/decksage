@@ -238,4 +238,3 @@ $TRAINCTL_BIN aws monitor $INSTANCE_ID --follow
 - Automatic checkpoint management
 - Spot instance handling
 - Modern Rust-based tooling
-

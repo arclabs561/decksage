@@ -124,14 +124,14 @@ Data Flow:
 1. **Fix linter errors:**
    ```go
    // Change ResolvedUpdateOptions to pointer
-   func Do(ctx, sc, opts *ResolvedUpdateOptions, req) 
+   func Do(ctx, sc, opts *ResolvedUpdateOptions, req)
    ```
 
 2. **Remove unused dgraph code:**
    ```bash
    # Option A: Delete store.go entirely
    rm src/backend/games/magic/store/store.go
-   
+
    # Option B: Remove dgraph, keep Store skeleton for future
    # (Keep the file but remove dgraph imports)
    ```
@@ -212,10 +212,3 @@ Data Flow:
 - Architecture: A (9/10) - Well designed split
 - Implementation: B (7.5/10) - Some unused code, minor issues
 - Testing: A- (8.5/10) - Tests pass, good coverage
-
-
-
-
-
-
-

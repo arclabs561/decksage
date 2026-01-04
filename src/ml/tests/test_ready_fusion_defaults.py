@@ -1,8 +1,10 @@
 #!/usr/bin/env python3
 import pytest
 
+
 try:
     from fastapi.testclient import TestClient
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -67,5 +69,3 @@ def test_fusion_mode_returns_results(client):
     j = r.json()
     assert j["query"] == "A"
     assert len(j["results"]) >= 1
-
-

@@ -112,4 +112,3 @@ All infrastructure is in place. Next actions:
 2. Improve embedding quality
 3. Measure other signals
 4. Compute all signals (when decks metadata available)
-

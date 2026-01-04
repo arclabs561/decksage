@@ -26,9 +26,9 @@ func ParseDateWithValidation(dateStr string) (time.Time, error) {
 	if dateStr == "" {
 		return time.Time{}, fmt.Errorf("empty date string")
 	}
-	
+
 	dateStr = strings.TrimSpace(dateStr)
-	
+
 	// Try each format
 	for _, format := range dateFormats {
 		if t, err := time.Parse(format, dateStr); err == nil {
@@ -40,7 +40,7 @@ func ParseDateWithValidation(dateStr string) (time.Time, error) {
 			return time.Time{}, fmt.Errorf("date %q has invalid year %d (expected 1990-2100)", dateStr, year)
 		}
 	}
-	
+
 	return time.Time{}, fmt.Errorf("could not parse date %q with any known format", dateStr)
 }
 
@@ -51,4 +51,3 @@ func ParseDateWithFallback(dateStr string, fallback time.Time) time.Time {
 	}
 	return fallback
 }
-

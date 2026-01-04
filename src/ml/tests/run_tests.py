@@ -4,11 +4,13 @@
 import sys
 from pathlib import Path
 
+
 # Add parent to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from utils.constants import GAME_FILTERS, RELEVANCE_WEIGHTS, get_filter_set
 from utils.evaluation import compute_precision_at_k, evaluate_similarity, jaccard_similarity
+
 
 passed = 0
 failed = 0

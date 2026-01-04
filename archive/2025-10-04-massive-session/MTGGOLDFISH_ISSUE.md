@@ -38,8 +38,8 @@ func (d *Dataset) fetch(ctx context.Context, url string) (*goquery.Document, err
 }
 ```
 
-**Pros**: Would work for all JS-rendered sites  
-**Cons**: Adds complexity, slower, resource-intensive  
+**Pros**: Would work for all JS-rendered sites
+**Cons**: Adds complexity, slower, resource-intensive
 **Effort**: 2-3 days development + testing
 
 ### Option 2: Find AJAX Endpoint
@@ -50,8 +50,8 @@ Reverse-engineer the AJAX call that loads deck data:
 3. Find XHR request that returns deck data
 4. Scrape that endpoint directly
 
-**Pros**: Faster than browser automation, works with current HTTP scraper  
-**Cons**: Brittle (endpoint may change), may have rate limiting  
+**Pros**: Faster than browser automation, works with current HTTP scraper
+**Cons**: Brittle (endpoint may change), may have rate limiting
 **Effort**: 1-2 hours investigation + implementation
 
 ### Option 3: Skip MTGGoldfish (Recommended Short-term)
@@ -59,14 +59,14 @@ Focus on sources that work:
 - MTGTop8: ✅ Working (55,293 decks)
 - Other sources: Implement Pokemon/YGO tournament scrapers
 
-**Pros**: Unblocks other work, MTGTop8 already has good coverage  
-**Cons**: Lose meta percentage data from Goldfish  
+**Pros**: Unblocks other work, MTGTop8 already has good coverage
+**Cons**: Lose meta percentage data from Goldfish
 **Effort**: 0 hours
 
 ## Recommendation
 
-**Short-term**: Option 3 (Skip for now)  
-**Medium-term**: Option 2 (Find AJAX endpoint) - if meta % data becomes important  
+**Short-term**: Option 3 (Skip for now)
+**Medium-term**: Option 2 (Find AJAX endpoint) - if meta % data becomes important
 **Long-term**: Option 1 (Browser automation) - if we need to scrape many JS-heavy sites
 
 ## Current Status

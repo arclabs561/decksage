@@ -79,4 +79,3 @@ Script arguments go after `--` separator.
 4. **Use trainctl for all future training** - Replace custom AWS scripts
 
 **trainctl is fully integrated and ready to use!**
-

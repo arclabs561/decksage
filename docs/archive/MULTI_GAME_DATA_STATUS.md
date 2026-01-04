@@ -1,6 +1,6 @@
 # Multi-Game Data Status
 
-**Date**: 2025-12-04  
+**Date**: 2025-12-04
 **Current State**: Only MTG data available in S3
 
 ---
@@ -90,4 +90,3 @@ go run cmd/dataset/main.go extract pokemon/pokemontcg-data
 - Run export from S3 (requires S3 download first)
 
 **Recommendation**: Use local `data-full` directory for now, upload to S3 later if needed.
-

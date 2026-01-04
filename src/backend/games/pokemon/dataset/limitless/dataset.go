@@ -134,7 +134,7 @@ func (d *Dataset) Extract(
 			d.log.Field("tournament_id", tournament.ID).Warnf(ctx, "Failed to fetch matches: %v (continuing without round results)", err)
 			matches = nil
 		}
-		
+
 		// Create lookup map: player ID -> matches
 		playerMatches := make(map[string][]apiMatch)
 		if matches != nil {
@@ -269,7 +269,7 @@ func (d *Dataset) buildRoundResults(
 	// Create lookup maps for efficient lookup
 	playerNameMap := make(map[string]string)      // playerID -> playerName
 	playerArchetypeMap := make(map[string]string) // playerID -> archetype
-	
+
 	for _, standing := range standings {
 		if standing.Player != "" {
 			playerNameMap[standing.Player] = standing.Name
@@ -285,7 +285,7 @@ func (d *Dataset) buildRoundResults(
 		if match.RoundNumber <= 0 {
 			continue // Skip invalid round numbers
 		}
-		
+
 		// Determine opponent
 		var opponentID string
 		if match.Player1 == playerID {
@@ -295,7 +295,7 @@ func (d *Dataset) buildRoundResults(
 		} else {
 			continue // Match doesn't involve this player
 		}
-		
+
 		// Get opponent name and archetype from lookup maps
 		opponentName := playerNameMap[opponentID]
 		if opponentName == "" {
@@ -377,10 +377,10 @@ func (d *Dataset) storeDecklist(
 
 	// Extract tournament type from name
 	tournamentType := extractTournamentType(tournament.Name)
-	
+
 	// Extract location from tournament name (e.g., "Regional Pittsburgh, PA")
 	location := extractLocation(tournament.Name)
-	
+
 	// Build collection metadata
 	deckType := &game.CollectionTypeDeck{
 		Name:      fmt.Sprintf("%s - %s", tournament.Name, standing.Name),
@@ -431,7 +431,7 @@ func (d *Dataset) storeDecklist(
 // extractTournamentType extracts tournament type from tournament name
 func extractTournamentType(name string) string {
 	nameLower := strings.ToLower(name)
-	
+
 	// Check for common tournament types
 	if strings.Contains(nameLower, "regional") {
 		return "Regional"
@@ -451,7 +451,7 @@ func extractTournamentType(name string) string {
 	if strings.Contains(nameLower, "special event") {
 		return "Special Event"
 	}
-	
+
 	return ""
 }
 
@@ -460,7 +460,7 @@ func extractTournamentType(name string) string {
 func extractLocation(name string) string {
 	// Look for patterns like "City, State" or "City, Country"
 	// Common patterns: "Regional Pittsburgh, PA", "Championship Las Vegas, NV"
-	
+
 	// Try to find comma-separated location
 	parts := strings.Split(name, ",")
 	if len(parts) >= 2 {
@@ -478,7 +478,7 @@ func extractLocation(name string) string {
 			return fmt.Sprintf("%s, %s", city, lastPart)
 		}
 	}
-	
+
 	return ""
 }
 

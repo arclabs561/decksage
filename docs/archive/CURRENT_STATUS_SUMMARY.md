@@ -57,4 +57,3 @@
 - **Status**: In progress
 - **Action**: Building trainctl (currently compiling)
 - **Next**: Test with local training, then migrate AWS scripts
-

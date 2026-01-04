@@ -66,7 +66,7 @@ You built working, tested, theory-aligned LLM validators.
 **Path A: Integrate (2-3 hours)**
 ```
 → Add to ML training pipeline
-→ Use in experiments  
+→ Use in experiments
 → Measure actual impact on model quality
 → Discover if they're useful
 
@@ -104,7 +104,7 @@ Risk: None
 2. If research curious → Path B (measure)
 3. If neither → Stop, move to next project
 
-**Why:** 
+**Why:**
 - 12 cycles sufficient
 - Core functionality proven
 - Theory demonstrated
@@ -124,7 +124,7 @@ Risk: None
    - 19 LLM tests caught actual issues
    - Input validation found bug #13
 
-3. **Theory application** 
+3. **Theory application**
    - Identified gap (structured output ≠ reasoning)
    - Implemented fix (chained)
    - Measured difference (9x consistency)

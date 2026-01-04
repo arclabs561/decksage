@@ -52,14 +52,14 @@ def create_ec2_instance(
     """Create EC2 instance for computation."""
     ec2 = boto3.client("ec2")
     ami_id = "ami-08fa3ed5577079e64"
-    
+
     user_data = """#!/bin/bash
 yum update -y
 yum install -y python3 python3-pip git
 python3 -m pip install --upgrade pip || pip3 install --upgrade pip || true
 python3 -m pip install pandas numpy gensim boto3 pecanpy || pip3 install pandas numpy gensim boto3 pecanpy || true
 """
-    
+
     launch_spec = {
         "ImageId": ami_id,
         "InstanceType": instance_type,
@@ -68,7 +68,7 @@ python3 -m pip install pandas numpy gensim boto3 pecanpy || pip3 install pandas 
         "UserData": user_data,
         "IamInstanceProfile": {"Name": "EC2-SSM-InstanceProfile"},
     }
-    
+
     if use_spot and spot_max_price:
         launch_spec["InstanceMarketOptions"] = {
             "MarketType": "spot",
@@ -78,7 +78,7 @@ python3 -m pip install pandas numpy gensim boto3 pecanpy || pip3 install pandas 
                 "InstanceInterruptionBehavior": "terminate",
             },
         }
-    
+
     try:
         if use_spot:
             print(f"Creating spot instance ({instance_type}, max ${spot_max_price or 'on-demand'}/hr)...")
@@ -86,11 +86,11 @@ python3 -m pip install pandas numpy gensim boto3 pecanpy || pip3 install pandas 
         else:
             print(f"Creating on-demand instance ({instance_type})...")
             response = ec2.run_instances(**launch_spec)
-        
+
         instance_id = response["Instances"][0]["InstanceId"]
         print(f"✅ Created instance: {instance_id}")
         return instance_id
-        
+
     except Exception as e:
         if use_spot and fallback_to_ondemand:
             print(f"⚠️  Spot instance failed: {e}")
@@ -113,7 +113,7 @@ def wait_for_ssm_ready(instance_id: str, timeout: int = 300) -> bool:
     """Wait for SSM to be ready on instance."""
     ssm = boto3.client("ssm")
     print(f"Waiting for SSM to be ready on {instance_id}...")
-    
+
     start_time = time.time()
     while time.time() - start_time < timeout:
         try:
@@ -125,10 +125,10 @@ def wait_for_ssm_ready(instance_id: str, timeout: int = 300) -> bool:
                 return True
         except Exception:
             pass
-        
+
         time.sleep(5)
         print(".", end="", flush=True)
-    
+
     print(f"\n⚠️  SSM timeout")
     return False
 
@@ -136,22 +136,22 @@ def wait_for_ssm_ready(instance_id: str, timeout: int = 300) -> bool:
 def run_command_on_instance(instance_id: str, command: str, timeout: int = 7200) -> tuple[int, str, str]:
     """Run command on EC2 instance via SSM."""
     ssm = boto3.client("ssm")
-    
+
     print(f"Running command on {instance_id}...")
-    
+
     try:
         commands = [cmd.strip() for cmd in command.strip().split("\n") if cmd.strip()]
-        
+
         response = ssm.send_command(
             InstanceIds=[instance_id],
             DocumentName="AWS-RunShellScript",
             Parameters={"commands": commands},
             TimeoutSeconds=timeout,
         )
-        
+
         command_id = response["Command"]["CommandId"]
         print(f"  Command ID: {command_id}")
-        
+
         start_time = time.time()
         while time.time() - start_time < timeout:
             try:
@@ -159,7 +159,7 @@ def run_command_on_instance(instance_id: str, command: str, timeout: int = 7200)
                     CommandId=command_id,
                     InstanceId=instance_id,
                 )
-                
+
                 status = result["Status"]
                 if status in ["Success", "Failed", "Cancelled", "TimedOut"]:
                     stdout = result.get("StandardOutputContent", "")
@@ -172,12 +172,12 @@ def run_command_on_instance(instance_id: str, command: str, timeout: int = 7200)
             except ssm.exceptions.InvocationDoesNotExist:
                 time.sleep(2)
                 continue
-            
+
             time.sleep(10)
             print(".", end="", flush=True)
-        
+
         return 1, "", f"Command timed out after {timeout}s"
-            
+
     except Exception as e:
         return 1, "", str(e)
 
@@ -210,9 +210,9 @@ def main() -> int:
     if not HAS_BOTO3:
         print("❌ boto3 not available", file=sys.stderr)
         return 1
-    
+
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Run improved training on AWS EC2")
     parser.add_argument("--edgelist", type=str, help="Edgelist file (default: use enriched)")
     parser.add_argument("--test-set", type=str, default="experiments/test_set_expanded_magic.json", help="Test set")
@@ -225,11 +225,11 @@ def main() -> int:
     parser.add_argument("--num-walks", type=int, default=10, help="Number of walks")
     parser.add_argument("--epochs", type=int, default=10, help="Max epochs")
     parser.add_argument("--patience", type=int, default=3, help="Early stopping patience")
-    
+
     args = parser.parse_args()
-    
+
     bucket = "games-collections"
-    
+
     # Determine edgelist
     if args.edgelist:
         edgelist_path = Path(args.edgelist)
@@ -237,43 +237,43 @@ def main() -> int:
         edgelist_path = Path("data/graphs/pairs_enriched.edg")
         if not edgelist_path.exists():
             edgelist_path = Path("data/graphs/pairs_enriched_with_attrs.edg")
-    
+
     # Upload training script
     script_path = Path("src/ml/scripts/improve_training_with_validation.py")
     s3_script_key = "scripts/improve_training_with_validation.py"
-    
+
     print("=" * 70)
     print("Step 1: Upload training script to S3")
     print("=" * 70)
     if not upload_file_to_s3(script_path, s3_script_key, bucket):
         return 1
-    
+
     # Upload test set and name mapping
     if Path(args.test_set).exists():
         upload_file_to_s3(Path(args.test_set), f"processed/{Path(args.test_set).name}", bucket)
-    
+
     if args.name_mapping and Path(args.name_mapping).exists():
         upload_file_to_s3(Path(args.name_mapping), f"processed/{Path(args.name_mapping).name}", bucket)
-    
+
     # Create EC2 instance
     print("\n" + "=" * 70)
     print("Step 2: Create EC2 instance")
     print("=" * 70)
-    
+
     instance_id = create_ec2_instance(
         instance_type="t3.medium",
         use_spot=True,
         spot_max_price="0.10",
         fallback_to_ondemand=True,
     )
-    
+
     if not instance_id:
         return 1
-    
+
     # Wait for SSM
     if not wait_for_ssm_ready(instance_id):
         print("⚠️  Continuing anyway...")
-    
+
     # Wait for Python
     print("\n" + "=" * 70)
     print("Step 3: Wait for Python installation")
@@ -282,7 +282,7 @@ def main() -> int:
     exit_code, stdout, stderr = run_command_on_instance(instance_id, wait_cmd, timeout=300)
     if exit_code == 0:
         print("✅ Python is ready")
-    
+
     # Install dependencies
     print("\n" + "=" * 70)
     print("Step 4: Install dependencies")
@@ -290,15 +290,15 @@ def main() -> int:
     install_cmd = "python3 -m pip install pandas numpy gensim boto3 pecanpy 2>&1"
     exit_code, stdout, stderr = run_command_on_instance(instance_id, install_cmd, timeout=600)
     print(stdout[-500:] if len(stdout) > 500 else stdout)
-    
+
     # Download script and data
     print("\n" + "=" * 70)
     print("Step 5: Download script and data")
     print("=" * 70)
-    
+
     download_script = f"""python3 -c "import boto3, os; s3=boto3.client('s3'); os.makedirs('/tmp/training', exist_ok=True); [s3.download_file('{bucket}', k, p) or print(f'✅ {{k}}') if True else None for k,p in [('{s3_script_key}', '/tmp/training/train.py'), ('processed/{Path(args.test_set).name}', '/tmp/training/test_set.json'), ('processed/{Path(args.name_mapping).name if args.name_mapping else 'name_mapping.json'}', '/tmp/training/name_mapping.json')] if Path(k).exists() or k.startswith('processed/')]; print('Download complete')"
 """
-    
+
     # Use edgelist from S3 or upload it
     if not str(edgelist_path).startswith("s3://"):
         # Upload edgelist
@@ -307,13 +307,13 @@ def main() -> int:
         edgelist_s3 = s3_edgelist_key
     else:
         edgelist_s3 = edgelist_path.replace("s3://games-collections/", "")
-    
+
     # Run training
     print("\n" + "=" * 70)
     print("Step 6: Run improved training")
     print("=" * 70)
     print("⏳ Training with validation and early stopping...")
-    
+
     run_cmd = f"""
 cd /tmp/training
 python3 train.py \
@@ -329,22 +329,22 @@ python3 train.py \
   --epochs {args.epochs} \
   --patience {args.patience}
 """
-    
+
     exit_code, stdout, stderr = run_command_on_instance(instance_id, run_cmd, timeout=14400)
-    
+
     print("\n" + "=" * 70)
     print("Training Results")
     print("=" * 70)
     print(stdout[-2000:] if len(stdout) > 2000 else stdout)
-    
+
     if exit_code != 0:
         print(f"\n⚠️  Training had errors: {stderr[-500:]}")
-    
+
     # Download results
     print("\n" + "=" * 70)
     print("Step 7: Download results")
     print("=" * 70)
-    
+
     download_results_script = f"""python3 << 'PYUPLOAD'
 import boto3
 import json
@@ -374,28 +374,27 @@ except Exception as e:
     print(f'⚠️  Could not upload history: {{e}}')
 PYUPLOAD
 """
-    
+
     exit_code, stdout, stderr = run_command_on_instance(instance_id, download_results_script, timeout=300)
     print(stdout)
-    
+
     # Download locally
     local_embeddings = Path(args.output)
     if download_from_s3(f"embeddings/{local_embeddings.name}", local_embeddings, bucket):
         print(f"✅ Embeddings saved to {local_embeddings}")
-    
+
     # Terminate instance
     print("\n" + "=" * 70)
     print("Step 8: Terminate instance")
     print("=" * 70)
     terminate_instance(instance_id)
-    
+
     print("\n" + "=" * 70)
     print("✅ Improved training complete!")
     print("=" * 70)
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

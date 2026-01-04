@@ -31,7 +31,7 @@
 **Purpose**: Validate parsers with real data, test full pipeline
 
 **Targets**:
-1. **Scryfall** - 2-3 sets for card data  
+1. **Scryfall** - 2-3 sets for card data
 2. **MTGTop8** - 10-20 tournament decks
 3. **Deckbox** - 10-20 user collections
 4. **MTGGoldfish** - 10-20 tournament decks
@@ -59,7 +59,7 @@ go run ./cmd/dataset extract mtgtop8 \
   --limit=15 \
   --bucket=file://./data
 
-# Deckbox user collections  
+# Deckbox user collections
 go run ./cmd/dataset extract deckbox \
   --limit=15 \
   --bucket=file://./data
@@ -339,7 +339,7 @@ find data -name "*.json" -print0 | xargs -0 ls -lh | head -10
 ### Short-term (This Week)
 
 5. Create converter for old-scraper-data
-6. Import existing data  
+6. Import existing data
 7. Expand to Phase 2 (100+ files)
 8. Build transform pipeline to process data
 

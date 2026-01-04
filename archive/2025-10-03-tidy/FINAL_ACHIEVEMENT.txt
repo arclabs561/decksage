@@ -28,4 +28,3 @@ The garden grew from 4,718 → 49,568 decks
 while maintaining 100.0/100 health.
 
 That's how you cultivate data.
-

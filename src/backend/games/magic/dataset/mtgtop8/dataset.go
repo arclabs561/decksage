@@ -209,7 +209,7 @@ func (d *Dataset) parsePage(
 		"tr td a[href*='event?e=']",
 		"a[href*='event?e=']",
 	}
-	
+
 	for _, selector := range selectors {
 		doc.Find(selector).EachWithBreak(func(i int, sel *goquery.Selection) bool {
 			href, ok := sel.Attr("href")
@@ -315,7 +315,7 @@ func (d *Dataset) parseItem(
 	// Extract tournament metadata: player, event, placement, record
 	var player, event, placement, record string
 	var wins, losses, ties int
-	
+
 	// Try to extract from page structure - MTGTop8 shows this in various places
 	// Look for event name in page title or headers
 	titleText := doc.Find("head title").Text()
@@ -325,7 +325,7 @@ func (d *Dataset) parseItem(
 			event = strings.TrimSpace(parts[0])
 		}
 	}
-	
+
 	// Look for player name in various selectors
 	doc.Find(".S14, .meta_arch, div[class*='player'], span[class*='player']").Each(func(i int, sel *goquery.Selection) {
 		text := strings.TrimSpace(sel.Text())
@@ -336,16 +336,16 @@ func (d *Dataset) parseItem(
 			}
 		}
 	})
-	
+
 	// Try to extract placement from result/rank indicators
 	doc.Find(".S14, .meta_arch, div[class*='result'], span[class*='result'], div[class*='rank'], span[class*='rank']").Each(func(i int, sel *goquery.Selection) {
 		text := strings.TrimSpace(sel.Text())
-		if strings.Contains(text, "st") || strings.Contains(text, "nd") || strings.Contains(text, "rd") || strings.Contains(text, "th") || 
+		if strings.Contains(text, "st") || strings.Contains(text, "nd") || strings.Contains(text, "rd") || strings.Contains(text, "th") ||
 		   strings.Contains(text, "Top") || strings.Contains(text, "Winner") || strings.Contains(text, "Finalist") {
 			placement = text
 		}
 	})
-	
+
 	// Try to extract record (W-L-T format)
 	doc.Find(".S14, .meta_arch, div[class*='record'], span[class*='record']").Each(func(i int, sel *goquery.Selection) {
 		text := strings.TrimSpace(sel.Text())
@@ -429,7 +429,7 @@ func (d *Dataset) parseItem(
 	// Extract tournament type and location from event name
 	tournamentType := extractMTGTournamentType(event)
 	location := extractMTGLocation(event)
-	
+
 	t := &game.CollectionTypeDeck{
 		Name:           deckName,
 		Format:         format,
@@ -485,12 +485,12 @@ func (d *Dataset) parseItem(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return err
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()
 	}
-	
+
 	return nil
 }
 
@@ -502,9 +502,9 @@ func extractMTGTournamentType(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	eventLower := strings.ToLower(eventName)
-	
+
 	// Check for common tournament types
 	if strings.Contains(eventLower, "grand prix") || strings.Contains(eventLower, "gp ") {
 		return "GP"
@@ -539,7 +539,7 @@ func extractMTGTournamentType(eventName string) string {
 	if strings.Contains(eventLower, "invitational") {
 		return "Invitational"
 	}
-	
+
 	return ""
 }
 
@@ -549,7 +549,7 @@ func extractMTGLocation(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	// Try to find comma-separated location
 	parts := strings.Split(eventName, ",")
 	if len(parts) >= 2 {
@@ -567,7 +567,7 @@ func extractMTGLocation(eventName string) string {
 			return fmt.Sprintf("%s, %s", city, lastPart)
 		}
 	}
-	
+
 	// Try to extract city from common patterns like "GP Las Vegas"
 	eventLower := strings.ToLower(eventName)
 	if strings.Contains(eventLower, "gp ") {
@@ -580,7 +580,7 @@ func extractMTGLocation(eventName string) string {
 			}
 		}
 	}
-	
+
 	return ""
 }
 

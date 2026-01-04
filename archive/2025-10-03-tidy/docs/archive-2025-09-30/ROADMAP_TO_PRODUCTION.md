@@ -1,9 +1,9 @@
 # DeckSage - Roadmap to Production
 ## From B (7/10) to A (9/10) in 2-3 Weeks
 
-**Current State**: Solid foundation with 2 critical bugs + data gaps  
-**Target State**: Production-ready multi-game similarity platform  
-**Timeline**: 2-3 weeks of focused work  
+**Current State**: Solid foundation with 2 critical bugs + data gaps
+**Target State**: Production-ready multi-game similarity platform
+**Timeline**: 2-3 weeks of focused work
 **Confidence**: Very high (we know all issues)
 
 ---
@@ -427,20 +427,20 @@ GET  /api/health
 
 ### After Week 1
 
-**If bugs fixed + tests added**: Proceed to Week 2  
-**If bugs remain**: Extend Week 1  
+**If bugs fixed + tests added**: Proceed to Week 2
+**If bugs remain**: Extend Week 1
 **Decision criteria**: All critical bugs resolved
 
 ### After Week 2
 
-**If data quality achieved**: Proceed to Week 3  
-**If coverage still poor**: Extract more data  
+**If data quality achieved**: Proceed to Week 3
+**If coverage still poor**: Extract more data
 **Decision criteria**: Format coverage >80%, embeddings quality >8.5/10
 
 ### After Week 3
 
-**If production deploy successful**: Ship!  
-**If issues found**: Iterate  
+**If production deploy successful**: Ship!
+**If issues found**: Iterate
 **Decision criteria**: API stable, UI functional, monitoring active
 
 ---
@@ -449,20 +449,20 @@ GET  /api/health
 
 ### If YGO Scraper Too Hard
 
-**Plan B**: Use YGOPRODeck deck API (if exists)  
-**Plan C**: Manual curated deck list  
+**Plan B**: Use YGOPRODeck deck API (if exists)
+**Plan C**: Manual curated deck list
 **Plan D**: Ship with MTG only, add YGO later
 
 ### If Data Quality Insufficient
 
-**Plan B**: Lower coverage threshold to 70%  
-**Plan C**: Format-specific models (don't mix)  
+**Plan B**: Lower coverage threshold to 70%
+**Plan C**: Format-specific models (don't mix)
 **Plan D**: Ship as "beta" with known limitations
 
 ### If Timeline Slips
 
-**Plan B**: Ship API without UI  
-**Plan C**: Ship with known bugs documented  
+**Plan B**: Ship API without UI
+**Plan C**: Ship with known bugs documented
 **Plan D**: Extend timeline, don't compromise quality
 
 ---
@@ -479,7 +479,7 @@ GET  /api/health
 ### Flexible
 
 - ⚠️ Exact number of decks
-- ⚠️ UI polish level  
+- ⚠️ UI polish level
 - ⚠️ Format coverage threshold
 - ⚠️ Pokemon inclusion
 
@@ -597,12 +597,12 @@ Documentation:
 
 ---
 
-**Current**: B (7/10) - Bugs + data gaps documented  
-**Week 1**: B+ (8/10) - Bugs fixed, tests added  
-**Week 2**: A- (9/10) - Data diversity achieved  
-**Week 3**: A (9/10) - Production deployed  
+**Current**: B (7/10) - Bugs + data gaps documented
+**Week 1**: B+ (8/10) - Bugs fixed, tests added
+**Week 2**: A- (9/10) - Data diversity achieved
+**Week 3**: A (9/10) - Production deployed
 
-**Timeline**: Realistic, based on actual experience  
+**Timeline**: Realistic, based on actual experience
 **Commitment**: Fix it right, then ship it
 
 🎯 **From B to A through rigorous engineering, not wishful thinking**

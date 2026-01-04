@@ -12,7 +12,7 @@
 
 **Fix**: Updated `cmd/export-hetero/main.go` to read correct structure
 
-**Result**: 
+**Result**:
 ```bash
 ✓ Exported 4,718 decks with metadata (100% success rate)
 ```
@@ -102,7 +102,7 @@ All paths now have single canonical location.
 
 ### Files Created
 - `BUGFIX_METADATA.md` - Critical bug documentation
-- `experiments/README_LOGS.md` - Log usage guide  
+- `experiments/README_LOGS.md` - Log usage guide
 - `src/ml/tests/test_similarity.py` - Similarity tests
 - `src/ml/tests/test_data_loading.py` - Data loading tests
 - `src/backend/cmd/diagnose-metadata/main.go` - Diagnostic tool
@@ -178,6 +178,3 @@ Expected: P@10 > 0.14 (finally beat the 53-experiment baseline)
 > "After 53 experiments hitting 0.12 ceiling, one debugging session found the bug: JSON structure mismatch. All design documents required the one thing we couldn't access."
 
 This is why you debug before you design.
-
-
-

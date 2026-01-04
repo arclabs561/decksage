@@ -234,7 +234,7 @@ Run comprehensive comparison:
 
 Implement chained versions of:
 - CardSimilarityAnnotation
-- ArchetypeValidation  
+- ArchetypeValidation
 - DeckCoherenceValidation
 
 **Result:** Theory-aligned alternatives for all validators
@@ -334,7 +334,7 @@ What we have:
 
 **Grade:**
 - Functionality: A
-- Theory: A  
+- Theory: A
 - Code cleanliness: C
 - Doc cleanliness: C
 - **Overall: B+** (works well, needs cleanup)

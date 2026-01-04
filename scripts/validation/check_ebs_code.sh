@@ -62,4 +62,3 @@ case "$RESULT" in
  exit 1
  ;;
 esac
-

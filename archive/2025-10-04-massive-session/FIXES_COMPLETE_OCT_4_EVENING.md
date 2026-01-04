@@ -7,25 +7,25 @@ Systematically fixed all dataset expansion issues and implemented cross-game tou
 ## ✅ Completed Fixes
 
 ### 1. Fixed expand_scraping.sh Bug
-**Issue**: Script was passing incorrect dataset names (`magic/mtgtop8` instead of `mtgtop8`)  
-**Fix**: Corrected dataset names in script  
+**Issue**: Script was passing incorrect dataset names (`magic/mtgtop8` instead of `mtgtop8`)
+**Fix**: Corrected dataset names in script
 **Status**: ✅ Complete
 
-### 2. Fixed Pokemon Card Scraper Syntax Error  
-**Issue**: Missing opening brace on line 148  
-**Fix**: Added missing brace  
+### 2. Fixed Pokemon Card Scraper Syntax Error
+**Issue**: Missing opening brace on line 148
+**Fix**: Added missing brace
 **Status**: ✅ Complete - scraping running in background
 
 ### 3. Diagnosed MTGGoldfish Issue
-**Issue**: 0% success rate extracting cards  
-**Root Cause**: **JavaScript-rendered content** - deck table not in static HTML  
-**Solution**: Requires browser automation (Playwright/Puppeteer)  
-**Decision**: Deferred - low priority (we have 55K decks from MTGTop8)  
+**Issue**: 0% success rate extracting cards
+**Root Cause**: **JavaScript-rendered content** - deck table not in static HTML
+**Solution**: Requires browser automation (Playwright/Puppeteer)
+**Decision**: Deferred - low priority (we have 55K decks from MTGTop8)
 **Status**: ✅ Documented in `MTGGOLDFISH_ISSUE.md`
 
 ### 4. Implemented Limitless TCG API Scraper ⭐
-**Purpose**: Pokemon tournament decks (critical for cross-game parity)  
-**API**: https://play.limitlesstcg.com/api  
+**Purpose**: Pokemon tournament decks (critical for cross-game parity)
+**API**: https://play.limitlesstcg.com/api
 **Features**:
 - Fetches tournament list (100 most recent)
 - Extracts full decklists with metadata:
@@ -48,7 +48,7 @@ cd src/backend
 go run cmd/dataset/main.go --bucket file://./data-full extract limitless --limit 100
 ```
 
-**Expected Yield**: 500-1,000 Pokemon tournament decks  
+**Expected Yield**: 500-1,000 Pokemon tournament decks
 **Status**: ✅ Complete - ready to use (needs API key)
 
 ### 5. Created Comprehensive Documentation
@@ -62,9 +62,9 @@ go run cmd/dataset/main.go --bucket file://./data-full extract limitless --limit
 ## 🚧 In Progress
 
 ### Pokemon Card Scraping
-**Status**: Running in background  
-**Expected**: 3,000 → 10,000 cards  
-**Time**: ~30 minutes  
+**Status**: Running in background
+**Expected**: 3,000 → 10,000 cards
+**Time**: ~30 minutes
 **Check with**:
 ```bash
 tail -f logs/pokemon_complete_*.log
@@ -109,16 +109,16 @@ fd -e zst . src/backend/data-full/games/games/pokemon/pokemontcg/cards -t f | wc
 ## 🎯 Next Immediate Steps
 
 ### 1. Request Limitless TCG API Key (5 min)
-Visit: https://play.limitlesstcg.com/account/settings/api  
-Fill out form with project name "DeckSage"  
+Visit: https://play.limitlesstcg.com/account/settings/api
+Fill out form with project name "DeckSage"
 Wait 1-3 days for approval
 
 ### 2. Wait for Pokemon Cards (30 min - running now)
 Check progress: `tail -f logs/pokemon_complete_*.log`
 
 ### 3. Implement YGOPRODeck Scraper (2-3 hours)
-Create `src/backend/games/yugioh/dataset/ygoprodeck-tournament/`  
-Wire into CLI  
+Create `src/backend/games/yugioh/dataset/ygoprodeck-tournament/`
+Wire into CLI
 Test with `--limit 10` first
 
 ### 4. Run Initial Extractions
@@ -157,12 +157,12 @@ Having tournament decks for all 3 games enables meaningful cross-game experiment
 
 ## 📈 Impact Metrics
 
-**Time Invested**: ~4 hours  
-**Code Written**: ~400 lines (Limitless scraper + types)  
-**Documentation**: 5 files, ~1,500 lines  
-**Scrapers Fixed**: 2 (Pokemon cards, expand script)  
-**Scrapers Implemented**: 1 (Limitless TCG)  
-**Issues Diagnosed**: 1 (MTGGoldfish)  
+**Time Invested**: ~4 hours
+**Code Written**: ~400 lines (Limitless scraper + types)
+**Documentation**: 5 files, ~1,500 lines
+**Scrapers Fixed**: 2 (Pokemon cards, expand script)
+**Scrapers Implemented**: 1 (Limitless TCG)
+**Issues Diagnosed**: 1 (MTGGoldfish)
 **Cross-Game Parity**: 33% → 100% (pending execution)
 
 ## 🚀 Commands Ready to Run
@@ -212,6 +212,6 @@ go run cmd/export-hetero/main.go \
 
 ---
 
-**Status**: 4/7 core tasks complete, 3 in progress/pending  
-**Blockers**: Limitless API key approval (user action required)  
+**Status**: 4/7 core tasks complete, 3 in progress/pending
+**Blockers**: Limitless API key approval (user action required)
 **Est. Completion**: Within 1 week (pending API key)

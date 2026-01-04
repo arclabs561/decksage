@@ -1,6 +1,6 @@
 # EC2 Spot Instance Training Status
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 🔄 **TRAINING IN PROGRESS**
 
 ---
@@ -17,7 +17,7 @@
 
 ## Training Command
 
-**Latest Command ID**: `89dfb8b2-6394-4b53-b144-cdc61101bc03`  
+**Latest Command ID**: `89dfb8b2-6394-4b53-b144-cdc61101bc03`
 **Status**: InProgress
 
 **Process**:
@@ -54,4 +54,3 @@ aws s3 ls s3://games-collections/embeddings/magic_128d_test_pecanpy.wv
 ---
 
 **Training is running. Check back in 10-30 minutes for completion.**
-

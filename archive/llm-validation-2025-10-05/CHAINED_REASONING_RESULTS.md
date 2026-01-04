@@ -41,7 +41,7 @@ Each step explicitly conditions on previous steps.
 ## Theoretical Alignment
 
 ✅ **Local dependency chaining:** Explicit marginalization
-✅ **D-separation:** Step 2 d-separates ratings from quality  
+✅ **D-separation:** Step 2 d-separates ratings from quality
 ✅ **Mantras:** Each step has focused sub-task
 ✅ **Reasoning structure:** Not just output structure
 

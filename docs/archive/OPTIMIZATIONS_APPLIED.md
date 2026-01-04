@@ -63,7 +63,7 @@
        --input experiments/test_set_labeled_magic.json \
        --output experiments/test_set_labeled_magic.json \
        --checkpoint-interval 5
-   
+
    # Card enrichment
    uv run --script src/ml/scripts/enrich_attributes_with_scryfall_optimized.py \
        --input data/processed/card_attributes_minimal.csv \
@@ -85,4 +85,3 @@
 - **Labeling**: Retry logic should reduce failures from ~38% to <5%
 - **Card enrichment**: Adaptive rate limiting should reduce 429 errors
 - **Checkpointing**: Allows resuming from any point (no lost work)
-

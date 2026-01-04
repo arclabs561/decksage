@@ -32,13 +32,13 @@ type ExtractStats struct {
 	Successful int
 	Failed     int
 	Errors     []ExtractError
-	
+
 	// Quality metrics
 	NormalizedCount    int            // Cards normalized
 	ValidationFailures map[string]int // Validation error types -> count
 	CacheHits          int
 	CacheMisses        int
-	
+
 	mu         sync.Mutex
 	startTime  time.Time
 	log        *logger.Logger
@@ -159,7 +159,7 @@ func (s *ExtractStats) GetCacheHitRate() float64 {
 func (s *ExtractStats) ExportJSON() ([]byte, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	
+
 	type Export struct {
 		Total              int            `json:"total"`
 		Successful         int            `json:"successful"`
@@ -173,13 +173,13 @@ func (s *ExtractStats) ExportJSON() ([]byte, error) {
 		Duration           string         `json:"duration"`
 		Errors             []ExtractError  `json:"errors"`
 	}
-	
+
 	duration := time.Since(s.startTime)
 	successRate := 0.0
 	if s.Total > 0 {
 		successRate = float64(s.Successful) / float64(s.Total) * 100
 	}
-	
+
 	export := Export{
 		Total:              s.Total,
 		Successful:         s.Successful,
@@ -193,15 +193,14 @@ func (s *ExtractStats) ExportJSON() ([]byte, error) {
 		Duration:           duration.Round(time.Second).String(),
 		Errors:             make([]ExtractError, len(s.Errors)),
 	}
-	
+
 	// Copy validation failures
 	for k, v := range s.ValidationFailures {
 		export.ValidationFailures[k] = v
 	}
-	
+
 	// Copy errors
 	copy(export.Errors, s.Errors)
-	
+
 	return json.MarshalIndent(export, "", "  ")
 }
-

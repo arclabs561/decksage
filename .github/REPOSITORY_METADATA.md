@@ -7,7 +7,7 @@ Card similarity search using tournament deck co-occurrence, graph embeddings, an
 
 ### Core (5)
 - `python` - Primary language
-- `go` - Backend language  
+- `go` - Backend language
 - `machine-learning` - Core purpose
 - `graph-neural-networks` - Key ML technique
 - `embeddings` - ML approach
@@ -29,11 +29,11 @@ Card similarity search using tournament deck co-occurrence, graph embeddings, an
 
 ## Best Practices Applied
 
-✅ **5-10 topics** (GitHub recommendation: 5-10)  
-✅ **Mix general + specific** (python + graph-neural-networks)  
-✅ **Include languages** (python, go)  
-✅ **Domain-specific** (trading-card-games, deck-building)  
-✅ **Key technologies** (embeddings, node2vec)  
+✅ **5-10 topics** (GitHub recommendation: 5-10)
+✅ **Mix general + specific** (python + graph-neural-networks)
+✅ **Include languages** (python, go)
+✅ **Domain-specific** (trading-card-games, deck-building)
+✅ **Key technologies** (embeddings, node2vec)
 ✅ **Avoid over-tagging** (max 10-12 topics)
 
 ## Implementation

@@ -13,7 +13,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from pathlib import Path
 
 from .fusion import FusionWeights, WeightedLateFusion
 from .fusion_grid_search import grid_search_weights
@@ -23,6 +22,7 @@ from .utils.paths import PATHS
 def load_test_set(game: str) -> dict:
     """Load test set (uses canonical implementation)."""
     from ml.utils.data_loading import load_test_set as canonical_load
+
     data = canonical_load(game=game)
     # Canonical file may have metadata wrapper
     if isinstance(data, dict) and "queries" in data:
@@ -34,7 +34,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Fusion grid search runner")
     parser.add_argument("--embeddings", type=str, required=True)
     parser.add_argument("--pairs", type=str, required=True)
-    parser.add_argument("--game", type=str, default="magic", choices=["magic", "pokemon", "yugioh"]) 
+    parser.add_argument("--game", type=str, default="magic", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--step", type=float, default=0.1)
     parser.add_argument("--top-k", type=int, default=10)
 
@@ -42,8 +42,9 @@ def main() -> int:
 
     # Lazy imports to keep test discovery lean
     from gensim.models import KeyedVectors
-    from .similarity_methods import load_graph
+
     from .card_functional_tagger import FunctionalTagger
+    from .similarity_methods import load_graph
 
     print("\nLoading models...")
     wv = KeyedVectors.load(args.embeddings)
@@ -82,14 +83,14 @@ def main() -> int:
                 "pairs": args.pairs,
                 "game": args.game,
                 "step": args.step,
- "top_k": args.top_k,
- "best_weights": {
- "embed": result.best_weights.embed,
- "jaccard": result.best_weights.jaccard,
- "functional": result.best_weights.functional,
- },
- "best_score": result.best_score,
- },
+                "top_k": args.top_k,
+                "best_weights": {
+                    "embed": result.best_weights.embed,
+                    "jaccard": result.best_weights.jaccard,
+                    "functional": result.best_weights.functional,
+                },
+                "best_score": result.best_score,
+            },
             f,
             indent=2,
         )
@@ -99,8 +100,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
- import sys
+    import sys
 
- sys.exit(main())
-
-
+    sys.exit(main())

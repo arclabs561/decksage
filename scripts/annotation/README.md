@@ -71,4 +71,3 @@ Annotations flow into training in two ways:
    - Used by evaluation scripts to measure P@10, MRR, etc.
 
 See `annotations/README.md` for detailed annotation workflow and guidelines.
-

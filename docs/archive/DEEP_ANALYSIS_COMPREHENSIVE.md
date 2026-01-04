@@ -1,6 +1,6 @@
 # Deep Analysis: Comprehensive Evaluation & Modeling Review
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 🔍 **CRITICAL FINDINGS** - Action Required Immediately
 
 ---
@@ -145,7 +145,7 @@ After deep analysis of evaluation results, experiment logs, test sets, and imple
 - No `.wv` files found
 - Experiment log mentions embeddings but files don't exist
 
-**Impact**: 
+**Impact**:
 - Cannot use embedding signal in fusion
 - All embedding-based methods will fail
 - GNN cannot be trained (needs embeddings or graph)
@@ -214,7 +214,7 @@ After deep analysis of evaluation results, experiment logs, test sets, and imple
 
 ### Why Fusion is Worse Than Baseline
 
-**Hypothesis**: 
+**Hypothesis**:
 1. **Embed signal broken** (no embeddings trained) → weight=0.1 wasted
 2. **Functional signal may be weak** (weight=0.7 too high)
 3. **Jaccard alone (0.089) > Fusion (0.088)** suggests:
@@ -347,7 +347,7 @@ uv run python -m src.ml.scripts.compute_and_cache_signals
 3. **Graph Structure**: Doesn't improve (exp_037)
 4. **More Data**: Can hurt (exp_003, exp_018)
 
-**Root Cause**: 
+**Root Cause**:
 - Infrastructure issues (metadata parsing)
 - Signal quality issues (frequency, graph structure weak)
 - Test set bias (may favor certain methods)
@@ -434,4 +434,3 @@ uv run python -m src.ml.scripts.compute_and_cache_signals
 ---
 
 **Status**: 🔴 **CRITICAL ISSUES IDENTIFIED** - Immediate action required on broken systems!
-

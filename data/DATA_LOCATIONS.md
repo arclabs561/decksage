@@ -9,7 +9,7 @@
 src/backend/data-full/games/
 ├── magic/
 │   ├── mtgtop8/collections/     56,548 decks
-│   ├── goldfish/collections/   23,993 decks  
+│   ├── goldfish/collections/   23,993 decks
 │   ├── deckbox/collections/     2,551 decks
 │   └── scryfall/cards/         35,393 cards
 ├── pokemon/

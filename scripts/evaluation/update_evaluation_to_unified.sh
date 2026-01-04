@@ -36,4 +36,3 @@ done
 find . -name "*.bak" -type f -delete 2>/dev/null || true
 
 echo "Done updating evaluation scripts"
-

@@ -90,7 +90,7 @@ Use it. Don't rediscover basic truths.
 
 **Pain without it:**
 - Human thinks: "Embeddings are cool, try more variants"
-- System data says: "Embeddings all fail, try something else"  
+- System data says: "Embeddings all fail, try something else"
 - Human ignores data
 - Wastes time
 
@@ -112,7 +112,7 @@ Computers are good at this.
 
 **Example:**
 Lightning Bolt in booster pack (random, based on rarity)
-vs  
+vs
 Lightning Bolt in Burn deck (intentional, player choice)
 
 These mean DIFFERENT things!
@@ -164,7 +164,7 @@ Optimize for the goal, not the proxy.
 Each principle exists because we felt the PAIN:
 - Tried 7 methods without A-Mem → forgot insights
 - Kept failures in memory → meta-learner suggested them again
-- No baseline protection → worried about losing progress  
+- No baseline protection → worried about losing progress
 - Ignored research → spent 30 experiments rediscovering basics
 - Used homogeneous graph → stuck at 0.12
 
@@ -204,5 +204,3 @@ As system evolves, add new motivations:
 Knowledge without motivation is brittle.
 Motivation without knowledge is aimless.
 Together: Self-improving system that understands itself.
-
-

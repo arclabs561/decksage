@@ -1,6 +1,6 @@
 # Multi-Signal Integration Complete
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ All signals integrated into API
 
 ---
@@ -197,9 +197,8 @@ curl -X POST http://localhost:8000/v1/similar \
 
 ## Status
 
-✅ **API Integration**: Complete  
-✅ **Signal Loading**: Complete  
-✅ **Signal Computation**: Script ready  
-🟡 **GNN Training**: Separate task (placeholder ready)  
+✅ **API Integration**: Complete
+✅ **Signal Loading**: Complete
+✅ **Signal Computation**: Script ready
+🟡 **GNN Training**: Separate task (placeholder ready)
 🟡 **Evaluation**: Pending (run after signals computed)
-

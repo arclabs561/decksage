@@ -11,7 +11,7 @@ This directory contains experimental features, premature sophistication, and arc
 - `true_closed_loop.py` - Closed-loop learning system
 - `self_sustaining_loop.py` - Autonomous experiment evolution
 
-**Status**: These implement sophisticated techniques from 2025 papers but were premature. 
+**Status**: These implement sophisticated techniques from 2025 papers but were premature.
 The foundation (basic similarity, tests, diagnostics) needs to be solid first.
 
 **Revisit when**: P@10 > 0.15 and core infrastructure is stable.

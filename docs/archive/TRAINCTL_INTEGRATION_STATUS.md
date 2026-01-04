@@ -3,7 +3,7 @@
 ## ✅ Completed
 
 1. **trainctl Compilation**: Fixed and building successfully
-2. **Enhanced Training Script**: 
+2. **Enhanced Training Script**:
    - Validation splits (80/10/10)
    - Early stopping (patience=3)
    - Learning rate scheduling (decay=0.95)
@@ -51,4 +51,3 @@ just hyperparam-search
 4. **Continue improvements** - All fronts: embeddings, data, labeling, training
 
 **trainctl is ready to use!**
-

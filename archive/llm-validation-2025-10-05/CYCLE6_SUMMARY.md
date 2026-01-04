@@ -180,12 +180,12 @@ Net: -40 lines, +2 utilities, better organized
 
 ## Cycle Stats
 
-**Time:** 30 minutes  
-**Issues found:** 5  
-**Issues fixed:** 2 (duplication, orphaned files)  
-**Issues documented:** 2 (model names, API key)  
-**Tests added:** 6 edge case tests  
-**Code reduced:** 40 lines via DRY  
+**Time:** 30 minutes
+**Issues found:** 5
+**Issues fixed:** 2 (duplication, orphaned files)
+**Issues documented:** 2 (model names, API key)
+**Tests added:** 6 edge case tests
+**Code reduced:** 40 lines via DRY
 **Utilities added:** 2 (helpers, constants)
 
 **Grade:** A (good improvements)

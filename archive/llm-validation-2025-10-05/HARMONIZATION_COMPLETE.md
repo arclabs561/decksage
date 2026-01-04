@@ -48,13 +48,13 @@ Dataset validation with LLMs - focused, clean, tested.
 
 ## Result
 
-**Before:** 3432 lines + 17 docs  
-**After:** 2555 lines + 1 doc  
+**Before:** 3432 lines + 17 docs
+**After:** 2555 lines + 1 doc
 **Removed:** 877 lines + 16 docs
 
-**Purpose:** Clear (dataset validation)  
-**Code:** Clean (no dead code)  
-**Tests:** Comprehensive (15 passing)  
+**Purpose:** Clear (dataset validation)
+**Code:** Clean (no dead code)
+**Tests:** Comprehensive (15 passing)
 **Docs:** Focused (1 essential file)
 
 ## Usage
@@ -63,7 +63,7 @@ Dataset validation with LLMs - focused, clean, tested.
 # Validate dataset quality
 python src/ml/llm_data_validator.py
 
-# Evaluate similarity predictions  
+# Evaluate similarity predictions
 python src/ml/experimental/llm_judge.py --embeddings X --queries Y
 
 # Run tests

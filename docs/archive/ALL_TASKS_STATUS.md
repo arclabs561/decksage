@@ -8,7 +8,7 @@
 - **Remaining**: 62 queries need labels
 - **Expected**: ~10-15 minutes
 
-### 2. Continue Card Enrichment  
+### 2. Continue Card Enrichment
 - **Status**: 🔄 Running in background
 - **Current**: 17,080/26,959 cards enriched (63.4%)
 - **Remaining**: ~9,879 cards
@@ -65,4 +65,3 @@ aws ec2 describe-instances --filters "Name=instance-state-name,Values=running" -
 - **Card enrichment**: Hours (rate limited) ⏱️
 
 **All tasks proceeding in parallel! 🚀**
-

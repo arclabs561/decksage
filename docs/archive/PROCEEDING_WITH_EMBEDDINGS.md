@@ -1,6 +1,6 @@
 # Proceeding with Embeddings and AWS
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ All embedding methods trained, AWS integration ready
 
 ---
@@ -120,4 +120,3 @@ uv run --script src/ml/scripts/train_with_aws.py \
 ---
 
 **Status**: ✅ All methods trained, ready for evaluation and S3 upload
-

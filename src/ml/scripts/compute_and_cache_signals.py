@@ -9,15 +9,17 @@ for fast loading in the API.
 from __future__ import annotations
 
 import json
-import logging
-from pathlib import Path
 
-from ..similarity.sideboard_signal import compute_sideboard_cooccurrence
 from ..analysis.temporal_trends import compute_monthly_cooccurrence
-from ..similarity.archetype_signal import compute_archetype_staples, compute_archetype_cooccurrence
-from ..similarity.format_signal import compute_format_cooccurrence, compute_format_transition_patterns
+from ..similarity.archetype_signal import compute_archetype_cooccurrence, compute_archetype_staples
+from ..similarity.format_signal import (
+    compute_format_cooccurrence,
+    compute_format_transition_patterns,
+)
+from ..similarity.sideboard_signal import compute_sideboard_cooccurrence
+from ..utils.logging_config import log_exception, setup_script_logging
 from ..utils.paths import PATHS
-from ..utils.logging_config import setup_script_logging, log_exception
+
 
 logger = setup_script_logging()
 
@@ -25,14 +27,14 @@ logger = setup_script_logging()
 def main():
     """Compute and cache all signals."""
     decks_path = PATHS.decks_with_metadata
-    
+
     if not decks_path.exists():
         logger.error(f"Decks file not found: {decks_path}")
         return
-    
+
     output_dir = PATHS.experiments / "signals"
     output_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # 1. Compute sideboard co-occurrence
     logger.info("Computing sideboard co-occurrence...")
     try:
@@ -40,10 +42,12 @@ def main():
         sideboard_path = output_dir / "sideboard_cooccurrence.json"
         with open(sideboard_path, "w") as f:
             json.dump(sideboard_cooccur, f, indent=2)
-        logger.info(f"✓ Saved sideboard co-occurrence: {len(sideboard_cooccur)} cards -> {sideboard_path}")
+        logger.info(
+            f"✓ Saved sideboard co-occurrence: {len(sideboard_cooccur)} cards -> {sideboard_path}"
+        )
     except Exception as e:
         log_exception(logger, "Failed to compute sideboard signal", e, include_context=True)
-    
+
     # 2. Compute temporal co-occurrence
     logger.info("Computing temporal (monthly) co-occurrence...")
     try:
@@ -51,48 +55,58 @@ def main():
         temporal_path = output_dir / "temporal_cooccurrence.json"
         with open(temporal_path, "w") as f:
             json.dump(monthly_cooccur, f, indent=2)
-        logger.info(f"✓ Saved temporal co-occurrence: {len(monthly_cooccur)} months -> {temporal_path}")
+        logger.info(
+            f"✓ Saved temporal co-occurrence: {len(monthly_cooccur)} months -> {temporal_path}"
+        )
     except Exception as e:
         log_exception(logger, "Failed to compute temporal signal", e, include_context=True)
-    
+
     # 3. Compute archetype signals
     logger.info("Computing archetype staples and co-occurrence...")
     try:
         archetype_staples = compute_archetype_staples(decks_path, min_decks=20)
         archetype_cooccur = compute_archetype_cooccurrence(decks_path, min_decks=20)
-        
+
         archetype_staples_path = output_dir / "archetype_staples.json"
         archetype_cooccur_path = output_dir / "archetype_cooccurrence.json"
-        
+
         with open(archetype_staples_path, "w") as f:
             json.dump(archetype_staples, f, indent=2)
         with open(archetype_cooccur_path, "w") as f:
             json.dump(archetype_cooccur, f, indent=2)
-        
-        logger.info(f"✓ Saved archetype staples: {len(archetype_staples)} cards -> {archetype_staples_path}")
-        logger.info(f"✓ Saved archetype co-occurrence: {len(archetype_cooccur)} cards -> {archetype_cooccur_path}")
+
+        logger.info(
+            f"✓ Saved archetype staples: {len(archetype_staples)} cards -> {archetype_staples_path}"
+        )
+        logger.info(
+            f"✓ Saved archetype co-occurrence: {len(archetype_cooccur)} cards -> {archetype_cooccur_path}"
+        )
     except Exception as e:
         log_exception(logger, "Failed to compute archetype signals", e, include_context=True)
-    
+
     # 4. Compute format signals
     logger.info("Computing format-specific and cross-format patterns...")
     try:
         format_cooccur = compute_format_cooccurrence(decks_path, min_decks_per_format=10)
         cross_format = compute_format_transition_patterns(format_cooccur)
-        
+
         format_cooccur_path = output_dir / "format_cooccurrence.json"
         cross_format_path = output_dir / "cross_format_patterns.json"
-        
+
         with open(format_cooccur_path, "w") as f:
             json.dump(format_cooccur, f, indent=2)
         with open(cross_format_path, "w") as f:
             json.dump(cross_format, f, indent=2)
-        
-        logger.info(f"✓ Saved format co-occurrence: {len(format_cooccur)} formats -> {format_cooccur_path}")
-        logger.info(f"✓ Saved cross-format patterns: {len(cross_format)} cards -> {cross_format_path}")
+
+        logger.info(
+            f"✓ Saved format co-occurrence: {len(format_cooccur)} formats -> {format_cooccur_path}"
+        )
+        logger.info(
+            f"✓ Saved cross-format patterns: {len(cross_format)} cards -> {cross_format_path}"
+        )
     except Exception as e:
         log_exception(logger, "Failed to compute format signals", e, include_context=True)
-    
+
     # 5. GNN embeddings (if available)
     # This would be generated by a separate training script
     gnn_path = output_dir / "gnn_embeddings.json"
@@ -101,11 +115,10 @@ def main():
     else:
         logger.info(f"⚠ GNN embeddings not found (expected at {gnn_path})")
         logger.info("  Run GNN training script to generate embeddings")
-    
+
     logger.info("\n✓ Signal computation complete!")
     logger.info(f"  Signals saved to: {output_dir}")
 
 
 if __name__ == "__main__":
     main()
-
