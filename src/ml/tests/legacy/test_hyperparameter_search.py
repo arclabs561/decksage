@@ -17,7 +17,7 @@ import pytest
 
 
 try:
-    from gensim.models import KeyedVectors, Word2Vec
+    from gensim.models import Word2Vec
 
     HAS_GENSIM = True
 except ImportError:
@@ -107,18 +107,24 @@ def test_s3_path_handling():
 
 def test_grid_search_config_generation():
     """Test grid search configuration generation."""
-    # Note: run_grid_search was removed/refactored
-    # This test is kept for historical reference but should be updated
-    # to test the actual hyperparameter search functionality
+    # Note: grid_search function exists in the module
+    # This test verifies the module can be imported and the function exists
     try:
         from ml.scripts import improve_embeddings_hyperparameter_search
 
-        # Verify module can be imported and has grid_search function
+        # Verify module can be imported
         assert improve_embeddings_hyperparameter_search is not None
-        assert hasattr(improve_embeddings_hyperparameter_search, "grid_search")
+        # grid_search is a function in the module, check if it exists
+        import inspect
+
+        functions = {
+            name
+            for name, obj in inspect.getmembers(improve_embeddings_hyperparameter_search)
+            if inspect.isfunction(obj)
+        }
+        assert "grid_search" in functions, "grid_search function not found in module"
     except ImportError:
         pytest.skip("improve_embeddings_hyperparameter_search module not available")
-    assert callable(run_grid_search)
 
 
 if __name__ == "__main__":
