@@ -11,9 +11,59 @@ Tests that temporal data flows correctly through the entire pipeline:
 
 from __future__ import annotations
 
+import pytest
 from datetime import datetime, timedelta
 
 from ml.data.incremental_graph import IncrementalCardGraph
+
+
+@pytest.fixture
+def temp_graph(tmp_path):
+    """Create a temporary IncrementalCardGraph for testing."""
+    graph_path = tmp_path / "test_graph.db"
+    graph = IncrementalCardGraph(graph_path=str(graph_path), use_sqlite=True)
+    yield graph
+    # Cleanup: graph is automatically saved/closed
+
+
+@pytest.fixture
+def nested_deck():
+    """Create a nested deck structure for testing."""
+    return {
+        "deck_id": "nested_test",
+        "format": "Modern",
+        "partitions": [
+            {
+                "name": "Main",
+                "cards": [
+                    {"name": "Lightning Bolt", "count": 4},
+                    {"name": "Lava Spike", "count": 4},
+                ],
+            },
+        ],
+    }
+
+
+@pytest.fixture
+def deck_with_round_results():
+    """Create a deck with round results for testing."""
+    return {
+        "deck_id": "round_results_test",
+        "format": "Modern",
+        "partitions": [
+            {
+                "name": "Main",
+                "cards": [
+                    {"name": "Lightning Bolt", "count": 4},
+                    {"name": "Lava Spike", "count": 4},
+                ],
+            },
+        ],
+        "roundResults": [
+            {"roundNumber": 1, "opponentDeck": "Jund", "result": "W"},
+            {"roundNumber": 2, "opponentDeck": "Burn", "result": "L"},
+        ],
+    }
 
 
 class TestDeckMetadataToTemporalTracking:
@@ -110,7 +160,7 @@ class TestMultipleFormats:
                         "name": "Main",
                         "cards": [
                             {"name": "Lightning Bolt", "count": 4},
-                            {"name": "Shock", "count": 4},
+                            {"name": "Rift Bolt", "count": 4},
                         ],
                     },
                 ],
