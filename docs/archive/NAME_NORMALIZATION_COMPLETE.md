@@ -89,7 +89,7 @@ Since local environment has dependency issues, we can run evaluation on AWS:
 2. **Normalization**: Removes special characters, lowercases, normalizes whitespace
 3. **Mapping Application**: Applied at three levels:
    - Query names → mapped queries
-   - Candidate names → mapped candidates  
+   - Candidate names → mapped candidates
    - Relevant card names → mapped relevant cards
 
 ## Impact
@@ -105,4 +105,3 @@ This fix addresses a **critical blocker** for evaluation:
 - `src/ml/scripts/fix_name_normalization_standalone.py` - Standalone analysis script
 - `src/ml/scripts/run_name_mapping_on_aws.py` - AWS orchestration
 - `src/ml/scripts/evaluate_all_embeddings.py` - Updated evaluation script
-

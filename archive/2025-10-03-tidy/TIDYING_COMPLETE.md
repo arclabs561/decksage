@@ -7,11 +7,11 @@ Repository comprehensively reviewed and tidied following critical analysis. Redu
 ## What Was Done
 
 ### 1. Archived Excessive Documentation ✅
-**Before**: 100+ markdown files  
+**Before**: 100+ markdown files
 **After**: 10 essential files + archive
 
 **Archived**:
-- 54 files from docs/archive-2025-09-30/ 
+- 54 files from docs/archive-2025-09-30/
 - 8 status markdown files (docs/status/)
 - 18 root-level status/design documents
 - All moved to `archive/2025-10-03-tidy/`
@@ -24,7 +24,7 @@ Repository comprehensively reviewed and tidied following critical analysis. Redu
 - experiments/README.md, annotations/README.md (data documentation)
 
 ### 2. Consolidated Experiment Tracking ✅
-**Before**: 3 experiment logs, 4 experiment tracking systems  
+**Before**: 3 experiment logs, 4 experiment tracking systems
 **After**: Single canonical log, simple tracking
 
 **Consolidated**:

@@ -13,19 +13,19 @@ from collections import defaultdict
 
 def compute_meta_statistics_and_evaluate(test_set, config):
     """Compute card statistics and use for similarity"""
-    
+
     # ❌ Hardcoded path
     df = pd.read_csv('../backend/pairs_large.csv')
-    
+
     # ❌ Duplicated constant (11th time in codebase)
     LANDS = {'Plains', 'Island', 'Swamp', 'Mountain', 'Forest'}
-    
+
     # Compute card frequency
     card_freq = defaultdict(int)
     for _, row in df.iterrows():
         card_freq[row['NAME_1']] += row['COUNT_MULTISET']
         card_freq[row['NAME_2']] += row['COUNT_MULTISET']
-    
+
     # ❌ Duplicated adjacency building (appears in ~10 experiments)
     adj = defaultdict(set)
     for _, row in df.iterrows():
@@ -33,38 +33,38 @@ def compute_meta_statistics_and_evaluate(test_set, config):
         if c1 not in LANDS and c2 not in LANDS:
             adj[c1].add(c2)
             adj[c2].add(c1)
-    
+
     # ❌ Duplicated evaluation loop
     scores = []
     for query, labels in test_set.items():
         if query not in adj:
             continue
-        
+
         query_freq = card_freq.get(query, 0)
         neighbors = adj[query]
-        
+
         sims = []
         for other in list(adj.keys())[:3000]:
             if other == query:
                 continue
-            
+
             # Jaccard
             other_n = adj[other]
             intersection = len(neighbors & other_n)
             union = len(neighbors | other_n)
             jaccard = intersection / union if union > 0 else 0
-            
+
             # Frequency similarity
             other_freq = card_freq.get(other, 0)
             freq_sim = 1.0 / (1.0 + abs(query_freq - other_freq) / max(query_freq, other_freq, 1))
-            
+
             # Combined (weighted)
             combined_sim = 0.7 * jaccard + 0.3 * freq_sim
-            
+
             sims.append((other, combined_sim))
-        
+
         sims.sort(key=lambda x: x[1], reverse=True)
-        
+
         # ❌ Duplicated scoring logic
         score = 0.0
         for card, _ in sims[:10]:
@@ -74,11 +74,11 @@ def compute_meta_statistics_and_evaluate(test_set, config):
                 score += 0.75
             elif card in labels.get('somewhat_relevant', []):
                 score += 0.5
-        
+
         scores.append(score / 10.0)
-    
+
     p10 = sum(scores) / len(scores) if scores else 0.0
-    
+
     return {'p10': p10, 'num_queries': len(scores)}
 ```
 
@@ -111,7 +111,7 @@ from utils import (
 
 def refactored_jaccard_method(test_set, config):
     """Clean Jaccard implementation using shared utilities."""
-    
+
     # ✅ Canonical path + game-aware filtering
     df = load_pairs(
         dataset='large',
@@ -119,30 +119,30 @@ def refactored_jaccard_method(test_set, config):
         filter_common=True,
         filter_level='basic'
     )
-    
+
     # ✅ Shared adjacency builder
     filter_set = get_filter_set('magic', 'basic')
     adj = build_adjacency_dict(df, filter_set=filter_set)
-    
+
     # Define similarity function
     def similarity_func(query: str, k: int):
         if query not in adj:
             return []
-        
+
         query_neighbors = adj[query]
         sims = []
-        
+
         for other in adj.keys():
             if other == query:
                 continue
-            
+
             other_neighbors = adj[other]
             sim = jaccard_similarity(query_neighbors, other_neighbors)
             sims.append((other, sim))
-        
+
         sims.sort(key=lambda x: x[1], reverse=True)
         return sims[:k]
-    
+
     # ✅ Standard evaluation loop
     results = evaluate_similarity(
         test_set=test_set,
@@ -150,7 +150,7 @@ def refactored_jaccard_method(test_set, config):
         top_k=10,
         verbose=True
     )
-    
+
     return results
 ```
 
@@ -236,12 +236,10 @@ filter_set = get_filter_set('magic', 'all')
 
 **What we did wrong:** Ran 39 experiments without abstracting obvious patterns
 
-**What we're doing right now:** 
+**What we're doing right now:**
 - After experiencing real pain (duplication, bugs, inconsistency)
 - Abstracting based on actual patterns, not speculation
 - Not over-abstracting (just the clear duplicates)
 - Testing the abstractions
 
 **This is the principle done correctly** - waited until we had real experience, then abstracted based on demonstrated need.
-
-

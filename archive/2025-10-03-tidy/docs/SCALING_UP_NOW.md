@@ -79,7 +79,7 @@ python llm_data_validator.py --sample 10
 - **Sources**: MTGTop8 (expanded) + Goldfish (new)
 - **Metadata**: 100% coverage on all
 
-### Annotations  
+### Annotations
 - **Quality validation**: 50 deck sample
 - **Similarity judgments**: 20-50 pairs
 - **Archetype descriptions**: 5-10 archetypes
@@ -233,6 +233,3 @@ print(f'With archetype: {sum(1 for d in decks if d.get(\"archetype\"))}/{len(dec
 - 6K decks > 4.7K decks → Ship it
 - Some annotations > No annotations → Use them
 - One working use case > Many designs → Build it
-
-
-

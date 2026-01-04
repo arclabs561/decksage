@@ -1,6 +1,6 @@
 # EC2 Spot Instance Training - Monitoring Summary
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: 🔄 **TRAINING IN PROGRESS**
 
 ---
@@ -64,4 +64,3 @@ aws ec2 describe-instances --instance-ids i-045dc67caaaacbc38
 ---
 
 **Training is progressing normally. Continue monitoring for completion.**
-

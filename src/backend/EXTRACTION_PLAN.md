@@ -57,8 +57,8 @@ go run ./cmd/dataset extract mtgtop8 \
 
 ### Phase 3: Other Formats (Priority 3)
 
-**Pioneer**: 15 → 30 decks  
-**Vintage**: 20 → 30 decks  
+**Pioneer**: 15 → 30 decks
+**Vintage**: 20 → 30 decks
 **Peasant**: 2 → 10 decks (if possible)
 
 ### Phase 4: Temporal Diversity (Future)

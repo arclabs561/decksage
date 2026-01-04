@@ -165,4 +165,3 @@ echo " --parameters 'commands=[\"ls -la $CODE_DIR\"]'"
 echo " 2. Training script will automatically check EBS before syncing"
 echo " 3. Future runs will reuse code from EBS (much faster!)"
 echo ""
-

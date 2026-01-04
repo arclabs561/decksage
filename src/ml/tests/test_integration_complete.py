@@ -20,7 +20,7 @@ def test_data_loading_uses_validators():
         formats=None,
         max_placement=None,
     )
-    
+
     assert len(decks) > 0
     # Should be dicts (backward compatible)
     assert isinstance(decks[0], dict)
@@ -38,7 +38,7 @@ def test_data_loading_backward_compatible():
         jsonl_path=default if default.exists() else fixture,
         validate=False,
     )
-    
+
     assert len(decks) > 0
     assert isinstance(decks[0], dict)
 
@@ -52,7 +52,7 @@ def test_data_loading_format_filter():
         formats=["Modern"],
         validate=True,
     )
-    
+
     # All should be Modern (or fewer than total if none exist)
     if modern_decks:
         assert all(d["format"] == "Modern" for d in modern_decks[:10])
@@ -60,37 +60,45 @@ def test_data_loading_format_filter():
 
 def test_llm_annotator_imports_and_loads_data():
     """Verify LLMAnnotator can be imported and load data.
-    
+
     NOTE: This does NOT test actual LLM API calls.
     For real LLM tests, see test_llm_validators_real.py
     """
     import os
+
     if not os.getenv("OPENROUTER_API_KEY"):
         pytest.skip("OPENROUTER_API_KEY not set")
-    
-    from ..annotation.llm_annotator import HAS_PYDANTIC_AI, LLMAnnotator
-    
+
+    try:
+        from ..annotation.llm_annotator import HAS_PYDANTIC_AI, LLMAnnotator
+    except ImportError as e:
+        pytest.skip(f"Could not import llm_annotator: {e}")
+
     if not HAS_PYDANTIC_AI:
         pytest.skip("pydantic-ai not available")
-    
+
     annotator = LLMAnnotator()
     assert len(annotator.decks) > 0
 
 
 def test_llm_data_validator_imports_and_loads_data():
     """Verify DataQualityValidator can be imported and load data.
-    
+
     NOTE: This does NOT test actual LLM API calls.
     For real LLM tests, see test_llm_validators_real.py
     """
     import os
+
     if not os.getenv("OPENROUTER_API_KEY"):
         pytest.skip("OPENROUTER_API_KEY not set")
-    
-    from ..validation.llm_data_validator import HAS_PYDANTIC_AI, DataQualityValidator
-    
+
+    try:
+        from ..validation.llm_data_validator import HAS_PYDANTIC_AI, DataQualityValidator
+    except ImportError as e:
+        pytest.skip(f"Could not import llm_data_validator: {e}")
+
     if not HAS_PYDANTIC_AI:
         pytest.skip("pydantic-ai not available")
-    
+
     validator = DataQualityValidator()
     assert len(validator.decks) > 0

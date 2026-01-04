@@ -58,4 +58,3 @@
 - **Hyperparameter search**: 2-4 hours
 
 **All tasks proceeding in parallel!**
-

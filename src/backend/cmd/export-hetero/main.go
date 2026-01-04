@@ -61,7 +61,7 @@ func main() {
 
 	errorCount := 0
 	maxErrorsToLog := 10
-	
+
 	for _, file := range files {
 		data, err := os.ReadFile(file)
 		if err != nil {
@@ -98,7 +98,7 @@ func main() {
 			Source:    getString(obj, "source"),
 			ScrapedAt: scrapedAt,
 		}
-		
+
 		// Backfill source from URL or file path if missing
 		if deck.Source == "" {
 			deck.Source = inferSourceFromPath(deck.URL, file)
@@ -201,7 +201,7 @@ func inferSourceFromPath(url string, filePath string) string {
 	if strings.Contains(urlLower, "scryfall.com") || strings.Contains(urlLower, "scryfall") {
 		return "scryfall"
 	}
-	
+
 	// Fallback to file path
 	pathLower := strings.ToLower(filePath)
 	if strings.Contains(pathLower, "mtgtop8") {
@@ -228,12 +228,12 @@ func inferSourceFromPath(url string, filePath string) string {
 	if strings.Contains(pathLower, "yugioh") || strings.Contains(pathLower, "ygo") {
 		return "ygoprodeck-tournament" // Default for Yu-Gi-Oh
 	}
-	
+
 	// Final fallback: use directory name
 	dir := filepath.Base(filepath.Dir(filePath))
 	if dir != "" && dir != "." {
 		return dir
 	}
-	
+
 	return "unknown"
 }

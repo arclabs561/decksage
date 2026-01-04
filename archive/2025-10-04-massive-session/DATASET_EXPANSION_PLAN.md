@@ -22,8 +22,8 @@ go run cmd/dataset/main.go \
   --parallel 32
 ```
 
-**Expected yield**: +5,000 MTG tournament decks  
-**Time estimate**: 30-45 minutes with rate limiting  
+**Expected yield**: +5,000 MTG tournament decks
+**Time estimate**: 30-45 minutes with rate limiting
 **Risk**: Low (scraper working, tested)
 
 **MTGGoldfish Debug** - Fix failing scraper
@@ -68,7 +68,7 @@ go run cmd/dataset/main.go \
 5. Test with 10-20 tournaments first
 6. Scale to 100+ tournaments
 
-**Expected yield**: 500-1,000 Pokemon tournament decks  
+**Expected yield**: 500-1,000 Pokemon tournament decks
 **Metadata richness**: Player, placement, record, tournament info, deck archetype
 
 ### Phase 3: Yu-Gi-Oh Tournament Decks (Next week)
@@ -102,7 +102,7 @@ go run cmd/dataset/main.go \
 - May need browser emulation for JS-rendered content
 - Card lists extracted from image URLs
 
-**Expected yield**: 200-500 Yu-Gi-Oh tournament decks  
+**Expected yield**: 200-500 Yu-Gi-Oh tournament decks
 **Metadata richness**: Player, tournament, placement, deck archetype
 
 **Alternative**: Check if YGOPRODeck has an API endpoint
@@ -115,7 +115,7 @@ curl https://db.ygoprodeck.com/api/v7/deckinfo.php?deck_id=651815
 
 **Fix Pokemon TCG API Pagination**
 
-**Status**: Scraper is correct, pagination error at page 13 is gracefully handled  
+**Status**: Scraper is correct, pagination error at page 13 is gracefully handled
 **Action**: Re-run scraper to completion
 
 ```bash
@@ -126,7 +126,7 @@ go run cmd/dataset/main.go \
   --parallel 8
 ```
 
-**Expected yield**: ~10,000 complete Pokemon cards (from current ~3,000)  
+**Expected yield**: ~10,000 complete Pokemon cards (from current ~3,000)
 **Time estimate**: 15-20 minutes
 
 ### Phase 5: Data Quality & Enrichment (Ongoing)

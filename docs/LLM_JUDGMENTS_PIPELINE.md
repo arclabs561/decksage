@@ -123,12 +123,12 @@ Every evaluation step compares model predictions against LLM labels:
 def evaluate_embedding(wv, test_set, ...):
     for query, labels in test_set.items():  # labels = LLM-generated
         predictions = wv.most_similar(query, topn=10)
-        
+
         # Check predictions against LLM labels
-        hits = sum(1 for pred in predictions 
-                   if pred in labels["highly_relevant"] or 
+        hits = sum(1 for pred in predictions
+                   if pred in labels["highly_relevant"] or
                       pred in labels["relevant"] or ...)
-        
+
         p_at_k = hits / 10
 ```
 
@@ -139,10 +139,10 @@ def evaluate_embedding(wv, test_set, ...):
 for p, q, dim, ... in grid_search_space:
     # Train (no labels)
     wv = train_embedding(edgelist_file, p=p, q=q, ...)
-    
+
     # Evaluate (uses LLM labels)
     metrics = evaluate_embedding(wv, test_set, ...)  # test_set has LLM labels
-    
+
     # Track best
     if metrics["p@10"] > best_p@10:
         best_config = {p, q, dim, ...}
@@ -154,10 +154,10 @@ for p, q, dim, ... in grid_search_space:
 # From optimize_fusion_weights.py
 for embed_w, jaccard_w, func_w in weight_grid:
     fusion = WeightedLateFusion(weights={embed: embed_w, ...})
-    
+
     # Evaluate fusion on test set (uses LLM labels)
     metrics = evaluate_similarity(test_set, fusion.similar, ...)
-    
+
     # Track best
     if metrics["p@10"] > best_p@10:
         best_weights = {embed: embed_w, ...}
@@ -219,4 +219,3 @@ def judge_predictions(test_set, predictions, ...):
 - ✅ Labels: 100/100 queries labeled (LLM + fallback)
 - ⏳ Hyperparameter search: Running (uses test set for evaluation)
 - ⏳ Fusion optimization: Pending (will use test set after embeddings improve)
-

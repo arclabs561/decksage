@@ -19,8 +19,6 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 
 def parse_deck_date(deck: dict[str, Any]) -> datetime | None:
     """Extract date from deck metadata."""
@@ -258,9 +256,7 @@ def temporal_similarity_signal(
             if freq > 0:
                 all_freqs.append(freq)
 
-        stability = (
-            sum(all_freqs) / len(all_freqs) if all_freqs else 0.0
-        )  # Average across months
+        stability = sum(all_freqs) / len(all_freqs) if all_freqs else 0.0  # Average across months
 
         # Combined score
         score = recent_score * 0.5 + stability * 0.3 + trend_boost
@@ -284,7 +280,7 @@ if __name__ == "__main__":
     print("\nFinding trending pairs...")
     trending = find_trending_pairs(monthly_cooccur, min_months=3)
 
-    print(f"\nTop 10 trending pairs:")
+    print("\nTop 10 trending pairs:")
     for card1, card2, trend in trending[:10]:
         print(f"  {card1} + {card2}: {trend:+.3f} per month")
 
@@ -296,4 +292,3 @@ if __name__ == "__main__":
         print("\nLightning Bolt popularity over time:")
         for month, pop in popularity_trends["Lightning Bolt"][-6:]:
             print(f"  {month}: {pop:.1%}")
-

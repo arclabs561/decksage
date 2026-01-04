@@ -1,6 +1,6 @@
 # anno Integration Summary
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ Integrated evaluation framework from `anno` crate
 
 ## What We Integrated
@@ -65,9 +65,9 @@ decksage-annotate eval \
 
 ## Integration Status
 
-✅ **Core evaluation framework integrated**  
-✅ **CLI command added**  
-✅ **Compiles successfully**  
+✅ **Core evaluation framework integrated**
+✅ **CLI command added**
+✅ **Compiles successfully**
 🔮 **Full integration** (actual similarity function calls) - TODO
 
 ## Next Steps
@@ -76,4 +76,3 @@ decksage-annotate eval \
 2. Add significance testing for comparing methods
 3. Add error analysis (why did similarity fail?)
 4. Add stratified metrics (per-game, per-archetype breakdowns)
-

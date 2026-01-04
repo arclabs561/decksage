@@ -23,7 +23,7 @@ alwaysApply: false
   - Limit concurrency to avoid overwhelming APIs or databases
   - Use `asyncio` for async operations (API calls, database queries)
   - Always handle exceptions in concurrent code - one failure shouldn't crash the entire batch
-- **Lineage enforcement**: 
+- **Lineage enforcement**:
   - Before processing Order N data, validate that Order N-1 dependencies exist
   - Use `validate_lineage.py` in automation scripts
   - Never write to Order 0 locations (immutable)

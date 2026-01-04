@@ -17,6 +17,7 @@ import time
 from datetime import datetime
 from pathlib import Path
 
+
 # Set up paths
 _script_file = Path(__file__).resolve()
 _src_dir = _script_file.parent.parent.parent / "src"
@@ -25,16 +26,21 @@ if str(_src_dir) not in sys.path:
 
 try:
     from ml.utils.paths import PATHS
+
     HAS_PATHS = True
 except ImportError:
     HAS_PATHS = False
     # Fallback paths
     PROJECT_ROOT = _script_file.parent.parent.parent
-    PATHS = type('PATHS', (), {
-        'embeddings': PROJECT_ROOT / "data" / "embeddings",
-        'experiments': PROJECT_ROOT / "experiments",
-        'test_magic': PROJECT_ROOT / "experiments" / "test_set_unified_magic.json",
-    })()
+    PATHS = type(
+        "PATHS",
+        (),
+        {
+            "embeddings": PROJECT_ROOT / "data" / "embeddings",
+            "experiments": PROJECT_ROOT / "experiments",
+            "test_magic": PROJECT_ROOT / "experiments" / "test_set_unified_magic.json",
+        },
+    )()
 
 
 def check_embeddings() -> dict[str, dict]:
@@ -44,7 +50,7 @@ def check_embeddings() -> dict[str, dict]:
         "gnn": PATHS.embeddings / "gnn_graphsage.json",
         "cooccurrence": PATHS.embeddings / "production.wv",
     }
-    
+
     for name, path in embeddings.items():
         if path.exists():
             mtime = path.stat().st_mtime
@@ -70,7 +76,7 @@ def check_test_sets() -> dict[str, dict]:
     test_sets = {
         "magic": PATHS.test_magic if HAS_PATHS else Path("experiments/test_set_unified_magic.json"),
     }
-    
+
     for game, path in test_sets.items():
         if path.exists():
             mtime = path.stat().st_mtime
@@ -97,9 +103,11 @@ def check_evaluation_results() -> dict[str, dict]:
     """Check evaluation results."""
     results = {}
     eval_files = {
-        "hybrid": PATHS.hybrid_evaluation_results if HAS_PATHS else Path("experiments/hybrid_evaluation_results.json"),
+        "hybrid": PATHS.hybrid_evaluation_results
+        if HAS_PATHS
+        else Path("experiments/hybrid_evaluation_results.json"),
     }
-    
+
     for name, path in eval_files.items():
         if path.exists():
             try:
@@ -128,7 +136,7 @@ def monitor_once() -> None:
     print("=" * 70)
     print(f"Time: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print()
-    
+
     # Embeddings
     print("EMBEDDINGS:")
     emb_results = check_embeddings()
@@ -141,7 +149,7 @@ def monitor_once() -> None:
         else:
             print(f"  ⏳ {name}: Missing")
     print()
-    
+
     # Test sets
     print("TEST SETS:")
     test_results = check_test_sets()
@@ -154,7 +162,7 @@ def monitor_once() -> None:
         else:
             print(f"  ⏳ {game}: Missing")
     print()
-    
+
     # Evaluation
     print("EVALUATION:")
     eval_results = check_evaluation_results()
@@ -173,14 +181,16 @@ def monitor_once() -> None:
 def main() -> int:
     """Main monitoring loop."""
     parser = argparse.ArgumentParser(description="Comprehensive system monitoring")
-    parser.add_argument("--interval", type=int, default=60, help="Check interval in seconds (default: 60)")
+    parser.add_argument(
+        "--interval", type=int, default=60, help="Check interval in seconds (default: 60)"
+    )
     parser.add_argument("--once", action="store_true", help="Check once and exit")
     args = parser.parse_args()
-    
+
     if args.once:
         monitor_once()
         return 0
-    
+
     iteration = 0
     try:
         while True:
@@ -197,4 +207,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

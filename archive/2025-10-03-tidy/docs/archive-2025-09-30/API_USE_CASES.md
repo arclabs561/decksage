@@ -14,8 +14,8 @@ curl -X POST http://localhost:8000/similar \
   }'
 ```
 
-**Returns:** Chain Lightning, Lava Spike, Fireblast  
-**Method:** Node2Vec (learns functional patterns)  
+**Returns:** Chain Lightning, Lava Spike, Fireblast
+**Method:** Node2Vec (learns functional patterns)
 **P@10:** 0.50
 
 ## Synergies (Cards That Work Together)
@@ -32,8 +32,8 @@ curl -X POST http://localhost:8000/similar \
   }'
 ```
 
-**Returns:** Monastery Swiftspear, Rift Bolt, Lava Dart  
-**Method:** Jaccard (direct co-occurrence)  
+**Returns:** Monastery Swiftspear, Rift Bolt, Lava Dart
+**Method:** Jaccard (direct co-occurrence)
 **P@10:** 0.14
 
 ## Meta Analysis
@@ -50,6 +50,5 @@ curl -X POST http://localhost:8000/similar \
   }'
 ```
 
-**Returns:** Current tournament pairings  
+**Returns:** Current tournament pairings
 **Method:** Jaccard (temporal weighted)
-

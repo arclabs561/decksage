@@ -8,10 +8,9 @@ Future: integrate Scryfall IDs, aliases, localized names.
 
 from __future__ import annotations
 
+import json
 from dataclasses import dataclass
 from pathlib import Path
-import json
-from typing import Optional
 
 
 def normalize_split(name: str) -> str:
@@ -23,13 +22,18 @@ def normalize_split(name: str) -> str:
 
 @dataclass
 class CardResolver:
-    scryfall_dir: Optional[Path] = None
+    scryfall_dir: Path | None = None
 
     def __post_init__(self) -> None:
         if self.scryfall_dir is None:
             # Default to backend Scryfall cards dir if present
             self.scryfall_dir = (
-                Path(__file__).parent.parent / "backend" / "data-full" / "magic" / "scryfall" / "cards"
+                Path(__file__).parent.parent
+                / "backend"
+                / "data-full"
+                / "magic"
+                / "scryfall"
+                / "cards"
             )
         self._name_to_canonical: dict[str, str] = {}
         self._name_to_id: dict[str, str] = {}
@@ -79,9 +83,7 @@ class CardResolver:
     def equals(self, a: str, b: str) -> bool:
         return self.canonical(a) == self.canonical(b)
 
-    def card_id(self, name: str) -> Optional[str]:
+    def card_id(self, name: str) -> str | None:
         self._load_index()
         key = self._safe_lower(normalize_split(name))
         return self._name_to_id.get(key)
-
-

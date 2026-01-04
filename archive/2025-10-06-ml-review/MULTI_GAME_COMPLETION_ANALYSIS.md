@@ -1,6 +1,6 @@
 # Multi-Game Deck Completion: Reality & Path Forward
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Context**: Post-implementation introspection after discovering multi-game data conflation
 
 ---
@@ -203,7 +203,7 @@ Trained:
        "magic": KeyedVectors.load("magic_64d.wv"),
        "pokemon": KeyedVectors.load("pokemon_64d.wv"),
    }
-   
+
    # Route by game
    @router.post("/v1/{game}/similar")
    def find_similar_game(game: str, request: SimilarityRequest):

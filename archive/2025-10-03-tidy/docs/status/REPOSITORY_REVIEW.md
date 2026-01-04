@@ -5,13 +5,13 @@ Comprehensive review after initial tidying to catch remaining issues.
 ## Issues Found & Fixed
 
 ### 1. Stray Log File ✅ FIXED
-**Issue**: `src/backend/scryfall_extract.log` (empty, 0 bytes)  
-**Action**: Removed  
+**Issue**: `src/backend/scryfall_extract.log` (empty, 0 bytes)
+**Action**: Removed
 **Reason**: Empty log files should not be in source tree
 
 ### 2. Python Cache Files ✅ FIXED
-**Issue**: `src/ml/__pycache__/` directory with 18 .pyc files  
-**Action**: Removed  
+**Issue**: `src/ml/__pycache__/` directory with 18 .pyc files
+**Action**: Removed
 **Reason**: Already in .gitignore, should not persist
 
 ### 3. Experiment Log Proliferation ✅ FIXED
@@ -28,7 +28,7 @@ Comprehensive review after initial tidying to catch remaining issues.
 - EVOLVED: Full enriched metadata (tags, keywords, links)
 - BACKUP: Original for reference
 
-**Rationale**: 
+**Rationale**:
 - _CLEAN was misleading name - actually stale/incomplete
 - Keep both main (simple) and EVOLVED (complete) for different use cases
 - BACKUP preserved for history
@@ -44,11 +44,11 @@ Comprehensive review after initial tidying to catch remaining issues.
 - Or remove if superseded by current test sets
 
 ### 5. Not a Git Repository
-**Finding**: No `.git/` directory found  
-**Implication**: .gitignore exists but repo not initialized  
+**Finding**: No `.git/` directory found
+**Implication**: .gitignore exists but repo not initialized
 **Impact**: All files currently exist as-is, nothing is being tracked/ignored
 
-**Decision needed**: 
+**Decision needed**:
 - Initialize git repo? (`git init`)
 - Or is this intentional (pre-git phase)?
 
@@ -129,4 +129,3 @@ Repository is **95% tidy**. Core structure is clean:
 Remaining issues are minor and mostly need clarification on which experiment logs to keep and whether old assets should be archived.
 
 **Grade**: B+ → A- (after experiment log cleanup)
-

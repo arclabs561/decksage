@@ -11,19 +11,19 @@ This is a lightweight interface for planning/learning:
 from __future__ import annotations
 
 import logging
-import random
-from dataclasses import dataclass
-from typing import Any, Literal, Optional
+from typing import Literal
 
 from .deck_patch import DeckPatch, apply_deck_patch
-from ..validation.validators.models import DeckCard
+
 
 logger = logging.getLogger("decksage.deck_env")
 
 
 # Simplified Deck model for the environment; real validation happens elsewhere
 class Deck:
-    def __init__(self, game: Literal["magic", "yugioh", "pokemon"], target_main_size: Optional[int] = None):
+    def __init__(
+        self, game: Literal["magic", "yugioh", "pokemon"], target_main_size: int | None = None
+    ):
         self.game = game
         self.target_main_size = target_main_size
         self._deck: dict | None = None
@@ -38,10 +38,13 @@ class Deck:
         obs = {
             "format": self._deck.get("format"),
             "archetype": self._deck.get("archetype"),
-            "partitions": {p.get("name"): {
-                "size": sum(c.get("count", 0) for c in p.get("cards", []) or []),
-                "unique": len(p.get("cards", []) or []),
-            } for p in parts},
+            "partitions": {
+                p.get("name"): {
+                    "size": sum(c.get("count", 0) for c in p.get("cards", []) or []),
+                    "unique": len(p.get("cards", []) or []),
+                }
+                for p in parts
+            },
         }
         return obs
 
@@ -70,8 +73,3 @@ class Deck:
 
 
 __all__ = ["DeckCompletionEnv", "StepResult"]
-
-
-
-
-

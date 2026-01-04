@@ -15,11 +15,11 @@ Creates:
 # ]
 # ///
 
-import json
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 import boto3
+
 
 S3_BUCKET = "games-collections"
 
@@ -56,16 +56,18 @@ def create_directory_readme(
         lines.extend(["", "## Usage", ""])
         for key, value in usage.items():
             lines.append(f"### {key}")
-            lines.append(f"```bash")
+            lines.append("```bash")
             lines.append(value)
             lines.append("```")
             lines.append("")
 
-    lines.extend([
-        "",
-        "---",
-        f"*Last updated: {datetime.now(timezone.utc).isoformat()}*",
-    ])
+    lines.extend(
+        [
+            "",
+            "---",
+            f"*Last updated: {datetime.now(UTC).isoformat()}*",
+        ]
+    )
 
     return "\n".join(lines)
 
@@ -77,11 +79,13 @@ def list_s3_objects(s3_client: Any, prefix: str) -> list[dict[str, Any]]:
     for page in paginator.paginate(Bucket=S3_BUCKET, Prefix=prefix):
         if "Contents" in page:
             for obj in page["Contents"]:
-                objects.append({
-                    "key": obj["Key"],
-                    "size": obj["Size"],
-                    "modified": obj["LastModified"].isoformat(),
-                })
+                objects.append(
+                    {
+                        "key": obj["Key"],
+                        "size": obj["Size"],
+                        "modified": obj["LastModified"].isoformat(),
+                    }
+                )
     return objects
 
 
@@ -255,4 +259,3 @@ See `model-cards/README.json` for the full index.
 
 if __name__ == "__main__":
     main()
-

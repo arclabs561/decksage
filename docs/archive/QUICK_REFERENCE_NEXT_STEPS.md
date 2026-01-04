@@ -1,6 +1,6 @@
 # Quick Reference: What's Next
 
-**Date**: 2025-12-06  
+**Date**: 2025-12-06
 **Status**: All systems proceeding
 
 ---
@@ -167,4 +167,3 @@ uv run --script src/ml/scripts/retry_failed_enrichments.py \
 - Commands available
 
 **Keep Going**: Everything is proceeding smoothly! 🚀
-

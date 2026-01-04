@@ -214,7 +214,7 @@ func (d *Dataset) extractCards(
 			return ctx.Err()
 		default:
 		}
-		
+
 		// Check item limit
 		if n, ok := opts.ItemLimit.Get(); ok && i >= n {
 			break
@@ -300,7 +300,7 @@ func (d *Dataset) parseCard(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return fmt.Errorf("failed to write card %q: %w", card.Name, err)
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()
@@ -489,7 +489,7 @@ func (d *Dataset) parseCollection(
 		// Try to get partition name from id attribute on anchor (legacy format)
 		anchorSel := headerSel.Find("a:first-of-type")
 		partitionName, hasID := anchorSel.Attr("id")
-		
+
 		// If no id attribute, extract from text content
 		if !hasID {
 			// Clone the header selection and remove child elements to get just the text
@@ -498,12 +498,12 @@ func (d *Dataset) parseCollection(
 			textSel.Find(".card-grid-header-dot").Remove()
 			textSel.Find("span").Remove()
 			partitionName = strings.TrimSpace(textSel.Text())
-			
+
 			// Clean up the partition name
 			partitionName = strings.TrimSpace(partitionName)
 			partitionName = strings.TrimPrefix(partitionName, "•")
 			partitionName = strings.TrimSpace(partitionName)
-			
+
 			// If still empty, try extracting from the raw text content
 			if partitionName == "" {
 				// Get all text and split by newlines
@@ -512,8 +512,8 @@ func (d *Dataset) parseCollection(
 				for _, line := range lines {
 					line = strings.TrimSpace(line)
 					// Skip lines with "cards", bullet points, or empty
-					if line != "" && 
-					   !strings.Contains(strings.ToLower(line), "cards") && 
+					if line != "" &&
+					   !strings.Contains(strings.ToLower(line), "cards") &&
 					   !strings.Contains(line, "•") &&
 					   !strings.HasPrefix(line, "<") {
 						partitionName = line
@@ -521,7 +521,7 @@ func (d *Dataset) parseCollection(
 					}
 				}
 			}
-			
+
 			// Final cleanup: remove any HTML entities or special characters
 			partitionName = strings.TrimSpace(partitionName)
 			// Remove common prefixes/suffixes
@@ -529,14 +529,14 @@ func (d *Dataset) parseCollection(
 			partitionName = strings.TrimSuffix(partitionName, "•")
 			partitionName = strings.TrimSpace(partitionName)
 		}
-		
+
 		// If we still don't have a partition name, skip this partition with a warning
 		if partitionName == "" {
 			html, _ := headerSel.Html()
 			d.log.Field("html", html).Warnf(ctx, "skipping partition with no name")
 			return true // Continue to next partition instead of failing
 		}
-		
+
 		var cards []game.CardDesc
 		seen := make(map[string]int) // Key: normalized card name (lowercase), Value: index in cards slice
 		headerSel.ParentsMatcher(goquery.Single(".card-grid-header")).
@@ -564,13 +564,13 @@ func (d *Dataset) parseCollection(
 					Count: 1,
 				})
 			})
-		
+
 		// Only add partition if it has cards (validation requires non-empty partitions)
 		if len(cards) == 0 {
 			d.log.Field("partition", partitionName).Warnf(ctx, "skipping partition with no cards")
 			return true // Continue to next partition
 		}
-		
+
 		partitions = append(partitions, game.Partition{
 			Name:  partitionName,
 			Cards: cards,
@@ -580,7 +580,7 @@ func (d *Dataset) parseCollection(
 	if err != nil {
 		return err
 	}
-	
+
 	// Check if we have any partitions with cards
 	if len(partitions) == 0 {
 		return fmt.Errorf("collection has no partitions with cards")
@@ -600,12 +600,12 @@ func (d *Dataset) parseCollection(
 		ReleaseDate: setReleaseDate,
 		Partitions:  partitions,
 	}
-	
+
 	// Validate and normalize the collection before writing
 	if err := set.Canonicalize(); err != nil {
 		return fmt.Errorf("collection is invalid: %w", err)
 	}
-	
+
 	b, err := json.Marshal(set)
 	if err != nil {
 		return err
@@ -614,7 +614,7 @@ func (d *Dataset) parseCollection(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return err
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()

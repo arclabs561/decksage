@@ -28,7 +28,7 @@ alwaysApply: false
 - **Contrastive learning**: Optional contrastive loss in GNN training for improved embedding geometry
 - **Fusion weights**: 30% GNN, 25% Instruction-tuned, 20% Co-occurrence, 15% Jaccard, 10% Functional (default, tunable)
 - **Graph storage**: JSON format for incremental graph (`data/graphs/incremental_graph.json`), edgelist export for GNN training
-- **Model options**: 
+- **Model options**:
   - GNN: GraphSAGE (inductive, default), LightGCN (recommendation-optimized), GCN, GAT
   - Instruction-tuned: E5-base-v2 (default), E5-Mistral-7B (newer), BGE-M3 (multilingual)
 - **Component training scripts**:

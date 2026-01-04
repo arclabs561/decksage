@@ -39,7 +39,7 @@ type Card struct {
 	Inherited   []Effect    `json:"inherited,omitempty"`  // Inherited effects
 	Images      []CardImage `json:"images,omitempty"`
 	References  []CardRef   `json:"references,omitempty"`
-	
+
 	// Enrichment data
 	Prices     CardPrices `json:"prices,omitempty"`     // Market pricing
 	Set        string     `json:"set,omitempty"`        // Set code
@@ -104,4 +104,3 @@ func (ct *CollectionTypeSet) IsCollectionType()    {}
 const (
 	PartitionDeck = "Deck"
 )
-

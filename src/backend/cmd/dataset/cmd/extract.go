@@ -103,16 +103,16 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		)
 	}
 	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
-	
+
 	// Create stats tracker and progress reporter for extraction metrics
 	stats := games.NewExtractStats(config.Log)
 	progress := games.NewProgressReporter(config.Log, d.Description().Name, 30*time.Second)
-	
+
 	// Pass stats through context so datasets can access it
 	ctxWithStats := games.WithExtractStats(config.Ctx, stats)
-	
+
 	config.Log.Infof(ctxWithStats, "🚀 Starting extraction for dataset: %s", d.Description().Name)
-	
+
 	if err := d.Extract(ctxWithStats, scraper, opts...); err != nil {
 		stats.RecordError(config.Ctx, "", d.Description().Name, err)
 		progress.IncrementFailed()
@@ -121,20 +121,20 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		config.Log.Infof(config.Ctx, "Extraction summary: %s", stats.Summary())
 		return fmt.Errorf("failed to update: %w", err)
 	}
-	
+
 	// Final progress report
 	progress.FinalReport()
-	
+
 	// Display extraction summary with quality metrics
 	config.Log.Infof(config.Ctx, "✅ Extraction complete: %s", stats.Summary())
-	
+
 	// Show quality metrics
 	if stats.NormalizedCount > 0 {
 		config.Log.Infof(config.Ctx, "📝 Normalized %d card names", stats.NormalizedCount)
 	}
 	cacheHitRate := stats.GetCacheHitRate() * 100
 	if stats.CacheHits+stats.CacheMisses > 0 {
-		config.Log.Infof(config.Ctx, "💾 Cache: %.1f%% hit rate (%d hits, %d misses)", 
+		config.Log.Infof(config.Ctx, "💾 Cache: %.1f%% hit rate (%d hits, %d misses)",
 			cacheHitRate, stats.CacheHits, stats.CacheMisses)
 	}
 	if len(stats.ValidationFailures) > 0 {
@@ -143,7 +143,7 @@ func runExtract(cmd *cobra.Command, args []string) error {
 			config.Log.Warnf(config.Ctx, "   - %s: %d", errorType, count)
 		}
 	}
-	
+
 	// Show recent errors if any
 	errors := stats.GetErrors()
 	if len(errors) > 0 {

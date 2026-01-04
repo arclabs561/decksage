@@ -15,8 +15,3 @@ def test_detect_cooccurrence_outliers_flags_high_counts():
 
     findings = detect_cooccurrence_outliers(df)
     assert any(f.get("type") == "cooccurrence_outlier_high" for f in findings)
-
-
-
-
-

@@ -16,7 +16,7 @@ Cards: Island, Counterspell, Control Magic, ...
 → LLM: "Not consistent - these are control cards" ❌
 ```
 
-**Output**: 
+**Output**:
 - % of archetypes correctly labeled
 - Suggested relabeling for inconsistent decks
 - Common mislabeling patterns
@@ -70,7 +70,7 @@ Cards: ..., Black Lotus, ...
 ### Phase 4: Overall Quality Score
 **Combines all validations:**
 ```
-Quality Score = 0.4 * archetype_consistency 
+Quality Score = 0.4 * archetype_consistency
               + 0.3 * relationship_validity
               + 0.3 * format_legality
 ```
@@ -242,6 +242,3 @@ save_with_metadata(high_quality, quality_scores=results)
 - More reliable similarity results
 - Confidence in published baselines
 - Automated quality monitoring
-
-
-

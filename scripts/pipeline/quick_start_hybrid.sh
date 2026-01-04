@@ -86,4 +86,3 @@ echo "For fast GPU training:"
 echo " ../runctl/target/release/runctl aws create --spot g4dn.xlarge"
 echo " just train-gnn-aws <instance-id>"
 echo ""
-

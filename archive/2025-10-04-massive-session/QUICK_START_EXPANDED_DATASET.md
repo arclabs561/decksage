@@ -99,7 +99,7 @@ cd src/backend
 # Pokemon: 1,000+ decks
 go run cmd/dataset/main.go --bucket file://./data-full extract limitless-web --pages 100 --limit 2000
 
-# YGO: 200+ decks  
+# YGO: 200+ decks
 go run cmd/dataset/main.go --bucket file://./data-full extract ygoprodeck-tournament --pages 30 --limit 500
 ```
 
@@ -171,11 +171,11 @@ make data-quality      # Validate data
 
 ## 🎉 Success Metrics
 
-**Dataset Growth**: 0 → 421 tournament decks (Pokemon + YGO)  
-**Cross-Game Parity**: 33% → 100%  
-**Code Quality**: 94% of issues fixed  
-**Documentation**: 9 comprehensive files  
-**Scrapers**: 3 → 5 working sources  
+**Dataset Growth**: 0 → 421 tournament decks (Pokemon + YGO)
+**Cross-Game Parity**: 33% → 100%
+**Code Quality**: 94% of issues fixed
+**Documentation**: 9 comprehensive files
+**Scrapers**: 3 → 5 working sources
 **Time to Value**: 6 hours (design → implementation → production)
 
 ---

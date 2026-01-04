@@ -350,67 +350,67 @@ func (d *Dataset) parseCollection(
 	deckID := strings.TrimPrefix(u, "https://www.mtggoldfish.com/deck/")
 	deckID = strings.TrimSuffix(deckID, "#paper")
 	deckID = strings.TrimSuffix(deckID, "#")
-	
+
 	// Fetch deck in plain text format (much more reliable than HTML parsing)
 	downloadURL := fmt.Sprintf("https://www.mtggoldfish.com/deck/download/%s", deckID)
 	downloadPage, err := d.fetch(ctx, sc, downloadURL, opts)
 	if err != nil {
 		return fmt.Errorf("failed to fetch deck download: %w", err)
 	}
-	
+
 	// Parse plain text deck format:
 	// "3 Card Name\n4 Another Card\n\n1 Sideboard Card\n..."
 	// Blank line separates main deck from sideboard
 	deckText := string(downloadPage.Response.Body)
 	lines := strings.Split(deckText, "\n")
-	
+
 	var mainCards []game.CardDesc
 	var sideboardCards []game.CardDesc
 	inSideboard := false
-	
+
 	for _, line := range lines {
 		line = strings.TrimSpace(line)
 		if line == "" {
 			inSideboard = true
 			continue
 		}
-		
+
 		// Parse format: "3 Card Name" or "4 Card Name"
 		parts := strings.SplitN(line, " ", 2)
 		if len(parts) != 2 {
 			continue // Skip invalid lines
 		}
-		
+
 		countStr := parts[0]
 		cardName := parts[1]
-		
+
 		count, parseErr := strconv.ParseInt(countStr, 10, 0)
 		if parseErr != nil {
 			continue // Skip lines that don't start with a number
 		}
-		
+
 		// Normalize card name for consistency
 		normalizedName := games.NormalizeCardName(cardName)
 		if normalizedName == "" || count <= 0 {
 			continue
 		}
-		
+
 		card := game.CardDesc{
 			Name:  normalizedName,
 			Count: int(count),
 		}
-		
+
 		if inSideboard {
 			sideboardCards = append(sideboardCards, card)
 		} else {
 			mainCards = append(mainCards, card)
 		}
 	}
-	
+
 	if len(mainCards) == 0 {
 		return fmt.Errorf("failed to parse cards: no cards found in deck download")
 	}
-	
+
 	partitions := []game.Partition{{
 		Name:  "Main",
 		Cards: mainCards,
@@ -425,7 +425,7 @@ func (d *Dataset) parseCollection(
 	// Extract tournament type and location from deck name or URL
 	tournamentType := extractMTGTournamentType(deckName)
 	location := extractMTGLocation(deckName)
-	
+
 	t := &game.CollectionTypeDeck{
 		Name:           deckName,
 		Format:         format,
@@ -454,12 +454,12 @@ func (d *Dataset) parseCollection(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return err
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()
 	}
-	
+
 	return nil
 }
 
@@ -470,9 +470,9 @@ func extractMTGTournamentType(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	eventLower := strings.ToLower(eventName)
-	
+
 	// Check for common tournament types
 	if strings.Contains(eventLower, "grand prix") || strings.Contains(eventLower, "gp ") {
 		return "GP"
@@ -507,7 +507,7 @@ func extractMTGTournamentType(eventName string) string {
 	if strings.Contains(eventLower, "invitational") {
 		return "Invitational"
 	}
-	
+
 	return ""
 }
 
@@ -517,7 +517,7 @@ func extractMTGLocation(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	// Try to find comma-separated location
 	parts := strings.Split(eventName, ",")
 	if len(parts) >= 2 {
@@ -535,7 +535,7 @@ func extractMTGLocation(eventName string) string {
 			return fmt.Sprintf("%s, %s", city, lastPart)
 		}
 	}
-	
+
 	// Try to extract city from common patterns like "GP Las Vegas"
 	eventLower := strings.ToLower(eventName)
 	if strings.Contains(eventLower, "gp ") {
@@ -548,7 +548,7 @@ func extractMTGLocation(eventName string) string {
 			}
 		}
 	}
-	
+
 	return ""
 }
 

@@ -88,12 +88,12 @@ tasks:
     predicted_by: [magic_128d, magic_256d, magic_128d_bfs]
     relevance: 4  # <-- Fill this in
     notes: 'Functional reprint in Legacy'
-  
+
   - card: Lava Dart
     predicted_by: [magic_128d, magic_128d_dfs]
     relevance: 3  # <-- Fill this in
     notes: 'Flashback damage spell'
-  
+
   - card: Mana Drain
     predicted_by: [magic_64d]
     relevance: 0  # <-- Fill this in
@@ -301,7 +301,7 @@ for seed in 42 43 44 45 46; do
   python annotate.py create \
     --seed $seed \
     --output ../../experiments/annotations/annotations_fold${seed}.yaml
-  
+
   # Annotate, then:
   python compare_models.py \
     --test-set ../../experiments/test_set_fold${seed}.json \
@@ -354,4 +354,3 @@ python api.py --embeddings ../../data/embeddings/production.wv
 - Check if embeddings trained on same data as test queries
 - Verify annotation quality (inter-annotator agreement)
 - Look at specific failure cases for insights
-

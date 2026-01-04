@@ -83,13 +83,13 @@ def test_llm_data_validator_integration():
     import os
     if not os.getenv("OPENROUTER_API_KEY"):
         pytest.skip("OPENROUTER_API_KEY not set")
-    
+
     from llm_data_validator import DataQualityValidator
     import asyncio
-    
+
     validator = DataQualityValidator()
     assert len(validator.decks) > 0
-    
+
     # Actually make an LLM call
     results = asyncio.run(
         validator.validate_archetype_sample(sample_size=1)
@@ -261,17 +261,17 @@ Add test that:
 
 1. **"It works" ≠ "It works as designed"**
    - Tests passed but didn't test what we thought
-   
+
 2. **Integration tests should integrate**
    - Testing imports isn't integration testing
-   
+
 3. **Verify performance claims**
    - "1082x" was for wrong test
    - Should have measured actual LLM call speedup
-   
+
 4. **Check what's in the cache directory**
    - Empty directory = not caching
-   
+
 5. **Backwards review catches what forward progress misses**
    - Building forward: "it compiles, ship it"
    - Reviewing backward: "wait, this doesn't make sense"
@@ -283,7 +283,7 @@ Add test that:
 **Status:** System works but WITHOUT caching.
 
 - ✅ LLM calls work
-- ✅ Structured outputs work  
+- ✅ Structured outputs work
 - ✅ JSON mode works
 - ❌ Caching doesn't work
 - ❌ Tests don't test what they claim

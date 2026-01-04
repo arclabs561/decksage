@@ -252,7 +252,7 @@ type CollectionTypeDeck struct {
 	Losses    int    `json:"losses,omitempty"`    // Loss count
 	Ties      int    `json:"ties,omitempty"`      // Tie count
 	Record    string `json:"record,omitempty"`    // Record string like "5-2-1"
-	
+
 	// Enhanced tournament metadata
 	TournamentType   string  `json:"tournamentType,omitempty"`   // "GP", "PTQ", "FNM", "Regional", "Championship"
 	TournamentSize   int     `json:"tournamentSize,omitempty"`   // Number of players
@@ -261,12 +261,12 @@ type CollectionTypeDeck struct {
 	TournamentID     string  `json:"tournamentId,omitempty"`     // Unique tournament identifier
 	RoundCount       int     `json:"roundCount,omitempty"`       // Swiss rounds
 	TopCutSize       int     `json:"topCutSize,omitempty"`       // Top 8, Top 16, etc.
-	
+
 	// Temporal context (computed)
 	DaysSinceRotation  int     `json:"daysSinceRotation,omitempty"`  // Days since last format rotation
 	DaysSinceBanUpdate  int     `json:"daysSinceBanUpdate,omitempty"` // Days since last ban list
 	MetaShare           float64 `json:"metaShare,omitempty"`          // Deck's meta share at event time (%)
-	
+
 	// Round-by-round results
 	RoundResults []RoundResult `json:"roundResults,omitempty"`
 }

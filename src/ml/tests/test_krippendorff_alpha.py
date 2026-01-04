@@ -67,9 +67,9 @@ def test_compute_iaa_for_labels():
             "irrelevant": [],
         },
     ]
-    
+
     iaa = compute_iaa_for_labels(judgments)
-    
+
     assert iaa["num_judges"] == 3
     assert "krippendorff_alpha" in iaa
     assert "agreement_rate" in iaa
@@ -80,11 +80,7 @@ def test_compute_iaa_for_labels():
 def test_compute_iaa_empty():
     """Test IAA computation with empty judgments."""
     iaa = compute_iaa_for_labels([])
-    
+
     assert iaa["num_judges"] == 0
     assert iaa["krippendorff_alpha"] == 0.0
     assert iaa["agreement_rate"] == 0.0
-
-
-
-

@@ -38,11 +38,10 @@
 Run 5 real experiments today, measure real improvement:
 
 **exp_026:** Actually use Scryfall types (not placeholder)
-**exp_027:** Actually train Modern-only embeddings 
+**exp_027:** Actually train Modern-only embeddings
 **exp_028:** Actually implement archetype conditioning
 **exp_029:** Actually use oracle text with BERT
 **exp_030:** Whichever actually works best
 
 Each will be real code that runs and produces numbers.
 No more placeholders.
-

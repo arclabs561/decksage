@@ -126,9 +126,8 @@ Don't deploy Node2Vec until:
 
 ## Grade
 
-**Before:** Tests broken, claims unfounded  
-**After:** Working system, honest assessment, clear path forward  
+**Before:** Tests broken, claims unfounded
+**After:** Working system, honest assessment, clear path forward
 **Grade:** B (7.5/10) - Functional but needs filtering for production
 
 **Path to A:** Format-specific embeddings + type filtering + 50-query validation
-

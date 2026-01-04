@@ -1,6 +1,6 @@
 # Code Tidying Summary
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Scope**: Rust annotation crate + Python codebase cleanup
 
 ## ✅ Rust Annotation Crate Cleanup
@@ -64,8 +64,8 @@ Found 9 TODO comments:
 
 ## ✅ Status
 
-**Rust Code**: ✅ Clean, formatted, no warnings  
-**Dependencies**: ✅ Minimal, all used  
+**Rust Code**: ✅ Clean, formatted, no warnings
+**Dependencies**: ✅ Minimal, all used
 **Python Code**: ⚠️ 9 TODOs (non-critical, future enhancements)
 
 ## 📋 Files Modified
@@ -83,4 +83,3 @@ Found 9 TODO comments:
 2. 🔮 Consider using more rank-refine features (MMR, MaxSim)
 3. 🔮 Address Python TODOs as needed
 4. 🔮 Consider extracting annotation logic to `rank-anno` if reusable
-

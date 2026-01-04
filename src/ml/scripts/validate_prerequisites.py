@@ -12,17 +12,19 @@ are available before running validation scripts.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from pathlib import Path
 from typing import Any
 
 # Set up project paths
 from ml.utils.path_setup import setup_project_paths
+
+
 setup_project_paths()
 
-from ml.utils.paths import PATHS
 from ml.utils.logging_config import setup_script_logging
+from ml.utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -52,14 +54,14 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
         "files": {},
         "overall": "pass",
     }
-    
+
     # Required dependencies
     required_deps = {
         "pandas": "pandas",
         "numpy": "numpy",
         "json": "json",
     }
-    
+
     for name, import_name in required_deps.items():
         available, message = check_optional_dependency(name, import_name)
         results["required"][name] = {
@@ -68,7 +70,7 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
         }
         if not available:
             results["overall"] = "fail"
-    
+
     # Optional dependencies
     optional_deps = {
         "pydantic_ai": "pydantic_ai",
@@ -76,21 +78,21 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
         "gensim": "gensim",
         "scikit-learn": "sklearn",
     }
-    
+
     for name, import_name in optional_deps.items():
         available, message = check_optional_dependency(name, import_name)
         results["optional"][name] = {
             "available": available,
             "message": message,
         }
-    
+
     # Required files
     required_files = {
         "test_set": getattr(PATHS, "test_magic", None),
         "decks": PATHS.decks_all_final,
         "pairs": PATHS.pairs_large,
     }
-    
+
     for name, path in required_files.items():
         if path:
             available, message = check_required_file(path, name)
@@ -100,7 +102,7 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
             }
             if not available and name in ["test_set", "decks"]:
                 results["overall"] = "warn" if results["overall"] == "pass" else "fail"
-    
+
     # Check output directory
     output_dir = PATHS.experiments
     if not output_dir.exists():
@@ -121,7 +123,7 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
             "available": True,
             "message": f"Output directory exists: {output_dir}",
         }
-    
+
     return results
 
 
@@ -138,45 +140,45 @@ def main() -> int:
         action="store_true",
         help="Output JSON format",
     )
-    
+
     args = parser.parse_args()
-    
+
     results = validate_tier0_tier1_prerequisites()
-    
+
     if args.json or args.output:
         from ml.scripts.fix_nuances import safe_json_dump
-        
+
         if args.output:
             safe_json_dump(results, args.output, indent=2)
         if args.json:
             import json
+
             print(json.dumps(results, indent=2))
     else:
         # Human-readable output
         print("\n" + "=" * 70)
         print("Prerequisite Validation")
         print("=" * 70)
-        
+
         print("\nRequired Dependencies:")
         for name, info in results["required"].items():
             status = "✓" if info["available"] else "✗"
             print(f"  {status} {name}: {info['message']}")
-        
+
         print("\nOptional Dependencies:")
         for name, info in results["optional"].items():
             status = "✓" if info["available"] else "○"
             print(f"  {status} {name}: {info['message']}")
-        
+
         print("\nFiles:")
         for name, info in results["files"].items():
             status = "✓" if info["available"] else "✗"
             print(f"  {status} {name}: {info['message']}")
-        
+
         print(f"\nOverall Status: {results['overall'].upper()}")
-    
+
     return 0 if results["overall"] in ["pass", "warn"] else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

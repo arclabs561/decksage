@@ -29,12 +29,12 @@ Think of it as: **"Scrape any card game website → Store structured data → En
    - Removed Redis dependency from tests
    - Updated to current scraper API
    - Fixed option types
-   
+
 2. **Known bugs in parsers** - FIXED ✅
    - Scryfall: Card toughness was copying power field
    - MTGTop8: Error return was wrong type
    - MTGTop8: Error shadowing in URL parsing
-   
+
 3. **Cache directory committed to git** - FIXED ✅
    - Added `.gitignore` to exclude build artifacts and cache
 
@@ -234,7 +234,7 @@ See `REFACTORING_FOR_MULTI_GAME.md` for detailed guide.
 
 **Bigger projects**:
 - Add Yu-Gi-Oh! support
-- Add Pokemon TCG support  
+- Add Pokemon TCG support
 - Implement transform pipeline
 - Build search indexing
 - Create REST API

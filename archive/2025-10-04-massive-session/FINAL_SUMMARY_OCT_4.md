@@ -36,16 +36,16 @@
 ## Bugs Found During Scrutiny 🐛
 
 ### Critical Bug: Sideboard Case Sensitivity
-**Found:** During backward review  
-**Impact:** Sideboard cards merged into main deck (75 cards in Main, 0 in Sideboard)  
-**Root Cause:** Check for `"Sideboard"` but HTML uses `"sideboard"`  
-**Fix:** Made check case-insensitive with `strings.ToLower()`  
+**Found:** During backward review
+**Impact:** Sideboard cards merged into main deck (75 cards in Main, 0 in Sideboard)
+**Root Cause:** Check for `"Sideboard"` but HTML uses `"sideboard"`
+**Fix:** Made check case-insensitive with `strings.ToLower()`
 **Status:** ✅ Fixed and verified
 
 ### False Alarm: Duplicate Cards
-**Initial Observation:** Thought "Abrade" appeared twice  
-**Investigation:** Grouped cards by name, checked counts  
-**Result:** No duplicates exist, was viewing artifact  
+**Initial Observation:** Thought "Abrade" appeared twice
+**Investigation:** Grouped cards by name, checked counts
+**Result:** No duplicates exist, was viewing artifact
 **Status:** ❌ Not a real issue
 
 ---
@@ -76,7 +76,7 @@
    - Code exists (line 290)
    - Just needs implementation
 
-### Priority 2  
+### Priority 2
 2. **Validation** - No deck size validation (should warn if < 60 cards)
 3. **Rate Limiting Tests** - Not covered by current test suite
 4. **End-to-end Tests** - No tests that scrape actual websites
@@ -228,7 +228,7 @@ The scrutiny process **worked as intended**:
 
 ---
 
-**Date:** October 4, 2025  
-**Status:** COMPLETE ✅  
-**Scrutiny Result:** 1 bug found and fixed  
+**Date:** October 4, 2025
+**Status:** COMPLETE ✅
+**Scrutiny Result:** 1 bug found and fixed
 **Final Quality:** High (9/10)

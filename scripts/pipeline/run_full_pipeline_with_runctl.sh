@@ -73,4 +73,3 @@ echo ""
 echo "Download results:"
 echo " s5cmd cp s3://games-collections/experiments/hybrid_evaluation_results.json experiments/"
 echo "="*70
-

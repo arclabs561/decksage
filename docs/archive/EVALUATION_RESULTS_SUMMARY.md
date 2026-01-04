@@ -90,4 +90,3 @@ Possible reasons:
 - Jaccard is currently the best performing method
 - Current embedding needs improvement
 - Fusion weights should be adjusted to favor Jaccard
-

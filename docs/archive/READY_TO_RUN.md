@@ -41,7 +41,7 @@ uv run --script src/ml/scripts/run_evaluation_on_aws.py
 7. Uploads results to S3
 8. Terminates instance
 
-**Expected Time**: 10-15 minutes  
+**Expected Time**: 10-15 minutes
 **Expected Cost**: ~$0.01-0.02
 
 ## 📊 Expected Results
@@ -99,4 +99,3 @@ If evaluation fails:
 - `src/ml/scripts/evaluate_all_embeddings.py` - Main evaluation script
 - `src/ml/utils/name_normalizer.py` - Name mapping utilities
 - `experiments/name_mapping.json` - Generated name mapping
-

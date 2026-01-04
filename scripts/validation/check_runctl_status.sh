@@ -53,4 +53,3 @@ done
 
 echo
 echo "=" | tr -d '\n' && printf '%.0s=' {1..69} && echo
-

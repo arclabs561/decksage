@@ -71,7 +71,7 @@ const (
 
 ### 2. Move Dataset Interface Up
 
-**Current**: `games/magic/dataset/dataset.go` contains MTG-specific Dataset interface  
+**Current**: `games/magic/dataset/dataset.go` contains MTG-specific Dataset interface
 **Proposed**: Move to `games/dataset.go` with game parameter
 
 ```go
@@ -90,7 +90,7 @@ type Dataset interface {
 
 ### 3. Generalize CLI Commands
 
-**Current**: `cmd/dataset/cmd/extract.go` has hardcoded game list  
+**Current**: `cmd/dataset/cmd/extract.go` has hardcoded game list
 **Proposed**: Auto-discover datasets via registry
 
 ```go
@@ -129,22 +129,22 @@ func init() {
 func runExtract(cmd *cobra.Command, args []string) error {
     parts := strings.Split(args[0], "/")
     var game, dataset string
-    
+
     if len(parts) == 2 {
         game, dataset = parts[0], parts[1]
     } else {
         game, dataset = "magic", parts[0]  // default to magic for backwards compat
     }
-    
+
     d, err := games.GetDataset(game, dataset, config.Log, gamesBlob)
     if err != nil {
         return err
     }
-    
+
     return d.Extract(config.Ctx, scraper, opts...)
 }
 
-// Usage: 
+// Usage:
 //   go run ./cmd/dataset extract magic/scryfall
 //   go run ./cmd/dataset extract yugioh/ygoprodeck
 //   go run ./cmd/dataset extract scryfall  # defaults to magic/scryfall
@@ -177,21 +177,21 @@ func NewTestConfig(t *testing.T) *TestConfig {
     ctx := context.Background()
     log := logger.NewLogger(ctx)
     log.SetLevel("DEBUG")
-    
+
     tmpDir, err := os.MkdirTemp("", "test-dataset")
     if err != nil {
         t.Fatalf("failed to create tmp dir: %v", err)
     }
     t.Cleanup(func() { os.RemoveAll(tmpDir) })
-    
+
     bucketURL := fmt.Sprintf("file://%s", tmpDir)
     blob, err := blob.NewBucket(ctx, log, bucketURL)
     if err != nil {
         t.Fatalf("failed to create blob: %v", err)
     }
-    
+
     scraper := scraper.NewScraper(log, blob)
-    
+
     return &TestConfig{
         Ctx:     ctx,
         Log:     log,
@@ -203,7 +203,7 @@ func NewTestConfig(t *testing.T) *TestConfig {
 
 func TestDatasetExtract(t *testing.T, d Dataset, limit int) {
     config := NewTestConfig(t)
-    err := d.Extract(config.Ctx, config.Scraper, 
+    err := d.Extract(config.Ctx, config.Scraper,
         &dataset.OptExtractItemLimit{Limit: limit})
     if err != nil {
         t.Fatalf("extract failed: %v", err)
@@ -370,7 +370,7 @@ go run ./cmd/dataset extract scryfall --limit=10
 ## Timeline Estimate
 
 - **Refactoring (non-breaking)**: 1-2 weeks
-- **First new game (Yu-Gi-Oh!)**: 2-3 weeks  
+- **First new game (Yu-Gi-Oh!)**: 2-3 weeks
 - **Second game (Pokemon)**: 1-2 weeks (faster with patterns established)
 - **Total**: ~6-8 weeks to fully multi-game platform
 

@@ -1,6 +1,6 @@
 # Deck Completion System - Final Report
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Status**: ✅ Production-ready for MTG; Multi-game architecture complete
 
 ---
@@ -201,28 +201,28 @@ Created:
 ## Critical Findings
 
 ### Finding 1: FunctionalTagger Build Spam
-**Issue**: Tagger tries to build card DB on every request (50× "Building card database..." in logs)  
-**Impact**: Noisy logs, wasted cycles  
-**Fix**: Prebuild on startup or lazy-load once with caching  
+**Issue**: Tagger tries to build card DB on every request (50× "Building card database..." in logs)
+**Impact**: Noisy logs, wasted cycles
+**Fix**: Prebuild on startup or lazy-load once with caching
 **Priority**: P1
 
 ### Finding 2: Pokemon/YGO Have No Deck Data
-**Issue**: pokemon_decks.jsonl and yugioh_decks.jsonl are empty (0 bytes)  
-**Impact**: Can't train completion policies for these games  
-**Root cause**: Backend extraction incomplete or export-hetero filtered them out  
-**Fix**: Re-run backend extractors with game-specific exports  
+**Issue**: pokemon_decks.jsonl and yugioh_decks.jsonl are empty (0 bytes)
+**Impact**: Can't train completion policies for these games
+**Root cause**: Backend extraction incomplete or export-hetero filtered them out
+**Fix**: Re-run backend extractors with game-specific exports
 **Priority**: P0 for multi-game support
 
 ### Finding 3: No Game Routing in API
-**Issue**: API uses single global embeddings; can't serve per-game models  
-**Impact**: Pokemon/YGO completion will use MTG embeddings  
-**Fix**: Load per-game models on startup; route by game parameter  
+**Issue**: API uses single global embeddings; can't serve per-game models
+**Impact**: Pokemon/YGO completion will use MTG embeddings
+**Fix**: Load per-game models on startup; route by game parameter
 **Priority**: P1
 
 ### Finding 4: Completion is MTG-Only
-**Issue**: Coverage/curve/budget assume MTG (FunctionalTagger, CMC, Scryfall pricing)  
-**Impact**: Pokemon/YGO completion will give nonsense results  
-**Fix**: Wire per-game taggers/pricing/curve logic  
+**Issue**: Coverage/curve/budget assume MTG (FunctionalTagger, CMC, Scryfall pricing)
+**Impact**: Pokemon/YGO completion will give nonsense results
+**Fix**: Wire per-game taggers/pricing/curve logic
 **Priority**: P1
 
 ---
@@ -339,27 +339,27 @@ Created:
 ## Known Issues & Mitigations
 
 ### Issue: Tagger Build Spam
-**Symptom**: 50+ "Building card database..." logs per completion  
-**Impact**: Noisy logs, wasted cycles  
-**Mitigation**: Lazy-load tagger once; cache in app.state  
+**Symptom**: 50+ "Building card database..." logs per completion
+**Impact**: Noisy logs, wasted cycles
+**Mitigation**: Lazy-load tagger once; cache in app.state
 **Priority**: P1
 
 ### Issue: No Pokemon/YGO Deck Data
-**Symptom**: pokemon_decks.jsonl and yugioh_decks.jsonl are empty  
-**Impact**: Can't train completion policies for these games  
-**Mitigation**: Re-run backend extractors  
+**Symptom**: pokemon_decks.jsonl and yugioh_decks.jsonl are empty
+**Impact**: Can't train completion policies for these games
+**Mitigation**: Re-run backend extractors
 **Priority**: P0 for multi-game
 
 ### Issue: No Game Filtering
-**Symptom**: Suggestions may include wrong-game cards  
-**Impact**: Low for MTG (97% of data); high for Pokemon/YGO  
-**Mitigation**: Add game filter to candidate generation  
+**Symptom**: Suggestions may include wrong-game cards
+**Impact**: Low for MTG (97% of data); high for Pokemon/YGO
+**Mitigation**: Add game filter to candidate generation
 **Priority**: P1
 
 ### Issue: MTG-Only Scoring
-**Symptom**: Coverage/curve/budget assume MTG  
-**Impact**: Pokemon/YGO completion will fail or give bad results  
-**Mitigation**: Wire per-game taggers/pricing/curve  
+**Symptom**: Coverage/curve/budget assume MTG
+**Impact**: Pokemon/YGO completion will fail or give bad results
+**Mitigation**: Wire per-game taggers/pricing/curve
 **Priority**: P1
 
 ---
@@ -404,18 +404,18 @@ curl -X POST http://localhost:8000/v1/deck/suggest_actions \
 ## Research Opportunities
 
 ### 1. Cross-Game Transfer Learning
-**Question**: Does MTG knowledge help Pokemon completion?  
-**Test**: Train on MTG, fine-tune on Pokemon, measure P@10  
+**Question**: Does MTG knowledge help Pokemon completion?
+**Test**: Train on MTG, fine-tune on Pokemon, measure P@10
 **Data**: cross_game_pairs.csv (5.5K pairs) provides signal
 
 ### 2. Multi-Game Fusion Weights
-**Question**: Do optimal weights differ by game?  
-**Test**: Grid search per game; compare magic_weights vs pokemon_weights  
+**Question**: Do optimal weights differ by game?
+**Test**: Grid search per game; compare magic_weights vs pokemon_weights
 **Hypothesis**: Pokemon may favor jaccard more (smaller card pool)
 
 ### 3. Contamination Effect
-**Question**: Does mixed training hurt or help?  
-**Test**: Compare MTG P@10 with clean vs mixed embeddings  
+**Question**: Does mixed training hurt or help?
+**Test**: Compare MTG P@10 with clean vs mixed embeddings
 **Result**: Minimal contamination in top-20; likely acceptable for MTG
 
 ---

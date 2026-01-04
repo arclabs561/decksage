@@ -11,7 +11,7 @@
    - User-visible error messages with helpful tips
    - Differentiates 503 from other errors
 
-3. **Direct Similar Cards Input** 
+3. **Direct Similar Cards Input**
    - Added "Similar Cards Finder" section in `App.js`
    - Standalone view in `SearchResults.js` for direct lookups
    - Exposes `window.showSimilarCardsForName()` function

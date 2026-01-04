@@ -1,6 +1,6 @@
 # DeckSage Quick Reference
 
-Start here: `README.md`  
+Start here: `README.md`
 Deep analysis: `DEEP_REVIEW_TRIAGED_ACTIONS.md`
 
 ---
@@ -42,7 +42,7 @@ Performance:
 
 Data:
 - 52,330 cards (MTG 35k, Pokemon 3k, YGO 14k)
-- 56,521 tournament decks  
+- 56,521 tournament decks
 - 90% cross-game parity achieved
 
 Test Coverage:
@@ -69,7 +69,7 @@ Test Coverage:
 2. **Centralize paths** → robustness (1-2h)
 3. **Add type hints** → better DX (3-4h)
 
-Total MVP: 16-26 hours (T0 items)  
+Total MVP: 16-26 hours (T0 items)
 Full product: 35-45 hours (T0 + T1.1 + T0.3)
 
 ---

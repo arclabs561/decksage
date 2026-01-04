@@ -9,7 +9,7 @@
 4. **Label Generation**: Script completed (need to verify all labels saved)
 
 ### ⚠️ Issues / Unknowns
-1. **Hyperparameter Search**: 
+1. **Hyperparameter Search**:
    - Instance terminated
    - Results not found in S3 or locally
    - **Action**: Re-run with trainctl
@@ -78,4 +78,3 @@
 2. **Verify labeling** (blocking evaluation)
 3. **Continue card enrichment** (background, non-blocking)
 4. **Train with trainctl** (once above resolved)
-

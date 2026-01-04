@@ -14,7 +14,7 @@
 - ✅ Built infrastructure
 - ❌ Pydantic AI doesn't call our functions
 
-### Attempt 2: requests-cache  
+### Attempt 2: requests-cache
 - ✅ Works for `requests` library
 - ❌ Pydantic AI uses `httpx` not `requests`
 
@@ -52,7 +52,7 @@ etag: (missing)
 ```bash
 $ pytest -m llm -v
 ✅ test_llm_judge_actually_works (9s)
-✅ test_data_validator_actually_validates (21s)  
+✅ test_data_validator_actually_validates (21s)
 ✅ test_llm_annotator_actually_annotates (14s)
 ```
 
@@ -63,8 +63,8 @@ $ pytest -m llm -v
 - Will catch real regressions
 
 ### ❌ Caching (F grade)
-**Attempts made:** 4  
-**Success rate:** 0%  
+**Attempts made:** 4
+**Success rate:** 0%
 **Reason:** OpenRouter + Pydantic AI = no clean caching solution
 
 **Options that might work:**
@@ -91,8 +91,8 @@ $ pytest -m llm -v
 
 ## Grade Evolution
 
-**Initial claim:** A+ (caching works, tests pass)  
-**After backwards review:** B+ (works but no caching)  
+**Initial claim:** A+ (caching works, tests pass)
+**After backwards review:** B+ (works but no caching)
 **After refinement attempts:** B (caching genuinely hard)
 
 **Current honest grade:**
@@ -141,7 +141,7 @@ Accept $1-5 per dev session in API costs. It's cheaper than the time spent tryin
 
 ```
 ✅ LLM validators work
-✅ Structured outputs excellent  
+✅ Structured outputs excellent
 ✅ Real tests prove it
 ✅ Documented honestly
 ❌ Caching not feasible (tried 4 ways)
@@ -155,7 +155,7 @@ Accept $1-5 per dev session in API costs. It's cheaper than the time spent tryin
 
 ---
 
-**Time spent:** 
+**Time spent:**
 - Building forward: 2 hours
 - Backwards review: 10 minutes (found 5 bugs)
 - Refinement: 1 hour (tried 4 caching solutions)

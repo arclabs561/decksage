@@ -23,7 +23,7 @@
    - Test set files
    - Card attributes files
    - Hyperparameter results
-   
+
    **Possible reasons**:
    - Different working directory
    - Files in different location
@@ -47,4 +47,3 @@ Since files aren't where expected, let's:
 4. Use trainctl for future training (once fixed) or existing scripts
 
 **Status: Ready to continue, need to verify file locations first**
-

@@ -1,6 +1,6 @@
 # Data Collection Expansion Plan - Prioritized by Impact
 
-**Date**: October 5, 2025  
+**Date**: October 5, 2025
 **Context**: Post deck-completion implementation; applying MoSCoW + RICE frameworks
 
 ---
@@ -22,8 +22,8 @@ YGO:        3,792 pairs,     20 decks,   295 cards ⚠️ Insufficient
 ### Must-Have (P0) - Blocks Core Functionality
 
 #### 1. YGO Tournament Deck Scaling (20 → 1,000+)
-**Impact**: Critical - YGO deck completion unusable with 20 decks  
-**Effort**: Low - scrapers exist, just need to run with higher limits  
+**Impact**: Critical - YGO deck completion unusable with 20 decks
+**Effort**: Low - scrapers exist, just need to run with higher limits
 **RICE Score**: (1000 users × 3 impact × 0.9 confidence) / 2 effort = **1,350**
 
 **Actions**:
@@ -39,8 +39,8 @@ go run cmd/dataset/main.go extract yugioh/ygoprodeck-tournament --scroll-limit 5
 **Expected**: 500-1,000 YGO decks → sufficient for embeddings and completion
 
 #### 2. Pokemon Card Database Completion (3K → 10K+)
-**Impact**: High - only 222 cards in pairs; need full card pool for completion  
-**Effort**: Low - Pokemon TCG API has pagination, just remove limit  
+**Impact**: High - only 222 cards in pairs; need full card pool for completion
+**Effort**: Low - Pokemon TCG API has pagination, just remove limit
 **RICE Score**: (500 users × 2.5 impact × 0.95 confidence) / 1 effort = **1,187**
 
 **Actions**:
@@ -54,8 +54,8 @@ go run cmd/dataset/main.go extract pokemon/pokemontcg  # Remove limit
 **Expected**: 10,000+ Pokemon cards → better coverage for pairs/embeddings
 
 #### 3. Pokemon Deck Scaling (1.2K → 5K+)
-**Impact**: Medium - 1.2K is usable but more improves quality  
-**Effort**: Low - Limitless API exists, needs API key  
+**Impact**: Medium - 1.2K is usable but more improves quality
+**Effort**: Low - Limitless API exists, needs API key
 **RICE Score**: (500 users × 2 impact × 0.8 confidence) / 2 effort = **400**
 
 **Actions**:
@@ -72,8 +72,8 @@ go run cmd/dataset/main.go extract pokemon/limitless --limit 5000
 ### Should-Have (P1) - Significant Quality Improvement
 
 #### 4. MTG Deck Diversity (Format Balance)
-**Impact**: Medium - improves format-specific completion  
-**Effort**: Low - mtgdecks.net scraper exists  
+**Impact**: Medium - improves format-specific completion
+**Effort**: Low - mtgdecks.net scraper exists
 **RICE Score**: (2000 users × 1.5 impact × 0.9 confidence) / 2 effort = **1,350**
 
 **Current imbalance**:
@@ -92,8 +92,8 @@ go run cmd/dataset/main.go extract magic/mtgdecks --limit 10000
 **Expected**: +10K MTG decks with better format balance
 
 #### 5. Temporal Diversity (Meta Evolution)
-**Impact**: High - enables meta-shift analysis and temporal recommendations  
-**Effort**: Medium - need to scrape historical data  
+**Impact**: High - enables meta-shift analysis and temporal recommendations
+**Effort**: Medium - need to scrape historical data
 **RICE Score**: (1500 users × 2.5 impact × 0.7 confidence) / 4 effort = **656**
 
 **Actions**:
@@ -106,8 +106,8 @@ go run cmd/dataset/main.go extract mtgtop8 --date-range 2024-01-01:2024-12-31 --
 **Expected**: Track archetype popularity over time; "what was good 6 months ago?"
 
 #### 6. Pokemon/YGO Pricing Integration
-**Impact**: High - enables budget-aware completion for all games  
-**Effort**: Medium - APIs exist, need integration  
+**Impact**: High - enables budget-aware completion for all games
+**Effort**: Medium - APIs exist, need integration
 **RICE Score**: (1000 users × 2 impact × 0.8 confidence) / 3 effort = **533**
 
 **Sources**:
@@ -120,7 +120,7 @@ go run cmd/dataset/main.go extract mtgtop8 --date-range 2024-01-01:2024-12-31 --
 class PokemonPricing:
     def __init__(self, api_key):
         self.api = TCGPlayerAPI(api_key, game="pokemon")
-    
+
     def get_price(self, card_name):
         # Query TCGPlayer Pokemon singles
         pass
@@ -133,8 +133,8 @@ class PokemonPricing:
 ### Could-Have (P2) - Nice to Have
 
 #### 7. Attributes CSV Generation (Faceted Jaccard)
-**Impact**: Medium - enables faceted similarity (by CMC, type, color)  
-**Effort**: Low - just export from existing data  
+**Impact**: Medium - enables faceted similarity (by CMC, type, color)
+**Effort**: Low - just export from existing data
 **RICE Score**: (800 users × 1.5 impact × 0.9 confidence) / 1 effort = **1,080**
 
 **Actions**:
@@ -154,8 +154,8 @@ pd.DataFrame(attrs).to_csv("data/attributes/magic_attrs.csv", index=False)
 **Expected**: Enables `mode=jaccard_faceted&facet=cmc` in API
 
 #### 8. Win Rate / Meta Share Data
-**Impact**: High - enables "what's winning?" recommendations  
-**Effort**: High - requires parsing meta reports or MTGO/Arena data  
+**Impact**: High - enables "what's winning?" recommendations
+**Effort**: High - requires parsing meta reports or MTGO/Arena data
 **RICE Score**: (1500 users × 2.5 impact × 0.5 confidence) / 6 effort = **312**
 
 **Sources**:
@@ -169,8 +169,8 @@ pd.DataFrame(attrs).to_csv("data/attributes/magic_attrs.csv", index=False)
 - Add meta_share field to deck metadata
 
 #### 9. EDHREC Integration (Commander Enrichment)
-**Impact**: Medium - improves Commander deck completion  
-**Effort**: Low - scraper exists  
+**Impact**: Medium - improves Commander deck completion
+**Effort**: Low - scraper exists
 **RICE Score**: (500 users × 2 impact × 0.8 confidence) / 2 effort = **400**
 
 **Actions**:
@@ -186,15 +186,15 @@ go run cmd/dataset/main.go extract magic/edhrec --limit 500
 ### Won't-Have (P3) - Future Consideration
 
 #### 10. Arena/MTGO Data (Untapped.gg, 17Lands)
-**Impact**: High for digital players  
-**Effort**: Very High - requires account, parsing complex formats  
+**Impact**: High for digital players
+**Effort**: Very High - requires account, parsing complex formats
 **RICE Score**: (1000 users × 2 impact × 0.3 confidence) / 8 effort = **75**
 
 **Defer**: Until core games are solid
 
 #### 11. Community Signals (Upvotes, Comments)
-**Impact**: Low - nice for social features  
-**Effort**: Medium - requires scraping user-generated content  
+**Impact**: Low - nice for social features
+**Effort**: Medium - requires scraping user-generated content
 **RICE Score**: (500 users × 1 impact × 0.5 confidence) / 4 effort = **62**
 
 **Defer**: Not critical for deck completion

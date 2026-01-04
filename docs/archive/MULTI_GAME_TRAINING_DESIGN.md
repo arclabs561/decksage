@@ -191,4 +191,3 @@ Dark Magician,Blue-Eyes White Dragon,YGO,YGO,8,deck_456,ygoprodeck
 - `src/backend/cmd/export-multi-game-graph/main.go` - Multi-game graph export
 - `src/ml/scripts/train_multi_game_embeddings.py` - Multi-game training script
 - `MULTI_GAME_TRAINING_DESIGN.md` - This document
-

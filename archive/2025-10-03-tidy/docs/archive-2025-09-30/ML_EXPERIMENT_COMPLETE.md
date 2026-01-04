@@ -1,6 +1,6 @@
 # 🎉 DeckSage ML Experiment - COMPLETE
 
-**Date**: 2025-09-30  
+**Date**: 2025-09-30
 **Status**: ✅ **SUCCESSFULLY COMPLETED**
 
 ---
@@ -30,7 +30,7 @@ Extract (Go) → Transform (Go) → Graph Export → ML Training (PecanPy) → S
 2. **Chain Lightning** - 0.980 ⚡ (3-damage burn spell)
 3. **Goblin Bushwhacker** - 0.964 (aggressive red creature)
 4. **Reckless Impulse** - 0.958 (red card advantage)
-5. **Rally at the Hornburg** - 0.957 
+5. **Rally at the Hornburg** - 0.957
 6. **Experimental Synthesizer** - 0.953
 7. **Fiery Islet** - 0.952 (red land)
 8. **Goblin Tomb Raider** - 0.951 (aggressive red creature)
@@ -89,7 +89,7 @@ node2vec+: True (weighted graph optimization)
 
 **Python ML** (Embeddings):
 - Load: Parse CSV into edgelist
-- Train: PecanPy node2vec+ 
+- Train: PecanPy node2vec+
 - Search: Gensim KeyedVectors similarity
 
 **Integration**: Perfect! No impedance mismatch.
@@ -265,11 +265,11 @@ go run ./cmd/quick-graph data-full/games/magic pairs.csv
 ## Citations
 
 **PecanPy**:
-Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_  
+Liu R, Krishnan A (2021) PecanPy: a fast, efficient, and parallelized Python implementation of node2vec. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btab202
 
 **node2vec+**:
-Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_  
+Liu R, Hirn M, Krishnan A (2023) Accurately modeling biased random walks on weighted graphs using node2vec+. _Bioinformatics_
 https://doi.org/10.1093/bioinformatics/btad047
 
 **Original node2vec**:
@@ -318,10 +318,10 @@ quality: VALIDATED ✅
 
 The DeckSage ML pipeline is validated and ready for:
 - Yu-Gi-Oh! integration
-- REST API deployment  
+- REST API deployment
 - Web UI development
 - Production scaling
 
-**Quality**: 10/10  
-**Architecture**: Proven  
+**Quality**: 10/10
+**Architecture**: Proven
 **Results**: Excellent

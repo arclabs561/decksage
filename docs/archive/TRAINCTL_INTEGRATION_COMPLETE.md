@@ -5,7 +5,7 @@
 ### 1. ✅ Enhanced Training Script for trainctl
 - **File**: `src/ml/scripts/improve_training_with_validation_enhanced.py`
 - **Added**: Checkpoint interval support for trainctl compatibility
-- **Features**: 
+- **Features**:
   - Saves checkpoints every N epochs (configurable)
   - Compatible with trainctl checkpoint management
   - Progress logging for trainctl monitoring
@@ -70,4 +70,3 @@ just hyperparam-search
 4. **Migrate Existing Scripts**: Replace custom AWS scripts with trainctl
 
 **trainctl integration complete! Ready to use for all training operations.**
-

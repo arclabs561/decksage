@@ -596,9 +596,9 @@ EXPANDED_CONTEXTUAL_DISCOVERY_JUDGE_PROMPT = """You are an expert judge evaluati
 
 
 __all__ = [
+    "EXPANDED_CONTEXTUAL_DISCOVERY_JUDGE_PROMPT",
     "EXPANDED_DECK_MODIFICATION_JUDGE_PROMPT",
     "EXPANDED_SIMILARITY_JUDGE_PROMPT",
-    "EXPANDED_CONTEXTUAL_DISCOVERY_JUDGE_PROMPT",
     "_PROMPT_VERSION",
 ]
 
@@ -606,4 +606,3 @@ __all__ = [
 def get_prompt_version() -> str:
     """Get current prompt version for cache invalidation."""
     return _PROMPT_VERSION
-

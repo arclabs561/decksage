@@ -1,5 +1,5 @@
 # Meta-Critique: Applying Structured Reasoning Theory to Today's Work
-**Date**: October 4, 2025  
+**Date**: October 4, 2025
 **Goal**: Scrutinize our work through lens of dependency gaps, Kolmogorov complexity, and reasoning dynamics
 
 ---
@@ -160,7 +160,7 @@ Source filtering improves P@10: 0.0632 → 0.1079 (+70.8%)
 ```
 P(improvement_is_real | experiment_shows_improvement)
   = Σ_B P(real | mechanism=B) P(mechanism=B | experiment)
-  
+
 Where B includes:
   - Cube pollution
   - Random chance
@@ -263,7 +263,7 @@ We should verify this power law relationship empirically.
 
 **Initial Thought**: Smaller graph should be faster
 
-**Reality Check**: 
+**Reality Check**:
 - All decks: 26,805 cards → sparse graph (many cube-only singletons)
 - Tournament: 13,359 cards → DENSE graph (all tournament-played)
 
@@ -287,7 +287,7 @@ But EFFECTIVE n is different:
 ```go
 // All these implement same function:
 Source string              // K(g) = low
-Source SourceType          // K(g) = medium  
+Source SourceType          // K(g) = medium
 Source + SourceType + Verification  // K(g) = high
 ```
 
@@ -314,7 +314,7 @@ This is **fitness-neutral navigation** - we explored design space and selected m
 **Dependency Gap**:
 ```
 P(improvement_generalizes | improvement_on_test_set)
-  = Σ_new_queries P(generalizes | performance_on_new_queries) 
+  = Σ_new_queries P(generalizes | performance_on_new_queries)
                   P(new_queries | test_set)
 ```
 
@@ -429,7 +429,7 @@ Improvement: +0.045 ± 0.007
 ## Part 11: Applying "Why Think Step by Step" Framework
 
 ### Paper's Core Insight
-> "Reasoning emerges from locality of experience"  
+> "Reasoning emerges from locality of experience"
 > Intermediate steps bridge dependency gaps when direct relationships aren't observed
 
 ### Our Data Structure
@@ -665,7 +665,7 @@ for threshold in [1000, 1500, 2000, 2500, 3000]:
 ## Part 16: Epistemic vs Aleatoric Uncertainty
 
 ### From Notes
-> H_epistemic(Z|S): Reducible uncertainty that can be learned  
+> H_epistemic(Z|S): Reducible uncertainty that can be learned
 > H_aleatoric(Z): Irreducible randomness
 
 ### Our Uncertainties
@@ -681,8 +681,8 @@ for threshold in [1000, 1500, 2000, 2500, 3000]:
 - ✅ Fetch lands in Bolt results - inherent to method
 - ✅ Meta shifts over time - inherent randomness
 
-**We focused on** reducing one epistemic uncertainty (does filtering help?)  
-**We ignored** quantifying remaining epistemic uncertainties  
+**We focused on** reducing one epistemic uncertainty (does filtering help?)
+**We ignored** quantifying remaining epistemic uncertainties
 **We properly identified** aleatoric limits
 
 **Score**: Partial - identified limits but didn't quantify uncertainties
@@ -895,7 +895,7 @@ Missing: Formal uncertainty quantification, temporal validation, independent tes
 
 **Total Additional Work**: ~10 hours for full rigor
 
-**Current Status**: 7.8/10 rigor, good enough for production  
+**Current Status**: 7.8/10 rigor, good enough for production
 **With additions**: 9/10 rigor, publication quality
 
 ---
@@ -916,8 +916,8 @@ Missing: Formal uncertainty quantification, temporal validation, independent tes
 
 ### Honest Assessment
 
-**For production use**: ✅ Sufficient rigor (7.8/10)  
-**For publication**: ⚠️ Need additions (CI, independent test set)  
+**For production use**: ✅ Sufficient rigor (7.8/10)
+**For publication**: ⚠️ Need additions (CI, independent test set)
 **For theoretical completeness**: ❌ Missing formal framework
 
 **Recommendation**: Ship to production now, add rigor for publication later.
