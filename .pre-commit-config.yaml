@@ -1,6 +1,19 @@
 # Pre-commit hooks: Fast checks that run on every commit
 # Pre-push hooks: Slower checks (tests, type checking) run before push
 # See: https://pre-commit.com/hooks.html
+#
+# INSTALLATION:
+#   Run: just pre-commit-install
+#   Or:  ./scripts/setup-dev.sh
+#   Or:  uv pip install pre-commit && pre-commit install && pre-commit install --hook-type pre-push
+#
+# Hooks run automatically on:
+#   - git commit (all pre-commit hooks)
+#   - git push (pre-push hooks: fast tests)
+#
+# Manual run:
+#   - just pre-commit-run (all files)
+#   - pre-commit run (staged files only)
 
 repos:
   # Python: Ruff (linter + formatter)
