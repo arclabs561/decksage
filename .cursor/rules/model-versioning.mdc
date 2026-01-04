@@ -1,0 +1,17 @@
+---
+description: Model versioning, production management, and registry
+globs:
+  - "src/ml/model_registry.py"
+  - "scripts/model_management/**"
+  - "src/ml/utils/path_resolution.py"
+alwaysApply: false
+---
+
+# Model Versioning & Production Management
+
+- **Versioning format**: Use `{component}_{date}_{commit_hash}` or `{component}_v{version}` (e.g., `gnn_graphsage_v2025-W52.json`)
+- **Versioning utilities**: Use `ml.utils.path_resolution.version_path()` for consistent path versioning (handles S3/absolute/local)
+- **Model registry**: Use `ml.model_registry.ModelRegistry` to track model versions, metrics, and metadata
+- **Production promotion**: Use `scripts/model_management/promote_to_production.sh` to promote versioned models
+- **Output versioning**: Training/evaluation scripts support `--output-version` flag for versioned outputs
+- **Versioned paths**: Scripts automatically version outputs when `--output-version` is provided

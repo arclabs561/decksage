@@ -107,3 +107,6 @@ def test_card_database_performance():
     # Should be fast (< 0.1s for 300 lookups)
     assert (end - start) < 0.1, f"Too slow: {end - start:.3f}s for {len(test_cards)} lookups"
 
+
+
+

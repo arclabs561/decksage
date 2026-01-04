@@ -10,13 +10,13 @@ Measures alignment with goals:
 
 from __future__ import annotations
 
-from typing import Callable, Dict, Tuple
+from typing import Callable, Dict, Optional, Tuple
 
 
 def functional_coverage_delta(
     before: dict,
     after: dict,
-    tag_set_fn: Callable[[str], set[str]] | None,
+    tag_set_fn: Optional[Callable[[str], set[str]]],
     *,
     main_partition: str,
 ) -> int:
@@ -35,7 +35,7 @@ def functional_coverage_delta(
     return max(0, len(deck_tags(after) - deck_tags(before)))
 
 
-def deck_price_total(deck, price_fn: Callable[[str], float | None] | None, *, main_partition: str) -> tuple[float | None, list[str]]:
+def deck_price_total(deck, price_fn: Optional[Callable[[str], Optional[float]]], *, main_partition: str) -> tuple[Optional[float], list[str]]:
     if price_fn is None:
         return None, []
     total = 0.0

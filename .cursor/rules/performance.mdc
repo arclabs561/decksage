@@ -1,0 +1,19 @@
+---
+description: Performance optimization guidelines for pandas, data loading, memory, and AWS
+globs:
+  - "src/ml/**/*.py"
+alwaysApply: false
+---
+
+# Performance Optimization Guidelines
+
+- **Pandas**: Always prefer vectorized operations - never use `df.iterrows()` (60-200x slower). Use `df[df['col'] >= threshold]` for filtering, `df['col'].map()` for lookups, `pandas.groupby()` for aggregation (2-3x faster), NumPy vectorized ops to avoid repeated `tuple(sorted())` calls (1.5-2x faster). Process large datasets in chunks (100K-500K rows) with progress reporting.
+- **Data validation**: Use Pydantic models (~10K decks/second, type safety, clear errors). Cache expensive validations (ban lists, legality) with TTL.
+- **Data loading**: Prefer SQLite over JSON for large graphs (4-5x faster: ~30s vs ~2-5min for 466MB). Use `--graph-db data/graphs/incremental_graph.db`.
+- **Memory efficiency**: Build DataFrames in memory (not temp CSV), chunk processing for >1M rows, filter early, use `df.copy()` only when necessary, write edgelists directly (streaming).
+- **Metadata filtering**: `Series.map()` instead of `DataFrame.apply()` (5-10x faster), then vectorized boolean indexing.
+- **Temporal/weighting**: Pre-compute weights in numpy arrays, then multiply (1.5-2x faster).
+- **Lookup operations**: O(1) dict lookups instead of O(n) list searches (10-100x faster for substitution pairs, edge lookups).
+- **AWS optimization**: Auto-detect instance type/CPU cores, map to optimal workers (g5.xlarge→4, g5.2xlarge→8, g5.4xlarge→16), adjust chunk sizes (1M AWS, 500K local), cap workers at 16 for Word2Vec.
+- **Validation**: Test with realistic data (100K-1M rows), measure actual speedup, test edge cases (empty DataFrames, missing columns, NaN), verify correctness.
+- **Performance targets** (validated 2024-12-31, current 2026-01-02): Edgelist <15s (achieved: 10.57s), graph loading <1min (achieved: 30.16s), total training <30min (achieved: 15.6min). Actual: 125x faster edgelist, 4-8x faster training.

@@ -239,16 +239,56 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
         try:
             import pandas as pd
             df = pd.read_csv(card_attrs_path)
-            card_row = df[df["NAME"].str.lower() == card_name.lower()]
+            # Handle both "NAME" and "name" column names (case-insensitive)
+            name_col = None
+            for col in df.columns:
+                if col.upper() == "NAME" or col.lower() == "name":
+                    name_col = col
+                    break
+            
+            if name_col:
+                # Use case-insensitive comparison
+                card_row = df[df[name_col].astype(str).str.lower() == card_name.lower()]
+            else:
+                # Fallback: try first column
+                card_row = df[df.iloc[:, 0].astype(str).str.lower() == card_name.lower()]
+            
             if not card_row.empty:
                 row = card_row.iloc[0]
+                # Safely get columns (handle missing columns gracefully)
+                def safe_get(col_name: str, default: str = "") -> str:
+                    """Get column value, handling case variations and missing columns."""
+                    # Try exact match first
+                    if col_name in row:
+                        val = row[col_name]
+                        return str(val) if pd.notna(val) else default
+                    # Try case-insensitive match
+                    for col in row.index:
+                        if col.lower() == col_name.lower():
+                            val = row[col]
+                            return str(val) if pd.notna(val) else default
+                    return default
+                
+                # Handle CMC conversion (might be string or float)
+                cmc_val = safe_get("cmc", "0")
+                try:
+                    cmc = float(cmc_val) if cmc_val else 0.0
+                except (ValueError, TypeError):
+                    cmc = 0.0
+                
                 context = {
-                    "oracle_text": row.get("oracle_text", ""),
-                    "type": row.get("type", ""),
-                    "mana_cost": row.get("mana_cost", ""),
-                    "cmc": row.get("cmc", ""),
-                    "colors": row.get("colors", ""),
-                    "rarity": row.get("rarity", ""),
+                    "oracle_text": safe_get("oracle_text", ""),
+                    "type": safe_get("type", ""),
+                    "mana_cost": safe_get("mana_cost", ""),
+                    "cmc": cmc,
+                    "colors": safe_get("colors", ""),
+                    "rarity": safe_get("rarity", ""),
+                    "power": safe_get("power", ""),
+                    "toughness": safe_get("toughness", ""),
+                    "keywords": safe_get("keywords", ""),
+                    "functional_tags": safe_get("functional_tags", ""),
+                    "archetype": safe_get("archetype", ""),
+                    "format_legal": safe_get("format_legal", ""),
                 }
                 return context
         except Exception as e:
@@ -288,7 +328,8 @@ def load_card_context(card_name: str, card_attrs_path: Path | None = None, game:
     
     # Default: try standard path
     if not context:
-        default_path = Path(__file__).parent.parent.parent.parent / "data" / "processed" / "card_attributes_enriched.csv"
+        from ml.utils.paths import PATHS
+        default_path = PATHS.card_attributes
         if default_path.exists():
             try:
                 import pandas as pd

@@ -16,7 +16,11 @@ from gensim.models import KeyedVectors
 
 from .hybrid_search import HybridSearch
 
-logger = logging.getLogger("decksage.search.index")
+try:
+    from ..utils.logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger("decksage.search.index")
 
 
 def index_from_embeddings(
@@ -100,12 +104,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Configure logging
-    level = logging.DEBUG if args.verbose else logging.INFO
-    logging.basicConfig(
-        level=level,
-        format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
-    )
+    # Configure logging (already done via get_logger above, but set level if verbose)
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
 
     # Validate embeddings path
     emb_path = Path(args.embeddings)
@@ -122,7 +123,8 @@ def main() -> int:
         )
         return 0
     except Exception as e:
-        logger.error(f"Indexing failed: {e}", exc_info=True)
+        from ..utils.logging_config import log_exception
+        log_exception(logger, "Indexing failed", e, include_context=True)
         return 1
 
 

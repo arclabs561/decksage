@@ -1,0 +1,11 @@
+---
+description: Project priorities and focus areas
+alwaysApply: true
+---
+
+# Priorities
+
+1. Embedding quality (P@10 target: 0.15-0.20, current: ~0.08)
+2. Evaluation rigor (test set expansion, IAA tracking)
+3. Downstream task performance (deck completion, substitution)
+4. Hybrid embedding system (co-occurrence + instruction-tuned + GNN fusion)

@@ -9,7 +9,11 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 
-logger = logging.getLogger(__name__)
+try:
+    from .logging_config import get_logger
+    logger = get_logger(__name__)
+except ImportError:
+    logger = logging.getLogger(__name__)
 
 
 class CacheInvalidationStrategy:
@@ -95,14 +99,20 @@ class CacheInvalidationStrategy:
                 pass
         
         # Check prompt version
-        if current_prompt_version and self.prompt_version:
-            if cache_entry.get("prompt_version") != current_prompt_version:
+        # Use current_prompt_version if provided, otherwise use self.prompt_version
+        prompt_version_to_check = current_prompt_version if current_prompt_version is not None else self.prompt_version
+        if prompt_version_to_check:
+            cache_prompt_version = cache_entry.get("prompt_version")
+            if cache_prompt_version is not None and cache_prompt_version != prompt_version_to_check:
                 logger.debug("Cache entry prompt version mismatch")
                 return True
         
         # Check model version
-        if current_model_version and self.model_version:
-            if cache_entry.get("model_version") != current_model_version:
+        # Use current_model_version if provided, otherwise use self.model_version
+        model_version_to_check = current_model_version if current_model_version is not None else self.model_version
+        if model_version_to_check:
+            cache_model_version = cache_entry.get("model_version")
+            if cache_model_version is not None and cache_model_version != model_version_to_check:
                 logger.debug("Cache entry model version mismatch")
                 return True
         
@@ -135,4 +145,7 @@ def get_model_version(model_name: str) -> str:
     """Extract version from model name or use as-is."""
     # Could parse version from model name if needed
     return model_name
+
+
+
 

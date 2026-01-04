@@ -68,11 +68,15 @@ func main() {
 	processed := 0
 	skipped := 0
 
+	errorCount := 0
+	maxErrorsToLog := 10
+	
 	for _, file := range files {
 		col, err := loadCollection(file)
 		if err != nil {
 			skipped++
-			if skipped <= 5 {
+			errorCount++
+			if errorCount <= maxErrorsToLog {
 				fmt.Printf("  ⚠️  Failed to load %s: %v\n", filepath.Base(file), err)
 			}
 			continue
@@ -180,6 +184,11 @@ func main() {
 	fmt.Printf("   Files found: %d\n", len(files))
 	fmt.Printf("   Files processed: %d\n", processed)
 	fmt.Printf("   Files skipped: %d\n", skipped)
+	if errorCount > maxErrorsToLog {
+		fmt.Printf("   Errors (showing first %d): %d total\n", maxErrorsToLog, errorCount)
+	} else if errorCount > 0 {
+		fmt.Printf("   Errors: %d\n", errorCount)
+	}
 	fmt.Printf("   Total decks: %d\n", totalDecks)
 	fmt.Printf("   Total cards: %d\n", totalCards)
 	fmt.Printf("   Total edges: %d\n", totalEdges)
@@ -292,6 +301,15 @@ func inferGameFromCollection(col *SimpleCollection, filePath string) string {
 	if strings.Contains(pathLower, "/magic/") || strings.Contains(pathLower, "/mtg/") {
 		return "MTG"
 	}
+	if strings.Contains(pathLower, "/digimon/") || strings.Contains(pathLower, "/dig/") {
+		return "DIG"
+	}
+	if strings.Contains(pathLower, "/onepiece/") || strings.Contains(pathLower, "/opcg/") || strings.Contains(pathLower, "/opc/") {
+		return "OPC"
+	}
+	if strings.Contains(pathLower, "/riftbound/") || strings.Contains(pathLower, "/rift/") || strings.Contains(pathLower, "/rft/") {
+		return "RFT"
+	}
 
 	// Infer from collection type
 	typeStr := col.Type.Type
@@ -310,7 +328,27 @@ func inferGameFromCollection(col *SimpleCollection, filePath string) string {
 			source = "mtgtop8"
 		} else if strings.Contains(urlLower, "goldfish") {
 			source = "goldfish"
+		} else if strings.Contains(urlLower, "limitlesstcg") || strings.Contains(urlLower, "limitless") {
+			// Limitless supports multiple games - need to check game parameter or collection type
+			source = "limitless"
+		} else if strings.Contains(urlLower, "riftdecks") || strings.Contains(urlLower, "riftbound") {
+			source = "riftdecks"
 		}
+	}
+
+	// Digimon types
+	if strings.Contains(typeStr, "Digimon") || strings.Contains(typeStr, "Dig") {
+		return "DIG"
+	}
+
+	// One Piece types
+	if strings.Contains(typeStr, "OnePiece") || strings.Contains(typeStr, "OPC") {
+		return "OPC"
+	}
+
+	// Riftbound types
+	if strings.Contains(typeStr, "Riftbound") || strings.Contains(typeStr, "Rift") {
+		return "RFT"
 	}
 
 	// MTG types
@@ -337,8 +375,30 @@ func inferGameFromCollection(col *SimpleCollection, filePath string) string {
 	if strings.Contains(source, "yugioh") || strings.Contains(source, "ygoprodeck") {
 		return "YGO"
 	}
-	if strings.Contains(source, "pokemon") || strings.Contains(source, "limitless") {
+	// Limitless TCG supports multiple games - check URL or collection type for game hint
+	if strings.Contains(source, "limitless") {
+		// Default to PKM for backward compatibility, but could be DIG or OPC
+		// Check URL for game hint
+		if strings.Contains(urlLower, "digimon") || strings.Contains(urlLower, "dcg") {
+			return "DIG"
+		}
+		if strings.Contains(urlLower, "onepiece") || strings.Contains(urlLower, "opcg") {
+			return "OPC"
+		}
+		// Default to Pokemon for backward compatibility
 		return "PKM"
+	}
+	if strings.Contains(source, "pokemon") {
+		return "PKM"
+	}
+	if strings.Contains(source, "digimon") || strings.Contains(source, "dig") {
+		return "DIG"
+	}
+	if strings.Contains(source, "onepiece") || strings.Contains(source, "opcg") || strings.Contains(source, "opc") {
+		return "OPC"
+	}
+	if strings.Contains(source, "riftbound") || strings.Contains(source, "rift") || strings.Contains(source, "riftdecks") {
+		return "RFT"
 	}
 	if strings.Contains(source, "mtg") || strings.Contains(source, "scryfall") ||
 		strings.Contains(source, "deckbox") || strings.Contains(source, "mtgtop8") {

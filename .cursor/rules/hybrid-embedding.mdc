@@ -1,0 +1,38 @@
+---
+description: Hybrid embedding system architecture, components, and training workflows
+globs:
+  - "src/ml/scripts/train_*.py"
+  - "src/ml/scripts/evaluate_*.py"
+  - "scripts/training/**"
+  - "scripts/automation/**"
+alwaysApply: false
+---
+
+# Hybrid Embedding System Architecture
+
+- **Three-component hybrid**: Co-occurrence embeddings (Node2Vec/PecanPy) + Instruction-tuned embeddings (E5-base-v2/E5-Mistral/BGE-M3) + GNN embeddings (GraphSAGE/LightGCN/GCN/GAT)
+- **Incremental graph**: `IncrementalCardGraph` maintains continuously updated co-occurrence graph with temporal tracking
+  - **Graph updates**: Use `update_graph_incremental.py` for daily updates, `train_hybrid_full.py` for full rebuild
+  - **Temporal tracking**: Edges track `first_seen` timestamp for temporal splitting
+  - **Storage**: JSON format (`data/graphs/incremental_graph.json`) for simplicity and incremental updates
+- **Update schedule**: Daily incremental updates, weekly GNN retraining, monthly full rebuild
+- **Long-term workflow**: Automated training/evaluation pipeline
+  - **Daily (2 AM UTC)**: Graph updates + incremental embeddings + quick eval (`scripts/automation/daily_update.sh --dry-run` to test)
+  - **Weekly (Sunday 2 AM UTC)**: Full retraining + evaluation + comparison (`scripts/automation/weekly_retrain.sh --dry-run` to test)
+  - **Monthly (First Sunday)**: Full system rebuild + expanded evaluation
+  - **Model versioning**: `{component}_v{version}` format (e.g., `gnn_graphsage_v2025-W52.json`)
+  - **Regression detection**: Auto-detect P@10 drops >10%, trigger automatic rollback
+  - **Performance tracking**: Compare versions over time using `compare_model_versions.py`
+- **Zero-shot capability**: Instruction-tuned embeddings handle new cards without training
+- **Inductive learning**: GraphSAGE/LightGCN generate embeddings for new nodes via neighbor aggregation
+- **Contrastive learning**: Optional contrastive loss in GNN training for improved embedding geometry
+- **Fusion weights**: 30% GNN, 25% Instruction-tuned, 20% Co-occurrence, 15% Jaccard, 10% Functional (default, tunable)
+- **Graph storage**: JSON format for incremental graph (`data/graphs/incremental_graph.json`), edgelist export for GNN training
+- **Model options**: 
+  - GNN: GraphSAGE (inductive, default), LightGCN (recommendation-optimized), GCN, GAT
+  - Instruction-tuned: E5-base-v2 (default), E5-Mistral-7B (newer), BGE-M3 (multilingual)
+- **Component training scripts**:
+  - Full hybrid: `train_hybrid_full.py` (from decks) or `train_hybrid_from_pairs.py` (from pairs)
+  - GNN only: `train_gnn.py` or `train_gnn_with_runctl.py` (standalone GNN training)
+  - Co-occurrence only: Filter pairs with `filter_pairs_by_timestamp.py`, then train Node2Vec/PecanPy
+  - Instruction-tuned: No training needed (zero-shot), configure model name

@@ -47,7 +47,7 @@ def main() -> int:
 
         result = bootstrap_main()
         if result != 0:
-            print(f"⚠️ Failed to bootstrap {game}")
+            print(f"Warning: Failed to bootstrap {game}")
             continue
 
     print(f"\n{'=' * 60}")

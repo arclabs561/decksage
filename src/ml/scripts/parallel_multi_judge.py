@@ -29,25 +29,27 @@ except ImportError:
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Import with path handling
+# Set up project paths
 import sys
-from pathlib import Path as P
-
-script_dir = P(__file__).parent
-if str(script_dir) not in sys.path:
-    sys.path.insert(0, str(script_dir))
+from ml.utils.path_setup import setup_project_paths
+setup_project_paths()
 
 try:
-    from generate_labels_for_new_queries_optimized import (
-        make_label_generation_agent,
-        generate_labels_for_query_with_retry,
+    # Try to import labeling functions - may not exist
+    from ml.scripts.generate_labels_for_new_queries_optimized import (
+        make_label_generation_agent,  # type: ignore[attr-defined]
+        generate_labels_for_query_with_retry,  # type: ignore[attr-defined]
     )
     HAS_LABELING = True
-except ImportError as e:
+except (ImportError, AttributeError) as e:
     HAS_LABELING = False
-    logger.error(f"Labeling scripts not available: {e}")
+    make_label_generation_agent = None  # type: ignore[assignment]
+    generate_labels_for_query_with_retry = None  # type: ignore[assignment]
+    logger.warning(f"Labeling scripts not available: {e}")
 
 # Try to use cache invalidation strategy
+_cache_strategy: Any = None
+_current_prompt_version: str | None = None
 try:
     from ml.utils.cache_invalidation import CacheInvalidationStrategy
     from ml.evaluation.expanded_judge_criteria import get_prompt_version
@@ -59,17 +61,35 @@ try:
     )
 except ImportError:
     HAS_CACHE_INVALIDATION = False
-    _cache_strategy = None
-    _current_prompt_version = None
 
 # Try to use LLM cache
+_llm_cache: Any = None
 try:
     from ml.utils.llm_cache import LLMCache, load_config
     HAS_LLM_CACHE = True
     _llm_cache = LLMCache(load_config(), scope="labeling")
 except ImportError:
     HAS_LLM_CACHE = False
-    _llm_cache = None
+
+
+def _get_cache_key(
+    query: str,
+    judge_id: int,
+    use_case: str | None = None,
+    game: str | None = None,
+) -> str:
+    """Generate cache key for judge labeling."""
+    if HAS_CACHE_INVALIDATION and _cache_strategy:
+        return _cache_strategy.get_cache_key(
+            query=query,
+            use_case=use_case,
+            game=game,
+            judge_id=judge_id,
+        )
+    else:
+        # Fallback: use safe cache key utility (hash-based for collision resistance)
+        from ml.scripts.fix_nuances import safe_cache_key
+        return safe_cache_key(query, judge_id, use_case, game, use_hash=True)
 
 
 def generate_labels_single_judge(
@@ -79,20 +99,11 @@ def generate_labels_single_judge(
     game: str | None = None,
 ) -> dict[str, list[str]]:
     """Generate labels from a single judge (for parallel execution)."""
+    # Generate cache key upfront (used for both get and set)
+    cache_key = _get_cache_key(query, judge_id, use_case, game) if HAS_LLM_CACHE and _llm_cache else None
+    
     # Try cache first (if available)
-    if HAS_LLM_CACHE and _llm_cache:
-        # Use cache invalidation strategy if available
-        if HAS_CACHE_INVALIDATION and _cache_strategy:
-            cache_key = _cache_strategy.get_cache_key(
-                query=query,
-                use_case=use_case,
-                game=game,
-                judge_id=judge_id,
-            )
-        else:
-            # Fallback to simple cache key
-            cache_key = f"label_{query}_{use_case}_{game}_{judge_id}"
-        
+    if HAS_LLM_CACHE and _llm_cache and cache_key:
         cached = _llm_cache.get(cache_key)
         
         # Check if cached entry should be invalidated (if strategy available)
@@ -116,7 +127,11 @@ def generate_labels_single_judge(
             return labels if labels and any(labels.values()) else {}
     
     # Generate labels (cache miss or no cache)
-    agent = make_label_generation_agent()
+    if not make_label_generation_agent or not generate_labels_for_query_with_retry:
+        logger.warning(f"Labeling functions not available for judge {judge_id}")
+        return {}
+    
+    agent = make_label_generation_agent()  # type: ignore[misc]
     if not agent:
         logger.warning(f"Could not create agent for judge {judge_id}")
         return {}
@@ -124,29 +139,17 @@ def generate_labels_single_judge(
     # Pass game parameter if function supports it
     try:
         import inspect
-        sig = inspect.signature(generate_labels_for_query_with_retry)
+        sig = inspect.signature(generate_labels_for_query_with_retry)  # type: ignore[arg-type]
         if 'game' in sig.parameters:
-            labels = generate_labels_for_query_with_retry(agent, query, use_case, game=game)
+            labels = generate_labels_for_query_with_retry(agent, query, use_case, game=game)  # type: ignore[misc]
         else:
-            labels = generate_labels_for_query_with_retry(agent, query, use_case)
+            labels = generate_labels_for_query_with_retry(agent, query, use_case)  # type: ignore[misc]
     except Exception:
         # Fallback if inspection fails
-        labels = generate_labels_for_query_with_retry(agent, query, use_case)
+        labels = generate_labels_for_query_with_retry(agent, query, use_case)  # type: ignore[misc]
     
     # Cache the result with version metadata
-    if labels and HAS_LLM_CACHE and _llm_cache:
-        # Ensure cache_key is defined (reuse from earlier or generate new)
-        if 'cache_key' not in locals():
-            if HAS_CACHE_INVALIDATION and _cache_strategy:
-                cache_key = _cache_strategy.get_cache_key(
-                    query=query,
-                    use_case=use_case,
-                    game=game,
-                    judge_id=judge_id,
-                )
-            else:
-                cache_key = f"label_{query}_{use_case}_{game}_{judge_id}"
-        
+    if labels and HAS_LLM_CACHE and _llm_cache and cache_key:
         if HAS_CACHE_INVALIDATION and _cache_strategy:
             # Annotate with version metadata
             annotated = _cache_strategy.annotate_cache_entry(
@@ -220,10 +223,10 @@ def generate_labels_parallel(
     
     # Validate each judgment for internal contradictions (same as sequential version)
     # Judges are isolated - each runs independently with no information sharing
-    validated_judgments = []
+    validated_judgments: list[dict[str, list[str]]] = []
     for i, judgment in enumerate(all_judgments):
         # Check for contradictions within a single judgment
-        card_to_levels = {}  # card -> set of levels it appears in
+        card_to_levels: dict[str, set[str]] = {}  # card -> set of levels it appears in
         for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
             for card in judgment.get(level, []):
                 if card not in card_to_levels:
@@ -231,7 +234,7 @@ def generate_labels_parallel(
                 card_to_levels[card].add(level)
         
         # Fix contradictions: keep card in highest relevance level only
-        cleaned_judgment = {
+        cleaned_judgment: dict[str, list[str]] = {
             "highly_relevant": [],
             "relevant": [],
             "somewhat_relevant": [],
@@ -239,7 +242,7 @@ def generate_labels_parallel(
             "irrelevant": [],
         }
         
-        level_priority = {
+        level_priority: dict[str, int] = {
             "highly_relevant": 4,
             "relevant": 3,
             "somewhat_relevant": 2,
@@ -271,7 +274,7 @@ def generate_labels_parallel(
                     card_votes[card] = {}
                 card_votes[card][level] = card_votes[card].get(level, 0) + 1
     
-    final_labels = {
+    final_labels: dict[str, list[str]] = {
         "highly_relevant": [],
         "relevant": [],
         "somewhat_relevant": [],
@@ -288,11 +291,13 @@ def generate_labels_parallel(
             # If no majority, card is excluded (judges disagreed too much)
     
     # Compute agreement
+    # Use validated_judgments for consistency (after contradiction removal)
+    num_judges = len(validated_judgments)
     agreement_scores = []
     for card, votes in card_votes.items():
         total_votes = sum(votes.values())
         max_votes = max(votes.values()) if votes else 0
-        agreement = max_votes / len(all_judgments) if all_judgments else 0.0
+        agreement = max_votes / num_judges if num_judges > 0 else 0.0
         agreement_scores.append(agreement)
     
     avg_agreement = sum(agreement_scores) / len(agreement_scores) if agreement_scores else 0.0
@@ -300,7 +305,7 @@ def generate_labels_parallel(
     return {
         **final_labels,
         "iaa": {
-            "num_judges": len(all_judgments),
+            "num_judges": len(validated_judgments),  # Use validated count (after contradiction removal)
             "agreement_rate": avg_agreement,
             "num_cards": len(card_votes),
         },

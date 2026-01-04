@@ -129,11 +129,57 @@ similar = wv.most_similar('Lightning Bolt', topn=10)
 
 ## Data Pipeline
 
-1. **Export**: `scripts/export_and_unify_all_decks.py` → `decks_all_unified.jsonl`
-2. **Enhance**: `scripts/enhance_exported_decks.py` → `decks_all_enhanced.jsonl`
-3. **Final**: `scripts/backfill_metadata.py` → `decks_all_final.jsonl` ✅
+### Unified Pipeline (Recommended)
 
-Use `decks_all_final.jsonl` for all deck-based training and analysis.
+**Single command**: `scripts/data_processing/unified_export_pipeline.py`
+
+Stages:
+1. **Export**: Extract decks from raw `.zst` files (per game/source)
+2. **Unify**: Combine all game exports into single JSONL
+3. **Enhance**: Normalize, deduplicate, validate, backfill metadata
+
+**Usage**:
+```bash
+# Full pipeline
+uv run scripts/data_processing/unified_export_pipeline.py
+
+# Skip export (use existing files)
+uv run scripts/data_processing/unified_export_pipeline.py --skip-export
+
+# Skip enhancement (just unify)
+uv run scripts/data_processing/unified_export_pipeline.py --skip-enhance
+```
+
+**Output**: `decks_all_final.jsonl` ✅
+- Normalized card names
+- Deduplicated by URL and card signature
+- Source field backfilled
+- `scraped_at` timestamps added
+- Invalid deck sizes filtered
+
+### Legacy Pipeline (Still Supported)
+
+1. **Export**: `scripts/test_sets/export_and_unify_all_decks.py` → `decks_all_unified.jsonl`
+2. **Enhance**: `scripts/enhance_exported_decks.py` → `decks_all_enhanced.jsonl`
+3. **Final**: `scripts/backfill_metadata.py` → `decks_all_final.jsonl`
+
+**Note**: Use unified pipeline for new exports. Legacy scripts maintained for backward compatibility.
+
+### Multi-Game Pairs
+
+**Regenerate**: `scripts/data_processing/regenerate_multi_game_pairs.py`
+
+Generates `pairs_multi_game.csv` with all games (MTG, Pokemon, Yu-Gi-Oh).
+
+**Usage**:
+```bash
+uv run scripts/data_processing/regenerate_multi_game_pairs.py
+
+# Rebuild even if exists
+uv run scripts/data_processing/regenerate_multi_game_pairs.py --rebuild
+```
+
+See `docs/DATA_PIPELINE.md` for complete documentation.
 
 
 

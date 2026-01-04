@@ -1,0 +1,45 @@
+---
+description: Code duplication prevention, naming conventions, and unification process
+alwaysApply: true
+---
+
+# Code Duplication Prevention
+
+- **Before creating new variants**: Check if existing script can be extended with parameters/flags
+- **Naming convention**: Use descriptive suffixes only when necessary:
+  - `_refined` = improved version (keep both temporarily during migration, then remove old)
+  - `_enhanced` = adds metadata/advanced features (supersedes refined, keep both if both used)
+  - `_simple` = simplified version for specific use case (keep if serves different purpose)
+  - `_optimized` = performance improvements (may supersede original)
+  - `_chunked` = processes in chunks (different approach, keep if needed)
+  - Avoid: `_complete` vs `_comprehensive` (choose one canonical version)
+- **Unification process**: When consolidating duplicates:
+  1. Search for all references: `rg -l "script_name" --type py`
+  2. Update all imports/references first
+  3. Merge functionality into canonical version (preserve both APIs if needed for compatibility)
+  4. Add explicit type annotations: `results: dict[str, Any] = {...}` to help type checkers
+  5. Run `ty` type checker: `uvx ty check <files>` (use `ty`, not mypy)
+  6. Run e2e tests to verify functionality
+  7. Remove obsolete files only after all references updated
+- **Canonical scripts** (as of 2026-01-01):
+  - Training: `train_multitask_refined.py` (base), `train_multitask_refined_enhanced.py` (advanced with metadata)
+  - Evaluation: `evaluate_multitask.py` (unified, supports both explicit queries and automatic sampling)
+  - Downstream: `evaluate_downstream_complete.py` (most comprehensive, includes contextual discovery)
+- **Type checking**: Use `ty` (not mypy) for type checking: `uvx ty check <files>`
+  - Fix type errors by adding explicit annotations (e.g., `dict[str, Any]`)
+  - Handle None checks for optional Path parameters
+- **Removed duplicates** (2026-01-01):
+  - `train_multitask_embeddings.py` → use `train_multitask_refined.py`
+  - `evaluate_multitask_refined.py` → merged into `evaluate_multitask.py`
+  - `evaluate_downstream_comprehensive.py` → use `evaluate_downstream_complete.py`
+- **Function-level duplicates** (consolidated 2026-01-01):
+  - `load_jaccard_graph` - ✅ Consolidated: Use `load_graph_for_jaccard` from `src/ml/utils/shared_operations.py` (with alias)
+  - `load_test_set` - ✅ Consolidated: Use `load_test_set` from `src/ml/utils/data_loading.py` (5+ scripts updated to use canonical)
+- **File-level duplicates reviewed** (as of 2026-01-01):
+  - `train_with_aws.py` vs `train_with_runctl.py` - `train_with_aws.py` DEPRECATED, use `train_with_runctl.py` (modern runctl-based)
+  - `train_gnn.py` vs `train_gnn_with_runctl.py` - Keep both: `train_gnn.py` for local-only, `train_gnn_with_runctl.py` for AWS/cloud
+- **Verified NOT duplicates** (serve different purposes):
+  - `train_embeddings_with_functional_and_text.py` vs `train_embeddings_with_functional_objective.py` (one has text, one doesn't)
+  - `optimize_fusion_weights.py` vs `optimize_fusion_weights_simple.py` (optimization vs proportional)
+  - `optimize_fusion_for_similarity.py` vs `optimize_fusion_for_substitution.py` (task-specific)
+  - `run_all_analysis.py` in `analysis/` vs `scripts/` (different purposes: comprehensive vs simple runner)

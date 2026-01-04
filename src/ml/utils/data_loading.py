@@ -3,7 +3,7 @@
 import json
 from collections import defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Dict, List, Optional, Set
 
 import pandas as pd
 
@@ -21,7 +21,7 @@ except ImportError:
 
 def load_pairs(
     dataset: str = "large",
-    game: str | None = None,
+    game: Optional[str] = None,
     filter_common: bool = False,
     filter_level: str = "basic",
 ) -> pd.DataFrame:
@@ -77,24 +77,99 @@ def load_embeddings(name: str) -> "KeyedVectors":
     return KeyedVectors.load(str(path))
 
 
-def load_test_set(game: str = "magic", path: Path | None = None) -> dict[str, Any]:
+def load_test_set(
+    game: str = "magic",
+    path: Optional[Path] = None,
+    validate: bool = False,
+    auto_fix: bool = False,
+) -> Dict[str, Any]:
     """
-    Load canonical test set.
+    Load unified test set (merged from best available sources).
 
     Args:
         game: 'magic', 'pokemon', or 'yugioh'
         path: Custom path (overrides game parameter)
+        validate: If True, validate test set coverage and log issues
+        auto_fix: If True and validate=True, automatically fix issues (expand test set, etc.)
 
     Returns:
-        Dict mapping query cards to relevance labels
+        Dict with 'queries' key containing query cards to relevance labels mapping
+    
+    Raises:
+        FileNotFoundError: If test set file doesn't exist
+        json.JSONDecodeError: If file is not valid JSON
+        ValueError: If test set is empty or invalid format
     """
-    test_path = Path(path) if path else getattr(PATHS, f"test_{game}")
+    # Get test set path
+    if path:
+        test_path = Path(path)
+    else:
+        # Try to get from PATHS
+        try:
+            test_path = getattr(PATHS, f"test_{game}")
+        except AttributeError:
+            # Fallback: construct path manually
+            from .paths import PATHS as P
+            test_path = P.experiments / f"test_set_unified_{game}.json"
+    
+    # Check file exists
+    if not test_path.exists():
+        raise FileNotFoundError(f"Test set not found: {test_path}")
+    
+    # Check file is not empty
+    if test_path.stat().st_size == 0:
+        raise ValueError(f"Test set file is empty: {test_path}")
+    
+    # Load JSON
+    try:
+        with open(test_path) as f:
+            data = json.load(f)
+    except json.JSONDecodeError as e:
+        raise ValueError(f"Invalid JSON in test set {test_path}: {e}") from e
+    
+    # Validate basic structure
+    if not isinstance(data, dict):
+        raise ValueError(f"Test set must be a dict, got {type(data)}")
+    
+    # Check if empty
+    queries = data.get("queries", data) if isinstance(data, dict) else data
+    if not queries or (isinstance(queries, dict) and len(queries) == 0):
+        raise ValueError(f"Test set is empty: {test_path}")
+    
+    # Optional validation and auto-fixing
+    if validate:
+        try:
+            from ..utils.test_set_helpers import load_test_set_with_validation
+            
+            # Use helper which handles validation without circular dependency
+            validated_data, validation_result = load_test_set_with_validation(
+                test_set_path=test_path,
+                game=game,
+                min_queries=100,
+                min_labels=5,
+                auto_fix=auto_fix,
+            )
+            
+            # Use validated data if auto_fix was successful
+            if auto_fix and validation_result.get("valid"):
+                data = validated_data
+            
+            if not validation_result["valid"]:
+                import logging
+                logger = logging.getLogger(__name__)
+                logger.warning(f"Test set validation issues for {test_path}:")
+                for issue in validation_result.get("issues", []):
+                    logger.warning(f"  - {issue}")
+        except Exception as e:
+            # Don't fail loading if validation fails, but log it
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.warning(f"Test set validation failed (continuing anyway): {e}")
+    
+    return data
 
-    with open(test_path) as f:
-        return json.load(f)
 
-
-def build_adjacency_dict(df: pd.DataFrame, filter_set: set[str] | None = None) -> dict[str, set]:
+def build_adjacency_dict(df: pd.DataFrame, filter_set: Optional[Set[str]] = None) -> Dict[str, set]:
     """
     Build adjacency dictionary from pairs.
 
@@ -122,12 +197,12 @@ def build_adjacency_dict(df: pd.DataFrame, filter_set: set[str] | None = None) -
 
 
 def load_decks_jsonl(
-    jsonl_path: Path | None = None,
-    sources: list[str] | None = None,
-    max_placement: int | None = None,
-    formats: list[str] | None = None,
+    jsonl_path: Optional[Path] = None,
+    sources: Optional[List[str]] = None,
+    max_placement: Optional[int] = None,
+    formats: Optional[List[str]] = None,
     validate: bool = True,
-) -> list[dict[str, Any]]:
+) -> List[Dict[str, Any]]:
     """
     Load decks from JSONL export with optional filtering and validation.
 
@@ -209,7 +284,7 @@ def load_decks_jsonl(
     return decks
 
 
-def load_tournament_decks(jsonl_path: Path | None = None) -> list[dict[str, Any]]:
+def load_tournament_decks(jsonl_path: Optional[Path] = None) -> List[Dict[str, Any]]:
     """
     Load only tournament-curated decks (mtgtop8, goldfish).
 
