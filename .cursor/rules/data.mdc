@@ -1,0 +1,22 @@
+---
+description: Data storage locations, S3 sync, and path handling
+globs:
+  - "data/**"
+  - "scripts/sync_*.sh"
+  - "src/ml/utils/paths.py"
+alwaysApply: false
+---
+
+# Data
+
+- S3 bucket: `s3://games-collections/`
+- Test sets: `experiments/test_set_unified_*.json` (✅ RECOMMENDED, use via PATHS.test_*) or `test_set_canonical_*.json` (reference only)
+- Embeddings: `data/embeddings/*.wv` (co-occurrence), `data/embeddings/gnn_graphsage.json` (GNN)
+- Processed decks: `data/processed/decks_all_final.jsonl` (recommended, 69K decks, enhanced) - OPTIONAL, scripts fallback to `pairs_large.csv`
+- Training data: `pairs_large.csv` (7.5M pairs, primary) or `decks_all_final.jsonl` (69K decks, optional)
+- **Incremental graph**: `data/graphs/incremental_graph.json` (JSON format, continuously updated). For very large graphs (>10M edges), consider Parquet or Protocol Buffers.
+- Always sync critical data to S3 using `s5cmd` (10-100x faster than `aws cli`)
+  - Comprehensive sync: `scripts/sync_all_to_s3.sh` (uses `s5cmd` with fallback to `aws cli`)
+  - Selective sync: `scripts/sync_to_s3.sh`
+- Use `PATHS` from `src/ml/utils/paths.py` instead of hardcoded paths
+- **Path priority**: EBS (`/mnt/data`) > local paths > S3 download (for cloud training)

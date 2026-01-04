@@ -4,24 +4,24 @@ Python code for training embeddings, evaluation, and experiments.
 
 ## Core Files
 
-**Training**:
+Training:
 - `card_similarity_pecan.py` - Train Node2Vec embeddings using PecanPy
 - `similarity_methods.py` - Various similarity methods (Jaccard, cosine, etc)
 
-**Evaluation**:
+Evaluation:
 - `evaluate.py` - Metrics (P@K, MRR, NDCG), experiment logging
 - `compare_models.py` - Compare multiple embedding methods
 - `improved_jaccard.py` - Jaccard with type filtering
 
-**LLM Tools**:
+LLM Tools:
 - `llm_annotator.py` - Generate annotations using LLM
 - `llm_data_validator.py` - Validate data quality with LLM
 - `test_llm_annotation.py` - Test LLM annotation setup
 
-**API**:
+API:
 - `api.py` - FastAPI server for similarity queries
 
-**Utilities**:
+Utilities:
 - `utils/` - Shared utilities (paths, constants, data loading)
 - `tests/` - 31 passing tests
 
@@ -107,13 +107,13 @@ just iterative-refine \
     max-queries=20
 ```
 
-**Key Scripts:**
+Key Scripts:
 - `iterative_refine_gold_data.py` - Main refinement pipeline (expand + deepen + re-label)
 - `batch_deepen_labels.py` - Add more labels to existing queries
 - `parallel_multi_judge.py` - Parallel execution for faster labeling
 - `analyze_eval_data_quality.py` - Analyze test set quality metrics
 
-**Quality Targets:**
+Quality Targets:
 - Label density: 15-25+ labels per query
 - IAA: ≥0.7 (Inter-Annotator Agreement)
 - Coverage: All card types, formats, archetypes

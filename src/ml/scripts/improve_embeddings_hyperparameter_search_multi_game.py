@@ -43,8 +43,13 @@ try:
 except ImportError:
     HAS_BOTO3 = False
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+try:
+    from ..utils.logging_config import setup_script_logging
+    logger = setup_script_logging()
+except ImportError:
+    import logging
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
 
 
 def load_multi_game_test_sets(

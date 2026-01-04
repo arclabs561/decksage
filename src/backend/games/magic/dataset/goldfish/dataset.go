@@ -422,9 +422,15 @@ func (d *Dataset) parseCollection(
 		})
 	}
 
+	// Extract tournament type and location from deck name or URL
+	tournamentType := extractMTGTournamentType(deckName)
+	location := extractMTGLocation(deckName)
+	
 	t := &game.CollectionTypeDeck{
-		Name:   deckName,
-		Format: format,
+		Name:           deckName,
+		Format:         format,
+		TournamentType: tournamentType,
+		Location:       location,
 	}
 	tw := game.CollectionTypeWrapper{
 		Type:  t.Type(),
@@ -458,6 +464,93 @@ func (d *Dataset) parseCollection(
 }
 
 var prefix = filepath.Join("magic", "goldfish")
+
+// extractMTGTournamentType extracts tournament type from event name
+func extractMTGTournamentType(eventName string) string {
+	if eventName == "" {
+		return ""
+	}
+	
+	eventLower := strings.ToLower(eventName)
+	
+	// Check for common tournament types
+	if strings.Contains(eventLower, "grand prix") || strings.Contains(eventLower, "gp ") {
+		return "GP"
+	}
+	if strings.Contains(eventLower, "pro tour") || strings.Contains(eventLower, "pt ") {
+		return "Pro Tour"
+	}
+	if strings.Contains(eventLower, "ptq") {
+		return "PTQ"
+	}
+	if strings.Contains(eventLower, "regional") {
+		return "Regional"
+	}
+	if strings.Contains(eventLower, "championship") || strings.Contains(eventLower, "worlds") {
+		return "Championship"
+	}
+	if strings.Contains(eventLower, "fnm") || strings.Contains(eventLower, "friday night magic") {
+		return "FNM"
+	}
+	if strings.Contains(eventLower, "rcq") {
+		return "RCQ"
+	}
+	if strings.Contains(eventLower, "rptq") {
+		return "RPTQ"
+	}
+	if strings.Contains(eventLower, "scg") || strings.Contains(eventLower, "star city games") {
+		return "SCG"
+	}
+	if strings.Contains(eventLower, "open") {
+		return "Open"
+	}
+	if strings.Contains(eventLower, "invitational") {
+		return "Invitational"
+	}
+	
+	return ""
+}
+
+// extractMTGLocation extracts location from event name
+// Examples: "GP Las Vegas", "Regional Pittsburgh, PA"
+func extractMTGLocation(eventName string) string {
+	if eventName == "" {
+		return ""
+	}
+	
+	// Try to find comma-separated location
+	parts := strings.Split(eventName, ",")
+	if len(parts) >= 2 {
+		// Check if last part looks like a state/country (2-3 letters or full country name)
+		lastPart := strings.TrimSpace(parts[len(parts)-1])
+		if len(lastPart) <= 3 || strings.Contains(strings.ToLower(lastPart), "united states") {
+			// Likely a location
+			city := strings.TrimSpace(parts[len(parts)-2])
+			// Remove tournament type prefix if present
+			city = strings.TrimPrefix(city, "GP")
+			city = strings.TrimPrefix(city, "Pro Tour")
+			city = strings.TrimPrefix(city, "Regional")
+			city = strings.TrimPrefix(city, "Championship")
+			city = strings.TrimSpace(city)
+			return fmt.Sprintf("%s, %s", city, lastPart)
+		}
+	}
+	
+	// Try to extract city from common patterns like "GP Las Vegas"
+	eventLower := strings.ToLower(eventName)
+	if strings.Contains(eventLower, "gp ") {
+		parts := strings.Fields(eventName)
+		for i, part := range parts {
+			if strings.ToLower(part) == "gp" && i+1 < len(parts) {
+				// Next part might be city
+				city := strings.Join(parts[i+1:], " ")
+				return city
+			}
+		}
+	}
+	
+	return ""
+}
 
 func (d *Dataset) collectionKey(collectionID string) string {
 	return filepath.Join(prefix, collectionID+".json")

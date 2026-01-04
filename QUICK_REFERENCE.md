@@ -1,51 +1,51 @@
 # DeckSage Quick Reference
 
-**Start here**: `README.md`  
-**Deep analysis**: `DEEP_REVIEW_TRIAGED_ACTIONS.md`
+Start here: `README.md`  
+Deep analysis: `DEEP_REVIEW_TRIAGED_ACTIONS.md`
 
 ---
 
-## Development Workflow (Post Oct 2025 Fixes)
+## Development Workflow
 
 ```bash
 # Daily development
-make sync          # Sync deps (247ms, fast!)
-make test-quick    # Quick test (2s)
-make lint          # Check quality
-make format        # Auto-format
+just sync          # Sync deps
+just test-quick    # Quick test
+just lint          # Check quality
+just format        # Auto-format
 
 # Full testing
-make test          # All tests (activate venv, avoid uv collection hang)
-make test-api      # API tests only
+just test          # All tests (activate venv, avoid uv collection hang)
+just test-api      # API tests only
 
-# ML Pipeline
-make pipeline-train    # Train embeddings
-make pipeline-serve    # Start API server
-make pipeline-full     # Complete pipeline (export → train → tune)
+# ML Pipeline (legacy - use runctl commands for training)
+just pipeline-train    # Train embeddings (legacy)
+just serve             # Start API server
+just pipeline-full     # Complete pipeline (export → train → tune, legacy)
 
 # Enrichment
-make enrich-mtg        # MTG functional tags (free)
-make enrich-pokemon    # Pokemon functional tags (free)
-make enrich-yugioh     # YGO functional tags (free)
+just enrich-mtg        # MTG functional tags (free)
+just enrich-pokemon    # Pokemon functional tags (free)
+just enrich-yugioh     # YGO functional tags (free)
 ```
 
-**Note**: Use `make test` (not `uv run pytest`) - see `DEEP_REVIEW_TRIAGED_ACTIONS.md` for why.
+Note: Use `just test` (not `uv run pytest`) - activates venv to avoid collection overhead.
 
 ---
 
 ## Current System State
 
-**Performance**:
+Performance:
 - P@10 = 0.088 ± ? (current, no confidence intervals)
 - Target: P@10 = 0.20-0.25 (requires card text embeddings)
 - Plateau: Co-occurrence alone maxes at ~0.08 (documented reality)
 
-**Data**:
+Data:
 - 52,330 cards (MTG 35k, Pokemon 3k, YGO 14k)
 - 56,521 tournament decks  
 - 90% cross-game parity achieved
 
-**Test Coverage**:
+Test Coverage:
 - 30+ test files
 - 185+ test functions
 - Property-based testing (Hypothesis)
@@ -69,8 +69,8 @@ make enrich-yugioh     # YGO functional tags (free)
 2. **Centralize paths** → robustness (1-2h)
 3. **Add type hints** → better DX (3-4h)
 
-**Total MVP**: 16-26 hours (T0 items)  
-**Full product**: 35-45 hours (T0 + T1.1 + T0.3)
+Total MVP: 16-26 hours (T0 items)  
+Full product: 35-45 hours (T0 + T1.1 + T0.3)
 
 ---
 
@@ -99,7 +99,7 @@ make enrich-yugioh     # YGO functional tags (free)
 ### Infrastructure
 - `src/ml/utils/llm_cache.py` (144 lines) - 30-day TTL, 1GB limit, concurrent-safe
 - `src/ml/utils/paths.py` - Centralized path configuration
-- `Makefile` - 14 documented workflow targets
+- `justfile` - All workflow targets (dev, testing, training, data pipeline)
 - `scripts/verify_training_status.py` - Training instance verification
 - `scripts/analyze_idle_instances.py` - Idle instance analysis
 
@@ -113,7 +113,7 @@ make enrich-yugioh     # YGO functional tags (free)
 4. **No text signals** - Missing biggest performance lever
 5. **Pytest collection slow** - Full suite hangs, individual files work (<2s)
 
-**All have documented workarounds or are acceptable for research code.**
+All have documented workarounds or are acceptable for research code.
 
 ---
 
@@ -150,21 +150,21 @@ uv run --script scripts/analyze_idle_instances.py
 just train-aws-monitor <instance-id>
 ```
 
-**Note**: Training instances default to `g4dn.xlarge` (GPU-enabled). Personal infrastructure (gyarados, alakazam) is automatically excluded from training management scripts.
+Note: Training instances default to `g4dn.xlarge` (GPU-enabled). Personal infrastructure (gyarados, alakazam) is automatically excluded from training management scripts.
 
 ## Getting Help
 
-**If confused about**: Read this first:
+If confused about, read this first:
 - Build/sync issues → `REVIEW_SUMMARY.md` (fixes applied section)
-- Test execution → `Makefile` + this file
+- Test execution → `justfile` + this file
 - Performance plateau → `experimental/REALITY_FINDINGS.md`
 - Next steps → `DEEP_REVIEW_TRIAGED_ACTIONS.md`
 - Architecture → `README.md` (architecture section)
 - Training management → `README.md` (training section)
 
-**Common Issues**:
-- `uv run pytest` hangs → Use `make test` instead
-- Import errors → Run `make sync`
+Common Issues:
+- `uv run pytest` hangs → Use `just test` instead
+- Import errors → Run `just sync`
 - Test failures → Expected (some tests need embeddings loaded)
 
 ---

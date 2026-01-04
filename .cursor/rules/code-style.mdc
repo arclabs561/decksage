@@ -1,0 +1,23 @@
+---
+description: Code style guidelines, tool preferences, and script organization standards
+alwaysApply: true
+---
+
+# Code Style
+
+- Use PEP 723 scripts for standalone tools (`# /// script`)
+- Prefer `uv`/`uvx` over `pip` for package management
+- Use type hints (Python 3.11+)
+- Follow existing patterns in `src/ml/`
+- Use `fd` not `find`, `rg` not `grep`, `bat` not `cat`
+- **Script organization**: Place runctl wrappers in `scripts/training/` or `scripts/evaluation/`
+- **Error handling**: Scripts should detect and handle missing dependencies, invalid paths, and connectivity issues gracefully
+  - **Shell scripts**: Always use `set -euo pipefail` for strict error handling
+  - **Python scripts**: Use try/except with specific exception types, provide clear error messages
+  - **Validation**: Check prerequisites (files, dependencies, environment variables) before execution
+  - **Logging**: Use structured logging (`ml.utils.structured_logging`) for production scripts
+- **CLI design**: Use `argparse` for command-line interfaces
+  - Provide clear help text, examples, and error messages
+  - Use subcommands for complex tools (e.g., `train`, `evaluate`, `export`)
+  - Support `--dry-run` flags for automation scripts
+  - Validate arguments early with clear error messages

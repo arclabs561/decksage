@@ -28,7 +28,7 @@ from __future__ import annotations
 import math
 from collections import Counter, defaultdict
 from dataclasses import dataclass
-from typing import Callable
+from typing import Callable, Optional
 
 from ..data.card_resolver import CardResolver
 
@@ -61,8 +61,8 @@ class DeckQualityMetrics:
 def compute_mana_curve(
     deck: dict,
     game: str,
-    cmc_fn: Callable[[str], int | None],
-    partition_name: str | None = None,
+    cmc_fn: Callable[[str], Optional[int]],
+    partition_name: Optional[str] = None,
 ) -> dict[int, float]:
     """
     Compute normalized mana curve (CMC distribution).
@@ -121,7 +121,7 @@ def kl_divergence(p: dict[int, float], q: dict[int, float]) -> float:
 def compute_archetype_curve(
     reference_decks: list[dict],
     game: str,
-    cmc_fn: Callable[[str], int | None],
+    cmc_fn: Callable[[str], Optional[int]],
 ) -> dict[int, float]:
     """
     Compute average mana curve from reference tournament decks.
@@ -159,7 +159,7 @@ def compute_tag_distribution(
     deck: dict,
     game: str,
     tag_set_fn: Callable[[str], set[str]],
-    partition_name: str | None = None,
+    partition_name: Optional[str] = None,
 ) -> dict[str, int]:
     """
     Compute functional tag distribution in deck.
@@ -213,7 +213,7 @@ def compute_synergy_score(
     game: str,
     tag_set_fn: Callable[[str], set[str]],
     reference_decks: list[dict],
-    partition_name: str | None = None,
+    partition_name: Optional[str] = None,
 ) -> float:
     """
     Compute synergy coherence score.
@@ -281,9 +281,9 @@ def assess_deck_quality(
     deck: dict,
     game: str,
     tag_set_fn: Callable[[str], set[str]],
-    cmc_fn: Callable[[str], int | None],
-    reference_decks: list[dict] | None = None,
-    archetype: str | None = None,
+    cmc_fn: Callable[[str], Optional[int]],
+    reference_decks: Optional[list[dict]] = None,
+    archetype: Optional[str] = None,
     *,
     curve_weight: float = 0.35,
     tag_balance_weight: float = 0.30,

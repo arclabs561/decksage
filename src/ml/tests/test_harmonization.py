@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Test harmonization across all three game implementations."""
 
-from ..validation.validators.models import (
+from ..validation.validators import (
     MTGDeck,
     YugiohDeck,
     PokemonDeck,

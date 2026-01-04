@@ -1,0 +1,25 @@
+[runpod]
+default_gpu = "NVIDIA GeForce RTX 4080 SUPER"
+default_disk_gb = 30
+default_image = "runpod/pytorch:2.1.0-py3.10-cuda11.8.0-devel-ubuntu22.04"
+
+[aws]
+region = "us-east-1"
+default_instance_type = "t3.medium"
+default_ami = "ami-08fa3ed5577079e64"
+use_spot = true
+s3_bucket = "games-collections"
+
+[local]
+default_device = "auto"
+checkpoint_dir = "checkpoints"
+
+[checkpoint]
+dir = "checkpoints"
+save_interval = 5
+keep_last_n = 10
+
+[monitoring]
+log_dir = "logs"
+update_interval_secs = 10
+enable_warnings = true

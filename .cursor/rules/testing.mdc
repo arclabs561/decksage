@@ -1,0 +1,30 @@
+---
+description: Testing guidelines and best practices
+alwaysApply: false
+globs:
+  - "src/ml/tests/**"
+  - "**/*test*.py"
+---
+
+# Testing
+
+- Run `pytest src/ml/tests/` before committing
+- Use property-based tests for invariants
+- Test LLM calls with caching (diskcache)
+- Mark slow tests with `@pytest.mark.slow`
+- Use `just test` (not `uv run pytest`) to avoid collection overhead
+
+## Test Organization
+Organize tests by speed and purpose:
+- Fast unit tests (<1s): Test individual functions in isolation
+- Integration tests (<30s): Test component interactions
+- Slow tests (>30s): Mark with `@pytest.mark.slow`, run in CI only
+
+## Test Data
+- Use fixtures for common test data, avoid hardcoding paths
+- Mock external dependencies (S3, APIs, LLMs) in tests
+
+## Test Coverage
+- Aim for >80% coverage on critical paths (data loading, validation, training)
+- Test isolation: Each test should be independent - no shared state between tests
+- Test naming: Use descriptive names: `test_function_name_scenario_expected_result`

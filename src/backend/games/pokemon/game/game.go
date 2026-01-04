@@ -104,6 +104,32 @@ type CollectionTypeDeck struct {
 	Event     string `json:"event,omitempty"`     // Tournament name
 	Placement int    `json:"placement,omitempty"` // Finishing position (1 = 1st place)
 	EventDate string `json:"eventDate,omitempty"` // Tournament date
+	
+	// Enhanced tournament metadata
+	TournamentType   string  `json:"tournamentType,omitempty"`   // "Regional", "Championship", "League Cup", "League Challenge"
+	TournamentSize   int     `json:"tournamentSize,omitempty"`   // Number of players (from Limitless API)
+	Location         string  `json:"location,omitempty"`         // City, State/Country
+	Region           string  `json:"region,omitempty"`           // "North America", "Europe", "Asia-Pacific"
+	TournamentID     string  `json:"tournamentId,omitempty"`     // Unique tournament identifier
+	Country          string  `json:"country,omitempty"`          // Player country (from Limitless API)
+	
+	// Temporal context (computed)
+	DaysSinceRotation  int     `json:"daysSinceRotation,omitempty"`  // Days since last format rotation
+	DaysSinceBanUpdate int     `json:"daysSinceBanUpdate,omitempty"` // Days since last ban list
+	MetaShare           float64 `json:"metaShare,omitempty"`          // Deck's meta share at event time (%)
+	
+	// Round-by-round results
+	RoundResults []RoundResult `json:"roundResults,omitempty"`
+}
+
+// RoundResult represents a single round/match result
+type RoundResult struct {
+	RoundNumber  int    `json:"roundNumber"`
+	Opponent     string `json:"opponent,omitempty"`      // Opponent player name
+	OpponentDeck string `json:"opponentDeck,omitempty"` // Opponent archetype
+	Result       string `json:"result"`                  // "W", "L", "T", "BYE"
+	GameWins     int    `json:"gameWins,omitempty"`      // 2-0, 2-1, etc.
+	GameLosses   int    `json:"gameLosses,omitempty"`
 }
 
 type CollectionTypeSet struct {

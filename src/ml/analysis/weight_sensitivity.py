@@ -14,9 +14,9 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from ..utils.logging_config import setup_script_logging
 
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+logger = setup_script_logging()
 
 
 def analyze_weight_sensitivity(

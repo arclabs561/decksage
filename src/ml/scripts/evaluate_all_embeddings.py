@@ -36,8 +36,16 @@ from __future__ import annotations
 
 import argparse
 import json
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
+# Set up project paths
+import sys
+from ml.utils.path_setup import setup_project_paths
+setup_project_paths()
+
+from ml.utils.paths import PATHS
 
 try:
     import pandas as pd
@@ -60,12 +68,37 @@ except ImportError:
 
 def load_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
     """Load test set (canonical format: dict mapping query to relevance labels)."""
-    with open(test_set_path) as f:
-        data = json.load(f)
+    import sys
+    import os
+    
+    print(f"  Loading test set from {test_set_path}...", end="", flush=True)
+    sys.stdout.flush()
+    
+    try:
+        # Use canonical load_test_set from utils
+        from ml.utils.data_loading import load_test_set as canonical_load
+        
+        # Check file size first (fast)
+        size = os.path.getsize(test_set_path)
+        print(f" ({size / 1024:.1f} KB)", flush=True)
+        sys.stdout.flush()
+        
+        # Load using canonical function
+        data = canonical_load(path=test_set_path)
+        
         # Handle both formats: direct dict or wrapped in "queries"
         if "queries" in data:
-            return data["queries"]
-        return data
+            result = data["queries"]
+        else:
+            result = data
+        
+        print(f"  Loaded {len(result)} queries", flush=True)
+        sys.stdout.flush()
+        return result
+    except Exception as e:
+        print(f"\n  ERROR loading test set: {e}", flush=True)
+        sys.stdout.flush()
+        raise
 
 
 def jaccard_similarity(set1: set[str], set2: set[str]) -> float:
@@ -75,23 +108,15 @@ def jaccard_similarity(set1: set[str], set2: set[str]) -> float:
     return intersection / union if union > 0 else 0.0
 
 
-def load_graph_for_jaccard(pairs_csv: Path) -> dict[str, set[str]]:
+# Use shared function for loading graph
+def load_graph_for_jaccard(
+    pairs_csv: Path | None = None,
+    graph_db: Path | None = None,
+    game: str | None = None,
+) -> dict[str, set[str]]:
     """Load graph adjacency for Jaccard similarity."""
-    print(f"Loading graph from {pairs_csv}...")
-    df = pd.read_csv(pairs_csv)
-    
-    adj: dict[str, set[str]] = {}
-    for _, row in df.iterrows():
-        card1, card2 = row["NAME_1"], row["NAME_2"]
-        if card1 not in adj:
-            adj[card1] = set()
-        if card2 not in adj:
-            adj[card2] = set()
-        adj[card1].add(card2)
-        adj[card2].add(card1)
-    
-    print(f"  Loaded {len(adj):,} cards")
-    return adj
+    from ml.utils.shared_operations import load_graph_for_jaccard as shared_load_graph
+    return shared_load_graph(pairs_csv=pairs_csv, graph_db=graph_db, game=game)
 
 
 def evaluate_embedding(
@@ -230,7 +255,7 @@ def evaluate_embedding(
             "vocab_coverage": vocab_coverage,
         }
         if verbose:
-            print(f"\n⚠️  No queries evaluated! Coverage: {vocab_coverage}")
+            print(f"\nWarning: No queries evaluated! Coverage: {vocab_coverage}")
         return result
     
     avg_p_at_k = np.mean(scores) if scores else 0.0
@@ -249,7 +274,7 @@ def evaluate_embedding(
         result["per_query_results"] = per_query_results
     
     if verbose and skipped_queries:
-        print(f"\n⚠️  Skipped {len(skipped_queries)} queries:")
+        print(f"\nWarning: Skipped {len(skipped_queries)} queries:")
         for q in list(skipped_queries)[:10]:
             print(f"    {q}: {skipped_reasons.get(q, 'unknown')}")
         if len(skipped_queries) > 10:
@@ -370,7 +395,7 @@ def evaluate_jaccard(
             "vocab_coverage": vocab_coverage,
         }
         if verbose:
-            print(f"\n⚠️  No queries evaluated! Coverage: {vocab_coverage}")
+            print(f"\nWarning: No queries evaluated! Coverage: {vocab_coverage}")
         return result
     
     # Calculate average precision (using scores list)
@@ -387,7 +412,7 @@ def evaluate_jaccard(
     }
     
     if verbose and skipped_queries:
-        print(f"\n⚠️  Skipped {len(skipped_queries)} queries:")
+        print(f"\nWarning: Skipped {len(skipped_queries)} queries:")
         for q in list(skipped_queries)[:10]:
             print(f"    {q}: {skipped_reasons.get(q, 'unknown')}")
         if len(skipped_queries) > 10:
@@ -402,14 +427,27 @@ def main() -> int:
     parser.add_argument(
         "--test-set",
         type=str,
-        default="experiments/test_set_canonical_magic.json",
-        help="Test set path",
+        default=None,  # Use PATHS.test_magic if not provided
+        help="Test set path (default: experiments/test_set_unified_magic.json)",
     )
     parser.add_argument(
         "--pairs-csv",
         type=str,
-        default="data/processed/pairs_large.csv",
-        help="Pairs CSV for Jaccard",
+        default=None,  # Use PATHS.pairs_large if not provided
+        help="Pairs CSV for Jaccard (legacy, use --graph-db if available)",
+    )
+    parser.add_argument(
+        "--graph-db",
+        type=str,
+        default=None,
+        help="Incremental graph SQLite database (preferred over pairs-csv)",
+    )
+    parser.add_argument(
+        "--game",
+        type=str,
+        choices=["MTG", "PKM", "YGO"],
+        default=None,
+        help="Filter graph by game for evaluation",
     )
     parser.add_argument(
         "--embeddings-dir",
@@ -420,45 +458,98 @@ def main() -> int:
     parser.add_argument(
         "--name-mapping",
         type=str,
-        default="experiments/name_mapping.json",
+        default=None,  # Use PATHS.experiments/name_mapping.json if exists
         help="Name mapping JSON (optional)",
     )
     parser.add_argument(
         "--output",
         type=str,
-        default="experiments/embedding_comparison.json",
-        help="Output JSON file",
+        default=None,  # Use PATHS.hybrid_evaluation_results if not provided
+        help="Output JSON file (default: experiments/hybrid_evaluation_results.json)",
     )
     parser.add_argument(
         "--confidence-intervals",
         action="store_true",
-        help="Compute bootstrap confidence intervals (recommended)",
+        help="Compute bootstrap confidence intervals (SLOW - default: disabled)",
+    )
+    parser.add_argument(
+        "--n-bootstrap",
+        type=int,
+        default=100,
+        help="Number of bootstrap samples for confidence intervals (default: 100, use 1000 for publication)",
+    )
+    parser.add_argument(
+        "--fast",
+        action="store_true",
+        help="Skip confidence intervals and use fast evaluation (default behavior)",
     )
     parser.add_argument(
         "--per-query",
         action="store_true",
         help="Include per-query breakdown in output",
     )
+    parser.add_argument(
+        "--validate-test-set",
+        action="store_true",
+        help="Validate test set coverage before evaluation",
+    )
+    parser.add_argument(
+        "--generate-dashboard",
+        action="store_true",
+        help="Generate quality dashboard after evaluation",
+    )
     
     args = parser.parse_args()
     
+    # Use PATHS defaults if not provided
+    if args.test_set is None:
+        args.test_set = str(PATHS.test_magic)
+    if args.name_mapping is None:
+        # Try to use default if exists, otherwise None
+        name_mapping_path = PATHS.experiments / "name_mapping.json"
+        args.name_mapping = str(name_mapping_path) if name_mapping_path.exists() else None
+    if args.output is None:
+        args.output = str(PATHS.hybrid_evaluation_results)
+    
     if not HAS_DEPS:
-        print("❌ Missing dependencies")
+        print("Error: Missing dependencies")
         return 1
+    
+    import sys
+    sys.stdout.flush()
     
     print("=" * 70)
     print("Evaluate All Embedding Methods")
     print("=" * 70)
     print()
+    sys.stdout.flush()
     
-    # Load test set
+    # Load test set (with optional validation)
     test_set_path = Path(args.test_set)
     if not test_set_path.exists():
-        print(f"❌ Test set not found: {test_set_path}")
+        print(f"Error: Test set not found: {test_set_path}")
+        sys.stdout.flush()
         return 1
     
+    if args.validate_test_set:
+        print("  Validating test set coverage...")
+        try:
+            from ml.evaluation.test_set_validation import validate_test_set_coverage
+            validation_result = validate_test_set_coverage(
+                test_set_path=test_set_path,
+                min_queries=100,
+                min_labels_per_query=5,
+            )
+            if not validation_result["valid"]:
+                print(f"  Warning: Test set validation issues found:")
+                for issue in validation_result.get("issues", []):
+                    print(f"     - {issue}")
+            else:
+                print(f"  Test set validation passed")
+        except Exception as e:
+            print(f"  Warning: Test set validation failed: {e}")
+    
     test_set = load_test_set(test_set_path)
-    print(f"📊 Loaded test set: {len(test_set)} queries")
     
     # Load name mapping if available (optional)
     name_mapper = None
@@ -475,13 +566,13 @@ def main() -> int:
                 sys.path.insert(0, str(src_dir))
             
             from ml.utils.name_normalizer import NameMapper
-            print(f"📊 Loading name mapping from {mapping_path}")
+            print(f"Loading name mapping from {mapping_path}")
             name_mapper = NameMapper.load_from_file(mapping_path)
             print(f"  Loaded {len(name_mapper.mapping)} name mappings")
         except ImportError:
-            print(f"⚠️  NameMapper not available, proceeding without name mapping")
+            print(f"Warning: NameMapper not available, proceeding without name mapping")
     else:
-        print(f"⚠️  No name mapping found at {mapping_path}, proceeding without mapping")
+        print(f"Warning: No name mapping found at {mapping_path}, proceeding without mapping")
     print()
     
     embeddings_dir = Path(args.embeddings_dir)
@@ -500,8 +591,23 @@ def main() -> int:
         )
     
     # Evaluate each embedding method
+    # First, check what embeddings actually exist
+    print(f"Scanning embeddings directory: {embeddings_dir}")
+    sys.stdout.flush()
+    
+    # Look for any .wv files in the directory
+    available_embeddings = list(embeddings_dir.glob("*.wv"))
+    print(f"Found {len(available_embeddings)} embedding files:")
+    for emb in available_embeddings:
+        size_mb = emb.stat().st_size / (1024 * 1024)
+        print(f"  - {emb.name} ({size_mb:.1f} MB)")
+    sys.stdout.flush()
+    print()
+    
+    # Try common embedding names, but also include any found
     methods = {
-        "trained_validated": embeddings_dir / "trained_validated.wv",  # New embeddings with validation
+        "multitask_embeddings": embeddings_dir / "multitask_embeddings.wv",
+        "trained_validated": embeddings_dir / "trained_validated.wv",
         "deepwalk": embeddings_dir / "deepwalk.wv",
         "node2vec_default": embeddings_dir / "node2vec_default.wv",
         "node2vec_bfs": embeddings_dir / "node2vec_bfs.wv",
@@ -509,16 +615,28 @@ def main() -> int:
         "magic_128d_test_pecanpy": embeddings_dir / "magic_128d_test_pecanpy.wv",
     }
     
+    # Add any other .wv files found
+    for emb_path in available_embeddings:
+        if emb_path.name not in [p.name for p in methods.values()]:
+            methods[emb_path.stem] = emb_path
+    
+    total_methods = len([p for p in methods.values() if p.exists()])
+    current_method = 0
+    
     for method_name, embed_path in methods.items():
         if not embed_path.exists():
-            print(f"⚠️  {method_name}: {embed_path} not found, skipping")
             continue
         
-        print(f"Evaluating {method_name}...")
+        current_method += 1
+        print(f"[{current_method}/{total_methods}] Evaluating {method_name}...")
+        print(f"  Loading from {embed_path}")
+        sys.stdout.flush()
         try:
             wv = KeyedVectors.load(str(embed_path))
+            print(f"  Loaded vocabulary: {len(wv)} vectors")
+            sys.stdout.flush()
             
-            if args.confidence_intervals:
+            if args.confidence_intervals and not args.fast:
                 # Use confidence interval evaluation
                 try:
                     # Try both locations for evaluate_with_confidence
@@ -567,13 +685,19 @@ def main() -> int:
                             vocab_coverage["not_in_vocab"] += 1
                     
                     # Use evaluate_with_confidence - it expects dict[str, list[str]] format
+                    print(f"  Running evaluation with confidence intervals (n_bootstrap={args.n_bootstrap})...")
+                    print(f"  This may take a few minutes for large test sets...")
+                    sys.stdout.flush()
                     metrics = evaluate_with_confidence(
                         flat_test_set,  # Converted to flat format
                         similarity_func,
                         top_k=10,
-                        n_bootstrap=1000,
+                        n_bootstrap=args.n_bootstrap,
                         confidence=0.95,
+                        verbose=False,  # Disable verbose to avoid per-query spam
                     )
+                    print(f"  Evaluation complete")
+                    sys.stdout.flush()
                     # Convert to expected format
                     metrics = {
                         "p@10": metrics.get("p@10", metrics.get("mean", 0.0)),
@@ -608,8 +732,11 @@ def main() -> int:
                     if 'vocab_coverage' in metrics:
                         cov = metrics['vocab_coverage']
                         print(f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab")
+                    sys.stdout.flush()
             else:
                 # Standard evaluation
+                print(f"  Running standard evaluation...")
+                sys.stdout.flush()
                 metrics = evaluate_embedding(
                     wv, 
                     test_set, 
@@ -621,8 +748,11 @@ def main() -> int:
                 if 'vocab_coverage' in metrics:
                     cov = metrics['vocab_coverage']
                     print(f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab")
+                sys.stdout.flush()
             
             results[method_name] = metrics
+            print(f"  ✓ {method_name} complete")
+            sys.stdout.flush()
             
             # Track in Aim
             if aim_run and track_evaluation_metrics:
@@ -634,16 +764,29 @@ def main() -> int:
                     method=method_name,
                 )
         except Exception as e:
-            print(f"  ❌ Error: {e}")
+            import traceback
+            print(f"  Error: {e}")
+            if args.per_query:
+                traceback.print_exc()
             results[method_name] = {"error": str(e)}
+            sys.stdout.flush()
         print()
+        sys.stdout.flush()
     
     # Evaluate Jaccard baseline
-    pairs_csv = Path(args.pairs_csv)
-    if pairs_csv.exists():
+    from ml.utils.paths import PATHS
+    pairs_csv = Path(args.pairs_csv) if args.pairs_csv else (PATHS.pairs_large if PATHS.pairs_large.exists() else None)
+    graph_db = Path(args.graph_db) if args.graph_db else (PATHS.incremental_graph_db if PATHS.incremental_graph_db.exists() else None)
+    
+    if (pairs_csv and pairs_csv.exists()) or (graph_db and graph_db.exists()):
         print("Evaluating Jaccard (baseline)...")
+        sys.stdout.flush()
         try:
-            adj = load_graph_for_jaccard(pairs_csv)
+            adj = load_graph_for_jaccard(
+                pairs_csv=pairs_csv,
+                graph_db=graph_db,
+                game=args.game,
+            )
             metrics = evaluate_jaccard(adj, test_set, name_mapper=name_mapper, verbose=False)
             results["jaccard"] = metrics
             
@@ -661,17 +804,21 @@ def main() -> int:
             if 'vocab_coverage' in metrics:
                 cov = metrics['vocab_coverage']
                 print(f"  Coverage: {cov.get('found_in_graph', 0)}/{cov.get('total_queries', 0)} in graph")
+            sys.stdout.flush()
         except Exception as e:
-            print(f"  ❌ Error: {e}")
+            print(f"  Error: {e}")
             results["jaccard"] = {"error": str(e)}
+            sys.stdout.flush()
     else:
-        print(f"⚠️  Pairs CSV not found: {pairs_csv}, skipping Jaccard")
+        print(f"Warning: Pairs CSV not found: {pairs_csv}, skipping Jaccard")
+        sys.stdout.flush()
     
     print()
     print("=" * 70)
     print("Results Summary")
     print("=" * 70)
     print()
+    sys.stdout.flush()
     
     # Sort by P@10
     sorted_results = sorted(
@@ -701,23 +848,130 @@ def main() -> int:
         print(
             f"{method:<25} {p10:<12.4f} {mrr:<12.4f} {queries:<10} {coverage_str:<12}"
         )
+    sys.stdout.flush()
     
     # Save results
     output_path = Path(args.output)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
+    print(f"\nSaving results to {output_path}...")
+    sys.stdout.flush()
+    
+    # Prepare results with standard format
+    output_data = {
+        "test_set": str(test_set_path),
+        "results": results,
+        "summary": {
+            "best_p@10": sorted_results[0][1].get("p@10", 0.0) if sorted_results else 0.0,
+            "best_method": sorted_results[0][0] if sorted_results else None,
+        },
+    }
+    
+    # Add confidence intervals if per-query results available
+    try:
+        from ml.evaluation.confidence_intervals_integration import add_confidence_intervals_to_evaluation_results
+        
+        # Extract per-query metrics from results if available
+        per_query_metrics = {}
+        for method_name, method_results in results.items():
+            if "per_query_results" in method_results:
+                per_query_metrics[method_name] = method_results["per_query_results"]
+        
+        # Add CIs to summary metrics
+        if per_query_metrics:
+            best_method = sorted_results[0][0] if sorted_results else None
+            if best_method and best_method in per_query_metrics:
+                best_metrics = results[best_method]
+                best_metrics_with_ci = add_confidence_intervals_to_evaluation_results(
+                    evaluation_results=best_metrics,
+                    per_query_metrics=per_query_metrics[best_method],
+                )
+                output_data["summary"]["best_metrics_with_ci"] = best_metrics_with_ci
+    except Exception:
+        # Don't fail if CI integration fails
+        pass
+    
     with open(output_path, "w") as f:
-        json.dump({
-            "test_set": str(test_set_path),
-            "results": results,
-            "summary": {
-                "best_p@10": sorted_results[0][1].get("p@10", 0.0) if sorted_results else 0.0,
-                "best_method": sorted_results[0][0] if sorted_results else None,
-            },
-        }, f, indent=2)
+        json.dump(output_data, f, indent=2)
     
     print()
-    print(f"✅ Results saved to {output_path}")
+    print(f"Results saved to {output_path}")
+    
+    # Auto-generate quality dashboard if requested
+    if args.generate_dashboard or (args.output and "experiments" in str(args.output)):
+        try:
+            from ml.evaluation.quality_dashboard import compute_system_health, generate_dashboard_html
+            
+            # Create dashboard from evaluation results
+            health = compute_system_health(
+                evaluation_results_path=output_path,
+            )
+            dashboard_path = output_path.parent / f"{output_path.stem}_dashboard.html"
+            generate_dashboard_html(health, dashboard_path)
+            print(f"Quality dashboard: {dashboard_path}")
+        except Exception:
+            # Don't fail if dashboard generation fails
+            pass
+    
+    print("=" * 70)
+    print("Evaluation complete!")
+    print("=" * 70)
+    sys.stdout.flush()
+    
+    # Register evaluation in registry (if available)
+    try:
+        try:
+            from ml.utils.evaluation_registry import EvaluationRegistry
+        except ImportError:
+            from ..utils.evaluation_registry import EvaluationRegistry
+        
+        # Extract version from output path or use timestamp
+        version = None
+        if "_v" in output_path.stem:
+            version = output_path.stem.split("_v")[-1]
+        else:
+            version = datetime.now().strftime("%Y-W%V")
+        
+        # Determine best embedding path from results
+        best_method = sorted_results[0][0] if sorted_results else None
+        best_embedding_path = None
+        if best_method and best_method != "Jaccard":
+            # Try to find the embedding file for the best method
+            embeddings_dir = Path(args.embeddings_dir)
+            if embeddings_dir.exists():
+                # Common naming patterns
+                for pattern in [f"{best_method.lower()}.wv", f"{best_method}.wv", f"*{best_method.lower()}*.wv"]:
+                    matches = list(embeddings_dir.glob(pattern))
+                    if matches:
+                        best_embedding_path = str(matches[0])
+                        break
+        
+        registry = EvaluationRegistry()
+        registry.record_evaluation(
+            model_type="embedding_comparison",
+            model_version=version,
+            model_path=best_embedding_path or "multiple_embeddings",
+            evaluation_results={
+                "test_set": str(test_set_path),
+                "results": results,
+                "summary": {
+                    "best_p@10": sorted_results[0][1].get("p@10", 0.0) if sorted_results else 0.0,
+                    "best_method": best_method,
+                },
+            },
+            test_set_path=str(test_set_path),
+            metadata={
+                "embeddings_dir": str(args.embeddings_dir),
+                "game": args.game,
+                "graph_db": str(args.graph_db) if args.graph_db else None,
+                "pairs_csv": str(args.pairs_csv) if args.pairs_csv else None,
+                "methods_evaluated": list(results.keys()),
+            },
+        )
+        print(f"✓ Evaluation registered in model registry (version: {version})")
+    except Exception as e:
+        # Don't fail evaluation if registry fails
+        print(f"Warning: Failed to register evaluation in registry: {e}")
     
     return 0
 

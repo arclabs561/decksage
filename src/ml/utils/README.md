@@ -9,6 +9,7 @@ Abstracts common patterns from 39+ experiments across Magic, Yu-Gi-Oh!, and Poke
 - **`evaluation.py`**: Core evaluation metrics (P@K, MRR, NDCG) - standard version
 - **`evaluation_with_ci.py`**: Evaluation with confidence intervals - use for rigorous analysis
 - **`constants.py`**: Game-specific filters and relevance weights
+- **`annotation_utils.py`**: Load and convert annotations (similarity → substitution pairs)
 - **`pydantic_ai_helpers.py`**: Shared utilities for Pydantic AI agents
 - **`llm_cost_tracker.py`**: Track LLM API costs
 - **`llm_cache.py`**: Cache LLM responses
@@ -35,6 +36,23 @@ wv = load_embeddings('magic_39k_decks_pecanpy')
 
 # Load test set
 test_set = load_test_set(game='magic')  # or 'yugioh', 'pokemon'
+
+# Load and convert annotations
+from utils.annotation_utils import (
+    load_similarity_annotations,
+    extract_substitution_pairs_from_annotations,
+    convert_annotations_to_substitution_pairs,
+)
+
+# Load similarity annotations
+annotations = load_similarity_annotations(Path("annotations/similarity_annotations.jsonl"))
+
+# Extract substitution pairs for training
+substitution_pairs = extract_substitution_pairs_from_annotations(
+    annotations,
+    min_similarity=0.8,
+    require_substitute_flag=True,
+)
 ```
 
 ### Building Graph

@@ -20,90 +20,89 @@ from ..utils.paths import PATHS
 
 
 def main():
-    """Generate annotation batches for all games"""
+ """Generate annotation batches for all games"""
 
-    # Game configurations
-    games = {
-        "magic": {
-            "target": 50,
-            "current": 38,
-            "test_set": PATHS.test_magic,
-            "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
-        },
-        "pokemon": {
-            "target": 25,
-            "current": 10,
-            "test_set": PATHS.test_pokemon,
-            "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
-        },
-        "yugioh": {
-            "target": 25,
-            "current": 13,
-            "test_set": PATHS.test_yugioh,
-            "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
-        },
-    }
+ # Game configurations
+ games = {
+ "magic": {
+ "target": 50,
+ "current": 38,
+ "test_set": PATHS.test_magic,
+ "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
+ },
+ "pokemon": {
+ "target": 25,
+ "current": 10,
+ "test_set": PATHS.test_pokemon,
+ "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
+ },
+ "yugioh": {
+ "target": 25,
+ "current": 13,
+ "test_set": PATHS.test_yugioh,
+ "pairs": PATHS.pairs_large if PATHS.pairs_large.exists() else PATHS.pairs_500,
+ },
+ }
 
-    print("=" * 60)
-    print("  Hand Annotation Batch Generator")
-    print("=" * 60)
-    print()
+ print("=" * 60)
+ print(" Hand Annotation Batch Generator")
+ print("=" * 60)
+ print()
 
-    # Load current test sets and count queries
-    for game, config in games.items():
-        test_set_path = config["test_set"]
-        if test_set_path.exists():
-            with open(test_set_path) as f:
-                test_set = json.load(f)
+ # Load current test sets and count queries
+ for game, config in games.items():
+    test_set_path = config["test_set"]
+    if test_set_path.exists():
+        with open(test_set_path) as f:
+            test_set = json.load(f)
             # Handle both formats
             queries = test_set.get("queries", test_set)
             actual_current = len(queries)
             config["current"] = actual_current
             config["existing_test_set"] = test_set
-        else:
-            config["existing_test_set"] = None
-            print(f"⚠️  Test set not found: {test_set_path}")
+    else:
+        config["existing_test_set"] = None
+        print(f"Warning: Test set not found: {test_set_path}")
 
-    # Generate batches
-    output_dir = Path("annotations")
-    output_dir.mkdir(exist_ok=True)
+# Generate batches
+output_dir = Path("annotations")
+output_dir.mkdir(exist_ok=True)
 
-    for game, config in games.items():
-        n_new = config["target"] - config["current"]
-        if n_new <= 0:
-            print(f"✓ {game.upper()}: Already has {config['current']} queries (target: {config['target']})")
-            continue
+for game, config in games.items():
+    n_new = config["target"] - config["current"]
+    if n_new <= 0:
+        print(f"✓ {game.upper()}: Already has {config['current']} queries (target: {config['target']})")
+        continue
 
-        print(f"\n📋 Generating batch for {game.upper()}:")
-        print(f"   Current: {config['current']} queries")
-        print(f"   Target: {config['target']} queries")
-        print(f"   Need: {n_new} new queries")
+    print(f"\n📋 Generating batch for {game.upper()}:")
+    print(f" Current: {config['current']} queries")
+    print(f" Target: {config['target']} queries")
+    print(f" Need: {n_new} new queries")
 
-        if not config["pairs"].exists():
-            print(f"   ❌ Pairs CSV not found: {config['pairs']}")
-            continue
+    if not config["pairs"].exists():
+        print(f" Error: Pairs CSV not found: {config['pairs']}")
+        continue
 
-        output_file = output_dir / f"hand_batch_{game}_expansion.yaml"
+    output_file = output_dir / f"hand_batch_{game}_expansion.yaml"
 
-        try:
-            create_annotation_batch(
-                game=game,
-                target_queries=config["target"],
-                current_queries=config["current"],
-                pairs_csv=config["pairs"],
-                embeddings_path=None,  # Can add later if embeddings available
-                output_path=output_file,
-                existing_test_set=config.get("existing_test_set"),
-                seed=42,
-            )
-        except Exception as e:
-            print(f"   ❌ Error: {e}")
-            import traceback
-
-            traceback.print_exc()
+    try:
+        create_annotation_batch(
+            game=game,
+            target_queries=config["target"],
+            current_queries=config["current"],
+            pairs_csv=config["pairs"],
+ embeddings_path=None, # Can add later if embeddings available
+ output_path=output_file,
+ existing_test_set=config.get("existing_test_set"),
+ seed=42,
+        )
+    except Exception as e:
+        print(f" Error: Error: {e}")
+        import traceback
+        traceback.print_exc()
 
     print("\n" + "=" * 60)
-    print("  Summary")
+    print(" Summary")
     print("=" * 60)
     total_current = sum(c["current"] for c in games.values())
     total_target = sum(c["target"] for c in games.values())

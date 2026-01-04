@@ -46,23 +46,28 @@ def main() -> int:
     
     project_root = Path(__file__).parent.parent.parent
     
+    # Import PATHS once at the top
+    from ml.utils.paths import PATHS
+    
     # Step 1: Fix vocabulary mismatches
     if not args.skip_vocab:
         for game in ["magic", "pokemon", "yugioh"]:
-            test_set = f"experiments/test_set_expanded_{game}.json" if game == "magic" else f"experiments/test_set_canonical_{game}.json"
-            pairs_csv = "data/processed/pairs_large.csv" if game == "magic" else f"data/processed/pairs_{game}.csv"
+            # Use unified test sets (recommended)
+            test_set = getattr(PATHS, f"test_{game}")
+            # Use PATHS for pairs (magic uses pairs_large, others may have game-specific files)
+            pairs_csv = PATHS.pairs_large if game == "magic" else (PATHS.processed / f"pairs_{game}.csv")
             
-            if Path(test_set).exists() and Path(pairs_csv).exists():
+            if test_set.exists() and pairs_csv.exists():
                 success = run_command(
                     ["uv", "run", "--script", "src/ml/scripts/fix_vocabulary_mismatch.py",
-                     "--test-set", test_set,
-                     "--pairs-csv", pairs_csv,
+                     "--test-set", str(test_set),
+                     "--pairs-csv", str(pairs_csv),
                      "--name-mapping", "experiments/name_mapping.json",
                      "--threshold", "0.80"],
                     f"Fixing vocabulary for {game}",
                 )
                 if not success:
-                    print(f"⚠️  Vocabulary fixing failed for {game}, continuing...")
+                    print(f"Warning: Vocabulary fixing failed for {game}, continuing...")
     
     # Step 2: Expand test sets
     if not args.skip_expand:
@@ -76,58 +81,61 @@ def main() -> int:
             "Expanding test sets for all games",
         )
         if not success:
-            print("⚠️  Test set expansion failed, continuing...")
+            print("Warning: Test set expansion failed, continuing...")
     
     # Step 3: Create downstream test data
     if not args.skip_downstream:
         for game in ["magic", "pokemon", "yugioh"]:
-            test_set = f"experiments/test_set_expanded_{game}.json"
-            pairs_csv = "data/processed/pairs_large.csv" if game == "magic" else f"data/processed/pairs_{game}.csv"
+            # Use unified test sets (recommended)
+            test_set = getattr(PATHS, f"test_{game}")
+            # Use PATHS for pairs (magic uses pairs_large, others may have game-specific files)
+            pairs_csv = PATHS.pairs_large if game == "magic" else (PATHS.processed / f"pairs_{game}.csv")
             
-            if Path(test_set).exists() and Path(pairs_csv).exists():
+            if test_set.exists() and pairs_csv.exists():
                 success = run_command(
                     ["uv", "run", "--script", "src/ml/scripts/create_downstream_test_data.py",
                      "--game", game,
-                     "--pairs-csv", pairs_csv,
-                     "--test-set", test_set,
+                     "--pairs-csv", str(pairs_csv),
+                     "--test-set", str(test_set),
                      "--output-dir", "experiments/downstream_tests"],
                     f"Creating downstream test data for {game}",
                 )
                 if not success:
-                    print(f"⚠️  Downstream test data creation failed for {game}, continuing...")
+                    print(f"Warning: Downstream test data creation failed for {game}, continuing...")
     
     # Step 4: Train embeddings (if needed)
     embedding_path = args.embedding
     if not args.skip_training and not embedding_path:
         # Train multi-game embeddings
-        if Path("data/processed/pairs_multi_game.csv").exists():
+        pairs_multi_game = PATHS.data / "processed" / "pairs_multi_game.csv"
+        if pairs_multi_game.exists():
             print("\n" + "="*70)
             print("Training multi-game embeddings")
             print("="*70)
-            print("⚠️  Multi-game training not yet implemented in master pipeline")
-            print("   Run manually: just train-multi-game")
+            print("Warning: Multi-game training not yet implemented in master pipeline")
+            print(" Run manually: just train-multi-game")
         else:
-            print("⚠️  Multi-game pairs not found, skipping multi-game training")
+            print("Warning: Multi-game pairs not found, skipping multi-game training")
     
     # Step 5: Comprehensive evaluation
     if not args.skip_eval:
         if not embedding_path:
             # Use latest trained embedding
-            embedding_path = "data/embeddings/trained_validated.wv"
+            embedding_path = str(PATHS.embeddings / "trained_validated.wv")
         
         if Path(embedding_path).exists():
             success = run_command(
                 ["uv", "run", "--script", "src/ml/scripts/comprehensive_evaluation_pipeline.py",
                  "--embedding", embedding_path,
-                 "--output", "experiments/evaluation_comprehensive.json",
-                 "--test-sets", "magic:experiments/test_set_expanded_magic.json",
-                            "pokemon:experiments/test_set_expanded_pokemon.json",
-                            "yugioh:experiments/test_set_expanded_yugioh.json",
+                 "--output", str(PATHS.experiments / "evaluation_comprehensive.json"),
+                 "--test-sets", f"magic:{PATHS.test_magic}",
+                 f"pokemon:{PATHS.test_pokemon}",
+                 f"yugioh:{PATHS.test_yugioh}",
                  "--downstream"],
                 "Running comprehensive evaluation",
             )
         else:
-            print(f"⚠️  Embedding not found: {embedding_path}, skipping evaluation")
+            print(f"Warning: Embedding not found: {embedding_path}, skipping evaluation")
     
     print("\n" + "="*70)
     print("MASTER PIPELINE COMPLETE")

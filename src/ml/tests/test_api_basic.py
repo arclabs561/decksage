@@ -21,6 +21,15 @@ except ImportError:
 # env cleanup handled by global fixture in conftest.py
 
 
+@pytest.fixture
+def api_client():
+    """Create a test client for the API."""
+    if not HAS_FASTAPI or app is None:
+        pytest.skip("FastAPI or app not available")
+    from fastapi.testclient import TestClient
+    return TestClient(app)
+
+
 def test_live_endpoint(api_client):
     client = api_client
     resp = client.get("/live")
