@@ -70,6 +70,7 @@ experiments/*.csv
 !docs/DATA_STORAGE.md
 !docs/DATA_USAGE.md
 !docs/DATA_LINEAGE_FLOW.txt
+!docs/DEVELOPMENT_RULES.md
 # Allow README files in key directories (provide context)
 !**/README.md
 # Block archive and session docs
