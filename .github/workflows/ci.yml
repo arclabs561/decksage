@@ -33,7 +33,7 @@ jobs:
           python-version: "3.11"
       
       - name: Install pre-commit
-        run: uv pip install pre-commit
+        run: uv pip install --system pre-commit
       
       - name: Run pre-commit on all files
         run: pre-commit run --all-files
@@ -57,7 +57,7 @@ jobs:
       
       - name: Install dependencies
         run: |
-          uv pip install ruff
+          uv pip install --system ruff
       
       - name: Run Ruff check
         run: uv run ruff check src/ml
@@ -179,7 +179,7 @@ jobs:
         run: |
           cd src/ml
           uv sync
-          uv pip install ty
+          uv pip install --system ty
       
       - name: Run type checker
         run: |
