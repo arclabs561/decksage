@@ -12,10 +12,10 @@ linters:
   enable:
     # Core linters
     - errcheck      # Check error handling
-    - gosimple      # Simplify code
+    # gosimple is part of staticcheck in v2, no need to enable separately
     - govet         # Go vet
     - ineffassign   # Detect ineffectual assignments
-    - staticcheck   # Comprehensive static analysis
+    - staticcheck   # Comprehensive static analysis (includes gosimple)
     # typecheck is built-in to golangci-lint v2, not a separate linter
     - unused        # Detect unused code
     
@@ -48,7 +48,7 @@ linters:
     - gochecknoglobals  # Globals sometimes necessary
     - gocognit      # Cognitive complexity is subjective
     - godox         # Allow TODOs
-    - gomnd         # Magic numbers sometimes ok
+    - mnd           # Magic numbers sometimes ok (v2 name, was gomnd in v1)
     - lll           # Line length handled by gofmt
     - nestif        # Nesting depth is judgement call
     - wsl           # Whitespace rules too strict
