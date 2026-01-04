@@ -182,6 +182,7 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "hypothesis>=6.147.0",
     "pytest>=9.0.0",
     "pytest-cov>=7.0.0",
 ]

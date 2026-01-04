@@ -1,6 +1,8 @@
 # Deployment Guide
 
-How to deploy DeckSage API to production (Fly.io).
+How to deploy DeckSage API to production (Fly.io) - **Private Tailscale Network Only**.
+
+This deployment is configured for private access via Tailscale only. The app is not publicly accessible.
 
 ## Pre-Deployment Checklist
 
@@ -14,6 +16,62 @@ Before deploying, ensure:
 6. **Docker builds**: `docker build -f Dockerfile.api -t decksage-api .`
 7. **Health check works**: API responds to `GET /live`
 
+## Private Network Setup (Tailscale)
+
+This app is configured for **private access only** via Tailscale. It is not publicly accessible.
+
+### Option 1: Tailscale Router (Recommended)
+
+1. **Create Tailscale router app** (one-time setup):
+   ```bash
+   fly apps create -o tailscale-router
+   cd /path/to/tailscale-router
+   # Use fly-apps/tailscale-router image or custom Dockerfile
+   ```
+
+2. **Get your Fly.io 6PN (private IPv6 network)**:
+   ```bash
+   fly ips private
+   # Example output: fdaa:3:d3ad:beef:192:2ef7:abcf:2
+   # Use /48 subnet: fdaa:3:d3ad::/48
+   ```
+
+3. **Configure Tailscale router** with your 6PN subnet in `fly.toml`:
+   ```toml
+   [env]
+     TS_ROUTES = "fdaa:3:d3ad::/48"  # Your 6PN subnet
+   ```
+
+4. **Set Tailscale auth key**:
+   ```bash
+   fly secrets set --app tailscale-router TS_AUTHKEY="tskey-client-<your-key>"
+   ```
+
+5. **Deploy router**:
+   ```bash
+   fly deploy --app tailscale-router
+   ```
+
+6. **Access DeckSage via Tailscale**:
+   - The app will be accessible at its private IPv6 address
+   - Or via Tailscale hostname if configured
+
+### Option 2: Direct Tailscale Connection
+
+To connect the app directly to Tailscale (requires modifying Dockerfile):
+
+1. **Generate Tailscale auth key** (pre-approved, one-time):
+   ```bash
+   # In Tailscale admin console, create reusable auth key
+   ```
+
+2. **Set secret**:
+   ```bash
+   fly secrets set TAILSCALE_AUTHKEY="tskey-<your-key>"
+   ```
+
+3. **Modify Dockerfile** to install and run tailscaled (see Tailscale docs)
+
 ## Manual Deployment
 
 ```bash
@@ -23,8 +81,12 @@ docker build -f Dockerfile.api -t decksage-api .
 # 2. Validate deployment
 ./scripts/validate_deployment.sh data/embeddings/production.wv
 
-# 3. Deploy to Fly.io
+# 3. Deploy to Fly.io (private network only)
 flyctl deploy --dockerfile Dockerfile.api
+
+# 4. Get private IP address
+flyctl ips private --app decksage
+# Access via: http://[private-ip]:8000 (from Tailscale network)
 ```
 
 ## Automated Deployment (GitHub Actions)
@@ -59,7 +121,17 @@ Required for deployment:
 **Liveness**: `GET /live` - Returns 200 if API is running
 **Readiness**: `GET /ready` - Returns 200 if API is ready to serve requests
 
-Fly.io automatically checks `/live` every 30s.
+Fly.io automatically checks `/live` every 30s via private network.
+
+## Accessing the Private API
+
+Since this app is private-only:
+
+1. **Via Tailscale router**: Access via Tailscale hostname or private IP
+2. **Via private IPv6**: Use `flyctl ips private` to get the address
+3. **Via Fly.io WireGuard**: Connect via `flyctl proxy 8000:8000`
+
+**Note**: The app has no public HTTP service. All access is via private network.
 
 ## Rollback
 

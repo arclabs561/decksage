@@ -1,5 +1,6 @@
-# Fly.io configuration for DeckSage API
+# Fly.io configuration for DeckSage API (Private Tailscale Network)
 # See: https://fly.io/docs/reference/configuration/
+# This app is configured for private access via Tailscale only
 
 app = "decksage"
 primary_region = "iad"  # US East (Virginia) - adjust to your preference
@@ -11,15 +12,25 @@ primary_region = "iad"  # US East (Virginia) - adjust to your preference
   PORT = "8000"
   PYTHONUNBUFFERED = "1"
 
-[http_service]
+# Private networking only - no public HTTP service
+# Access via Tailscale private network (6PN) or Tailscale router
+# To access:
+#   1. Set up Tailscale router (see docs/DEPLOYMENT.md)
+#   2. Or connect app directly to Tailscale (requires tailscaled in Dockerfile)
+#   3. Access via private IPv6: fdaa:3:<org>:<app>::2:8000
+
+# Internal service (private network only)
+[[services]]
   internal_port = 8000
-  force_https = true
-  auto_stop_machines = 'suspend'  # Suspend instead of stop for faster cold starts
-  auto_start_machines = true
-  min_machines_running = 1  # Keep 1 warm to avoid SSL timeout on cold start
+  protocol = "tcp"
   processes = ["app"]
 
-  [[http_service.checks]]
+  [[services.ports]]
+    port = 8000
+    handlers = ["http"]
+    force_https = false  # Private network, no need for HTTPS
+
+  [[services.checks]]
     grace_period = "10s"
     interval = "30s"
     method = "GET"
