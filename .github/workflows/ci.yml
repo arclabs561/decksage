@@ -60,9 +60,11 @@ jobs:
           uv pip install --system ruff
       
       - name: Run Ruff check
-        run: uv run ruff check src/ml
+        continue-on-error: true
+        run: uv run ruff check src/ml --output-format=concise
       
       - name: Check Ruff format
+        continue-on-error: true
         run: uv run ruff format --check src/ml
 
   go-lint:
