@@ -10,8 +10,31 @@ repos:
       - id: ruff
         args: [--fix]
         stages: [commit]
+        types: [python]
+        exclude: |
+          (?x)^(
+            .*_embeddings\.py|
+            .*_trainctl\.py|
+            .*/__pycache__/|
+            .*\.pyc$|
+            build/|
+            dist/|
+            \.venv/|
+            venv/
+          )
       - id: ruff-format
         stages: [commit]
+        types: [python]
+        exclude: |
+          (?x)^(
+            .*_embeddings\.py|
+            .*_trainctl\.py|
+            .*/__pycache__/|
+            build/|
+            dist/|
+            \.venv/|
+            venv/
+          )
 
   # Go: golangci-lint (comprehensive Go linter)
   # Updated to v2.6.2 for Go 1.24 support and v2 config format compatibility
@@ -29,7 +52,17 @@ repos:
     hooks:
       - id: shellcheck
         stages: [commit]
+        types: [shell]
         args: [-e, SC1091]  # Allow sourcing files without checking
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/
+          )
 
   # Standard pre-commit hooks
   - repo: https://github.com/pre-commit/pre-commit-hooks
@@ -37,12 +70,79 @@ repos:
     hooks:
       - id: trailing-whitespace
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            \.pyc$|
+            \.lock$|
+            \.zst$|
+            \.sst$|
+            \.wv$|
+            \.kv$|
+            \.edg$|
+            data/raw/|
+            data/embeddings/|
+            data/graphs/|
+            data/archive/
+          )
       - id: end-of-file-fixer
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            \.pyc$|
+            \.lock$|
+            \.zst$|
+            \.sst$|
+            \.wv$|
+            \.kv$|
+            \.edg$|
+            data/raw/|
+            data/embeddings/|
+            data/graphs/|
+            data/archive/
+          )
       - id: check-yaml
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            data/raw/|
+            data/embeddings/|
+            data/graphs/|
+            data/archive/
+          )
       - id: check-json
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            data/raw/|
+            data/embeddings/|
+            data/graphs/|
+            data/archive/|
+            experiments/.*\.json$
+          )
       - id: check-added-large-files
         args: ['--maxkb=1000']
         stages: [commit]
@@ -50,12 +150,77 @@ repos:
         stages: [commit]
       - id: check-toml
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/
+          )
       - id: mixed-line-ending
         stages: [commit]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            \.pyc$|
+            \.lock$|
+            \.zst$|
+            \.sst$|
+            \.wv$|
+            \.kv$|
+            \.edg$
+          )
       - id: check-executables-have-shebangs
         stages: [commit]
+        types: [text]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            \.md$|
+            \.txt$|
+            \.py$|
+            \.go$
+          )
       - id: check-shebang-scripts-are-executable
         stages: [commit]
+        types: [text]
+        exclude: |
+          (?x)^(
+            \.git/|
+            \.venv/|
+            venv/|
+            node_modules/|
+            build/|
+            dist/|
+            \.md$|
+            \.txt$|
+            \.py$|
+            \.go$
+          )
+
+  # Data lineage validation (runs before commit)
+  - repo: local
+    hooks:
+      - id: validate-lineage
+        name: Validate data lineage
+        entry: bash -c 'python3 scripts/data_processing/validate_lineage.py'
+        language: system
+        pass_filenames: false
+        always_run: true
+        stages: [commit]
+        verbose: true
 
   # Pre-push: Fast tests (unit tests only, no slow/integration)
   - repo: local
