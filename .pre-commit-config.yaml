@@ -292,6 +292,7 @@ repos:
         verbose: false  # Reduce noise
 
   # Pre-push: Fast tests (unit tests only, no slow/integration)
+  # Only run if Python files changed (optimization)
   - repo: local
     hooks:
       - id: pytest-fast
@@ -301,7 +302,8 @@ repos:
         pass_filenames: false
         always_run: false
         stages: [push]
-        verbose: true
+        types: [python]  # Only run if Python files changed
+        verbose: false  # Reduce noise
 
   # Manual: Full test suite (run with --hook-stage manual)
   - repo: local

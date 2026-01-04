@@ -120,18 +120,23 @@ exclude = [
     "logs/**",
 ]
 
+[tool.ruff.lint]
+# Modern Ruff v0.1.0+ uses lint.* namespace
+# Keep select/ignore at top level for backward compatibility
+# but also support lint.* for future-proofing
+
 [tool.ruff.format]
 # Use Black-compatible formatting
 quote-style = "double"
 indent-style = "space"
 line-ending = "auto"
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 known-first-party = ["decksage", "ml"]
 force-single-line = false
 lines-after-imports = 2
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # Test files can be less strict
 "tests/**/*.py" = ["S101", "PLR2004"]
 "**/test_*.py" = ["S101", "PLR2004"]
