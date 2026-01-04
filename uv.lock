@@ -939,6 +939,7 @@ viz = [
 
 [package.dev-dependencies]
 dev = [
+    { name = "hypothesis" },
     { name = "pytest" },
     { name = "pytest-cov" },
 ]
@@ -989,6 +990,7 @@ provides-extras = ["dev", "api", "embeddings", "viz", "fast", "enrichment", "gnn
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "hypothesis", specifier = ">=6.147.0" },
     { name = "pytest", specifier = ">=9.0.0" },
     { name = "pytest-cov", specifier = ">=7.0.0" },
 ]
