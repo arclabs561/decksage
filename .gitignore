@@ -165,3 +165,11 @@ output=experiments/test_set_comprehensive.json
 
 # Assets directory (contains potentially copyrighted fonts and symbols)
 assets/
+
+# Questionable content - should be local/S3 only
+data/processed/card_attributes_minimal.csv
+data/processed/scryfall_card_db.json
+data/processed/ground_truth_v1.json
+src/ml/scryfall_card_db.json
+src/ml/tests/fixtures/decks_*.jsonl
+experiments/downstream_tests/*.jsonl
