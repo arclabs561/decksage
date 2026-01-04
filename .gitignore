@@ -162,3 +162,6 @@ dist/
 src/backend/cache/
 **/cache/
 output=experiments/test_set_comprehensive.json
+
+# Assets directory (contains potentially copyrighted fonts and symbols)
+assets/
