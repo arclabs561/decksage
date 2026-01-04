@@ -89,10 +89,9 @@ GO_FILTER_REGEX_INCLUDE: "(src/backend/)"
 # golangci-lint: Meta-linter that runs multiple Go linters
 # Note: .golangci.yml uses v2 config format, so linters are configured there
 # These args are for MegaLinter's wrapper only
+# Removed --path-prefix and path args - let .golangci.yml handle configuration
 GO_GOLANGCI_LINT_ARGUMENTS:
   - "--timeout=5m"
-  - "--path-prefix=src/backend"
-  - "src/backend/..."
 GO_GOLANGCI_LINT_CONFIG_FILE: WORKSPACE  # Will look for .golangci.yml
 
 # revive: Fast, configurable Go linter (disabled - using golangci-lint instead)
