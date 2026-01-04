@@ -82,17 +82,21 @@ class CardTextEmbedder:
     def _save_cache(self) -> None:
         """Save embeddings to disk cache."""
         try:
-            # During Python shutdown, builtins like 'open' may not be available
-            # Import here to ensure it's available
-            from builtins import open as builtin_open
+            # During Python shutdown, builtins and modules may be unavailable
+            # Check if we're in shutdown state
+            import sys
+            if sys.meta_path is None:
+                return  # Python is shutting down, skip cache save
 
-            with builtin_open(self.cache_file, "wb") as f:
+            with open(self.cache_file, "wb") as f:
                 pickle.dump(self._memory_cache, f)
             logger.debug(f"Saved {len(self._memory_cache)} embeddings to cache")
         except (Exception, NameError, AttributeError) as e:
             # Silently fail during shutdown - logger may also be unavailable
             try:
-                logger.warning(f"Failed to save cache: {e}")
+                import sys
+                if sys.meta_path is not None:  # Only log if not shutting down
+                    logger.warning(f"Failed to save cache: {e}")
             except Exception:
                 pass  # Logger unavailable during shutdown
 
