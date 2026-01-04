@@ -173,3 +173,7 @@ data/processed/ground_truth_v1.json
 src/ml/scryfall_card_db.json
 src/ml/tests/fixtures/decks_*.jsonl
 experiments/downstream_tests/*.jsonl
+
+# Large data files (accidentally committed)
+src/backend/data/processed/pairs_large.csv
+data/processed/pairs_multi_game.csv.*
