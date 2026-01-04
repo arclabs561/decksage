@@ -333,21 +333,3 @@ repos:
         pass_filenames: false
         always_run: false
         stages: [manual]
-
-      # Pre-deploy validation (runs before push if deployment files changed)
-      - id: validate-deployment
-        name: Validate deployment readiness
-        entry: bash -c 'python3 scripts/validation/validate_deployment_readiness.py "$@" || true'
-        language: system
-        types: [python, yaml, dockerfile]
-        files: |
-          (?x)^(
-            Dockerfile\.api|
-            fly\.toml|
-            \.github/workflows/deploy\.yml|
-            scripts/validate_deployment\.sh|
-            src/ml/api/.*\.py
-          )
-        stages: [push]
-        pass_filenames: true
-        verbose: true
