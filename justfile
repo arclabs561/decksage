@@ -99,27 +99,60 @@ format:
     #!/usr/bin/env bash
     uv run ruff format src/ml
 
-# Pre-commit hooks
+# Pre-commit hooks (using prek - fast pre-commit alternative)
 pre-commit-install:
     #!/usr/bin/env bash
-    # Install pre-commit hooks (commit + push)
-    pre-commit install
-    pre-commit install --hook-type pre-push
+    # Install hooks using prek (preferred) or pre-commit (fallback)
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v prek >/dev/null 2>&1; then
+      prek install
+      prek install --hook-type pre-push
+    elif command -v pre-commit >/dev/null 2>&1; then
+      pre-commit install
+      pre-commit install --hook-type pre-push
+    else
+      echo "Neither prek nor pre-commit found. Run: ./scripts/setup-dev.sh"
+      exit 1
+    fi
 
 pre-commit-run:
     #!/usr/bin/env bash
-    # Run pre-commit on all files
-    pre-commit run --all-files
+    # Run hooks on all files (prek preferred, pre-commit fallback)
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v prek >/dev/null 2>&1; then
+      prek run --all-files
+    elif command -v pre-commit >/dev/null 2>&1; then
+      pre-commit run --all-files
+    else
+      echo "Neither prek nor pre-commit found. Run: ./scripts/setup-dev.sh"
+      exit 1
+    fi
 
 pre-commit-update:
     #!/usr/bin/env bash
-    # Update pre-commit hooks to latest versions
-    pre-commit autoupdate
+    # Update hooks to latest versions
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v prek >/dev/null 2>&1; then
+      prek auto-update
+    elif command -v pre-commit >/dev/null 2>&1; then
+      pre-commit autoupdate
+    else
+      echo "Neither prek nor pre-commit found. Run: ./scripts/setup-dev.sh"
+      exit 1
+    fi
 
 pre-commit:
     #!/usr/bin/env bash
-    # Run pre-commit on staged files (default behavior)
-    pre-commit run
+    # Run hooks on staged files (default behavior)
+    export PATH="$HOME/.local/bin:$PATH"
+    if command -v prek >/dev/null 2>&1; then
+      prek run
+    elif command -v pre-commit >/dev/null 2>&1; then
+      pre-commit run
+    else
+      echo "Neither prek nor pre-commit found. Run: ./scripts/setup-dev.sh"
+      exit 1
+    fi
 
 # Development
 sync:
@@ -742,9 +775,9 @@ quality-dashboard:
 # ============================================================================
 # TypeScript Client & CLI (ARCHIVED - Use Python CLI Instead)
 # ============================================================================
-# 
+#
 # TypeScript package archived on 2025-01-01.
 # Reason: Frontend uses direct fetch(), Python CLI replaced TypeScript CLI.
 # Location: archive/2025-01-01-cleanup/packages/decksage-ts/
-# 
+#
 # If needed for future frontend/Node.js work, restore from archive.

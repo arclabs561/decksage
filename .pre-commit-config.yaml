@@ -203,8 +203,13 @@ repos:
             dist/|
             \.md$|
             \.txt$|
-            \.py$|
-            \.go$
+            \.py$|  # Python files can be modules or scripts
+            \.go$|
+            justfile$|
+            \.json$|
+            \.yaml$|
+            \.yml$|
+            \.pre-commit-config\.yaml$  # Config file, not executable
           )
       - id: check-shebang-scripts-are-executable
         stages: [commit]
@@ -219,8 +224,13 @@ repos:
             dist/|
             \.md$|
             \.txt$|
-            \.py$|
-            \.go$
+            \.py$|  # Python files can be modules or scripts
+            \.go$|
+            justfile$|
+            \.json$|
+            \.yaml$|
+            \.yml$|
+            \.pre-commit-config\.yaml$  # Config file, not executable
           )
 
   # Data lineage validation (runs before commit)
