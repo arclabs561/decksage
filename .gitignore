@@ -145,3 +145,19 @@ data/processed/pairs_*.csv
 data/graphs/incremental_graph.*
 data/embeddings/**/*.wv
 **/*.db
+
+# Compiled binaries and build artifacts
+src/backend/backfill-source
+src/backend/analyze-decks
+src/backend/export-*
+src/backend/*.exe
+bin/*
+build/
+dist/
+**/*.exe
+
+# Cache and database files
+**/*.sst
+**/*.vlog
+src/backend/cache/
+**/cache/
