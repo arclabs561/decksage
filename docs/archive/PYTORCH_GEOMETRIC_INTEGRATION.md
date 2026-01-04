@@ -1,6 +1,6 @@
 # PyTorch Geometric Integration
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Infrastructure ready, ready for training
 
 ---
@@ -214,4 +214,3 @@ fusion = WeightedLateFusion(..., gnn_embedder=gnn_embedder)
 - **Memory**: ~2-4GB for 128-dim embeddings
 - **Compatibility**: Works with existing fusion pipeline (drop-in replacement for embeddings)
 - **Future**: Could add edge features (co-occurrence counts), node features (functional tags), or multi-layer GNNs
-

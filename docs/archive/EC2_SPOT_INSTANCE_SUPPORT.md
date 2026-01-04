@@ -1,6 +1,6 @@
 # EC2 Spot Instance Support
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ Complete - Spot and on-demand instances now supported
 
 ---
@@ -124,11 +124,10 @@ uv run --script src/ml/scripts/train_on_aws_instance.py \
 
 ## Status
 
-✅ **Complete**: Spot and on-demand instances fully supported  
-✅ **Tested**: Ready for use  
+✅ **Complete**: Spot and on-demand instances fully supported
+✅ **Tested**: Ready for use
 ✅ **Documented**: Usage examples and cost comparison included
 
 ---
 
 **Next Steps**: Use spot instances by default for training to save costs while maintaining reliability through automatic fallback.
-

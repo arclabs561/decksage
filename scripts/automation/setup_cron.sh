@@ -1,7 +1,7 @@
 #!/bin/bash
 set -euo pipefail
 # Setup cron jobs for automated training/evaluation
-# 
+#
 # This sets up:
 # - Daily updates (2 AM UTC)
 # - Weekly retraining (Sunday 2 AM UTC)
@@ -54,4 +54,3 @@ echo " tail -f $PROJECT_ROOT/logs/cron_weekly.log"
 echo ""
 echo "To remove cron jobs:"
 echo " crontab -e # Then delete the lines"
-

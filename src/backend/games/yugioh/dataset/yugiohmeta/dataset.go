@@ -259,7 +259,7 @@ func (d *Dataset) parseDeck(
 	// Extract tournament type and location from event name
 	tournamentType := extractYGOTournamentType(event)
 	location := extractYGOLocation(event)
-	
+
 	deckType := &game.CollectionTypeDeck{
 		Name:           deckName,
 		Format:         format,
@@ -301,9 +301,9 @@ func extractYGOTournamentType(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	eventLower := strings.ToLower(eventName)
-	
+
 	// Check for common tournament types
 	if strings.Contains(eventLower, "ycs") || strings.Contains(eventLower, "yugioh championship series") {
 		return "YCS"
@@ -326,7 +326,7 @@ func extractYGOTournamentType(eventName string) string {
 	if strings.Contains(eventLower, "continental") {
 		return "Continental"
 	}
-	
+
 	return ""
 }
 
@@ -336,7 +336,7 @@ func extractYGOLocation(eventName string) string {
 	if eventName == "" {
 		return ""
 	}
-	
+
 	// Try to find comma-separated location
 	parts := strings.Split(eventName, ",")
 	if len(parts) >= 2 {
@@ -354,7 +354,7 @@ func extractYGOLocation(eventName string) string {
 			return fmt.Sprintf("%s, %s", city, lastPart)
 		}
 	}
-	
+
 	// Try to extract city from common patterns like "YCS Las Vegas"
 	eventLower := strings.ToLower(eventName)
 	if strings.Contains(eventLower, "ycs ") {
@@ -367,7 +367,7 @@ func extractYGOLocation(eventName string) string {
 			}
 		}
 	}
-	
+
 	return ""
 }
 

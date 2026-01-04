@@ -50,7 +50,7 @@ func (d *Dataset) Extract(
 	// TODO: Implement scraping from riftdecks.com or riftbound.gg
 	// For now, this is a placeholder that can be extended
 	// The site structure is: https://riftdecks.com/riftbound-decks
-	
+
 	// Placeholder: return nil for now
 	// When implementing, follow the pattern:
 	// 1. Scrape deck listing pages
@@ -167,4 +167,3 @@ func (d *Dataset) IterItems(
 		options...,
 	)
 }
-

@@ -1,6 +1,6 @@
 # Strategic Data Priorities - Implementation Status
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Core infrastructure complete, ready for data generation
 
 ---
@@ -25,7 +25,7 @@ python -m src.ml.annotation.llm_judge_batch \
 ```
 
 ### 2. Sideboard Signal Integration
-**Files**: 
+**Files**:
 - `src/ml/similarity/sideboard_signal.py` (signal computation)
 - `src/ml/similarity/fusion.py` (integration)
 

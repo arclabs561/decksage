@@ -1,7 +1,7 @@
 # Code Review: scraper/scraper.go
 
-**File**: `src/backend/scraper/scraper.go`  
-**Lines Reviewed**: 1-402  
+**File**: `src/backend/scraper/scraper.go`
+**Lines Reviewed**: 1-402
 **Severity**: Found 1 critical bug, 3 minor issues
 
 ---
@@ -131,8 +131,8 @@ type Scraper struct {
 
 ##Grade
 
-**Code Quality**: B+ (8/10)  
-**Bug Severity**: Medium (dead code, but low impact)  
-**Robustness**: B (7.5/10)  
+**Code Quality**: B+ (8/10)
+**Bug Severity**: Medium (dead code, but low impact)
+**Robustness**: B (7.5/10)
 
 **Overall**: **B+ (8/10)** - Solid implementation, one dead code bug

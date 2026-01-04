@@ -46,4 +46,3 @@ func DeserializeAsSet(_ string, data []byte) (Item, error) {
 	}
 	return &SetItem{Set: &set}, nil
 }
-

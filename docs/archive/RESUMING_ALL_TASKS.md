@@ -55,4 +55,3 @@ aws s3 ls s3://games-collections/experiments/hyperparameter_search_results.json
 ```
 
 **All tasks resumed and running! 🚀**
-

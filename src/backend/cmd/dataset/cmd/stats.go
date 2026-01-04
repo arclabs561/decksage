@@ -30,7 +30,7 @@ func runStats(cmd *cobra.Command, args []string) error {
 	// For now, this is a placeholder that shows how stats export would work
 	// In a real implementation, stats would be loaded from a previous extraction
 	stats := games.NewExtractStats(config.Log)
-	
+
 	// Example: simulate some stats
 	stats.RecordSuccess()
 	stats.RecordSuccess()
@@ -60,4 +60,3 @@ func runStats(cmd *cobra.Command, args []string) error {
 
 	return nil
 }
-

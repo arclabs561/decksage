@@ -4,7 +4,6 @@ from __future__ import annotations
 import json
 import sys
 from pathlib import Path
-from typing import Any, Dict
 
 
 HERE = Path(__file__).resolve().parent
@@ -32,7 +31,7 @@ def escape_html(s: str) -> str:
     )
 
 
-def build_section(query: str, buckets: Dict[str, list[str]]) -> str:
+def build_section(query: str, buckets: dict[str, list[str]]) -> str:
     groups = [
         ("Highly relevant", buckets.get("highly_relevant", []), "#10b981"),
         ("Relevant", buckets.get("relevant", []), "#22c55e"),
@@ -45,9 +44,9 @@ def build_section(query: str, buckets: Dict[str, list[str]]) -> str:
         safe = escape_html(name)
         img = scryfall_img_url(name)
         return (
-            f"<div class=\"tile\" data-name=\"{safe}\">"
-            f"  <img loading=\"lazy\" src=\"{img}\" alt=\"{safe}\"/>"
-            f"  <div class=\"tile-name\">{safe}</div>"
+            f'<div class="tile" data-name="{safe}">'
+            f'  <img loading="lazy" src="{img}" alt="{safe}"/>'
+            f'  <div class="tile-name">{safe}</div>'
             f"</div>"
         )
 
@@ -82,7 +81,7 @@ def build_section(query: str, buckets: Dict[str, list[str]]) -> str:
 
 def generate(test_set_path: Path, output_path: Path) -> None:
     data = load_json(test_set_path)
-    queries: Dict[str, Dict[str, list[str]]] = data.get("queries", {})
+    queries: dict[str, dict[str, list[str]]] = data.get("queries", {})
 
     sections = []
     for q, buckets in queries.items():
@@ -200,5 +199,3 @@ def main(argv: list[str]) -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main(sys.argv[1:]))
-
-

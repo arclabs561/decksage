@@ -48,14 +48,15 @@ data/
 - **pairs_large.csv**: Primary training data (7.5M pairs, 265 MB, MTG)
 - **pairs_multi_game.csv**: Multi-game pairs (24.6M pairs, 1.6 GB, currently MTG-only)
 - **card_attributes_enriched.csv**: Card attributes with functional tags (27K cards, 6 MB)
-- **decks_all_final.jsonl**: ✅ **RECOMMENDED** - All decks enhanced (69K decks, 241 MB)
+- **decks_pokemon.jsonl**: Pokemon tournament decks (1,208 decks, 2.1 MB) ✅ EXISTS
+- **decks_all_final.jsonl**: All decks enhanced (69K decks, 241 MB) ⚠️ GENERATE VIA PIPELINE
   - Normalized card names
   - Deduplicated by URL and card signature
   - Filtered invalid deck sizes
   - Source attribution backfilled
-- **decks_all_unified.jsonl**: Raw unified export (87K decks, 292 MB, before enhancement)
-- **decks_all_enhanced.jsonl**: Enhanced decks (69K decks, 241 MB, intermediate step)
-- **decks_pokemon.jsonl**: Pokemon tournament decks (1,208 decks, 2.1 MB)
+  - **Status**: File does not exist by default. Generate using `scripts/data_processing/unified_export_pipeline.py`
+- **decks_all_unified.jsonl**: Raw unified export (87K decks, 292 MB, before enhancement) ⚠️ GENERATE VIA PIPELINE
+- **decks_all_enhanced.jsonl**: Enhanced decks (69K decks, 241 MB, intermediate step) ⚠️ GENERATE VIA PIPELINE
 
 ### Deck Exports
 - **data/decks/**: Per-game and per-source deck exports
@@ -119,11 +120,12 @@ similar = wv.most_similar('Lightning Bolt', topn=10)
 ## Data Sizes (Current)
 
 - `raw/`: ~3.8GB (canonical storage in `src/backend/data-full/`)
-- `processed/`: 
-  - `pairs_large.csv`: 265 MB (7.5M pairs)
-  - `pairs_multi_game.csv`: 1.6 GB (24.6M pairs)
-  - `decks_all_final.jsonl`: 241 MB (69K decks) ✅
-  - `card_attributes_enriched.csv`: 6 MB (27K cards)
+- `processed/`:
+  - `pairs_large.csv`: 265 MB (7.5M pairs) ✅ EXISTS
+  - `pairs_multi_game.csv`: 1.6 GB (24.6M pairs) ✅ EXISTS
+  - `decks_pokemon.jsonl`: 2.1 MB (1,208 decks) ✅ EXISTS
+  - `decks_all_final.jsonl`: 241 MB (69K decks) ⚠️ GENERATE VIA PIPELINE
+  - `card_attributes_enriched.csv`: 6 MB (27K cards) ✅ EXISTS
 - `graphs/`: ~3MB per graph
 - `embeddings/`: ~1MB per model (22 files total)
 
@@ -180,11 +182,3 @@ uv run scripts/data_processing/regenerate_multi_game_pairs.py --rebuild
 ```
 
 See `docs/DATA_PIPELINE.md` for complete documentation.
-
-
-
-
-
-
-
-

@@ -11,14 +11,13 @@ Tests:
 
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
-
 import pytest
+
 
 try:
     import pandas as pd
     import requests
+
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
@@ -27,6 +26,7 @@ except ImportError:
 
 def test_extract_attributes_from_scryfall():
     """Test extracting attributes from Scryfall card data."""
+
     # Function exists in retry_failed_enrichments.py but file is corrupted
     # Use inline implementation for test
     def extract_attributes_from_scryfall(card_data: dict) -> dict:
@@ -55,7 +55,7 @@ def test_extract_attributes_from_scryfall():
             "oracle_text": oracle_text,
             "keywords": ",".join(keywords) if keywords else "",
         }
-    
+
     # Sample Scryfall card data
     card_data = {
         "name": "Lightning Bolt",
@@ -71,9 +71,9 @@ def test_extract_attributes_from_scryfall():
         "oracle_text": "Lightning Bolt deals 3 damage to any target.",
         "keywords": ["fast"],
     }
-    
+
     attrs = extract_attributes_from_scryfall(card_data)
-    
+
     assert attrs["type"] == "Instant"
     assert attrs["mana_cost"] == "{R}"
     assert attrs["cmc"] == 1.0
@@ -87,6 +87,7 @@ def test_extract_attributes_from_scryfall():
 
 def test_extract_attributes_creature():
     """Test extracting attributes for a creature card."""
+
     # Function exists in retry_failed_enrichments.py but file is corrupted
     # Use inline implementation for test
     def extract_attributes_from_scryfall(card_data: dict) -> dict:
@@ -115,7 +116,7 @@ def test_extract_attributes_creature():
             "oracle_text": oracle_text,
             "keywords": ",".join(keywords) if keywords else "",
         }
-    
+
     card_data = {
         "name": "Grizzly Bears",
         "type_line": "Creature — Bear",
@@ -130,9 +131,9 @@ def test_extract_attributes_creature():
         "oracle_text": "",
         "keywords": [],
     }
-    
+
     attrs = extract_attributes_from_scryfall(card_data)
-    
+
     assert attrs["power"] == "2"
     assert attrs["toughness"] == "2"
     assert attrs["type"] == "Creature — Bear"
@@ -141,16 +142,16 @@ def test_extract_attributes_creature():
 def test_name_variants():
     """Test name variant generation for retry."""
     from ml.data.card_name_normalizer import get_name_variants
-    
+
     # Split card
     variants = get_name_variants("Lightning Bolt // Shock")
     assert "Lightning Bolt" in variants
     assert "Shock" in variants
-    
+
     # Card with parentheses
     variants = get_name_variants("Card Name (Set Name)")
     assert "Card Name" in variants
-    
+
     # Unicode
     variants = get_name_variants("Forêt")
     assert any("Foret" in v or "Forêt" in v for v in variants)
@@ -159,7 +160,7 @@ def test_name_variants():
 def test_normalize_card_name():
     """Test card name normalization."""
     from ml.data.card_name_normalizer import normalize_card_name
-    
+
     assert normalize_card_name("  Lightning  Bolt  ") == "Lightning Bolt"
     assert normalize_card_name("Lightning-Bolt") == "Lightning-Bolt"
     # Note: card_name_normalizer preserves periods (different from old script behavior)
@@ -170,9 +171,9 @@ def test_normalize_card_name():
 def test_get_card_from_scryfall():
     """Test fetching card from Scryfall API."""
     from ml.scripts.enrich_attributes_with_scryfall_optimized import get_card_from_scryfall
-    
+
     card_data, delay = get_card_from_scryfall("Lightning Bolt")
-    
+
     assert card_data is not None
     assert card_data["name"] == "Lightning Bolt"
     assert delay >= 0.05
@@ -180,4 +181,3 @@ def test_get_card_from_scryfall():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

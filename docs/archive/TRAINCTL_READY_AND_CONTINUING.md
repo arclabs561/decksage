@@ -66,4 +66,3 @@ just hyperparam-search
 5. **Continue all improvements** - After verifying file locations
 
 **trainctl is ready! Just need to locate data files and verify background processes.**
-

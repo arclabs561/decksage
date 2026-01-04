@@ -1,6 +1,6 @@
 # Deck Modification Implementation Plan
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Ready to implement
 
 ---
@@ -41,12 +41,12 @@ def suggest_additions(
     if role_aware and tag_set_fn:
         gaps = _detect_role_gaps(deck, tag_set_fn)
         # Prioritize suggestions that fill gaps
-    
+
     # Filter by archetype if provided
     if archetype:
         staples = _get_archetype_staples(archetype, format)
         # Boost staple scores
-    
+
     # Existing similarity logic...
 ```
 
@@ -84,11 +84,11 @@ def suggest_removals(
 ) -> list[tuple[str, float, str]]:  # (card, score, reason)
     """
     Suggest cards to remove.
-    
+
     Returns list of (card, removal_score, reason) tuples.
     """
     removals = []
-    
+
     # 1. Find cards with low archetype match
     if archetype:
         staples = _get_archetype_staples(archetype)
@@ -99,7 +99,7 @@ def suggest_removals(
                 similarity = _archetype_similarity(card, archetype, fusion)
                 if similarity < 0.3:
                     removals.append((card, 1.0 - similarity, "low_archetype_match"))
-    
+
     # 2. Find redundant cards (multiple filling same role)
     if preserve_roles and tag_set_fn:
         role_cards = defaultdict(list)
@@ -108,7 +108,7 @@ def suggest_removals(
             for role in ["removal", "threat", "card_draw"]:
                 if role in tags:
                     role_cards[role].append(card)
-        
+
         # If a role has too many cards, suggest removing weakest
         for role, cards in role_cards.items():
             if len(cards) > 8:  # Too many removal spells
@@ -117,7 +117,7 @@ def suggest_removals(
                 scored.sort(key=lambda x: x[1])
                 for card, score in scored[:len(cards) - 6]:  # Keep top 6
                     removals.append((card, 0.7, f"redundant_{role}"))
-    
+
     return sorted(removals, key=lambda x: x[1], reverse=True)
 ```
 
@@ -145,17 +145,17 @@ def get_contextual_suggestions(
     """
     state = get_state()
     fusion = _make_fusion(state)
-    
+
     # Synergies: high co-occurrence in same decks
     synergies = _find_synergies(card, fusion, format, archetype)
-    
+
     # Alternatives: functional similarity
     alternatives = _find_alternatives(card, fusion, tag_set_fn)
-    
+
     # Upgrades/downgrades: price + power analysis
     upgrades = _find_upgrades(card, price_fn, fusion)
     downgrades = _find_downgrades(card, price_fn, fusion)
-    
+
     return {
         "synergies": synergies,
         "alternatives": alternatives,
@@ -273,4 +273,3 @@ def get_contextual_suggestions(
 ---
 
 **Start with**: Enhance `suggest_additions` in `deck_completion.py` with role awareness and archetype filtering.
-

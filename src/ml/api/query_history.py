@@ -12,12 +12,15 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
 try:
-    from ..utils.paths import PATHS
     from ..utils.logging_config import get_logger
+    from ..utils.paths import PATHS
+
     logger = get_logger(__name__)
 except ImportError:
     import logging
+
     logger = logging.getLogger(__name__)
     PATHS = None
 
@@ -28,7 +31,7 @@ def get_query_history_path() -> Path:
         history_dir = PATHS.DATA_DIR / "analytics"
     else:
         history_dir = Path("data/analytics")
-    
+
     history_dir.mkdir(parents=True, exist_ok=True)
     return history_dir / "query_history.jsonl"
 
@@ -42,20 +45,20 @@ def log_query(
 ) -> None:
     """
     Log a query for analytics.
-    
+
     Non-blocking: failures don't affect API performance.
     Note: File I/O is not thread-safe - for production, use database or queue.
     """
     history_path = get_query_history_path()
-    
+
     # Validate and sanitize input
     if not endpoint or not query:
         logger.debug("Skipping query log: missing endpoint or query")
         return
-    
+
     # Limit query length to prevent abuse
     query = query[:1000] if len(query) > 1000 else query
-    
+
     # Sanitize metadata (remove any non-serializable items)
     safe_metadata = {}
     if metadata:
@@ -65,7 +68,7 @@ def log_query(
                 safe_metadata[str(k)[:100]] = v  # Limit key length
             except (TypeError, ValueError):
                 safe_metadata[str(k)[:100]] = str(v)[:500]  # Convert to string
-    
+
     entry = {
         "timestamp": datetime.now().isoformat(),
         "endpoint": str(endpoint)[:200],  # Limit endpoint length
@@ -74,12 +77,12 @@ def log_query(
         "session_id": str(session_id)[:100] if session_id else None,  # Limit session_id length
         "metadata": safe_metadata,
     }
-    
+
     try:
         # Use append mode (atomic on most filesystems, but not guaranteed thread-safe)
         with open(history_path, "a", encoding="utf-8") as f:
             f.write(json.dumps(entry, ensure_ascii=False) + "\n")
-    except (OSError, IOError) as e:
+    except OSError as e:
         # Non-fatal: log but don't raise
         logger.debug(f"Failed to log query (non-fatal): {e}")
     except Exception as e:
@@ -90,7 +93,7 @@ def log_query(
 def get_query_stats(days: int = 7) -> dict[str, Any]:
     """Get query statistics for the last N days."""
     history_path = get_query_history_path()
-    
+
     if not history_path.exists():
         return {
             "total_queries": 0,
@@ -98,15 +101,15 @@ def get_query_stats(days: int = 7) -> dict[str, Any]:
             "top_queries": [],
             "unique_users": 0,
         }
-    
+
     cutoff = datetime.now().timestamp() - (days * 86400)
     queries_by_endpoint: dict[str, int] = defaultdict(int)
     query_counts: dict[str, int] = defaultdict(int)
     users: set[str] = set()
     total = 0
-    
+
     try:
-        with open(history_path, "r") as f:
+        with open(history_path) as f:
             for line in f:
                 if line.strip():
                     try:
@@ -122,10 +125,10 @@ def get_query_stats(days: int = 7) -> dict[str, Any]:
                         continue
     except Exception:
         pass
-    
+
     # Top queries
     top_queries = sorted(query_counts.items(), key=lambda x: x[1], reverse=True)[:10]
-    
+
     return {
         "total_queries": total,
         "by_endpoint": dict(queries_by_endpoint),
@@ -133,4 +136,3 @@ def get_query_stats(days: int = 7) -> dict[str, Any]:
         "unique_users": len(users),
         "period_days": days,
     }
-

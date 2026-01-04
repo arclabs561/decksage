@@ -113,7 +113,7 @@ We've been treating "similarity" as one thing. It's not.
 **Measures:** Direct co-occurrence
 **Good for:** Synergies, meta analysis
 **Bad for:** Substitutes, upgrades
-**Example:** 
+**Example:**
 - Query: Lightning Bolt
 - Returns: Cards that appear WITH Bolt (synergies)
 - Monastery Swiftspear, Rift Bolt, Lava Dart
@@ -132,7 +132,7 @@ We've been treating "similarity" as one thing. It's not.
 **Good for:** Exact replacements
 **Bad for:** Strategic similarity
 **Example:**
-- Query: Lightning Bolt  
+- Query: Lightning Bolt
 - Returns: Same type/cost/effect
 - Shock (strictly worse), Burst Lightning (conditional)
 
@@ -156,25 +156,25 @@ async def find_similar(
     - "similar_deck": Find similar deck archetypes
     - "meta": What's popular with this card
     """
-    
+
     if use_case == "substitute":
         # Use Node2Vec (semantic similarity)
         return node2vec_similar(query, k)
-    
+
     elif use_case == "synergy":
         # Use Jaccard (co-occurrence)
         return jaccard_similar(query, k)
-    
+
     elif use_case == "deck_complete":
         # Cluster-based recommendation
         archetype = detect_archetype(user_deck)
         return archetype_staples(archetype, k)
-    
+
     elif use_case == "upgrade":
         # Similarity + price + power
         similar = node2vec_similar(query, k*3)
         return filter_by_price_and_power(similar, budget, k)
-    
+
     # etc.
 ```
 
@@ -284,5 +284,3 @@ POST /similar {"query": "Bolt"}
 
 This explains why both Jaccard AND Node2Vec have value.
 They solve different problems.
-
-

@@ -360,12 +360,12 @@ func (d *Dataset) parseDeck(
 	if err := d.blob.Write(ctx, bkey, b); err != nil {
 		return err
 	}
-	
+
 	// Record success in statistics if available
 	if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 		stats.RecordSuccess()
 	}
-	
+
 	return nil
 }
 
@@ -419,4 +419,3 @@ func (d *Dataset) IterItems(
 		options...,
 	)
 }
-

@@ -1,7 +1,7 @@
 # 🔬 Comprehensive Architecture Review
 ## Deep Analysis of Multi-Game Card Collection System
 
-**Date**: October 1, 2025  
+**Date**: October 1, 2025
 **Scope**: All 3 games (MTG, Yu-Gi-Oh!, Pokemon), all datasets, all abstractions
 
 ---
@@ -478,21 +478,21 @@ GET https://api.pokemontcg.io/v2/cards?pageSize=250&page=1
 for {
     pageURL := fmt.Sprintf("%s&page=%d", url, page)
     req, err := http.NewRequest("GET", pageURL, nil)
-    
+
     // Check limit before AND during page processing
     if limit, ok := opts.ItemLimit.Get(); ok && totalCards >= limit {
         break
     }
-    
+
     // Parse response
     var apiResp apiResponse
     json.Unmarshal(pageResp.Response.Body, &apiResp)
-    
+
     // End condition
     if page*apiResp.PageSize >= apiResp.TotalCount {
         break
     }
-    
+
     page++
 }
 ```
@@ -673,7 +673,7 @@ Pokemon:             games/pokemon/pokemontcg/cards/{id}.json
        Extract(...)
        IterItems(...)
    }
-   
+
    // games/dataset.go has a different one
    type Dataset interface {
        Description() games.Description  // Different type!
@@ -688,7 +688,7 @@ Pokemon:             games/pokemon/pokemontcg/cards/{id}.json
    ```go
    // MTG uses root-level paths
    magic/scryfall/cards/...
-   
+
    // YGO/Pokemon use games/ prefix
    games/yugioh/ygoprodeck/cards/...
    games/pokemon/pokemontcg/cards/...
@@ -700,7 +700,7 @@ Pokemon:             games/pokemon/pokemontcg/cards/{id}.json
    - YGO: Only has card database, no deck scraper yet
    - Pokemon: Only has card database, no deck scraper yet
    - MTG: Has 3 deck sources (full coverage)
-   
+
    **Impact**: Can't train co-occurrence graphs for YGO/Pokemon yet
    **Fix**: Add deck scrapers (YGOPRODeck has deck database API)
 
@@ -1008,4 +1008,3 @@ This architecture successfully implements a multi-game card collection system wi
 - Type safety that catches bugs early
 
 The system is production-ready for MTG and architecturally validated for multi-game expansion. Adding new games takes hours, not weeks, proving the abstraction boundaries are correct.
-

@@ -1,6 +1,6 @@
 # ML Folder Review & Improvements - Executive Summary
 
-**Date**: October 6, 2025  
+**Date**: October 6, 2025
 **Scope**: Multi-scale review of `src/ml` directory, data pipeline, and project quality
 
 ---
@@ -8,8 +8,8 @@
 ## ✅ Critical Fixes Applied
 
 ### 1. Build Performance (Priority 0)
-**Before**: `uv sync` hung indefinitely (timeout after 30+ seconds)  
-**After**: Builds in 247ms (120x+ improvement)  
+**Before**: `uv sync` hung indefinitely (timeout after 30+ seconds)
+**After**: Builds in 247ms (120x+ improvement)
 **Fix**: Configured hatchling to exclude massive `src/backend/` directory (99,481 files)
 
 ```toml
@@ -23,7 +23,7 @@ exclude = ["src/backend", "src/frontend", "src/experiments"]
 ### 2. API Code Quality (Priority 1)
 **Issues Fixed**:
 - Removed duplicated `uvicorn` import blocks (2x)
-- Removed duplicated `gensim` import blocks (2x)  
+- Removed duplicated `gensim` import blocks (2x)
 - Organized imports into logical sections
 - Added comments explaining optional dependencies
 
@@ -46,7 +46,7 @@ make format        # Auto-formatting
 ### 4. Documentation Hygiene (Priority 2)
 **Archived**: 15 session/status documents → `archive/2025-10-06-ml-review/`
 
-**Before**: 21 markdown files in root  
+**Before**: 21 markdown files in root
 **After**: 6 essential documents (71% reduction)
 
 **Remaining docs** (all essential):
@@ -96,7 +96,7 @@ make format        # Auto-formatting
 1. **Functional tagger duplication** - 3 files share ~30% code (MTG/Pokemon/YGO)
    - **Decision**: Kept separate (Chesterton's fence)
    - **Rationale**: Domain complexity justifies independent evolution
-   
+
 2. **No data versioning** - Can't reproduce old experiments if data changes
    - **Impact**: Medium (research context tolerates this)
    - **Solution**: Add DVC or date-stamped snapshots when needed
@@ -143,7 +143,7 @@ make format        # Auto-formatting
 
 ### Now (P0-P1)
 - ✅ Fixed uv build hang
-- ✅ Fixed API code duplication  
+- ✅ Fixed API code duplication
 - ✅ Created Makefile
 - ✅ Archived documentation sprawl
 - ✅ Improved test infrastructure
@@ -217,7 +217,7 @@ make test-quick    # Run tests (2s)
 make lint          # Check code quality
 make format        # Auto-format code
 
-# ML Pipeline  
+# ML Pipeline
 make pipeline-full # Export → Train → Tune → Ready to serve
 make pipeline-serve # Start API
 
@@ -251,7 +251,7 @@ All commands documented in `Makefile` with `make help`.
 
 This is a **mature, production-quality ML system** with minor operational friction. The issues fixed were:
 - Build tooling (uv config)
-- Code cleanliness (API duplications)  
+- Code cleanliness (API duplications)
 - Documentation sprawl (archived)
 - Developer UX (Makefile)
 

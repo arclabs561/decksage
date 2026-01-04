@@ -242,7 +242,7 @@ YES - needs adoption:
 5. Backfill metadata on old Collections
 6. Add format inference fallback
 
-### Long-term (Architectural)  
+### Long-term (Architectural)
 7. Shared schema (Go + Python via protobuf)
 8. Historical ban list support
 9. Advanced validation (mana curve, etc.)

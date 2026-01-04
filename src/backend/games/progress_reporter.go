@@ -55,11 +55,11 @@ func (pr *ProgressReporter) IncrementFailed() {
 func (pr *ProgressReporter) maybeReport() {
 	now := time.Now().Unix()
 	lastReport := pr.lastReport.Load()
-	
+
 	if now-lastReport < int64(pr.interval.Seconds()) {
 		return
 	}
-	
+
 	if pr.lastReport.CompareAndSwap(lastReport, now) {
 		pr.report()
 	}
@@ -71,17 +71,17 @@ func (pr *ProgressReporter) report() {
 	successful := pr.successful.Load()
 	failed := pr.failed.Load()
 	duration := time.Since(pr.startTime)
-	
+
 	rate := 0.0
 	if duration.Seconds() > 0 {
 		rate = float64(total) / duration.Minutes()
 	}
-	
+
 	successRate := 0.0
 	if total > 0 {
 		successRate = float64(successful) / float64(total) * 100
 	}
-	
+
 	pr.log.Infof(context.Background(),
 		"📊 Progress [%s]: %d total (%d successful, %d failed, %.1f%% success) - %.1f/min - elapsed: %v",
 		pr.datasetName, total, successful, failed, successRate, rate, duration.Round(time.Second),
@@ -94,20 +94,19 @@ func (pr *ProgressReporter) FinalReport() {
 	successful := pr.successful.Load()
 	failed := pr.failed.Load()
 	duration := time.Since(pr.startTime)
-	
+
 	rate := 0.0
 	if duration.Seconds() > 0 {
 		rate = float64(total) / duration.Minutes()
 	}
-	
+
 	successRate := 0.0
 	if total > 0 {
 		successRate = float64(successful) / float64(total) * 100
 	}
-	
+
 	pr.log.Infof(context.Background(),
 		"✅ Final [%s]: %d total (%d successful, %d failed, %.1f%% success) in %v (%.1f/min)",
 		pr.datasetName, total, successful, failed, successRate, duration.Round(time.Second), rate,
 	)
 }
-

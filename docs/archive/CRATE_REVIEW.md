@@ -1,13 +1,13 @@
 # Crate Review & Dependency Analysis
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Scope**: Review of all Rust crates used in DeckSage annotation tool + related crates
 
 ## External Rank Crates
 
 ### rank-fusion v0.1.19
-**Purpose**: Rank fusion algorithms for hybrid search  
-**Dependencies**: Zero (optional serde feature)  
+**Purpose**: Rank fusion algorithms for hybrid search
+**Dependencies**: Zero (optional serde feature)
 **Features Used**:
 - `rrf_weighted()` - Reciprocal Rank Fusion with custom weights
 - `RrfConfig` - Configuration for RRF (k parameter, top_k)
@@ -28,8 +28,8 @@
 - Perfect for our use case (fusing multiple candidate sources)
 
 ### rank-refine v0.7.36
-**Purpose**: SIMD-accelerated reranking with embeddings  
-**Dependencies**: Optional (kodama for hierarchical, serde for serialization)  
+**Purpose**: SIMD-accelerated reranking with embeddings
+**Dependencies**: Optional (kodama for hierarchical, serde for serialization)
 **Features Used**:
 - `simd::cosine()` - SIMD-accelerated cosine similarity
 
@@ -48,8 +48,8 @@
 - Could use more features (MMR, MaxSim) in future
 
 ### anno v0.2.0
-**Purpose**: Named Entity Recognition (NER), coreference resolution, and **evaluation framework**  
-**Dependencies**: Minimal core (serde, regex, chrono, log, once_cell, thiserror)  
+**Purpose**: Named Entity Recognition (NER), coreference resolution, and **evaluation framework**
+**Dependencies**: Minimal core (serde, regex, chrono, log, once_cell, thiserror)
 **Status**: ✅ **INTEGRATED** - Using evaluation framework features
 
 **What it does**:
@@ -107,7 +107,7 @@ decksage-annotation
 └── chrono (timestamps) ✅
 ```
 
-**Total direct dependencies**: 8 (excluding rank-fusion/rank-refine)  
+**Total direct dependencies**: 8 (excluding rank-fusion/rank-refine)
 **Transitive dependencies**: ~30 (mostly from clap, serde, chrono)
 
 ## Recommendations

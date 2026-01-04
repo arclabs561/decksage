@@ -10,12 +10,12 @@
 
 ### 1. The Metadata Bug That Blocked 53 Experiments ✅
 
-**Symptom**: Every archetype/format experiment returned 0 results  
-**Root cause**: JSON wrapper `{"collection": {...}}` never existed  
-**Fix**: One line in `export-hetero/main.go` - read from root level  
+**Symptom**: Every archetype/format experiment returned 0 results
+**Root cause**: JSON wrapper `{"collection": {...}}` never existed
+**Fix**: One line in `export-hetero/main.go` - read from root level
 **Verification**: 4,718 decks now export with 100% metadata (382 archetypes, 11 formats)
 
-**Files**: 
+**Files**:
 - `BUGFIX_METADATA.md` - Full analysis
 - `src/backend/cmd/diagnose-metadata/main.go` - Diagnostic tool
 
@@ -23,12 +23,12 @@
 
 ### 2. Baseline Measurement Honesty ✅
 
-**Claimed**: P@10 = 0.12-0.15  
+**Claimed**: P@10 = 0.12-0.15
 **Measured**: P@10 = 0.08 (38-query comprehensive test)
 
 **Experiments run**:
 - exp_054: Archetype-aware → P@10 = 0.033 (naive method fails)
-- exp_055: New metadata export → P@10 = 0.088 
+- exp_055: New metadata export → P@10 = 0.088
 - exp_056: Verify old baseline → P@10 = 0.082 (claim doesn't reproduce)
 
 **Conclusion**: Previous scores were test set artifacts (small = easier)
@@ -41,7 +41,7 @@
 
 ### 3. Repository Consistency ✅
 
-**Before**: 3 conflicting experiment logs, 18x LANDS definitions, inconsistent paths  
+**Before**: 3 conflicting experiment logs, 18x LANDS definitions, inconsistent paths
 **After**: Single canonical log, shared utils, standardized paths
 
 **Tests**: 18 → 31 Python tests (all passing)
@@ -184,6 +184,3 @@ python exp_057_expanded_baseline.py  # More data → better P@10?
 The infrastructure is solid. The bugs are fixed. The path is clear.
 
 **Now we measure if: more data + LLM annotations → better results.**
-
-
-

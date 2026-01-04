@@ -1,7 +1,7 @@
 #!/bin/bash
 # Daily automated update: Graph + Embeddings + Quick Evaluation
 # Runs daily at 2 AM UTC (or manually)
-# 
+#
 # This script:
 # 1. Updates incremental graph with new deck data
 # 2. Detects new cards and updates embeddings incrementally
@@ -73,7 +73,7 @@ else
  else
  echo " ✓ Graph file: $GRAPH_PATH"
  fi
- 
+
  if [[ ! -f "$GNN_MODEL_PATH" ]] && [[ "$GNN_MODEL_PATH" != s3://* ]]; then
  echo "Warning: GNN model not found (will use default): $GNN_MODEL_PATH"
  else
@@ -161,4 +161,3 @@ if command -v s5cmd >/dev/null 2>&1; then
  s5cmd cp "$LOG_FILE" "s3://games-collections/logs/daily/" 2>&1 | grep -v "^$" || true
  echo "✓ Log uploaded to S3"
 fi
-

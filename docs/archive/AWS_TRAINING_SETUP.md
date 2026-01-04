@@ -1,6 +1,6 @@
 # AWS EC2 Training Setup
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ Script ready, can be used when needed
 
 ---
@@ -121,4 +121,3 @@ uv run --script src/ml/scripts/train_on_aws_instance.py \
 ---
 
 **Status**: ✅ Ready to use when local training fails (scipy build issue)
-

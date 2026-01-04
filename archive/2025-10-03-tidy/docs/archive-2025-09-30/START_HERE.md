@@ -1,6 +1,6 @@
 # DeckSage - START HERE
 
-**Last Updated**: 2025-09-30  
+**Last Updated**: 2025-09-30
 **Status**: Architecture Validated, ML Pipeline Working, Data Needs Diversity
 
 ---
@@ -119,7 +119,7 @@ uv pip install pecanpy pandas matplotlib scikit-learn
 
 **Set contamination**: Original graph included card sets (printing), which created 36.5% meaningless edges.
 
-**Fixed**: Deck-only filtering  
+**Fixed**: Deck-only filtering
 **Result**: Embeddings now match expert MTG knowledge
 
 **Grade**: Contaminated (6/10) → Clean (8.5/10)

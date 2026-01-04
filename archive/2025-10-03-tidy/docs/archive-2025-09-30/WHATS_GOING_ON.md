@@ -15,7 +15,7 @@ DeckSage is a **multi-game card game data collection and analysis platform**. Th
    - Blob storage abstraction (local/S3)
    - 4 dataset sources for Magic: The Gathering:
      - **Scryfall** - Card database + set collections
-     - **Deckbox** - User deck/cube collections  
+     - **Deckbox** - User deck/cube collections
      - **MTGGoldfish** - Tournament decks
      - **MTGTop8** - Tournament results
 
@@ -79,7 +79,7 @@ cd src/backend
 # Scrape 10 decks from MTGTop8
 go run ./cmd/dataset extract mtgtop8 --limit=10 --bucket=file://./data
 
-# Scrape sets from Scryfall  
+# Scrape sets from Scryfall
 go run ./cmd/dataset extract scryfall --section=collections --limit=5
 ```
 
@@ -278,7 +278,7 @@ Currently **MTG-only**, but designed for expansion:
 1. **Fix Known Bugs** (1-2 hours)
    - Scryfall toughness field
    - MTGTop8 error handling
-   
+
 2. **Add Deckbox Tests** (1 hour)
    - Create `deckbox/dataset_test.go`
    - Add fixtures

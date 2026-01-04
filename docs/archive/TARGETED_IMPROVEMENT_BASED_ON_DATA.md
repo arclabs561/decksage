@@ -1,7 +1,7 @@
 # Targeted Improvement Based on Data Analysis
 
-**Date**: November 10, 2025  
-**Finding**: Best experiment achieved P@10=0.150 (70% better than current)  
+**Date**: November 10, 2025
+**Finding**: Best experiment achieved P@10=0.150 (70% better than current)
 **Method**: "Separate Node2Vec per format" (exp_025)
 
 ---
@@ -17,7 +17,7 @@
 ### Key Insight
 **Format-specific embeddings work better than format-agnostic!**
 
-**Implication**: 
+**Implication**:
 - Current system may be mixing formats incorrectly
 - Need format-aware similarity
 - This is a small, targeted fix (not a major rewrite)
@@ -35,7 +35,7 @@
 2. If not, add format filtering to embeddings
 3. Use format-specific embedding models if available
 
-**Expected Impact**: 
+**Expected Impact**:
 - If current embeddings are format-agnostic: +0.03-0.06 P@10 (0.088 → 0.12-0.15)
 - If already format-aware: No change (need other fix)
 
@@ -68,7 +68,7 @@
 **Action**: Review embedding loading code
 
 ### Step 2: Implement Format-Aware Similarity (If Needed)
-**Change**: 
+**Change**:
 - Load format-specific embedding models
 - Filter embeddings by format in similarity
 - Use format from deck/query context
@@ -84,7 +84,7 @@ def format_aware_similarity(query_card, candidate_card, format_name):
 ```
 
 ### Step 3: Measure Impact
-**Action**: 
+**Action**:
 - Re-run evaluation with format-aware similarity
 - Compare: format-aware vs format-agnostic
 - Measure P@10 improvement
@@ -100,7 +100,7 @@ def format_aware_similarity(query_card, candidate_card, format_name):
 **Baseline**: Jaccard alone → P@10=0.089
 **Finding**: Fusion is worse than baseline!
 
-**Hypothesis**: 
+**Hypothesis**:
 - Functional tags (0.7 weight) may be low quality
 - Embeddings (0.1 weight) may be format-agnostic (hurting performance)
 - Need to measure individual signals
@@ -190,10 +190,3 @@ All top 5 use **Jaccard as base**:
 4. ⏳ Optimize weights - based on signal quality
 
 **All changes justified by data from experiment log.**
-
-
-
-
-
-
-

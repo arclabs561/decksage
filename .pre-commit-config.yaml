@@ -33,7 +33,9 @@ repos:
             build/|
             dist/|
             \.venv/|
-            venv/
+            venv/|
+            archive/
+            experiments/archived/
           )
       - id: ruff-format
         stages: [commit]
@@ -243,6 +245,46 @@ repos:
         pass_filenames: false
         always_run: true
         stages: [commit]
+        verbose: true
+
+      # Check for hardcoded paths (should use PATHS utility)
+      # Non-blocking: warns but doesn't fail (many existing instances)
+      - id: check-hardcoded-paths
+        name: Check for hardcoded paths
+        entry: bash -c 'python3 scripts/validation/check_hardcoded_paths.py "$@" || true'
+        language: system
+        types: [python]
+        stages: [commit]
+        exclude: |
+          (?x)^(
+            src/ml/utils/paths\.py|
+            scripts/data_processing/validate_lineage\.py|
+            scripts/validation/check_hardcoded_paths\.py|
+            \.venv/|
+            venv/|
+            __pycache__/|
+            archive/|
+            tests/
+          )
+
+      # Check for TODO/FIXME in committed code (warn, don't fail)
+      - id: check-todo
+        name: Check for TODO/FIXME
+        entry: bash -c 'grep -rn "TODO\|FIXME\|XXX\|HACK" "$@" | grep -v ".git" | head -10 || true'
+        language: system
+        types: [python]
+        stages: [commit]
+        verbose: true
+        pass_filenames: true
+
+      # Validate Python file permissions (shebang vs executable)
+      - id: check-python-permissions
+        name: Check Python file permissions
+        entry: bash -c 'for f in "$@"; do if head -1 "$f" | grep -q "^#!/usr/bin/env python"; then test -x "$f" || echo "⚠️  $f has shebang but is not executable"; fi; done || true'
+        language: system
+        types: [python]
+        stages: [commit]
+        pass_filenames: true
         verbose: true
 
   # Pre-push: Fast tests (unit tests only, no slow/integration)

@@ -228,5 +228,3 @@ Lightning Bolt,Brainstorm,38,76
 3. Add labels → supervised learning (should work)
 
 **Don't waste time:** Node2Vec on unattributed co-occurrence graphs is the wrong tool.
-
-

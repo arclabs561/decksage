@@ -15,12 +15,12 @@ Uses:
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 
 from ..similarity.gnn_embeddings import CardGNNEmbedder
+from ..utils.logging_config import log_exception, setup_script_logging
 from ..utils.paths import PATHS
-from ..utils.logging_config import setup_script_logging, log_exception
+
 
 logger = setup_script_logging()
 
@@ -88,9 +88,10 @@ def main():
 
     # Convert CSV to edgelist if needed
     import pandas as pd
+
     edgelist_path = PATHS.graphs / f"{pairs_path.stem}.edg"
     edgelist_path.parent.mkdir(parents=True, exist_ok=True)
-    
+
     if not edgelist_path.exists():
         logger.info(f"Converting {pairs_path} to edgelist format...")
         df = pd.read_csv(pairs_path)
@@ -107,7 +108,7 @@ def main():
         output_path = Path(args.output)
     else:
         output_path = PATHS.experiments / "signals" / f"gnn_{args.model_type.lower()}.json"
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Train model
@@ -143,4 +144,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-

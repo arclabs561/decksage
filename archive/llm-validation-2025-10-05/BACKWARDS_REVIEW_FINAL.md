@@ -9,7 +9,7 @@ Start from claimed end state, work backwards to verify.
 ✓ Dead code removed (877 lines)
   - Checked: src/ml/utils/llm_cache.py not found
   - Checked: No broken imports in llm_judge.py
-  
+
 ✓ Scripts work
   - llm_judge.py runs with --help
   - No import errors
@@ -38,7 +38,7 @@ Start from claimed end state, work backwards to verify.
 - Structural validation (Pydantic): DATA_VALIDATION.md
 - Semantic validation (LLM): DATA_QUALITY_VALIDATION.md
 - Cache recovery notes: DATA_*_FINDINGS/PREVENTION.md
-  
+
 **Action:** Keep all. Different purposes.
 
 ✗ Test collection shows errors

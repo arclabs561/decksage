@@ -1,6 +1,6 @@
 # Embedding Methods: Complete Status
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: ✅ DeepWalk trained, comparison script ready
 
 ---
@@ -119,4 +119,3 @@ model = Node2Vec(
 ---
 
 **Status**: ✅ DeepWalk trained, comparison in progress
-

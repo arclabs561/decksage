@@ -52,7 +52,7 @@ exclude = ["src/backend", "src/frontend", "src/experiments"]
 ### 5. Test Execution Path (P1 - DX)
 **Problem**: Tests worked but required non-obvious workflow.
 
-**Fix**: 
+**Fix**:
 - Documented in README that `make test` should be used (not `uv run pytest`)
 - Reason: Activating venv avoids package rebuild overhead during test collection
 - Created specific targets for fast feedback (`make test-quick`)
@@ -66,7 +66,7 @@ exclude = ["src/backend", "src/frontend", "src/experiments"]
 
 **Decision**: Kept separate per Chesterton's fence principle.
 
-**Rationale**: 
+**Rationale**:
 - Game-specific tagging logic is complex and domain-specific
 - Each game has 25-35 unique tags
 - Consolidation would require sophisticated abstraction
@@ -131,7 +131,7 @@ make test-api    # ✅ 6 passed, 2 expected failures (503 without embeddings)
 ```bash
 # Fast (< 2s per file):
 make test-quick                    # Single file
-make test-api                      # API tests only  
+make test-api                      # API tests only
 pytest src/ml/tests/test_*.py      # Individual files
 
 # Works but slow:

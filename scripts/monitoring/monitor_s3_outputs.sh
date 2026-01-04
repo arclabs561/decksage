@@ -31,13 +31,13 @@ eval_found=false
 while true; do
     iteration=$((iteration + 1))
     timestamp=$(date '+%Y-%m-%d %H:%M:%S')
-    
+
     echo "[$iteration] $timestamp"
     echo "----------------------------------------------------------------------"
-    
+
     # Check intermediate progress files
     echo "Intermediate Progress:"
-    
+
     # Check for training metrics
     if aws s3 ls "${PROGRESS_DIR}/training_metrics.jsonl" > /dev/null 2>&1; then
         echo "  ✓ Training metrics found"
@@ -51,7 +51,7 @@ while true; do
     else
         echo "  ✗ Training metrics: Not found"
     fi
-    
+
     # Check for progress summary
     if aws s3 ls "${PROGRESS_DIR}/training_progress.json" > /dev/null 2>&1; then
         echo "  ✓ Progress summary found"
@@ -64,7 +64,7 @@ while true; do
     else
         echo "  ✗ Progress summary: Not found"
     fi
-    
+
     # Check for checkpoints
     checkpoint_count=$(aws s3 ls "${PROGRESS_DIR}/checkpoints/" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$checkpoint_count" -gt 0 ]; then
@@ -72,15 +72,15 @@ while true; do
     else
         echo "  ✗ Checkpoints: Not found"
     fi
-    
+
     echo ""
-    
+
     # Check GNN embeddings
     if aws s3 ls "$GNN_OUTPUT" > /dev/null 2>&1; then
         if [ "$gnn_found" = false ]; then
             echo "✓ GNN embeddings found in S3!"
             gnn_found=true
-            
+
             # Download
             echo "  Downloading..."
             aws s3 cp "$GNN_OUTPUT" "data/embeddings/gnn_graphsage.json" 2>&1 | grep -v "^$" || true
@@ -91,18 +91,18 @@ while true; do
     else
         echo "✗ GNN embeddings: Not found in S3"
     fi
-    
+
     # Check evaluation results
     if aws s3 ls "$EVAL_OUTPUT" > /dev/null 2>&1; then
         if [ "$eval_found" = false ]; then
             echo "✓ Evaluation results found in S3!"
             eval_found=true
-            
+
             # Download
             echo "  Downloading..."
             aws s3 cp "$EVAL_OUTPUT" "experiments/hybrid_evaluation_results.json" 2>&1 | grep -v "^$" || true
             echo "  ✓ Downloaded to experiments/hybrid_evaluation_results.json"
-            
+
             # Show summary
             echo ""
             echo "======================================================================"
@@ -115,7 +115,7 @@ while true; do
             echo "View results:"
             echo "  cat experiments/hybrid_evaluation_results.json | python3 -m json.tool"
             echo "======================================================================"
-            
+
                    # If both found, prompt to stop instance
                    if [ "$gnn_found" = true ] && [ "$eval_found" = true ]; then
                        echo ""
@@ -136,7 +136,7 @@ while true; do
     else
         echo "✗ Evaluation results: Not found in S3"
     fi
-    
+
     # Check instance status using runctl (more reliable than process checking)
     if "$RUNCTL_BIN" aws processes "$INSTANCE_ID" > /dev/null 2>&1; then
         echo "✓ Instance: Accessible via runctl"
@@ -145,15 +145,15 @@ while true; do
     else
         echo "✗ Instance: Not accessible (may be stopped or terminated)"
     fi
-    
+
     echo ""
-    
+
     # If both found, exit
     if [ "$gnn_found" = true ] && [ "$eval_found" = true ]; then
         echo "All outputs found. Monitoring complete."
         exit 0
     fi
-    
+
     echo "Next check in ${CHECK_INTERVAL}s..."
     echo ""
     sleep "$CHECK_INTERVAL"

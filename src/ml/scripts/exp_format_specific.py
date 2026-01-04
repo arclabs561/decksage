@@ -14,8 +14,8 @@ from collections import defaultdict
 from pathlib import Path
 
 from utils.evaluation import compute_precision_at_k, jaccard_similarity
-from ml.utils.shared_operations import jaccard_similarity
 
+from ml.utils.shared_operations import jaccard_similarity
 
 
 def load_decks_by_format(jsonl_path):

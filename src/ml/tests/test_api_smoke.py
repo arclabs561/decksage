@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-import types
 import pytest
-from pathlib import Path
+
 
 try:
     from fastapi.testclient import TestClient
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -16,6 +16,7 @@ pytestmark = pytest.mark.skipif(not HAS_FASTAPI, reason="fastapi not installed")
 
 def make_app_with_mocks():
     from ..api import api
+
     # Inject minimal mocks into API state (not legacy globals)
     class DummyEmb:
         def __len__(self):
@@ -37,7 +38,11 @@ def make_app_with_mocks():
 
     state = api.get_state()
     state.embeddings = DummyEmb()
-    state.model_info = {"methods": ["embedding", "jaccard", "fusion"], "num_cards": 3, "embedding_dim": 3}
+    state.model_info = {
+        "methods": ["embedding", "jaccard", "fusion"],
+        "num_cards": 3,
+        "embedding_dim": 3,
+    }
     state.graph_data = {"adj": {"A": {"B"}, "B": {"A", "C"}, "C": {"B"}}, "weights": {}}
     # Ensure router mounted
     return api.app

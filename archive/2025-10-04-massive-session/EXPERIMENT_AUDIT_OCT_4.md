@@ -1,5 +1,5 @@
 # Experiment Infrastructure Audit
-**Date**: October 4, 2025  
+**Date**: October 4, 2025
 **Goal**: Assess experiment organization, duplication, deprecation, and test suite integration
 
 ---
@@ -148,7 +148,7 @@ def run_all_experiments():
        """Smoke test: experiment can run without errors."""
        # Run with small dataset
        ...
-   
+
    def test_exp_format_specific_runs():
        ...
    ```
@@ -156,11 +156,11 @@ def run_all_experiments():
 3. **Document Experiment Status**
    ```markdown
    # EXPERIMENTS.md
-   
+
    ## Active
    - exp_source_filtering.py - Source filtering (Oct 4, 2025)
    - exp_format_specific.py - Format-specific (needs testing)
-   
+
    ## Archived
    - experimental/run_exp_*.py - Historical (47 experiments)
    - experimental/experiment_runner.py - Old infrastructure
@@ -179,10 +179,10 @@ def run_all_experiments():
        def __init__(self, name, hypothesis):
            self.name = name
            self.hypothesis = hypothesis
-       
+
        def run(self) -> dict:
            raise NotImplementedError
-       
+
        def log_result(self, result):
            # Auto-append to EXPERIMENT_LOG_CANONICAL.jsonl
            ...

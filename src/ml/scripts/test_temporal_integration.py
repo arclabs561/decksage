@@ -13,10 +13,10 @@ This script is kept for reference but should not be used for testing.
 
 from __future__ import annotations
 
-import json
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+
 
 # Add src to path
 script_dir = Path(__file__).parent
@@ -27,6 +27,7 @@ if str(src_dir) not in sys.path:
 from ml.data.incremental_graph import IncrementalCardGraph
 from ml.similarity.fusion import WeightedLateFusion
 from ml.utils.paths import PATHS
+
 
 print("=" * 70)
 print("TEMPORAL ENHANCEMENTS INTEGRATION TEST")
@@ -73,12 +74,15 @@ base_date = datetime(2024, 1, 1)
 for i, deck in enumerate(decks):
     deck_id = f"deck_{i}"
     timestamp = base_date + timedelta(days=i * 30)  # 30 days apart
-    
-    graph.set_deck_metadata(deck_id, {
-        "format": deck["format"],
-        "tournament_type": "GP",
-        "tournament_size": 500,
-    })
+
+    graph.set_deck_metadata(
+        deck_id,
+        {
+            "format": deck["format"],
+            "tournament_type": "GP",
+            "tournament_size": 500,
+        },
+    )
     graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
 
 # Check edge temporal distribution
@@ -122,7 +126,7 @@ try:
         graph=graph2,
         weights=None,  # Use defaults
     )
-    
+
     # Test temporal similarity (will use edge monthly_counts if available)
     if edge_key in graph2.edges:
         edge = graph2.edges[edge_key]
@@ -145,7 +149,7 @@ edge_key_test = tuple(sorted(["Lightning Bolt", "Shock"]))
 if edge_key_test in graph2.edges:
     edge = graph2.edges[edge_key_test]
     edge_dict = edge.to_dict()
-    
+
     # Check serialization (may be empty if no temporal data yet)
     if edge.monthly_counts:
         assert "monthly_counts" in edge_dict, "Should serialize monthly_counts"
@@ -153,7 +157,7 @@ if edge_key_test in graph2.edges:
     if edge.format_periods:
         assert "format_periods" in edge_dict, "Should serialize format_periods"
         print(f"  ✓ format_periods serialized: {len(edge_dict.get('format_periods', {}))} formats")
-    
+
     # Test round-trip
     edge_loaded = edge.from_dict(edge_dict)
     assert edge_loaded.monthly_counts == edge.monthly_counts
@@ -169,4 +173,3 @@ if test_graph_path.exists():
 print("\n" + "=" * 70)
 print("✓ ALL INTEGRATION TESTS PASSED")
 print("=" * 70)
-

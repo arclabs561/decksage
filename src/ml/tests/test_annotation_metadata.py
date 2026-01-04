@@ -18,14 +18,17 @@ from pathlib import Path
 
 import pytest
 
+
 try:
     from ml.annotation.llm_annotator import CardSimilarityAnnotation
+
     HAS_LLM_ANNOTATOR = True
 except ImportError:
     HAS_LLM_ANNOTATOR = False
 
 try:
     import yaml
+
     HAS_YAML = True
 except ImportError:
     HAS_YAML = False
@@ -49,13 +52,13 @@ def test_llm_annotation_metadata_fields():
         annotator_id="judge_1",
         timestamp=datetime.now().isoformat(),
     )
-    
+
     # Verify all metadata fields are present
     assert ann.model_name is not None
     assert ann.model_params is not None
     assert ann.annotator_id is not None
     assert ann.timestamp is not None
-    
+
     # Verify serialization
     data = ann.model_dump()
     assert "model_name" in data
@@ -72,21 +75,22 @@ def test_hand_annotation_iaa_structure():
         from ml.annotation.hand_annotate import create_annotation_batch
     except ImportError:
         pytest.skip("hand_annotate module not available")
-    
+
     # Create a minimal test batch
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".yaml", delete=False) as f:
         output_path = Path(f.name)
-    
+
     try:
         # This would normally create a batch, but we'll check the template structure
         # Instead, check that the function exists and has IAA support
         import inspect
+
         from ml.annotation import hand_annotate
-        
+
         # Check if IAA tracking is mentioned in the code
         source = inspect.getsource(hand_annotate.create_annotation_batch)
         assert "iaa_tracking" in source or "annotator" in source.lower()
-        
+
     finally:
         if output_path.exists():
             output_path.unlink()
@@ -95,7 +99,7 @@ def test_hand_annotation_iaa_structure():
 def test_annotation_metadata_extraction():
     """Test extracting metadata from annotations."""
     from ml.utils.annotation_utils import load_similarity_annotations
-    
+
     # Create test annotation file
     test_ann = {
         "card1": "Lightning Bolt",
@@ -108,20 +112,20 @@ def test_annotation_metadata_extraction():
         "annotator_id": "judge_1",
         "timestamp": datetime.now().isoformat(),
     }
-    
-    with tempfile.NamedTemporaryFile(mode='w', suffix='.jsonl', delete=False) as f:
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".jsonl", delete=False) as f:
         f.write(json.dumps(test_ann) + "\n")
         ann_path = Path(f.name)
-    
+
     try:
         annotations = load_similarity_annotations(ann_path)
         assert len(annotations) == 1
-        
+
         ann = annotations[0]
         assert ann.get("model_name") == "anthropic/claude-4.5-sonnet"
         assert ann.get("annotator_id") == "judge_1"
         assert ann.get("timestamp") is not None
-        
+
     finally:
         if ann_path.exists():
             ann_path.unlink()
@@ -130,7 +134,7 @@ def test_annotation_metadata_extraction():
 def test_graph_metadata_storage():
     """Test that annotation metadata can be stored in graph edges."""
     from ml.data.incremental_graph import Edge
-    
+
     # Create edge with annotation metadata
     edge = Edge(
         card1="Lightning Bolt",
@@ -142,22 +146,24 @@ def test_graph_metadata_storage():
                 "is_substitute": True,
                 "model_name": "anthropic/claude-4.5-sonnet",
             }
-        }
+        },
     )
-    
+
     # Verify metadata is stored
     assert edge.metadata is not None
     assert "annotation" in edge.metadata
     assert edge.metadata["annotation"]["similarity_type"] == "functional"
     assert edge.metadata["annotation"]["is_substitute"] is True
-    
+
     # Verify serialization
     edge_dict = edge.to_dict()
     assert "metadata" in edge_dict
     assert "annotation" in edge_dict["metadata"]
 
 
-@pytest.mark.skip(reason="train_multitask_refined_enhanced.create_enhanced_edgelist function is missing/corrupted")
+@pytest.mark.skip(
+    reason="train_multitask_refined_enhanced.create_enhanced_edgelist function is missing/corrupted"
+)
 def test_annotation_metadata_in_edgelist():
     """Test that annotation metadata is included in edgelist output."""
     # This would test the actual edgelist creation
@@ -166,10 +172,11 @@ def test_annotation_metadata_in_edgelist():
         from ml.scripts.train_multitask_refined_enhanced import create_enhanced_edgelist
     except ImportError:
         pytest.skip("train_multitask_refined_enhanced module not available")
-    
+
     import inspect
+
     sig = inspect.signature(create_enhanced_edgelist)
-    
+
     # Verify annotation_metadata parameter exists
     assert "annotation_metadata" in sig.parameters
     param = sig.parameters["annotation_metadata"]
@@ -178,4 +185,3 @@ def test_annotation_metadata_in_edgelist():
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

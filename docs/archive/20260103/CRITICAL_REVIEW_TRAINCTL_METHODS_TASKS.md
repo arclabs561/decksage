@@ -1,6 +1,6 @@
 # Critical Review: trainctl, Cursor Setup, Training Methods, Downstream Tasks
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Comprehensive analysis of 4 critical areas
 
 ---
@@ -46,15 +46,15 @@ $TRAINCTL_BIN aws train "$INSTANCE_ID" \
 ```
 
 #### ❌ Issue 2: Not Using trainctl's Built-in Checkpointing
-**Current**: Manual checkpointing in Python scripts  
+**Current**: Manual checkpointing in Python scripts
 **Better**: Use trainctl's `--checkpoint-interval` and `--resume-from` flags
 
 #### ❌ Issue 3: Not Using trainctl for Local Training
-**Current**: Direct Python execution for local training  
+**Current**: Direct Python execution for local training
 **Better**: Use `trainctl local` for consistency
 
 #### ❌ Issue 4: Missing RunPod Support
-**Current**: Only AWS EC2  
+**Current**: Only AWS EC2
 **Better**: Add RunPod support for GPU training (cheaper than EC2)
 
 ### Recommendations
@@ -125,11 +125,11 @@ backups
 - `*.md` files in root (100+ markdown files!)
 
 #### ❌ Issue 2: No `.cursorrules` File
-**Problem**: No project-specific rules for Cursor AI  
+**Problem**: No project-specific rules for Cursor AI
 **Impact**: AI doesn't know project conventions, style, priorities
 
 #### ❌ Issue 3: Data Directory Too Broad
-**Current**: `data` ignored entirely  
+**Current**: `data` ignored entirely
 **Problem**: Some data files might be small and relevant (e.g., `data/processed/test_set_canonical_magic.json`)
 
 ### Recommendations
@@ -241,23 +241,23 @@ build/
 ### Recommendations
 
 #### Priority 1: Graph NE (High ROI)
-**Why**: Simpler than Node2Vec, no hyperparameter tuning, outperforms in some tasks  
-**Effort**: 4-6 hours  
+**Why**: Simpler than Node2Vec, no hyperparameter tuning, outperforms in some tasks
+**Effort**: 4-6 hours
 **Impact**: Potentially 10-15% improvement
 
 #### Priority 2: Meta Node2Vec (Perfect Fit)
-**Why**: We have format/archetype metadata - this is exactly what Meta Node2Vec is for  
-**Effort**: 8-12 hours  
+**Why**: We have format/archetype metadata - this is exactly what Meta Node2Vec is for
+**Effort**: 8-12 hours
 **Impact**: Could leverage metadata for better embeddings
 
 #### Priority 3: Ensemble Methods
-**Why**: Research shows 10-20% improvement  
-**Effort**: 3-4 hours  
+**Why**: Research shows 10-20% improvement
+**Effort**: 3-4 hours
 **Impact**: Combine DeepWalk + Node2Vec variants + Graph NE
 
 #### Priority 4: PyTorch Geometric Node2Vec
-**Why**: GPU-accelerated, integrates with GNNs  
-**Effort**: 2-3 hours (if scipy issue resolved)  
+**Why**: GPU-accelerated, integrates with GNNs
+**Effort**: 2-3 hours (if scipy issue resolved)
 **Impact**: Faster training, better integration
 
 ### Implementation Plan
@@ -304,19 +304,19 @@ build/
 ### Issues Found
 
 #### ❌ Issue 1: No Win Rate Evaluation
-**Problem**: Deck completion is evaluated on "does it suggest good cards?" not "does it improve win rate?"  
+**Problem**: Deck completion is evaluated on "does it suggest good cards?" not "does it improve win rate?"
 **Impact**: We don't know if our suggestions actually help players win
 
 #### ❌ Issue 2: No Task-Specific Evaluation
-**Problem**: All evaluation is on similarity (P@10), not on downstream tasks  
+**Problem**: All evaluation is on similarity (P@10), not on downstream tasks
 **Impact**: Good similarity doesn't guarantee good deck completion
 
 #### ❌ Issue 3: No A/B Testing
-**Problem**: No way to compare algorithm changes on real user behavior  
+**Problem**: No way to compare algorithm changes on real user behavior
 **Impact**: Can't measure real-world impact
 
 #### ❌ Issue 4: No Temporal Evaluation
-**Problem**: Recommendations don't account for format rotation, meta shifts  
+**Problem**: Recommendations don't account for format rotation, meta shifts
 **Impact**: Suggestions may be stale or irrelevant
 
 ### Recommendations
@@ -354,18 +354,18 @@ def evaluate_card_substitution(
 ```
 
 #### Priority 2: Win Rate Integration
-**Action**: If win rate data available, integrate into evaluation  
-**Effort**: 4-6 hours  
+**Action**: If win rate data available, integrate into evaluation
+**Effort**: 4-6 hours
 **Impact**: Real-world validation
 
 #### Priority 3: Temporal Evaluation
-**Action**: Evaluate recommendations at different time points  
-**Effort**: 6-8 hours  
+**Action**: Evaluate recommendations at different time points
+**Effort**: 6-8 hours
 **Impact**: Ensure recommendations stay relevant
 
 #### Priority 4: A/B Testing Framework
-**Action**: Create framework to compare algorithm versions  
-**Effort**: 8-12 hours  
+**Action**: Create framework to compare algorithm versions
+**Effort**: 8-12 hours
 **Impact**: Rigorous algorithm comparison
 
 ---
@@ -421,4 +421,3 @@ def evaluate_card_substitution(
 - Meta Node2Vec (perfect fit for our metadata)
 - Task-specific evaluation (similarity ≠ downstream performance)
 - Win rate integration (real-world validation)
-

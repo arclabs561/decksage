@@ -38,7 +38,7 @@ echo "Step 1: Checking training status..."
 if check_training; then
  echo "✓ Training is running"
  echo " Monitoring training progress..."
- 
+
  # Monitor until training completes
  while check_training; do
  echo -n "."
@@ -48,14 +48,14 @@ if check_training; then
  echo "Training process completed"
 else
  echo "Warning: Training process not found"
- 
+
  # Check if training already completed
  if check_training_complete; then
  echo "✓ Training appears to have completed (GNN embeddings found in S3)"
  else
  echo "Warning: Training not found and outputs not in S3"
  echo " Starting training..."
- 
+
  SSH_KEY_PATH="$SSH_KEY_PATH" "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/train_hybrid_full.py" \
  --data-s3 "s3://games-collections/" \
@@ -66,10 +66,10 @@ else
  --gnn-output "embeddings/gnn_graphsage.json" \
  --gnn-epochs 50 \
  --instruction-model "intfloat/e5-base-v2" &
- 
+
  TRAIN_PID=$!
  echo " Training started (PID: $TRAIN_PID)"
- 
+
  # Monitor training
  while check_training || kill -0 $TRAIN_PID 2>/dev/null; do
  echo -n "."
@@ -92,7 +92,7 @@ if check_evaluation; then
  echo "Warning: Evaluation already running"
 else
  echo " Running evaluation with leakage prevention..."
- 
+
  "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/evaluate_hybrid_with_runctl.py" \
  --data-s3 "s3://games-collections/" \
@@ -105,10 +105,10 @@ else
  --instruction-model "intfloat/e5-base-v2" \
  --output "experiments/hybrid_evaluation_results.json" \
  --use-temporal-split &
- 
+
  EVAL_PID=$!
  echo " Evaluation started (PID: $EVAL_PID)"
- 
+
  # Monitor evaluation
  while check_evaluation || kill -0 $EVAL_PID 2>/dev/null; do
  echo -n "."
@@ -135,4 +135,3 @@ echo ""
 echo "View results:"
 echo " cat experiments/hybrid_evaluation_results.json | python3 -m json.tool"
 echo "="*70
-

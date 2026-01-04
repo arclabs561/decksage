@@ -9,7 +9,7 @@ After harmonizing LLM validators, checking rest of repo reveals:
 **Archive (status/completion docs):**
 - AUDIT_SUMMARY.md
 - COMPLETE_*.md
-- *_SUMMARY.md  
+- *_SUMMARY.md
 - *_FINAL.md
 - SESSION_COMPLETE*.md
 - VALIDATORS_EXECUTIVE_SUMMARY.md
@@ -30,7 +30,7 @@ After harmonizing LLM validators, checking rest of repo reveals:
 - vision_card_enricher.py
 - multi_perspective_judge.py
 
-**Decision:** 
+**Decision:**
 - If actively used → harmonize with Pydantic AI
 - If experimental → leave as-is or archive
 - Check: Are they imported anywhere?
@@ -48,7 +48,7 @@ After harmonizing LLM validators, checking rest of repo reveals:
 
 Many files have 20-100 print statements.
 
-**Decision:** 
+**Decision:**
 - CLI scripts: OK (print is fine)
 - Library code: Should use logging
 - But: Diminishing returns on converting all

@@ -91,4 +91,3 @@ Updated fusion weights based on actual evaluation results showing Jaccard is 3x 
 - Use Jaccard as the primary/only signal for now
 - Focus on improving embedding quality
 - Only add embedding back when it actually helps
-

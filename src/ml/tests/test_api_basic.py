@@ -1,9 +1,9 @@
-import os
-
 import pytest
+
 
 try:
     from fastapi.testclient import TestClient
+
     HAS_FASTAPI = True
 except ImportError:
     HAS_FASTAPI = False
@@ -27,6 +27,7 @@ def api_client():
     if not HAS_FASTAPI or app is None:
         pytest.skip("FastAPI or app not available")
     from fastapi.testclient import TestClient
+
     return TestClient(app)
 
 
@@ -43,5 +44,3 @@ def test_ready_without_embeddings_returns_503(api_client):
     assert resp.status_code == 503
     data = resp.json()
     assert data["detail"].startswith("not ready")
-
-

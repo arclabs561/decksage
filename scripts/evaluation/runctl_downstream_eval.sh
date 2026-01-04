@@ -99,12 +99,12 @@ case "$MODE" in
  INSTANCE_ID="${1:-${INSTANCE_ID:-}}"
  DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-500}"
  USE_EBS="${USE_EBS:-true}"
- 
+
  if [[ -z "$INSTANCE_ID" ]]; then
  echo "No instance ID provided, creating spot instance..."
  INSTANCE_TYPE="${INSTANCE_TYPE:-g4dn.xlarge}"
  echo " Instance type: $INSTANCE_TYPE"
- 
+
  # Check for existing EBS volume for this project
  if [[ "$USE_EBS" == "true" ]]; then
  echo " Checking for existing EBS volume..."
@@ -117,22 +117,22 @@ case "$MODE" in
  echo " Will create new EBS volume (${DATA_VOLUME_SIZE}GB) for persistent data"
  echo " Volume will be auto-mounted at /mnt/data by user-data script"
  fi
- 
+
  CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --data-volume-size "$DATA_VOLUME_SIZE" --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek "$INSTANCE_TYPE" 2>&1)
  else
  CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek "$INSTANCE_TYPE" 2>&1)
  fi
- 
+
  echo "$CREATE_OUTPUT"
  # Extract instance ID from output (handles both spot and on-demand fallback)
  # Look for "Created spot instance: i-xxx" or "Created on-demand instance: i-xxx" pattern
  INSTANCE_ID=$(echo "$CREATE_OUTPUT" | grep -oE '(Created (spot|on-demand) instance|Instance ID): i-[a-z0-9]+' | grep -oE 'i-[a-z0-9]+' | head -1 || echo "")
- 
+
  # If still not found, try to find any instance ID pattern
  if [[ -z "$INSTANCE_ID" ]]; then
  INSTANCE_ID=$(echo "$CREATE_OUTPUT" | grep -oE 'i-[a-z0-9]{17}' | head -1 || echo "")
  fi
- 
+
  if [[ -z "$INSTANCE_ID" ]]; then
  echo "Could not determine instance ID from output."
  echo "Output was:"
@@ -149,7 +149,7 @@ case "$MODE" in
  fi
  echo "Using instance: $INSTANCE_ID"
  echo "Waiting for instance to be ready and EBS volume to mount..."
- 
+
  # Wait for instance to be running
  echo " Waiting for instance to be running..."
  for i in {1..30}; do
@@ -159,12 +159,12 @@ case "$MODE" in
  fi
  sleep 2
  done
- 
+
  # If using EBS, wait for volume to be attached and give time for user-data to mount it
  if [[ "$USE_EBS" == "true" ]]; then
  echo " Waiting for EBS volume to attach and mount (user-data script)..."
  sleep 30 # Give user-data script time to format and mount volume
- 
+
  # Check if volume is attached
  VOLUME_ID=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].BlockDeviceMappings[?DeviceName==`/dev/sdf`].Ebs.VolumeId' --output text 2>/dev/null || echo "")
  if [[ -n "$VOLUME_ID" && "$VOLUME_ID" != "None" ]]; then
@@ -176,12 +176,12 @@ case "$MODE" in
  fi
  fi
  shift || true
- 
+
  echo "AWS evaluation mode (instance: $INSTANCE_ID)"
  echo " S3 data: $S3_DATA"
  echo " S3 output: $S3_OUTPUT"
  echo ""
- 
+
  # Get instance key name to set SSH_KEY_PATH
  INSTANCE_KEY=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].KeyName' --output text 2>&1)
  if [[ -n "$INSTANCE_KEY" && "$INSTANCE_KEY" != "None" ]]; then
@@ -194,32 +194,32 @@ case "$MODE" in
  echo " Using SSH key: $SSH_KEY_PATH"
  fi
  fi
- 
+
  # Fallback to tarek key if available
  if [[ -z "${SSH_KEY_PATH:-}" ]] && [[ -f "$HOME/.ssh/tarek.pem" ]]; then
  export SSH_KEY_PATH="$HOME/.ssh/tarek.pem"
  echo " Using fallback SSH key: $SSH_KEY_PATH"
  fi
- 
+
  # Use shell-based sync for better reliability (works with SSH or SSM)
  export TRAINCTL_USE_SHELL_SYNC=1
- 
+
  # runctl syncs code to /home/{user}/{project_name}/ and runs from that directory
  # Script path is relative to project root (runctl syncs entire project)
  # Use --data-s3 and --output-s3 per cursor rules
  cd "$PROJECT_ROOT" || exit 1
- 
+
  # Ensure we're in the right directory for runctl
  # runctl syncs to /home/ec2-user/<project-name>/ by default
  PROJECT_NAME=$(basename "$PROJECT_ROOT")
- 
+
  # Export environment variables for runctl
  export TRAINCTL_USE_SHELL_SYNC=1 # Use shell-based sync for reliability
  export SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/tarek.pem}"
- 
+
  echo "Syncing code to instance..."
  echo " Syncing from: src/ml/scripts"
- 
+
  "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/evaluate_downstream_complete.py" \
  --data-s3 "$S3_DATA" \
@@ -250,4 +250,3 @@ echo "To check status without hanging:"
 echo " ssh -i ~/.ssh/tarek.pem ec2-user@<instance-ip> 'tail -f /home/ec2-user/dev/training.log'"
 echo " aws s3 ls s3://games-collections/experiments/downstream_evaluation_*.json"
 echo " aws ssm list-commands --instance-id $INSTANCE_ID --max-items 1"
-

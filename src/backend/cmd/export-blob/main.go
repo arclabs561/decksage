@@ -118,7 +118,7 @@ func main() {
 				deckMap["event"] = ""
 				deckMap["placement"] = 0
 				deckMap["event_date"] = ""
-				
+
 				// Try to get values using type assertions for known types
 				// This is a simplified approach - in production, you'd use proper type switches
 			}
@@ -178,4 +178,3 @@ func getInt(m map[string]interface{}, key string) int {
 	}
 	return 0
 }
-

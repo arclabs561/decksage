@@ -31,23 +31,23 @@ def test_single_query(query: str, num_judges: int = 2):
     if not HAS_SCRIPTS:
         print("Scripts not available")
         return
-    
+
     print(f"\n=== Testing: {query} ===")
     print(f"Using {num_judges} judges with enhanced prompts...")
-    
+
     try:
         result = generate_labels_multi_judge(query, num_judges=num_judges)
-        
+
         if result:
             print(f"\n✅ Generated labels:")
             print(f"  Highly relevant: {len(result.get('highly_relevant', []))}")
             print(f"  Relevant: {len(result.get('relevant', []))}")
             print(f"  Somewhat relevant: {len(result.get('somewhat_relevant', []))}")
             print(f"  Marginally relevant: {len(result.get('marginally_relevant', []))}")
-            
+
             if result.get('highly_relevant'):
                 print(f"\n  Examples (highly_relevant): {result['highly_relevant'][:5]}")
-            
+
             iaa = result.get('iaa', {})
             print(f"\n  IAA: {iaa.get('agreement_rate', 0.0):.2f} ({iaa.get('num_judges', 0)} judges)")
         else:
@@ -61,19 +61,18 @@ def main():
     """Test enhanced labeling on a few queries."""
     test_queries = [
         "Lightning Bolt",
-        "Brainstorm", 
+        "Brainstorm",
         "Counterspell",
     ]
-    
+
     print("Testing enhanced label generation with improved prompts...")
     print("=" * 60)
-    
+
     for query in test_queries:
         test_single_query(query, num_judges=2)
-    
+
     print("\n" + "=" * 60)
     print("✅ Test complete")
 
 if __name__ == "__main__":
     main()
-

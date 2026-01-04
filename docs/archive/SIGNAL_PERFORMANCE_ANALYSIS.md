@@ -1,6 +1,6 @@
 # Individual Signal Performance Analysis
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Test Set**: `experiments/test_set_canonical_magic.json` (38 queries)
 
 ---
@@ -71,4 +71,3 @@
 ---
 
 **Status**: ✅ Individual signals measured, fusion weights need re-optimization
-

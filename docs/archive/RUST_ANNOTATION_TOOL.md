@@ -110,9 +110,8 @@ Test Set Merge (JSON)
 
 ## Status
 
-✅ **Compiles successfully**  
-✅ **Integrates with rank-fusion and rank-refine**  
+✅ **Compiles successfully**
+✅ **Integrates with rank-fusion and rank-refine**
 ✅ **Ready for integration with data loading**
 
 The tool is ready to use once you connect it to your actual data sources (embeddings, graph data, etc.).
-

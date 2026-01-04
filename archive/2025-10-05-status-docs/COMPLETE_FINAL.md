@@ -23,7 +23,7 @@ Tests: 109, passing: 103
 
 2. **llm_judge_chained.py** - Theory-aligned
    - 3 sequential API calls
-   - Explicit dependency chaining  
+   - Explicit dependency chaining
    - Each step conditions on prior
    - Tests: 4 passing
 

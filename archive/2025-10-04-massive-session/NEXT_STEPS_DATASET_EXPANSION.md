@@ -14,8 +14,8 @@ go run cmd/dataset/main.go \
   extract pokemontcg \
   --parallel 8
 ```
-**Value**: Complete Pokemon card coverage (3,000 → 10,000 cards)  
-**Risk**: Low (parser working, syntax error already fixed)  
+**Value**: Complete Pokemon card coverage (3,000 → 10,000 cards)
+**Risk**: Low (parser working, syntax error already fixed)
 **Effort**: 30 minutes runtime
 
 ### Option 2: Fix MTGGoldfish Parser (2-3 hours, enables +2-5K decks)
@@ -41,8 +41,8 @@ go run ../../cmd/dataset/main.go \
   extract goldfish \
   --limit 100
 ```
-**Value**: Unlocks 2,000-5,000 decks + meta percentage data  
-**Risk**: Medium (requires code changes, testing)  
+**Value**: Unlocks 2,000-5,000 decks + meta percentage data
+**Risk**: Medium (requires code changes, testing)
 **Effort**: 2-3 hours development
 
 ### Option 3: Targeted MTGTop8 Format Expansion (+200-500 decks, 1 hour)
@@ -72,8 +72,8 @@ go run cmd/dataset/main.go \
   --start 500 \
   --pages 100
 ```
-**Value**: Better format balance, 200-500 new decks  
-**Risk**: Low (scraper working)  
+**Value**: Better format balance, 200-500 new decks
+**Risk**: Low (scraper working)
 **Effort**: 1 hour runtime
 
 ## Medium-Term Actions (Next 2 Weeks)
@@ -114,7 +114,7 @@ func (d *LimitlessDataset) Extract(ctx context.Context, sc *scraper.Scraper, opt
 }
 ```
 
-**Expected Yield**: 500-1,000 Pokemon tournament decks  
+**Expected Yield**: 500-1,000 Pokemon tournament decks
 **Effort**: 1-2 days development + testing
 
 ### Implement YGOPRODeck Tournament Scraper
@@ -143,7 +143,7 @@ src/backend/games/yugioh/dataset/ygoprodeck-tournament/dataset.go
 - Player count
 - Main deck, Extra deck, Side deck (card IDs from image URLs)
 
-**Expected Yield**: 200-500 Yu-Gi-Oh tournament decks  
+**Expected Yield**: 200-500 Yu-Gi-Oh tournament decks
 **Effort**: 2-3 days development + testing
 
 ## Recommended Sequence

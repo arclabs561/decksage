@@ -23,7 +23,7 @@
 #### RRSIG Records (Signatures)
 All DNS records are signed:
 - ✓ A record signed
-- ✓ AAAA record signed  
+- ✓ AAAA record signed
 - ✓ DNSKEY records signed
 
 #### DNSSEC Validation
@@ -62,16 +62,3 @@ fly deploy -a decksage
 curl https://decksage.cards/live
 curl https://decksage.cards/ready
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-

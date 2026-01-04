@@ -22,8 +22,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
+
 try:
     from pydantic_ai import Agent
+
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
@@ -33,16 +35,21 @@ logger = logging.getLogger(__name__)
 
 # Set up project paths
 import sys
+
 from ml.utils.path_setup import setup_project_paths
+
+
 setup_project_paths()
 
 try:
     from generate_labels_multi_judge import generate_labels_multi_judge
+
     HAS_MULTI_JUDGE = True
 except ImportError as e:
     HAS_MULTI_JUDGE = False
     logger.error(f"Multi-judge not available: {e}")
     generate_labels_multi_judge = None
+
 
 # ... existing code ...
 def batch_label_queries(
@@ -94,16 +101,26 @@ def batch_label_queries(
         low_iaa = iaa.get("agreement_rate", 1.0) < 0.6 if iaa else False
 
         if needs_more_labels or (replace_fallback and has_fallback) or low_iaa:
-            queries_to_label.append((query_name, query_data, {
-                "needs_more_labels": needs_more_labels,
-                "has_fallback": has_fallback,
-                "low_iaa": low_iaa,
-                "current_labels": total_labels,
-            }))
+            queries_to_label.append(
+                (
+                    query_name,
+                    query_data,
+                    {
+                        "needs_more_labels": needs_more_labels,
+                        "has_fallback": has_fallback,
+                        "low_iaa": low_iaa,
+                        "current_labels": total_labels,
+                    },
+                )
+            )
 
     logger.info(f"Found {len(queries_to_label)} queries needing re-labeling:")
-    logger.info(f" - Needs more labels (<{min_labels}): {sum(1 for _, _, r in queries_to_label if r['needs_more_labels'])}")
-    logger.info(f" - Has fallback labels: {sum(1 for _, _, r in queries_to_label if r['has_fallback'])}")
+    logger.info(
+        f" - Needs more labels (<{min_labels}): {sum(1 for _, _, r in queries_to_label if r['needs_more_labels'])}"
+    )
+    logger.info(
+        f" - Has fallback labels: {sum(1 for _, _, r in queries_to_label if r['has_fallback'])}"
+    )
     logger.info(f" - Low IAA (<0.6): {sum(1 for _, _, r in queries_to_label if r['low_iaa'])}")
 
     if not queries_to_label:
@@ -117,7 +134,9 @@ def batch_label_queries(
 
     for i, (query_name, query_data, reason) in enumerate(queries_to_label, 1):
         use_case = query_data.get("use_case")
-        logger.info(f"[{i}/{len(queries_to_label)}] Re-labeling {query_name} (reason: {', '.join(k for k, v in reason.items() if v)})...")
+        logger.info(
+            f"[{i}/{len(queries_to_label)}] Re-labeling {query_name} (reason: {', '.join(k for k, v in reason.items() if v)})..."
+        )
 
         # Generate labels with multi-judge
         result = generate_labels_multi_judge(
@@ -126,7 +145,9 @@ def batch_label_queries(
             use_case=use_case,
         )
 
-        if result and any(result.get(level, []) for level in ["highly_relevant", "relevant", "somewhat_relevant"]):
+        if result and any(
+            result.get(level, []) for level in ["highly_relevant", "relevant", "somewhat_relevant"]
+        ):
             # Update query data
             updated[query_name] = {
                 **query_data,
@@ -138,7 +159,15 @@ def batch_label_queries(
             successful += 1
             iaa = result.get("iaa", {})
             agreement = iaa.get("agreement_rate", 0.0)
-            num_labels = sum(len(result.get(level, [])) for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"])
+            num_labels = sum(
+                len(result.get(level, []))
+                for level in [
+                    "highly_relevant",
+                    "relevant",
+                    "somewhat_relevant",
+                    "marginally_relevant",
+                ]
+            )
             logger.info(f" Generated {num_labels} labels (IAA: {agreement:.2f})")
         else:
             logger.warning(f" Warning: Failed to generate labels for {query_name}")
@@ -177,7 +206,9 @@ def main() -> int:
     parser.add_argument("--input", type=str, required=True, help="Input test set JSON")
     parser.add_argument("--output", type=str, required=True, help="Output test set JSON")
     parser.add_argument("--num-judges", type=int, default=3, help="Number of judges per query")
-    parser.add_argument("--min-labels", type=int, default=10, help="Minimum labels required (re-label if below)")
+    parser.add_argument(
+        "--min-labels", type=int, default=10, help="Minimum labels required (re-label if below)"
+    )
     parser.add_argument("--replace-fallback", action="store_true", help="Replace fallback labels")
     parser.add_argument("--batch-size", type=int, default=10, help="Checkpoint interval")
     args = parser.parse_args()
@@ -209,4 +240,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

@@ -8,6 +8,7 @@ Standardizes game names between different formats:
 
 from typing import Literal
 
+
 # Game name mappings
 GAME_NAME_MAP = {
     # Lowercase -> Uppercase
@@ -51,14 +52,14 @@ def normalize_game_name(
 ) -> str:
     """
     Normalize game name to specified format.
-    
+
     Args:
         name: Game name in any format
         to_format: Target format ("lowercase" or "uppercase")
-        
+
     Returns:
         Normalized game name
-        
+
     Examples:
         >>> normalize_game_name("MTG", "lowercase")
         'magic'
@@ -69,9 +70,9 @@ def normalize_game_name(
     """
     if not name:
         return ""
-    
+
     name_lower = name.lower().strip()
-    
+
     # Direct mapping
     if name_lower in GAME_NAME_MAP:
         mapped = GAME_NAME_MAP[name_lower]
@@ -87,14 +88,19 @@ def normalize_game_name(
             mapped = "YGO" if to_format == "uppercase" else "yugioh"
         elif "digimon" in name_lower or "dig" in name_lower:
             mapped = "DIG" if to_format == "uppercase" else "digimon"
-        elif "onepiece" in name_lower or "opcg" in name_lower or "opc" in name_lower or "one piece" in name_lower:
+        elif (
+            "onepiece" in name_lower
+            or "opcg" in name_lower
+            or "opc" in name_lower
+            or "one piece" in name_lower
+        ):
             mapped = "OPC" if to_format == "uppercase" else "onepiece"
         elif "riftbound" in name_lower or "rift" in name_lower or "rft" in name_lower:
             mapped = "RFT" if to_format == "uppercase" else "riftbound"
         else:
             # Unknown - return as-is
             return name
-    
+
     # Convert to target format
     if to_format == "lowercase":
         return GAME_NAME_MAP.get(mapped, mapped.lower())
@@ -114,4 +120,3 @@ def get_all_game_names(format: Literal["lowercase", "uppercase"] = "lowercase") 
         return list(LOWERCASE_GAMES)
     else:
         return list(UPPERCASE_GAMES)
-

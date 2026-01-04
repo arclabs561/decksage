@@ -10,6 +10,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+
 # Test cases based on research findings
 TEST_CASES = {
     "similarity": [
@@ -167,16 +168,12 @@ def critique_similarity_prompt() -> dict[str, Any]:
             pass
 
     # Prompt structure critique
-    strengths.append(
-        "Comprehensive game-specific guidance covering MTG, Pokemon, Yu-Gi-Oh"
-    )
+    strengths.append("Comprehensive game-specific guidance covering MTG, Pokemon, Yu-Gi-Oh")
     strengths.append("Temporal meta evolution considerations included")
     strengths.append("Game state situations (early/mid/late) covered")
     strengths.append("Play styles and archetypes well-documented")
 
-    issues.append(
-        "Prompt is very long - may hit token limits or cause model to skip sections"
-    )
+    issues.append("Prompt is very long - may hit token limits or cause model to skip sections")
     issues.append(
         "Game-specific sections are comprehensive but may be overwhelming - consider progressive disclosure"
     )
@@ -218,15 +215,11 @@ def critique_deck_modification_prompt() -> dict[str, Any]:
     strengths.append("Game state awareness included (dimensions 18-20)")
     strengths.append("Game-specific guidance for all three games")
 
-    issues.append(
-        "20 dimensions may be too many - model may not evaluate all consistently"
-    )
+    issues.append("20 dimensions may be too many - model may not evaluate all consistently")
     issues.append(
         "Temporal dimensions (13-17) are separate but should be integrated into primary dimensions"
     )
-    issues.append(
-        "Game-specific guidance is at the end - may be missed if prompt is truncated"
-    )
+    issues.append("Game-specific guidance is at the end - may be missed if prompt is truncated")
 
     suggestions.append(
         "Consider collapsing temporal dimensions into primary dimensions with temporal sub-considerations"
@@ -258,15 +251,9 @@ def critique_contextual_discovery_prompt() -> dict[str, Any]:
     strengths.append("Good examples for each category")
     strengths.append("Overlap percentage guidance for alternatives")
 
-    issues.append(
-        "Missing temporal context - upgrades/downgrades should consider price volatility"
-    )
-    issues.append(
-        "Missing game-specific guidance - upgrade paths differ by game"
-    )
-    issues.append(
-        "Missing game state considerations - upgrades may be better in some game phases"
-    )
+    issues.append("Missing temporal context - upgrades/downgrades should consider price volatility")
+    issues.append("Missing game-specific guidance - upgrade paths differ by game")
+    issues.append("Missing game state considerations - upgrades may be better in some game phases")
 
     suggestions.append(
         "Add temporal awareness: 'Upgrade path coherence should consider if card will rotate/be banned soon'"
@@ -363,4 +350,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

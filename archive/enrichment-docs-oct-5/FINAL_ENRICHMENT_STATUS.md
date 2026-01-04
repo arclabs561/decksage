@@ -1,6 +1,6 @@
 # Final Enrichment Pipeline Status
 
-**Completed**: October 5, 2025  
+**Completed**: October 5, 2025
 **Result**: ✅ Comprehensive, balanced, LLM-enhanced enrichment for all games
 
 ---
@@ -164,7 +164,7 @@ meta_staples = ["Lightning Bolt", "Counterspell", "Sol Ring"]
 for card_name in meta_staples:
     card_data = get_card(card_name)
     features = enricher.enrich_card(card_data, "mtg")
-    
+
     print(f"\n{card_name}:")
     print(f"  Archetype: {features.archetype_role}")
     print(f"  Synergies: {', '.join(features.synergies[:3])}")
@@ -229,8 +229,8 @@ for card in sample:
 
 ### Expected Improvement
 
-**Current**: P@10 = 0.08 (co-occurrence only)  
-**Target**: P@10 = 0.15-0.25 (multi-modal)  
+**Current**: P@10 = 0.08 (co-occurrence only)
+**Target**: P@10 = 0.15-0.25 (multi-modal)
 **Stretch**: P@10 = 0.35-0.42 (paper results)
 
 **Next Experiments**:
@@ -419,6 +419,6 @@ uv run python unified_enrichment_pipeline.py \
 
 ---
 
-**Session Complete** ✅  
-**All systems operational**  
+**Session Complete** ✅
+**All systems operational**
 **Ready for production enrichment runs**

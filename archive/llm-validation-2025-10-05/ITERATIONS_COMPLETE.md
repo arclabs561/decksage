@@ -78,7 +78,7 @@ Skipped: 6 (missing deps)
 
 ## Grade: A
 
-Functionality: A  
+Functionality: A
 Type safety: A
 Testing: A
 Error handling: A

@@ -53,31 +53,31 @@ uv run python unified_enrichment_pipeline.py \
 ## What Each System Does
 
 ### 1. Functional Taggers (Free)
-**Input**: Card text/data  
-**Output**: Boolean tags (removal, ramp, hand_trap, etc.)  
-**Speed**: 1000 cards/second  
-**Cost**: $0  
+**Input**: Card text/data
+**Output**: Boolean tags (removal, ramp, hand_trap, etc.)
+**Speed**: 1000 cards/second
+**Cost**: $0
 **Use for**: Filtering, role-based similarity
 
 ### 2. LLM Semantic (Low cost)
-**Input**: Card text/data  
-**Output**: Strategic insights (archetype, synergies, power level)  
-**Speed**: ~2 cards/second  
-**Cost**: $0.002/card  
+**Input**: Card text/data
+**Output**: Strategic insights (archetype, synergies, power level)
+**Speed**: ~2 cards/second
+**Cost**: $0.002/card
 **Use for**: Strategic similarity, synergy recommendations
 
 ### 3. Vision Models (Moderate cost)
-**Input**: Card images  
-**Output**: Art style, colors, mood, theme  
-**Speed**: ~1 image/second  
-**Cost**: $0.01/image  
+**Input**: Card images
+**Output**: Art style, colors, mood, theme
+**Speed**: ~1 image/second
+**Cost**: $0.01/image
 **Use for**: Art-based clustering, aesthetic similarity
 
 ### 4. Market Data (Free)
-**Input**: Scraped pricing  
-**Output**: Price tiers, budget analysis  
-**Speed**: Instant (cached)  
-**Cost**: $0  
+**Input**: Scraped pricing
+**Output**: Price tiers, budget analysis
+**Speed**: Instant (cached)
+**Cost**: $0
 **Use for**: Budget substitutes, price-aware recommendations
 
 ---
@@ -223,19 +223,19 @@ uv run python unified_enrichment_pipeline.py \
 
 ## FAQ
 
-**Q: Is LLM enrichment expensive?**  
+**Q: Is LLM enrichment expensive?**
 A: ~$0.002/card. For 1000 cards = $2. Use STANDARD level (100-card sample) = $0.20.
 
-**Q: Do I need vision enrichment?**  
+**Q: Do I need vision enrichment?**
 A: No. Vision is optional for art-based use cases. Most use cases work without it.
 
-**Q: How much improvement can I expect?**  
+**Q: How much improvement can I expect?**
 A: Multi-modal approaches in papers achieve P@10 = 0.35-0.42. We're targeting 0.20-0.25 (2-3x).
 
-**Q: Which enrichment level should I use?**  
+**Q: Which enrichment level should I use?**
 A: STANDARD for production (best cost/benefit), COMPREHENSIVE for research.
 
-**Q: Is this production-ready?**  
+**Q: Is this production-ready?**
 A: Yes. All systems tested, documented, and validated.
 
 ---

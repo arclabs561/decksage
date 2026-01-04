@@ -1,6 +1,6 @@
 # Gaps Fixed - Summary
 
-**Date**: October 1, 2025  
+**Date**: October 1, 2025
 **Status**: ✅ All critical gaps addressed
 
 ---
@@ -39,12 +39,12 @@ go run ./cmd/dataset extract pokemontcg --limit=50
   - CardDesc, Partition, Collection
   - Type registry duplicate detection
   - Canonicalize() validation (valid + invalid cases)
-  
+
 - Added `games/pokemon/dataset/pokemontcg/dataset_test.go`
   - Dataset description test
   - Card conversion from API response
   - Attack/weakness/ability parsing
-  
+
 - Added `games/yugioh/dataset/ygoprodeck/dataset_test.go`
   - Dataset description test
   - Monster card conversion
@@ -54,7 +54,7 @@ go run ./cmd/dataset extract pokemontcg --limit=50
 **Test Coverage**:
 ```
 games/                           ✅ 5 tests
-games/magic/dataset              ✅ 3 tests  
+games/magic/dataset              ✅ 3 tests
 games/magic/dataset/goldfish     ✅ 3 tests
 games/magic/dataset/mtgtop8      ✅ 2 tests
 games/magic/dataset/scryfall     ✅ 4 tests
@@ -90,7 +90,7 @@ Total: 29 tests passing across 10 packages
   "race": "Dragon"
 }
 
-// Pokemon: Alakazam  
+// Pokemon: Alakazam
 {
   "name": "Alakazam",
   "supertype": "Pokémon",
@@ -114,13 +114,13 @@ Total: 29 tests passing across 10 packages
   - Scraping strategies for all 5 data sources
   - Data quality observations
   - Critical findings and recommendations
-  
+
 - Created `MULTI_GAME_SUPPORT_COMPLETE.md` (comprehensive guide)
   - Implementation status for all 3 games
   - CLI integration examples
   - Test coverage summary
   - Next steps for expansion
-  
+
 - This document: `GAPS_FIXED_SUMMARY.md`
 
 ---
@@ -134,7 +134,7 @@ Total: 29 tests passing across 10 packages
    // games/yugioh/dataset/dataset.go:
    //   - TODO: YGOPRODeck deck database
    //   - TODO: DB.yugioh.com scraper
-   
+
    // games/pokemon/dataset/dataset.go:
    //   - TODO: Limitless TCG scraper (tournament decks)
    //   - TODO: PokeBeach scraper (news and decks)
@@ -287,4 +287,3 @@ Next logical steps:
 2. Add Pokemon deck scraper (Limitless TCG)
 3. Train embeddings for all 3 games
 4. Build cross-game similarity search
-

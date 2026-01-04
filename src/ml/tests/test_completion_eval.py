@@ -7,6 +7,8 @@ from ..deck_building.completion_eval import (
     deck_price_total,
     functional_coverage_delta,
 )
+
+
 try:
     from ..enrichment.card_functional_tagger import FunctionalTagger
 except ImportError:
@@ -14,7 +16,6 @@ except ImportError:
     FunctionalTagger = None
     pytest.skip("card_functional_tagger module not available", allow_module_level=True)
 
-from ..validation.validators import MTGDeck
 from dataclasses import asdict
 
 
@@ -23,7 +24,7 @@ def tagger(monkeypatch):
     """Fixture to provide a FunctionalTagger with a mocked card DB."""
     if FunctionalTagger is None:
         pytest.skip("FunctionalTagger not available")
-    
+
     from ..enrichment.card_functional_tagger import FunctionalTagger
 
     def mock_load_db(self):
@@ -89,7 +90,9 @@ def test_functional_coverage_delta_gain(tagger):
             "card_draw",
             "ramp",
         }
-        return {t for t, v in asdict(tags_obj).items() if isinstance(v, bool) and v and t in allowed}
+        return {
+            t for t, v in asdict(tags_obj).items() if isinstance(v, bool) and v and t in allowed
+        }
 
     delta = functional_coverage_delta(
         before=deck_before, after=deck_after, tag_set_fn=tag_set_fn, main_partition="Main"
@@ -136,7 +139,9 @@ def test_functional_coverage_delta_no_gain(tagger):
             "card_draw",
             "ramp",
         }
-        return {t for t, v in asdict(tags_obj).items() if isinstance(v, bool) and v and t in allowed}
+        return {
+            t for t, v in asdict(tags_obj).items() if isinstance(v, bool) and v and t in allowed
+        }
 
     delta = functional_coverage_delta(
         before=deck_before, after=deck_after, tag_set_fn=tag_set_fn, main_partition="Main"
@@ -188,8 +193,3 @@ def test_deck_price_total_with_missing():
     total, missing = deck_price_total(deck, price_fn, main_partition="Main")
     assert total == 40.0
     assert sorted(missing) == sorted(["Card C", "Mountain"])
-
-
-
-
-

@@ -36,7 +36,7 @@ type Card struct {
 	Keywords    []string    `json:"keywords,omitempty"` // Keywords like Quick Attack, Overwhelm, etc.
 	Images      []CardImage `json:"images,omitempty"`
 	References  []CardRef   `json:"references,omitempty"`
-	
+
 	// Enrichment data
 	Prices     CardPrices `json:"prices,omitempty"`     // Market pricing
 	Set        string     `json:"set,omitempty"`        // Set code (e.g., "ORI", "SFG")
@@ -97,4 +97,3 @@ func (ct *CollectionTypeSet) IsCollectionType()    {}
 const (
 	PartitionDeck = "Deck"
 )
-

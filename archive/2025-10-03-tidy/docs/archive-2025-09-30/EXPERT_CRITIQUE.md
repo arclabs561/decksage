@@ -1,7 +1,7 @@
 # DeckSage - Expert MTG Critique & Validation
 
-**Date**: 2025-09-30  
-**Analyst**: Domain expert validation  
+**Date**: 2025-09-30
+**Analyst**: Domain expert validation
 **Status**: ✅ **DECK-ONLY MODEL VALIDATED**
 
 ---
@@ -10,7 +10,7 @@
 
 **CRITICAL FINDING**: Original model was contaminated by Set co-occurrence (36.5% of edges)
 
-**SOLUTION**: Deck-only filtering  
+**SOLUTION**: Deck-only filtering
 **RESULT**: Embeddings now match expert MTG knowledge
 
 **Quality**: Contaminated (6/10) → Clean (8.5/10)
@@ -88,7 +88,7 @@ Tested card pairs with **known MTG domain relationships**:
 - Correctly identifies burn/aggro strategy
 - Missing: Lava Spike, Rift Bolt (not in dataset)
 
-**Issues**: 
+**Issues**:
 - Coverage: Modern burn appears under-represented
 - Should include: Boros Charm, Skullcrack, Eidolon of the Great Revel
 
@@ -205,7 +205,7 @@ Tested card pairs with **known MTG domain relationships**:
 - "Snow-Covered Swamp" had 0.880 similarity with Brainstorm (nonsense!)
 - Command Tower appeared 487 times (from sets, not decks)
 
-**Solution**: Excluded sets from co-occurrence  
+**Solution**: Excluded sets from co-occurrence
 **Result**: Brainstorm→Lightning Bolt went from 0.603 → 0.475 (better separation)
 
 ### Issue #2: Cube Inclusion ⚠️ DECISION NEEDED
@@ -291,7 +291,7 @@ Tested card pairs with **known MTG domain relationships**:
 
 **Test**: Are embeddings format-aware?
 
-**Observation**: 
+**Observation**:
 - Counterspell → Only Pauper results ✅
 - Brainstorm → Only Legacy results ✅
 - Monastery Swiftspear → Modern/Pioneer results ✅
@@ -348,7 +348,7 @@ Tested card pairs with **known MTG domain relationships**:
 
 ### Coverage Improvement
 
-**Contaminated Model**: 1,206 cards (with filter)  
+**Contaminated Model**: 1,206 cards (with filter)
 **Clean Model**: 1,328 cards (no filter)
 
 **New cards found**:
@@ -608,7 +608,7 @@ Tested card pairs with **known MTG domain relationships**:
 
 ### Key Finding
 
-**"Good ML on bad data = Bad results"**  
+**"Good ML on bad data = Bad results"**
 **"Simple ML on good data = Good results"**
 
 Our embeddings are excellent GIVEN the data, but the data itself has:

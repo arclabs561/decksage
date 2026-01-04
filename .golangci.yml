@@ -20,13 +20,13 @@ linters:
     - staticcheck   # Comprehensive static analysis (includes gosimple)
     # typecheck is built-in to golangci-lint v2, not a separate linter
     - unused        # Detect unused code
-    
+
     # Style & formatting
     # Note: gofmt and goimports are formatters in v2, not linters
     # Configure them in the formatters section below
     - misspell      # Detect misspellings
     - revive        # Fast, configurable linter
-    
+
     # Best practices
     - gocritic      # Opinionated checks
     - gocyclo       # Cyclomatic complexity
@@ -34,10 +34,10 @@ linters:
     - gosec         # Security issues
     - unconvert     # Unnecessary type conversions
     - unparam       # Unused function parameters
-    
+
     # Performance
     - prealloc      # Suggest slice preallocation
-    
+
     # Bugs & potential issues
     - bodyclose     # HTTP body close checks
     - noctx         # Detect non-context functions
@@ -59,17 +59,17 @@ linters-settings:
   errcheck:
     check-type-assertions: true
     check-blank: false
-    
+
   govet:
     check-shadowing: true
     enable-all: true
-    
+
   gocyclo:
     min-complexity: 15
-    
+
   dupl:
     threshold: 100
-    
+
   gocritic:
     enabled-tags:
       - diagnostic
@@ -79,7 +79,7 @@ linters-settings:
     disabled-checks:
       - whyNoLint
       - unnamedResult
-      
+
   revive:
     rules:
       - name: blank-imports
@@ -105,7 +105,7 @@ linters-settings:
       - name: empty-block
       - name: superfluous-else
       - name: unreachable-code
-      
+
   misspell:
     locale: US
 
@@ -127,15 +127,15 @@ issues:
         - dupl
         - gosec
         - gocritic
-        
+
     # Exclude generated files
     - path: ".*\\.pb\\.go$"
       linters:
         - all
-        
+
   # Maximum count of issues with same text. 0 means unlimited
   max-same-issues: 0
-  
+
   # Maximum issues count per one linter. 0 means unlimited
   max-issues-per-linter: 0
 

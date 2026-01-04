@@ -13,7 +13,7 @@
    - Current state summary
    - Essential links
 
-2. **`README_UPDATED.md`** ⭐  
+2. **`README_UPDATED.md`** ⭐
    - Comprehensive overview
    - Architecture summary
    - Example results
@@ -340,7 +340,7 @@
 
 **Why it exists**: 27 files is a lot to navigate
 
-**How to use**: 
+**How to use**:
 - Skim the one-sentence summaries
 - Pick a reading path based on your goal
 - Start with ⭐ marked files

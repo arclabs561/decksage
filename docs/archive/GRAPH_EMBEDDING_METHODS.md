@@ -1,6 +1,6 @@
 # Graph Embedding Methods: Current State (2024-2025)
 
-**Date**: 2025-01-27  
+**Date**: 2025-01-27
 **Status**: Research complete, implementation ready
 
 ---
@@ -137,6 +137,5 @@ uv run python -m src.ml.similarity.card_similarity_pecan \
 
 ---
 
-**Status**: ✅ Node2Vec (PecanPy) - Current, competitive  
+**Status**: ✅ Node2Vec (PecanPy) - Current, competitive
 **Next**: Compare variants, add Graph NE, explore Meta Node2Vec
-

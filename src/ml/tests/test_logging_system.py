@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import logging
 import tempfile
-import time
+from datetime import UTC
 from pathlib import Path
 
 import pytest
@@ -18,8 +18,9 @@ from ml.utils.logging_config import (
     log_progress,
     setup_script_logging,
 )
+
+
 # Skip test - log_monitor.py is corrupted (all on one line)
-import pytest
 pytestmark = pytest.mark.skip(reason="log_monitor.py is corrupted and needs manual repair")
 
 # from ml.utils.log_monitor import (
@@ -39,7 +40,7 @@ class TestLogParser:
         # The regex captures: timestamp, level, name, message (func:line is optional)
         line = "2024-01-15 10:30:45 - INFO - test - func:123 - [a1b2c3d4] [PROGRESS] epoch: 1/5 (20.0%)"
         event = LogParser.parse_line(line)
-        
+
         assert event is not None
         # The parser extracts level correctly, but the regex groups may differ
         # Check that we got a valid event with the expected prefix
@@ -51,7 +52,7 @@ class TestLogParser:
         """Test parsing log with comma-separated microseconds."""
         line = "2024-01-15 10:30:45,123 - INFO - test - func:123 - [a1b2c3d4] [CHECKPOINT] epoch_2 saved"
         event = LogParser.parse_line(line)
-        
+
         assert event is not None
         assert event.prefix == "CHECKPOINT"
         assert event.timestamp is not None
@@ -60,7 +61,7 @@ class TestLogParser:
         """Test parsing ISO format timestamp."""
         line = "2024-01-15T10:30:45Z - INFO - test - func:123 - [a1b2c3d4] [METRIC] loss=0.45"
         event = LogParser.parse_line(line)
-        
+
         assert event is not None
         assert event.prefix == "METRIC"
         assert event.timestamp is not None
@@ -74,7 +75,7 @@ class TestLogParser:
         """Test that malformed lines don't crash."""
         line = "This is not a proper log line"
         event = LogParser.parse_line(line)
-        
+
         # Should return event with defaults, not crash
         assert event is not None
         assert event.level == "INFO"  # Default
@@ -84,7 +85,7 @@ class TestLogParser:
         # Note: Actual format includes func:line, so adjust pattern
         line = "2024-01-15 10:30:45 - INFO - test - func:123 - [PROGRESS] epoch: 5/10 (50.0%)"
         event = LogParser.parse_line(line)
-        
+
         assert event is not None
         assert event.prefix == "PROGRESS"
         # Metadata extraction depends on PROGRESS_PATTERN matching
@@ -98,7 +99,7 @@ class TestLogParser:
         """Test that checkpoint events extract metadata correctly."""
         line = "2024-01-15 10:30:45 - INFO - test - func:123 - [CHECKPOINT] epoch_5 saved to /tmp/checkpoint.pt"
         event = LogParser.parse_line(line)
-        
+
         assert event is not None
         assert event.prefix == "CHECKPOINT"
         if event.metadata:
@@ -106,12 +107,16 @@ class TestLogParser:
 
     def test_parse_file(self):
         """Test parsing a log file."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
-            f.write("2024-01-15 10:30:45 - INFO - test - func:123 - [PROGRESS] epoch: 1/3 (33.3%)\n")
-            f.write("2024-01-15 10:30:46 - INFO - test - func:123 - [PROGRESS] epoch: 2/3 (66.7%)\n")
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
+            f.write(
+                "2024-01-15 10:30:45 - INFO - test - func:123 - [PROGRESS] epoch: 1/3 (33.3%)\n"
+            )
+            f.write(
+                "2024-01-15 10:30:46 - INFO - test - func:123 - [PROGRESS] epoch: 2/3 (66.7%)\n"
+            )
             f.write("2024-01-15 10:30:47 - INFO - test - func:123 - [CHECKPOINT] epoch_2 saved\n")
             log_path = Path(f.name)
-        
+
         try:
             events = LogParser.parse_file(log_path, last_n_lines=10)
             assert len(events) == 3
@@ -125,17 +130,23 @@ class TestLocalLogMonitor:
 
     def test_monitor_creates_status(self):
         """Test that monitor creates status from logs."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
-            f.write("2024-01-15 10:30:45 - INFO - test - func:123 - [abc123] [PROGRESS] epoch: 1/3 (33.3%)\n")
-            f.write("2024-01-15 10:30:46 - INFO - test - func:123 - [abc123] [PROGRESS] epoch: 2/3 (66.7%)\n")
-            f.write("2024-01-15 10:30:47 - INFO - test - func:123 - [abc123] [CHECKPOINT] epoch_2 saved\n")
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
+            f.write(
+                "2024-01-15 10:30:45 - INFO - test - func:123 - [abc123] [PROGRESS] epoch: 1/3 (33.3%)\n"
+            )
+            f.write(
+                "2024-01-15 10:30:46 - INFO - test - func:123 - [abc123] [PROGRESS] epoch: 2/3 (66.7%)\n"
+            )
+            f.write(
+                "2024-01-15 10:30:47 - INFO - test - func:123 - [abc123] [CHECKPOINT] epoch_2 saved\n"
+            )
             f.write("2024-01-15 10:30:48 - INFO - test - func:123 - [abc123] Training complete!\n")
             log_path = Path(f.name)
-        
+
         try:
             monitor = LocalLogMonitor(log_path)
             status = monitor.get_status()
-            
+
             assert status.correlation_id == "abc123"
             assert status.stage == "epoch"
             assert status.progress == "2/3"
@@ -149,7 +160,7 @@ class TestLocalLogMonitor:
         log_path = Path("/tmp/nonexistent.log")
         monitor = LocalLogMonitor(log_path)
         status = monitor.get_status()
-        
+
         assert status.last_update is None
         assert status.is_complete is False
 
@@ -162,31 +173,31 @@ class TestLoggingIntegration:
         with tempfile.TemporaryDirectory() as tmpdir:
             log_dir = Path(tmpdir)
             log_file = log_dir / "training.log"
-            
+
             # Create logger and write structured logs
             configure_logging(log_file=str(log_file), force=True)
             logger = logging.getLogger("test_training")
-            
+
             logger.info("Starting training")
             logger.info("[PROGRESS] [test123] [PROGRESS] epoch: 1/3 (33.3%)")
             logger.info("[PROGRESS] [test123] [PROGRESS] epoch: 2/3 (66.7%)")
             logger.info("[CHECKPOINT] [test123] [CHECKPOINT] epoch_2 saved")
             logger.info("[PROGRESS] [test123] [PROGRESS] epoch: 3/3 (100.0%)")
             logger.info("Training complete!")
-            
+
             # Flush handlers
             for handler in logging.getLogger().handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
-            
+
             # Parse and monitor
             assert log_file.exists()
             events = LogParser.parse_file(log_file)
             assert len(events) >= 5
-            
+
             monitor = LocalLogMonitor(log_file)
             status = monitor.get_status()
-            
+
             assert status.correlation_id == "test123"
             assert status.is_complete is True
 
@@ -194,15 +205,15 @@ class TestLoggingIntegration:
         """Test that setup_script_logging creates log file."""
         with tempfile.TemporaryDirectory() as tmpdir:
             log_dir = Path(tmpdir)
-            
+
             logger = setup_script_logging(script_name="test_script", log_dir=str(log_dir))
             logger.info("Test message")
-            
+
             # Flush
             for handler in logging.getLogger().handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
-                if hasattr(handler, 'baseFilename'):
+                if hasattr(handler, "baseFilename"):
                     log_file = Path(handler.baseFilename)
                     assert log_file.exists()
                     break
@@ -211,19 +222,19 @@ class TestLoggingIntegration:
         """Test log_progress and log_checkpoint functions."""
         with tempfile.TemporaryDirectory() as tmpdir:
             log_dir = Path(tmpdir)
-            
+
             logger = setup_script_logging(script_name="test", log_dir=str(log_dir))
-            
+
             log_progress(logger, "epoch", 1, 3, loss=0.5)
             log_checkpoint(logger, "epoch_1", checkpoint_path="/tmp/checkpoint.pt")
-            
+
             # Flush
             for handler in logging.getLogger().handlers:
-                if hasattr(handler, 'flush'):
+                if hasattr(handler, "flush"):
                     handler.flush()
-                if hasattr(handler, 'baseFilename'):
+                if hasattr(handler, "baseFilename"):
                     log_file = Path(handler.baseFilename)
-                    
+
                     # Verify logs contain prefixes
                     content = log_file.read_text()
                     assert "[PROGRESS]" in content
@@ -242,20 +253,20 @@ class TestFormatStatus:
         status.progress = "10/10"
         status.is_complete = True
         status.last_update = None
-        
+
         formatted = format_status(status)
         assert "COMPLETE" in formatted
         assert "test123" in formatted
 
     def test_format_running_status(self):
         """Test formatting running training status."""
-        from datetime import datetime, timezone
-        
+        from datetime import datetime
+
         status = TrainingStatus()
         status.stage = "epoch"
         status.progress = "5/10"
-        status.last_update = datetime.now(timezone.utc)
-        
+        status.last_update = datetime.now(UTC)
+
         formatted = format_status(status)
         assert "RUNNING" in formatted
         assert "5/10" in formatted
@@ -264,7 +275,7 @@ class TestFormatStatus:
         """Test formatting status with errors."""
         status = TrainingStatus()
         status.errors = ["Error 1", "Error 2"]
-        
+
         formatted = format_status(status, verbose=True)
         assert "Error 1" in formatted
         assert "Error 2" in formatted
@@ -276,20 +287,22 @@ class TestLoggingPerformance:
 
     def test_parse_large_log_file(self):
         """Test parsing a large log file efficiently."""
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.log') as f:
+        with tempfile.NamedTemporaryFile(mode="w", delete=False, suffix=".log") as f:
             # Create 1000 log lines
             for i in range(1000):
-                f.write(f"2024-01-15 10:30:{i%60:02d} - INFO - test - [PROGRESS] epoch: {i}/1000\n")
+                f.write(
+                    f"2024-01-15 10:30:{i % 60:02d} - INFO - test - [PROGRESS] epoch: {i}/1000\n"
+                )
             log_path = Path(f.name)
-        
+
         try:
             import time
+
             start = time.time()
             events = LogParser.parse_file(log_path, last_n_lines=100)
             elapsed = time.time() - start
-            
+
             assert len(events) == 100
             assert elapsed < 1.0  # Should be fast
         finally:
             log_path.unlink()
-

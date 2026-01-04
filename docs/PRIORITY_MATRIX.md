@@ -1,6 +1,6 @@
 # Priority Matrix: Next Actions
 
-Context: Post-fixes deep review of DeckSage ML system  
+Context: Post-fixes deep review of DeckSage ML system
 Date: October 6, 2025
 
 ---
@@ -12,7 +12,7 @@ Impact
   ↑
   │  ┌─────────────────┐
   │  │ T0.1: Test Set  │ ← START HERE
-  │  │ T0.2: Deck Qual │ ← THEN THIS  
+  │  │ T0.2: Deck Qual │ ← THEN THIS
   │  ├─────────────────┤
   │  │ T1.1: Text Emb  │ ← BIGGEST WIN
   │  └─────────────────┘
@@ -61,18 +61,18 @@ START: What are you optimizing for?
 ## Quick Triage by Role
 
 ### If You're a Researcher
-Focus: T0.1 (test set) + T1.1 (text embeddings)  
-Why: Need rigorous evaluation and performance improvement  
+Focus: T0.1 (test set) + T1.1 (text embeddings)
+Why: Need rigorous evaluation and performance improvement
 Skip: T2.* (technical debt), T0.3 (dashboard)
 
-### If You're Building a Product  
-Focus: T0.2 (deck quality) + T0.3 (monitoring)  
-Why: Need to validate UX and prevent degradation  
+### If You're Building a Product
+Focus: T0.2 (deck quality) + T0.3 (monitoring)
+Why: Need to validate UX and prevent degradation
 Skip: T1.1 (performance optimization can wait)
 
 ### If You're Maintaining This
-Focus: T2.2 (paths) + T2.3 (types) + T0.3 (dashboard)  
-Why: Reduce future maintenance burden  
+Focus: T2.2 (paths) + T2.3 (types) + T0.3 (dashboard)
+Why: Reduce future maintenance burden
 Skip: T1.* (research improvements)
 
 ---
@@ -107,7 +107,7 @@ W   Low    Medium    High
 Goal: Trustworthy evaluation + validated core feature
 
 - Week 1: T0.1 (expand test set to 100 queries)
-- Week 2: T0.2 (deck quality validation)  
+- Week 2: T0.2 (deck quality validation)
 - Week 3: T0.3 (quality dashboard)
 - Week 4: T2.2 (fix hardcoded paths)
 
@@ -172,8 +172,8 @@ Time: 35-45 hours
 | T1.3 | High | Medium | Might not beat greedy |
 | T2.* | Low | None | Pure cleanup |
 
-Highest ROI: T0.1 + T0.2 (foundation)  
-Biggest Leap: T1.1 (text embeddings)  
+Highest ROI: T0.1 + T0.2 (foundation)
+Biggest Leap: T1.1 (text embeddings)
 Safest Bets: T0.3 + T2.2 (monitoring + paths)
 
 ---
@@ -237,16 +237,16 @@ When in doubt: Do T0.1 first. Evaluation rigor unlocks everything else.
 
 Based on `experimental/REALITY_FINDINGS.md`:
 
-Don't: Optimize graph algorithms further  
+Don't: Optimize graph algorithms further
 Do: Add new signals (text, type, CMC)
 
-Don't: Add format-specific filtering  
+Don't: Add format-specific filtering
 Do: Accept co-occurrence serves specific use cases
 
-Don't: Scrape more decks without quality checks  
+Don't: Scrape more decks without quality checks
 Do: Improve signal quality over quantity
 
-Don't: Declare "production ready" prematurely  
+Don't: Declare "production ready" prematurely
 Do: Validate core features work first (T0.2)
 
 ---

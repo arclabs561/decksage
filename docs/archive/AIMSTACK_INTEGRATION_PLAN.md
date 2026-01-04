@@ -58,14 +58,14 @@ for epoch in range(epochs):
     train_loss = ...
     val_loss = ...
     val_p10 = ...
-    
+
     aim_run.track(train_loss, name='loss', context={'subset': 'train'})
     aim_run.track(val_loss, name='loss', context={'subset': 'val'})
     aim_run.track(val_p10, name='p10', context={'subset': 'val'})
-    
+
     # Track learning rate
     aim_run.track(current_lr, name='learning_rate')
-    
+
     # Track embeddings as artifact
     if epoch % checkpoint_interval == 0:
         aim_run.track(embedding_path, name='checkpoint', context={'epoch': epoch})
@@ -88,7 +88,7 @@ aim_run = aim.Run(
 # Track each configuration's results
 for params in grid_search:
     result = evaluate_config(params)
-    
+
     aim_run.track(result['p10'], name='p10', context={'config': params})
     aim_run.track(result['ndcg'], name='ndcg', context={'config': params})
     aim_run.track(result['mrr'], name='mrr', context={'config': params})
@@ -138,12 +138,12 @@ async def track_api_metrics(request: Request, call_next):
     start_time = time.time()
     response = await call_next(request)
     duration = time.time() - start_time
-    
+
     aim_run.track(duration, name='request_duration', context={
         'endpoint': request.url.path,
         'method': request.method,
     })
-    
+
     return response
 ```
 
@@ -292,22 +292,22 @@ from pathlib import Path
 def migrate_experiment_log():
     """Migrate EXPERIMENT_LOG.jsonl to Aim"""
     log_file = Path('experiments/EXPERIMENT_LOG.jsonl')
-    
+
     with open(log_file) as f:
         for line in f:
             exp = json.loads(line)
-            
+
             run = aim.Run(
                 experiment=exp.get('experiment_id', 'migrated'),
                 repo='.aim',
                 hparams=exp.get('config', {}),
             )
-            
+
             # Track results
             if 'results' in exp:
                 for metric, value in exp['results'].items():
                     run.track(value, name=metric)
-            
+
             run.finalize()
 ```
 
@@ -328,4 +328,3 @@ def migrate_experiment_log():
 5. ⏳ Integrate into evaluation scripts
 6. ⏳ Migrate existing experiment logs
 7. ⏳ Set up Aim UI for team access
-

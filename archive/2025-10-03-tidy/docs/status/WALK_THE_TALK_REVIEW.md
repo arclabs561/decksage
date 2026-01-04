@@ -64,7 +64,7 @@ BASIC_LANDS = {'Plains', 'Island', 'Swamp', 'Mountain', 'Forest'}
 # utils/data_loading.py
 def load_pairs(dataset='large'):
     """Load pairs from canonical location"""
-    
+
 def load_embeddings(name):
     """Load embeddings from canonical location"""
 
@@ -142,7 +142,7 @@ for query, labels in test_set.items():
 ```python
 # Different files use different paths:
 '../backend/pairs_large.csv'
-'../backend/pairs_500decks.csv'  
+'../backend/pairs_500decks.csv'
 '../../data/processed/pairs_large.csv'
 '../../data/embeddings/magic_39k_decks_pecanpy.wv'
 '../../data/embeddings/node2vec_default.wv'
@@ -243,8 +243,8 @@ Experience complexity before abstracting, BUT:
 | Data quality focus | A | B+ | A- |
 | Tests for regression | A | **D** | C+ |
 
-**Overall Backend:** A (walks the talk)  
-**Overall ML:** C- (doesn't walk the talk)  
+**Overall Backend:** A (walks the talk)
+**Overall ML:** C- (doesn't walk the talk)
 **System:** B- (mixed)
 
 ---
@@ -291,5 +291,3 @@ The **architecture is sound:**
 - Experiment tracking system exists
 
 The issue is **implementation discipline** in the rapid experimentation phase. This is fixable and expected. The awareness (this review) is the first step to alignment.
-
-

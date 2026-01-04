@@ -1,8 +1,9 @@
-from gensim import corpora, models, similarities
-
 import argparse
+
+from gensim import models
 from gensim.models.callbacks import CallbackAny2Vec
 from tqdm import tqdm
+
 from .corpus import CollectionsCorpus
 
 
@@ -16,12 +17,13 @@ class Callback(CallbackAny2Vec):
     def close(self):
         self.pbar.close()
 
+
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('infile')
-    parser.add_argument('--outfile', default='vectors.kv')
-    parser.add_argument('--limit', default=None, type=int)
-    parser.add_argument('--epochs', default=200)
+    parser.add_argument("infile")
+    parser.add_argument("--outfile", default="vectors.kv")
+    parser.add_argument("--limit", default=None, type=int)
+    parser.add_argument("--epochs", default=200)
     args = parser.parse_args()
 
     callback = Callback(args.epochs)
@@ -35,10 +37,11 @@ def main():
         workers=-1,
         epochs=args.epochs,
         shrink_windows=False,
-        callbacks=[callback]
+        callbacks=[callback],
     )
     callback.close()
     model.wv.save(args.outfile)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     main()

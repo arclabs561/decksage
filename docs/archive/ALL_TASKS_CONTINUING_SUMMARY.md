@@ -56,4 +56,3 @@ just hyperparam-search
 4. **Continue all improvements** - Embeddings, data, labeling, training, multi-game
 
 **All tasks continuing with trainctl ready!**
-

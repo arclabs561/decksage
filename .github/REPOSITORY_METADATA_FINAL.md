@@ -111,8 +111,8 @@ gh repo edit \
 
 ## Validation
 
-✅ Covers all use cases (similarity, substitution, completion)  
-✅ Highlights key differentiator (graph-neural-networks)  
-✅ Broad enough for discoverability  
-✅ Specific enough for relevance  
+✅ Covers all use cases (similarity, substitution, completion)
+✅ Highlights key differentiator (graph-neural-networks)
+✅ Broad enough for discoverability
+✅ Specific enough for relevance
 ✅ Follows GitHub best practices (5-10 topics)

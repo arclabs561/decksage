@@ -51,4 +51,3 @@ ps aux | rg "(optimized|enrich|label)" | rg -v grep
 - **All tasks**: Can resume from checkpoints if interrupted
 
 **Optimizations applied and running! 🚀**
-

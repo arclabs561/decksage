@@ -80,13 +80,13 @@ else
  else
  echo " Instance: $INSTANCE_ID (will verify status)"
  fi
- 
+
  if [[ ! -f "data/processed/pairs_large.csv" ]] && [[ "data/processed/pairs_large.csv" != s3://* ]]; then
  echo "Warning: Pairs file not found locally (will check S3)"
  else
  echo " ✓ Pairs file: data/processed/pairs_large.csv"
  fi
- 
+
  if [[ ! -f "$GRAPH_PATH" ]] && [[ "$GRAPH_PATH" != s3://* ]]; then
  echo "Warning: Graph file not found (will be created): $GRAPH_PATH"
  else
@@ -196,7 +196,7 @@ elif [[ -f "$PREV_EVAL" ]] || s5cmd ls "s3://games-collections/$PREV_EVAL" >/dev
  # Extract versions from paths
  CURRENT_VERSION="$WEEK"
  PREV_VERSION=$(date -d "1 week ago" +%Y-W%V 2>/dev/null || date -v-7d +%Y-W%V 2>/dev/null || echo "UNKNOWN")
- 
+
  uv run python -c "
 from ml.utils.evaluation_registry import EvaluationRegistry
 import json
@@ -209,7 +209,7 @@ if comparison:
  with open(delta_file, 'w') as f:
  json.dump(comparison, f, indent=2)
  print(f'Comparison saved to {delta_file}')
- 
+
  # Check for regression
  if comparison.get('delta_pct', 0) < -10.0:
  print('REGRESSION')
@@ -226,7 +226,7 @@ else:
  --output "experiments/performance_delta_${WEEK}.json" \
  2>&1 | tee -a "$LOG_FILE"
  fi
- 
+
  # Check for regression
  if [[ -f "experiments/performance_delta_${WEEK}.json" ]]; then
  REGRESSION=$(uv run python -c "
@@ -247,7 +247,7 @@ try:
 except Exception as e:
  print(f'ERROR: {e}')
 " 2>/dev/null || echo "ERROR")
- 
+
  if [[ "$REGRESSION" == "REGRESSION" ]]; then
  echo "Warning: PERFORMANCE REGRESSION DETECTED!"
  echo " P@10 dropped >10% vs. previous week"
@@ -296,4 +296,3 @@ if command -v s5cmd >/dev/null 2>&1; then
  s5cmd cp "$EVAL_OUTPUT" "s3://games-collections/experiments/" 2>&1 | grep -v "^$" || true
  echo "✓ Results uploaded to S3"
 fi
-

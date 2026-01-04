@@ -98,4 +98,3 @@ Environment variables:
 - `MEILISEARCH_KEY`: Meilisearch API key (optional)
 - `QDRANT_URL`: Qdrant server URL (default: http://localhost:6333)
 - `QDRANT_API_KEY`: Qdrant API key (optional)
-

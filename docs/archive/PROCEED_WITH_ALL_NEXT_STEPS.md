@@ -136,4 +136,3 @@ Once environment is fixed:
 **All infrastructure is complete and ready.** The only blocker is the environment (scipy build), which has clear solutions. Once fixed, all steps can execute sequentially and complete the remaining tasks.
 
 **Recommendation**: Fix scipy build locally for development, or use AWS EC2 for production computation.
-

@@ -10,7 +10,7 @@
 ### New Sources
 
 #### 1. MTGTop8 - Expand Depth ⚡
-**Current**: Unknown page count  
+**Current**: Unknown page count
 **Target**: Last 12 months, all formats
 
 ```bash
@@ -18,28 +18,28 @@ cd src/backend
 go run cmd/dataset/main.go extract magic/mtgtop8 --pages 500 --formats all
 ```
 
-**Expected yield**: +5,000 decks  
-**Effort**: Low (scraper exists)  
+**Expected yield**: +5,000 decks
+**Effort**: Low (scraper exists)
 **Priority**: **HIGH** - Easy wins
 
 ---
 
 #### 2. MTGGoldfish - Tournament Decks 🐠
-**Status**: Parser exists but not heavily used  
+**Status**: Parser exists but not heavily used
 **Target**: Modern, Pioneer, Standard metagame decks
 
 ```bash
 go run cmd/dataset/main.go extract magic/goldfish --limit 2000
 ```
 
-**Expected yield**: +3,000 decks  
-**Effort**: Medium (test existing scraper)  
+**Expected yield**: +3,000 decks
+**Effort**: Medium (test existing scraper)
 **Priority**: **HIGH**
 
 ---
 
 #### 3. MTGO League Results 🎮
-**Source**: https://www.mtgo.com/decklists  
+**Source**: https://www.mtgo.com/decklists
 **Data**: 5-0 league decks (competitive, recent)
 
 **New scraper needed**:
@@ -51,14 +51,14 @@ type Dataset struct {
 }
 ```
 
-**Expected yield**: +5,000 decks  
-**Effort**: High (new scraper)  
+**Expected yield**: +5,000 decks
+**Effort**: High (new scraper)
 **Priority**: **MEDIUM** - High quality data
 
 ---
 
 #### 4. Archidekt - Community Decks 🏗️
-**Source**: https://archidekt.com/api/  
+**Source**: https://archidekt.com/api/
 **Data**: User-created decks with tags
 
 **Considerations**:
@@ -66,18 +66,18 @@ type Dataset struct {
 - Need quality filtering
 - Has API (easier than scraping)
 
-**Expected yield**: +10,000 decks (but lower quality)  
-**Effort**: Medium (API available)  
+**Expected yield**: +10,000 decks (but lower quality)
+**Effort**: Medium (API available)
 **Priority**: **LOW** - Quality concerns
 
 ---
 
 #### 5. Moxfield - Modern Data 📊
-**Source**: https://www.moxfield.com/  
+**Source**: https://www.moxfield.com/
 **Data**: Tournament imports, user decks
 
-**Expected yield**: +3,000 competitive decks  
-**Effort**: Medium  
+**Expected yield**: +3,000 competitive decks
+**Effort**: Medium
 **Priority**: **MEDIUM**
 
 ---
@@ -242,7 +242,7 @@ python llm_data_validator.py
     "avg_time": "1.2s/deck"
   },
   "goldfish": {
-    "last_run": "2025-10-02", 
+    "last_run": "2025-10-02",
     "decks_scraped": 0,
     "status": "ready"
   }
@@ -286,11 +286,11 @@ python llm_data_validator.py
 
 ## Success Criteria
 
-✅ **20K+ decks** from multiple sources  
-✅ **Quality score > 0.85** on validation  
-✅ **Temporal coverage**: 12+ months  
-✅ **Format diversity**: All major formats  
-✅ **Deduplication**: < 1% duplicates  
+✅ **20K+ decks** from multiple sources
+✅ **Quality score > 0.85** on validation
+✅ **Temporal coverage**: 12+ months
+✅ **Format diversity**: All major formats
+✅ **Deduplication**: < 1% duplicates
 
 ---
 
@@ -309,6 +309,3 @@ go run cmd/dataset/main.go extract magic/mtgtop8 --pages 200
 # 3. Monitor progress
 watch -n 10 'find data-full/games/magic/mtgtop8/collections -name "*.zst" | wc -l'
 ```
-
-
-
