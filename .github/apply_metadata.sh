@@ -1,29 +1,29 @@
 #!/bin/bash
-# Apply GitHub repository metadata recommendations
+# Apply GitHub repository metadata recommendations (revised)
 # Usage: ./apply_metadata.sh
 
 set -euo pipefail
 
-DESCRIPTION="Card similarity search using tournament deck co-occurrence, graph embeddings, and hybrid ML models for trading card games"
+DESCRIPTION="ML-powered card recommendations for trading card games: budget substitutions, deck completion, and similarity search using graph neural networks and tournament deck co-occurrence analysis"
 
 TOPICS=(
   "python"
-  "go"
   "machine-learning"
+  "recommendation-system"
   "graph-neural-networks"
-  "embeddings"
   "trading-card-games"
   "deck-building"
-  "similarity-search"
-  "magic-the-gathering"
+  "card-game"
+  "embeddings"
   "node2vec"
+  "similarity-search"
 )
 
-echo "Applying GitHub repository metadata..."
+echo "Applying GitHub repository metadata (revised recommendations)..."
 echo ""
 echo "Description: $DESCRIPTION"
 echo ""
-echo "Topics:"
+echo "Topics (10):"
 for topic in "${TOPICS[@]}"; do
   echo "  - $topic"
 done
