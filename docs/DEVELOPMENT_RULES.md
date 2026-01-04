@@ -1,6 +1,6 @@
 # Development Rules & Themes
 
-**Note for AI Agents**: This document outlines common rules and themes that should be enforced during code review and development. Read this alongside `.cursor/rules/*.mdc` files for complete context.
+This document outlines common rules and themes for DeckSage development. Read this alongside `.cursor/rules/*.mdc` files for complete context.
 
 ## Core Principles
 
@@ -83,13 +83,13 @@ When reviewing code (human or AI), check:
 - [ ] Follows existing patterns in codebase
 - [ ] No premature abstraction
 
-## For AI Agents
+## For Code Review
 
-When generating or reviewing code:
+When reviewing code:
 1. **Check existing code first**: Search for similar functionality before creating new
 2. **Read `.cursor/rules/*.mdc`**: These contain detailed rules and context
-3. **Enforce PATHS utility**: Always suggest using `PATHS` instead of hardcoded paths
-4. **Prevent duplication**: Suggest extending existing code rather than duplicating
+3. **Enforce PATHS utility**: Always use `PATHS` instead of hardcoded paths
+4. **Prevent duplication**: Extend existing code rather than duplicating
 5. **Respect Chesterton's fence**: Understand why code exists before changing it
 6. **Type hints required**: Always include type hints for new functions
 7. **Data lineage**: Include lineage comments in data processing scripts
