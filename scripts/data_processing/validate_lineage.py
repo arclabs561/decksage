@@ -25,6 +25,7 @@ def validate_lineage():
 
     # Order 1: Exported decks
     processed = Path("data/processed")
+    experiments = Path("experiments")
     exported_games = set()
     if processed.exists():
         for f in processed.glob("decks_*.jsonl"):
@@ -58,7 +59,7 @@ def validate_lineage():
 
     # Order 5: Test sets
     test_set_games = set()
-    if experiments.exists():
+    if experiments and experiments.exists():
         for f in experiments.glob("test_set_unified_*.json"):
             try:
                 import json
