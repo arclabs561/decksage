@@ -77,7 +77,8 @@ promote_model() {
  if [[ "$versioned_path" == s3://* ]]; then
  # S3 path - download first
  echo "Downloading $model_type from S3: $versioned_path"
- local temp_path="/tmp/$(basename "$versioned_path")"
+  local temp_path
+  temp_path="/tmp/$(basename "$versioned_path")"
  s5cmd cp "$versioned_path" "$temp_path" 2>&1 | grep -v "^$" || {
  echo "Error: Failed to download from S3"
  return 1
@@ -219,4 +220,3 @@ echo ""
 echo "Next steps:"
 echo " 1. Verify models work: ./scripts/evaluation/eval_hybrid_with_runctl.sh local"
 echo " 2. Sync to S3: s5cmd sync embeddings/ s3://games-collections/embeddings/"
-echo " 3. Update production deployment if needed"
