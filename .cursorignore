@@ -41,8 +41,7 @@ data/pairs/
 # Training checkpoints
 checkpoints/
 
-# Deployment
-deploy/
+# Backups
 backups/
 
 # Logs
@@ -71,7 +70,6 @@ experiments/*.csv
 !docs/DATA_USAGE.md
 !docs/DATA_LINEAGE_FLOW.txt
 !docs/DEVELOPMENT_RULES.md
-!docs/DEPLOYMENT.md
 # Allow README files in key directories (provide context)
 !**/README.md
 # Block archive and session docs
