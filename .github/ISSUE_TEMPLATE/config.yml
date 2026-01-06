@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Documentation
+    url: https://github.com/arclabs561/decksage/tree/main/docs
+    about: Check the documentation for answers
+  - name: Quick Reference
+    url: https://github.com/arclabs561/decksage/blob/main/docs/quick-reference.md
+    about: See the quick reference guide

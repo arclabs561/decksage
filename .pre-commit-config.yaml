@@ -16,7 +16,7 @@
 #   - pre-commit run (staged files only)
 #
 # For developers:
-#   - Review docs/DEVELOPMENT_RULES.md for common rules and themes
+#   - Review docs/development-rules.md for common rules and themes
 #   - Check .cursor/rules/*.mdc for detailed project-specific rules
 #   - All hooks are optimized to check only changed files (fast execution)
 #   - Custom hooks review recent changes and enforce project patterns
