@@ -1,0 +1,15 @@
+{
+  "name": "decksage-e2e-visual-tests",
+  "version": "1.0.0",
+  "description": "Visual testing dependencies for DeckSage E2E tests",
+  "scripts": {
+    "test:visual": "ai-visual-test test --config tests/visual/config.json",
+    "test:visual:baseline": "ai-visual-test screenshot --url http://localhost:8000 --output tests/visual/baselines/current.png"
+  },
+  "devDependencies": {
+    "@arclabs561/ai-visual-test": "^0.5.1"
+  },
+  "dependencies": {
+    "async-mutex": "^0.5.0"
+  }
+}

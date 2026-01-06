@@ -6,8 +6,8 @@ We currently support security updates for the latest version of DeckSage.
 
 | Version | Supported          |
 | ------- | ------------------ |
-| Latest  | :white_check_mark: |
-| < Latest| :x:                |
+| Latest  | Yes                |
+| < Latest| No                 |
 
 ## Reporting a Vulnerability
 

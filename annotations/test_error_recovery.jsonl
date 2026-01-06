@@ -1,0 +1,6 @@
+{"card1": "A", "card2": "B", "similarity_score": 0.9, "source": "test"}
+{"card1": "C", "similarity_score": 0.8, "source": "test"}
+{"card1": "D", "card2": "E", "similarity_score": 2.0, "source": "test"}
+{"card1": "F", "card2": "G", "similarity_score": 0.7, "source": "test"}
+{invalid json}
+{"card1": "H", "card2": "I", "similarity_score": 0.6, "source": "test"}

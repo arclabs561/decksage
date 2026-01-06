@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-06T18:12:54.311086",
+  "results": {
+    "iaa_config": true,
+    "single_annotator": true,
+    "multi_annotator": false,
+    "uncertainty": true,
+    "human_queue": true,
+    "all_games": false
+  },
+  "passed": 4,
+  "total": 4
+}

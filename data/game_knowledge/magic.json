@@ -1,0 +1,113 @@
+{
+  "game": "magic",
+  "mechanics": {
+    "mana_system": "Mana is the primary resource. Cards have mana costs (e.g., {1}{R} = 1 generic + 1 red). Converted mana cost (CMC) is total mana symbols. Lands produce mana.",
+    "color_system": "Five colors: White (W), Blue (U), Black (B), Red (R), Green (G). Color identity determines deckbuilding. Colorless mana ({C}) exists.",
+    "card_types": ["Creature", "Instant", "Sorcery", "Enchantment", "Artifact", "Planeswalker", "Land", "Tribal"],
+    "keywords": ["Flash", "Haste", "Flying", "Trample", "Deathtouch", "Lifelink", "Vigilance", "First Strike", "Double Strike"],
+    "special_rules": "Stack-based spell resolution. Priority system. Life total as resource. Card advantage vs tempo tradeoffs.",
+    "terminology": {
+      "CMC": "Converted Mana Cost - total mana symbols",
+      "Oracle Text": "Official rules text of a card",
+      "Quadrant Theory": "Evaluate cards in: developing, parity, winning, losing board states",
+      "Philosophy of Fire": "Direct damage conversion rates (3 damage ≈ 1 card ≈ 1 mana)"
+    }
+  },
+  "archetypes": [
+    {
+      "name": "Burn",
+      "description": "Aggressive red deck that wins through direct damage spells",
+      "strategy": "Deal 20 damage as fast as possible using efficient burn spells",
+      "core_cards": ["Lightning Bolt", "Lava Spike", "Rift Bolt", "Skullcrack"],
+      "flex_slots": ["Monastery Swiftspear", "Goblin Guide", "Eidolon of the Great Revel"],
+      "key_features": ["Fast", "Linear", "Light interaction", "Low curve (1-2 CMC)"],
+      "typical_curve": "Low - 20-23 lands, focus on 1-2 CMC spells",
+      "interaction_level": "Light",
+      "meta_position": "Tier 1-2 in Modern, Tier 2 in Legacy"
+    },
+    {
+      "name": "Control",
+      "description": "Reactive deck that wins through card advantage and inevitability",
+      "strategy": "Answer threats, accumulate card advantage, win with finisher",
+      "core_cards": ["Counterspell", "Force of Will", "Brainstorm", "Terminus"],
+      "flex_slots": ["Jace, the Mind Sculptor", "Snapcaster Mage", "Force of Negation"],
+      "key_features": ["Slow", "Heavy interaction", "High curve (3+ CMC)", "Card advantage focus"],
+      "typical_curve": "High - 26-27 lands, focus on 3+ CMC spells",
+      "interaction_level": "Heavy",
+      "meta_position": "Tier 1-2 in Legacy, Tier 2-3 in Modern"
+    },
+    {
+      "name": "Midrange",
+      "description": "Flexible deck that adapts to opponent's strategy",
+      "strategy": "Play efficient threats and answers, outvalue opponent",
+      "core_cards": ["Dark Confidant", "Tarmogoyf", "Liliana of the Veil"],
+      "flex_slots": ["Thoughtseize", "Fatal Push", "Kolaghan's Command"],
+      "key_features": ["Flexible", "Medium speed", "Moderate interaction", "Balanced curve"],
+      "typical_curve": "Medium - 24-25 lands, focus on 2-4 CMC spells",
+      "interaction_level": "Medium",
+      "meta_position": "Tier 1-2 in Modern, Tier 2 in Legacy"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Modern",
+      "legal_sets": ["All sets from 8th Edition (2003) onwards"],
+      "rotation_schedule": "No rotation - only new sets added",
+      "ban_list": ["Birthing Pod", "Deathrite Shaman", "Eye of Ugin", "Gitaxian Probe", "Golgari Grave-Troll", "Hogaak, Arisen Necropolis", "Hypergenesis", "Krark-Clan Ironworks", "Mental Misstep", "Mox Opal", "Mycosynth Lattice", "Oko, Thief of Crowns", "Once Upon a Time", "Ponder", "Preordain", "Punishing Fire", "Rite of Flame", "Second Sunrise", "Seething Song", "Sensei's Divining Top", "Simian Spirit Guide", "Skullclamp", "Splinter Twin", "Summer Bloom", "Tibalt's Trickery", "Treasure Cruise", "Umezawa's Jitte", "Uro, Titan of Nature's Wrath", "Valakut, the Molten Pinnacle"],
+      "restricted_list": [],
+      "meta_context": "Diverse format with aggro (Burn, Prowess), midrange (Jund, Rakdos), control (UW Control), and combo (Amulet Titan, Living End) strategies",
+      "last_updated": "2025-01-01"
+    },
+    {
+      "name": "Legacy",
+      "legal_sets": ["All sets ever printed"],
+      "rotation_schedule": "No rotation",
+      "ban_list": ["Ante cards", "Conspiracy cards", "Shahrazad", "Power 9", "Time Vault", "Library of Alexandria"],
+      "restricted_list": [],
+      "meta_context": "Powerful format with combo (Storm, Reanimator), control (Miracles), and tempo (Delver) strategies. Force of Will is format-defining",
+      "last_updated": "2025-01-01"
+    },
+    {
+      "name": "Standard",
+      "legal_sets": ["Current rotation block"],
+      "rotation_schedule": "Three-year rotation - oldest sets rotate annually",
+      "ban_list": [],
+      "restricted_list": [],
+      "meta_context": "Rotating format with current sets. Meta shifts with each new set release",
+      "last_updated": "2025-01-01"
+    }
+  ],
+  "examples": [
+    {
+      "query": "Lightning Bolt",
+      "card1": "Lightning Bolt",
+      "card2": "Chain Lightning",
+      "score": 0.92,
+      "reasoning": "Both are 1-mana red instant burn spells dealing 3 damage. Functionally identical in most contexts.",
+      "format": "Legacy"
+    },
+    {
+      "query": "Lightning Bolt",
+      "card1": "Lightning Bolt",
+      "card2": "Lava Spike",
+      "score": 0.52,
+      "reasoning": "Both are red burn spells, but Bolt is instant and more flexible, while Spike is sorcery and only targets players.",
+      "format": "Modern"
+    },
+    {
+      "query": "Fatal Push",
+      "card1": "Fatal Push",
+      "card2": "Path to Exile",
+      "score": 0.68,
+      "reasoning": "Both are efficient creature removal. Fatal Push is 1-mana black, Path is 1-mana white. Push is better early game, Path is better late game.",
+      "format": "Modern"
+    }
+  ],
+  "temporal_context": {
+    "current_meta": "Modern: Diverse with Burn, Jund, UW Control, Amulet Titan. Legacy: Delver, Miracles, Storm dominant.",
+    "recent_bans": "No recent bans in Modern or Legacy (as of 2025-01-01)",
+    "price_volatility": "Winter/summer price drops, fall/spring spikes common"
+  },
+  "last_updated": "2025-01-01T00:00:00"
+}
+

@@ -1,0 +1,7 @@
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.3, "source": "test_source_0.3", "is_substitute": false}
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.5, "source": "test_source_0.5", "is_substitute": false}
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.7, "source": "test_source_0.7", "is_substitute": false}
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.9, "source": "test_source_0.9", "is_substitute": true}
+{"card1": "Sol Ring", "card2": "Mana Crypt", "similarity_score": 0.85, "source": "hand", "is_substitute": true}
+{"card1": "Sol Ring", "card2": "Mana Crypt", "similarity_score": 0.85, "source": "llm", "is_substitute": true}
+{"card1": "Sol Ring", "card2": "Mana Crypt", "similarity_score": 0.85, "source": "feedback", "is_substitute": true}

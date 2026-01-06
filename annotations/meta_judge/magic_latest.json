@@ -1,0 +1,99 @@
+{
+  "overall_quality": 0.35,
+  "metrics": {
+    "score_diversity": 0.1260609298105141,
+    "score_range_utilization": 0.15000000000000002,
+    "reasoning_quality": 0.7916666666666666,
+    "consistency_score": 0.1260609298105141,
+    "completeness": 1.0
+  },
+  "issues": [
+    {
+      "issue_type": "score_clustering",
+      "severity": 4,
+      "description": "Severe score clustering in 0.08-0.23 range. Entire batch uses only bottom 23% of score range.",
+      "affected_count": 9,
+      "examples": [
+        "Hellkite Charger vs Flayer Drone (0.23)",
+        "Seaside Citadel vs Eternal Wanderer (0.08)"
+      ],
+      "suggested_fix": "Add explicit guidance on using full score range. Include examples of high (0.8+) and mid-range (0.4-0.6) similarity pairs in prompt."
+    },
+    {
+      "issue_type": "missing_card_data",
+      "severity": 3,
+      "description": "Several annotations have incomplete or missing card attribute data in card_comparison field",
+      "affected_count": 4,
+      "examples": [
+        "Seaside Citadel vs Eternal Wanderer",
+        "Builder's Talent vs Overlord of the Boilerbilges"
+      ],
+      "suggested_fix": "Ensure card data fetching system provides complete attributes for all cards"
+    },
+    {
+      "issue_type": "inconsistent_scoring",
+      "severity": 2,
+      "description": "Similar levels of card difference receiving inconsistent scores (range 0.08-0.23 for similarly unrelated pairs)",
+      "affected_count": 5,
+      "examples": [
+        "Seaside Citadel vs Eternal Wanderer (0.08) vs Slivdrazi vs Ashen Monstrosity (0.12)"
+      ],
+      "suggested_fix": "Add scoring rubric with explicit thresholds based on shared attributes"
+    }
+  ],
+  "strengths": [
+    "Very detailed and structured reasoning with clear step-by-step analysis",
+    "Consistent consideration of graph features in reasoning",
+    "Good completeness - all required fields present",
+    "Strong analysis of strategic context and deck roles"
+  ],
+  "feedback": "The annotations show strong reasoning quality but suffer from severe score compression issues. All scores fall between 0.08-0.23 despite varying levels of card similarity. While the reasoning is detailed and well-structured, it's not translating into appropriate score differentiation.\n\nThe card data completeness issues in several annotations compromise the ability to make thorough comparisons. When card attribute data is missing, the annotations rely more heavily on general knowledge rather than specific card characteristics.\n\nThe scoring appears to treat all \"unrelated\" cards similarly instead of recognizing degrees of unrelatedness. For example, cards sharing a card type but nothing else score similarly to cards with no shared attributes at all.",
+  "context_injections": {
+    "scoring_examples": {
+      "high_similarity": {
+        "cards": [
+          "Lightning Bolt",
+          "Lightning Strike"
+        ],
+        "score": 0.85,
+        "explanation": "Same effect with minor difference"
+      },
+      "medium_similarity": {
+        "cards": [
+          "Birds of Paradise",
+          "Llanowar Elves"
+        ],
+        "score": 0.55,
+        "explanation": "Similar role but different upsides"
+      },
+      "low_similarity": {
+        "cards": [
+          "Black Lotus",
+          "Grizzly Bears"
+        ],
+        "score": 0.05,
+        "explanation": "Completely different cards"
+      }
+    },
+    "scoring_rubric": {
+      "same_card_type": 0.2,
+      "same_color": 0.1,
+      "same_cmc": 0.1,
+      "similar_effect": 0.4,
+      "similar_role": 0.3
+    },
+    "prompt_additions": [
+      "Scores should use full 0-1 range. Cards with no meaningful similarity should score 0.0-0.2",
+      "Medium similarity (some shared attributes/roles) should score 0.4-0.6",
+      "High similarity (nearly identical function) should score 0.8-1.0"
+    ]
+  },
+  "recommendations": [
+    "Revise scoring guidance to explicitly require use of full 0-1 range",
+    "Add reference examples showing high (0.8+), medium (0.4-0.6), and low (0.0-0.2) similarity pairs",
+    "Implement scoring rubric based on number of shared attributes",
+    "Fix card data fetching to ensure complete attributes for all cards",
+    "Add validation check to reject annotations where card data is missing"
+  ],
+  "timestamp": ""
+}

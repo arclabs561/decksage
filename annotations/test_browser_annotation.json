@@ -1,0 +1,11 @@
+{
+  "query": "Lightning Bolt",
+  "timestamp": "2026-01-05T09:20:00.000Z",
+  "annotations": [
+    {"candidate": "Chain Lightning", "relevance": 4, "notes": "Near substitute, sorcery vs instant"},
+    {"candidate": "Lava Spike", "relevance": 4, "notes": "Player-only but same function"},
+    {"candidate": "Fireblast", "relevance": 3, "notes": "Burn finisher, different cost"},
+    {"candidate": "Shock", "relevance": 2, "notes": "Similar but weaker"},
+    {"candidate": "Counterspell", "relevance": 0, "notes": "Completely different"}
+  ]
+}

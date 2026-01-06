@@ -1,0 +1,58 @@
+name: Architecture Checks
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  architecture-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install dependencies
+        run: |
+          pip install pre-commit
+          pip install -e ".[dev]"
+
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files
+        continue-on-error: true
+
+      - name: Check hardcoded paths
+        run: |
+          python3 scripts/validation/check_hardcoded_paths.py $(git diff --name-only origin/${{ github.base_ref }} 2>/dev/null | grep '\.py$' || echo "") || true
+        continue-on-error: true
+
+      - name: Check lineage usage
+        run: |
+          python3 scripts/validation/check_lineage_usage.py $(git diff --name-only origin/${{ github.base_ref }} 2>/dev/null | grep '\.py$' || echo "") || true
+        continue-on-error: true
+
+      - name: Check schema validation
+        run: |
+          python3 scripts/validation/check_schema_validation.py $(git diff --name-only origin/${{ github.base_ref }} 2>/dev/null | grep '\.py$' || echo "") || true
+        continue-on-error: true
+
+      - name: Run architecture tests
+        run: |
+          pytest tests/test_lineage_validation.py tests/test_schema_validation.py -v || true
+        continue-on-error: true
+
+      - name: Check adoption metrics
+        run: |
+          echo "=== Adoption Metrics ==="
+          echo "Files using safe_write:"
+          rg "safe_write" --type py | wc -l || echo "0"
+          echo "Files using validate_deck_record:"
+          rg "validate_deck_record" --type py | wc -l || echo "0"
+          echo "Files using DeckExport:"
+          rg "DeckExport" --type py | wc -l || echo "0"

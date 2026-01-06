@@ -1,0 +1,211 @@
+/* Common Styles for DeckSage UI
+ * Shared across all pages for consistency
+ */
+
+:root {
+    /* Colors */
+    --bg-primary: #0f0f0f;
+    --bg-secondary: #1a1a1a;
+    --bg-tertiary: #252525;
+    --bg-elevated: #2a2a2a;
+    --border-default: #333;
+    --border-hover: #444;
+    --border-active: #6b8eff;
+    --text-primary: #ffffff;
+    --text-secondary: #b0b0b0;
+    --text-tertiary: #888;
+    --accent-primary: #6b8eff;
+    --accent-hover: #5a7eff;
+    --accent-light: rgba(107, 142, 255, 0.1);
+    --success: #4caf50;
+    --warning: #ff9800;
+    --error: #f44336;
+    
+    /* Spacing */
+    --spacing-xs: 4px;
+    --spacing-sm: 8px;
+    --spacing-md: 16px;
+    --spacing-lg: 24px;
+    --spacing-xl: 32px;
+    
+    /* Shadows */
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
+    
+    /* Typography */
+    --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    --font-size-base: 14px;
+    --font-size-lg: 16px;
+    --font-size-xl: 20px;
+    --font-size-2xl: 32px;
+    
+    /* Transitions */
+    --transition-fast: 0.1s;
+    --transition-base: 0.15s;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: var(--font-family);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* Buttons */
+button {
+    padding: 10px 20px;
+    background: var(--accent-primary);
+    border: none;
+    border-radius: 8px;
+    color: #fff;
+    font-size: var(--font-size-base);
+    font-weight: 600;
+    cursor: pointer;
+    font-family: inherit;
+}
+
+button:hover:not(:disabled) {
+    background: var(--accent-hover);
+}
+
+button:active:not(:disabled) {
+    background: var(--accent-primary);
+}
+
+button:disabled {
+    background: var(--bg-tertiary);
+    cursor: not-allowed;
+    opacity: 0.5;
+}
+
+button.secondary {
+    background: var(--bg-tertiary);
+    color: var(--text-primary);
+}
+
+/* Inputs */
+input[type="text"],
+input[type="number"],
+select {
+    padding: 10px 14px;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: var(--font-size-base);
+    font-family: inherit;
+}
+
+input:hover,
+select:hover {
+    border-color: var(--border-hover);
+}
+
+input:focus,
+select:focus {
+    outline: none;
+    border-color: var(--accent-primary);
+    box-shadow: 0 0 0 2px var(--accent-light);
+}
+
+input::placeholder {
+    color: var(--text-tertiary);
+}
+
+/* Cards/Containers */
+.card {
+    background: var(--bg-elevated);
+    border: 1px solid var(--border-default);
+    border-radius: 8px;
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+    border-color: var(--border-hover);
+    box-shadow: var(--shadow-md);
+}
+
+/* Typography */
+h1 {
+    font-size: var(--font-size-2xl);
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: -0.5px;
+}
+
+h2 {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+/* Status messages */
+.status {
+    padding: var(--spacing-md);
+    border-radius: 8px;
+    margin: var(--spacing-md) 0;
+}
+
+.status.success {
+    background: rgba(76, 175, 80, 0.1);
+    border: 1px solid var(--success);
+    color: var(--success);
+}
+
+.status.error {
+    background: rgba(244, 67, 54, 0.1);
+    border: 1px solid var(--error);
+    color: var(--error);
+}
+
+.status.info {
+    background: rgba(107, 142, 255, 0.1);
+    border: 1px solid var(--accent-primary);
+    color: var(--accent-primary);
+}
+
+.status.hidden {
+    display: none;
+}
+
+/* Loading states */
+.skeleton {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+}
+
+
+/* Empty states */
+.empty-state {
+    text-align: center;
+    padding: var(--spacing-xl);
+    color: var(--text-secondary);
+}
+
+.empty-state-icon {
+    font-size: 48px;
+    margin-bottom: var(--spacing-md);
+    opacity: 0.5;
+}
+
+.empty-state-title {
+    font-size: var(--font-size-xl);
+    font-weight: 600;
+    margin-bottom: var(--spacing-sm);
+    color: var(--text-primary);
+}
+
+.empty-state-message {
+    color: var(--text-secondary);
+    margin-bottom: var(--spacing-md);
+}
+

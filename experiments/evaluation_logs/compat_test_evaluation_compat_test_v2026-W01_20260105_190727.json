@@ -1,0 +1,18 @@
+{
+  "run_id": "compat_test_evaluation_compat_test_v2026-W01_20260105_190727",
+  "timestamp": "2026-01-05T19:07:27.656767+00:00",
+  "evaluation_type": "compat_test_evaluation",
+  "method": "compat_test_v2026-W01",
+  "test_set_path": null,
+  "num_queries": null,
+  "metrics": {
+    "mrr": 0.3
+  },
+  "config": {
+    "model_type": "compat_test",
+    "model_version": "v2026-W01",
+    "model_path": "/path/to/model",
+    "test": true
+  },
+  "notes": "Migrated from evaluation_registry.db"
+}

@@ -1,0 +1,155 @@
+{
+  "data_lineage": {
+    "orders": {
+      "0": {
+        "name": "Primary Source Data",
+        "immutable": true,
+        "locations": {
+          "s3": "s3://games-collections/games/",
+          "local": "src/backend/data-full/games/"
+        },
+        "tools": [
+          "go run cmd/dataset/main.go extract"
+        ]
+      },
+      "1": {
+        "name": "Exported Decks",
+        "depends_on": [
+          "0"
+        ],
+        "locations": {
+          "local": "data/processed/decks_*.jsonl"
+        },
+        "tools": [
+          "bin/export-blob",
+          "bin/export-hetero"
+        ]
+      },
+      "2": {
+        "name": "Co-occurrence Pairs",
+        "depends_on": [
+          "1"
+        ],
+        "locations": {
+          "local": "data/processed/pairs_*.csv"
+        },
+        "tools": [
+          "scripts/data_processing/generate_pairs_for_games.py"
+        ]
+      },
+      "3": {
+        "name": "Incremental Graph",
+        "depends_on": [
+          "1",
+          "2"
+        ],
+        "locations": {
+          "local": "data/graphs/incremental_graph.db"
+        },
+        "tools": [
+          "ml.scripts.update_graph_incremental"
+        ]
+      },
+      "4": {
+        "name": "Embeddings",
+        "depends_on": [
+          "2",
+          "3"
+        ],
+        "locations": {
+          "local": "data/embeddings/"
+        },
+        "tools": [
+          "ml.scripts.train_hybrid_full",
+          "ml.scripts.train_gnn"
+        ]
+      },
+      "5": {
+        "name": "Test Sets",
+        "depends_on": [
+          "1",
+          "4"
+        ],
+        "locations": {
+          "local": "experiments/test_set_unified_*.json"
+        },
+        "tools": [
+          "scripts/test_sets/create_test_sets_for_new_games.py"
+        ],
+        "description": "Test Sets with ground truth labels. Labels can be LLM-generated (via expand_test_set_with_llm) or human-annotated.",
+        "llm_labels": true
+      },
+      "6": {
+        "name": "Annotations",
+        "depends_on": [
+          "1",
+          "4"
+        ],
+        "locations": {
+          "local": [
+            "annotations/*.jsonl",
+            "annotations/*.yaml",
+            "annotations/hand_batch_*.yaml",
+            "annotations/judgment_*.jsonl",
+            "annotations/llm_judgments/judgment_*.json"
+          ],
+          "s3": [
+            "s3://games-collections/annotations/",
+            "s3://games-collections/experiments/annotations_llm/"
+          ]
+        },
+        "tools": [
+          "scripts/annotations/generate_llm_annotations.py",
+          "ml.annotation.hand_annotate",
+          "ml.scripts.generate_all_annotation_batches",
+          "ml.experimental.progressive_annotation",
+          "ml.experimental.multi_perspective_judge",
+          "scripts/sync_llm_annotations_to_s3.sh"
+        ],
+        "description": "Similarity/substitution annotations (LLM JSONL or human YAML). Supports two formats: (1) LLM annotations (JSONL) with similarity scores, (2) Hand annotations (YAML) with 0-4 relevance scale. Both can be converted to substitution pairs (Order 2) for training or merged into test sets (Order 5).",
+        "formats": {
+          "llm_jsonl": {
+            "pattern": "annotations/*_llm_annotations.jsonl",
+            "fields": ["card1", "card2", "similarity_score", "is_substitute", "similarity_type"],
+            "created_by": "ml.annotation.llm_annotator"
+          },
+          "hand_yaml": {
+            "pattern": "annotations/hand_batch_*.yaml",
+            "fields": ["query", "candidates", "relevance", "similarity_type", "is_substitute"],
+            "created_by": "ml.annotation.hand_annotate generate",
+            "merge_to_test_set": "ml.annotation.hand_annotate merge"
+          },
+          "llm_judgments": {
+            "pattern": "annotations/judgment_*.jsonl",
+            "fields": ["card1", "card2", "similarity_score", "is_substitute", "source", "judgment_metadata"],
+            "created_by": "ml.experimental.progressive_annotation, ml.experimental.multi_perspective_judge",
+            "note": "Unified format: Programmatic ensemble judgments saved as annotations with source='llm_judgment'. Old format (annotations/llm_judgments/judgment_*.json) supported for backward compatibility."
+          }
+        },
+        "conversion_paths": [
+          {
+            "to_order": 2,
+            "tool": "ml.utils.annotation_utils.convert_annotations_to_substitution_pairs",
+            "purpose": "Training signal (2x weight in embeddings)",
+            "supports": ["jsonl", "yaml"]
+          },
+          {
+            "to_order": 5,
+            "tool": "ml.annotation.hand_annotate merge",
+            "purpose": "Test set ground truth labels",
+            "supports": ["yaml"]
+          }
+        ],
+        "llm_labels": true
+      }
+    },
+    "validation": {
+      "script": "scripts/data_processing/validate_lineage.py",
+      "regeneration": "scripts/data_processing/regenerate_derived.py"
+    },
+    "documentation": {
+      "flow": "docs/data-lineage-flow.txt",
+      "labels": "docs/llm-labels-lineage.md"
+    }
+  }
+}

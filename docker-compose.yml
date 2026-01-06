@@ -1,0 +1,140 @@
+version: '3.8'
+
+services:
+  # DeckSage API Service
+  decksage-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: decksage-api
+    ports:
+      - "${API_PORT:-8000}:8000"
+    environment:
+      # Required: ML Asset Paths (mount as volumes or set to paths in container)
+      - EMBEDDINGS_PATH=${EMBEDDINGS_PATH:-/app/data/embeddings/model.wv}
+      - PAIRS_PATH=${PAIRS_PATH:-/app/data/graphs/pairs.csv}
+      - ATTRIBUTES_PATH=${ATTRIBUTES_PATH:-/app/data/attributes/card_attrs.csv}
+      
+      # Asset Version Tracking
+      - ASSET_METADATA_PATH=${ASSET_METADATA_PATH:-/app/data/ASSET_METADATA.json}
+      - ASSET_VERSION=${ASSET_VERSION:-}
+      
+      # Optional: Additional Signals
+      - SIDEBOARD_SIGNAL_PATH=${SIDEBOARD_SIGNAL_PATH:-/app/data/signals/sideboard.json}
+      - TEMPORAL_SIGNAL_PATH=${TEMPORAL_SIGNAL_PATH:-/app/data/signals/temporal.json}
+      - GNN_PATH=${GNN_PATH:-/app/data/signals/gnn_graphsage.json}
+      - TEXT_EMBEDDER_MODEL=${TEXT_EMBEDDER_MODEL:-all-MiniLM-L6-v2}
+      - INSTRUCTION_EMBEDDER_MODEL=${INSTRUCTION_EMBEDDER_MODEL:-intfloat/e5-base-v2}
+      
+      # Optional: Search Services
+      - MEILISEARCH_URL=${MEILISEARCH_URL:-http://meilisearch:7700}
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-}
+      - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
+      - QDRANT_API_KEY=${QDRANT_API_KEY:-}
+      
+      # API Configuration
+      - PORT=8000
+      - ENVIRONMENT=${ENVIRONMENT:-development}
+      # CORS: Default to empty (no CORS) for security. Use CORS_ORIGINS env var to specify origins.
+      # Development: Set CORS_ORIGINS=* or specific origins (e.g., http://localhost:3000)
+      # Production: MUST set CORS_ORIGINS to specific domains (comma-separated)
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      
+      # Optional: Auto-index cards on startup (set to "true" to enable)
+      - INDEX_ON_STARTUP=${INDEX_ON_STARTUP:-false}
+    volumes:
+      # ML Assets: Mount your trained models and data here
+      # These are the REQUIRED bind mounts for ML assets
+      - ${EMBEDDINGS_VOLUME:-./data/embeddings}:/app/data/embeddings:ro
+      - ${PAIRS_VOLUME:-./data/graphs}:/app/data/graphs:ro
+      - ${ATTRIBUTES_VOLUME:-./data/attributes}:/app/data/attributes:ro
+      - ${SIGNALS_VOLUME:-./data/signals}:/app/data/signals:ro
+      # Asset metadata for version tracking
+      - ${ASSET_METADATA_VOLUME:-./data/ASSET_METADATA.json}:/app/data/ASSET_METADATA.json:ro
+      # Frontend: Mount HTML file for development (hot-reload without rebuild)
+      # In production, the file is baked into the image via Dockerfile
+      - ${FRONTEND_HTML_VOLUME:-./test_search.html}:/app/test_search.html:ro
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/live"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 3
+    restart: unless-stopped
+    # Resource limits (adjust based on your ML model sizes)
+    deploy:
+      resources:
+        limits:
+          cpus: '${API_CPU_LIMIT:-2.0}'
+          memory: ${API_MEMORY_LIMIT:-4G}
+        reservations:
+          cpus: '${API_CPU_RESERVATION:-0.5}'
+          memory: ${API_MEMORY_RESERVATION:-1G}
+    networks:
+      - decksage-network
+
+  # Meilisearch: Fast text/keyword search
+  meilisearch:
+    image: getmeili/meilisearch:v1.30.0
+    container_name: decksage-meilisearch
+    ports:
+      - "${MEILISEARCH_PORT:-7700}:7700"
+    environment:
+      - MEILI_MASTER_KEY=${MEILISEARCH_KEY:-}
+      - MEILI_ENV=${ENVIRONMENT:-development}
+    volumes:
+      - meilisearch_data:/meili_data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:7700/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '${MEILISEARCH_CPU_LIMIT:-1.0}'
+          memory: ${MEILISEARCH_MEMORY_LIMIT:-2G}
+    networks:
+      - decksage-network
+
+  # Qdrant: Vector similarity search
+  qdrant:
+    image: qdrant/qdrant:v1.16.3
+    container_name: decksage-qdrant
+    ports:
+      - "${QDRANT_PORT:-6333}:6333"
+      - "${QDRANT_GRPC_PORT:-6334}:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '${QDRANT_CPU_LIMIT:-1.0}'
+          memory: ${QDRANT_MEMORY_LIMIT:-2G}
+    networks:
+      - decksage-network
+
+volumes:
+  meilisearch_data:
+    driver: local
+  qdrant_data:
+    driver: local
+
+networks:
+  decksage-network:
+    driver: bridge
+

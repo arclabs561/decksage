@@ -1,0 +1,11 @@
+{
+  "run_id": "hybrid_evaluation_hybrid_20260105_190536",
+  "timestamp": "2026-01-05T19:05:36.117728+00:00",
+  "evaluation_type": "hybrid_evaluation",
+  "method": "hybrid",
+  "test_set_path": null,
+  "num_queries": null,
+  "metrics": {},
+  "config": {},
+  "notes": "Migrated from hybrid_evaluation_v2025-W51 2.json (original: 2025-12-18T08:53:47.668058)"
+}
