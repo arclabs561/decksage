@@ -109,8 +109,10 @@ jobs:
 
       - name: Run fast tests
         run: |
-          cd src/ml
-          uv run pytest tests/ -v -m "not slow and not integration" --maxfail=5
+          # Run from project root to include both tests/ and src/ml/tests/
+          # Set PYTHONPATH so tests can import from scripts/ and src/ml/
+          export PYTHONPATH="${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/src:${PYTHONPATH}"
+          uv run pytest tests/ src/ml/tests/ -v -m "not slow and not integration" --maxfail=5
 
       - name: Upload test results
         if: always()
@@ -146,8 +148,10 @@ jobs:
 
       - name: Run slow/integration tests
         run: |
-          cd src/ml
-          uv run pytest tests/ -v -m "slow or integration" --maxfail=3
+          # Run from project root to include both tests/ and src/ml/tests/
+          # Set PYTHONPATH so tests can import from scripts/ and src/ml/
+          export PYTHONPATH="${GITHUB_WORKSPACE}:${GITHUB_WORKSPACE}/src:${PYTHONPATH}"
+          uv run pytest tests/ src/ml/tests/ -v -m "slow or integration" --maxfail=3
 
       - name: Upload test results
         if: always()
@@ -185,3 +189,6 @@ jobs:
         run: |
           cd src/ml
           uvx ty check src/ml || true  # Non-blocking for now
+
+  # Summary: CI runs tests from project root to include both tests/ and src/ml/tests/
+  # PYTHONPATH is set to allow imports from scripts/ and src/ml/
