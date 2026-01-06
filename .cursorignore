@@ -1,42 +1,33 @@
-# Environment
+# Environment and virtual environments
 .env
 .venv
-__pycache__
+__pycache__/
 *.pyc
-.cache
+.cache/
+
 # Python cache directories
 .pytest_cache/
 .ruff_cache/
 .mypy_cache/
 .pytype/
-# Experiment tracking and testing frameworks
-.aim/
 .hypothesis/
+
 # Tool-specific cache/config
 .runctl/
 uv.lock
 
-# Large data directories
+# Large data directories (not in git)
 data/raw/
 data/full/
 data-full/
 old-scraper-data/
 data/archive/
-integration_test_tmp/
-
-# Data files - embeddings, graphs, large datasets
-data/embeddings/*.wv
-data/embeddings/*.kv
-data/embeddings/*.pkl
-data/graphs/*.edg
-data/decks/*.jsonl
-data/processed/*.csv
-data/processed/*.jsonl
+data/embeddings/
+data/graphs/
+data/decks/
+data/processed/
 data/pairs/
-# Compressed and binary data formats
-*.zst
-*.attrs
-*.sst
+integration_test_tmp/
 
 # Training checkpoints
 checkpoints/
@@ -47,45 +38,20 @@ backups/
 # Logs
 logs/
 *.log
-/tmp/*.log
 
 # Archive
 archive/
 
-# Experiments (large files)
+# Experiments (large result files)
 experiments/*.jsonl
 experiments/*.html
 experiments/*.csv
-
-# Documentation - allow key architectural and reference docs for AI context
-# Block session/analysis docs but allow essential references
-*.md
-!README.md
-!PAUSE_RESUME_GUIDE.md
-# Allow key docs in docs/ directory (architecture, lineage, workflows)
-!docs/LLM_LABELS_LINEAGE.md
-!docs/QUICK_REFERENCE.md
-!docs/PRIORITY_MATRIX.md
-!docs/DATA_STORAGE.md
-!docs/DATA_USAGE.md
-!docs/DATA_LINEAGE_FLOW.txt
-!docs/DEVELOPMENT_RULES.md
-# Allow README files in key directories (provide context)
-!**/README.md
-# Block archive and session docs
-docs/archive/
-docs/*SESSION*.md
-docs/*ANALYSIS*.md
-docs/*REVIEW*.md
-docs/*COMPLETE*.md
-docs/*FINAL*.md
 
 # Build artifacts
 target/
 dist/
 build/
 *.egg-info/
-# Go binaries and build artifacts
 *.exe
 *.dll
 *.so
@@ -94,7 +60,6 @@ build/
 *.out
 src/backend/build/
 src/backend/*/validate-data
-# Generated binaries (Go)
 src/backend/analyze-decks
 src/backend/backfill-source
 src/backend/export-hetero
@@ -102,32 +67,16 @@ src/backend/dataset
 src/backend/export-decks-only
 src/backend/validate-data
 
-# Config files - allow ones that help understand project structure
-.dockerignore
-.gitignore
-.gitattributes
-# .cursor/rules/ - Allow cursor rules (needed for AI context)
-# *.mdc - Allow .mdc rule files (needed for AI context)
-.editorconfig
-.prettierignore
-.eslintignore
-# Allow config files that define project behavior (useful for context)
-!pyproject.toml
-!justfile
-!runctl.toml
-!pytest.ini
-!.pre-commit-config.yaml
-!.golangci.yml
-!.cursorignore
+# Compressed and binary data formats
+*.zst
+*.attrs
+*.sst
 
 # IDE and editor files
 .vscode/
 .idea/
-# Cursor IDE - ignore cache/state but allow rules
 .cursor/
 !.cursor/rules/
-!.cursor/rules/**/*.mdc
-!.cursor/rules/**/README.md
 
 # Temporary and backup files
 *.tmp
@@ -140,6 +89,24 @@ src/backend/validate-data
 *.orig
 *.rej
 
-# OS
+# OS files
 .DS_Store
 Thumbs.db
+
+# Session/analysis docs (temporary)
+docs/archive/
+docs/*SESSION*.md
+docs/*ANALYSIS*.md
+docs/*REVIEW*.md
+docs/*COMPLETE*.md
+docs/*FINAL*.md
+docs/*SUMMARY*.md
+
+# Root-level temporary markdown files
+*-summary.md
+*-complete.md
+*-final.md
+*-status.md
+*-roadmap.md
+*-critique.md
+*-enhancements.md
