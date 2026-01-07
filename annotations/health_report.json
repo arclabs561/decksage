@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-01-05T12:57:05.707904",
+  "checks": {
+    "file_integrity": {
+      "jsonl_files": 23,
+      "issues": [],
+      "warnings": [],
+      "status": "healthy"
+    },
+    "data_quality": {
+      "integrated_file": "annotations/pipeline_integrated.jsonl",
+      "total_annotations": 67,
+      "issues": [],
+      "status": "healthy"
+    },
+    "integration": {
+      "integrated_file": "annotations/pipeline_integrated.jsonl",
+      "outdated_sources": [],
+      "status": "up_to_date"
+    },
+    "s3_sync": {
+      "status": "synced",
+      "files_in_s3": 53,
+      "s3_path": "s3://games-collections/annotations/"
+    },
+    "dependencies": {
+      "dependencies": {
+        "pydantic": "missing",
+        "pydantic_ai": "missing",
+        "fastapi": "missing",
+        "uvicorn": "missing",
+        "s5cmd": "installed"
+      },
+      "status": "missing_dependencies",
+      "missing": [
+        "pydantic",
+        "pydantic_ai",
+        "fastapi",
+        "uvicorn"
+      ]
+    }
+  },
+  "overall_status": "needs_attention"
+}

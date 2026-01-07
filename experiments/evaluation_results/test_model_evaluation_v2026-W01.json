@@ -1,0 +1,25 @@
+{
+  "timestamp": "2026-01-05T14:34:06.146080",
+  "model_type": "test_model",
+  "model_version": "v2026-W01",
+  "model_path": "/path/to/model",
+  "test_set_path": null,
+  "metrics": {},
+  "full_results": {
+    "metrics": {
+      "p_at_k": 0.1
+    },
+    "num_queries": null,
+    "config": {
+      "model_type": "test_model",
+      "model_version": "v2026-W01",
+      "model_path": "/path/to/model"
+    }
+  },
+  "metadata": {
+    "run_id": "test_test_20260105_193406",
+    "evaluation_type": "test",
+    "method": "test"
+  },
+  "is_production": false
+}

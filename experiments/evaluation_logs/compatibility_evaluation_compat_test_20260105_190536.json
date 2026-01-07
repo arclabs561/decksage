@@ -1,0 +1,11 @@
+{
+  "run_id": "compatibility_evaluation_compat_test_20260105_190536",
+  "timestamp": "2026-01-05T19:05:36.114667+00:00",
+  "evaluation_type": "compatibility_evaluation",
+  "method": "compat_test",
+  "test_set_path": null,
+  "num_queries": null,
+  "metrics": {},
+  "config": {},
+  "notes": "Migrated from compat_test_evaluation_vv2026-W01.json (original: 2026-01-04T21:31:11.119438)"
+}

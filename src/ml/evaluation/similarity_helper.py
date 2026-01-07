@@ -124,8 +124,27 @@ def create_similarity_function(
                 jaccard=0.15,
                 functional=0.10,
                 text_embed=0.25,
+                visual_embed=0.20,
                 gnn=0.30,
             ).normalized()
+
+        # Load text embedder if available
+        text_embedder = None
+        try:
+            from ..similarity.text_embeddings import get_text_embedder
+
+            text_embedder = get_text_embedder()
+        except (ImportError, Exception):
+            pass  # Text embeddings optional
+
+        # Load visual embedder if available
+        visual_embedder = None
+        try:
+            from ..similarity.visual_embeddings import get_visual_embedder
+
+            visual_embedder = get_visual_embedder()
+        except (ImportError, Exception):
+            pass  # Visual embeddings optional
 
         # Create fusion instance
         fusion = WeightedLateFusion(
@@ -134,6 +153,8 @@ def create_similarity_function(
             tagger=tag_set_fn,
             weights=weights,
             aggregator="weighted",
+            text_embedder=text_embedder,
+            visual_embedder=visual_embedder,
         )
 
         def similarity_fn(query: str, k: int) -> list[tuple[str, float]]:

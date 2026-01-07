@@ -1,0 +1,15 @@
+[
+  {
+    "card1": "A",
+    "card2": "B",
+    "similarity_score": 0.8,
+    "source": "test",
+    "metadata": {
+      "nested": {
+        "deep": {
+          "value": 123
+        }
+      }
+    }
+  }
+]

@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-04T21:32:09.409825",
+  "model_type": "verification",
+  "model_version": "v2026-W01",
+  "model_path": "/path/to/model",
+  "test_set_path": null,
+  "metrics": {},
+  "full_results": {
+    "p@10": 0.15
+  },
+  "metadata": {},
+  "is_production": false
+}

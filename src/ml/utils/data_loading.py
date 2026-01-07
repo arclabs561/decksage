@@ -1,6 +1,7 @@
 """Shared data loading utilities for multi-game experiments."""
 
 import json
+import logging
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
@@ -9,6 +10,18 @@ import pandas as pd
 
 from .constants import get_filter_set
 from .paths import PATHS
+
+
+logger = logging.getLogger(__name__)
+
+# Schema validation (optional, graceful degradation)
+try:
+    from ..data.export_schema import validate_deck_record
+
+    HAS_SCHEMA_VALIDATION = True
+except ImportError:
+    HAS_SCHEMA_VALIDATION = False
+    validate_deck_record = None
 
 
 try:
@@ -265,11 +278,35 @@ def load_decks_jsonl(
 
     # Legacy path: no validation
     decks = []
+    validation_warnings = 0
+    validation_errors = 0
+
     with open(jsonl_path) as f:
-        for line in f:
+        for line_num, line in enumerate(f, 1):
             if not line.strip():
                 continue
-            deck = json.loads(line)
+
+            try:
+                deck = json.loads(line)
+            except json.JSONDecodeError as e:
+                logger.warning(f"Line {line_num}: Invalid JSON - {e}")
+                continue
+
+            # Schema validation (non-strict by default)
+            if HAS_SCHEMA_VALIDATION and validate_deck_record is not None:
+                is_valid, error, validated_deck = validate_deck_record(deck, strict=False)
+                if not is_valid:
+                    validation_errors += 1
+                    if validation_errors <= 5:  # Log first 5 errors
+                        logger.warning(f"Line {line_num}: Schema validation failed - {error}")
+                    continue
+                elif error:  # Warning but valid
+                    validation_warnings += 1
+                    if validation_warnings <= 5:  # Log first 5 warnings
+                        logger.debug(f"Line {line_num}: Schema validation warning - {error}")
+                # Use validated deck if available (normalized)
+                if validated_deck:
+                    deck = validated_deck
 
             # Apply filters
             if sources and deck.get("source") not in sources:
@@ -284,6 +321,12 @@ def load_decks_jsonl(
                 continue
 
             decks.append(deck)
+
+    if validation_warnings > 0 or validation_errors > 0:
+        logger.info(
+            f"Schema validation: {len(decks)} valid decks, "
+            f"{validation_warnings} warnings, {validation_errors} errors"
+        )
 
     return decks
 
@@ -357,3 +400,87 @@ def deck_stats(decks: list[dict]) -> dict[str, Any]:
     stats["by_archetype"] = dict(stats["by_archetype"])
 
     return stats
+
+
+def load_card_attributes(
+    attrs_path: Path | None = None,
+    enrich_with_images: bool = False,
+    game: str | None = None,
+) -> dict[str, dict[str, Any]]:
+    """
+    Load card attributes from CSV with optional image URL enrichment.
+
+    Args:
+        attrs_path: Path to card attributes CSV (default: PATHS.card_attributes)
+        enrich_with_images: If True, fetch missing image URLs from Scryfall API
+        game: Game filter for image fetching (currently only 'magic' supported)
+
+    Returns:
+        Dict mapping card name -> card attributes dict
+    """
+    if attrs_path is None:
+        attrs_path = PATHS.card_attributes
+
+    if not attrs_path or not attrs_path.exists():
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.debug(f"Card attributes file not found: {attrs_path}")
+        return {}
+
+    try:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.info(f"Loading card attributes from {attrs_path}...")
+        attrs_df = pd.read_csv(attrs_path)
+
+        # Find name column
+        name_col = None
+        for col in ["NAME", "name", "card_name", "Card"]:
+            if col in attrs_df.columns:
+                name_col = col
+                break
+
+        if not name_col:
+            logger.warning("Could not find name column in card attributes CSV")
+            return {}
+
+        # Build attributes dict
+        card_attributes = {}
+        valid_mask = attrs_df[name_col].notna() & (attrs_df[name_col].astype(str).str.strip() != "")
+        valid_df = attrs_df[valid_mask]
+
+        for idx in valid_df.index:
+            row = valid_df.loc[idx]
+            card_name = str(row[name_col]).strip()
+            if card_name:
+                # Convert row to dict, preserving all columns
+                attrs = row.to_dict()
+                # Normalize name field
+                attrs["name"] = card_name
+                card_attributes[card_name] = attrs
+
+        logger.info(f"Loaded attributes for {len(card_attributes):,} cards")
+
+        # Optionally enrich with image URLs
+        if enrich_with_images and (game is None or game == "magic"):
+            try:
+                from ..utils.scryfall_image_urls import enrich_card_attributes_with_images
+
+                logger.info("Enriching card attributes with image URLs...")
+                stats = enrich_card_attributes_with_images(card_attributes, resume=True)
+                logger.info(
+                    f"Image URL enrichment: {stats['fetched']} fetched, "
+                    f"{stats['failed']} failed, {stats['already_had']} already had"
+                )
+            except Exception as e:
+                logger.warning(f"Failed to enrich with image URLs: {e}")
+
+        return card_attributes
+    except Exception as e:
+        import logging
+
+        logger = logging.getLogger(__name__)
+        logger.warning(f"Could not load card attributes: {e}")
+        return {}

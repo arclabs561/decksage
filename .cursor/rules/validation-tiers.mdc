@@ -1,0 +1,45 @@
+---
+description: Validation rigor tiers - when to be rigorous vs pragmatic
+alwaysApply: true
+---
+
+# Validation Tiers
+
+Different contexts require different levels of validation rigor. This clarifies when to be rigorous versus pragmatic.
+
+## Tier 1: Production/Release (Rigorous)
+- **When**: Code going to production, model releases, data pipeline changes
+- **Requirements**:
+  - Comprehensive testing (unit, integration, e2e)
+  - Performance benchmarks and regression checks
+  - Security scanning (snyk_code_scan)
+  - Documentation updates
+  - Validation of all claims with evidence
+- **Don't declare "production ready" or "complete" without this tier**
+
+## Tier 2: Experimental/Development (Pragmatic)
+- **When**: Prototyping, experiments, proof-of-concept work
+- **Requirements**:
+  - Basic functionality tests
+  - Manual verification sufficient for initial validation
+  - Document assumptions and limitations
+  - Mark as experimental/alpha in code/comments
+- **Principle**: "Pragmatic approximations that work now are better than optimal solutions requiring infrastructure you don't have"
+
+## Tier 3: Quick Iteration (Minimal)
+- **When**: Debugging, small fixes, refactoring with existing tests
+- **Requirements**:
+  - Run existing relevant tests
+  - Verify fix doesn't break existing functionality
+  - No new tests required for trivial changes
+
+## Decision Framework
+- **Default to Tier 2** (pragmatic) for new work
+- **Upgrade to Tier 1** (rigorous) when:
+  - Feature is ready for production use
+  - Changes affect critical paths (data loading, training, evaluation)
+  - User-facing changes or API modifications
+- **Downgrade to Tier 3** (minimal) for:
+  - Obvious bug fixes
+  - Documentation-only changes
+  - Refactoring with comprehensive existing test coverage

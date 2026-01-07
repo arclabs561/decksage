@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Card Similarity Annotation: Martyr's Cause</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .query-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .query-card h1 {
+            margin: 0 0 10px 0;
+            color: #333;
+        }
+        .candidate {
+            background: white;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 6px;
+            border: 2px solid #e0e0e0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .candidate:hover {
+            border-color: #4CAF50;
+        }
+        .candidate-name {
+            font-weight: 500;
+            font-size: 16px;
+        }
+        .rating-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        .rating-btn {
+            padding: 8px 16px;
+            border: 1px solid #ccc;
+            background: white;
+            cursor: pointer;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .rating-btn:hover {
+            background: #f0f0f0;
+        }
+        .rating-btn.selected {
+            background: #4CAF50;
+            color: white;
+            border-color: #4CAF50;
+        }
+        .notes-input {
+            width: 100%;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: inherit;
+        }
+        .submit-btn {
+            background: #2196F3;
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        .submit-btn:hover {
+            background: #1976D2;
+        }
+        .legend {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 20px;
+        }
+        .legend h3 {
+            margin-top: 0;
+        }
+        .legend ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="query-card">
+        <h1>Query Card: Martyr's Cause</h1>
+        <p>Rate the similarity of each candidate card to the query card.</p>
+    </div>
+
+    <div class="legend">
+        <h3>Relevance Scale</h3>
+        <ul>
+            <li><strong>4</strong>: Extremely similar (near substitutes, same function)</li>
+            <li><strong>3</strong>: Very similar (often seen together, similar role)</li>
+            <li><strong>2</strong>: Somewhat similar (related function or archetype)</li>
+            <li><strong>1</strong>: Marginally similar (loose connection)</li>
+            <li><strong>0</strong>: Irrelevant (different function, color, or archetype)</li>
+        </ul>
+    </div>
+
+    <form id="annotation-form">
+        <div id="candidates-container">
+
+            <div class="candidate" data-candidate="Ghitu War Cry">
+                <div class="candidate-name">Ghitu War Cry</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 0)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 0)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 0)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 0)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 0)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-0" />
+                    <input type="hidden" id="rating-0" name="rating-0" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Tectonic Edge">
+                <div class="candidate-name">Tectonic Edge</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 1)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 1)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 1)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 1)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 1)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-1" />
+                    <input type="hidden" id="rating-1" name="rating-1" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Frontier Mastodon">
+                <div class="candidate-name">Frontier Mastodon</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 2)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 2)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 2)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 2)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 2)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-2" />
+                    <input type="hidden" id="rating-2" name="rating-2" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Windcaller Aven">
+                <div class="candidate-name">Windcaller Aven</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 3)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 3)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 3)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 3)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 3)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-3" />
+                    <input type="hidden" id="rating-3" name="rating-3" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Bladewing the Risen">
+                <div class="candidate-name">Bladewing the Risen</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 4)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 4)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 4)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 4)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 4)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-4" />
+                    <input type="hidden" id="rating-4" name="rating-4" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Gruesome Fate">
+                <div class="candidate-name">Gruesome Fate</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 5)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 5)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 5)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 5)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 5)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-5" />
+                    <input type="hidden" id="rating-5" name="rating-5" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Thought Erasure">
+                <div class="candidate-name">Thought Erasure</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 6)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 6)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 6)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 6)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 6)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-6" />
+                    <input type="hidden" id="rating-6" name="rating-6" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Eviscerator">
+                <div class="candidate-name">Eviscerator</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 7)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 7)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 7)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 7)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 7)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-7" />
+                    <input type="hidden" id="rating-7" name="rating-7" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Levitation">
+                <div class="candidate-name">Levitation</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 8)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 8)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 8)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 8)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 8)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-8" />
+                    <input type="hidden" id="rating-8" name="rating-8" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Sandsteppe Citadel">
+                <div class="candidate-name">Sandsteppe Citadel</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 9)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 9)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 9)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 9)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 9)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-9" />
+                    <input type="hidden" id="rating-9" name="rating-9" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Vampire Lacerator">
+                <div class="candidate-name">Vampire Lacerator</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 10)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 10)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 10)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 10)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 10)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-10" />
+                    <input type="hidden" id="rating-10" name="rating-10" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Borrowed Grace">
+                <div class="candidate-name">Borrowed Grace</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 11)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 11)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 11)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 11)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 11)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-11" />
+                    <input type="hidden" id="rating-11" name="rating-11" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Beastbreaker of Bala Ged">
+                <div class="candidate-name">Beastbreaker of Bala Ged</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 12)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 12)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 12)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 12)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 12)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-12" />
+                    <input type="hidden" id="rating-12" name="rating-12" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Herald's Horn">
+                <div class="candidate-name">Herald's Horn</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 13)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 13)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 13)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 13)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 13)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-13" />
+                    <input type="hidden" id="rating-13" name="rating-13" value="" />
+                </div>
+            </div>
+
+            <div class="candidate" data-candidate="Cancel">
+                <div class="candidate-name">Cancel</div>
+                <div>
+                    <div class="rating-buttons">
+                        <button type="button" class="rating-btn" data-rating="4" onclick="selectRating(this, 14)">4</button>
+                        <button type="button" class="rating-btn" data-rating="3" onclick="selectRating(this, 14)">3</button>
+                        <button type="button" class="rating-btn" data-rating="2" onclick="selectRating(this, 14)">2</button>
+                        <button type="button" class="rating-btn" data-rating="1" onclick="selectRating(this, 14)">1</button>
+                        <button type="button" class="rating-btn" data-rating="0" onclick="selectRating(this, 14)">0</button>
+                    </div>
+                    <input type="text" class="notes-input" placeholder="Notes (optional)" id="notes-14" />
+                    <input type="hidden" id="rating-14" name="rating-14" value="" />
+                </div>
+            </div>
+
+        </div>
+        <button type="submit" class="submit-btn">Submit Annotations</button>
+    </form>
+
+    <script>
+        const ratings = {};
+        const notes = {};
+
+        function selectRating(btn, index) {
+            // Remove selected class from all buttons in this group
+            const container = btn.closest('.candidate');
+            container.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
+            
+            // Add selected class to clicked button
+            btn.classList.add('selected');
+            
+            // Store rating
+            const rating = parseInt(btn.dataset.rating);
+            ratings[index] = rating;
+            document.getElementById(`rating-${index}`).value = rating;
+        }
+
+        document.getElementById('annotation-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const annotations = [];
+            const candidates = document.querySelectorAll('.candidate');
+            
+            candidates.forEach((candidateEl, index) => {
+                const candidate = candidateEl.dataset.candidate;
+                const rating = ratings[index];
+                const note = document.getElementById(`notes-${index}`).value;
+                
+                if (rating !== undefined) {
+                    annotations.push({
+                        candidate: candidate,
+                        relevance: rating,
+                        notes: note
+                    });
+                }
+            });
+            
+            const result = {
+                query: 'Martyr's Cause',
+                timestamp: new Date().toISOString(),
+                annotations: annotations
+            };
+            
+            // Download as JSON
+            const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'annotations_' + Date.now() + '.json';
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            alert('Annotations saved! Check your downloads folder.');
+        });
+    </script>
+</body>
+</html>

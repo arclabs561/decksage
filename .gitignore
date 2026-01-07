@@ -188,3 +188,4 @@ data/graphs/*
 data/embeddings/**/*
 src/backend/data/processed/*.csv
 src/backend/data/embeddings/*
+data/processed/decks_all_final.jsonl

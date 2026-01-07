@@ -1,0 +1,13 @@
+{
+  "timestamp": "2026-01-04T21:18:31.637576",
+  "model_type": "test",
+  "model_version": "vduplicate",
+  "model_path": "test2",
+  "test_set_path": null,
+  "metrics": {},
+  "full_results": {
+    "p@10": 0.6
+  },
+  "metadata": {},
+  "is_production": false
+}

@@ -48,6 +48,54 @@ test-tier0-tier1:
         -v \
         -m "not slow"
 
+# ============================================================================
+# Architecture Validation
+# ============================================================================
+
+# Check for hardcoded paths (blocking)
+check-paths:
+    #!/usr/bin/env bash
+    python3 scripts/validation/check_hardcoded_paths.py $(git diff --name-only --diff-filter=ACMR HEAD | grep '\.py$' || echo "")
+
+# Check for unsafe data writes (non-blocking)
+check-lineage:
+    #!/usr/bin/env bash
+    python3 scripts/validation/check_lineage_usage.py $(git diff --name-only --diff-filter=ACMR HEAD | grep '\.py$' || echo "") || true
+
+# Check for unvalidated deck loads (non-blocking)
+check-schema:
+    #!/usr/bin/env bash
+    python3 scripts/validation/check_schema_validation.py $(git diff --name-only --diff-filter=ACMR HEAD | grep '\.py$' || echo "") || true
+
+# Run all architecture checks
+check-architecture:
+    #!/usr/bin/env bash
+    echo "Checking hardcoded paths..."
+    just check-paths
+    echo ""
+    echo "Checking lineage usage..."
+    just check-lineage
+    echo ""
+    echo "Checking schema validation..."
+    just check-schema
+
+# Run architecture validation tests
+test-architecture:
+    #!/usr/bin/env bash
+    uv run pytest tests/test_lineage_validation.py tests/test_schema_validation.py -v
+
+# Count adoption metrics
+check-adoption:
+    #!/usr/bin/env bash
+    echo "Files using safe_write:"
+    rg "safe_write" --type py | wc -l
+    echo ""
+    echo "Files using validate_deck_record:"
+    rg "validate_deck_record" --type py | wc -l
+    echo ""
+    echo "Files using DeckExport:"
+    rg "DeckExport" --type py | wc -l
+
 # Run all Tier 0 & Tier 1 tests (including slow)
 test-tier0-tier1-all:
     #!/usr/bin/env bash
@@ -664,15 +712,7 @@ validate-test-set game:
         --min-queries 100 \
         --min-labels 5
 
-# Generate quality dashboard (T0.3)
-quality-dashboard:
-    #!/usr/bin/env bash
-    # Generate quality dashboard from validation results
-    # Usage: just quality-dashboard
-    uv run python -m ml.evaluation.quality_dashboard \
-        --test-set-validation experiments/test_set_validation_magic.json \
-        --completion-validation experiments/deck_quality_validation_magic.json \
-        --output experiments/quality_dashboard.html
+# Generate quality dashboard (see line 766 for implementation)
 
 # Expand Pokemon test set to 100 queries
 expand-pokemon-test-set:
@@ -771,6 +811,237 @@ quality-dashboard:
         --completion-validation experiments/deck_quality_validation_magic.json \
         --evaluation-results experiments/hybrid_evaluation_results.json \
         --output experiments/quality_dashboard.html
+
+# ============================================================================
+# Pack Scraping & Integration (Booster/Starter/Standard Packs)
+# ============================================================================
+
+# Scrape packs for all games
+scrape-packs-all limit-per-game='':
+    #!/usr/bin/env bash
+    # Scrape packs for all games (Magic, Pokemon, Yu-Gi-Oh)
+    # Usage: just scrape-packs-all
+    #        just scrape-packs-all limit-per-game=50
+    LIMIT_FLAG=""
+    if [ -n "{{limit-per-game}}" ]; then
+        LIMIT_FLAG="--limit-per-game {{limit-per-game}}"
+    fi
+    uv run python -m ml.scripts.scrape_all_packs $LIMIT_FLAG
+
+# Scrape Magic packs from Scryfall
+scrape-packs-magic pack-types='' limit='':
+    #!/usr/bin/env bash
+    # Scrape Magic packs from Scryfall API
+    # Usage: just scrape-packs-magic
+    #        just scrape-packs-magic pack-types="booster starter" limit=100
+    PACK_TYPES_FLAG=""
+    if [ -n "{{pack-types}}" ]; then
+        PACK_TYPES_FLAG="--pack-types {{pack-types}}"
+    fi
+    LIMIT_FLAG=""
+    if [ -n "{{limit}}" ]; then
+        LIMIT_FLAG="--limit {{limit}}"
+    fi
+    uv run python -m ml.scripts.scrape_packs_magic $PACK_TYPES_FLAG $LIMIT_FLAG
+
+# Scrape Pokemon packs from TCGdx
+scrape-packs-pokemon limit='':
+    #!/usr/bin/env bash
+    # Scrape Pokemon packs from TCGdx API
+    # Usage: just scrape-packs-pokemon
+    #        just scrape-packs-pokemon limit=50
+    LIMIT_FLAG=""
+    if [ -n "{{limit}}" ]; then
+        LIMIT_FLAG="--limit {{limit}}"
+    fi
+    uv run python -m ml.scripts.scrape_packs_pokemon $LIMIT_FLAG
+
+# Scrape Yu-Gi-Oh packs from YGOProDeck
+scrape-packs-yugioh limit='':
+    #!/usr/bin/env bash
+    # Scrape Yu-Gi-Oh packs from YGOProDeck API
+    # Usage: just scrape-packs-yugioh
+    #        just scrape-packs-yugioh limit=50
+    LIMIT_FLAG=""
+    if [ -n "{{limit}}" ]; then
+        LIMIT_FLAG="--limit {{limit}}"
+    fi
+    uv run python -m ml.scripts.scrape_packs_yugioh $LIMIT_FLAG
+
+# Integrate pack data into graph
+integrate-packs game='' no-pack-edges='' no-pack-metadata='':
+    #!/usr/bin/env bash
+    # Integrate pack co-occurrence into incremental graph
+    # Usage: just integrate-packs
+    #        just integrate-packs game=MTG
+    #        just integrate-packs no-pack-edges=true  # Only add metadata, not edges
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    NO_EDGES_FLAG=""
+    if [ "{{no-pack-edges}}" = "true" ]; then
+        NO_EDGES_FLAG="--no-pack-edges"
+    fi
+    NO_METADATA_FLAG=""
+    if [ "{{no-pack-metadata}}" = "true" ]; then
+        NO_METADATA_FLAG="--no-pack-metadata"
+    fi
+    uv run python -m ml.scripts.integrate_packs_into_graph \
+        $GAME_FLAG \
+        $NO_EDGES_FLAG \
+        $NO_METADATA_FLAG
+
+# Full pack pipeline: scrape + integrate
+pack-pipeline game='' limit-per-game='':
+    #!/usr/bin/env bash
+    # Full pipeline: scrape packs then integrate into graph
+    # Usage: just pack-pipeline
+    #        just pack-pipeline game=MTG limit-per-game=50
+    LIMIT_FLAG=""
+    if [ -n "{{limit-per-game}}" ]; then
+        LIMIT_FLAG="--limit-per-game {{limit-per-game}}"
+    fi
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--games {{game}}"
+    fi
+    echo "==> Step 1: Scraping packs..."
+    uv run python -m ml.scripts.scrape_all_packs $GAME_FLAG $LIMIT_FLAG
+    echo "==> Step 2: Integrating packs into graph..."
+    if [ -n "{{game}}" ]; then
+        just integrate-packs game={{game}}
+    else
+        just integrate-packs
+    fi
+    echo "==> Step 3: Validating pack data..."
+    if [ -n "{{game}}" ]; then
+        uv run python -m ml.scripts.validate_pack_data --game {{game}}
+    else
+        uv run python -m ml.scripts.validate_pack_data
+    fi
+    echo "==> Pack pipeline complete!"
+
+# Validate pack data quality
+validate-packs game='':
+    #!/usr/bin/env bash
+    # Validate pack data quality and coverage
+    # Usage: just validate-packs
+    #        just validate-packs game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.validate_pack_data $GAME_FLAG
+
+# Analyze pack coverage and gaps
+analyze-pack-coverage game='' top-n='50':
+    #!/usr/bin/env bash
+    # Analyze pack coverage and identify gaps
+    # Usage: just analyze-pack-coverage
+    #        just analyze-pack-coverage game=MTG top-n=100
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    TOP_N_FLAG=""
+    if [ -n "{{top-n}}" ]; then
+        TOP_N_FLAG="--top-n {{top-n}}"
+    fi
+    uv run python -m ml.scripts.analyze_pack_coverage $GAME_FLAG $TOP_N_FLAG
+
+# Export graph with pack features for GNN
+export-graph-packs game='' min-weight='1':
+    #!/usr/bin/env bash
+    # Export graph edgelist with pack features for GNN training
+    # Usage: just export-graph-packs
+    #        just export-graph-packs game=MTG min-weight=2
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    MIN_WEIGHT_FLAG=""
+    if [ -n "{{min-weight}}" ]; then
+        MIN_WEIGHT_FLAG="--min-weight {{min-weight}}"
+    fi
+    uv run python -m ml.scripts.export_graph_with_pack_features $GAME_FLAG $MIN_WEIGHT_FLAG
+
+# Integrate archetype relationships
+integrate-archetypes game='':
+    #!/usr/bin/env bash
+    # Integrate archetype relationships into graph
+    # Usage: just integrate-archetypes
+    #        just integrate-archetypes game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_archetype_relationships $GAME_FLAG
+
+# Integrate card attribute relationships
+integrate-attributes game='':
+    #!/usr/bin/env bash
+    # Integrate card attribute relationships (color, type, keywords, etc.)
+    # Usage: just integrate-attributes
+    #        just integrate-attributes game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_card_attributes_relationships $GAME_FLAG
+
+# Enrich card attributes with image URLs (for visual embeddings)
+enrich-card-images limit='' test-set-only='':
+    #!/usr/bin/env bash
+    # Enrich card_attributes_enriched.csv with image URLs from Scryfall API
+    # Part of standard data processing pipeline (Order 0-1: Card attributes enrichment)
+    # Usage: just enrich-card-images
+    #        just enrich-card-images limit=1000
+    #        just enrich-card-images test-set-only=true
+    ARGS=()
+    if [ -n "{{limit}}" ] && [ "{{limit}}" != "" ]; then
+        ARGS+=("--limit" "{{limit}}")
+    fi
+    if [ -n "{{test-set-only}}" ] && [ "{{test-set-only}}" = "true" ]; then
+        ARGS+=("--test-set-only")
+    fi
+    uv run python scripts/data/update_card_data_with_images.py "${ARGS[@]}"
+
+# Integrate tournament performance
+integrate-tournament game='':
+    #!/usr/bin/env bash
+    # Integrate tournament performance data (winning decks get stronger edges)
+    # Usage: just integrate-tournament
+    #        just integrate-tournament game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_tournament_performance $GAME_FLAG
+
+# Integrate format legality
+integrate-format game='':
+    #!/usr/bin/env bash
+    # Integrate format legality relationships
+    # Usage: just integrate-format
+    #        just integrate-format game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_format_legality $GAME_FLAG
+
+# Integrate all data sources
+integrate-all game='':
+    #!/usr/bin/env bash
+    # Integrate all data sources (packs, archetypes, attributes, tournament, format)
+    # Usage: just integrate-all
+    #        just integrate-all game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_all_data_sources $GAME_FLAG
 
 # ============================================================================
 # TypeScript Client & CLI (ARCHIVED - Use Python CLI Instead)

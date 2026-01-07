@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-01-04T21:29:27.588823",
+  "model_type": "test",
+  "model_version": "v2026-W01",
+  "model_path": "/path/to/model",
+  "test_set_path": null,
+  "metrics": {
+    "mrr": 0.3
+  },
+  "full_results": {
+    "p@10": 0.15,
+    "mrr": 0.3
+  },
+  "metadata": {
+    "test": true
+  },
+  "is_production": false
+}

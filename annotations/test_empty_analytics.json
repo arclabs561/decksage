@@ -1,0 +1,23 @@
+{
+  "generated_at": "2026-01-05T12:57:27.408834",
+  "total_annotations": 0,
+  "coverage": {
+    "unique_cards": 0,
+    "unique_pairs": 0,
+    "total_annotations": 0,
+    "sources": {},
+    "games": {},
+    "avg_annotations_per_card": 0
+  },
+  "quality": {},
+  "temporal": {},
+  "agreement": {
+    "total_pairs": 0,
+    "multi_source_pairs": 0,
+    "agreements": 0,
+    "disagreements": 0,
+    "agreement_rate": 0,
+    "sample_agreements": [],
+    "sample_disagreements": []
+  }
+}

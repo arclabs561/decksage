@@ -188,6 +188,7 @@ class HybridSearch:
         image_url: str | None = None,
         ref_url: str | None = None,
         embedding: np.ndarray | None = None,
+        visual_embedding: np.ndarray | None = None,
     ) -> None:
         """
         Index a card in both Meilisearch and Qdrant.
@@ -199,6 +200,7 @@ class HybridSearch:
             image_url: Card image URL
             ref_url: Reference URL
             embedding: Pre-computed embedding vector (if None, will generate from embeddings)
+            visual_embedding: Pre-computed visual embedding vector (optional)
         """
         card_id = self._card_id(card_name)
 
@@ -244,6 +246,14 @@ class HybridSearch:
                         "image_url": image_url or "",
                         "ref_url": ref_url or "",
                     }
+
+                    # Store visual embedding in payload if provided
+                    # Note: Qdrant payload has size limits, so we store as list
+                    if visual_embedding is not None:
+                        if isinstance(visual_embedding, np.ndarray):
+                            payload["visual_embedding"] = visual_embedding.tolist()
+                        else:
+                            payload["visual_embedding"] = visual_embedding
 
                     self.qdrant.upsert(
                         collection_name=self.collection_name,

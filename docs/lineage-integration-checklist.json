@@ -1,0 +1,69 @@
+{
+  "lineage_integration": {
+    "cursor_rules": {
+      "status": "complete",
+      "file": ".cursorrules",
+      "notes": "Comprehensive Data Lineage Architecture section added"
+    },
+    "documentation": {
+      "status": "complete",
+      "files": [
+        "docs/data-lineage-flow.txt",
+        "docs/llm-labels-lineage.md"
+      ],
+      "notes": "Complete documentation with LLM labels clarification"
+    },
+    "validation_tools": {
+      "status": "complete",
+      "files": [
+        "scripts/data_processing/validate_lineage.py",
+        "scripts/data_processing/regenerate_derived.py",
+        "src/ml/utils/lineage.py"
+      ],
+      "notes": "Validation and regeneration tools created"
+    },
+    "automation_integration": {
+      "status": "complete",
+      "files": [
+        "scripts/automation/daily_update.sh",
+        "scripts/automation/weekly_retrain.sh"
+      ],
+      "notes": "Lineage validation added to automation scripts"
+    },
+    "script_documentation": {
+      "status": "in_progress",
+      "completed": [
+        "scripts/data_processing/generate_pairs_for_games.py",
+        "scripts/test_sets/create_test_sets_for_new_games.py",
+        "scripts/annotations/generate_llm_annotations.py",
+        "src/backend/cmd/export-blob/main.go",
+        "src/ml/scripts/update_graph_incremental.py",
+        "src/ml/scripts/train_hybrid_full.py",
+        "src/ml/scripts/expand_test_set_with_llm.py",
+        "src/ml/annotation/llm_annotator.py",
+        "src/ml/utils/data_loading.py",
+        "src/ml/utils/annotation_utils.py",
+        "src/ml/evaluation/evaluate_hybrid_with_runctl.py"
+      ],
+      "notes": "Key scripts now have lineage documentation"
+    },
+    "git_hooks": {
+      "status": "complete",
+      "file": ".git/hooks/pre-commit",
+      "notes": "Pre-commit hook validates lineage"
+    },
+    "justfile_targets": {
+      "status": "complete",
+      "targets": [
+        "validate-lineage",
+        "regenerate-derived"
+      ],
+      "notes": "Justfile targets for easy validation (migrated from Makefile)"
+    },
+    "metadata": {
+      "status": "complete",
+      "file": "data/data-lineage-metadata.json",
+      "notes": "Machine-readable lineage metadata"
+    }
+  }
+}

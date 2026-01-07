@@ -1,0 +1,19 @@
+{
+  "run_id": "hybrid_evaluation_hybrid_test-20260101-085347_20260105_190727",
+  "timestamp": "2026-01-05T19:07:27.655842+00:00",
+  "evaluation_type": "hybrid_evaluation",
+  "method": "hybrid_test-20260101-085347",
+  "test_set_path": "test_set.json",
+  "num_queries": null,
+  "metrics": {
+    "p_at_10": 0.15,
+    "mrr": 0.08
+  },
+  "config": {
+    "model_type": "hybrid",
+    "model_version": "test-20260101-085347",
+    "model_path": "test.wv",
+    "test": true
+  },
+  "notes": "Migrated from evaluation_registry.db"
+}

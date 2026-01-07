@@ -1,0 +1,22 @@
+{
+  "timestamp": "2026-01-04T21:31:30.226925",
+  "model_type": "hybrid",
+  "model_version": "v2026-W01",
+  "model_path": "test.wv",
+  "test_set_path": "experiments/test_set_unified_magic.json",
+  "metrics": {
+    "p_at_10": 0.1418,
+    "mrr": 0.3238
+  },
+  "full_results": {
+    "summary": {
+      "avg_p_at_10": 0.1418,
+      "avg_mrr": 0.3238
+    }
+  },
+  "metadata": {
+    "instruction_model": "intfloat/e5-base-v2",
+    "use_temporal_split": true
+  },
+  "is_production": false
+}
