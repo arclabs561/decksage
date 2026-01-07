@@ -8,7 +8,7 @@ ML-powered card similarity and recommendations for trading card games. Find budg
 
 ## Features
 
-- **Multi-modal similarity search**: Combines graph embeddings, instruction-tuned embeddings, co-occurrence patterns, and functional tags
+- **Multi-modal similarity search**: Combines graph embeddings, instruction-tuned embeddings, visual embeddings, co-occurrence patterns, and functional tags
 - **Budget substitutions**: Find cheaper alternatives that serve similar roles
 - **Deck completion**: AI-powered suggestions to finish incomplete decks
 - **Contextual recommendations**: Format, archetype, and meta-aware suggestions
@@ -79,8 +79,9 @@ DeckSage uses a hybrid embedding system combining multiple signals:
 1. **Graph Neural Networks (30%)**: Multi-hop relationships, inductive learning
 2. **Instruction-Tuned Embeddings (25%)**: Zero-shot semantic understanding
 3. **Co-occurrence Embeddings (20%)**: Node2Vec/PecanPy on tournament decks
-4. **Jaccard Similarity (15%)**: Direct co-occurrence patterns
-5. **Functional Tags (10%)**: Role-based similarity (removal, draw, ramp, etc.)
+4. **Visual Embeddings (20%)**: SigLIP 2 vision model for card image similarity
+5. **Jaccard Similarity (15%)**: Direct co-occurrence patterns
+6. **Functional Tags (10%)**: Role-based similarity (removal, draw, ramp, etc.)
 
 **Pipeline**:
 ```

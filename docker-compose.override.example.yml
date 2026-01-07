@@ -1,0 +1,32 @@
+# Example override file for local development
+# Copy to docker-compose.override.yml and customize paths
+#
+# Usage:
+#   cp docker-compose.override.example.yml docker-compose.override.yml
+#   # Edit paths as needed
+#   docker compose up
+
+version: '3.8'
+
+services:
+  decksage-api:
+    environment:
+      # Development environment
+      - ENVIRONMENT=development
+      # Allow CORS for local development (adjust origins as needed)
+      - CORS_ORIGINS=*
+      # Point to your local ML assets
+      - EMBEDDINGS_PATH=/app/data/embeddings/magic_128d_test_pecanpy.wv
+      - PAIRS_PATH=/app/data/graphs/pairs_large.csv
+      - ATTRIBUTES_PATH=/app/data/attributes/card_attrs.csv
+    volumes:
+      # Mount your local data directories
+      - ./data/embeddings:/app/data/embeddings:ro
+      - ./data/graphs:/app/data/graphs:ro
+      - ./data/attributes:/app/data/attributes:ro
+      - ./data/signals:/app/data/signals:ro
+      # Frontend: Mount HTML for hot-reload during development
+      # Changes to test_search.html will be reflected immediately without rebuild
+      - ./test_search.html:/app/test_search.html:ro
+    # Enable hot-reload for development (API code changes)
+    command: ["uvicorn", "src.ml.api.api:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]

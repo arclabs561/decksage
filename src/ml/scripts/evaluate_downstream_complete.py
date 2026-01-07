@@ -227,8 +227,8 @@ def load_trained_assets(
                 pairs_path.exists() and pairs_path.stat().st_size < 1000
             ):
                 pairs_path = PATHS.backend / "pairs.csv"
-            if not pairs_path.exists():
-                pairs_path = Path("src/backend/pairs.csv")
+            # Note: No additional fallback - if PATHS.backend/pairs.csv doesn't exist,
+            # the code will handle it gracefully below
 
     if pairs_path and pairs_path.exists() and pairs_path.stat().st_size > 1000:
         logger.info(f"Loading graph from CSV (faster): {pairs_path}")
@@ -273,8 +273,8 @@ def load_trained_assets(
                     pairs_path.exists() and pairs_path.stat().st_size < 1000
                 ):
                     pairs_path = PATHS.backend / "pairs.csv"
-                if not pairs_path.exists():
-                    pairs_path = Path("src/backend/pairs.csv")
+                # Note: No additional fallback - if PATHS.backend/pairs.csv doesn't exist,
+                # the code will handle it gracefully below
 
         # Convert string to Path and handle S3
         if pairs_path and isinstance(pairs_path, str):
@@ -430,12 +430,22 @@ def load_trained_assets(
     if assets["embeddings"] and assets["adj"]:
         # OPTIMIZATION: Disable tagger in fast mode (functional tags are expensive)
         tagger_to_use = None if (fast_mode or disable_functional) else assets["tagger"]
+        # Load visual embedder if available (optional, doesn't slow down evaluation significantly)
+        visual_embedder = None
+        try:
+            from ..similarity.visual_embeddings import get_visual_embedder
+
+            visual_embedder = get_visual_embedder()
+        except (ImportError, Exception):
+            pass  # Visual embeddings optional
+
         fusion = WeightedLateFusion(
             embeddings=assets["embeddings"],
             adj=assets["adj"],
             tagger=tagger_to_use,
             weights=fusion_weights,
             text_embedder=None,  # Always disable text embeddings for evaluation (too slow)
+            visual_embedder=visual_embedder,  # Visual embeddings are fast enough for evaluation
         )
         assets["fusion"] = fusion
     else:

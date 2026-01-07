@@ -1,0 +1,65 @@
+{
+  "single": {
+    "num_annotations": 5,
+    "score_mean": 0.11599999999999999,
+    "score_std": 0.10594338110519223,
+    "score_min": 0.04,
+    "score_max": 0.32,
+    "score_distribution": {
+      "very_low (0.0-0.2)": 4,
+      "low (0.2-0.4)": 1,
+      "medium (0.4-0.6)": 0,
+      "high (0.6-0.8)": 0,
+      "very_high (0.8-1.0)": 0
+    },
+    "type_distribution": {
+      "unrelated": 4,
+      "synergy": 1
+    },
+    "source_distribution": {
+      "llm": 5
+    }
+  },
+  "uncertainty": {
+    "num_annotations": 5,
+    "score_mean": 0.144,
+    "score_std": 0.09024411338142782,
+    "score_min": 0.05,
+    "score_max": 0.25,
+    "score_distribution": {
+      "very_low (0.0-0.2)": 3,
+      "low (0.2-0.4)": 2,
+      "medium (0.4-0.6)": 0,
+      "high (0.6-0.8)": 0,
+      "very_high (0.8-1.0)": 0
+    },
+    "type_distribution": {
+      "unrelated": 3,
+      "archetype": 2
+    },
+    "source_distribution": {
+      "llm": 5
+    }
+  },
+  "multi_annotator": {
+    "num_annotations": 5,
+    "score_mean": 0.16199999999999998,
+    "score_std": 0.1049571341072154,
+    "score_min": 0.05,
+    "score_max": 0.35,
+    "score_distribution": {
+      "very_low (0.0-0.2)": 4,
+      "low (0.2-0.4)": 1,
+      "medium (0.4-0.6)": 0,
+      "high (0.6-0.8)": 0,
+      "very_high (0.8-1.0)": 0
+    },
+    "type_distribution": {
+      "unrelated": 4,
+      "functional": 1
+    },
+    "source_distribution": {
+      "llm_multi_annotator": 5
+    }
+  }
+}

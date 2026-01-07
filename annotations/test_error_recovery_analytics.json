@@ -1,0 +1,39 @@
+{
+  "generated_at": "2026-01-05T13:48:49.868900",
+  "total_annotations": 5,
+  "coverage": {
+    "unique_cards": 9,
+    "unique_pairs": 4,
+    "total_annotations": 5,
+    "sources": {
+      "test": 5
+    },
+    "games": {
+      "unknown": 5
+    },
+    "avg_annotations_per_card": 0.5555555555555556
+  },
+  "quality": {
+    "min_score": 0.6,
+    "max_score": 2.0,
+    "avg_score": 1.0,
+    "median_score": 0.8,
+    "score_distribution": {
+      "high": 3,
+      "medium": 2,
+      "low": 0
+    },
+    "substitute_rate": 0.0,
+    "total_substitutes": 0
+  },
+  "temporal": {},
+  "agreement": {
+    "total_pairs": 4,
+    "multi_source_pairs": 0,
+    "agreements": 0,
+    "disagreements": 0,
+    "agreement_rate": 0,
+    "sample_agreements": [],
+    "sample_disagreements": []
+  }
+}

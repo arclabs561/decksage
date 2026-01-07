@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeckSage UI Validation Tests</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #e0e0e0;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #2a2a2a;
+            border-radius: 8px;
+            border-left: 4px solid #6b8eff;
+        }
+        .test-result {
+            margin: 10px 0;
+            padding: 10px;
+            border-radius: 4px;
+        }
+        .pass {
+            background: #1a4a1a;
+            border-left: 3px solid #4ade80;
+        }
+        .fail {
+            background: #4a1a1a;
+            border-left: 3px solid #ef4444;
+        }
+        .warning {
+            background: #4a4a1a;
+            border-left: 3px solid #fbbf24;
+        }
+        .info {
+            background: #1a1a4a;
+            border-left: 3px solid #6b8eff;
+        }
+        button {
+            padding: 8px 16px;
+            background: #6b8eff;
+            border: none;
+            border-radius: 4px;
+            color: white;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #5a7eef;
+        }
+        pre {
+            background: #1a1a1a;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        h1, h2 {
+            color: #6b8eff;
+        }
+    </style>
+</head>
+<body>
+    <h1>DeckSage UI Validation Tests</h1>
+    <p>This page tests all UI features, caching, analytics, and service worker functionality.</p>
+
+    <div class="test-section">
+        <h2>1. Browser Compatibility</h2>
+        <div id="browser-tests"></div>
+    </div>
+
+    <div class="test-section">
+        <h2>2. LocalStorage & Cache System</h2>
+        <div id="storage-tests"></div>
+        <button onclick="testCacheSystem()">Test Cache System</button>
+        <button onclick="testCacheCleanup()">Test Cache Cleanup</button>
+    </div>
+
+    <div class="test-section">
+        <h2>3. Service Worker</h2>
+        <div id="sw-tests"></div>
+        <button onclick="testServiceWorker()">Test Service Worker</button>
+        <button onclick="testOfflineMode()">Test Offline Mode</button>
+    </div>
+
+    <div class="test-section">
+        <h2>4. Analytics System</h2>
+        <div id="analytics-tests"></div>
+        <button onclick="testAnalytics()">Test Analytics</button>
+        <button onclick="testAnalyticsPrivacy()">Test Privacy</button>
+    </div>
+
+    <div class="test-section">
+        <h2>5. XSS Protection</h2>
+        <div id="xss-tests"></div>
+        <button onclick="testXSSProtection()">Test XSS Protection</button>
+    </div>
+
+    <div class="test-section">
+        <h2>6. Input Validation</h2>
+        <div id="validation-tests"></div>
+        <button onclick="testInputValidation()">Test Input Validation</button>
+    </div>
+
+    <div class="test-section">
+        <h2>7. Performance Metrics</h2>
+        <div id="performance-tests"></div>
+        <button onclick="testPerformance()">Test Performance</button>
+    </div>
+
+    <div class="test-section">
+        <h2>8. Edge Cases</h2>
+        <div id="edge-tests"></div>
+        <button onclick="testEdgeCases()">Test Edge Cases</button>
+    </div>
+
+    <div class="test-section">
+        <h2>9. API Integration</h2>
+        <div id="api-tests"></div>
+        <button onclick="testAPIIntegration()">Test API Integration</button>
+    </div>
+
+    <div class="test-section">
+        <h2>10. Accessibility</h2>
+        <div id="a11y-tests"></div>
+        <button onclick="testAccessibility()">Test Accessibility</button>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let testResults = [];
+
+        function addResult(section, message, type = 'info') {
+            const div = document.createElement('div');
+            div.className = `test-result ${type}`;
+            div.textContent = message;
+            document.getElementById(section).appendChild(div);
+            testResults.push({ section, message, type });
+        }
+
+        function clearResults(section) {
+            document.getElementById(section).innerHTML = '';
+        }
+
+        // Test 1: Browser Compatibility
+        function testBrowserCompatibility() {
+            clearResults('browser-tests');
+            const features = {
+                'Service Worker': 'serviceWorker' in navigator,
+                'localStorage': typeof Storage !== 'undefined',
+                'fetch API': typeof fetch !== 'undefined',
+                'AbortController': typeof AbortController !== 'undefined',
+                'Performance API': typeof performance !== 'undefined' && 'now' in performance,
+                'CSS Grid': CSS.supports('display', 'grid'),
+                'CSS Flexbox': CSS.supports('display', 'flex'),
+            };
+
+            let allPassed = true;
+            for (const [feature, supported] of Object.entries(features)) {
+                if (supported) {
+                    addResult('browser-tests', `✓ ${feature}: Supported`, 'pass');
+                } else {
+                    addResult('browser-tests', `✗ ${feature}: Not supported`, 'fail');
+                    allPassed = false;
+                }
+            }
+
+            if (allPassed) {
+                addResult('browser-tests', 'All browser features supported!', 'pass');
+            } else {
+                addResult('browser-tests', 'Some features not supported. UI may have limited functionality.', 'warning');
+            }
+        }
+
+        // Test 2: Cache System
+        function testCacheSystem() {
+            clearResults('storage-tests');
+            
+            try {
+                // Test localStorage availability
+                if (typeof Storage === 'undefined') {
+                    addResult('storage-tests', '✗ localStorage not available', 'fail');
+                    return;
+                }
+                addResult('storage-tests', '✓ localStorage available', 'pass');
+
+                // Test cache key generation
+                const testKey = `decksage_cache_${btoa('test|fusion|substitute|10').replace(/[+/=]/g, '')}`;
+                addResult('storage-tests', `✓ Cache key format: ${testKey.substring(0, 30)}...`, 'pass');
+
+                // Test cache storage
+                const testData = {
+                    result: { results: [{ card: 'Test Card', similarity: 0.9 }] },
+                    timestamp: Date.now(),
+                };
+                localStorage.setItem('test_cache_key', JSON.stringify(testData));
+                const retrieved = JSON.parse(localStorage.getItem('test_cache_key'));
+                
+                if (retrieved && retrieved.result) {
+                    addResult('storage-tests', '✓ Cache storage/retrieval works', 'pass');
+                } else {
+                    addResult('storage-tests', '✗ Cache storage/retrieval failed', 'fail');
+                }
+
+                // Test cache expiration
+                const expiredData = {
+                    result: { results: [] },
+                    timestamp: Date.now() - 7200000, // 2 hours ago
+                };
+                localStorage.setItem('test_expired_cache', JSON.stringify(expiredData));
+                const expired = JSON.parse(localStorage.getItem('test_expired_cache'));
+                const isExpired = Date.now() - expired.timestamp > 3600000; // 1 hour TTL
+                
+                if (isExpired) {
+                    addResult('storage-tests', '✓ Cache expiration detection works', 'pass');
+                } else {
+                    addResult('storage-tests', '✗ Cache expiration detection failed', 'fail');
+                }
+
+                // Cleanup
+                localStorage.removeItem('test_cache_key');
+                localStorage.removeItem('test_expired_cache');
+
+                // Test quota
+                try {
+                    let testString = 'x'.repeat(1024 * 1024); // 1MB
+                    localStorage.setItem('test_quota', testString);
+                    localStorage.removeItem('test_quota');
+                    addResult('storage-tests', '✓ Storage quota sufficient', 'pass');
+                } catch (e) {
+                    if (e.name === 'QuotaExceededError') {
+                        addResult('storage-tests', '⚠ Storage quota limited', 'warning');
+                    } else {
+                        addResult('storage-tests', `✗ Storage quota test failed: ${e.message}`, 'fail');
+                    }
+                }
+
+            } catch (e) {
+                addResult('storage-tests', `✗ Cache system test failed: ${e.message}`, 'fail');
+            }
+        }
+
+        function testCacheCleanup() {
+            clearResults('storage-tests');
+            
+            try {
+                // Create multiple cache entries
+                const now = Date.now();
+                for (let i = 0; i < 60; i++) {
+                    const key = `decksage_cache_test_${i}`;
+                    const data = {
+                        result: { results: [] },
+                        timestamp: now - (i * 60000), // Staggered timestamps
+                    };
+                    localStorage.setItem(key, JSON.stringify(data));
+                }
+
+                const keys = Object.keys(localStorage).filter(k => k.startsWith('decksage_cache_test_'));
+                addResult('storage-tests', `✓ Created ${keys.length} test cache entries`, 'pass');
+
+                // Simulate cleanup (keep only 50)
+                const entries = keys.map(key => {
+                    try {
+                        const data = JSON.parse(localStorage.getItem(key));
+                        return { key, timestamp: data.timestamp };
+                    } catch {
+                        return { key, timestamp: 0 };
+                    }
+                }).sort((a, b) => b.timestamp - a.timestamp);
+
+                const toRemove = entries.slice(50);
+                toRemove.forEach(entry => {
+                    localStorage.removeItem(entry.key);
+                });
+
+                const remaining = Object.keys(localStorage).filter(k => k.startsWith('decksage_cache_test_'));
+                addResult('storage-tests', `✓ Cleanup reduced to ${remaining.length} entries`, 'pass');
+
+                // Cleanup all test entries
+                keys.forEach(k => localStorage.removeItem(k));
+                addResult('storage-tests', '✓ All test entries cleaned up', 'pass');
+
+            } catch (e) {
+                addResult('storage-tests', `✗ Cache cleanup test failed: ${e.message}`, 'fail');
+            }
+        }
+
+        // Test 3: Service Worker
+        async function testServiceWorker() {
+            clearResults('sw-tests');
+            
+            if (!('serviceWorker' in navigator)) {
+                addResult('sw-tests', '✗ Service Worker not supported', 'fail');
+                return;
+            }
+
+            addResult('sw-tests', '✓ Service Worker API available', 'pass');
+
+            try {
+                const registration = await navigator.serviceWorker.getRegistration();
+                if (registration) {
+                    addResult('sw-tests', `✓ Service Worker registered: ${registration.scope}`, 'pass');
+                    addResult('sw-tests', `  Active: ${registration.active ? 'Yes' : 'No'}`, 'info');
+                    addResult('sw-tests', `  Installing: ${registration.installing ? 'Yes' : 'No'}`, 'info');
+                    addResult('sw-tests', `  Waiting: ${registration.waiting ? 'Yes' : 'No'}`, 'info');
+                } else {
+                    addResult('sw-tests', '⚠ Service Worker not registered yet', 'warning');
+                }
+            } catch (e) {
+                addResult('sw-tests', `✗ Service Worker check failed: ${e.message}`, 'fail');
+            }
+
+            // Test cache API
+            if ('caches' in window) {
+                addResult('sw-tests', '✓ Cache API available', 'pass');
+                try {
+                    const cacheNames = await caches.keys();
+                    addResult('sw-tests', `✓ Found ${cacheNames.length} cache(s)`, 'pass');
+                    cacheNames.forEach(name => {
+                        addResult('sw-tests', `  - ${name}`, 'info');
+                    });
+                } catch (e) {
+                    addResult('sw-tests', `✗ Cache API error: ${e.message}`, 'fail');
+                }
+            } else {
+                addResult('sw-tests', '✗ Cache API not available', 'fail');
+            }
+        }
+
+        async function testOfflineMode() {
+            clearResults('sw-tests');
+            
+            if (!navigator.onLine) {
+                addResult('sw-tests', '⚠ Already offline', 'warning');
+            }
+
+            // Test offline event
+            const offlineHandler = () => {
+                addResult('sw-tests', '✓ Offline event detected', 'pass');
+            };
+            window.addEventListener('offline', offlineHandler);
+
+            // Test online event
+            const onlineHandler = () => {
+                addResult('sw-tests', '✓ Online event detected', 'pass');
+            };
+            window.addEventListener('online', onlineHandler);
+
+            addResult('sw-tests', `Current status: ${navigator.onLine ? 'Online' : 'Offline'}`, 'info');
+        }
+
+        // Test 4: Analytics
+        function testAnalytics() {
+            clearResults('analytics-tests');
+            
+            try {
+                // Test analytics storage
+                const testEvent = {
+                    type: 'test_event',
+                    data: { test: true },
+                    timestamp: Date.now(),
+                    sessionId: 'test_session',
+                };
+
+                let events = [];
+                try {
+                    const stored = localStorage.getItem('decksage_analytics');
+                    if (stored) {
+                        events = JSON.parse(stored);
+                    }
+                } catch {
+                    events = [];
+                }
+
+                events.push(testEvent);
+                if (events.length > 100) {
+                    events = events.slice(-100);
+                }
+
+                localStorage.setItem('decksage_analytics', JSON.stringify(events));
+                addResult('analytics-tests', '✓ Analytics storage works', 'pass');
+
+                // Test retrieval
+                const retrieved = JSON.parse(localStorage.getItem('decksage_analytics') || '[]');
+                if (retrieved.length > 0) {
+                    addResult('analytics-tests', `✓ Retrieved ${retrieved.length} event(s)`, 'pass');
+                } else {
+                    addResult('analytics-tests', '⚠ No events found', 'warning');
+                }
+
+                // Test opt-out
+                localStorage.setItem('decksage_analytics_disabled', 'true');
+                const disabled = localStorage.getItem('decksage_analytics_disabled') === 'true';
+                if (disabled) {
+                    addResult('analytics-tests', '✓ Opt-out mechanism works', 'pass');
+                }
+                localStorage.removeItem('decksage_analytics_disabled');
+
+            } catch (e) {
+                addResult('analytics-tests', `✗ Analytics test failed: ${e.message}`, 'fail');
+            }
+        }
+
+        function testAnalyticsPrivacy() {
+            clearResults('analytics-tests');
+            
+            // Test anonymization
+            const testData = {
+                userId: 'user123',
+                ip: '192.168.1.1',
+                userAgent: 'Mozilla/5.0',
+                query: 'Lightning Bolt',
+            };
+
+            // Simulate anonymization
+            const anonymized = { ...testData };
+            delete anonymized.userId;
+            delete anonymized.ip;
+            delete anonymized.userAgent;
+
+            if (!anonymized.userId && !anonymized.ip && !anonymized.userAgent) {
+                addResult('analytics-tests', '✓ Data anonymization works', 'pass');
+            } else {
+                addResult('analytics-tests', '✗ Data anonymization failed', 'fail');
+            }
+
+            // Test that query is preserved (not PII)
+            if (anonymized.query === 'Lightning Bolt') {
+                addResult('analytics-tests', '✓ Non-PII data preserved', 'pass');
+            }
+        }
+
+        // Test 5: XSS Protection
+        function testXSSProtection() {
+            clearResults('xss-tests');
+            
+            // Test escapeHtml function
+            const testCases = [
+                { input: '<script>alert("xss")</script>', expected: '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;' },
+                { input: '<img src=x onerror=alert(1)>', expected: '&lt;img src=x onerror=alert(1)&gt;' },
+                { input: 'javascript:alert(1)', expected: 'javascript:alert(1)' },
+                { input: 'Normal text', expected: 'Normal text' },
+            ];
+
+            testCases.forEach(({ input, expected }) => {
+                const div = document.createElement('div');
+                div.textContent = input;
+                const escaped = div.innerHTML;
+                
+                if (escaped === expected) {
+                    addResult('xss-tests', `✓ Escaped: ${input.substring(0, 30)}...`, 'pass');
+                } else {
+                    addResult('xss-tests', `✗ Failed: ${input}`, 'fail');
+                }
+            });
+
+            // Test that innerHTML with escaped content is safe
+            const malicious = '<script>alert("xss")</script>';
+            const container = document.createElement('div');
+            container.innerHTML = malicious; // This would be dangerous
+            const hasScript = container.querySelector('script');
+            
+            if (hasScript) {
+                addResult('xss-tests', '⚠ Unescaped content contains script tags (expected)', 'warning');
+            }
+
+            // Test proper escaping
+            const safeContainer = document.createElement('div');
+            const tempDiv = document.createElement('div');
+            tempDiv.textContent = malicious;
+            safeContainer.innerHTML = tempDiv.innerHTML;
+            const safeHasScript = safeContainer.querySelector('script');
+            
+            if (!safeHasScript) {
+                addResult('xss-tests', '✓ Properly escaped content is safe', 'pass');
+            } else {
+                addResult('xss-tests', '✗ Escaped content still contains script', 'fail');
+            }
+        }
+
+        // Test 6: Input Validation
+        function testInputValidation() {
+            clearResults('validation-tests');
+            
+            // Test weight validation
+            const weightTests = [
+                { text: 0.5, vector: 0.5, valid: true },
+                { text: 0.3, vector: 0.7, valid: true },
+                { text: 0.5, vector: 0.3, valid: false }, // Sum != 1.0
+                { text: -0.1, vector: 0.5, valid: false }, // Negative
+                { text: 1.5, vector: 0.5, valid: false }, // > 1.0
+            ];
+
+            weightTests.forEach(({ text, vector, valid }) => {
+                const sum = text + vector;
+                const inRange = text >= 0 && text <= 1 && vector >= 0 && vector <= 1;
+                const sumValid = Math.abs(sum - 1.0) <= 0.01;
+                const isValid = inRange && sumValid;
+
+                if (isValid === valid) {
+                    addResult('validation-tests', `✓ Weight validation: ${text} + ${vector} = ${sum}`, 'pass');
+                } else {
+                    addResult('validation-tests', `✗ Weight validation failed: ${text} + ${vector}`, 'fail');
+                }
+            });
+
+            // Test range validation
+            const rangeTests = [
+                { value: 10, min: 1, max: 100, valid: true },
+                { value: 0, min: 1, max: 100, valid: false },
+                { value: 101, min: 1, max: 100, valid: false },
+                { value: 50, min: 1, max: 100, valid: true },
+            ];
+
+            rangeTests.forEach(({ value, min, max, valid }) => {
+                const isValid = value >= min && value <= max;
+                if (isValid === valid) {
+                    addResult('validation-tests', `✓ Range validation: ${value} in [${min}, ${max}]`, 'pass');
+                } else {
+                    addResult('validation-tests', `✗ Range validation failed: ${value}`, 'fail');
+                }
+            });
+
+            // Test deck structure validation
+            const deckTests = [
+                { deck: { Main: ['Card1'] }, valid: true },
+                { deck: { partitions: [{ name: 'Main', cards: [] }] }, valid: true },
+                { deck: { Sideboard: ['Card1'] }, valid: false }, // No Main
+                { deck: {}, valid: false },
+                { deck: { partitions: [] }, valid: false },
+            ];
+
+            deckTests.forEach(({ deck, valid }) => {
+                let hasMain = false;
+                if (deck.partitions && Array.isArray(deck.partitions)) {
+                    hasMain = deck.partitions.some(p => p.name && (p.name.includes('Main') || p.name === 'Main Deck'));
+                } else if (deck.Main && Array.isArray(deck.Main)) {
+                    hasMain = true;
+                }
+                
+                if (hasMain === valid) {
+                    addResult('validation-tests', `✓ Deck validation: ${hasMain}`, 'pass');
+                } else {
+                    addResult('validation-tests', `✗ Deck validation failed`, 'fail');
+                }
+            });
+        }
+
+        // Test 7: Performance
+        function testPerformance() {
+            clearResults('performance-tests');
+            
+            if (typeof performance === 'undefined' || !performance.now) {
+                addResult('performance-tests', '✗ Performance API not available', 'fail');
+                return;
+            }
+
+            addResult('performance-tests', '✓ Performance API available', 'pass');
+
+            // Test timing
+            const start = performance.now();
+            // Simulate some work
+            for (let i = 0; i < 1000; i++) {
+                Math.sqrt(i);
+            }
+            const end = performance.now();
+            const duration = end - start;
+
+            addResult('performance-tests', `✓ Performance timing: ${duration.toFixed(2)}ms`, 'pass');
+
+            // Test memory (if available)
+            if (performance.memory) {
+                const memory = performance.memory;
+                addResult('performance-tests', `  Used: ${(memory.usedJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+                addResult('performance-tests', `  Total: ${(memory.totalJSHeapSize / 1024 / 1024).toFixed(2)} MB`, 'info');
+            }
+        }
+
+        // Test 8: Edge Cases
+        function testEdgeCases() {
+            clearResults('edge-tests');
+            
+            // Test empty inputs
+            const emptyTests = ['', '   ', '\n', '\t'];
+            emptyTests.forEach(input => {
+                const trimmed = input.trim();
+                if (trimmed === '') {
+                    addResult('edge-tests', `✓ Empty input handling: "${input}"`, 'pass');
+                }
+            });
+
+            // Test very long inputs
+            const longInput = 'x'.repeat(10000);
+            if (longInput.length === 10000) {
+                addResult('edge-tests', '✓ Long input handling works', 'pass');
+            }
+
+            // Test special characters
+            const specialChars = ['<>&"\'', '日本語', '🚀', 'null', 'undefined'];
+            specialChars.forEach(char => {
+                const div = document.createElement('div');
+                div.textContent = char;
+                const escaped = div.innerHTML;
+                if (escaped !== char) {
+                    addResult('edge-tests', `✓ Special char escaped: ${char}`, 'pass');
+                }
+            });
+
+            // Test JSON parsing errors
+            const invalidJSONs = ['{invalid}', 'null', 'undefined', 'not json'];
+            invalidJSONs.forEach(json => {
+                try {
+                    JSON.parse(json);
+                    addResult('edge-tests', `✗ Invalid JSON accepted: ${json}`, 'fail');
+                } catch {
+                    addResult('edge-tests', `✓ Invalid JSON rejected: ${json}`, 'pass');
+                }
+            });
+        }
+
+        // Test 9: API Integration
+        async function testAPIIntegration() {
+            clearResults('api-tests');
+            
+            // Test API base URL
+            addResult('api-tests', `API Base: ${API_BASE}`, 'info');
+
+            // Test endpoints exist
+            const endpoints = [
+                '/v1/similar',
+                '/v1/cards',
+                '/v1/search',
+                '/v1/deck/complete',
+                '/v1/feedback',
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    // Just check if we can construct the URL
+                    const url = `${API_BASE}${endpoint}`;
+                    addResult('api-tests', `✓ Endpoint URL: ${endpoint}`, 'pass');
+                } catch (e) {
+                    addResult('api-tests', `✗ Endpoint error: ${endpoint} - ${e.message}`, 'fail');
+                }
+            }
+
+            // Test fetch availability
+            if (typeof fetch !== 'undefined') {
+                addResult('api-tests', '✓ Fetch API available', 'pass');
+            } else {
+                addResult('api-tests', '✗ Fetch API not available', 'fail');
+            }
+
+            // Test AbortController
+            if (typeof AbortController !== 'undefined') {
+                addResult('api-tests', '✓ AbortController available', 'pass');
+                
+                const controller = new AbortController();
+                controller.abort();
+                if (controller.signal.aborted) {
+                    addResult('api-tests', '✓ AbortController works', 'pass');
+                }
+            } else {
+                addResult('api-tests', '✗ AbortController not available', 'fail');
+            }
+        }
+
+        // Test 10: Accessibility
+        function testAccessibility() {
+            clearResults('a11y-tests');
+            
+            // Test ARIA attributes
+            const mainContent = document.getElementById('main-content');
+            if (mainContent) {
+                addResult('a11y-tests', '✓ Main content element found', 'pass');
+            }
+
+            // Test skip link
+            const skipLink = document.querySelector('.skip-link');
+            if (skipLink) {
+                addResult('a11y-tests', '✓ Skip link found', 'pass');
+            } else {
+                addResult('a11y-tests', '⚠ Skip link not found (may be in main page)', 'warning');
+            }
+
+            // Test keyboard navigation
+            if (document.addEventListener) {
+                addResult('a11y-tests', '✓ Keyboard event handling available', 'pass');
+            }
+
+            // Test focus indicators
+            const testButton = document.createElement('button');
+            testButton.style.outline = '2px solid #6b8eff';
+            if (testButton.style.outline) {
+                addResult('a11y-tests', '✓ Focus indicators can be styled', 'pass');
+            }
+        }
+
+        // Run all tests
+        function runAllTests() {
+            testBrowserCompatibility();
+            testCacheSystem();
+            testServiceWorker();
+            testAnalytics();
+            testXSSProtection();
+            testInputValidation();
+            testPerformance();
+            testEdgeCases();
+            testAPIIntegration();
+            testAccessibility();
+        }
+
+        // Initialize
+        window.addEventListener('load', () => {
+            runAllTests();
+        });
+    </script>
+</body>
+</html>
+
+

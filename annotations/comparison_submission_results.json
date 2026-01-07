@@ -1,0 +1,16 @@
+{
+  "mturk": {
+    "submitted": [],
+    "failed": [
+      {
+        "card1": "Lightning Bolt",
+        "card2": "Shock",
+        "error": "An error occurred (RequestError) when calling the CreateHIT operation: This Requester has insufficient funds in their account to complete this transaction. Please visit https://requester.mturk.com/prepayments/new to purchase Prepaid HITs. (1767737203828)"
+      }
+    ]
+  },
+  "scale": {
+    "submitted": [],
+    "failed": []
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "game": "pokemon",
+  "mechanics": {
+    "mana_system": "Energy cards attached to Pokemon. Basic Energy (Fire, Water, Grass, etc.) and Special Energy. Energy acceleration is key.",
+    "color_system": "Types: Fire, Water, Grass, Lightning, Psychic, Fighting, Darkness, Metal, Fairy, Dragon, Colorless",
+    "card_types": ["Pokemon", "Trainer", "Energy"],
+    "keywords": ["V", "VMAX", "ex", "GX", "EX", "Rule Box", "Radiant", "Rapid Strike", "Single Strike"],
+    "special_rules": "Prize cards (6 cards set aside, take when KO opponent's Pokemon). Going first: no supporter/attack. Going second: can attack. Regulation marks (D, E, F, etc.) determine legality.",
+    "terminology": {
+      "Prize Cards": "6 cards set aside at start. Take one when KO opponent's Pokemon",
+      "Regulation Mark": "Letter on card (D, E, F) determines format legality",
+      "Rule Box": "Pokemon with special rules (V, VMAX, ex, GX)",
+      "Bench": "Up to 5 Pokemon on bench (not active)"
+    }
+  },
+  "archetypes": [
+    {
+      "name": "Single-Prize Focused",
+      "description": "Deck built around Pokemon that give up one prize when KO'd",
+      "strategy": "Win through prize trade advantage - take 6 prizes while giving up fewer",
+      "core_cards": ["Gholdengo ex", "Radiant Charizard", "Lost City"],
+      "flex_slots": ["Iono", "Professor's Research", "Nest Ball"],
+      "key_features": ["Prize trade advantage", "Consistency engines", "Energy acceleration"],
+      "typical_curve": "Low-medium - focus on setup and acceleration",
+      "interaction_level": "Medium",
+      "meta_position": "Tier 1 - Gholdengo ex dominant (26% meta share)"
+    },
+    {
+      "name": "Control",
+      "description": "Deck that controls board and wins through resource advantage",
+      "strategy": "Disrupt opponent, accumulate resources, win with finisher",
+      "core_cards": ["Gardevoir ex", "Kirlia", "Ralts"],
+      "flex_slots": ["Boss's Orders", "Iono", "Radiant Greninja"],
+      "key_features": ["Slow", "Heavy disruption", "Energy acceleration", "Card draw"],
+      "typical_curve": "Medium-high - focus on setup and control",
+      "interaction_level": "Heavy",
+      "meta_position": "Tier 1-2 - Gardevoir ex strong"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Standard",
+      "legal_sets": ["Sets with regulation marks F and G (2024-2025)"],
+      "rotation_schedule": "Annual rotation - oldest regulation mark rotates",
+      "ban_list": [],
+      "restricted_list": [],
+      "meta_context": "Gholdengo ex (26%), Dragapult ex (20%), Gardevoir ex (15%) are top decks. Single-prize strategies strong.",
+      "last_updated": "2025-01-01"
+    },
+    {
+      "name": "Expanded",
+      "legal_sets": ["All sets from Black & White onwards"],
+      "rotation_schedule": "No rotation",
+      "ban_list": ["Lysandre's Trump Card", "Forest of Giant Plants", "Island Amulet", "Maxie's Hidden Ball Trick", "Archie's Ace in the Hole", "Scoop Up Net"],
+      "restricted_list": [],
+      "meta_context": "Powerful format with combo and control strategies",
+      "last_updated": "2025-01-01"
+    }
+  ],
+  "examples": [
+    {
+      "query": "Pikachu VMAX",
+      "card1": "Pikachu VMAX",
+      "card2": "Raichu V",
+      "score": 0.75,
+      "reasoning": "Both are Lightning-type V Pokemon. Pikachu VMAX evolves from Pikachu V, Raichu V is alternative evolution line.",
+      "format": "Standard"
+    },
+    {
+      "query": "Iono",
+      "card1": "Iono",
+      "card2": "Professor's Research",
+      "score": 0.65,
+      "reasoning": "Both are draw supporters. Iono disrupts opponent's hand, Professor's Research is pure draw. Similar function, different execution.",
+      "format": "Standard"
+    }
+  ],
+  "temporal_context": {
+    "current_meta": "Gholdengo ex (26%), Dragapult ex (20%), Gardevoir ex (15%) are top decks",
+    "recent_bans": "No recent bans (as of 2025-01-01)",
+    "price_volatility": "New set releases cause price spikes. Journey Together cards (N's Zoroark ex) spiked recently"
+  },
+  "last_updated": "2025-01-01T00:00:00"
+}
+

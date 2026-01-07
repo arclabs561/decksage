@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add src to path
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent / "src"
@@ -30,17 +31,17 @@ def update_evaluation_script(script_path: Path) -> dict[str, Any]:
             "success": False,
             "error": "Script not found",
         }
-    
+
     with open(script_path) as f:
         content = f.read()
-    
+
     original_content = content
     changes = []
-    
+
     # Check for improved test set
     improved_test_set = Path("experiments/test_set_canonical_magic_improved.json")
     unified_test_set = Path("experiments/test_set_unified_magic.json")
-    
+
     # Determine which test set to use
     if improved_test_set.exists():
         target_test_set = str(improved_test_set)
@@ -53,37 +54,35 @@ def update_evaluation_script(script_path: Path) -> dict[str, Any]:
             "success": False,
             "error": "No improved or unified test set found",
         }
-    
+
     # Update default test set paths
     patterns = [
         # Pattern 1: default=Path("experiments/test_set_canonical_magic.json")
-        (r'default=Path\("experiments/test_set_canonical_magic\.json"\)',
-         f'default=Path("{target_test_set}")'),
-        
+        (
+            r'default=Path\("experiments/test_set_canonical_magic\.json"\)',
+            f'default=Path("{target_test_set}")',
+        ),
         # Pattern 2: default="experiments/test_set_canonical_magic.json"
-        (r'default="experiments/test_set_canonical_magic\.json"',
-         f'default="{target_test_set}"'),
-        
+        (r'default="experiments/test_set_canonical_magic\.json"', f'default="{target_test_set}"'),
         # Pattern 3: PATHS.test_magic (if it points to canonical)
-        (r'PATHS\.test_magic',
-         f'Path("{target_test_set}")'),
+        (r"PATHS\.test_magic", f'Path("{target_test_set}")'),
     ]
-    
+
     for pattern, replacement in patterns:
         if re.search(pattern, content):
             content = re.sub(pattern, replacement, content)
             changes.append(f"Updated: {pattern}")
-    
+
     if content != original_content:
         # Backup original
         backup_path = script_path.parent / f"{script_path.stem}_backup.py"
         with open(backup_path, "w") as f:
             f.write(original_content)
-        
+
         # Write updated
         with open(script_path, "w") as f:
             f.write(content)
-        
+
         return {
             "success": True,
             "script": str(script_path),
@@ -104,7 +103,7 @@ def update_evaluation_script(script_path: Path) -> dict[str, Any]:
 def main() -> int:
     """Main entry point."""
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Update evaluation scripts")
     parser.add_argument(
         "--script",
@@ -116,9 +115,9 @@ def main() -> int:
         action="store_true",
         help="Show what would be changed without modifying files",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Find evaluation scripts
     if args.script:
         scripts_to_update = [args.script]
@@ -128,17 +127,17 @@ def main() -> int:
             Path("scripts/evaluation/evaluate_with_coverage_check.py"),
             Path("scripts/evaluation/ensure_full_evaluation.py"),
         ]
-    
+
     print("Updating evaluation scripts to use improved test set...")
     print()
-    
+
     for script_path in scripts_to_update:
         if not script_path.exists():
             print(f"⚠ Skipping {script_path.name}: not found")
             continue
-        
+
         print(f"Updating {script_path.name}...", end=" ", flush=True)
-        
+
         if args.dry_run:
             result = update_evaluation_script(script_path)
             if result.get("changes"):
@@ -156,10 +155,9 @@ def main() -> int:
                     print(f"✓ Already using {result['test_set']} test set")
             else:
                 print(f"✗ {result.get('error', 'Failed')}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
