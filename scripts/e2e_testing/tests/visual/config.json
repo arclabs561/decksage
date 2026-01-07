@@ -1,0 +1,91 @@
+{
+  "url": "http://localhost:8000",
+  "tests": [
+    {
+      "name": "search_interface_loaded",
+      "description": "Verify search interface loads correctly",
+      "checks": [
+        "Search input field is visible",
+        "Search button is visible",
+        "Page title contains 'DeckSage'",
+        "No JavaScript errors in console"
+      ]
+    },
+    {
+      "name": "autocomplete_appears",
+      "description": "Verify autocomplete dropdown appears when typing",
+      "trigger": {
+        "action": "type",
+        "selector": "#cardInput",
+        "text": "Light"
+      },
+      "wait": 300,
+      "checks": [
+        "Autocomplete dropdown is visible",
+        "Suggestions are displayed",
+        "Matching text is highlighted",
+        "Dropdown is positioned below input"
+      ]
+    },
+    {
+      "name": "search_results_display",
+      "description": "Verify search results display correctly",
+      "trigger": {
+        "action": "search",
+        "query": "Lightning Bolt"
+      },
+      "wait": 2000,
+      "checks": [
+        "Results are displayed",
+        "Card names are visible",
+        "Similarity scores are shown",
+        "Metadata (type, mana cost) is visible",
+        "Images load (if available)",
+        "No layout breaks or overflow"
+      ]
+    },
+    {
+      "name": "empty_state_display",
+      "description": "Verify empty state displays correctly",
+      "trigger": {
+        "action": "search",
+        "query": "NonExistentCard12345"
+      },
+      "wait": 2000,
+      "checks": [
+        "Empty state message is visible",
+        "Helpful suggestions are shown",
+        "Clear search button is available"
+      ]
+    },
+    {
+      "name": "advanced_options_toggle",
+      "description": "Verify advanced options toggle works",
+      "trigger": {
+        "action": "click",
+        "selector": "button[onclick='toggleAdvanced()']"
+      },
+      "wait": 200,
+      "checks": [
+        "Advanced options section is visible",
+        "Method selector is visible",
+        "Use case selector is visible",
+        "Results input is visible",
+        "AI toggle checkbox is visible"
+      ]
+    }
+  ],
+  "accessibility": {
+    "color_contrast": true,
+    "touch_targets": true,
+    "visual_hierarchy": true
+  },
+  "responsive": {
+    "viewports": [
+      {"width": 375, "height": 667, "name": "mobile"},
+      {"width": 768, "height": 1024, "name": "tablet"},
+      {"width": 1920, "height": 1080, "name": "desktop"}
+    ]
+  }
+}
+

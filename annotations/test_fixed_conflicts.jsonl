@@ -1,0 +1,3 @@
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.9, "source": "test"}
+{"card1": "Card A", "card2": "Card B", "similarity_score": 1.5, "source": "test"}
+{"card1": "Card C", "card2": "Card D", "similarity_score": -0.1, "source": "test"}

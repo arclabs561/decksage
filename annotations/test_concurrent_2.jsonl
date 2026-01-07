@@ -1,0 +1,10 @@
+{"card1": "Card_2_0", "card2": "Card_2_1", "similarity_score": 0.5, "source": "test_2"}
+{"card1": "Card_2_1", "card2": "Card_2_2", "similarity_score": 0.6, "source": "test_2"}
+{"card1": "Card_2_2", "card2": "Card_2_3", "similarity_score": 0.7, "source": "test_2"}
+{"card1": "Card_2_3", "card2": "Card_2_4", "similarity_score": 0.8, "source": "test_2"}
+{"card1": "Card_2_4", "card2": "Card_2_5", "similarity_score": 0.9, "source": "test_2"}
+{"card1": "Card_2_5", "card2": "Card_2_6", "similarity_score": 0.5, "source": "test_2"}
+{"card1": "Card_2_6", "card2": "Card_2_7", "similarity_score": 0.6, "source": "test_2"}
+{"card1": "Card_2_7", "card2": "Card_2_8", "similarity_score": 0.7, "source": "test_2"}
+{"card1": "Card_2_8", "card2": "Card_2_9", "similarity_score": 0.8, "source": "test_2"}
+{"card1": "Card_2_9", "card2": "Card_2_10", "similarity_score": 0.9, "source": "test_2"}

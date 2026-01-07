@@ -73,4 +73,3 @@ echo "  1. Review error handling analysis: experiments/error_handling_analysis.j
 echo "  2. Run tests: pytest tests/"
 echo "  3. Validate: python3 scripts/validation/validate_all.py"
 echo ""
-

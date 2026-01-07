@@ -1,0 +1,77 @@
+{
+  "overall_quality": 0.65,
+  "metrics": {
+    "score_diversity": 0.35567715698368935,
+    "score_range_utilization": 0.85,
+    "reasoning_quality": 0.8475,
+    "consistency_score": 0.35567715698368935,
+    "completeness": 1.0
+  },
+  "issues": [
+    {
+      "issue_type": "score_clustering",
+      "severity": 3,
+      "description": "Strong clustering of scores in the low range (0.12-0.24), with mean at 0.24. Not enough mid-range scores.",
+      "affected_count": 35,
+      "examples": [
+        "Card_73539069-Card_41209827",
+        "Card_80181649-Card_81439173"
+      ],
+      "suggested_fix": "Add explicit guidance about mid-range similarity cases and when to use scores between 0.3-0.7"
+    },
+    {
+      "issue_type": "inconsistent_scoring",
+      "severity": 3,
+      "description": "Similar Jaccard values getting different scores without clear justification",
+      "affected_count": 12,
+      "examples": [
+        "Pairs with Jaccard ~0.2 receiving scores from 0.14-0.23"
+      ],
+      "suggested_fix": "Add specific Jaccard similarity thresholds and corresponding score ranges to the prompt"
+    },
+    {
+      "issue_type": "graph_feature_interpretation",
+      "severity": 2,
+      "description": "Inconsistent handling of contradictions between context deck counts and graph features",
+      "affected_count": 8,
+      "examples": [
+        "Card_80181649-Card_81439173 mentions contradiction but doesn't affect scoring"
+      ],
+      "suggested_fix": "Add guidance on how to handle and weight contradictory graph evidence"
+    }
+  ],
+  "strengths": [
+    "Excellent reasoning detail and structure across all annotations",
+    "Strong utilization of graph features in reasoning",
+    "Perfect completeness with all required fields",
+    "Good handling of edge cases (very high/low similarity)",
+    "Consistent reasoning structure with clear sections"
+  ],
+  "feedback": "The annotations show strong attention to detail and excellent reasoning structure, but suffer from significant score clustering and consistency issues. While the full score range is technically used (0.12-0.97), there's a heavy bias toward low scores, with most falling below 0.3. The reasoning quality is high, with detailed analysis of graph features and clear justification structures, but the interpretation of similar graph features sometimes leads to different scores without clear justification.\n\nThe handling of high-similarity pairs (like the 0.97 example) is excellent, with detailed analysis of graph features and archetype context. However, the mid-range similarities are underrepresented, suggesting a tendency to push scores toward extremes.\n\nThe completeness and reasoning structure are particular strengths, with every annotation following a clear format and including all required information. The use of graph features is consistent and detailed, though the interpretation could be more standardized.",
+  "context_injections": {
+    "jaccard_thresholds": {
+      "0.8-1.0": "Very high similarity (0.8-1.0)",
+      "0.5-0.8": "High similarity (0.6-0.8)",
+      "0.3-0.5": "Moderate similarity (0.4-0.6)",
+      "0.1-0.3": "Low similarity (0.2-0.4)",
+      "0.0-0.1": "Minimal similarity (0.0-0.2)"
+    },
+    "example_annotations": {
+      "mid_range": "Add example with 0.5 score showing partial functional overlap",
+      "contradictory_evidence": "Add example showing how to weight different graph features"
+    },
+    "prompt_improvements": [
+      "Emphasize full range utilization",
+      "Add specific Jaccard similarity guidelines",
+      "Include calibration examples at 0.3, 0.5, and 0.7 scores"
+    ]
+  },
+  "recommendations": [
+    "Establish clear score bands based on Jaccard similarity ranges",
+    "Add example annotations for mid-range similarity scores (0.4-0.6)",
+    "Create specific guidelines for handling contradictory graph evidence",
+    "Include more archetype-based reasoning for mid-range scores",
+    "Add calibration examples showing when to use each 0.1 score increment"
+  ],
+  "timestamp": ""
+}

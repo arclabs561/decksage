@@ -1,0 +1,88 @@
+tasks:
+- ground_truth:
+    highly_relevant:
+    - Chain Lightning
+    - Lava Spike
+    irrelevant:
+    - Counterspell
+    - Tarmogoyf
+    - Brainstorm
+    marginally_relevant:
+    - Goblin Guide
+    - Rift Bolt
+    relevant:
+    - Fireblast
+    - Lava Dart
+    - Skewer the Critics
+    somewhat_relevant:
+    - Monastery Swiftspear
+    - Eidolon of the Great Revel
+  query: Lightning Bolt
+- ground_truth:
+    highly_relevant:
+    - Ponder
+    - Preordain
+    irrelevant:
+    - Lightning Bolt
+    - Dark Ritual
+    marginally_relevant:
+    - Force of Will
+    - Daze
+    relevant:
+    - Gitaxian Probe
+    - Portent
+    somewhat_relevant:
+    - Fetchlands
+    - Delver of Secrets
+  query: Brainstorm
+- ground_truth:
+    highly_relevant:
+    - Cabal Ritual
+    - Culling the Weak
+    irrelevant:
+    - Lightning Bolt
+    - Counterspell
+    marginally_relevant:
+    - Thoughtseize
+    - Duress
+    relevant:
+    - Lion's Eye Diamond
+    - Lotus Petal
+    somewhat_relevant:
+    - Tendrils of Agony
+    - Ad Nauseam
+  query: Dark Ritual
+- ground_truth:
+    highly_relevant:
+    - Force of Negation
+    - Pact of Negation
+    irrelevant:
+    - Lightning Bolt
+    - Tarmogoyf
+    marginally_relevant:
+    - Counterspell
+    - Spell Pierce
+    relevant:
+    - Daze
+    - Flusterstorm
+    somewhat_relevant:
+    - Brainstorm
+    - Delver of Secrets
+  query: Force of Will
+- ground_truth:
+    highly_relevant:
+    - Insectile Aberration
+    irrelevant:
+    - Tarmogoyf
+    - Dark Ritual
+    marginally_relevant:
+    - Daze
+    - Force of Will
+    relevant:
+    - Monastery Swiftspear
+    - Dragon's Rage Channeler
+    somewhat_relevant:
+    - Brainstorm
+    - Ponder
+    - Lightning Bolt
+  query: Delver of Secrets

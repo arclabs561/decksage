@@ -138,19 +138,20 @@ func main() {
 		if len(deck.Cards) > 0 {
 			// Create map with timestamp aliases for backward compatibility
 			deckMap := map[string]interface{}{
-				"deck_id":    deck.DeckID,
-				"archetype":  deck.Archetype,
-				"format":     deck.Format,
-				"url":        deck.URL,
-				"source":     deck.Source,
-				"player":     deck.Player,
-				"event":      deck.Event,
-				"placement":  deck.Placement,
-				"event_date": deck.EventDate,
-				"scraped_at": deck.ScrapedAt,
-				"timestamp":  deck.ScrapedAt, // Alias for backward compatibility
-				"created_at": deck.ScrapedAt, // Alias for backward compatibility
-				"cards":      deck.Cards,
+				"deck_id":       deck.DeckID,
+				"archetype":     deck.Archetype,
+				"format":        deck.Format,
+				"url":           deck.URL,
+				"source":        deck.Source,
+				"player":        deck.Player,
+				"event":         deck.Event,
+				"placement":     deck.Placement,
+				"event_date":    deck.EventDate,
+				"scraped_at":    deck.ScrapedAt,
+				"timestamp":     deck.ScrapedAt, // Alias for backward compatibility
+				"created_at":    deck.ScrapedAt, // Alias for backward compatibility
+				"export_version": "1.0",         // Schema version for validation
+				"cards":         deck.Cards,
 			}
 			encoder.Encode(deckMap)
 			exported++

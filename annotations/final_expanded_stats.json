@@ -1,0 +1,20 @@
+{
+  "total_annotations": 67,
+  "unique_pairs": 67,
+  "sources": {
+    "llm_generated": 53,
+    "user_feedback": 4,
+    "llm_judgment": 10
+  },
+  "games": {
+    "riftbound": 3,
+    "yugioh": 50,
+    "unknown": 14
+  },
+  "score_stats": {
+    "min": 0.35,
+    "max": 0.95,
+    "avg": 0.5223880597014925
+  },
+  "substitute_count": 2
+}

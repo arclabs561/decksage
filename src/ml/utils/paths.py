@@ -48,6 +48,9 @@ PAIRS_500 = PROCESSED_DIR / "pairs_500decks.csv"
 INCREMENTAL_GRAPH_DB = GRAPHS_DIR / "incremental_graph.db"
 INCREMENTAL_GRAPH_JSON = GRAPHS_DIR / "incremental_graph.json"
 
+# Pack database (for pack/booster/starter deck information)
+PACKS_DB = DATA_DIR / "packs.db"
+
 # NEW: Fixed metadata export (Oct 2025 - bug fix)
 DECKS_WITH_METADATA = PROCESSED_DIR / "decks_with_metadata.jsonl"
 DECKS_ALL_UNIFIED = PROCESSED_DIR / "decks_all_unified.jsonl"
@@ -98,6 +101,9 @@ class PATHS:
     # Graph database
     incremental_graph_db = INCREMENTAL_GRAPH_DB
     incremental_graph_json = INCREMENTAL_GRAPH_JSON
+
+    # Pack database
+    packs_db = PACKS_DB
 
     # Test sets
     test_magic = TEST_SET_MAGIC
