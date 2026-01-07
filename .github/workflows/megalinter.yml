@@ -60,7 +60,7 @@ jobs:
       # Upload MegaLinter artifacts
       - name: Archive MegaLinter Reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: megalinter-reports
           path: |
