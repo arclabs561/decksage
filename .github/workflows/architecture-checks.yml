@@ -27,7 +27,6 @@ jobs:
         with:
           path: |
             ~/.cache/uv
-            src/ml/.venv
           key: ${{ runner.os }}-uv-arch-${{ hashFiles('pyproject.toml') }}
           restore-keys: |
             ${{ runner.os }}-uv-arch-
