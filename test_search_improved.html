@@ -1,0 +1,1875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeckSage - Card Similarity Search</title>
+    <meta name="description" content="Search Magic: The Gathering, Pokemon, and Yu-Gi-Oh cards by name or text">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: #1a1a1a;
+            color: #e0e0e0;
+            padding: 24px;
+            line-height: 1.5;
+        }
+        /* Skip link for accessibility */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 0;
+            background: #6b8eff;
+            color: #fff;
+            padding: 8px;
+            text-decoration: none;
+            z-index: 100;
+        }
+        .skip-link:focus {
+            top: 0;
+        }
+        /* Game-specific typography */
+        body.game-magic {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Georgia', serif;
+        }
+        body.game-magic .result-name {
+            font-family: 'Georgia', 'Times New Roman', serif;
+            letter-spacing: 0.02em;
+        }
+        body.game-yugioh {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Times New Roman', serif;
+        }
+        body.game-yugioh .result-name {
+            font-family: 'Times New Roman', 'Georgia', serif;
+            letter-spacing: 0.015em;
+            font-weight: 600;
+        }
+        body.game-pokemon {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body.game-pokemon .result-name {
+            font-family: 'Helvetica Neue', 'Arial', sans-serif;
+            letter-spacing: 0.01em;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding-top: 80px;
+        }
+        h1 {
+            color: #fff;
+            font-size: 36px;
+            font-weight: 300;
+            margin-bottom: 48px;
+            text-align: center;
+            letter-spacing: -0.5px;
+        }
+        /* Navigation tabs */
+        .nav-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 8px;
+        }
+        .nav-tab {
+            padding: 8px 16px;
+            background: transparent;
+            border: none;
+            color: #888;
+            cursor: pointer;
+            font-size: 14px;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .nav-tab:hover {
+            color: #aaa;
+        }
+        .nav-tab.active {
+            color: #6b8eff;
+            border-bottom-color: #6b8eff;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .feedback-toggle {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .feedback-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+            cursor: pointer;
+        }
+        .feedback-toggle label {
+            font-size: 13px;
+            color: #888;
+            cursor: pointer;
+        }
+        .help-icon {
+            display: inline-block;
+            width: 18px;
+            height: 18px;
+            line-height: 18px;
+            text-align: center;
+            border-radius: 50%;
+            background: #555;
+            color: #fff;
+            font-size: 12px;
+            cursor: help;
+            margin-left: 6px;
+        }
+        .help-icon:hover {
+            background: #777;
+        }
+        .search-section {
+            margin-bottom: 32px;
+        }
+        .search-form {
+            display: flex;
+            gap: 0;
+            max-width: 600px;
+            margin: 0 auto;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 24px;
+            padding: 0;
+            transition: box-shadow 0.2s, border-color 0.2s;
+        }
+        .search-form:focus-within {
+            border-color: #6b8eff;
+            box-shadow: 0 0 0 3px rgba(107, 142, 255, 0.1);
+        }
+        .search-input-wrapper {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 0 20px;
+            position: relative;
+        }
+        input[type="text"] {
+            flex: 1;
+            padding: 14px 0;
+            background: transparent;
+            border: none;
+            color: #e0e0e0;
+            font-size: 16px;
+            outline: none;
+            width: 100%;
+        }
+        input[type="text"]:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: 2px;
+        }
+        input[type="text"]::placeholder {
+            color: #666;
+        }
+        .autocomplete-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 8px;
+            margin-top: 4px;
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 1000;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            display: none;
+        }
+        .autocomplete-dropdown.visible {
+            display: block;
+        }
+        .autocomplete-section {
+            padding: 8px 0;
+        }
+        .autocomplete-section-title {
+            padding: 8px 20px;
+            font-size: 11px;
+            text-transform: uppercase;
+            color: #666;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        .autocomplete-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            color: #e0e0e0;
+            font-size: 14px;
+            border-bottom: 1px solid #333;
+            transition: background 0.15s, color 0.15s;
+            display: flex;
+            align-items: center;
+        }
+        .autocomplete-item:last-child {
+            border-bottom: none;
+        }
+        .autocomplete-item:hover,
+        .autocomplete-item:focus {
+            background: #3a3a3a;
+            outline: none;
+        }
+        .autocomplete-item.selected {
+            background: #3a3a3a;
+            color: #6b8eff;
+            font-weight: 500;
+        }
+        .autocomplete-item .match {
+            font-weight: 600;
+            color: #6b8eff;
+        }
+        .autocomplete-item.selected .match {
+            color: #8ba3ff;
+        }
+        .autocomplete-item.history-item {
+            color: #999;
+        }
+        .autocomplete-item.history-item::before {
+            content: "🕐 ";
+            margin-right: 8px;
+            opacity: 0.6;
+        }
+        .search-button {
+            padding: 12px 24px;
+            background: transparent;
+            border: none;
+            border-left: 1px solid #444;
+            color: #6b8eff;
+            cursor: pointer;
+            font-size: 15px;
+            font-weight: 500;
+            transition: background 0.2s;
+            border-radius: 0 24px 24px 0;
+        }
+        .search-button:hover {
+            background: rgba(107, 142, 255, 0.1);
+        }
+        .search-button:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: -2px;
+        }
+        .search-button:active {
+            background: rgba(107, 142, 255, 0.2);
+        }
+        .advanced-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+            padding: 16px;
+            background: #1a1a1a;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .advanced-toggle {
+            text-align: center;
+            margin-top: 12px;
+        }
+        .advanced-toggle button {
+            background: none;
+            border: none;
+            color: #888;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            text-decoration: underline;
+        }
+        .advanced-toggle button:hover {
+            color: #aaa;
+        }
+        .advanced-toggle button:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: 2px;
+            border-radius: 2px;
+        }
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 12px;
+        }
+        .option-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .option-group label {
+            font-size: 13px;
+            color: #aaa;
+            white-space: nowrap;
+        }
+        select, input[type="number"] {
+            flex: 1;
+            padding: 8px 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-size: 14px;
+        }
+        select:focus, input[type="number"]:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: 1px;
+        }
+        /* Skeleton loading screens */
+        .skeleton {
+            background: linear-gradient(90deg, #2a2a2a 25%, #333 50%, #2a2a2a 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        .skeleton-result {
+            background: #1f1f1f;
+            padding: 16px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 2px solid #444;
+        }
+        .skeleton-title {
+            height: 20px;
+            width: 60%;
+            margin-bottom: 12px;
+        }
+        .skeleton-text {
+            height: 14px;
+            width: 80%;
+            margin-bottom: 8px;
+        }
+        .skeleton-text.short {
+            width: 40%;
+        }
+        .skeleton-bar {
+            height: 4px;
+            width: 100px;
+            margin-top: 8px;
+        }
+        .results-section {
+            margin-top: 32px;
+        }
+        .result-item {
+            background: #1f1f1f;
+            padding: 16px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 2px solid #6b8eff;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.2s;
+        }
+        .result-item:hover {
+            background: #252525;
+        }
+        .result-item:focus-within {
+            outline: 2px solid #6b8eff;
+            outline-offset: 2px;
+        }
+        .result-info {
+            flex: 1;
+        }
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 8px;
+        }
+        .result-image-wrapper {
+            flex-shrink: 0;
+            width: 80px;
+            height: 112px;
+            border-radius: 8px;
+            overflow: hidden;
+            background: #2a2a2a;
+            border: 1px solid #444;
+        }
+        .card-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+        .result-content {
+            flex: 1;
+            min-width: 0;
+        }
+        .result-name {
+            font-weight: 500;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+        .result-meta {
+            font-size: 12px;
+            color: #999;
+            margin-top: 4px;
+        }
+        .result-tags {
+            font-size: 13px;
+            color: #6b8eff;
+            margin-top: 8px;
+            font-weight: 500;
+            line-height: 1.5;
+        }
+        .result-format {
+            font-size: 12px;
+            color: #4a9eff;
+            margin-top: 6px;
+        }
+        .result-archetype {
+            font-size: 12px;
+            color: #9d4edd;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .result-cooccur {
+            font-size: 12px;
+            color: #06b6d4;
+            margin-top: 6px;
+            font-weight: 500;
+        }
+        .result-archetype-cooccur {
+            font-size: 11px;
+            color: #a78bfa;
+            margin-top: 4px;
+        }
+        .result-format-cooccur {
+            font-size: 11px;
+            color: #60a5fa;
+            margin-top: 4px;
+        }
+        .tag-label {
+            color: #999;
+            font-weight: 400;
+            margin-right: 6px;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #888;
+        }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        .empty-state-title {
+            font-size: 20px;
+            font-weight: 500;
+            color: #ccc;
+            margin-bottom: 8px;
+        }
+        .empty-state-message {
+            font-size: 14px;
+            color: #999;
+            margin-bottom: 24px;
+        }
+        .empty-state-suggestions {
+            text-align: left;
+            display: inline-block;
+            background: #1f1f1f;
+            padding: 16px 24px;
+            border-radius: 8px;
+            border: 1px solid #333;
+        }
+        .empty-state-suggestions .suggestion {
+            font-size: 13px;
+            color: #aaa;
+            margin: 8px 0;
+        }
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border-width: 0;
+        }
+        .result-substitutability {
+            font-size: 12px;
+            margin-top: 8px;
+            padding: 6px 10px;
+            border-radius: 6px;
+            display: inline-block;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+        }
+        .result-substitutability.can-substitute {
+            background: rgba(74, 222, 128, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(74, 222, 128, 0.3);
+        }
+        .result-substitutability.partial-substitute {
+            background: rgba(251, 191, 36, 0.15);
+            color: #fbbf24;
+            border: 1px solid rgba(251, 191, 36, 0.3);
+        }
+        .result-substitutability.not-substitutable {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+            border: 1px solid rgba(239, 68, 68, 0.3);
+        }
+        .result-oracle {
+            font-size: 12px;
+            color: #aaa;
+            margin-top: 8px;
+            line-height: 1.4;
+            font-style: italic;
+        }
+        .result-similarity {
+            flex: 1;
+            margin-left: 20px;
+        }
+        .similarity-header {
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+        .similarity-percent {
+            font-size: 16px;
+            font-weight: 600;
+            color: #fff;
+        }
+        .similarity-label {
+            font-size: 12px;
+            color: #aaa;
+            font-style: italic;
+        }
+        .feedback-controls {
+            display: flex;
+            gap: 5px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .rating-buttons {
+            display: flex;
+            gap: 3px;
+        }
+        .rating-btn {
+            padding: 6px 12px;
+            font-size: 13px;
+            background: #2a2a2a;
+            border: 1px solid #3a3a3a;
+            color: #ccc;
+            cursor: pointer;
+        }
+        .rating-btn:hover {
+            background: #333;
+        }
+        .rating-btn:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: 1px;
+        }
+        .rating-btn.active {
+            background: #6b8eff;
+            border-color: #6b8eff;
+            color: #fff;
+        }
+        .substitute-toggle {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 13px;
+        }
+        .substitute-toggle input[type="checkbox"] {
+            width: 16px;
+            height: 16px;
+        }
+        .status {
+            padding: 12px;
+            border-radius: 6px;
+            margin-bottom: 16px;
+            font-size: 14px;
+            position: relative;
+        }
+        .status.dismissible {
+            padding-right: 32px;
+        }
+        .status-close {
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            font-size: 18px;
+            opacity: 0.7;
+        }
+        .status-close:hover {
+            opacity: 1;
+        }
+        .status.error {
+            background: #4a1a1a;
+            border: 1px solid #8a2a2a;
+            color: #ff8888;
+        }
+        .status.success {
+            background: #1a4a1a;
+            border: 1px solid #2a8a2a;
+            color: #88ff88;
+        }
+        .status.info {
+            background: #1a1a4a;
+            border: 1px solid #2a2a8a;
+            color: #8888ff;
+        }
+        .model-info {
+            font-size: 12px;
+            color: #666;
+            margin-top: 24px;
+            padding-top: 16px;
+            border-top: 1px solid #2a2a2a;
+        }
+        .loading {
+            text-align: center;
+            padding: 32px;
+            color: #666;
+            font-size: 14px;
+        }
+        .hidden {
+            display: none;
+        }
+        .method-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #444;
+            border-radius: 3px;
+            font-size: 11px;
+            margin-left: 10px;
+            color: #aaa;
+        }
+        .similarity-bar {
+            width: 80px;
+            height: 3px;
+            background: #2a2a2a;
+            border-radius: 2px;
+            margin-top: 6px;
+            overflow: hidden;
+        }
+        .similarity-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #6b8eff, #5a7eef);
+            transition: width 0.3s;
+        }
+        /* Deck completion UI */
+        .deck-input {
+            width: 100%;
+            min-height: 200px;
+            padding: 12px;
+            background: #2a2a2a;
+            border: 1px solid #444;
+            border-radius: 6px;
+            color: #e0e0e0;
+            font-family: monospace;
+            font-size: 14px;
+            resize: vertical;
+        }
+        .deck-input:focus {
+            outline: 2px solid #6b8eff;
+            outline-offset: 1px;
+        }
+        .deck-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+        .deck-stat {
+            background: #1f1f1f;
+            padding: 12px;
+            border-radius: 6px;
+            border: 1px solid #333;
+        }
+        .deck-stat-label {
+            font-size: 12px;
+            color: #999;
+            margin-bottom: 4px;
+        }
+        .deck-stat-value {
+            font-size: 20px;
+            font-weight: 600;
+            color: #fff;
+        }
+        /* Mobile responsive */
+        @media (max-width: 768px) {
+            body {
+                padding: 12px;
+            }
+            .container {
+                padding-top: 40px;
+            }
+            h1 {
+                font-size: 28px;
+                margin-bottom: 32px;
+            }
+            .search-form {
+                max-width: 100%;
+            }
+            .options {
+                grid-template-columns: 1fr;
+            }
+            .result-item {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .feedback-controls {
+                width: 100%;
+                margin-top: 12px;
+            }
+            .nav-tabs {
+                flex-wrap: wrap;
+            }
+        }
+    </style>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    <div class="container">
+        <h1>DeckSage</h1>
+
+        <nav class="nav-tabs" role="tablist" aria-label="Main navigation">
+            <button class="nav-tab active" role="tab" aria-selected="true" aria-controls="similarity-tab" id="similarity-tab-btn" onclick="switchTab('similarity')">Similarity Search</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="hybrid-tab" id="hybrid-tab-btn" onclick="switchTab('hybrid')">Hybrid Search</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="contextual-tab" id="contextual-tab-btn" onclick="switchTab('contextual')">Contextual</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Completion</button>
+        </nav>
+
+        <main id="main-content">
+            <!-- Similarity Search Tab -->
+            <div id="similarity-tab" class="tab-content active" role="tabpanel" aria-labelledby="similarity-tab-btn">
+                <div class="search-section">
+                    <form class="search-form" id="searchForm">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="cardInput" placeholder="Search for a card..." required autofocus aria-label="Card name search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown">
+                            <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
+                        </div>
+                        <button type="submit" class="search-button" aria-label="Search for similar cards">Search</button>
+                    </form>
+                    <div class="advanced-toggle">
+                        <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Advanced options</button>
+                    </div>
+                    <div class="advanced-options" id="advancedOptions" style="display: none;">
+                        <div class="options">
+                            <div class="option-group">
+                                <label for="methodSelect">Method:</label>
+                                <select id="methodSelect" aria-label="Similarity search method">
+                                    <option value="fusion" selected>Fusion</option>
+                                    <option value="embedding">Embedding</option>
+                                    <option value="jaccard">Jaccard</option>
+                                </select>
+                            </div>
+                            <div class="option-group">
+                                <label for="useCaseSelect">Use case:</label>
+                                <select id="useCaseSelect" aria-label="Search use case">
+                                    <option value="substitute" selected>Substitute</option>
+                                    <option value="synergy">Synergy</option>
+                                    <option value="meta">Meta</option>
+                                </select>
+                            </div>
+                            <div class="option-group">
+                                <label for="kInput">Results:</label>
+                                <input type="number" id="kInput" value="10" min="1" max="100" title="Number of results" aria-label="Number of results">
+                            </div>
+                            <div class="option-group">
+                                <label for="llmToggle" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="checkbox" id="llmToggle" aria-label="Enable AI-powered suggestions">
+                                    <span>AI-powered suggestions</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="statusMessage" class="status hidden" role="status" aria-live="polite"></div>
+
+                <div class="results-section" id="resultsSection" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Results</h2>
+                        <div class="feedback-toggle">
+                            <input type="checkbox" id="enableFeedback" onchange="toggleFeedbackMode()" aria-label="Enable feedback mode">
+                            <label for="enableFeedback">Feedback</label>
+                            <span class="help-icon" title="Rating scale: 4=Extremely similar (substitutes), 3=Very similar (similar role), 2=Somewhat similar (related function), 1=Marginally similar (loose connection), 0=Irrelevant">?</span>
+                        </div>
+                    </div>
+                    <div id="resultsContainer"></div>
+                    <div class="model-info" id="modelInfo"></div>
+                </div>
+            </div>
+
+            <!-- Hybrid Search Tab -->
+            <div id="hybrid-tab" class="tab-content" role="tabpanel" aria-labelledby="hybrid-tab-btn">
+                <div class="search-section">
+                    <form class="search-form" id="hybridSearchForm">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="hybridInput" placeholder="Search cards by text or meaning..." required aria-label="Hybrid search query">
+                        </div>
+                        <button type="submit" class="search-button">Search</button>
+                    </form>
+                    <div class="advanced-options" style="display: grid;">
+                        <div class="option-group">
+                            <label for="textWeight">Text Weight:</label>
+                            <input type="number" id="textWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Text search weight">
+                        </div>
+                        <div class="option-group">
+                            <label for="vectorWeight">Vector Weight:</label>
+                            <input type="number" id="vectorWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Vector search weight">
+                        </div>
+                        <div class="option-group">
+                            <label for="hybridLimit">Results:</label>
+                            <input type="number" id="hybridLimit" value="10" min="1" max="100" aria-label="Number of results">
+                        </div>
+                    </div>
+                </div>
+                <div id="hybridStatusMessage" class="status hidden" role="status" aria-live="polite"></div>
+                <div class="results-section" id="hybridResultsSection" style="display: none;">
+                    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Results</h2>
+                    <div id="hybridResultsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Contextual Suggestions Tab -->
+            <div id="contextual-tab" class="tab-content" role="tabpanel" aria-labelledby="contextual-tab-btn">
+                <div class="search-section">
+                    <form class="search-form" id="contextualForm">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="contextualCardInput" placeholder="Enter card name..." required aria-label="Card name for contextual suggestions">
+                        </div>
+                        <button type="submit" class="search-button">Get Suggestions</button>
+                    </form>
+                    <div class="advanced-options" style="display: grid;">
+                        <div class="option-group">
+                            <label for="contextualGame">Game:</label>
+                            <select id="contextualGame" aria-label="Game selection">
+                                <option value="magic">Magic: The Gathering</option>
+                                <option value="yugioh">Yu-Gi-Oh!</option>
+                                <option value="pokemon">Pokemon</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="contextualFormat">Format (optional):</label>
+                            <input type="text" id="contextualFormat" placeholder="e.g., Modern, Legacy" aria-label="Format name">
+                        </div>
+                        <div class="option-group">
+                            <label for="contextualArchetype">Archetype (optional):</label>
+                            <input type="text" id="contextualArchetype" placeholder="e.g., Burn, Control" aria-label="Archetype name">
+                        </div>
+                        <div class="option-group">
+                            <label for="contextualTopK">Results per category:</label>
+                            <input type="number" id="contextualTopK" value="10" min="1" max="50" aria-label="Results per category">
+                        </div>
+                    </div>
+                </div>
+                <div id="contextualStatusMessage" class="status hidden" role="status" aria-live="polite"></div>
+                <div class="results-section" id="contextualResultsSection" style="display: none;">
+                    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Contextual Suggestions</h2>
+                    <div id="contextualResultsContainer"></div>
+                </div>
+            </div>
+
+            <!-- Deck Completion Tab -->
+            <div id="deck-tab" class="tab-content" role="tabpanel" aria-labelledby="deck-tab-btn">
+                <div class="search-section">
+                    <form id="deckCompletionForm">
+                        <div class="option-group" style="margin-bottom: 12px;">
+                            <label for="deckGame">Game:</label>
+                            <select id="deckGame" required aria-label="Game selection">
+                                <option value="magic">Magic: The Gathering</option>
+                                <option value="yugioh">Yu-Gi-Oh!</option>
+                                <option value="pokemon">Pokemon</option>
+                            </select>
+                        </div>
+                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">Deck (JSON format):</label>
+                        <textarea id="deckInput" class="deck-input" placeholder='{"Main": ["Card Name 1", "Card Name 2", ...], "Sideboard": [...]}' required aria-label="Deck in JSON format"></textarea>
+                        <div class="advanced-options" style="display: grid; margin-top: 16px;">
+                            <div class="option-group">
+                                <label for="targetSize">Target Main Size:</label>
+                                <input type="number" id="targetSize" min="1" max="200" aria-label="Target deck size">
+                            </div>
+                            <div class="option-group">
+                                <label for="maxSteps">Max Steps:</label>
+                                <input type="number" id="maxSteps" value="60" min="1" max="200" aria-label="Maximum completion steps">
+                            </div>
+                            <div class="option-group">
+                                <label for="completionMethod">Method:</label>
+                                <select id="completionMethod" aria-label="Completion method">
+                                    <option value="greedy" selected>Greedy</option>
+                                    <option value="beam">Beam Search</option>
+                                </select>
+                            </div>
+                        </div>
+                        <button type="submit" class="search-button" style="margin-top: 16px; width: 100%; border-radius: 6px; border: none;">Complete Deck</button>
+                    </form>
+                </div>
+                <div id="deckStatusMessage" class="status hidden" role="status" aria-live="polite"></div>
+                <div class="results-section" id="deckResultsSection" style="display: none;">
+                    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Completed Deck</h2>
+                    <div id="deckResultsContainer"></div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let currentQuery = '';
+        let currentResults = [];
+        let currentModelInfo = null;
+        let sessionId = generateSessionId();
+        let feedbackModeEnabled = false;
+        let autocompleteTimeout = null;
+        let autocompleteItems = [];
+        let selectedAutocompleteIndex = -1;
+        let currentTab = 'similarity';
+
+        // Search history management
+        const SEARCH_HISTORY_KEY = 'decksage_search_history';
+        const MAX_HISTORY = 10;
+
+        function generateSessionId() {
+            return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        }
+
+        function getSearchHistory() {
+            try {
+                const history = localStorage.getItem(SEARCH_HISTORY_KEY);
+                return history ? JSON.parse(history) : [];
+            } catch {
+                return [];
+            }
+        }
+
+        function addToSearchHistory(query) {
+            if (!query || query.trim().length === 0) return;
+            const trimmed = query.trim();
+            let history = getSearchHistory();
+            // Remove if already exists
+            history = history.filter(item => item.toLowerCase() !== trimmed.toLowerCase());
+            // Add to front
+            history.unshift(trimmed);
+            // Limit size
+            if (history.length > MAX_HISTORY) {
+                history = history.slice(0, MAX_HISTORY);
+            }
+            try {
+                localStorage.setItem(SEARCH_HISTORY_KEY, JSON.stringify(history));
+            } catch {
+                // Ignore storage errors
+            }
+        }
+
+        function showStatus(message, type = 'info', dismissible = true, containerId = 'statusMessage') {
+            const statusEl = document.getElementById(containerId);
+            if (!statusEl) return;
+            
+            statusEl.innerHTML = message + (dismissible ? '<button class="status-close" onclick="this.parentElement.classList.add(\'hidden\')" aria-label="Dismiss">×</button>' : '');
+            statusEl.className = `status ${type} ${dismissible ? 'dismissible' : ''}`;
+            statusEl.classList.remove('hidden');
+            statusEl.setAttribute('role', 'status');
+            statusEl.setAttribute('aria-live', 'polite');
+            
+            // Auto-hide after 8 seconds (increased from 5)
+            if (dismissible) {
+                setTimeout(() => {
+                    statusEl.classList.add('hidden');
+                }, 8000);
+            }
+        }
+
+        function showSkeletonLoading(containerId, count = 5) {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+            
+            container.innerHTML = Array(count).fill(0).map(() => `
+                <div class="skeleton-result skeleton">
+                    <div class="skeleton-title skeleton"></div>
+                    <div class="skeleton-text skeleton"></div>
+                    <div class="skeleton-text skeleton short"></div>
+                    <div class="skeleton-bar skeleton"></div>
+                </div>
+            `).join('');
+        }
+
+        function getUserFriendlyError(errorMsg) {
+            const errorLower = errorMsg.toLowerCase();
+            if (errorLower.includes('timeout') || errorLower.includes('abort')) {
+                return 'Request took too long. Try a different search method or fewer results.';
+            }
+            if (errorLower.includes('503') || errorLower.includes('not loaded') || errorLower.includes('not available')) {
+                return 'Service is starting up. Please wait a moment and try again.';
+            }
+            if (errorLower.includes('404') || errorLower.includes('not found')) {
+                return 'No cards found. Try a different search term or check your spelling.';
+            }
+            if (errorLower.includes('400') || errorLower.includes('invalid')) {
+                return 'Invalid request. Please check your input and try again.';
+            }
+            if (errorLower.includes('429') || errorLower.includes('rate limit')) {
+                return 'Too many requests. Please wait a moment before trying again.';
+            }
+            if (errorLower.includes('500') || errorLower.includes('server error')) {
+                return 'Server error occurred. Please try again later.';
+            }
+            // Return original if no match
+            return errorMsg;
+        }
+
+        function switchTab(tabName) {
+            currentTab = tabName;
+            // Update tab buttons
+            document.querySelectorAll('.nav-tab').forEach(btn => {
+                btn.classList.remove('active');
+                btn.setAttribute('aria-selected', 'false');
+            });
+            document.getElementById(`${tabName}-tab-btn`).classList.add('active');
+            document.getElementById(`${tabName}-tab-btn`).setAttribute('aria-selected', 'true');
+            
+            // Update tab content
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+        }
+
+        function toggleAdvanced() {
+            const advanced = document.getElementById('advancedOptions');
+            const isVisible = advanced.style.display !== 'none';
+            advanced.style.display = isVisible ? 'none' : 'grid';
+            const button = document.querySelector('.advanced-toggle button');
+            button.setAttribute('aria-expanded', !isVisible);
+        }
+
+        async function searchCards() {
+            const cardName = document.getElementById('cardInput').value.trim();
+            const method = document.getElementById('methodSelect').value;
+            const k = parseInt(document.getElementById('kInput').value);
+            const useCase = document.getElementById('useCaseSelect').value;
+
+            if (!cardName) {
+                showStatus('Please enter a card name', 'error');
+                return;
+            }
+
+            // Add to search history
+            addToSearchHistory(cardName);
+
+            currentQuery = cardName;
+            const resultsSection = document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById('resultsContainer');
+            
+            // Show skeleton loading
+            resultsSection.style.display = 'block';
+            showSkeletonLoading('resultsContainer', k);
+
+            try {
+                const useLLMIntent = localStorage.getItem('decksage_use_llm_intent') === 'true';
+                const url = `${API_BASE}/v1/similar${useLLMIntent ? '?use_llm_intent=true' : ''}`;
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 60000);
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: cardName,
+                        top_k: k,
+                        mode: method,
+                        use_case: useCase,
+                    }),
+                    signal: controller.signal,
+                });
+
+                clearTimeout(timeoutId);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    let errorMsg = error.detail || 'Search failed';
+                    if (Array.isArray(error.detail)) {
+                        errorMsg = error.detail.map(e => e.msg || e).join(', ');
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                currentResults = data.results || [];
+                currentModelInfo = data.model_info || null;
+                
+                if (currentResults.length === 0) {
+                    showStatus('No results found', 'info');
+                    resultsContainer.innerHTML = `
+                        <div class="empty-state">
+                            <div class="empty-state-icon">🔍</div>
+                            <div class="empty-state-title">No cards found</div>
+                            <div class="empty-state-message">Try a different search term or adjust your filters</div>
+                            <div class="empty-state-suggestions">
+                                <div class="suggestion">• Check spelling</div>
+                                <div class="suggestion">• Try a partial card name</div>
+                                <div class="suggestion">• Use a different search method</div>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    showStatus(`Found ${currentResults.length} results`, 'success');
+                }
+                displayResults(data);
+            } catch (error) {
+                const friendlyError = getUserFriendlyError(error.message);
+                if (error.name === 'AbortError') {
+                    showStatus('Request timed out. Try a different method or fewer results.', 'error');
+                } else {
+                    showStatus(`Error: ${friendlyError}`, 'error');
+                }
+                resultsContainer.innerHTML = `<div class="status error">${friendlyError}</div>`;
+            }
+        }
+
+        async function hybridSearch() {
+            const query = document.getElementById('hybridInput').value.trim();
+            const textWeight = parseFloat(document.getElementById('textWeight').value);
+            const vectorWeight = parseFloat(document.getElementById('vectorWeight').value);
+            const limit = parseInt(document.getElementById('hybridLimit').value);
+
+            if (!query) {
+                showStatus('Please enter a search query', 'error', true, 'hybridStatusMessage');
+                return;
+            }
+
+            addToSearchHistory(query);
+
+            const resultsSection = document.getElementById('hybridResultsSection');
+            const resultsContainer = document.getElementById('hybridResultsContainer');
+            
+            resultsSection.style.display = 'block';
+            showSkeletonLoading('hybridResultsContainer', limit);
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/search`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query: query,
+                        limit: limit,
+                        text_weight: textWeight,
+                        vector_weight: vectorWeight,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Search failed');
+                }
+
+                const data = await response.json();
+                if (data.results && data.results.length > 0) {
+                    showStatus(`Found ${data.results.length} results`, 'success', true, 'hybridStatusMessage');
+                    displayHybridResults(data);
+                } else {
+                    showStatus('No results found', 'info', true, 'hybridStatusMessage');
+                    resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No cards found</div></div>';
+                }
+            } catch (error) {
+                const friendlyError = getUserFriendlyError(error.message);
+                showStatus(`Error: ${friendlyError}`, 'error', true, 'hybridStatusMessage');
+                resultsContainer.innerHTML = `<div class="status error">${friendlyError}</div>`;
+            }
+        }
+
+        function displayHybridResults(data) {
+            const container = document.getElementById('hybridResultsContainer');
+            container.innerHTML = data.results.map(result => `
+                <div class="result-item">
+                    <div class="result-info">
+                        <div class="result-name">${result.card_name}</div>
+                        <div class="result-meta">Score: ${(result.score * 100).toFixed(1)}% · Source: ${result.source}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        async function contextualSearch() {
+            const card = document.getElementById('contextualCardInput').value.trim();
+            const game = document.getElementById('contextualGame').value;
+            const format = document.getElementById('contextualFormat').value.trim() || null;
+            const archetype = document.getElementById('contextualArchetype').value.trim() || null;
+            const topK = parseInt(document.getElementById('contextualTopK').value);
+
+            if (!card) {
+                showStatus('Please enter a card name', 'error', true, 'contextualStatusMessage');
+                return;
+            }
+
+            const resultsSection = document.getElementById('contextualResultsSection');
+            const resultsContainer = document.getElementById('contextualResultsContainer');
+            
+            resultsSection.style.display = 'block';
+            showSkeletonLoading('contextualResultsContainer', topK * 3);
+
+            try {
+                const params = new URLSearchParams({
+                    game: game,
+                    top_k: topK.toString(),
+                });
+                if (format) params.append('format', format);
+                if (archetype) params.append('archetype', archetype);
+
+                const response = await fetch(`${API_BASE}/v1/cards/${encodeURIComponent(card)}/contextual?${params}`);
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Request failed');
+                }
+
+                const data = await response.json();
+                if (data.categories && Object.keys(data.categories).length > 0) {
+                    showStatus('Contextual suggestions loaded', 'success', true, 'contextualStatusMessage');
+                    displayContextualResults(data);
+                } else {
+                    showStatus('No contextual suggestions available', 'info', true, 'contextualStatusMessage');
+                    resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No suggestions found</div></div>';
+                }
+            } catch (error) {
+                const friendlyError = getUserFriendlyError(error.message);
+                showStatus(`Error: ${friendlyError}`, 'error', true, 'contextualStatusMessage');
+                resultsContainer.innerHTML = `<div class="status error">${friendlyError}</div>`;
+            }
+        }
+
+        function displayContextualResults(data) {
+            const container = document.getElementById('contextualResultsContainer');
+            let html = '';
+            for (const [category, cards] of Object.entries(data.categories)) {
+                html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: #6b8eff; font-size: 16px;">${category}</h3>`;
+                html += cards.map(card => `
+                    <div class="result-item">
+                        <div class="result-info">
+                            <div class="result-name">${card.card}</div>
+                            <div class="result-meta">Similarity: ${(card.similarity * 100).toFixed(1)}%</div>
+                        </div>
+                    </div>
+                `).join('');
+            }
+            container.innerHTML = html;
+        }
+
+        async function completeDeck() {
+            const game = document.getElementById('deckGame').value;
+            const deckText = document.getElementById('deckInput').value.trim();
+            const targetSize = document.getElementById('targetSize').value ? parseInt(document.getElementById('targetSize').value) : null;
+            const maxSteps = parseInt(document.getElementById('maxSteps').value);
+            const method = document.getElementById('completionMethod').value;
+
+            if (!deckText) {
+                showStatus('Please enter a deck', 'error', true, 'deckStatusMessage');
+                return;
+            }
+
+            let deck;
+            try {
+                deck = JSON.parse(deckText);
+            } catch {
+                showStatus('Invalid JSON format. Please check your deck format.', 'error', true, 'deckStatusMessage');
+                return;
+            }
+
+            const resultsSection = document.getElementById('deckResultsSection');
+            const resultsContainer = document.getElementById('deckResultsContainer');
+            
+            resultsSection.style.display = 'block';
+            showSkeletonLoading('deckResultsContainer', 3);
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/deck/complete`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        game: game,
+                        deck: deck,
+                        target_main_size: targetSize,
+                        max_steps: maxSteps,
+                        method: method,
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Deck completion failed');
+                }
+
+                const data = await response.json();
+                showStatus('Deck completed successfully', 'success', true, 'deckStatusMessage');
+                displayDeckResults(data);
+            } catch (error) {
+                const friendlyError = getUserFriendlyError(error.message);
+                showStatus(`Error: ${friendlyError}`, 'error', true, 'deckStatusMessage');
+                resultsContainer.innerHTML = `<div class="status error">${friendlyError}</div>`;
+            }
+        }
+
+        function displayDeckResults(data) {
+            const container = document.getElementById('deckResultsContainer');
+            const mainCount = data.deck.Main ? data.deck.Main.length : 0;
+            const sideCount = data.deck.Sideboard ? data.deck.Sideboard.length : 0;
+            
+            let html = `
+                <div class="deck-stats">
+                    <div class="deck-stat">
+                        <div class="deck-stat-label">Main Deck</div>
+                        <div class="deck-stat-value">${mainCount}</div>
+                    </div>
+                    <div class="deck-stat">
+                        <div class="deck-stat-label">Sideboard</div>
+                        <div class="deck-stat-value">${sideCount}</div>
+                    </div>
+                    <div class="deck-stat">
+                        <div class="deck-stat-label">Steps</div>
+                        <div class="deck-stat-value">${data.steps.length}</div>
+                    </div>
+                </div>
+                <div style="margin-top: 24px;">
+                    <h3 style="margin-bottom: 12px; color: #6b8eff;">Completed Deck (JSON)</h3>
+                    <textarea class="deck-input" readonly style="min-height: 300px;">${JSON.stringify(data.deck, null, 2)}</textarea>
+                </div>
+            `;
+            
+            if (data.steps && data.steps.length > 0) {
+                html += '<div style="margin-top: 24px;"><h3 style="margin-bottom: 12px; color: #6b8eff;">Completion Steps</h3>';
+                html += data.steps.map((step, idx) => `
+                    <div class="result-item" style="margin-bottom: 8px;">
+                        <div class="result-info">
+                            <div class="result-name">Step ${idx + 1}: ${step.action || 'Added card'}</div>
+                            ${step.card ? `<div class="result-meta">Card: ${step.card}</div>` : ''}
+                        </div>
+                    </div>
+                `).join('');
+                html += '</div>';
+            }
+            
+            container.innerHTML = html;
+        }
+
+        // LLM toggle handler
+        document.addEventListener('DOMContentLoaded', () => {
+            const llmToggle = document.getElementById('llmToggle');
+            if (llmToggle) {
+                llmToggle.checked = localStorage.getItem('decksage_use_llm') === 'true';
+                llmToggle.addEventListener('change', (e) => {
+                    localStorage.setItem('decksage_use_llm', e.target.checked ? 'true' : 'false');
+                    localStorage.setItem('decksage_use_llm_intent', e.target.checked ? 'true' : 'false');
+                });
+            }
+        });
+
+        function toggleFeedbackMode() {
+            feedbackModeEnabled = document.getElementById('enableFeedback').checked;
+            if (currentResults.length > 0) {
+                const data = { 
+                    results: currentResults, 
+                    model_info: currentModelInfo 
+                };
+                displayResults(data);
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContainer = document.getElementById('resultsContainer');
+            const modelInfo = document.getElementById('modelInfo');
+            const resultsSection = document.getElementById('resultsSection');
+
+            resultsContainer.innerHTML = '';
+            currentResults.forEach((result, index) => {
+                const item = document.createElement('div');
+                item.className = 'result-item';
+                item.setAttribute('tabindex', '0');
+                item.setAttribute('role', 'article');
+                item.setAttribute('aria-label', `Result ${index + 1}: ${result.card}`);
+                
+                const ratingLabels = {
+                    4: 'Extremely similar (near substitutes)',
+                    3: 'Very similar (similar role)',
+                    2: 'Somewhat similar (related function)',
+                    1: 'Marginally similar (loose connection)',
+                    0: 'Irrelevant (different function)'
+                };
+                const feedbackControlsHtml = feedbackModeEnabled ? `
+                    <div class="feedback-controls">
+                        <div class="rating-buttons">
+                            ${[0, 1, 2, 3, 4].map(rating => 
+                                `<button class="rating-btn" data-rating="${rating}" data-index="${index}" 
+                                    title="${ratingLabels[rating]}" aria-label="Rate ${rating}: ${ratingLabels[rating]}">${rating}</button>`
+                            ).join('')}
+                        </div>
+                        <div class="substitute-toggle">
+                            <input type="checkbox" id="substitute-${index}" data-index="${index}" aria-label="Can this card substitute the query card">
+                            <label for="substitute-${index}">Substitute?</label>
+                        </div>
+                        <button class="rating-btn" onclick="submitFeedback(${index})" aria-label="Submit feedback">Submit</button>
+                    </div>
+                ` : '';
+                const similarityPercent = (result.similarity * 100).toFixed(0);
+                const similarityLabel = result.similarity >= 0.9 ? 'Near substitute' :
+                                       result.similarity >= 0.7 ? 'Very similar' :
+                                       result.similarity >= 0.4 ? 'Somewhat similar' :
+                                       result.similarity >= 0.2 ? 'Marginally similar' : 'Weak connection';
+                
+                const meta = result.metadata || {};
+                const metaParts = [];
+                if (meta.type) metaParts.push(meta.type);
+                if (meta.mana_cost) metaParts.push(meta.mana_cost);
+                if (meta.cmc !== undefined && meta.cmc !== null) metaParts.push(`CMC ${meta.cmc}`);
+                const metaText = metaParts.length > 0 ? metaParts.join(' · ') : '';
+                
+                const functionalTags = meta.functional_tags ? meta.functional_tags.split(',').slice(0, 3).join(', ') : '';
+                const formatLegal = meta.format_legal ? meta.format_legal.split(',').slice(0, 3).join(', ') : '';
+                const cooccurNote = meta.cooccurrence_note || '';
+                const archetypeStaples = meta.archetype_staples || '';
+                const archetypeCooccur = meta.archetype_cooccurrence || '';
+                const formatCooccur = meta.format_cooccurrence || '';
+                const oraclePreview = meta.oracle_text ? (meta.oracle_text.length > 100 ? meta.oracle_text.substring(0, 100) + '...' : meta.oracle_text) : '';
+                
+                const isSubstitutable = result.similarity >= 0.7;
+                const isPartial = result.similarity >= 0.4 && result.similarity < 0.7;
+                let substitutabilityClass = 'not-substitutable';
+                let substitutabilityText = '✗ Not substitutable';
+                if (isSubstitutable) {
+                    substitutabilityClass = 'can-substitute';
+                    substitutabilityText = '✓ Can substitute';
+                } else if (isPartial) {
+                    substitutabilityClass = 'partial-substitute';
+                    substitutabilityText = '~ Partial substitute';
+                }
+                
+                const cardImage = meta.image_url ? `<img src="${meta.image_url}" alt="${result.card}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : '';
+                
+                item.innerHTML = `
+                    <div class="result-info">
+                        <div class="result-header">
+                            ${cardImage ? `<div class="result-image-wrapper">${cardImage}</div>` : ''}
+                            <div class="result-content">
+                                <div class="result-name">${result.card}</div>
+                                <div class="result-similarity">
+                                    <div class="similarity-header">
+                                        <span class="similarity-percent">${similarityPercent}%</span>
+                                        <span class="similarity-label">${similarityLabel}</span>
+                                    </div>
+                                    <div class="similarity-bar">
+                                        <div class="similarity-fill" style="width: ${result.similarity * 100}%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        ${metaText ? `<div class="result-meta">${metaText}</div>` : ''}
+                        ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${functionalTags}</div>` : ''}
+                        ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${formatLegal}</div>` : ''}
+                        ${archetypeStaples ? `<div class="result-archetype"><span class="tag-label">Archetype:</span> ${archetypeStaples}</div>` : ''}
+                        ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${cooccurNote}</div>` : ''}
+                        ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${archetypeCooccur}</div>` : ''}
+                        ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${formatCooccur}</div>` : ''}
+                        <div class="result-substitutability ${substitutabilityClass}">${substitutabilityText}</div>
+                        ${oraclePreview ? `<div class="result-oracle">${oraclePreview}</div>` : ''}
+                    </div>
+                    ${feedbackControlsHtml}
+                `;
+                resultsContainer.appendChild(item);
+            });
+
+            if (feedbackModeEnabled) {
+                document.querySelectorAll('.rating-btn[data-rating]').forEach(btn => {
+                    btn.addEventListener('click', function() {
+                        const index = parseInt(this.dataset.index);
+                        const rating = parseInt(this.dataset.rating);
+                        setRating(index, rating);
+                    });
+                });
+            }
+
+            if (data && data.model_info) {
+                const method = data.model_info.method_used || 'unknown';
+                modelInfo.innerHTML = `
+                    ${data.model_info.embedding_source || 'unknown'} · 
+                    ${data.model_info.num_cards?.toLocaleString() || 'N/A'} cards · 
+                    ${method}
+                `;
+            } else {
+                modelInfo.innerHTML = '';
+            }
+
+            resultsSection.style.display = 'block';
+        }
+
+        function setRating(index, rating) {
+            const buttons = document.querySelectorAll(`.rating-btn[data-index="${index}"]`);
+            buttons.forEach(btn => {
+                if (parseInt(btn.dataset.rating) === rating) {
+                    btn.classList.add('active');
+                } else {
+                    btn.classList.remove('active');
+                }
+            });
+            if (!currentResults[index].feedback) {
+                currentResults[index].feedback = {};
+            }
+            currentResults[index].feedback.rating = rating;
+        }
+
+        async function submitFeedback(index) {
+            const result = currentResults[index];
+            const feedback = result.feedback || {};
+            const rating = feedback.rating;
+            const isSubstitute = document.getElementById(`substitute-${index}`).checked;
+
+            if (rating === undefined) {
+                showStatus('Please select a rating (0-4) before submitting', 'error');
+                return;
+            }
+
+            const submitBtn = document.querySelectorAll('.result-item')[index].querySelector('button[onclick*="submitFeedback"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/feedback`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        query_card: currentQuery,
+                        suggested_card: result.card,
+                        task_type: 'similarity',
+                        rating: rating,
+                        is_substitute: isSubstitute,
+                        user_id: null,
+                        session_id: sessionId,
+                        context: {
+                            similarity: result.similarity,
+                            method: document.getElementById('methodSelect').value,
+                            use_case: document.getElementById('useCaseSelect').value,
+                        },
+                    }),
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    let errorMsg = error.detail || 'Failed to submit feedback';
+                    if (Array.isArray(error.detail)) {
+                        errorMsg = error.detail.map(e => e.msg || e).join(', ');
+                    }
+                    throw new Error(errorMsg);
+                }
+
+                const data = await response.json();
+                showStatus(`Feedback submitted (ID: ${data.feedback_id.substring(0, 8)}...)`, 'success');
+                
+                const item = document.querySelectorAll('.result-item')[index];
+                item.style.opacity = '0.6';
+                item.style.borderLeftColor = '#2a8a2a';
+                submitBtn.textContent = '✓ Submitted';
+            } catch (error) {
+                const friendlyError = getUserFriendlyError(error.message);
+                showStatus(`Error: ${friendlyError}`, 'error');
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
+            }
+        }
+
+        async function fetchAutocomplete(query) {
+            // Changed: 1 character minimum instead of 2
+            if (!query || query.length < 1) {
+                // Show search history if query is empty
+                const history = getSearchHistory();
+                if (history.length > 0) {
+                    showAutocomplete([], query, history);
+                } else {
+                    hideAutocomplete();
+                }
+                return;
+            }
+            
+            try {
+                const useLLM = localStorage.getItem('decksage_use_llm') === 'true';
+                const url = `${API_BASE}/v1/cards?prefix=${encodeURIComponent(query)}&limit=8${useLLM ? '&use_llm=true' : ''}`;
+                const response = await fetch(url);
+                if (!response.ok) {
+                    if (response.status === 503) {
+                        const dropdown = document.getElementById('autocompleteDropdown');
+                        dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; font-style: italic; cursor: default;">Autocomplete requires embeddings to be loaded</div>';
+                        dropdown.classList.add('visible');
+                        return;
+                    }
+                    return;
+                }
+                
+                const data = await response.json();
+                const history = getSearchHistory().filter(item => 
+                    item.toLowerCase().includes(query.toLowerCase()) && 
+                    item.toLowerCase() !== query.toLowerCase()
+                );
+                
+                if (data.items && data.items.length > 0) {
+                    showAutocomplete(data.items, query, history);
+                } else if (history.length > 0) {
+                    showAutocomplete([], query, history);
+                } else {
+                    // Show empty state
+                    const dropdown = document.getElementById('autocompleteDropdown');
+                    dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; font-style: italic; cursor: default;">No suggestions found</div>';
+                    dropdown.classList.add('visible');
+                }
+            } catch (error) {
+                const dropdown = document.getElementById('autocompleteDropdown');
+                dropdown.innerHTML = `<div class="autocomplete-item" style="color: #ef4444; font-style: italic; cursor: default;">Connection error</div>`;
+                dropdown.classList.add('visible');
+                setTimeout(() => hideAutocomplete(), 2000);
+            }
+        }
+
+        function showAutocomplete(items, query, history = []) {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            const cardInput = document.getElementById('cardInput');
+            const queryLower = query.toLowerCase();
+            
+            let html = '';
+            
+            // Show history first if available
+            if (history.length > 0 && query.length === 0) {
+                html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Recent Searches</div>';
+                history.slice(0, 5).forEach((item, index) => {
+                    html += `<div class="autocomplete-item history-item" data-index="${index}" data-value="${item}" role="option" aria-label="Recent search: ${item}" tabindex="0">${escapeHtml(item)}</div>`;
+                });
+                html += '</div>';
+            }
+            
+            // Show API suggestions
+            if (items.length > 0) {
+                if (history.length > 0) html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Suggestions</div>';
+                items.forEach((item, index) => {
+                    const itemLower = item.toLowerCase();
+                    let highlighted = escapeHtml(item);
+                    
+                    // Improved highlighting: highlight all matches, not just first
+                    if (itemLower.includes(queryLower)) {
+                        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+                        highlighted = escapeHtml(item).replace(regex, '<strong class="match">$1</strong>');
+                    }
+                    
+                    html += `<div class="autocomplete-item" data-index="${history.length + index}" data-value="${item}" role="option" aria-label="Card: ${item}" tabindex="0">${highlighted}</div>`;
+                });
+                if (history.length > 0) html += '</div>';
+            }
+            
+            dropdown.innerHTML = html;
+            dropdown.setAttribute('role', 'listbox');
+            dropdown.setAttribute('aria-label', `${items.length + history.length} suggestions`);
+            dropdown.classList.add('visible');
+            cardInput.setAttribute('aria-expanded', 'true');
+            autocompleteItems = [...history, ...items];
+            selectedAutocompleteIndex = -1;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        function hideAutocomplete() {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            const cardInput = document.getElementById('cardInput');
+            if (dropdown) {
+                dropdown.classList.remove('visible');
+                dropdown.removeAttribute('role');
+                dropdown.removeAttribute('aria-label');
+                autocompleteItems = [];
+                selectedAutocompleteIndex = -1;
+            }
+            if (cardInput) {
+                cardInput.setAttribute('aria-expanded', 'false');
+            }
+        }
+
+        function selectAutocompleteItem(index) {
+            if (index >= 0 && index < autocompleteItems.length) {
+                const cardInput = document.getElementById('cardInput');
+                cardInput.value = autocompleteItems[index];
+                hideAutocomplete();
+                if (currentTab === 'similarity') {
+                    searchCards();
+                }
+            }
+        }
+
+        // Setup autocomplete
+        const cardInput = document.getElementById('cardInput');
+        if (cardInput) {
+            cardInput.addEventListener('input', (e) => {
+                const query = e.target.value.trim();
+                
+                if (autocompleteTimeout) {
+                    clearTimeout(autocompleteTimeout);
+                }
+                
+                // Reduced debounce for faster feedback
+                autocompleteTimeout = setTimeout(() => {
+                    fetchAutocomplete(query);
+                }, 150);
+            });
+
+            cardInput.addEventListener('focus', () => {
+                const query = cardInput.value.trim();
+                if (query.length === 0) {
+                    const history = getSearchHistory();
+                    if (history.length > 0) {
+                        showAutocomplete([], '', history);
+                    }
+                }
+            });
+
+            cardInput.addEventListener('keydown', (e) => {
+                const dropdown = document.getElementById('autocompleteDropdown');
+                if (!dropdown || !dropdown.classList.contains('visible')) return;
+                
+                if (e.key === 'ArrowDown') {
+                    e.preventDefault();
+                    selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, autocompleteItems.length - 1);
+                    updateAutocompleteSelection();
+                } else if (e.key === 'ArrowUp') {
+                    e.preventDefault();
+                    selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
+                    updateAutocompleteSelection();
+                } else if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < autocompleteItems.length) {
+                        selectAutocompleteItem(selectedAutocompleteIndex);
+                    } else if (autocompleteItems.length > 0) {
+                        cardInput.value = autocompleteItems[0];
+                        hideAutocomplete();
+                        if (currentTab === 'similarity') {
+                            searchCards();
+                        }
+                    }
+                } else if (e.key === 'Escape') {
+                    e.preventDefault();
+                    hideAutocomplete();
+                }
+            });
+        }
+
+        function updateAutocompleteSelection() {
+            const items = document.querySelectorAll('.autocomplete-item');
+            items.forEach((item, index) => {
+                if (index === selectedAutocompleteIndex) {
+                    item.classList.add('selected');
+                    item.setAttribute('aria-selected', 'true');
+                    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                } else {
+                    item.classList.remove('selected');
+                    item.removeAttribute('aria-selected');
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            const wrapper = document.querySelector('.search-input-wrapper');
+            if (!wrapper || !wrapper.contains(e.target)) {
+                hideAutocomplete();
+            }
+        });
+
+        document.addEventListener('click', (e) => {
+            const item = e.target.closest('.autocomplete-item');
+            if (item) {
+                const value = item.dataset.value;
+                if (value) {
+                    const cardInput = document.getElementById('cardInput');
+                    if (cardInput) {
+                        cardInput.value = value;
+                        hideAutocomplete();
+                        cardInput.focus();
+                        if (currentTab === 'similarity') {
+                            searchCards();
+                        }
+                    }
+                }
+            }
+        });
+
+        function detectAndApplyGameStyle(cardName) {
+            const body = document.body;
+            body.classList.remove('game-magic', 'game-pokemon', 'game-yugioh');
+            
+            const nameLower = cardName.toLowerCase();
+            if (nameLower.includes('-ex') || nameLower.includes('-gx') || nameLower.includes('-v') || nameLower.includes('pikachu') || nameLower.includes('charizard')) {
+                body.classList.add('game-pokemon');
+            } else if (nameLower.includes('blue-eyes') || nameLower.includes('dark magician') || nameLower.includes('exodia')) {
+                body.classList.add('game-yugioh');
+            } else {
+                body.classList.add('game-magic');
+            }
+        }
+
+        // Form submissions
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            hideAutocomplete();
+            searchCards();
+        });
+
+        document.getElementById('hybridSearchForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            hybridSearch();
+        });
+
+        document.getElementById('contextualForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            contextualSearch();
+        });
+
+        document.getElementById('deckCompletionForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            completeDeck();
+        });
+
+        // Keyboard shortcuts help (shown on focus)
+        document.addEventListener('keydown', (e) => {
+            // Show keyboard shortcuts on ? key
+            if (e.key === '?' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                const target = e.target;
+                if (target.tagName !== 'INPUT' && target.tagName !== 'TEXTAREA') {
+                    showStatus('Keyboard shortcuts: Arrow keys navigate, Enter selects, Escape closes, ? shows this help', 'info');
+                }
+            }
+        });
+    </script>
+</body>
+</html>
+
+

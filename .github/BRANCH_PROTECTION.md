@@ -2,7 +2,7 @@
 
 ## Current Status
 
-The main branch is not currently protected. This document describes how to enable branch protection.
+The main branch is protected with required status checks and PR reviews.
 
 ## Recommended Protection Rules
 

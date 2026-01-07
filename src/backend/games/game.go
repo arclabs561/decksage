@@ -12,6 +12,8 @@
 package games
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -47,6 +49,13 @@ type Collection struct {
 	// Source tracking: which scraper/dataset extracted this
 	// Examples: "mtgtop8", "goldfish", "deckbox", "scryfall", "limitless", "ygoprodeck"
 	Source string `json:"source,omitempty"`
+
+	// Change tracking and versioning
+	ScrapedAt   time.Time `json:"scraped_at,omitempty"`   // When this was first scraped
+	UpdatedAt   time.Time `json:"updated_at,omitempty"`   // When content last changed
+	Version     int       `json:"version,omitempty"`      // Increments on content change
+	ContentHash string    `json:"content_hash,omitempty"` // SHA256 hash of canonicalized content
+	ETag        string    `json:"etag,omitempty"`         // HTTP ETag from source
 }
 
 // CollectionTypeWrapper wraps game-specific collection types.
@@ -168,4 +177,59 @@ func (c *Collection) Canonicalize() error {
 		})
 	}
 	return nil
+}
+
+// ComputeContentHash calculates a SHA256 hash of the canonicalized card content.
+// This hash is used to detect content changes (not just metadata changes).
+// The hash is computed from the sorted partitions and cards, making it order-independent.
+func (c *Collection) ComputeContentHash() {
+	if c.ContentHash != "" {
+		return // Already computed
+	}
+
+	// Create a canonical representation for hashing
+	// Only include card content, not metadata like ID, URL, dates, etc.
+	type hashableContent struct {
+		Partitions []struct {
+			Name  string
+			Cards []struct {
+				Name  string
+				Count int
+			}
+		}
+	}
+
+	hc := hashableContent{
+		Partitions: make([]struct {
+			Name  string
+			Cards []struct {
+				Name  string
+				Count int
+			}
+		}, len(c.Partitions)),
+	}
+
+	for i, p := range c.Partitions {
+		hc.Partitions[i].Name = p.Name
+		hc.Partitions[i].Cards = make([]struct {
+			Name  string
+			Count int
+		}, len(p.Cards))
+		for j, card := range p.Cards {
+			hc.Partitions[i].Cards[j].Name = card.Name
+			hc.Partitions[i].Cards[j].Count = card.Count
+		}
+	}
+
+	// Marshal to JSON for consistent hashing
+	data, err := json.Marshal(hc)
+	if err != nil {
+		// Should never happen, but if it does, use empty hash
+		c.ContentHash = ""
+		return
+	}
+
+	// Compute SHA256 hash
+	hash := sha256.Sum256(data)
+	c.ContentHash = hex.EncodeToString(hash[:])
 }

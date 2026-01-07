@@ -19,8 +19,12 @@ Also supports MMR (Maximal Marginal Relevance) for result diversification.
 
 from __future__ import annotations
 
+import logging
 from dataclasses import dataclass
 from typing import Any
+
+
+logger = logging.getLogger(__name__)
 
 
 def _clamp01(x: float) -> float:
@@ -50,6 +54,7 @@ class FusionWeights:
     - GNN: 30% (multi-hop, new cards, inductive learning)
     - Instruction-tuned: 25% (zero-shot, semantic understanding)
     - Co-occurrence: 20% (established patterns, Node2Vec/PecanPy)
+    - Visual: 20% (visual similarity from card images)
     - Jaccard: 15% (direct co-occurrence)
     - Functional: 10% (role-based similarity)
     """
@@ -58,6 +63,7 @@ class FusionWeights:
     jaccard: float = 0.15  # Direct co-occurrence (Jaccard similarity)
     functional: float = 0.10  # Functional tag similarity (role-based)
     text_embed: float = 0.25  # Instruction-tuned embeddings (zero-shot, semantic)
+    visual_embed: float = 0.20  # Visual embeddings (card images, CLIP/SigLIP)
     sideboard: float = 0.0  # Sideboard co-occurrence signal (optional)
     temporal: float = 0.0  # Temporal trend signal (optional)
     gnn: float = 0.30  # GNN-learned embeddings (GraphSAGE, multi-hop)
@@ -71,6 +77,7 @@ class FusionWeights:
             + self.jaccard
             + self.functional
             + self.text_embed
+            + self.visual_embed
             + self.sideboard
             + self.temporal
             + self.gnn
@@ -83,6 +90,7 @@ class FusionWeights:
                 jaccard=0.15,
                 functional=0.15,
                 text_embed=0.10,
+                visual_embed=0.10,
                 sideboard=0.10,
                 temporal=0.05,
                 gnn=0.10,
@@ -94,6 +102,7 @@ class FusionWeights:
             jaccard=self.jaccard / total,
             functional=self.functional / total,
             text_embed=self.text_embed / total,
+            visual_embed=self.visual_embed / total,
             sideboard=self.sideboard / total,
             temporal=self.temporal / total,
             gnn=self.gnn / total,
@@ -121,6 +130,7 @@ class WeightedLateFusion:
         mmr_lambda: float = 0.0,
         candidate_topn: int = 100,
         text_embedder: Any | None = None,
+        visual_embedder: Any | None = None,
         card_data: dict[str, dict[str, Any]] | None = None,
         sideboard_cooccurrence: dict[str, dict[str, float]] | None = None,
         temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
@@ -131,6 +141,7 @@ class WeightedLateFusion:
         cross_format_patterns: dict[str, dict[str, float]] | None = None,
         task_type: str | None = None,
         graph: Any | None = None,  # IncrementalCardGraph instance for enhanced temporal similarity
+        adaptive_visual_weights: bool = True,  # Adjust visual weights based on coverage
     ):
         """
         Initialize fusion model.
@@ -145,6 +156,7 @@ class WeightedLateFusion:
             mmr_lambda: MMR diversification parameter (0.0 = no diversification, 1.0 = max diversity)
             candidate_topn: Number of candidates to consider from each modality before fusion
             text_embedder: Optional CardTextEmbedder instance for text embeddings
+            visual_embedder: Optional CardVisualEmbedder instance for visual embeddings
             card_data: Optional dict mapping card name -> card dict (for Oracle text access)
             sideboard_cooccurrence: Optional dict mapping card -> dict of co-occurring cards -> frequency
             temporal_cooccurrence: Optional dict mapping month -> card -> co-occurring card -> frequency
@@ -173,6 +185,7 @@ class WeightedLateFusion:
         self.adj = adj or {}
         self.tagger = tagger
         self.text_embedder = text_embedder
+        self.visual_embedder = visual_embedder
         self.card_data = card_data or {}
         self.sideboard_cooccurrence = sideboard_cooccurrence or {}
         self.temporal_cooccurrence = temporal_cooccurrence or {}
@@ -183,6 +196,26 @@ class WeightedLateFusion:
         self.cross_format_patterns = cross_format_patterns or {}
         self.graph = graph  # IncrementalCardGraph for enhanced temporal similarity
         self.aggregator = aggregator
+        self.adaptive_visual_weights = adaptive_visual_weights
+
+        # Adjust weights based on visual coverage if adaptive mode enabled
+        if adaptive_visual_weights and visual_embedder and weights and weights.visual_embed > 0.0:
+            try:
+                from ..utils.visual_coverage import (
+                    adjust_weights_for_coverage,
+                    compute_visual_coverage,
+                )
+
+                coverage = compute_visual_coverage(visual_embedder, card_data)
+                if coverage["coverage_rate"] < 0.1:  # Less than 10% coverage
+                    logger.info(
+                        f"Low visual coverage ({coverage['coverage_rate']:.1%}), "
+                        f"adjusting weights (original visual_embed={weights.visual_embed:.3f})"
+                    )
+                    weights = adjust_weights_for_coverage(weights, coverage["coverage_rate"])
+                    logger.info(f"Adjusted visual_embed weight: {weights.visual_embed:.3f}")
+            except Exception as e:
+                logger.debug(f"Failed to adjust weights for coverage: {e}")
         self.rrf_k = rrf_k
         self.mmr_lambda = mmr_lambda
         self.candidate_topn = candidate_topn
@@ -279,6 +312,35 @@ class WeightedLateFusion:
 
             return float(similarity)
         except Exception:
+            return 0.0
+
+    def _get_visual_embedding_similarity(self, query: str, candidate: str) -> float:
+        """Get visual embedding similarity from card image URLs."""
+        if not self.visual_embedder:
+            return 0.0
+
+        try:
+            # Get card data if available (same pattern as text embeddings)
+            query_card_data = (
+                self.card_data.get(query) or self.card_data.get(query.lower())
+                if self.card_data
+                else None
+            )
+            candidate_card_data = (
+                self.card_data.get(candidate) or self.card_data.get(candidate.lower())
+                if self.card_data
+                else None
+            )
+
+            # Use card dict if available, otherwise use name string
+            query_input = query_card_data if query_card_data else query
+            candidate_input = candidate_card_data if candidate_card_data else candidate
+
+            # Visual embedder handles card dicts, name strings, or PIL Images
+            similarity = self.visual_embedder.similarity(query_input, candidate_input)
+            return float(similarity)
+        except Exception:
+            # Gracefully handle errors (missing images, download failures, etc.)
             return 0.0
 
     def _get_sideboard_similarity(self, query: str, candidate: str) -> float:
@@ -564,6 +626,7 @@ class WeightedLateFusion:
         compute_jaccard = self.weights.jaccard > 0.0
         compute_functional = self.weights.functional > 0.0
         compute_text_embed = self.weights.text_embed > 0.0
+        compute_visual_embed = self.weights.visual_embed > 0.0
         compute_sideboard = self.weights.sideboard > 0.0
         compute_temporal = self.weights.temporal > 0.0
         compute_gnn = self.weights.gnn > 0.0
@@ -589,6 +652,10 @@ class WeightedLateFusion:
                 scores[candidate]["text_embed"] = self._get_text_embedding_similarity(
                     query, candidate
                 )
+            if compute_visual_embed:
+                scores[candidate]["visual_embed"] = self._get_visual_embedding_similarity(
+                    query, candidate
+                )
             if compute_sideboard:
                 scores[candidate]["sideboard"] = self._get_sideboard_similarity(query, candidate)
             if compute_temporal:
@@ -611,6 +678,8 @@ class WeightedLateFusion:
             weight_score_pairs.append((self.weights.functional, scores["functional"]))
         if self.weights.text_embed > 0.0 and "text_embed" in scores:
             weight_score_pairs.append((self.weights.text_embed, scores["text_embed"]))
+        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
+            weight_score_pairs.append((self.weights.visual_embed, scores["visual_embed"]))
         if self.weights.sideboard > 0.0 and "sideboard" in scores:
             weight_score_pairs.append((self.weights.sideboard, scores["sideboard"]))
         if self.weights.temporal > 0.0 and "temporal" in scores:
@@ -636,6 +705,8 @@ class WeightedLateFusion:
             total += self.weights.functional / (self.rrf_k + ranks["functional"])
         if self.weights.text_embed > 0.0 and "text_embed" in ranks:
             total += self.weights.text_embed / (self.rrf_k + ranks["text_embed"])
+        if self.weights.visual_embed > 0.0 and "visual_embed" in ranks:
+            total += self.weights.visual_embed / (self.rrf_k + ranks["visual_embed"])
         if self.weights.sideboard > 0.0 and "sideboard" in ranks:
             total += self.weights.sideboard / (self.rrf_k + ranks["sideboard"])
         if self.weights.temporal > 0.0 and "temporal" in ranks:
@@ -659,6 +730,8 @@ class WeightedLateFusion:
             total += self.weights.functional * scores["functional"]
         if self.weights.text_embed > 0.0 and "text_embed" in scores:
             total += self.weights.text_embed * scores["text_embed"]
+        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
+            total += self.weights.visual_embed * scores["visual_embed"]
         if self.weights.sideboard > 0.0 and "sideboard" in scores:
             total += self.weights.sideboard * scores["sideboard"]
         if self.weights.temporal > 0.0 and "temporal" in scores:
@@ -683,6 +756,8 @@ class WeightedLateFusion:
             enabled_scores.append(scores["functional"])
         if self.weights.text_embed > 0.0 and "text_embed" in scores:
             enabled_scores.append(scores["text_embed"])
+        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
+            enabled_scores.append(scores["visual_embed"])
         if self.weights.sideboard > 0.0 and "sideboard" in scores:
             enabled_scores.append(scores["sideboard"])
         if self.weights.temporal > 0.0 and "temporal" in scores:
@@ -710,6 +785,9 @@ class WeightedLateFusion:
             found = True
         if self.weights.text_embed > 0.0 and "text_embed" in scores:
             min_score = min(min_score, scores["text_embed"])
+            found = True
+        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
+            min_score = min(min_score, scores["visual_embed"])
             found = True
         if self.weights.sideboard > 0.0 and "sideboard" in scores:
             min_score = min(min_score, scores["sideboard"])
@@ -819,6 +897,7 @@ class WeightedLateFusion:
                 jaccard_ranked = []
                 functional_ranked = []
                 text_embed_ranked = []
+                visual_embed_ranked = []
                 sideboard_ranked = []
                 temporal_ranked = []
                 gnn_ranked = []
@@ -837,6 +916,10 @@ class WeightedLateFusion:
                     if "text_embed" in modality_scores[candidate]:
                         text_embed_ranked.append(
                             (candidate, modality_scores[candidate]["text_embed"])
+                        )
+                    if "visual_embed" in modality_scores[candidate]:
+                        visual_embed_ranked.append(
+                            (candidate, modality_scores[candidate]["visual_embed"])
                         )
                     if "sideboard" in modality_scores[candidate]:
                         sideboard_ranked.append(
@@ -857,6 +940,7 @@ class WeightedLateFusion:
                 jaccard_ranked.sort(key=lambda x: x[1], reverse=True)
                 functional_ranked.sort(key=lambda x: x[1], reverse=True)
                 text_embed_ranked.sort(key=lambda x: x[1], reverse=True)
+                visual_embed_ranked.sort(key=lambda x: x[1], reverse=True)
                 sideboard_ranked.sort(key=lambda x: x[1], reverse=True)
                 temporal_ranked.sort(key=lambda x: x[1], reverse=True)
                 gnn_ranked.sort(key=lambda x: x[1], reverse=True)
@@ -881,6 +965,10 @@ class WeightedLateFusion:
                     if candidate not in ranks:
                         ranks[candidate] = {}
                     ranks[candidate]["text_embed"] = rank
+                for rank, (candidate, _) in enumerate(visual_embed_ranked, start=1):
+                    if candidate not in ranks:
+                        ranks[candidate] = {}
+                    ranks[candidate]["visual_embed"] = rank
                 for rank, (candidate, _) in enumerate(sideboard_ranked, start=1):
                     if candidate not in ranks:
                         ranks[candidate] = {}

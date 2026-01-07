@@ -1,0 +1,1541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DeckSage - Similarity Review</title>
+    <meta name="description" content="Review and annotate card similarities in bulk">
+    <link rel="stylesheet" href="/static/common.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --bg-elevated: #2a2a2a;
+            --border-default: #333;
+            --border-hover: #444;
+            --border-active: #6b8eff;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --text-tertiary: #888;
+            --accent-primary: #6b8eff;
+            --accent-hover: #5a7eff;
+            --accent-light: rgba(107, 142, 255, 0.1);
+            --success: #4caf50;
+            --warning: #ff9800;
+            --error: #f44336;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
+            --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            padding: 0;
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 24px 20px;
+        }
+        
+        .header {
+            margin-bottom: 24px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-default);
+        }
+        
+        h1 {
+            font-size: 32px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+            letter-spacing: -0.5px;
+        }
+        
+        .subtitle {
+            font-size: 16px;
+            color: var(--text-secondary);
+            font-weight: 400;
+        }
+        
+        .header-controls {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+            align-items: center;
+            padding: 20px;
+            background: var(--bg-elevated);
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .control-group {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        
+        .control-group label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            font-weight: 500;
+            white-space: nowrap;
+        }
+        
+        select, input[type="text"], input[type="number"] {
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        input[type="file"] {
+            padding: 8px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            cursor: pointer;
+        }
+        
+        input[type="file"]:hover {
+            border-color: var(--border-hover);
+        }
+        
+        input[type="file"]:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        
+        select:hover, input:hover {
+            border-color: var(--border-hover);
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        
+        button {
+            padding: 10px 20px;
+            background: var(--accent-primary);
+            border: none;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: var(--shadow-sm);
+            font-family: inherit;
+        }
+        
+        button:hover:not(:disabled) {
+            background: var(--accent-hover);
+        }
+        
+        button:active:not(:disabled) {
+            background: var(--accent-primary);
+        }
+        
+        button:disabled {
+            background: var(--bg-tertiary);
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+        
+        button.secondary {
+            background: var(--bg-tertiary);
+            color: var(--text-primary);
+        }
+        
+        button.secondary:hover:not(:disabled) {
+            background: var(--bg-elevated);
+        }
+        
+        .legend {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .legend h3 {
+            font-size: 16px;
+            margin-bottom: 16px;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .legend-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 12px;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 12px;
+            background: var(--bg-secondary);
+            border-radius: 6px;
+            font-size: 13px;
+        }
+        
+        .legend-rating {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 24px;
+            height: 24px;
+            background: var(--accent-primary);
+            color: white;
+            border-radius: 4px;
+            font-weight: 600;
+            font-size: 12px;
+        }
+        
+        .legend-item strong {
+            color: var(--text-primary);
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        
+        .stat-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .stat-card:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            color: var(--text-primary);
+            line-height: 1;
+        }
+        
+        .stat-value.accent {
+            background: var(--accent-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .progress-indicator {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 16px 20px;
+            box-shadow: var(--shadow-md);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .progress-indicator.visible {
+            display: block;
+        }
+        
+        .progress-bar {
+            width: 200px;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--accent-primary);
+        }
+        
+        .similarity-list {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .similarity-item {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: var(--shadow-sm);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .similarity-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--accent-primary);
+            opacity: 0;
+        }
+        
+        .similarity-item:hover {
+            border-color: var(--border-hover);
+            box-shadow: var(--shadow-md);
+        }
+        
+        .similarity-item:hover::before {
+            opacity: 1;
+        }
+        
+        .similarity-item.annotated {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 1px var(--accent-light);
+        }
+        
+        .similarity-item.annotated::before {
+            opacity: 1;
+        }
+        
+        .similarity-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+            gap: 24px;
+        }
+        
+        .card-pair {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex: 1;
+        }
+        
+        .card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .card-name {
+            font-size: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+            line-height: 1.3;
+        }
+        
+        .card-meta {
+            font-size: 13px;
+            color: var(--text-tertiary);
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        
+        .card-meta-item {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .card-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            background: var(--bg-secondary);
+            border-radius: 50%;
+            color: var(--text-tertiary);
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+        
+        .similarity-score {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        
+        .score-value {
+            font-size: 32px;
+            font-weight: 700;
+            background: var(--accent-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+        }
+        
+        .score-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .similarity-bar {
+            width: 120px;
+            height: 6px;
+            background: var(--bg-secondary);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 4px;
+        }
+        
+        .similarity-fill {
+            height: 100%;
+            background: var(--accent-primary);
+        }
+        
+        .metadata-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border-default);
+        }
+        
+        /* Metadata section is always visible for test compatibility */
+        
+        .metadata-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+        }
+        
+        .metadata-item {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        
+        .metadata-label {
+            font-size: 11px;
+            color: var(--text-tertiary);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+        
+        .metadata-value {
+            font-size: 14px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+        
+        .metadata-value.empty {
+            color: var(--text-tertiary);
+            font-style: italic;
+        }
+        
+        .metadata-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+        
+        .annotation-controls {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border-default);
+            flex-wrap: wrap;
+        }
+        
+        .rating-section {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .rating-label {
+            font-size: 12px;
+            color: var(--text-tertiary);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .rating-buttons {
+            display: flex;
+            gap: 6px;
+        }
+        
+        .rating-btn {
+            padding: 8px 14px;
+            background: var(--bg-secondary);
+            border: 2px solid var(--border-default);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            min-width: 44px;
+        }
+        
+        .rating-btn:focus {
+            outline: 2px solid var(--accent-primary);
+            outline-offset: 2px;
+        }
+        
+        .rating-btn:hover {
+            background: var(--bg-tertiary);
+            border-color: var(--border-hover);
+            color: var(--text-primary);
+        }
+        
+        .rating-btn.selected {
+            background: var(--accent-primary);
+            border-color: var(--accent-primary);
+            color: #fff;
+        }
+        
+        .rating-btn.selected:hover {
+            background: var(--accent-hover);
+        }
+        
+        .substitute-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 16px;
+            background: var(--bg-secondary);
+            border-radius: 8px;
+            border: 1px solid var(--border-default);
+        }
+        
+        .substitute-section input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+            accent-color: var(--accent-primary);
+        }
+        
+        .substitute-section label {
+            font-size: 14px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        
+        .notes-section {
+            flex: 1;
+            min-width: 200px;
+        }
+        
+        .notes-input {
+            width: 100%;
+            padding: 10px 14px;
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-default);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+        }
+        
+        .notes-input:focus {
+            outline: none;
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 0 3px var(--accent-light);
+        }
+        
+        .notes-input::placeholder {
+            color: var(--text-tertiary);
+        }
+        
+        .bulk-actions {
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-elevated);
+            border-top: 1px solid var(--border-default);
+            padding: 20px 24px;
+            margin-top: 32px;
+            margin-left: -24px;
+            margin-right: -24px;
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
+        }
+        
+        .bulk-actions-left {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        
+        .bulk-stats {
+            font-size: 14px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        
+        .bulk-stats strong {
+            color: var(--accent-primary);
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-tertiary);
+        }
+        
+        .loading-spinner {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--bg-tertiary);
+            border-top-color: var(--accent-primary);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin-bottom: 16px;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error {
+            background: rgba(244, 67, 54, 0.1);
+            border: 1px solid var(--error);
+            color: #ffaaaa;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--text-tertiary);
+        }
+        
+        .empty-state-icon {
+            font-size: 64px;
+            margin-bottom: 16px;
+            opacity: 0.5;
+        }
+        
+        .empty-state h2 {
+            font-size: 24px;
+            margin-bottom: 8px;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .empty-state p {
+            font-size: 16px;
+            color: var(--text-tertiary);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px 16px;
+            }
+            
+            h1 {
+                font-size: 32px;
+            }
+            
+            .header-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .control-group {
+                width: 100%;
+            }
+            
+            .card-pair {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .card-separator {
+                transform: rotate(90deg);
+            }
+            
+            .similarity-header {
+                flex-direction: column;
+            }
+            
+            .similarity-score {
+                align-items: flex-start;
+            }
+            
+            .bulk-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Similarity Review</h1>
+            <p class="subtitle">Review and annotate card similarities in bulk with comprehensive metadata</p>
+        </div>
+        
+        <div class="header-controls">
+            <div class="control-group">
+                <label for="dataSource">Data Source:</label>
+                <select id="dataSource">
+                    <option value="api">API (Similarity Search)</option>
+                    <option value="file">JSON/JSONL File</option>
+                </select>
+            </div>
+            <div class="control-group" id="fileInputGroup" style="display: none;">
+                <label for="fileInput">File:</label>
+                <input type="file" id="fileInput" accept=".json,.jsonl">
+            </div>
+            <div class="control-group" id="queryInputGroup">
+                <label for="queryCard">Query Card:</label>
+                <input type="text" id="queryCard" placeholder="Enter card name">
+            </div>
+            <div class="control-group" id="topKGroup">
+                <label for="topK">Top K:</label>
+                <input type="number" id="topK" value="20" min="1" max="100" style="width: 80px;">
+            </div>
+            <button id="loadBtn">Load Similarities</button>
+            <button id="exportBtn" class="secondary" disabled>Export Annotations</button>
+            <div class="control-group" id="sortGroup" style="display: none;">
+                <label for="sortBy">Sort by:</label>
+                <select id="sortBy">
+                    <option value="similarity">Similarity (High→Low)</option>
+                    <option value="similarity-asc">Similarity (Low→High)</option>
+                    <option value="name">Card Name</option>
+                    <option value="annotated">Annotated First</option>
+                    <option value="unannotated">Unannotated First</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Rating Scale</h3>
+            <div class="legend-grid">
+                <div class="legend-item">
+                    <span class="legend-rating">4</span>
+                    <span><strong>Extremely similar</strong> — near substitutes, same function</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-rating">3</span>
+                    <span><strong>Very similar</strong> — often seen together, similar role</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-rating">2</span>
+                    <span><strong>Somewhat similar</strong> — related function or archetype</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-rating">1</span>
+                    <span><strong>Marginally similar</strong> — loose connection</span>
+                </div>
+                <div class="legend-item">
+                    <span class="legend-rating">0</span>
+                    <span><strong>Irrelevant</strong> — different function, color, or archetype</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats" id="stats" style="display: none;">
+            <div class="stat-card">
+                <div class="stat-label">Total Items</div>
+                <div class="stat-value" id="statTotal">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Annotated</div>
+                <div class="stat-value accent" id="statAnnotated">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Pending</div>
+                <div class="stat-value" id="statPending">0</div>
+            </div>
+        </div>
+
+        <div id="errorContainer"></div>
+        <div id="loadingContainer" class="loading" style="display: none;">
+            <div class="loading-spinner"></div>
+            <div>Loading similarities...</div>
+        </div>
+        <div id="similarityList" class="similarity-list"></div>
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-state-icon">📊</div>
+            <h2>No similarities loaded</h2>
+            <p>Load similarities from API or file to start reviewing.</p>
+        </div>
+        
+        <div id="progressIndicator" class="progress-indicator">
+            <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Progress</div>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+            </div>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" id="progressText">0% complete</div>
+        </div>
+
+        <div class="bulk-actions" id="bulkActions" style="display: none;">
+            <div class="bulk-actions-left">
+                <button id="submitAllBtn">Submit All Annotations</button>
+                <button id="clearAllBtn" class="secondary">Clear All</button>
+            </div>
+            <div class="bulk-stats" id="bulkStats"></div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin;
+        let similarities = [];
+        let annotations = new Map();
+
+        const dataSource = document.getElementById('dataSource');
+        const fileInputGroup = document.getElementById('fileInputGroup');
+        const queryInputGroup = document.getElementById('queryInputGroup');
+        const fileInput = document.getElementById('fileInput');
+        const queryCard = document.getElementById('queryCard');
+        const topK = document.getElementById('topK');
+        const loadBtn = document.getElementById('loadBtn');
+        const exportBtn = document.getElementById('exportBtn');
+        const submitAllBtn = document.getElementById('submitAllBtn');
+        const clearAllBtn = document.getElementById('clearAllBtn');
+        const errorContainer = document.getElementById('errorContainer');
+        const loadingContainer = document.getElementById('loadingContainer');
+        const similarityList = document.getElementById('similarityList');
+        const emptyState = document.getElementById('emptyState');
+        const stats = document.getElementById('stats');
+        const bulkActions = document.getElementById('bulkActions');
+        const sortBy = document.getElementById('sortBy');
+
+        dataSource.addEventListener('change', () => {
+            if (dataSource.value === 'file') {
+                fileInputGroup.style.display = 'flex';
+                queryInputGroup.style.display = 'none';
+                document.getElementById('topKGroup').style.display = 'none';
+            } else {
+                fileInputGroup.style.display = 'none';
+                queryInputGroup.style.display = 'flex';
+                document.getElementById('topKGroup').style.display = 'flex';
+            }
+        });
+        
+        sortBy.addEventListener('change', () => {
+            sortSimilarities();
+        });
+        
+        function sortSimilarities() {
+            if (similarities.length === 0) return;
+            
+            const sortValue = sortBy.value;
+            const sortedIndices = [...Array(similarities.length).keys()].sort((a, b) => {
+                const simA = similarities[a];
+                const simB = similarities[b];
+                const annA = annotations.get(a);
+                const annB = annotations.get(b);
+                
+                switch (sortValue) {
+                    case 'similarity':
+                        return simB.similarity - simA.similarity;
+                    case 'similarity-asc':
+                        return simA.similarity - simB.similarity;
+                    case 'name':
+                        return simA.card2.localeCompare(simB.card2);
+                    case 'annotated':
+                        const aAnnotated = annA && annA.rating !== undefined && annA.rating !== null;
+                        const bAnnotated = annB && annB.rating !== undefined && annB.rating !== null;
+                        if (aAnnotated === bAnnotated) return simB.similarity - simA.similarity;
+                        return bAnnotated ? 1 : -1;
+                    case 'unannotated':
+                        const aUnannotated = !annA || annA.rating === undefined || annA.rating === null;
+                        const bUnannotated = !annB || annB.rating === undefined || annB.rating === null;
+                        if (aUnannotated === bUnannotated) return simB.similarity - simA.similarity;
+                        return bUnannotated ? 1 : -1;
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Reorder similarities and annotations
+            const newSimilarities = sortedIndices.map(i => similarities[i]);
+            const newAnnotations = new Map();
+            sortedIndices.forEach((oldIdx, newIdx) => {
+                if (annotations.has(oldIdx)) {
+                    newAnnotations.set(newIdx, annotations.get(oldIdx));
+                }
+            });
+            
+            similarities = newSimilarities;
+            annotations = newAnnotations;
+            
+            // Re-render
+            renderSimilarities();
+        }
+
+        loadBtn.addEventListener('click', async () => {
+            errorContainer.innerHTML = '';
+            loadingContainer.style.display = 'block';
+            similarityList.innerHTML = '';
+            emptyState.style.display = 'none';
+            stats.style.display = 'none';
+            bulkActions.style.display = 'none';
+            annotations.clear();
+
+            try {
+                if (dataSource.value === 'file') {
+                    await loadFromFile();
+                } else {
+                    await loadFromAPI();
+                }
+            } catch (error) {
+                showError(error.message);
+                loadingContainer.style.display = 'none';
+            }
+        });
+
+        async function loadFromFile() {
+            const file = fileInput.files[0];
+            if (!file) {
+                throw new Error('Please select a file');
+            }
+
+            const text = await file.text();
+            let data;
+
+            if (file.name.endsWith('.jsonl')) {
+                data = text.split('\n')
+                    .filter(line => line.trim())
+                    .map(line => JSON.parse(line));
+            } else {
+                data = JSON.parse(text);
+                if (!Array.isArray(data)) {
+                    data = [data];
+                }
+            }
+
+            similarities = data.map((item, index) => ({
+                id: index,
+                card1: item.card1 || item.query || '',
+                card2: item.card2 || item.candidate || item.suggested_card || '',
+                similarity: item.similarity_score || item.similarity || 0,
+                similarity_type: item.similarity_type || '',
+                is_substitute: item.is_substitute || false,
+                reasoning: item.reasoning || '',
+                metadata: item.metadata || item.card_comparison || {},
+                source: item.source || 'file',
+                ...item
+            }));
+
+            renderSimilarities();
+        }
+
+        async function loadFromAPI() {
+            const query = queryCard.value.trim();
+            if (!query) {
+                throw new Error('Please enter a query card name');
+            }
+
+            const k = parseInt(topK.value) || 20;
+            const url = `${API_BASE}/v1/cards/${encodeURIComponent(query)}/similar?k=${k}&mode=substitute`;
+
+            const response = await fetch(url);
+            if (!response.ok) {
+                const errorText = await response.text();
+                let errorMsg = `API error: ${response.status} ${response.statusText}`;
+                try {
+                    const errorJson = JSON.parse(errorText);
+                    errorMsg = errorJson.detail || errorMsg;
+                } catch {
+                    // Use default error message
+                }
+                throw new Error(errorMsg);
+            }
+
+            const data = await response.json();
+            similarities = (data.results || []).map((item, index) => ({
+                id: index,
+                card1: query,
+                card2: item.card || item.card_name || '',
+                similarity: item.similarity || item.similarity_score || 0,
+                similarity_type: item.similarity_type || '',
+                is_substitute: item.is_substitute || false,
+                reasoning: item.reasoning || '',
+                metadata: item.metadata || {},
+                source: 'api',
+                ...item
+            }));
+
+            renderSimilarities();
+        }
+
+        function renderSimilarities() {
+            // Use requestAnimationFrame for smooth transition
+            requestAnimationFrame(() => {
+                loadingContainer.style.display = 'none';
+                
+                if (similarities.length === 0) {
+                    emptyState.style.display = 'block';
+                    stats.style.display = 'none';
+                    bulkActions.style.display = 'none';
+                    return;
+                }
+
+            emptyState.style.display = 'none';
+            stats.style.display = 'grid';
+            bulkActions.style.display = 'flex';
+            exportBtn.disabled = false;
+            document.getElementById('sortGroup').style.display = 'flex';
+
+                similarityList.innerHTML = '';
+                similarities.forEach((sim, index) => {
+                    const item = createSimilarityItem(sim, index);
+                    similarityList.appendChild(item);
+                });
+
+                updateStats();
+                
+                // Scroll to top of list
+                similarityList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            });
+        }
+
+        function createSimilarityItem(sim, index) {
+            const item = document.createElement('div');
+            item.className = 'similarity-item';
+            item.dataset.index = index;
+
+            const annotation = annotations.get(index) || {};
+            const rating = annotation.rating !== undefined ? annotation.rating : null;
+            const isSubstitute = annotation.is_substitute !== undefined ? annotation.is_substitute : sim.is_substitute;
+            const notes = annotation.notes || '';
+
+            if (rating !== null) {
+                item.classList.add('annotated');
+            }
+
+            // Extract metadata - API returns metadata directly on the result
+            const metadata = sim.metadata || {};
+            // For API results, metadata is directly on the result
+            // For file results, might be nested in card1_attrs/card2_attrs
+            const card1Meta = metadata.card1_attrs || metadata.card1 || {};
+            const card2Meta = metadata.card2_attrs || metadata.card2 || {};
+            
+            // Also check if metadata is directly on sim (API format) - card2 gets the enriched metadata
+            const finalCard2Meta = {
+                type: sim.type || metadata.type || card2Meta.type,
+                mana_cost: sim.mana_cost || metadata.mana_cost || card2Meta.mana_cost,
+                cmc: sim.cmc !== undefined ? sim.cmc : (metadata.cmc !== undefined ? metadata.cmc : card2Meta.cmc),
+                power: sim.power || metadata.power || card2Meta.power,
+                toughness: sim.toughness || metadata.toughness || card2Meta.toughness,
+                functional_tags: sim.functional_tags || metadata.functional_tags || card2Meta.functional_tags,
+                format_legal: sim.format_legal || metadata.format_legal || card2Meta.format_legal,
+                archetype: sim.archetype || metadata.archetype || card2Meta.archetype,
+                oracle_text: sim.oracle_text || metadata.oracle_text || card2Meta.oracle_text,
+                image_url: sim.image_url || metadata.image_url || card2Meta.image_url,
+                cooccurrence_count: sim.cooccurrence_count || metadata.cooccurrence_count || card2Meta.cooccurrence_count,
+                cooccurrence_note: sim.cooccurrence_note || metadata.cooccurrence_note || card2Meta.cooccurrence_note,
+                archetype_staples: sim.archetype_staples || metadata.archetype_staples || card2Meta.archetype_staples,
+                archetype_cooccurrence: sim.archetype_cooccurrence || metadata.archetype_cooccurrence || card2Meta.archetype_cooccurrence,
+                format_cooccurrence: sim.format_cooccurrence || metadata.format_cooccurrence || card2Meta.format_cooccurrence
+            };
+
+            item.innerHTML = `
+                <div class="similarity-header">
+                    <div class="card-pair">
+                        <div class="card-info">
+                            <div class="card-name">${escapeHtml(sim.card1)}</div>
+                            <div class="card-meta">
+                                ${card1Meta.type ? `<div class="card-meta-item">${escapeHtml(card1Meta.type)}</div>` : ''}
+                                ${card1Meta.mana_cost ? `<div class="card-meta-item">${escapeHtml(card1Meta.mana_cost)}</div>` : ''}
+                                ${card1Meta.cmc !== undefined ? `<div class="card-meta-item">CMC ${card1Meta.cmc}</div>` : ''}
+                            </div>
+                        </div>
+                        <div class="card-separator">→</div>
+                        <div class="card-info">
+                            ${finalCard2Meta.image_url ? `
+                            <div style="display: flex; gap: 12px; align-items: flex-start;">
+                                <img src="${escapeHtml(finalCard2Meta.image_url)}" 
+                                     alt="${escapeHtml(sim.card2)}" 
+                                     style="width: 60px; height: auto; border-radius: 8px; border: 1px solid var(--border-default); flex-shrink: 0;"
+                                     onerror="this.style.display='none'">
+                                <div style="flex: 1; min-width: 0;">
+                            ` : '<div style="flex: 1;">'}
+                                <div class="card-name">${escapeHtml(sim.card2)}</div>
+                                <div class="card-meta">
+                                    ${finalCard2Meta.type ? `<div class="card-meta-item">${escapeHtml(finalCard2Meta.type)}</div>` : ''}
+                                    ${finalCard2Meta.mana_cost ? `<div class="card-meta-item">${escapeHtml(finalCard2Meta.mana_cost)}</div>` : ''}
+                                    ${finalCard2Meta.cmc !== undefined ? `<div class="card-meta-item">CMC ${finalCard2Meta.cmc}</div>` : ''}
+                                    ${finalCard2Meta.power && finalCard2Meta.toughness ? `<div class="card-meta-item">${finalCard2Meta.power}/${finalCard2Meta.toughness}</div>` : ''}
+                                </div>
+                            </div>
+                            ${finalCard2Meta.image_url ? '</div>' : ''}
+                        </div>
+                    </div>
+                    <div class="similarity-score">
+                        <div class="score-value">${(sim.similarity * 100).toFixed(0)}%</div>
+                        <div class="score-label">Similarity</div>
+                        <div class="similarity-bar">
+                            <div class="similarity-fill" style="width: ${sim.similarity * 100}%"></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="metadata-section">
+                    <div class="metadata-grid">
+                        ${sim.similarity_type ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Type</div>
+                            <div class="metadata-value">
+                                <span class="metadata-badge">${escapeHtml(sim.similarity_type)}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${sim.reasoning ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Reasoning</div>
+                            <div class="metadata-value">${escapeHtml(sim.reasoning)}</div>
+                        </div>
+                        ` : ''}
+                        ${sim.source ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Source</div>
+                            <div class="metadata-value">${escapeHtml(sim.source)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.functional_tags ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Functional Tags</div>
+                            <div class="metadata-value">
+                                <span class="metadata-badge">${escapeHtml(finalCard2Meta.functional_tags)}</span>
+                            </div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.format_legal ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Format Legal</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.format_legal)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.archetype ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Archetype</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.archetype)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.cooccurrence_note ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Co-occurrence</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.cooccurrence_note)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.archetype_staples ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Archetype Staples</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.archetype_staples)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.archetype_cooccurrence ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Shared Archetypes</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.archetype_cooccurrence)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.format_cooccurrence ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Format Co-occurrence</div>
+                            <div class="metadata-value">${escapeHtml(finalCard2Meta.format_cooccurrence)}</div>
+                        </div>
+                        ` : ''}
+                        ${finalCard2Meta.oracle_text ? `
+                        <div class="metadata-item" style="grid-column: 1 / -1;">
+                            <div class="metadata-label">Oracle Text</div>
+                            <div class="metadata-value" style="font-size: 12px; line-height: 1.6; max-height: 100px; overflow-y: auto;">${escapeHtml(finalCard2Meta.oracle_text)}</div>
+                        </div>
+                        ` : ''}
+                        ${card1Meta.power !== undefined && finalCard2Meta.power !== undefined ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Power</div>
+                            <div class="metadata-value">${card1Meta.power} → ${finalCard2Meta.power}</div>
+                        </div>
+                        ` : ''}
+                        ${card1Meta.toughness !== undefined && finalCard2Meta.toughness !== undefined ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Toughness</div>
+                            <div class="metadata-value">${card1Meta.toughness} → ${finalCard2Meta.toughness}</div>
+                        </div>
+                        ` : ''}
+                        ${!sim.similarity_type && !sim.reasoning && !sim.source && 
+                          !finalCard2Meta.functional_tags && !finalCard2Meta.format_legal && !finalCard2Meta.archetype &&
+                          !finalCard2Meta.cooccurrence_note && !finalCard2Meta.archetype_staples &&
+                          !finalCard2Meta.archetype_cooccurrence && !finalCard2Meta.format_cooccurrence &&
+                          !finalCard2Meta.oracle_text && card1Meta.power === undefined && finalCard2Meta.power === undefined ? `
+                        <div class="metadata-item">
+                            <div class="metadata-label">Metadata</div>
+                            <div class="metadata-value empty">No additional metadata available</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+                <div class="annotation-controls">
+                    <div class="rating-section">
+                        <div class="rating-label">Rating</div>
+                        <div class="rating-buttons">
+                            ${[0, 1, 2, 3, 4].map(r => `
+                                <button class="rating-btn ${rating === r ? 'selected' : ''}" 
+                                        data-rating="${r}" 
+                                        data-index="${index}"
+                                        title="${getRatingLabel(r)}">
+                                    ${r}
+                                </button>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <div class="substitute-section">
+                        <input type="checkbox" id="substitute-${index}" data-index="${index}" ${isSubstitute ? 'checked' : ''}>
+                        <label for="substitute-${index}">Substitute?</label>
+                    </div>
+                    <div class="notes-section">
+                        <input type="text" class="notes-input" placeholder="Notes (optional)" 
+                               id="notes-${index}" data-index="${index}" value="${escapeHtml(notes)}">
+                    </div>
+                </div>
+            `;
+
+            // Add event listeners
+            item.querySelectorAll('.rating-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const idx = parseInt(btn.dataset.index);
+                    const rating = parseInt(btn.dataset.rating);
+                    setRating(idx, rating);
+                });
+                
+                // Keyboard support
+                btn.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        btn.click();
+                    }
+                });
+            });
+
+            item.querySelector(`#substitute-${index}`).addEventListener('change', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                setSubstitute(idx, e.target.checked);
+            });
+
+            item.querySelector(`#notes-${index}`).addEventListener('input', (e) => {
+                const idx = parseInt(e.target.dataset.index);
+                setNotes(idx, e.target.value);
+            });
+
+            return item;
+        }
+
+        function getRatingLabel(rating) {
+            const labels = {
+                4: 'Extremely similar (near substitutes)',
+                3: 'Very similar (similar role)',
+                2: 'Somewhat similar (related function)',
+                1: 'Marginally similar (loose connection)',
+                0: 'Irrelevant (different function)'
+            };
+            return labels[rating] || '';
+        }
+
+        function setRating(index, rating) {
+            if (!annotations.has(index)) {
+                annotations.set(index, {});
+            }
+            annotations.get(index).rating = rating;
+            
+            // Update UI
+            const item = document.querySelector(`[data-index="${index}"]`);
+            item.querySelectorAll('.rating-btn').forEach(btn => {
+                btn.classList.toggle('selected', parseInt(btn.dataset.rating) === rating);
+            });
+            
+            item.classList.add('annotated');
+            
+            updateStats();
+        }
+
+        function setSubstitute(index, isSubstitute) {
+            if (!annotations.has(index)) {
+                annotations.set(index, {});
+            }
+            annotations.get(index).is_substitute = isSubstitute;
+            updateStats();
+        }
+
+        function setNotes(index, notes) {
+            if (!annotations.has(index)) {
+                annotations.set(index, {});
+            }
+            annotations.get(index).notes = notes;
+        }
+
+        function updateStats() {
+            const total = similarities.length;
+            const annotated = Array.from(annotations.values()).filter(a => a.rating !== undefined && a.rating !== null).length;
+            const pending = total - annotated;
+            const progress = total > 0 ? (annotated / total * 100) : 0;
+
+            document.getElementById('statTotal').textContent = total;
+            document.getElementById('statAnnotated').textContent = annotated;
+            document.getElementById('statPending').textContent = pending;
+
+            document.getElementById('bulkStats').innerHTML = `<strong>${annotated}</strong> of <strong>${total}</strong> annotated`;
+            
+            // Update progress indicator
+            const progressIndicator = document.getElementById('progressIndicator');
+            const progressFill = document.getElementById('progressFill');
+            const progressText = document.getElementById('progressText');
+            
+            if (total > 0) {
+                progressIndicator.classList.add('visible');
+                progressFill.style.width = `${progress}%`;
+                progressText.textContent = `${Math.round(progress)}% complete (${annotated}/${total})`;
+            } else {
+                progressIndicator.classList.remove('visible');
+            }
+        }
+
+        submitAllBtn.addEventListener('click', async () => {
+            const feedbacks = [];
+            
+            annotations.forEach((annotation, index) => {
+                if (annotation.rating !== undefined && annotation.rating !== null) {
+                    const sim = similarities[index];
+                    feedbacks.push({
+                        query_card: sim.card1,
+                        suggested_card: sim.card2,
+                        task_type: 'similarity',
+                        rating: annotation.rating,
+                        is_substitute: annotation.is_substitute || false,
+                        feedback_text: annotation.notes || null,
+                        context: {
+                            similarity_score: sim.similarity,
+                            similarity_type: sim.similarity_type,
+                            source: sim.source
+                        }
+                    });
+                }
+            });
+
+            if (feedbacks.length === 0) {
+                alert('No annotations to submit. Please rate at least one similarity.');
+                return;
+            }
+
+            submitAllBtn.disabled = true;
+            submitAllBtn.textContent = 'Submitting...';
+
+            try {
+                const response = await fetch(`${API_BASE}/v1/feedback/batch`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ feedbacks })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Failed to submit feedback');
+                }
+
+                const result = await response.json();
+                alert(`Successfully submitted ${result.processed} annotations!`);
+                
+                // Clear annotations after successful submission
+                annotations.clear();
+                renderSimilarities();
+            } catch (error) {
+                showError(`Failed to submit annotations: ${error.message}`);
+            } finally {
+                submitAllBtn.disabled = false;
+                submitAllBtn.textContent = 'Submit All Annotations';
+            }
+        });
+
+        clearAllBtn.addEventListener('click', () => {
+            if (confirm('Clear all annotations?')) {
+                annotations.clear();
+                renderSimilarities();
+            }
+        });
+
+        exportBtn.addEventListener('click', () => {
+            const exportData = [];
+            
+            similarities.forEach((sim, index) => {
+                const annotation = annotations.get(index);
+                if (annotation && annotation.rating !== undefined) {
+                    exportData.push({
+                        card1: sim.card1,
+                        card2: sim.card2,
+                        similarity_score: sim.similarity,
+                        similarity_type: sim.similarity_type,
+                        rating: annotation.rating,
+                        is_substitute: annotation.is_substitute || false,
+                        notes: annotation.notes || '',
+                        source: 'review_ui',
+                        timestamp: new Date().toISOString()
+                    });
+                }
+            });
+
+            if (exportData.length === 0) {
+                alert('No annotations to export.');
+                return;
+            }
+
+            const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `similarity_annotations_${Date.now()}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        function showError(message) {
+            errorContainer.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
+            // Scroll to error
+            errorContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            const div = document.createElement('div');
+            div.textContent = String(text);
+            return div.innerHTML;
+        }
+        
+        // Keyboard shortcuts for faster annotation
+        document.addEventListener('keydown', (e) => {
+            // Only handle shortcuts when not typing in inputs
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+                return;
+            }
+            
+            // Number keys 0-4 for rating
+            if (e.key >= '0' && e.key <= '4' && similarities.length > 0) {
+                const firstUnannotated = similarities.findIndex((sim, idx) => {
+                    const ann = annotations.get(idx);
+                    return !ann || ann.rating === undefined || ann.rating === null;
+                });
+                
+                if (firstUnannotated !== -1) {
+                    const rating = parseInt(e.key);
+                    setRating(firstUnannotated, rating);
+                    
+                    // Scroll to next unannotated
+                    const nextUnannotated = similarities.findIndex((sim, idx) => {
+                        if (idx <= firstUnannotated) return false;
+                        const ann = annotations.get(idx);
+                        return !ann || ann.rating === undefined || ann.rating === null;
+                    });
+                    
+                    if (nextUnannotated !== -1) {
+                        const nextItem = document.querySelector(`[data-index="${nextUnannotated}"]`);
+                        if (nextItem) {
+                            nextItem.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            // Focus first rating button for keyboard nav
+                            const firstBtn = nextItem.querySelector('.rating-btn');
+                            if (firstBtn) {
+                                setTimeout(() => firstBtn.focus(), 100);
+                            }
+                        }
+                    }
+                    e.preventDefault();
+                }
+            }
+            
+            // 's' for substitute toggle
+            if (e.key === 's' && similarities.length > 0) {
+                const firstUnannotated = similarities.findIndex((sim, idx) => {
+                    const ann = annotations.get(idx);
+                    return !ann || ann.rating === undefined || ann.rating === null;
+                });
+                
+                if (firstUnannotated !== -1) {
+                    const item = document.querySelector(`[data-index="${firstUnannotated}"]`);
+                    if (item) {
+                        const checkbox = item.querySelector('input[type="checkbox"]');
+                        if (checkbox) {
+                            checkbox.checked = !checkbox.checked;
+                            setSubstitute(firstUnannotated, checkbox.checked);
+                            e.preventDefault();
+                        }
+                    }
+                }
+            }
+        });
+        
+        // Add tooltip for keyboard shortcuts
+        const helpText = document.createElement('div');
+        helpText.style.cssText = 'position: fixed; bottom: 80px; right: 24px; background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--text-secondary); max-width: 200px; z-index: 1000; box-shadow: var(--shadow-lg); display: none;';
+        helpText.innerHTML = '<strong>Keyboard Shortcuts:</strong><br>0-4: Rate first unannotated<br>S: Toggle substitute<br>Click to dismiss';
+        helpText.addEventListener('click', () => helpText.style.display = 'none');
+        document.body.appendChild(helpText);
+        
+        // Show help on '?' key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '?' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+                helpText.style.display = helpText.style.display === 'none' ? 'block' : 'none';
+                e.preventDefault();
+            }
+        });
+    </script>
+</body>
+</html>

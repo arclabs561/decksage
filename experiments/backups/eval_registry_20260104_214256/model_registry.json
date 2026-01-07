@@ -1,0 +1,22 @@
+{
+  "models": {
+    "test_v1": {
+      "model_type": "test",
+      "version": "v1",
+      "path": "/path/to/model",
+      "registered_at": "2026-01-05T02:42:56.065197Z",
+      "metrics": {
+        "p_at_10": 0.1
+      },
+      "metadata": {
+        "test_set_path": null,
+        "evaluation_timestamp": "2026-01-04T21:42:56.064264"
+      },
+      "is_production": false
+    }
+  },
+  "metadata": {
+    "created_at": "2026-01-05T02:42:56.065194Z",
+    "updated_at": "2026-01-05T02:42:56.065199Z"
+  }
+}

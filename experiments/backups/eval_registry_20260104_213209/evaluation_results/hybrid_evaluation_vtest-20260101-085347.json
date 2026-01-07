@@ -1,0 +1,21 @@
+{
+  "timestamp": "2026-01-01T08:53:47.666483",
+  "model_type": "hybrid",
+  "model_version": "test-20260101-085347",
+  "model_path": "test.wv",
+  "test_set_path": "test_set.json",
+  "metrics": {
+    "p_at_10": 0.15,
+    "mrr": 0.08
+  },
+  "full_results": {
+    "summary": {
+      "avg_p_at_10": 0.15,
+      "total_queries": 100
+    },
+    "queries": {}
+  },
+  "metadata": {
+    "test": true
+  }
+}

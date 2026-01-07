@@ -455,7 +455,11 @@ class CardDatabase:
                 ("riftbound", self._riftbound_cards),
             ]:
                 if card_set:
+                    # Try with higher threshold first (more precise)
                     match, score = find_best_match(card_name, list(card_set), threshold=0.85)
+                    # If no match, try lower threshold (more lenient)
+                    if not match:
+                        match, score = find_best_match(card_name, list(card_set), threshold=0.70)
                     if match:
                         logger.debug(
                             f"Fuzzy match: '{card_name}' -> '{match}' ({game_name}, score={score:.2f})"

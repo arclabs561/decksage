@@ -48,4 +48,3 @@ echo "  - experiments/deep_analysis_integrity.json"
 echo "  - experiments/deep_analysis_code_quality.json"
 echo "  - experiments/deep_analysis_inconsistencies.json"
 echo ""
-

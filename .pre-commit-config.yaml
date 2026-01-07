@@ -266,11 +266,34 @@ repos:
         fail_fast: false  # Non-blocking, informational
 
       # Check for hardcoded paths (should use PATHS utility)
-      # Non-blocking: warns but doesn't fail (many existing instances)
+      # Blocking: fails commit if hardcoded paths found
       # Only runs on changed files for speed
       - id: check-hardcoded-paths
         name: Check for hardcoded paths
-        entry: bash -c 'python3 scripts/validation/check_hardcoded_paths.py "$@" || true'
+        entry: bash -c 'python3 scripts/validation/check_hardcoded_paths.py "$@"'
+        language: system
+        types: [python]
+        stages: [commit]
+        pass_filenames: true  # Only check changed files
+        fail_fast: true  # Stop on first error
+
+      # Check for unsafe data writes (should use safe_write)
+      # Non-blocking: warns but doesn't fail (many existing instances)
+      # Only runs on changed files for speed
+      - id: check-lineage-usage
+        name: Check for unsafe data writes
+        entry: bash -c 'python3 scripts/validation/check_lineage_usage.py "$@" || true'
+        language: system
+        types: [python]
+        stages: [commit]
+        pass_filenames: true  # Only check changed files
+
+      # Check for unvalidated deck loads (should use schema validation)
+      # Non-blocking: warns but doesn't fail (many existing instances)
+      # Only runs on changed files for speed
+      - id: check-schema-validation
+        name: Check for unvalidated deck loads
+        entry: bash -c 'python3 scripts/validation/check_schema_validation.py "$@" || true'
         language: system
         types: [python]
         stages: [commit]

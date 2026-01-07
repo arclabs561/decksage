@@ -1,0 +1,15 @@
+{
+  "run_id": "test_evaluation_test_vtest_20260105_190727",
+  "timestamp": "2026-01-05T19:07:27.653300+00:00",
+  "evaluation_type": "test_evaluation",
+  "method": "test_vtest",
+  "test_set_path": null,
+  "num_queries": null,
+  "metrics": {},
+  "config": {
+    "model_type": "test",
+    "model_version": "vtest",
+    "model_path": "test"
+  },
+  "notes": "Migrated from evaluation_registry.db"
+}

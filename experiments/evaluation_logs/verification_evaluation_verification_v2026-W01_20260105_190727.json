@@ -1,0 +1,15 @@
+{
+  "run_id": "verification_evaluation_verification_v2026-W01_20260105_190727",
+  "timestamp": "2026-01-05T19:07:27.667747+00:00",
+  "evaluation_type": "verification_evaluation",
+  "method": "verification_v2026-W01",
+  "test_set_path": null,
+  "num_queries": null,
+  "metrics": {},
+  "config": {
+    "model_type": "verification",
+    "model_version": "v2026-W01",
+    "model_path": "/path/to/model"
+  },
+  "notes": "Migrated from evaluation_registry.db"
+}

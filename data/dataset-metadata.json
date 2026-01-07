@@ -1,0 +1,169 @@
+{
+  "version": "1.1",
+  "last_updated": "2025-01-03",
+  "description": "DeckSage dataset metadata and lineage",
+  "datasets": {
+    "pairs_large": {
+      "file": "data/processed/pairs_large.csv",
+      "description": "Card co-occurrence pairs from MTG decks",
+      "source": "Scraped deck data",
+      "rows": 7541436,
+      "format": "CSV",
+      "columns": [
+        "NAME_1",
+        "NAME_2",
+        "COUNT",
+        "DECK_ID",
+        "SOURCE"
+      ],
+      "game": "MTG",
+      "status": "active",
+      "lineage": {
+        "source": "decks_all_final.jsonl",
+        "generated_by": "src/backend/cmd/export-decks-only/main.go",
+        "generated_at": "2025-01-03",
+        "version": "v1.0"
+      }
+    },
+    "pairs_multi_game": {
+      "file": "data/processed/pairs_multi_game.csv",
+      "description": "Card co-occurrence pairs from all games (MTG, Pokemon, Yu-Gi-Oh)",
+      "source": "Scraped deck data from all games",
+      "rows": 24605118,
+      "format": "CSV",
+      "columns": [
+        "NAME_1",
+        "NAME_2",
+        "GAME_1",
+        "GAME_2",
+        "COUNT",
+        "DECK_ID",
+        "SOURCE"
+      ],
+      "games": ["MTG", "PKM", "YGO"],
+      "status": "active",
+      "lineage": {
+        "source": "src/backend/data-full/games/*",
+        "generated_by": "src/backend/cmd/export-multi-game-graph/main.go",
+        "regeneration_script": "scripts/data_processing/regenerate_multi_game_pairs.py",
+        "generated_at": "2025-01-03",
+        "version": "v2.0",
+        "note": "Regenerated to include all games. Use regenerate_multi_game_pairs.py to update."
+      }
+    },
+    "card_attributes_enriched": {
+      "file": "data/processed/card_attributes_enriched.csv",
+      "description": "Card metadata with enriched attributes",
+      "source": "Scryfall API",
+      "rows": 47131,
+      "format": "CSV",
+      "columns": [
+        "name",
+        "type",
+        "colors",
+        "mana_cost",
+        "cmc",
+        "rarity",
+        "power",
+        "toughness",
+        "set",
+        "set_name",
+        "oracle_text",
+        "keywords"
+      ],
+      "game": "MTG",
+      "status": "active",
+      "lineage": {
+        "source": "Scryfall bulk data API",
+        "generated_by": "scripts/enrich_card_attributes.py",
+        "generated_at": "2025-01-03",
+        "version": "v1.0"
+      }
+    },
+    "test_set_canonical_magic": {
+      "file": "experiments/test_set_canonical_magic.json",
+      "description": "Canonical test set for MTG card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 38,
+      "format": "JSON",
+      "game": "magic",
+      "status": "active",
+      "target": 50
+    },
+    "test_set_canonical_pokemon": {
+      "file": "experiments/test_set_canonical_pokemon.json",
+      "description": "Canonical test set for Pokemon card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 10,
+      "format": "JSON",
+      "game": "pokemon",
+      "status": "active",
+      "target": 25
+    },
+    "test_set_canonical_yugioh": {
+      "file": "experiments/test_set_canonical_yugioh.json",
+      "description": "Canonical test set for Yu-Gi-Oh card similarity",
+      "source": "Hand annotation + LLM judgments",
+      "queries": 13,
+      "format": "JSON",
+      "game": "yugioh",
+      "status": "active",
+      "target": 25
+    },
+    "ground_truth_v1": {
+      "file": "data/processed/ground_truth_v1.json",
+      "description": "Ground truth labels for evaluation",
+      "source": "Hand annotation + canonical test set merge",
+      "queries": 38,
+      "format": "JSON",
+      "game": "magic",
+      "status": "active",
+      "last_expanded": "2025-01-03"
+    }
+  },
+  "decks": {
+    "all_final": {
+      "file": "data/processed/decks_all_final.jsonl",
+      "description": "All decks unified, enhanced, and validated",
+      "count": 69000,
+      "status": "active",
+      "lineage": {
+        "source": "src/backend/data-full/games/*",
+        "exported_by": "src/backend/cmd/export-hetero/main.go",
+        "enhanced_by": "scripts/enhance_exported_decks.py",
+        "pipeline": "scripts/data_processing/unified_export_pipeline.py",
+        "generated_at": "2025-01-03",
+        "version": "v2.0",
+        "features": [
+          "Normalized card names",
+          "Deduplicated by URL and card signature",
+          "Source field backfilled",
+          "scraped_at timestamps added",
+          "Invalid deck sizes filtered"
+        ]
+      }
+    },
+    "yugioh": {
+      "file": "data/decks/yugioh_decks.jsonl",
+      "count": 794,
+      "status": "active",
+      "target": 1000
+    },
+    "pokemon": {
+      "file": "data/processed/decks_pokemon.jsonl",
+      "count": 1208,
+      "status": "active",
+      "target": 1000
+    }
+  },
+  "embeddings": {
+    "production": "data/embeddings/production.wv",
+    "count": 19,
+    "documentation": "data/embeddings/README.md"
+  },
+  "validation": {
+    "script": "scripts/validate_datasets.py",
+    "health_check": "scripts/dataset_health_check.py",
+    "last_run": null
+  }
+}

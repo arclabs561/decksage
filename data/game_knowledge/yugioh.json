@@ -1,0 +1,77 @@
+{
+  "game": "yugioh",
+  "mechanics": {
+    "mana_system": "No mana system - cards have levels/ranks and summoning conditions",
+    "color_system": "Attributes: DARK, LIGHT, EARTH, WATER, FIRE, WIND, DIVINE",
+    "card_types": ["Monster", "Spell", "Trap"],
+    "keywords": ["Hand Trap", "Starter", "Extender", "Floodgate", "Board Breaker", "Negate"],
+    "special_rules": "Going first advantage (55-60% win rate). Hand traps (9-15 in modern decks). Starter vs Extender theory. One-card combos.",
+    "terminology": {
+      "Hand Trap": "Monster that can be activated from hand during opponent's turn",
+      "Starter": "Card that initiates combo (11-13 copies for 82-91% consistency)",
+      "Extender": "Card that provides resources during combo",
+      "Floodgate": "Continuous effect that restricts opponent",
+      "Board Breaker": "Card that breaks established boards"
+    }
+  },
+  "archetypes": [
+    {
+      "name": "Combo",
+      "description": "Deck that assembles game-winning combos",
+      "strategy": "Establish unbreakable board turn 1, win through combo",
+      "core_cards": ["Starter cards (11-13 copies)", "Extenders", "Hand traps"],
+      "flex_slots": ["Tech cards", "Board breakers"],
+      "key_features": ["High consistency", "Going first focus", "Combo assembly"],
+      "typical_curve": "Low - focus on starters and extenders",
+      "interaction_level": "Light (going first), Heavy (going second)",
+      "meta_position": "Tier 1 - Dracotail, Maliss, Ryzeal dominant"
+    },
+    {
+      "name": "Control",
+      "description": "Reactive deck that wins through resource advantage",
+      "strategy": "Disrupt opponent, accumulate resources, win with finisher",
+      "core_cards": ["Hand traps", "Disruption", "Card advantage engines"],
+      "flex_slots": ["Tech cards", "Board breakers"],
+      "key_features": ["Heavy disruption", "Going second capable", "Resource management"],
+      "typical_curve": "Medium - focus on disruption and value",
+      "interaction_level": "Heavy",
+      "meta_position": "Tier 1-2"
+    }
+  ],
+  "formats": [
+    {
+      "name": "Advanced",
+      "legal_sets": ["All sets ever printed"],
+      "rotation_schedule": "No rotation - only ban list changes",
+      "ban_list": ["Many cards - see official ban list"],
+      "restricted_list": [],
+      "meta_context": "Dracotail, Maliss, Ryzeal, Yummy are top decks. Going first advantage (55-60%). Hand trap density 9-15.",
+      "last_updated": "2025-01-01"
+    }
+  ],
+  "examples": [
+    {
+      "query": "Blue-Eyes White Dragon",
+      "card1": "Blue-Eyes White Dragon",
+      "card2": "Blue-Eyes Alternative White Dragon",
+      "score": 0.85,
+      "reasoning": "Both are Blue-Eyes monsters. Alternative is alternative summoning condition version. Similar function in Blue-Eyes decks.",
+      "format": "Advanced"
+    },
+    {
+      "query": "Ash Blossom & Joyous Spring",
+      "card1": "Ash Blossom & Joyous Spring",
+      "card2": "Infinite Impermanence",
+      "score": 0.60,
+      "reasoning": "Both are hand traps. Ash Blossom negates searches/summons, Infinite Impermanence negates effects. Similar function, different targets.",
+      "format": "Advanced"
+    }
+  ],
+  "temporal_context": {
+    "current_meta": "Dracotail, Maliss, Ryzeal, Yummy are top decks. Going first advantage 55-60%.",
+    "recent_bans": "October 2025: 7 cards banned (floodgates removed)",
+    "price_volatility": "Ban list updates cause price spikes. Meta shifts affect card values"
+  },
+  "last_updated": "2025-01-01T00:00:00"
+}
+

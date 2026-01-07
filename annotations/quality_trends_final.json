@@ -1,0 +1,88 @@
+{
+  "overall": {
+    "quality_scores": [
+      0.65,
+      0.65
+    ],
+    "avg_quality": 0.65,
+    "quality_trend": "stable"
+  },
+  "by_game": {
+    "yugioh": {
+      "quality_scores": [
+        0.65
+      ],
+      "issues": {
+        "score_clustering": [
+          3
+        ],
+        "inconsistent_scoring": [
+          3
+        ],
+        "graph_feature_interpretation": [
+          2
+        ]
+      },
+      "recommendations": [
+        "Establish clear score bands based on Jaccard similarity ranges",
+        "Add example annotations for mid-range similarity scores (0.4-0.6)",
+        "Create specific guidelines for handling contradictory graph evidence",
+        "Include more archetype-based reasoning for mid-range scores",
+        "Add calibration examples showing when to use each 0.1 score increment"
+      ],
+      "avg_quality": 0.65
+    },
+    "magic": {
+      "quality_scores": [
+        0.65
+      ],
+      "issues": {
+        "score_clustering": [
+          3
+        ],
+        "inconsistent_scoring": [
+          2
+        ]
+      },
+      "recommendations": [
+        "Add explicit score anchors with examples for each range (0.0-0.2, 0.2-0.4, etc.)",
+        "Include more diverse example pairs in the prompt showing mid and high similarity scores",
+        "Develop clear scoring criteria for different types of similarity (functional, archetype, thematic)",
+        "Add guidance that shared themes/archetypes should typically score at least 0.3-0.4",
+        "Implement a validation check to flag when reasoning identifies similarities but score is very low"
+      ],
+      "avg_quality": 0.65
+    }
+  },
+  "common_issues": {
+    "score_clustering": 2,
+    "inconsistent_scoring": 2,
+    "graph_feature_interpretation": 1
+  },
+  "common_recommendations": {
+    "Establish clear score bands based on Jaccard similarity ranges": 1,
+    "Add example annotations for mid-range similarity scores (0.4-0.6)": 1,
+    "Create specific guidelines for handling contradictory graph evidence": 1,
+    "Include more archetype-based reasoning for mid-range scores": 1,
+    "Add calibration examples showing when to use each 0.1 score increment": 1,
+    "Add explicit score anchors with examples for each range (0.0-0.2, 0.2-0.4, etc.)": 1,
+    "Include more diverse example pairs in the prompt showing mid and high similarity scores": 1,
+    "Develop clear scoring criteria for different types of similarity (functional, archetype, thematic)": 1,
+    "Add guidance that shared themes/archetypes should typically score at least 0.3-0.4": 1,
+    "Implement a validation check to flag when reasoning identifies similarities but score is very low": 1
+  },
+  "metrics_trends": {
+    "score_diversity": [
+      0.35567715698368935,
+      0.2467387282126582
+    ],
+    "reasoning_quality": [
+      0.8475,
+      0.8
+    ],
+    "completeness": [
+      1.0,
+      1.0
+    ]
+  }
+}

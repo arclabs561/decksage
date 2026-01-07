@@ -4,6 +4,8 @@ Data lineage validation utilities.
 Provides functions to validate data lineage dependencies and enforce rules.
 """
 
+from collections.abc import Generator
+from contextlib import contextmanager
 from pathlib import Path
 
 
@@ -160,3 +162,63 @@ def validate_before_processing(order: int, input_paths: list[Path]) -> tuple[boo
 def get_lineage_info(order: int) -> dict:
     """Get lineage information for a given order."""
     return DATA_ORDERS.get(order, {})
+
+
+@contextmanager
+def safe_write(path: Path | str, order: int, strict: bool = True) -> Generator[Path, None, None]:
+    """
+    Context manager for safe data writes with lineage validation.
+
+    Validates that:
+    1. Path is not in Order 0 (immutable) location
+    2. Dependencies for the order are satisfied
+
+    Args:
+        path: Path to write to
+        order: Data lineage order (1-6)
+        strict: If True, raise error on validation failure. If False, log warning.
+
+    Yields:
+        Path object for writing
+
+    Raises:
+        ValueError: If path violates lineage rules (when strict=True)
+
+    Example:
+        ```python
+        from ml.utils.lineage import safe_write
+
+        with safe_write(PATHS.processed / "decks.jsonl", order=1):
+            with open(path, "w") as f:
+                # Write operations
+                pass
+        ```
+    """
+    import logging
+
+    logger = logging.getLogger(__name__)
+    path_obj = Path(path) if isinstance(path, str) else path
+
+    # Validate before opening
+    is_valid, error = validate_write_path(path_obj, order)
+    if not is_valid:
+        if strict:
+            raise ValueError(f"Lineage violation: {error}")
+        else:
+            logger.warning(f"Lineage warning: {error}")
+
+    # Check dependencies
+    deps_satisfied, missing = check_dependencies(order)
+    if not deps_satisfied:
+        error_msg = f"Missing dependencies for order {order}: {missing}"
+        if strict:
+            raise ValueError(error_msg)
+        else:
+            logger.warning(error_msg)
+
+    # Yield path for writing
+    yield path_obj
+
+    # Post-write validation (optional - just log if file wasn't created)
+    if not path_obj.exists():
+        logger.warning(f"File was not created after write context: {path_obj}")

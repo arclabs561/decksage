@@ -32,6 +32,7 @@ if str(src_dir) not in sys.path:
  sys.path.insert(0, str(src_dir))
 
 from ml.utils.paths import PATHS
+from ml.utils.lineage import safe_write
 
 
 def export_decks_from_raw(
@@ -69,14 +70,29 @@ def export_decks_from_raw(
  print(f"Error: Failed to build: {e}")
  return 0
 
- # Run export
+ # Run export (validate lineage before writing)
  output_file.parent.mkdir(parents=True, exist_ok=True)
+
+ # Validate lineage before export (Order 1: Exported Decks)
+ try:
+     with safe_write(output_file, order=1, strict=False) as validated_path:
  export_result = subprocess.run(
- [str(binary_path), str(canonical_dir), str(output_file)],
+             [str(binary_path), str(canonical_dir), str(validated_path)],
  capture_output=True,
  text=True,
  )
 
+         if export_result.returncode != 0:
+             print(f"Error: Export failed: {export_result.stderr}")
+             return 0
+ except ValueError as e:
+     print(f"Warning: Lineage validation failed: {e}")
+     # Continue anyway in non-strict mode
+     export_result = subprocess.run(
+         [str(binary_path), str(canonical_dir), str(output_file)],
+         capture_output=True,
+         text=True,
+     )
  if export_result.returncode != 0:
  print(f"Error: Export failed: {export_result.stderr}")
  return 0
@@ -104,7 +120,7 @@ def run_pipeline(
 ) -> int:
  """Run unified export and enhancement pipeline."""
  if output_dir is None:
- output_dir = Path("data/decks")
+        output_dir = PATHS.data / "decks"
  if unified_file is None:
  unified_file = PATHS.processed / "decks_all_final.jsonl"
 
@@ -180,7 +196,9 @@ def run_pipeline(
  unified_count = 0
  temp_unified = unified_file.parent / f"{unified_file.stem}_temp.jsonl"
 
- with open(temp_unified, "w") as out:
+# Validate lineage for unified file (Order 1)
+with safe_write(temp_unified, order=1, strict=False) as validated_temp:
+    with open(validated_temp, "w") as out:
  for game, files in game_files.items():
  for file_path in files:
  if not file_path.exists():
@@ -204,12 +222,14 @@ def run_pipeline(
  print(f"\n✓ Unified {unified_count:,} decks")
  print()
 
- # Stage 3: Enhance
+ # Stage 3: Enhance (validate lineage for final file)
  if not skip_enhance:
  print("Stage 3: Enhancing decks")
  print("-" * 70)
 
- stats = enhance_decks(temp_unified, unified_file)
+     # Validate lineage for final output (Order 1)
+     with safe_write(unified_file, order=1, strict=False) as validated_final:
+         stats = enhance_decks(temp_unified, validated_final)
 
  # Clean up temp file
  temp_unified.unlink()
@@ -224,7 +244,8 @@ def run_pipeline(
  print(f" - Invalid removed: {stats['invalid_removed']:,}")
  print(f" - Source backfilled: {stats['source_backfilled']:,}")
  else:
- # Just rename temp to final
+     # Just rename temp to final (validate lineage first)
+     with safe_write(unified_file, order=1, strict=False):
  temp_unified.rename(unified_file)
  print(f"✓ Saved {unified_count:,} decks to {unified_file}")
 
@@ -246,12 +267,12 @@ def main() -> int:
  action="store_true",
  help="Skip enhancement, just unify",
  )
- parser.add_argument(
- "--output-dir",
- type=Path,
- default=Path("data/decks"),
- help="Output directory for per-game files",
- )
+    parser.add_argument(
+        "--output-dir",
+        type=Path,
+        default=PATHS.data / "decks",
+        help="Output directory for per-game files",
+    )
  parser.add_argument(
  "--unified-file",
  type=Path,

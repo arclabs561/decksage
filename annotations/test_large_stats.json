@@ -1,0 +1,16 @@
+{
+  "total_annotations": 1000,
+  "unique_pairs": 1000,
+  "sources": {
+    "test": 1000
+  },
+  "games": {
+    "unknown": 1000
+  },
+  "score_stats": {
+    "min": 0.5,
+    "max": 0.95,
+    "avg": 0.725
+  },
+  "substitute_count": 200
+}

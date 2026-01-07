@@ -1,0 +1,1 @@
+{"card1": "Lightning Bolt", "card2": "Chain Lightning", "similarity_score": 0.9, "source": "resolved_aggressive", "is_substitute": true, "conflict_resolution": {"strategy": "aggressive", "num_sources": 4}}
