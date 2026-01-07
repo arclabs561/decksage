@@ -1,0 +1,515 @@
+{
+  "version": "1.0",
+  "queries": {
+    "12/6": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "DeRezzd"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "DeRezzd": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Main Phase One"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Main Phase One": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Summoner Skirmish"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_10000080": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_10019086"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_12014404": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_12058741"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_13332685": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_13455674"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_15693423": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_15848542"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_17955766": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_17968114"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_19652159": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_1966438"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_21565445": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_21848500"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_2347656": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_23545031"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_24361622": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_24440742"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_25801745": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_25865565"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_27420823": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_27480536"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_29301450": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_29479265"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_31552317": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_31588572"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_32991300": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_33113958"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_34541543": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_34755994"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_35614780": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_35726888"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_37495766": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_37582948"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_38811586": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_38814750"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_40543231": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_4055337"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_41924516": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_41927278"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_44362883": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_44394295"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_45852939": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_45883110"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_47759571": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_4779091"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_4904812": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_49238328"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_51409648": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_51473858"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_53334471": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_53417695"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_54693926": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_54757758"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_572850": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_57416183"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_59323650": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_59388357"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_60517697": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_60643553"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_62383431": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_62405028"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_64182380": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_64257161"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_65741786": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_65741787"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_67680512": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_6798031"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_69299029": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_69385019"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_706925": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_70871153"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_72932673": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_73082255"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_73898890": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_73956664"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_74997493": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_75003700"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_7811875": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_78144171"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_79130389": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_79415624"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_80666118": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_80696379"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_8165596": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_81677154"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_83326048": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_83443619"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_85692042": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_8576764"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_88284599": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_88305705"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_90448279": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_90590304"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_92428405": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_92512625"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_93830681": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_93854893"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card_94977270": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card_95454996"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Lightning Bolt": {
+      "highly_relevant": [
+        "Fireball"
+      ],
+      "relevant": [
+        "Shock"
+      ],
+      "somewhat_relevant": [
+        "Goblin Tomb Raider",
+        "Gingerbrute",
+        "Great Furnace",
+        "Voldaren Epicure",
+        "Chain Lightning",
+        "Burning-Tree Emissary",
+        "Fireblast",
+        "Guttersnipe",
+        "Rally at the Hornburg",
+        "Kessig Flamebreather"
+      ],
+      "marginally_relevant": [
+        "Black Knight"
+      ],
+      "irrelevant": []
+    },
+    "Sol Ring": {
+      "highly_relevant": [
+        "Command Tower"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  }
+}

@@ -142,6 +142,8 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 0.8,
             functional=base_weights.functional * 1.5,  # Increase functional
             text_embed=base_weights.text_embed * 1.2,  # Increase instruction-tuned
+            visual_embed=base_weights.visual_embed
+            * 1.1,  # Visual helps identify reprints/alternates
             gnn=base_weights.gnn * 0.9,
         ).normalized()
 
@@ -152,6 +154,7 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 1.1,  # Co-occurrence important for deck synergy
             functional=base_weights.functional * 1.2,  # Functional tags help fill gaps
             text_embed=base_weights.text_embed * 1.3,  # Instruction-tuned for deck context
+            visual_embed=base_weights.visual_embed * 1.0,  # Visual less important for completion
             gnn=base_weights.gnn * 1.0,
         ).normalized()
 
@@ -162,6 +165,7 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 1.3,  # Co-occurrence critical for synergies
             functional=base_weights.functional * 0.9,
             text_embed=base_weights.text_embed * 1.1,  # Instruction-tuned helps
+            visual_embed=base_weights.visual_embed * 0.8,  # Visual less important for synergy
             gnn=base_weights.gnn * 1.2,  # GNN captures multi-hop synergies
         ).normalized()
 
@@ -172,6 +176,7 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 1.1,  # Increase Jaccard
             functional=base_weights.functional * 0.8,
             text_embed=base_weights.text_embed * 0.9,
+            visual_embed=base_weights.visual_embed * 1.2,  # Visual important for similarity
             gnn=base_weights.gnn * 1.1,  # Increase GNN
         ).normalized()
 
@@ -182,6 +187,8 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard,
             functional=base_weights.functional,
             text_embed=base_weights.text_embed,
+            visual_embed=base_weights.visual_embed
+            * 1.1,  # Visual helps discover visually similar cards
             gnn=base_weights.gnn * 1.2,  # Increase GNN for multi-hop discovery
         ).normalized()
 
@@ -192,6 +199,7 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 1.0,
             functional=base_weights.functional * 1.3,  # Functional tags critical for refinement
             text_embed=base_weights.text_embed * 1.2,
+            visual_embed=base_weights.visual_embed * 1.0,
             gnn=base_weights.gnn * 1.0,
         ).normalized()
 
@@ -202,6 +210,8 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 0.9,
             functional=base_weights.functional * 1.4,  # Functional equivalence important
             text_embed=base_weights.text_embed * 1.3,  # Instruction-tuned for alternatives
+            visual_embed=base_weights.visual_embed
+            * 1.1,  # Visual helps identify similar-looking alternatives
             gnn=base_weights.gnn * 0.9,
         ).normalized()
 
@@ -212,6 +222,7 @@ def create_task_specific_weights(
             jaccard=base_weights.jaccard * 1.0,
             functional=base_weights.functional * 1.2,  # Functional tags indicate quality
             text_embed=base_weights.text_embed * 1.1,
+            visual_embed=base_weights.visual_embed * 1.0,
             gnn=base_weights.gnn * 1.0,
         ).normalized()
 

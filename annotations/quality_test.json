@@ -1,0 +1,39 @@
+{
+  "timestamp": "2026-01-05T09:19:22.088309",
+  "sources": {
+    "hand_annotations": {
+      "total_queries": 312,
+      "total_candidates": 4620,
+      "graded": 0,
+      "completion_rate": 0.0,
+      "files": 7
+    },
+    "llm_annotations": {
+      "total": 53,
+      "files": 2,
+      "uniform_score_issues": 2
+    },
+    "user_feedback": {
+      "total": 32,
+      "files": 2
+    },
+    "llm_judgments": {
+      "total_files": 1,
+      "uniform_score_issues": 1
+    }
+  },
+  "quality_metrics": {
+    "overall_score": 0.29999999999999993,
+    "total_sources": 4,
+    "total_issues": 3
+  },
+  "issues": [
+    "All hand annotation batches are empty (0% completion)",
+    "2 LLM annotation files have uniform scores (suspicious)",
+    "1 judgment files have uniform scores"
+  ],
+  "recommendations": [
+    "Complete at least one batch using browser annotation tool",
+    "Regenerate LLM annotations using generate_llm_annotations_fixed.py"
+  ]
+}

@@ -1,0 +1,97 @@
+instructions:
+  relevance_scale:
+    0: Completely irrelevant (different colors, function)
+    1: Somewhat related (same color or card type)
+    2: Related (similar function or archetype)
+    3: Very similar (often seen together)
+    4: Extremely similar (near substitutes)
+  notes: Add explanation for edge cases or interesting patterns
+
+tasks:
+- query: Lightning Bolt
+  context: 'Classic red instant: R for 3 damage. Burn staple.'
+  candidates:
+  - card: Chain Lightning
+    predicted_by: [node2vec_128, node2vec_256]
+    relevance: 4
+    notes: 'Functional reprint, Legacy sorcery restriction'
+
+  - card: Lava Dart
+    predicted_by: [node2vec_128]
+    relevance: 3
+    notes: 'Flashback burn spell, seen in same decks'
+
+  - card: Fireblast
+    predicted_by: [node2vec_128, baseline_jaccard]
+    relevance: 3
+    notes: 'Burn finisher, free with sac lands'
+
+  - card: Shock
+    predicted_by: [node2vec_64]
+    relevance: 2
+    notes: 'Similar but weaker (2 damage vs 3)'
+
+  - card: Counterspell
+    predicted_by: [baseline_degree]
+    relevance: 0
+    notes: 'Wrong! Blue interaction, different function entirely'
+
+- query: Brainstorm
+  context: 'Blue cantrip: U instant, draw 3 put 2 back'
+  candidates:
+  - card: Ponder
+    predicted_by: [node2vec_256, node2vec_128]
+    relevance: 4
+    notes: 'Near substitute, cantrip family'
+
+  - card: Preordain
+    predicted_by: [node2vec_256, node2vec_128]
+    relevance: 4
+    notes: 'Near substitute, cantrip family'
+
+  - card: Gitaxian Probe
+    predicted_by: [node2vec_128, baseline_jaccard]
+    relevance: 3
+    notes: 'Cantrip but different info role'
+
+  - card: Force of Will
+    predicted_by: [node2vec_128, baseline_degree]
+    relevance: 2
+    notes: 'Same decks (blue control) but different function'
+
+  - card: Delver of Secrets
+    predicted_by: [baseline_degree]
+    relevance: 2
+    notes: 'Often together but creature vs spell'
+
+- query: Dark Ritual
+  context: 'Black fast mana: B for BBB'
+  candidates:
+  - card: Cabal Ritual
+    predicted_by: [node2vec_256, baseline_jaccard]
+    relevance: 4
+    notes: 'Similar fast mana in Storm'
+
+  - card: Lion's Eye Diamond
+    predicted_by: [node2vec_256, node2vec_128]
+    relevance: 3
+    notes: 'Fast mana in Storm, harder to use'
+
+  - card: Lotus Petal
+    predicted_by: [node2vec_128]
+    relevance: 3
+    notes: 'Fast mana, colorless version'
+
+  - card: Tendrils of Agony
+    predicted_by: [node2vec_128, baseline_degree]
+    relevance: 2
+    notes: 'Storm payoff, seen together but different role'
+
+# Template for additional queries:
+# - query: CARD_NAME
+#   context: 'Brief description'
+#   candidates:
+#   - card: SIMILAR_CARD
+#     predicted_by: [model1, model2]
+#     relevance: null  # 0-4
+#     notes: ''

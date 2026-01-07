@@ -107,4 +107,3 @@ echo "  1. Review improved test set: experiments/test_set_canonical_magic_improv
 echo "  2. Review new evaluations: experiments/evaluation_results_unified.json"
 echo "  3. Run validation: python3 scripts/validation/validate_all.py"
 echo ""
-

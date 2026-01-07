@@ -1,0 +1,9004 @@
+{
+  "queries": {
+    "Card 0": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 1"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 1": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 2"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 2": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 3"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 3": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 4"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 4": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 5"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 5": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 6"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 6": {
+      "highly_relevant": [
+        "Card 7"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 7": {
+      "highly_relevant": [
+        "Card 8"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 8": {
+      "highly_relevant": [
+        "Card 9"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 9": {
+      "highly_relevant": [
+        "Card 10"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 10": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 11"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 11": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 12"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 12": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 13"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 13": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 14"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 14": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 15"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 15": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 16"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 16": {
+      "highly_relevant": [
+        "Card 17"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 17": {
+      "highly_relevant": [
+        "Card 18"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 18": {
+      "highly_relevant": [
+        "Card 19"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 19": {
+      "highly_relevant": [
+        "Card 20"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 20": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 21"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 21": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 22"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 22": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 23"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 23": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 24"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 24": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 25"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 25": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 26"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 26": {
+      "highly_relevant": [
+        "Card 27"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 27": {
+      "highly_relevant": [
+        "Card 28"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 28": {
+      "highly_relevant": [
+        "Card 29"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 29": {
+      "highly_relevant": [
+        "Card 30"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 30": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 31"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 31": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 32"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 32": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 33"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 33": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 34"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 34": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 35"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 35": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 36"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 36": {
+      "highly_relevant": [
+        "Card 37"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 37": {
+      "highly_relevant": [
+        "Card 38"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 38": {
+      "highly_relevant": [
+        "Card 39"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 39": {
+      "highly_relevant": [
+        "Card 40"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 40": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 41"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 41": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 42"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 42": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 43"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 43": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 44"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 44": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 45"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 45": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 46"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 46": {
+      "highly_relevant": [
+        "Card 47"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 47": {
+      "highly_relevant": [
+        "Card 48"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 48": {
+      "highly_relevant": [
+        "Card 49"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 49": {
+      "highly_relevant": [
+        "Card 50"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 50": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 51"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 51": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 52"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 52": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 53"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 53": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 54"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 54": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 55"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 55": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 56"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 56": {
+      "highly_relevant": [
+        "Card 57"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 57": {
+      "highly_relevant": [
+        "Card 58"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 58": {
+      "highly_relevant": [
+        "Card 59"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 59": {
+      "highly_relevant": [
+        "Card 60"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 60": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 61"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 61": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 62"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 62": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 63"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 63": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 64"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 64": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 65"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 65": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 66"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 66": {
+      "highly_relevant": [
+        "Card 67"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 67": {
+      "highly_relevant": [
+        "Card 68"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 68": {
+      "highly_relevant": [
+        "Card 69"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 69": {
+      "highly_relevant": [
+        "Card 70"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 70": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 71"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 71": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 72"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 72": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 73"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 73": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 74"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 74": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 75"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 75": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 76"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 76": {
+      "highly_relevant": [
+        "Card 77"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 77": {
+      "highly_relevant": [
+        "Card 78"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 78": {
+      "highly_relevant": [
+        "Card 79"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 79": {
+      "highly_relevant": [
+        "Card 80"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 80": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 81"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 81": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 82"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 82": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 83"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 83": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 84"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 84": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 85"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 85": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 86"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 86": {
+      "highly_relevant": [
+        "Card 87"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 87": {
+      "highly_relevant": [
+        "Card 88"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 88": {
+      "highly_relevant": [
+        "Card 89"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 89": {
+      "highly_relevant": [
+        "Card 90"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 90": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 91"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 91": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 92"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 92": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 93"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 93": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 94"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 94": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 95"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 95": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 96"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 96": {
+      "highly_relevant": [
+        "Card 97"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 97": {
+      "highly_relevant": [
+        "Card 98"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 98": {
+      "highly_relevant": [
+        "Card 99"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 99": {
+      "highly_relevant": [
+        "Card 100"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 100": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 101"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 101": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 102"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 102": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 103"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 103": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 104"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 104": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 105"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 105": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 106"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 106": {
+      "highly_relevant": [
+        "Card 107"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 107": {
+      "highly_relevant": [
+        "Card 108"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 108": {
+      "highly_relevant": [
+        "Card 109"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 109": {
+      "highly_relevant": [
+        "Card 110"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 110": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 111"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 111": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 112"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 112": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 113"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 113": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 114"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 114": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 115"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 115": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 116"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 116": {
+      "highly_relevant": [
+        "Card 117"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 117": {
+      "highly_relevant": [
+        "Card 118"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 118": {
+      "highly_relevant": [
+        "Card 119"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 119": {
+      "highly_relevant": [
+        "Card 120"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 120": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 121"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 121": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 122"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 122": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 123"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 123": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 124"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 124": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 125"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 125": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 126"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 126": {
+      "highly_relevant": [
+        "Card 127"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 127": {
+      "highly_relevant": [
+        "Card 128"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 128": {
+      "highly_relevant": [
+        "Card 129"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 129": {
+      "highly_relevant": [
+        "Card 130"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 130": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 131"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 131": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 132"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 132": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 133"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 133": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 134"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 134": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 135"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 135": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 136"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 136": {
+      "highly_relevant": [
+        "Card 137"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 137": {
+      "highly_relevant": [
+        "Card 138"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 138": {
+      "highly_relevant": [
+        "Card 139"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 139": {
+      "highly_relevant": [
+        "Card 140"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 140": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 141"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 141": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 142"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 142": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 143"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 143": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 144"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 144": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 145"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 145": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 146"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 146": {
+      "highly_relevant": [
+        "Card 147"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 147": {
+      "highly_relevant": [
+        "Card 148"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 148": {
+      "highly_relevant": [
+        "Card 149"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 149": {
+      "highly_relevant": [
+        "Card 150"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 150": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 151"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 151": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 152"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 152": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 153"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 153": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 154"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 154": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 155"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 155": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 156"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 156": {
+      "highly_relevant": [
+        "Card 157"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 157": {
+      "highly_relevant": [
+        "Card 158"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 158": {
+      "highly_relevant": [
+        "Card 159"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 159": {
+      "highly_relevant": [
+        "Card 160"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 160": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 161"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 161": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 162"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 162": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 163"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 163": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 164"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 164": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 165"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 165": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 166"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 166": {
+      "highly_relevant": [
+        "Card 167"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 167": {
+      "highly_relevant": [
+        "Card 168"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 168": {
+      "highly_relevant": [
+        "Card 169"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 169": {
+      "highly_relevant": [
+        "Card 170"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 170": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 171"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 171": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 172"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 172": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 173"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 173": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 174"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 174": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 175"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 175": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 176"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 176": {
+      "highly_relevant": [
+        "Card 177"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 177": {
+      "highly_relevant": [
+        "Card 178"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 178": {
+      "highly_relevant": [
+        "Card 179"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 179": {
+      "highly_relevant": [
+        "Card 180"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 180": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 181"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 181": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 182"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 182": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 183"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 183": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 184"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 184": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 185"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 185": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 186"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 186": {
+      "highly_relevant": [
+        "Card 187"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 187": {
+      "highly_relevant": [
+        "Card 188"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 188": {
+      "highly_relevant": [
+        "Card 189"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 189": {
+      "highly_relevant": [
+        "Card 190"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 190": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 191"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 191": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 192"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 192": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 193"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 193": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 194"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 194": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 195"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 195": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 196"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 196": {
+      "highly_relevant": [
+        "Card 197"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 197": {
+      "highly_relevant": [
+        "Card 198"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 198": {
+      "highly_relevant": [
+        "Card 199"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 199": {
+      "highly_relevant": [
+        "Card 200"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 200": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 201"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 201": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 202"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 202": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 203"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 203": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 204"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 204": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 205"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 205": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 206"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 206": {
+      "highly_relevant": [
+        "Card 207"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 207": {
+      "highly_relevant": [
+        "Card 208"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 208": {
+      "highly_relevant": [
+        "Card 209"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 209": {
+      "highly_relevant": [
+        "Card 210"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 210": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 211"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 211": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 212"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 212": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 213"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 213": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 214"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 214": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 215"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 215": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 216"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 216": {
+      "highly_relevant": [
+        "Card 217"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 217": {
+      "highly_relevant": [
+        "Card 218"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 218": {
+      "highly_relevant": [
+        "Card 219"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 219": {
+      "highly_relevant": [
+        "Card 220"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 220": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 221"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 221": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 222"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 222": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 223"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 223": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 224"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 224": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 225"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 225": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 226"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 226": {
+      "highly_relevant": [
+        "Card 227"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 227": {
+      "highly_relevant": [
+        "Card 228"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 228": {
+      "highly_relevant": [
+        "Card 229"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 229": {
+      "highly_relevant": [
+        "Card 230"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 230": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 231"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 231": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 232"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 232": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 233"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 233": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 234"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 234": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 235"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 235": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 236"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 236": {
+      "highly_relevant": [
+        "Card 237"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 237": {
+      "highly_relevant": [
+        "Card 238"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 238": {
+      "highly_relevant": [
+        "Card 239"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 239": {
+      "highly_relevant": [
+        "Card 240"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 240": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 241"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 241": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 242"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 242": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 243"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 243": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 244"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 244": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 245"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 245": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 246"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 246": {
+      "highly_relevant": [
+        "Card 247"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 247": {
+      "highly_relevant": [
+        "Card 248"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 248": {
+      "highly_relevant": [
+        "Card 249"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 249": {
+      "highly_relevant": [
+        "Card 250"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 250": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 251"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 251": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 252"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 252": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 253"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 253": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 254"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 254": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 255"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 255": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 256"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 256": {
+      "highly_relevant": [
+        "Card 257"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 257": {
+      "highly_relevant": [
+        "Card 258"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 258": {
+      "highly_relevant": [
+        "Card 259"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 259": {
+      "highly_relevant": [
+        "Card 260"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 260": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 261"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 261": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 262"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 262": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 263"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 263": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 264"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 264": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 265"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 265": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 266"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 266": {
+      "highly_relevant": [
+        "Card 267"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 267": {
+      "highly_relevant": [
+        "Card 268"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 268": {
+      "highly_relevant": [
+        "Card 269"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 269": {
+      "highly_relevant": [
+        "Card 270"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 270": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 271"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 271": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 272"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 272": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 273"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 273": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 274"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 274": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 275"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 275": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 276"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 276": {
+      "highly_relevant": [
+        "Card 277"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 277": {
+      "highly_relevant": [
+        "Card 278"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 278": {
+      "highly_relevant": [
+        "Card 279"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 279": {
+      "highly_relevant": [
+        "Card 280"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 280": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 281"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 281": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 282"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 282": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 283"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 283": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 284"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 284": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 285"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 285": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 286"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 286": {
+      "highly_relevant": [
+        "Card 287"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 287": {
+      "highly_relevant": [
+        "Card 288"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 288": {
+      "highly_relevant": [
+        "Card 289"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 289": {
+      "highly_relevant": [
+        "Card 290"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 290": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 291"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 291": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 292"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 292": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 293"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 293": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 294"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 294": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 295"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 295": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 296"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 296": {
+      "highly_relevant": [
+        "Card 297"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 297": {
+      "highly_relevant": [
+        "Card 298"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 298": {
+      "highly_relevant": [
+        "Card 299"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 299": {
+      "highly_relevant": [
+        "Card 300"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 300": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 301"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 301": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 302"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 302": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 303"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 303": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 304"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 304": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 305"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 305": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 306"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 306": {
+      "highly_relevant": [
+        "Card 307"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 307": {
+      "highly_relevant": [
+        "Card 308"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 308": {
+      "highly_relevant": [
+        "Card 309"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 309": {
+      "highly_relevant": [
+        "Card 310"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 310": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 311"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 311": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 312"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 312": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 313"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 313": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 314"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 314": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 315"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 315": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 316"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 316": {
+      "highly_relevant": [
+        "Card 317"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 317": {
+      "highly_relevant": [
+        "Card 318"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 318": {
+      "highly_relevant": [
+        "Card 319"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 319": {
+      "highly_relevant": [
+        "Card 320"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 320": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 321"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 321": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 322"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 322": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 323"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 323": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 324"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 324": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 325"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 325": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 326"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 326": {
+      "highly_relevant": [
+        "Card 327"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 327": {
+      "highly_relevant": [
+        "Card 328"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 328": {
+      "highly_relevant": [
+        "Card 329"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 329": {
+      "highly_relevant": [
+        "Card 330"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 330": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 331"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 331": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 332"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 332": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 333"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 333": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 334"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 334": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 335"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 335": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 336"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 336": {
+      "highly_relevant": [
+        "Card 337"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 337": {
+      "highly_relevant": [
+        "Card 338"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 338": {
+      "highly_relevant": [
+        "Card 339"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 339": {
+      "highly_relevant": [
+        "Card 340"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 340": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 341"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 341": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 342"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 342": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 343"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 343": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 344"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 344": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 345"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 345": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 346"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 346": {
+      "highly_relevant": [
+        "Card 347"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 347": {
+      "highly_relevant": [
+        "Card 348"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 348": {
+      "highly_relevant": [
+        "Card 349"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 349": {
+      "highly_relevant": [
+        "Card 350"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 350": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 351"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 351": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 352"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 352": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 353"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 353": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 354"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 354": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 355"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 355": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 356"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 356": {
+      "highly_relevant": [
+        "Card 357"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 357": {
+      "highly_relevant": [
+        "Card 358"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 358": {
+      "highly_relevant": [
+        "Card 359"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 359": {
+      "highly_relevant": [
+        "Card 360"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 360": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 361"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 361": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 362"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 362": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 363"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 363": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 364"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 364": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 365"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 365": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 366"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 366": {
+      "highly_relevant": [
+        "Card 367"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 367": {
+      "highly_relevant": [
+        "Card 368"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 368": {
+      "highly_relevant": [
+        "Card 369"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 369": {
+      "highly_relevant": [
+        "Card 370"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 370": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 371"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 371": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 372"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 372": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 373"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 373": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 374"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 374": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 375"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 375": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 376"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 376": {
+      "highly_relevant": [
+        "Card 377"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 377": {
+      "highly_relevant": [
+        "Card 378"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 378": {
+      "highly_relevant": [
+        "Card 379"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 379": {
+      "highly_relevant": [
+        "Card 380"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 380": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 381"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 381": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 382"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 382": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 383"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 383": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 384"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 384": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 385"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 385": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 386"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 386": {
+      "highly_relevant": [
+        "Card 387"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 387": {
+      "highly_relevant": [
+        "Card 388"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 388": {
+      "highly_relevant": [
+        "Card 389"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 389": {
+      "highly_relevant": [
+        "Card 390"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 390": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 391"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 391": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 392"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 392": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 393"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 393": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 394"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 394": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 395"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 395": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 396"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 396": {
+      "highly_relevant": [
+        "Card 397"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 397": {
+      "highly_relevant": [
+        "Card 398"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 398": {
+      "highly_relevant": [
+        "Card 399"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 399": {
+      "highly_relevant": [
+        "Card 400"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 400": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 401"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 401": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 402"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 402": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 403"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 403": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 404"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 404": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 405"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 405": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 406"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 406": {
+      "highly_relevant": [
+        "Card 407"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 407": {
+      "highly_relevant": [
+        "Card 408"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 408": {
+      "highly_relevant": [
+        "Card 409"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 409": {
+      "highly_relevant": [
+        "Card 410"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 410": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 411"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 411": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 412"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 412": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 413"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 413": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 414"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 414": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 415"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 415": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 416"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 416": {
+      "highly_relevant": [
+        "Card 417"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 417": {
+      "highly_relevant": [
+        "Card 418"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 418": {
+      "highly_relevant": [
+        "Card 419"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 419": {
+      "highly_relevant": [
+        "Card 420"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 420": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 421"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 421": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 422"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 422": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 423"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 423": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 424"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 424": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 425"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 425": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 426"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 426": {
+      "highly_relevant": [
+        "Card 427"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 427": {
+      "highly_relevant": [
+        "Card 428"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 428": {
+      "highly_relevant": [
+        "Card 429"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 429": {
+      "highly_relevant": [
+        "Card 430"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 430": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 431"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 431": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 432"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 432": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 433"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 433": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 434"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 434": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 435"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 435": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 436"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 436": {
+      "highly_relevant": [
+        "Card 437"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 437": {
+      "highly_relevant": [
+        "Card 438"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 438": {
+      "highly_relevant": [
+        "Card 439"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 439": {
+      "highly_relevant": [
+        "Card 440"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 440": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 441"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 441": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 442"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 442": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 443"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 443": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 444"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 444": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 445"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 445": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 446"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 446": {
+      "highly_relevant": [
+        "Card 447"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 447": {
+      "highly_relevant": [
+        "Card 448"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 448": {
+      "highly_relevant": [
+        "Card 449"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 449": {
+      "highly_relevant": [
+        "Card 450"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 450": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 451"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 451": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 452"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 452": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 453"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 453": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 454"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 454": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 455"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 455": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 456"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 456": {
+      "highly_relevant": [
+        "Card 457"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 457": {
+      "highly_relevant": [
+        "Card 458"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 458": {
+      "highly_relevant": [
+        "Card 459"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 459": {
+      "highly_relevant": [
+        "Card 460"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 460": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 461"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 461": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 462"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 462": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 463"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 463": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 464"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 464": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 465"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 465": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 466"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 466": {
+      "highly_relevant": [
+        "Card 467"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 467": {
+      "highly_relevant": [
+        "Card 468"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 468": {
+      "highly_relevant": [
+        "Card 469"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 469": {
+      "highly_relevant": [
+        "Card 470"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 470": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 471"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 471": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 472"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 472": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 473"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 473": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 474"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 474": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 475"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 475": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 476"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 476": {
+      "highly_relevant": [
+        "Card 477"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 477": {
+      "highly_relevant": [
+        "Card 478"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 478": {
+      "highly_relevant": [
+        "Card 479"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 479": {
+      "highly_relevant": [
+        "Card 480"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 480": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 481"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 481": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 482"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 482": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 483"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 483": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 484"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 484": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 485"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 485": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 486"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 486": {
+      "highly_relevant": [
+        "Card 487"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 487": {
+      "highly_relevant": [
+        "Card 488"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 488": {
+      "highly_relevant": [
+        "Card 489"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 489": {
+      "highly_relevant": [
+        "Card 490"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 490": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 491"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 491": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 492"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 492": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 493"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 493": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 494"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 494": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 495"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 495": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 496"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 496": {
+      "highly_relevant": [
+        "Card 497"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 497": {
+      "highly_relevant": [
+        "Card 498"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 498": {
+      "highly_relevant": [
+        "Card 499"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 499": {
+      "highly_relevant": [
+        "Card 500"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 500": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 501"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 501": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 502"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 502": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 503"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 503": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 504"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 504": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 505"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 505": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 506"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 506": {
+      "highly_relevant": [
+        "Card 507"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 507": {
+      "highly_relevant": [
+        "Card 508"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 508": {
+      "highly_relevant": [
+        "Card 509"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 509": {
+      "highly_relevant": [
+        "Card 510"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 510": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 511"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 511": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 512"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 512": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 513"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 513": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 514"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 514": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 515"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 515": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 516"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 516": {
+      "highly_relevant": [
+        "Card 517"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 517": {
+      "highly_relevant": [
+        "Card 518"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 518": {
+      "highly_relevant": [
+        "Card 519"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 519": {
+      "highly_relevant": [
+        "Card 520"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 520": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 521"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 521": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 522"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 522": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 523"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 523": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 524"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 524": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 525"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 525": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 526"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 526": {
+      "highly_relevant": [
+        "Card 527"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 527": {
+      "highly_relevant": [
+        "Card 528"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 528": {
+      "highly_relevant": [
+        "Card 529"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 529": {
+      "highly_relevant": [
+        "Card 530"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 530": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 531"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 531": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 532"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 532": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 533"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 533": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 534"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 534": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 535"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 535": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 536"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 536": {
+      "highly_relevant": [
+        "Card 537"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 537": {
+      "highly_relevant": [
+        "Card 538"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 538": {
+      "highly_relevant": [
+        "Card 539"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 539": {
+      "highly_relevant": [
+        "Card 540"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 540": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 541"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 541": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 542"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 542": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 543"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 543": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 544"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 544": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 545"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 545": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 546"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 546": {
+      "highly_relevant": [
+        "Card 547"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 547": {
+      "highly_relevant": [
+        "Card 548"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 548": {
+      "highly_relevant": [
+        "Card 549"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 549": {
+      "highly_relevant": [
+        "Card 550"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 550": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 551"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 551": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 552"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 552": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 553"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 553": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 554"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 554": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 555"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 555": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 556"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 556": {
+      "highly_relevant": [
+        "Card 557"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 557": {
+      "highly_relevant": [
+        "Card 558"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 558": {
+      "highly_relevant": [
+        "Card 559"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 559": {
+      "highly_relevant": [
+        "Card 560"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 560": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 561"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 561": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 562"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 562": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 563"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 563": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 564"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 564": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 565"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 565": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 566"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 566": {
+      "highly_relevant": [
+        "Card 567"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 567": {
+      "highly_relevant": [
+        "Card 568"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 568": {
+      "highly_relevant": [
+        "Card 569"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 569": {
+      "highly_relevant": [
+        "Card 570"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 570": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 571"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 571": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 572"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 572": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 573"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 573": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 574"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 574": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 575"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 575": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 576"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 576": {
+      "highly_relevant": [
+        "Card 577"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 577": {
+      "highly_relevant": [
+        "Card 578"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 578": {
+      "highly_relevant": [
+        "Card 579"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 579": {
+      "highly_relevant": [
+        "Card 580"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 580": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 581"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 581": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 582"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 582": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 583"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 583": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 584"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 584": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 585"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 585": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 586"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 586": {
+      "highly_relevant": [
+        "Card 587"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 587": {
+      "highly_relevant": [
+        "Card 588"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 588": {
+      "highly_relevant": [
+        "Card 589"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 589": {
+      "highly_relevant": [
+        "Card 590"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 590": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 591"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 591": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 592"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 592": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 593"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 593": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 594"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 594": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 595"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 595": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 596"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 596": {
+      "highly_relevant": [
+        "Card 597"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 597": {
+      "highly_relevant": [
+        "Card 598"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 598": {
+      "highly_relevant": [
+        "Card 599"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 599": {
+      "highly_relevant": [
+        "Card 600"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 600": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 601"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 601": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 602"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 602": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 603"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 603": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 604"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 604": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 605"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 605": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 606"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 606": {
+      "highly_relevant": [
+        "Card 607"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 607": {
+      "highly_relevant": [
+        "Card 608"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 608": {
+      "highly_relevant": [
+        "Card 609"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 609": {
+      "highly_relevant": [
+        "Card 610"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 610": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 611"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 611": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 612"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 612": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 613"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 613": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 614"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 614": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 615"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 615": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 616"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 616": {
+      "highly_relevant": [
+        "Card 617"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 617": {
+      "highly_relevant": [
+        "Card 618"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 618": {
+      "highly_relevant": [
+        "Card 619"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 619": {
+      "highly_relevant": [
+        "Card 620"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 620": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 621"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 621": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 622"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 622": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 623"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 623": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 624"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 624": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 625"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 625": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 626"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 626": {
+      "highly_relevant": [
+        "Card 627"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 627": {
+      "highly_relevant": [
+        "Card 628"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 628": {
+      "highly_relevant": [
+        "Card 629"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 629": {
+      "highly_relevant": [
+        "Card 630"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 630": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 631"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 631": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 632"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 632": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 633"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 633": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 634"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 634": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 635"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 635": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 636"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 636": {
+      "highly_relevant": [
+        "Card 637"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 637": {
+      "highly_relevant": [
+        "Card 638"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 638": {
+      "highly_relevant": [
+        "Card 639"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 639": {
+      "highly_relevant": [
+        "Card 640"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 640": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 641"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 641": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 642"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 642": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 643"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 643": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 644"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 644": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 645"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 645": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 646"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 646": {
+      "highly_relevant": [
+        "Card 647"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 647": {
+      "highly_relevant": [
+        "Card 648"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 648": {
+      "highly_relevant": [
+        "Card 649"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 649": {
+      "highly_relevant": [
+        "Card 650"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 650": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 651"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 651": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 652"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 652": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 653"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 653": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 654"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 654": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 655"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 655": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 656"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 656": {
+      "highly_relevant": [
+        "Card 657"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 657": {
+      "highly_relevant": [
+        "Card 658"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 658": {
+      "highly_relevant": [
+        "Card 659"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 659": {
+      "highly_relevant": [
+        "Card 660"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 660": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 661"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 661": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 662"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 662": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 663"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 663": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 664"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 664": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 665"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 665": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 666"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 666": {
+      "highly_relevant": [
+        "Card 667"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 667": {
+      "highly_relevant": [
+        "Card 668"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 668": {
+      "highly_relevant": [
+        "Card 669"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 669": {
+      "highly_relevant": [
+        "Card 670"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 670": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 671"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 671": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 672"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 672": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 673"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 673": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 674"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 674": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 675"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 675": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 676"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 676": {
+      "highly_relevant": [
+        "Card 677"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 677": {
+      "highly_relevant": [
+        "Card 678"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 678": {
+      "highly_relevant": [
+        "Card 679"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 679": {
+      "highly_relevant": [
+        "Card 680"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 680": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 681"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 681": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 682"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 682": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 683"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 683": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 684"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 684": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 685"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 685": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 686"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 686": {
+      "highly_relevant": [
+        "Card 687"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 687": {
+      "highly_relevant": [
+        "Card 688"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 688": {
+      "highly_relevant": [
+        "Card 689"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 689": {
+      "highly_relevant": [
+        "Card 690"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 690": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 691"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 691": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 692"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 692": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 693"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 693": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 694"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 694": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 695"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 695": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 696"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 696": {
+      "highly_relevant": [
+        "Card 697"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 697": {
+      "highly_relevant": [
+        "Card 698"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 698": {
+      "highly_relevant": [
+        "Card 699"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 699": {
+      "highly_relevant": [
+        "Card 700"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 700": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 701"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 701": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 702"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 702": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 703"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 703": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 704"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 704": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 705"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 705": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 706"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 706": {
+      "highly_relevant": [
+        "Card 707"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 707": {
+      "highly_relevant": [
+        "Card 708"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 708": {
+      "highly_relevant": [
+        "Card 709"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 709": {
+      "highly_relevant": [
+        "Card 710"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 710": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 711"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 711": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 712"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 712": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 713"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 713": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 714"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 714": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 715"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 715": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 716"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 716": {
+      "highly_relevant": [
+        "Card 717"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 717": {
+      "highly_relevant": [
+        "Card 718"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 718": {
+      "highly_relevant": [
+        "Card 719"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 719": {
+      "highly_relevant": [
+        "Card 720"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 720": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 721"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 721": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 722"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 722": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 723"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 723": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 724"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 724": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 725"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 725": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 726"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 726": {
+      "highly_relevant": [
+        "Card 727"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 727": {
+      "highly_relevant": [
+        "Card 728"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 728": {
+      "highly_relevant": [
+        "Card 729"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 729": {
+      "highly_relevant": [
+        "Card 730"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 730": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 731"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 731": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 732"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 732": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 733"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 733": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 734"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 734": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 735"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 735": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 736"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 736": {
+      "highly_relevant": [
+        "Card 737"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 737": {
+      "highly_relevant": [
+        "Card 738"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 738": {
+      "highly_relevant": [
+        "Card 739"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 739": {
+      "highly_relevant": [
+        "Card 740"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 740": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 741"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 741": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 742"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 742": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 743"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 743": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 744"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 744": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 745"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 745": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 746"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 746": {
+      "highly_relevant": [
+        "Card 747"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 747": {
+      "highly_relevant": [
+        "Card 748"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 748": {
+      "highly_relevant": [
+        "Card 749"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 749": {
+      "highly_relevant": [
+        "Card 750"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 750": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 751"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 751": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 752"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 752": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 753"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 753": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 754"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 754": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 755"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 755": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 756"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 756": {
+      "highly_relevant": [
+        "Card 757"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 757": {
+      "highly_relevant": [
+        "Card 758"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 758": {
+      "highly_relevant": [
+        "Card 759"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 759": {
+      "highly_relevant": [
+        "Card 760"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 760": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 761"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 761": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 762"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 762": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 763"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 763": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 764"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 764": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 765"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 765": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 766"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 766": {
+      "highly_relevant": [
+        "Card 767"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 767": {
+      "highly_relevant": [
+        "Card 768"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 768": {
+      "highly_relevant": [
+        "Card 769"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 769": {
+      "highly_relevant": [
+        "Card 770"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 770": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 771"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 771": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 772"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 772": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 773"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 773": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 774"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 774": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 775"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 775": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 776"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 776": {
+      "highly_relevant": [
+        "Card 777"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 777": {
+      "highly_relevant": [
+        "Card 778"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 778": {
+      "highly_relevant": [
+        "Card 779"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 779": {
+      "highly_relevant": [
+        "Card 780"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 780": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 781"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 781": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 782"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 782": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 783"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 783": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 784"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 784": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 785"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 785": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 786"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 786": {
+      "highly_relevant": [
+        "Card 787"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 787": {
+      "highly_relevant": [
+        "Card 788"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 788": {
+      "highly_relevant": [
+        "Card 789"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 789": {
+      "highly_relevant": [
+        "Card 790"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 790": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 791"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 791": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 792"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 792": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 793"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 793": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 794"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 794": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 795"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 795": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 796"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 796": {
+      "highly_relevant": [
+        "Card 797"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 797": {
+      "highly_relevant": [
+        "Card 798"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 798": {
+      "highly_relevant": [
+        "Card 799"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 799": {
+      "highly_relevant": [
+        "Card 800"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 800": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 801"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 801": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 802"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 802": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 803"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 803": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 804"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 804": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 805"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 805": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 806"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 806": {
+      "highly_relevant": [
+        "Card 807"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 807": {
+      "highly_relevant": [
+        "Card 808"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 808": {
+      "highly_relevant": [
+        "Card 809"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 809": {
+      "highly_relevant": [
+        "Card 810"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 810": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 811"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 811": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 812"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 812": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 813"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 813": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 814"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 814": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 815"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 815": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 816"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 816": {
+      "highly_relevant": [
+        "Card 817"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 817": {
+      "highly_relevant": [
+        "Card 818"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 818": {
+      "highly_relevant": [
+        "Card 819"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 819": {
+      "highly_relevant": [
+        "Card 820"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 820": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 821"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 821": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 822"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 822": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 823"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 823": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 824"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 824": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 825"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 825": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 826"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 826": {
+      "highly_relevant": [
+        "Card 827"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 827": {
+      "highly_relevant": [
+        "Card 828"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 828": {
+      "highly_relevant": [
+        "Card 829"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 829": {
+      "highly_relevant": [
+        "Card 830"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 830": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 831"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 831": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 832"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 832": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 833"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 833": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 834"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 834": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 835"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 835": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 836"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 836": {
+      "highly_relevant": [
+        "Card 837"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 837": {
+      "highly_relevant": [
+        "Card 838"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 838": {
+      "highly_relevant": [
+        "Card 839"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 839": {
+      "highly_relevant": [
+        "Card 840"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 840": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 841"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 841": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 842"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 842": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 843"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 843": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 844"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 844": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 845"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 845": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 846"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 846": {
+      "highly_relevant": [
+        "Card 847"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 847": {
+      "highly_relevant": [
+        "Card 848"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 848": {
+      "highly_relevant": [
+        "Card 849"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 849": {
+      "highly_relevant": [
+        "Card 850"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 850": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 851"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 851": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 852"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 852": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 853"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 853": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 854"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 854": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 855"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 855": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 856"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 856": {
+      "highly_relevant": [
+        "Card 857"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 857": {
+      "highly_relevant": [
+        "Card 858"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 858": {
+      "highly_relevant": [
+        "Card 859"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 859": {
+      "highly_relevant": [
+        "Card 860"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 860": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 861"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 861": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 862"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 862": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 863"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 863": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 864"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 864": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 865"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 865": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 866"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 866": {
+      "highly_relevant": [
+        "Card 867"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 867": {
+      "highly_relevant": [
+        "Card 868"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 868": {
+      "highly_relevant": [
+        "Card 869"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 869": {
+      "highly_relevant": [
+        "Card 870"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 870": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 871"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 871": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 872"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 872": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 873"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 873": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 874"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 874": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 875"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 875": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 876"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 876": {
+      "highly_relevant": [
+        "Card 877"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 877": {
+      "highly_relevant": [
+        "Card 878"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 878": {
+      "highly_relevant": [
+        "Card 879"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 879": {
+      "highly_relevant": [
+        "Card 880"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 880": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 881"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 881": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 882"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 882": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 883"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 883": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 884"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 884": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 885"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 885": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 886"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 886": {
+      "highly_relevant": [
+        "Card 887"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 887": {
+      "highly_relevant": [
+        "Card 888"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 888": {
+      "highly_relevant": [
+        "Card 889"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 889": {
+      "highly_relevant": [
+        "Card 890"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 890": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 891"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 891": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 892"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 892": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 893"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 893": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 894"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 894": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 895"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 895": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 896"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 896": {
+      "highly_relevant": [
+        "Card 897"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 897": {
+      "highly_relevant": [
+        "Card 898"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 898": {
+      "highly_relevant": [
+        "Card 899"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 899": {
+      "highly_relevant": [
+        "Card 900"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 900": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 901"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 901": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 902"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 902": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 903"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 903": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 904"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 904": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 905"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 905": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 906"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 906": {
+      "highly_relevant": [
+        "Card 907"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 907": {
+      "highly_relevant": [
+        "Card 908"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 908": {
+      "highly_relevant": [
+        "Card 909"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 909": {
+      "highly_relevant": [
+        "Card 910"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 910": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 911"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 911": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 912"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 912": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 913"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 913": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 914"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 914": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 915"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 915": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 916"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 916": {
+      "highly_relevant": [
+        "Card 917"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 917": {
+      "highly_relevant": [
+        "Card 918"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 918": {
+      "highly_relevant": [
+        "Card 919"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 919": {
+      "highly_relevant": [
+        "Card 920"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 920": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 921"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 921": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 922"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 922": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 923"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 923": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 924"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 924": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 925"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 925": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 926"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 926": {
+      "highly_relevant": [
+        "Card 927"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 927": {
+      "highly_relevant": [
+        "Card 928"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 928": {
+      "highly_relevant": [
+        "Card 929"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 929": {
+      "highly_relevant": [
+        "Card 930"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 930": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 931"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 931": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 932"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 932": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 933"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 933": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 934"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 934": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 935"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 935": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 936"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 936": {
+      "highly_relevant": [
+        "Card 937"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 937": {
+      "highly_relevant": [
+        "Card 938"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 938": {
+      "highly_relevant": [
+        "Card 939"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 939": {
+      "highly_relevant": [
+        "Card 940"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 940": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 941"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 941": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 942"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 942": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 943"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 943": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 944"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 944": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 945"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 945": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 946"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 946": {
+      "highly_relevant": [
+        "Card 947"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 947": {
+      "highly_relevant": [
+        "Card 948"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 948": {
+      "highly_relevant": [
+        "Card 949"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 949": {
+      "highly_relevant": [
+        "Card 950"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 950": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 951"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 951": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 952"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 952": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 953"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 953": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 954"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 954": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 955"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 955": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 956"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 956": {
+      "highly_relevant": [
+        "Card 957"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 957": {
+      "highly_relevant": [
+        "Card 958"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 958": {
+      "highly_relevant": [
+        "Card 959"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 959": {
+      "highly_relevant": [
+        "Card 960"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 960": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 961"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 961": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 962"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 962": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 963"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 963": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 964"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 964": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 965"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 965": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 966"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 966": {
+      "highly_relevant": [
+        "Card 967"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 967": {
+      "highly_relevant": [
+        "Card 968"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 968": {
+      "highly_relevant": [
+        "Card 969"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 969": {
+      "highly_relevant": [
+        "Card 970"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 970": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 971"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 971": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 972"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 972": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 973"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 973": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 974"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 974": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 975"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 975": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 976"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 976": {
+      "highly_relevant": [
+        "Card 977"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 977": {
+      "highly_relevant": [
+        "Card 978"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 978": {
+      "highly_relevant": [
+        "Card 979"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 979": {
+      "highly_relevant": [
+        "Card 980"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 980": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 981"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 981": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 982"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 982": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 983"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 983": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 984"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 984": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 985"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 985": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 986"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 986": {
+      "highly_relevant": [
+        "Card 987"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 987": {
+      "highly_relevant": [
+        "Card 988"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 988": {
+      "highly_relevant": [
+        "Card 989"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 989": {
+      "highly_relevant": [
+        "Card 990"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 990": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 991"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 991": {
+      "highly_relevant": [],
+      "relevant": [],
+      "somewhat_relevant": [
+        "Card 992"
+      ],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 992": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 993"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 993": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 994"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 994": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 995"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 995": {
+      "highly_relevant": [],
+      "relevant": [
+        "Card 996"
+      ],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 996": {
+      "highly_relevant": [
+        "Card 997"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 997": {
+      "highly_relevant": [
+        "Card 998"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 998": {
+      "highly_relevant": [
+        "Card 999"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    },
+    "Card 999": {
+      "highly_relevant": [
+        "Card 1000"
+      ],
+      "relevant": [],
+      "somewhat_relevant": [],
+      "marginally_relevant": [],
+      "irrelevant": []
+    }
+  }
+}

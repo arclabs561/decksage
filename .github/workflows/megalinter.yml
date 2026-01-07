@@ -25,9 +25,9 @@ jobs:
     name: MegaLinter
     runs-on: ubuntu-latest
 
-    # Grant write permissions for PR comments
+    # Grant write permissions for PR comments and commits
     permissions:
-      contents: read
+      contents: write
       pull-requests: write
       issues: write
 
@@ -86,3 +86,5 @@ jobs:
           commit_message: "style: apply MegaLinter fixes"
           commit_user_name: megalinter-bot
           commit_user_email: bot@megalinter.io
+        permissions:
+          contents: write

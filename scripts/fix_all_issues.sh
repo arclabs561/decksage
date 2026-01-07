@@ -89,4 +89,3 @@ echo ""
 echo "4. View comprehensive report:"
 echo "   python3 scripts/fix_repository_issues.py"
 echo ""
-

@@ -203,12 +203,14 @@ class ApiState:
         self.sideboard_cooccurrence: dict[str, dict[str, float]] | None = None
         self.temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
         self.text_embedder: object | None = None
+        self.visual_embedder: object | None = None
         self.gnn_embedder: object | None = None
         # New signals
         self.archetype_staples: dict[str, dict[str, float]] | None = None
         self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
         self.format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
         self.cross_format_patterns: dict[str, dict[str, float]] | None = None
+        self.signal_status: dict[str, bool] | None = None  # Signal loading status
 
 
 def get_state() -> ApiState:
@@ -281,6 +283,9 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
                     text_embed=float(
                         bw.get("text_embed", 0.25)
                     ),  # Instruction-tuned (default from recommended weights)
+                    visual_embed=float(
+                        bw.get("visual_embed", 0.20)
+                    ),  # Visual (default from recommended weights)
                     sideboard=float(bw.get("sideboard", 0.0)),
                     temporal=float(bw.get("temporal", 0.0)),
                     gnn=float(bw.get("gnn", 0.30)),  # GNN (default from recommended weights)
@@ -333,7 +338,21 @@ def _adopt_legacy_globals() -> None:
 # API app with lifespan
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """FastAPI lifespan handler: load resources on startup, free on shutdown."""
+    """
+    FastAPI lifespan handler: load resources on startup, free on shutdown.
+
+    **Worker Configuration**:
+    - Each worker loads embeddings independently (memory duplication)
+    - Recommended: Use single worker for development/testing
+    - Production: Use multiple workers only if memory allows
+      - Each worker needs ~2-4GB RAM for embeddings
+      - Example: 4 workers = 8-16GB RAM total
+
+    **Shared State** (if needed):
+    - For shared caches/counters, use Redis (see load_signals.py)
+    - Embeddings are read-only, so per-worker loading is acceptable
+    - Consider shared memory (mmap) for very large embeddings if needed
+    """
     # Load environment variables lazily (respects test-time monkeypatching)
     try:
         load_dotenv()
@@ -367,7 +386,14 @@ async def lifespan(app: FastAPI):
         from .load_signals import load_signals_to_state
 
         text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
-        load_signals_to_state(text_embedder_model=text_embedder_model)
+        visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
+        signal_status = load_signals_to_state(
+            text_embedder_model=text_embedder_model,
+            visual_embedder_model=visual_embedder_model,
+        )
+        # Store signal status in state for /ready endpoint
+        state = get_state()
+        state.signal_status = signal_status
     except Exception:
         logger.debug("Failed to load additional signals (this is optional)", exc_info=True)
     try:
@@ -513,6 +539,9 @@ def ready():
             "embed": state.fusion_default_weights.embed,
             "jaccard": state.fusion_default_weights.jaccard,
             "functional": state.fusion_default_weights.functional,
+            "text_embed": state.fusion_default_weights.text_embed,
+            "visual_embed": state.fusion_default_weights.visual_embed,
+            "gnn": state.fusion_default_weights.gnn,
         }
     return resp
 
@@ -572,6 +601,7 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
         functional=float(w.get("functional", base_fw.functional)),
         text_embed=float(w.get("text_embed", base_fw.text_embed)),
+        visual_embed=float(w.get("visual_embed", base_fw.visual_embed)),
         sideboard=float(w.get("sideboard", base_fw.sideboard)),
         temporal=float(w.get("temporal", base_fw.temporal)),
         gnn=float(w.get("gnn", base_fw.gnn)),
@@ -596,6 +626,7 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         rrf_k=int(request.rrf_k or 60),
         mmr_lambda=float(request.mmr_lambda or 0.0),
         text_embedder=state.text_embedder,
+        visual_embedder=state.visual_embedder,
         card_data=state.card_attrs,  # Use card_attrs for Oracle text access
         sideboard_cooccurrence=state.sideboard_cooccurrence,
         temporal_cooccurrence=state.temporal_cooccurrence,
@@ -747,6 +778,9 @@ def get_contextual_suggestions(
         adj=state.graph_data.get("adj", {}) if state.graph_data else {},
         weights=FusionWeights(),  # Use defaults
         task_type="synergy",  # Default for contextual discovery
+        text_embedder=state.text_embedder,
+        visual_embedder=state.visual_embedder,
+        card_data=state.card_attrs,
     )
 
     # Get price function

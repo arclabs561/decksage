@@ -107,8 +107,17 @@ def create_fusion_with_hybrid_embeddings(
         jaccard=0.15,      # Direct co-occurrence
         functional=0.10,   # Functional tags
         text_embed=0.25,   # Instruction-tuned (zero-shot, new cards)
+        visual_embed=0.20, # Visual embeddings (card images)
         gnn=0.30,          # GraphSAGE (multi-hop, new cards)
     )
+
+    # Load visual embedder if available
+    visual_embedder = None
+    try:
+        from ..similarity.visual_embeddings import get_visual_embedder
+        visual_embedder = get_visual_embedder()
+    except (ImportError, Exception):
+        pass  # Visual embeddings optional
 
     fusion = WeightedLateFusion(
         embeddings=embeddings_data.get("cooccurrence_embeddings"),
@@ -116,6 +125,7 @@ def create_fusion_with_hybrid_embeddings(
         tagger=tagger,
         weights=weights,
         text_embedder=embeddings_data.get("instruction_embedder"),
+        visual_embedder=visual_embedder,
         gnn_embedder=embeddings_data.get("gnn_embedder"),
         card_data=card_data or {},
     )

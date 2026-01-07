@@ -1,0 +1,4 @@
+card1,card2,similarity_score,is_substitute,source,similarity_type,confidence,timestamp
+Lightning Bolt,Chain Lightning,0.9,,test,,,
+Card A,Card B,1.5,,test,,,
+Card C,Card D,-0.1,,test,,,

@@ -1,0 +1,26 @@
+{
+  "mturk": {
+    "service": "mturk",
+    "available": true,
+    "cost_per_task": 0.12000000000000001,
+    "estimated_total": 0.36000000000000004,
+    "setup_ok": true,
+    "error": null
+  },
+  "scale": {
+    "service": "scale",
+    "available": true,
+    "cost_per_task": 0.5,
+    "estimated_total": 1.5,
+    "setup_ok": true,
+    "error": null
+  },
+  "custom": {
+    "service": "custom",
+    "available": true,
+    "cost_per_task": 0.0,
+    "estimated_total": 0.0,
+    "setup_ok": true,
+    "error": null
+  }
+}

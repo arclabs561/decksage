@@ -1,0 +1,51 @@
+{
+  "timestamp": "2026-01-05T13:48:24.380981",
+  "checks": {
+    "file_integrity": {
+      "jsonl_files": 37,
+      "issues": [
+        "Invalid JSON in test_problematic.jsonl: Expecting property name enclosed in double quotes: line 1 column 2 (char 1)"
+      ],
+      "warnings": [
+        "Empty file: test_empty.jsonl",
+        "Empty file: test_empty_resolved.jsonl"
+      ],
+      "status": "unhealthy"
+    },
+    "data_quality": {
+      "integrated_file": "annotations/pipeline_integrated.jsonl",
+      "total_annotations": 67,
+      "issues": [],
+      "status": "healthy"
+    },
+    "integration": {
+      "integrated_file": "annotations/pipeline_integrated.jsonl",
+      "outdated_sources": [
+        "user_feedback: user_feedback.jsonl"
+      ],
+      "status": "outdated"
+    },
+    "s3_sync": {
+      "status": "synced",
+      "files_in_s3": 76,
+      "s3_path": "s3://games-collections/annotations/"
+    },
+    "dependencies": {
+      "dependencies": {
+        "pydantic": "missing",
+        "pydantic_ai": "missing",
+        "fastapi": "missing",
+        "uvicorn": "missing",
+        "s5cmd": "installed"
+      },
+      "status": "missing_dependencies",
+      "missing": [
+        "pydantic",
+        "pydantic_ai",
+        "fastapi",
+        "uvicorn"
+      ]
+    }
+  },
+  "overall_status": "needs_attention"
+}

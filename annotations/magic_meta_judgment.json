@@ -1,0 +1,96 @@
+{
+  "overall_quality": 0.65,
+  "metrics": {
+    "score_diversity": 0.2467387282126582,
+    "score_range_utilization": 0.7,
+    "reasoning_quality": 0.8,
+    "consistency_score": 0.2467387282126582,
+    "completeness": 1.0
+  },
+  "issues": [
+    {
+      "issue_type": "score_clustering",
+      "severity": 3,
+      "description": "Strong clustering of scores in the low range (0.03-0.08), with mean at 0.14. Not utilizing mid-to-high range effectively.",
+      "affected_count": 35,
+      "examples": [
+        "Ruinous Intrusion vs Behind the Scenes (0.08)",
+        "Bloodline Necromancer vs Enchanter's Bane (0.08)"
+      ],
+      "suggested_fix": "Add explicit guidance about using full score range and examples of mid-range (0.4-0.6) and high (0.7-1.0) similarity pairs"
+    },
+    {
+      "issue_type": "inconsistent_scoring",
+      "severity": 2,
+      "description": "Similar archetype pairs receiving inconsistent scores. Jiang Yanggu vs Rubblebelt Raiders scored 0.38 despite strong thematic overlap, while other archetype pairs scored much lower.",
+      "affected_count": 15,
+      "examples": [
+        "Jiang Yanggu vs Rubblebelt Raiders"
+      ],
+      "suggested_fix": "Provide clearer scoring rubric for archetype-based similarities with concrete examples"
+    }
+  ],
+  "strengths": [
+    "Extremely detailed and well-structured reasoning that thoroughly analyzes multiple aspects",
+    "Consistent format with clear sections (Function Analysis, Power Level, etc.)",
+    "Strong use of graph features and attribute similarities in analysis",
+    "Perfect completeness score with all required fields present"
+  ],
+  "feedback": "The annotations show excellent reasoning depth and structure, but suffer from significant score clustering in the low range. While the analysis is thorough, it's not translating into appropriate score differentiation. The reasoning often identifies meaningful similarities (like shared archetypes or themes) but then assigns very low scores anyway, suggesting a disconnect between analysis and score assignment.\n\nThe annotations need better calibration for mid-range and high-range similarities. Currently, even cards with significant thematic and strategic overlap (like Jiang Yanggu and Rubblebelt Raiders) receive relatively low scores. The detailed analysis is actually identifying more similarity than the scores reflect.",
+  "context_injections": {
+    "score_anchors": {
+      "0.0-0.2": "Completely unrelated cards with no functional or thematic overlap",
+      "0.2-0.4": "Cards sharing broad archetypes or themes but different roles",
+      "0.4-0.6": "Cards with significant strategic overlap or similar roles",
+      "0.6-0.8": "Cards with strong functional similarity or clear substitutability",
+      "0.8-1.0": "Nearly identical effects or direct upgrades/downgrades"
+    },
+    "example_pairs": [
+      {
+        "cards": [
+          "Lightning Bolt",
+          "Lightning Strike"
+        ],
+        "score": 0.85,
+        "reason": "Nearly identical effect with small power difference"
+      },
+      {
+        "cards": [
+          "Birds of Paradise",
+          "Llanowar Elves"
+        ],
+        "score": 0.75,
+        "reason": "Same core function with slight variations"
+      },
+      {
+        "cards": [
+          "Counterspell",
+          "Negate"
+        ],
+        "score": 0.55,
+        "reason": "Similar role but different scope"
+      },
+      {
+        "cards": [
+          "Grizzly Bears",
+          "Watchwolf"
+        ],
+        "score": 0.45,
+        "reason": "Similar creature type/role with power difference"
+      }
+    ],
+    "jaccard_thresholds": {
+      "high": "Jaccard > 0.2 suggests score > 0.6",
+      "medium": "Jaccard 0.1-0.2 suggests score 0.4-0.6",
+      "low": "Jaccard < 0.1 suggests score < 0.4"
+    }
+  },
+  "recommendations": [
+    "Add explicit score anchors with examples for each range (0.0-0.2, 0.2-0.4, etc.)",
+    "Include more diverse example pairs in the prompt showing mid and high similarity scores",
+    "Develop clear scoring criteria for different types of similarity (functional, archetype, thematic)",
+    "Add guidance that shared themes/archetypes should typically score at least 0.3-0.4",
+    "Implement a validation check to flag when reasoning identifies similarities but score is very low"
+  ],
+  "timestamp": ""
+}
