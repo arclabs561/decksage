@@ -12,6 +12,7 @@ from __future__ import annotations
 
 from typing import Any
 
+
 try:
     from pydantic import BaseModel, Field
 
@@ -25,9 +26,7 @@ except ImportError:
 class GraphFeatures(BaseModel):
     """Graph-derived similarity features."""
 
-    cooccurrence_count: int = Field(
-        default=0, description="Number of decks they appear together"
-    )
+    cooccurrence_count: int = Field(default=0, description="Number of decks they appear together")
     cooccurrence_frequency: float = Field(
         default=0.0, description="Frequency (0-1) of co-occurrence"
     )
@@ -40,9 +39,7 @@ class GraphFeatures(BaseModel):
     common_neighbors: int = Field(default=0, description="Number of shared neighbors")
     total_neighbors_card1: int = Field(default=0, description="Degree of card1")
     total_neighbors_card2: int = Field(default=0, description="Degree of card2")
-    clustering_coefficient: float | None = Field(
-        None, description="Local clustering coefficient"
-    )
+    clustering_coefficient: float | None = Field(None, description="Local clustering coefficient")
     edge_weight: int | None = Field(None, description="Direct edge weight if exists")
 
 
@@ -73,19 +70,16 @@ class CardComparison(BaseModel):
         default_factory=list, description="Shared functional tags/keywords"
     )
     differences: list[str] = Field(
-        default_factory=list, description="Key differences (e.g., 'card1 is instant, card2 is sorcery')"
+        default_factory=list,
+        description="Key differences (e.g., 'card1 is instant, card2 is sorcery')",
     )
 
 
 class TournamentContext(BaseModel):
     """Tournament-specific co-occurrence patterns."""
 
-    top8_appearances: int = Field(
-        default=0, description="Number of top 8 finishes together"
-    )
-    win_rate_together: float | None = Field(
-        None, description="Win rate when both present"
-    )
+    top8_appearances: int = Field(default=0, description="Number of top 8 finishes together")
+    win_rate_together: float | None = Field(None, description="Win rate when both present")
     placement_distribution: dict[str, int] = Field(
         default_factory=dict, description="Placement distribution (1st, 2nd, etc.)"
     )
@@ -121,27 +115,13 @@ class ContextualAnalysis(BaseModel):
 class MultiFacetedAnalysis(BaseModel):
     """Breakdown by different similarity dimensions."""
 
-    functional_similarity: float = Field(
-        default=0.0, description="Same role/function (0-1)"
-    )
-    synergy_similarity: float = Field(
-        default=0.0, description="Work well together (0-1)"
-    )
-    manabase_similarity: float = Field(
-        default=0.0, description="Similar mana requirements (0-1)"
-    )
-    archetype_similarity: float = Field(
-        default=0.0, description="Same archetype fit (0-1)"
-    )
-    temporal_similarity: float = Field(
-        default=0.0, description="Similar meta timing (0-1)"
-    )
-    format_similarity: float = Field(
-        default=0.0, description="Same format usage (0-1)"
-    )
-    power_level_similarity: float = Field(
-        default=0.0, description="Similar power level (0-1)"
-    )
+    functional_similarity: float = Field(default=0.0, description="Same role/function (0-1)")
+    synergy_similarity: float = Field(default=0.0, description="Work well together (0-1)")
+    manabase_similarity: float = Field(default=0.0, description="Similar mana requirements (0-1)")
+    archetype_similarity: float = Field(default=0.0, description="Same archetype fit (0-1)")
+    temporal_similarity: float = Field(default=0.0, description="Similar meta timing (0-1)")
+    format_similarity: float = Field(default=0.0, description="Same format usage (0-1)")
+    power_level_similarity: float = Field(default=0.0, description="Similar power level (0-1)")
     explanation_per_facet: dict[str, str] = Field(
         default_factory=dict, description="Explanation for each similarity dimension"
     )
@@ -150,24 +130,16 @@ class MultiFacetedAnalysis(BaseModel):
 class DetailedExplanation(BaseModel):
     """Rich text explanation using graph data."""
 
-    summary: str = Field(
-        default="", description="One-sentence summary"
-    )
+    summary: str = Field(default="", description="One-sentence summary")
     graph_evidence: str = Field(
         default="", description="Evidence from graph (co-occurrence, Jaccard, etc.)"
     )
-    attribute_analysis: str = Field(
-        default="", description="Attribute-based comparison"
-    )
-    contextual_factors: str = Field(
-        default="", description="Archetype, format, temporal context"
-    )
+    attribute_analysis: str = Field(default="", description="Attribute-based comparison")
+    contextual_factors: str = Field(default="", description="Archetype, format, temporal context")
     substitution_analysis: str = Field(
         default="", description="When/why substitution works or doesn't"
     )
-    trade_offs: str = Field(
-        default="", description="What you gain/lose by substituting"
-    )
+    trade_offs: str = Field(default="", description="What you gain/lose by substituting")
     use_cases: list[str] = Field(
         default_factory=list, description="Specific scenarios where relationship matters"
     )
@@ -231,5 +203,3 @@ class EnrichedCardSimilarityAnnotation(BaseModel):
     annotator_id: str | None = None
     timestamp: str | None = None
     game: str | None = None
-
-

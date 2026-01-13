@@ -142,7 +142,7 @@ class SimilarityRequest(BaseModel):
     )
     aggregator: str | None = Field(
         None,
-        description="Fusion aggregator: 'weighted' (default), 'rrf', 'combsum', or 'combmnz'",
+        description="Fusion aggregator: 'rrf' (default), 'isr', 'weighted', 'combsum', 'combmnz', 'combmax', 'combmin'",
     )
     rrf_k: int | None = Field(
         None,
@@ -211,6 +211,7 @@ class ApiState:
         self.format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
         self.cross_format_patterns: dict[str, dict[str, float]] | None = None
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
+        self.reranker: object | None = None  # Learned reranker (optional)
 
 
 def get_state() -> ApiState:
@@ -387,13 +388,24 @@ async def lifespan(app: FastAPI):
 
         text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
         visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
+        reranker_path = os.getenv("RERANKER_PATH", None)  # Optional reranker model path
         signal_status = load_signals_to_state(
             text_embedder_model=text_embedder_model,
             visual_embedder_model=visual_embedder_model,
+            reranker_path=reranker_path,
         )
         # Store signal status in state for /ready endpoint
         state = get_state()
         state.signal_status = signal_status
+
+        # Log comprehensive signal availability summary
+        loaded_signals = [name for name, loaded in signal_status.items() if loaded]
+        missing_signals = [name for name, loaded in signal_status.items() if not loaded]
+        logger.info(
+            f"API Signal Status: {len(loaded_signals)}/{len(signal_status)} signals loaded. "
+            f"Available: {', '.join(loaded_signals) if loaded_signals else 'none'}. "
+            f"Missing: {', '.join(missing_signals) if missing_signals else 'none'}"
+        )
     except Exception:
         logger.debug("Failed to load additional signals (this is optional)", exc_info=True)
     try:
@@ -622,7 +634,9 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         state.graph_data["adj"],
         tagger,
         fw,
-        aggregator=(request.aggregator or "weighted"),
+        aggregator=(
+            request.aggregator or "rrf"
+        ),  # RRF recommended default for heterogeneous signals
         rrf_k=int(request.rrf_k or 60),
         mmr_lambda=float(request.mmr_lambda or 0.0),
         text_embedder=state.text_embedder,
@@ -636,12 +650,36 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
         format_cooccurrence=state.format_cooccurrence,
         cross_format_patterns=state.cross_format_patterns,
         task_type=task_type,
+        graph=state.graph_data.get("graph") if state.graph_data else None,
     )
-    if request.also_like:
-        queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
-        similar = fusion.similar_multi(queries, k)
+
+    # Use reranking if available
+    use_reranking = state.reranker is not None
+    if use_reranking:
+        # Two-stage pipeline: retrieve → rerank
+        from ml.reranking.hybrid_search import HybridSearchWithReranking
+
+        hybrid_search = HybridSearchWithReranking(
+            retriever=fusion,
+            reranker=state.reranker,
+            top_k_retrieve=100,  # Retrieve more candidates
+            top_k_final=k,  # Final results after reranking
+            use_reranking=True,
+        )
+        if request.also_like:
+            # Multi-query not yet supported in hybrid search, fallback to fusion
+            queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
+            similar = fusion.similar_multi(queries, k)
+        else:
+            similar = hybrid_search.search(query)
     else:
-        similar = fusion.similar(query, k, task_type=task_type)
+        # Fallback to manual fusion
+        if request.also_like:
+            queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
+            similar = fusion.similar_multi(queries, k)
+        else:
+            similar = fusion.similar(query, k, task_type=task_type)
+
     return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
 
 

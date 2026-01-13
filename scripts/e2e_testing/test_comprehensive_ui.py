@@ -13,16 +13,20 @@ Tests all UI features comprehensively:
 - Performance
 """
 
-import json
-import os
-import time
-from pathlib import Path
-
 import requests
+from test_constants import TEST_CARDS, TIMEOUTS
 
 # Import shared utilities and constants (dotenv is loaded automatically by test_utils)
-from test_utils import wait_for_api, logger, API_BASE, get_ui_url, start_http_server, setup_playwright_routing, inject_api_base
-from test_constants import TEST_CARDS, TIMEOUTS
+from test_utils import (
+    API_BASE,
+    get_ui_url,
+    inject_api_base,
+    logger,
+    setup_playwright_routing,
+    start_http_server,
+    wait_for_api,
+)
+
 
 # Start HTTP server and get UI URL
 start_http_server()
@@ -31,6 +35,7 @@ UI_URL = get_ui_url()
 # Use Playwright for browser automation
 try:
     from playwright.sync_api import sync_playwright
+
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
@@ -48,21 +53,21 @@ def test_type_ahead_ui():
     if not HAS_PLAYWRIGHT:
         logger.warning("⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
-            
+
             # Find search input
             search_input = page.locator("#cardInput")
             search_input.wait_for(state="visible")
-            
+
             # Type slowly to trigger autocomplete
             search_input.type("Light", delay=100)
             page.wait_for_timeout(500)  # Wait for debounce
-            
+
             # Check if dropdown appears
             dropdown = page.locator("#autocompleteDropdown")
             if dropdown.is_visible():
@@ -93,8 +98,7 @@ def test_card_images():
             json={"query": test_query, "top_k": 3},
             timeout=TIMEOUTS["slow"],
         )
-        assert resp.status_code == 200, \
-            f"Expected 200, got {resp.status_code} for image test"
+        assert resp.status_code == 200, f"Expected 200, got {resp.status_code} for image test"
         data = resp.json()
         results = data.get("results", [])
         assert results, "Expected search results"
@@ -111,7 +115,9 @@ def test_card_images():
                         if img_resp.status_code == 200:
                             logger.info(f"✅ Image accessible: {result['card']}")
                         else:
-                            logger.warning(f"⚠️  Image returned {img_resp.status_code}: {result['card']}")
+                            logger.warning(
+                                f"⚠️  Image returned {img_resp.status_code}: {result['card']}"
+                            )
                     except requests.RequestException:
                         logger.warning(f"⚠️  Image URL not accessible: {result['card']}")
         logger.info(f"Found {images_found}/{len(results)} results with image URLs")
@@ -154,7 +160,7 @@ def test_metadata_completeness():
     """Test metadata enrichment completeness."""
     logger.info("\n🔍 Testing metadata completeness...")
     test_queries = ["Lightning Bolt", "Counterspell", "Brainstorm"]
-    
+
     all_metadata_fields = set()
     for query in test_queries:
         try:
@@ -171,23 +177,29 @@ def test_metadata_completeness():
                     all_metadata_fields.update(meta.keys())
         except Exception:
             pass
-    
+
     expected_fields = {
-        "type", "mana_cost", "cmc", "functional_tags",
-        "archetype_staples", "cooccurrence_note", "archetype_cooccurrence",
-        "format_cooccurrence", "image_url"
+        "type",
+        "mana_cost",
+        "cmc",
+        "functional_tags",
+        "archetype_staples",
+        "cooccurrence_note",
+        "archetype_cooccurrence",
+        "format_cooccurrence",
+        "image_url",
     }
-    
+
     found = expected_fields & all_metadata_fields
     missing = expected_fields - all_metadata_fields
-    
+
     logger.info(f"  Found fields: {sorted(found)}")
     if missing:
         logger.info(f"  Missing fields: {sorted(missing)}")
-    
+
     coverage = len(found) / len(expected_fields) * 100
     logger.info(f"  Coverage: {coverage:.1f}%")
-    
+
     return coverage >= 50  # At least 50% of expected fields
 
 
@@ -220,32 +232,33 @@ def test_accessibility():
     if not HAS_PLAYWRIGHT:
         logger.warning("  ⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     issues = []
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             context = browser.new_context()
-            
+
             # Set up API routing
             setup_playwright_routing(context)
-            
+
             page = context.new_page()
-            
+
             # Inject API_BASE override
             inject_api_base(page)
-            
+
             page.goto(UI_URL)
-            
+
             # Check for focus indicators
             search_input = page.locator("#unifiedInput, #cardInput").first
             search_input.wait_for(state="visible")
             search_input.focus()
             page.wait_for_timeout(100)
-            
+
             # Check computed styles for focus indicator
-            focus_style = page.evaluate("""
+            focus_style = page.evaluate(
+                """
                 (element) => {
                     const style = window.getComputedStyle(element);
                     return {
@@ -253,26 +266,30 @@ def test_accessibility():
                         boxShadow: style.boxShadow
                     };
                 }
-            """, search_input)
-            
+            """,
+                search_input,
+            )
+
             has_focus_indicator = (
-                focus_style["outline"] and focus_style["outline"] != "none" and focus_style["outline"] != "0px"
+                focus_style["outline"]
+                and focus_style["outline"] != "none"
+                and focus_style["outline"] != "0px"
             ) or (focus_style["boxShadow"] and focus_style["boxShadow"] != "none")
-            
+
             if not has_focus_indicator:
                 issues.append("Focus indicator not visible")
-            
+
             # Check ARIA attributes
             role = search_input.get_attribute("role")
             aria_label = search_input.get_attribute("aria-label")
-            
+
             if role != "combobox":
                 issues.append("Search input missing role='combobox'")
             if not aria_label:
                 issues.append("Search input missing aria-label")
-            
+
             browser.close()
-            
+
             if issues:
                 logger.warning(f"  ⚠️  Found {len(issues)} accessibility issues:")
                 for issue in issues:
@@ -284,7 +301,7 @@ def test_accessibility():
     except Exception as e:
         logger.warning(f"  ⚠️  Accessibility test failed: {e}")
         return None
-    
+
     if issues:
         logger.warning(f"  ⚠️  Accessibility issues: {', '.join(issues)}")
         return False
@@ -296,11 +313,11 @@ def main():
     logger.info("=" * 60)
     logger.info("Comprehensive UI/UX E2E Test")
     logger.info("=" * 60)
-    
+
     if not test_api_readiness():
         logger.info("\n❌ API not ready. Start with: docker-compose up")
         return 1
-    
+
     results = {
         "type_ahead": test_type_ahead_ui(),
         "card_images": test_card_images(),
@@ -309,38 +326,37 @@ def main():
         "meilisearch": test_meilisearch_indexing(),
         "accessibility": test_accessibility(),
     }
-    
+
     logger.info("\n" + "=" * 60)
     logger.info("Test Results Summary:")
     logger.info("=" * 60)
     for test, result in results.items():
         status = "✅" if result else "❌" if result is False else "⚠️"
         logger.info(f"{status} {test}")
-    
+
     passed = sum(1 for r in results.values() if r is True)
     total = sum(1 for r in results.values() if r is not None)
-    
+
     logger.info(f"\nPassed: {passed}/{total}")
-    
+
     # Recommendations
     logger.info("\n" + "=" * 60)
     logger.info("Recommendations:")
     logger.info("=" * 60)
-    
+
     if not results.get("meilisearch"):
         logger.warning("⚠️  Meilisearch not indexed. To index:")
         logger.info("   python -m ml.search.index_cards --embeddings <path>")
         logger.info("   Or set INDEX_ON_STARTUP=true in docker-compose")
-    
+
     if not results.get("type_ahead"):
         logger.warning("⚠️  Type-ahead may not be working. Check:")
         logger.info("   - API embeddings loaded")
         logger.error("   - Browser console for errors")
         logger.info("   - Network tab for /v1/cards requests")
-    
+
     return 0 if passed == total else 1
 
 
 if __name__ == "__main__":
     exit(main())
-

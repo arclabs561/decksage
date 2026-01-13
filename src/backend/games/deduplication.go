@@ -128,11 +128,11 @@ func (dt *DeduplicationTracker) Save(ctx context.Context) error {
 // Thread-safe: uses read-write lock for concurrent access
 func (dt *DeduplicationTracker) FindDuplicate(c *Collection) (isDuplicate bool, canonicalID, canonicalURL string) {
 	sig := ComputeDeckSignature(c)
-	
+
 	dt.mu.RLock()
 	existing, exists := dt.signatures[sig]
 	dt.mu.RUnlock()
-	
+
 	if exists {
 		// Check if this is a different source
 		isNewSource := true
@@ -223,4 +223,3 @@ func (dt *DeduplicationTracker) GetCanonicalSource(sig string) string {
 func (dt *DeduplicationTracker) trackingKey() string {
 	return filepath.Join(dt.prefix, ".deduplication.json")
 }
-

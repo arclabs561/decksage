@@ -15,6 +15,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -167,7 +168,8 @@ def create_browser_annotation_interface(
             </div>
 """
 
-    html_content += """
+    html_content += (
+        """
         </div>
         <button type="submit" class="submit-btn">Submit Annotations</button>
     </form>
@@ -180,10 +182,10 @@ def create_browser_annotation_interface(
             // Remove selected class from all buttons in this group
             const container = btn.closest('.candidate');
             container.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
-            
+
             // Add selected class to clicked button
             btn.classList.add('selected');
-            
+
             // Store rating
             const rating = parseInt(btn.dataset.rating);
             ratings[index] = rating;
@@ -192,15 +194,15 @@ def create_browser_annotation_interface(
 
         document.getElementById('annotation-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const annotations = [];
             const candidates = document.querySelectorAll('.candidate');
-            
+
             candidates.forEach((candidateEl, index) => {
                 const candidate = candidateEl.dataset.candidate;
                 const rating = ratings[index];
                 const note = document.getElementById(`notes-${index}`).value;
-                
+
                 if (rating !== undefined) {
                     annotations.push({
                         candidate: candidate,
@@ -209,13 +211,15 @@ def create_browser_annotation_interface(
                     });
                 }
             });
-            
+
             const result = {
-                query: '""" + query_card + """',
+                query: '"""
+        + query_card
+        + """',
                 timestamp: new Date().toISOString(),
                 annotations: annotations
             };
-            
+
             // Download as JSON
             const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -224,17 +228,20 @@ def create_browser_annotation_interface(
             a.download = 'annotations_' + Date.now() + '.json';
             a.click();
             URL.revokeObjectURL(url);
-            
+
             alert('Annotations saved! Check your downloads folder.');
         });
     </script>
 </body>
 </html>
 """
+    )
 
     # Save HTML file
     if output_path is None:
-        output_path = project_root / "annotations" / f"browser_annotation_{query_card.replace(' ', '_')}.html"
+        output_path = (
+            project_root / "annotations" / f"browser_annotation_{query_card.replace(' ', '_')}.html"
+        )
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
@@ -310,7 +317,7 @@ def convert_browser_annotation_to_unified(
                     f.write(json.dumps(ann, ensure_ascii=False) + "\n")
             temp_path.replace(output_path)
             print(f"✓ Converted {len(unified)} annotations to {output_path}")
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 temp_path.unlink()
             raise
@@ -332,8 +339,12 @@ def main() -> int:
     create_parser.add_argument("--output", type=Path, help="Output HTML path")
 
     # Convert annotation
-    convert_parser = subparsers.add_parser("convert", help="Convert browser annotation to unified format")
-    convert_parser.add_argument("--input", type=Path, required=True, help="Browser annotation JSON file")
+    convert_parser = subparsers.add_parser(
+        "convert", help="Convert browser annotation to unified format"
+    )
+    convert_parser.add_argument(
+        "--input", type=Path, required=True, help="Browser annotation JSON file"
+    )
     convert_parser.add_argument(
         "--output",
         type=Path,
@@ -357,4 +368,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

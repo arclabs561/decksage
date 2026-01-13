@@ -23,6 +23,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
 try:
     from pydantic import BaseModel, Field
 except ImportError:
@@ -87,7 +88,14 @@ def main() -> int:
     parser.add_argument("--attributes", help="Path to attributes CSV")
     parser.add_argument("--signals-dir", help="Directory containing signal files")
     parser.add_argument("--version", help="Version tag (auto-detected if not provided)")
-    parser.add_argument("--output", default="data/ASSET_METADATA.json", help="Output metadata file")
+    # Use PATHS utility if available, otherwise fallback
+    try:
+        from ml.utils.paths import PATHS
+
+        default_output = str(PATHS.data / "ASSET_METADATA.json")
+    except (ImportError, AttributeError):
+        default_output = "data/ASSET_METADATA.json"
+    parser.add_argument("--output", default=default_output, help="Output metadata file")
     parser.add_argument(
         "--training-run",
         help="Training run ID or path to training metadata",
@@ -203,4 +211,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-

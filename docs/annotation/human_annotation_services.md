@@ -245,4 +245,3 @@ Human annotations are integrated into the unified annotation system:
 - Scale AI: https://docs.scale.com/
 - Labelbox: https://docs.labelbox.com/
 - Appen: https://appen.com/
-

@@ -1,7 +1,7 @@
 # DeckSage Architecture Review
 
-**Date**: 2025-01-XX  
-**Reviewer**: AI Assistant  
+**Date**: 2025-01-XX
+**Reviewer**: AI Assistant
 **Scope**: Overall system architecture, component interactions, data flow, and design decisions
 
 ---
@@ -135,7 +135,7 @@ deck.get("source")  # Assumes structure
 deck.get("format")  # No schema check
 ```
 
-**Actual Risk**: 
+**Actual Risk**:
 - Go code has "FIXED" comments indicating structure changes (line 93, 107)
 - Python code assumes `cards` array exists but doesn't validate
 - If Go changes field names or structure, Python will fail silently or with cryptic errors
@@ -172,7 +172,7 @@ def _get_jaccard_similarity(self, query: str, candidate: str) -> float:
         return 0.0  # Returns 0 if missing
 ```
 
-**Actual Assessment**: 
+**Actual Assessment**:
 - Architecture is sound - optional signals with graceful degradation
 - But complexity may be premature if signals aren't actually loaded/used
 - Need to verify which signals are actually available at runtime
@@ -198,7 +198,7 @@ def _get_jaccard_similarity(self, query: str, candidate: str) -> float:
 pairs_path = Path("src/backend/pairs.csv")  # Hardcoded!
 ```
 
-**Actual Impact**: 
+**Actual Impact**:
 - Found 2 instances in `evaluate_downstream_complete.py`
 - Most code correctly uses `PATHS` utility
 - These are in evaluation scripts (lower risk but still violates rules)
@@ -503,4 +503,3 @@ DeckSage has a solid architectural foundation with clear separation of concerns 
 - `src/ml/experimental/REALITY_FINDINGS.md` - Performance reality check
 - `src/ml/utils/lineage.py` - Lineage validation utilities
 - `src/ml/similarity/fusion.py` - Fusion system implementation
-

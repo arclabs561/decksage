@@ -5,11 +5,12 @@ import json
 import sys
 from pathlib import Path
 
+
 # Allow running as script
 if __name__ == "__main__":
     import sys
     from pathlib import Path
-    
+
     # Add src to path
     src_path = Path(__file__).parent.parent.parent
     sys.path.insert(0, str(src_path))
@@ -77,7 +78,7 @@ def main():
     """Validate all knowledge files."""
     import os
     from pathlib import Path
-    
+
     # Find knowledge directory without importing PATHS
     env_root = os.getenv("DECKSAGE_ROOT")
     if env_root:
@@ -114,4 +115,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-

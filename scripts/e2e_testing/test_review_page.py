@@ -13,32 +13,30 @@ Tests the bulk similarity review interface:
 - Statistics display
 """
 
-import os
 import json
 import tempfile
 from pathlib import Path
 
-# Import shared utilities (dotenv is loaded automatically by test_utils)
-from test_utils import (
-    wait_for_api,
-    logger,
-    API_BASE,
-    wait_for_element_condition,
-    wait_for_network_idle,
-    safe_click,
-    safe_type,
-    wait_for_similarities_loaded,
-    retry_with_backoff,
-    get_ui_url,
-    get_review_url,
-    start_http_server,
-    setup_playwright_routing,
-    inject_api_base,
-)
-
 # Import expect for Playwright assertions
 from playwright.sync_api import expect
 from test_constants import TEST_CARDS, TIMEOUTS
+
+# Import shared utilities (dotenv is loaded automatically by test_utils)
+from test_utils import (
+    get_review_url,
+    get_ui_url,
+    inject_api_base,
+    logger,
+    retry_with_backoff,
+    safe_click,
+    setup_playwright_routing,
+    start_http_server,
+    wait_for_api,
+    wait_for_element_condition,
+    wait_for_network_idle,
+    wait_for_similarities_loaded,
+)
+
 
 # Start HTTP server and get URLs
 start_http_server()
@@ -47,7 +45,8 @@ REVIEW_URL = get_review_url()
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import sync_playwright, Page, expect
+    from playwright.sync_api import Page, expect, sync_playwright
+
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
@@ -56,7 +55,7 @@ except ImportError:
 
 class ReviewPageTester:
     """E2E tester for similarity review page."""
-    
+
     def __init__(self):
         self.results = {
             "tests_run": 0,
@@ -66,7 +65,7 @@ class ReviewPageTester:
         }
         self.page = None
         self.browser = None
-    
+
     def test_feature(self, name: str, func):
         """Test a feature and track results."""
         self.results["tests_run"] += 1
@@ -83,10 +82,10 @@ class ReviewPageTester:
                 return False
         except Exception as e:
             self.results["tests_failed"] += 1
-            self.results["issues"].append(f"{name}: {str(e)}")
+            self.results["issues"].append(f"{name}: {e!s}")
             logger.error(f"❌ {name} (error: {e})")
             return False
-    
+
     def test_page_loads(self):
         """Test 1: Review page loads correctly."""
         logger.info("Testing: Review page loads...")
@@ -96,33 +95,33 @@ class ReviewPageTester:
                 self.page.goto(REVIEW_URL, wait_until="domcontentloaded")
                 wait_for_network_idle(self.page, timeout=10000)
                 return True
-            
+
             retry_with_backoff(navigate, max_retries=3, initial_delay=1.0)
-            
+
             # Check for main elements with better waiting
             title = self.page.locator("h1")
             if not wait_for_element_condition(self.page, title, "visible", timeout=5000):
                 logger.error("  ❌ Title not found")
                 return False
             expect(title).to_contain_text("Similarity Review")
-            
+
             # Check for controls
             data_source = self.page.locator("#dataSource")
             if not wait_for_element_condition(self.page, data_source, "visible", timeout=5000):
                 logger.error("  ❌ Data source selector not found")
                 return False
-            
+
             load_btn = self.page.locator("#loadBtn")
             if not wait_for_element_condition(self.page, load_btn, "visible", timeout=5000):
                 logger.error("  ❌ Load button not found")
                 return False
-            
+
             logger.info("  ✅ Page loaded with all controls")
             return True
         except Exception as e:
             logger.error(f"  ❌ Page load failed: {e}")
             return False
-    
+
     def test_load_from_api(self):
         """Test 2: Load similarities from API."""
         logger.info("Testing: Load similarities from API...")
@@ -130,22 +129,26 @@ class ReviewPageTester:
             # Set data source to API
             data_source = self.page.locator("#dataSource")
             data_source.select_option("api")
-            
+
             # Enter query card
             query_input = self.page.locator("#queryCard")
-            test_card = TEST_CARDS.get("common") if isinstance(TEST_CARDS, dict) else (TEST_CARDS[0] if TEST_CARDS else "Lightning Bolt")
+            test_card = (
+                TEST_CARDS.get("common")
+                if isinstance(TEST_CARDS, dict)
+                else (TEST_CARDS[0] if TEST_CARDS else "Lightning Bolt")
+            )
             query_input.fill(test_card)
-            
+
             # Set top K
             top_k = self.page.locator("#topK")
             top_k.fill("10")
-            
+
             # Click load button with safe click
             load_btn = self.page.locator("#loadBtn")
             if not safe_click(self.page, load_btn, timeout=5000):
                 logger.error("  ❌ Failed to click load button")
                 return False
-            
+
             # Wait for similarities to load (handles loading state internally)
             if not wait_for_similarities_loaded(self.page, timeout=15000):
                 logger.warning("  ⚠️  Similarities may not have loaded")
@@ -155,19 +158,19 @@ class ReviewPageTester:
                     error_text = error_msg.inner_text()
                     logger.warning(f"  ⚠️  Error shown: {error_text[:100]}")
                     return True  # Error is a valid state to test
-            
+
             # Wait for either similarities to appear OR error/empty state
             # Check for error first
             error_msg = self.page.locator(".error")
             empty_state = self.page.locator("#emptyState")
-            
+
             # Wait a bit for results to load
             self.page.wait_for_timeout(1000)
-            
+
             # Check for similarities
             similarity_items = self.page.locator(".similarity-item")
             count = similarity_items.count()
-            
+
             if count > 0:
                 logger.info(f"  ✅ Loaded {count} similarities from API")
                 return True
@@ -193,7 +196,7 @@ class ReviewPageTester:
         except Exception as e:
             logger.error(f"  ❌ API load failed: {e}")
             return False
-    
+
     def test_display_metadata(self):
         """Test 3: Similarity metadata is displayed."""
         logger.info("Testing: Metadata display...")
@@ -203,28 +206,28 @@ class ReviewPageTester:
             if similarity_items.count() == 0:
                 logger.warning("  ⚠️  No similarities to check metadata for")
                 return True  # Not a failure, just no data
-            
+
             # Check first item for metadata
             first_item = similarity_items.first
-            
+
             # Check for card names
             card_names = first_item.locator(".card-name")
             expect(card_names).to_have_count(2, timeout=2000)
-            
+
             # Check for similarity score
             score_value = first_item.locator(".score-value")
             expect(score_value).to_be_visible()
-            
+
             # Check for metadata grid
             metadata_grid = first_item.locator(".metadata-grid")
             expect(metadata_grid).to_be_visible()
-            
+
             logger.info("  ✅ Metadata displayed correctly")
             return True
         except Exception as e:
             logger.error(f"  ❌ Metadata display failed: {e}")
             return False
-    
+
     def test_annotation_controls(self):
         """Test 4: Annotation controls work."""
         logger.info("Testing: Annotation controls...")
@@ -233,17 +236,17 @@ class ReviewPageTester:
             if similarity_items.count() == 0:
                 logger.warning("  ⚠️  No similarities to annotate")
                 return True
-            
+
             first_item = similarity_items.first
-            
+
             # Test rating buttons
             rating_btn = first_item.locator(".rating-btn").first
             expect(rating_btn).to_be_visible()
             rating_btn.click()
-            
+
             # Wait a bit for the click to register
             self.page.wait_for_timeout(200)
-            
+
             # Check that button is selected (it may have multiple classes like "rating-btn selected")
             # Check that the class attribute contains "selected"
             class_attr = rating_btn.get_attribute("class")
@@ -252,24 +255,24 @@ class ReviewPageTester:
             else:
                 logger.error(f"  ❌ Rating button not selected, classes: {class_attr}")
                 return False
-            
+
             # Test substitute checkbox
             substitute_checkbox = first_item.locator('input[type="checkbox"]').first
             expect(substitute_checkbox).to_be_visible()
             if not substitute_checkbox.is_checked():
                 substitute_checkbox.check()
-            
+
             # Test notes input
             notes_input = first_item.locator(".notes-input")
             expect(notes_input).to_be_visible()
             notes_input.fill("Test annotation note")
-            
+
             logger.info("  ✅ Annotation controls work")
             return True
         except Exception as e:
             logger.error(f"  ❌ Annotation controls failed: {e}")
             return False
-    
+
     def test_statistics(self):
         """Test 5: Statistics are displayed and updated."""
         logger.info("Testing: Statistics display...")
@@ -279,15 +282,15 @@ class ReviewPageTester:
             if similarity_items.count() == 0:
                 logger.warning("  ⚠️  No similarities loaded, stats won't be visible")
                 return True  # Not a failure if no data
-            
+
             # Stats should be visible when there are similarities
             stats = self.page.locator("#stats")
             expect(stats).to_be_visible(timeout=2000)
-            
+
             # Check stat values
             stat_total = self.page.locator("#statTotal")
             total_text = stat_total.inner_text()
-            
+
             if total_text and total_text != "0":
                 logger.info(f"  ✅ Statistics displayed: {total_text} total")
                 return True
@@ -297,7 +300,7 @@ class ReviewPageTester:
         except Exception as e:
             logger.error(f"  ❌ Statistics display failed: {e}")
             return False
-    
+
     def test_load_from_file(self):
         """Test 6: Load similarities from file."""
         logger.info("Testing: Load similarities from file...")
@@ -311,7 +314,7 @@ class ReviewPageTester:
                     "similarity_type": "functional",
                     "is_substitute": True,
                     "reasoning": "Both are direct damage spells",
-                    "source": "test"
+                    "source": "test",
                 },
                 {
                     "card1": "Lightning Bolt",
@@ -320,39 +323,39 @@ class ReviewPageTester:
                     "similarity_type": "functional",
                     "is_substitute": False,
                     "reasoning": "Similar but weaker",
-                    "source": "test"
-                }
+                    "source": "test",
+                },
             ]
-            
-            with tempfile.NamedTemporaryFile(mode='w', suffix='.json', delete=False) as f:
+
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
                 json.dump(test_data, f)
                 temp_file = f.name
-            
+
             try:
                 # Set data source to file
                 data_source = self.page.locator("#dataSource")
                 data_source.select_option("file")
-                
+
                 # Wait for file input to appear
                 file_input_group = self.page.locator("#fileInputGroup")
                 expect(file_input_group).to_be_visible()
-                
+
                 # Upload file
                 file_input = self.page.locator("#fileInput")
                 file_input.set_input_files(temp_file)
-                
+
                 # Click load button
                 load_btn = self.page.locator("#loadBtn")
                 load_btn.click()
-                
+
                 # Wait for similarities to appear
                 similarity_list = self.page.locator("#similarityList")
                 expect(similarity_list).to_be_visible(timeout=5000)
-                
+
                 # Check that similarities are displayed
                 similarity_items = self.page.locator(".similarity-item")
                 count = similarity_items.count()
-                
+
                 if count >= 2:
                     logger.info(f"  ✅ Loaded {count} similarities from file")
                     return True
@@ -365,7 +368,7 @@ class ReviewPageTester:
         except Exception as e:
             logger.error(f"  ❌ File load failed: {e}")
             return False
-    
+
     def test_export_functionality(self):
         """Test 7: Export annotations."""
         logger.info("Testing: Export functionality...")
@@ -375,25 +378,25 @@ class ReviewPageTester:
             if similarity_items.count() == 0:
                 logger.warning("  ⚠️  No similarities to export")
                 return True
-            
+
             # Annotate first item
             first_item = similarity_items.first
             rating_btn = first_item.locator(".rating-btn").nth(3)  # Rating 3
             rating_btn.click()
-            
+
             # Check export button is enabled
             export_btn = self.page.locator("#exportBtn")
             expect(export_btn).not_to_be_disabled()
-            
+
             # Wait a bit for annotation to register
             self.page.wait_for_timeout(300)
-            
+
             # Set up download listener with timeout
             try:
                 with self.page.expect_download(timeout=5000) as download_info:
                     export_btn.click()
                 download = download_info.value
-                if download.suggested_filename and download.suggested_filename.endswith('.json'):
+                if download.suggested_filename and download.suggested_filename.endswith(".json"):
                     logger.info(f"  ✅ Export triggered: {download.suggested_filename}")
                     return True
                 else:
@@ -402,13 +405,15 @@ class ReviewPageTester:
             except Exception as e:
                 # Check if alert was shown (no annotations case)
                 # The export function shows an alert if no annotations
-                logger.warning(f"  ⚠️  Export may have shown alert (no annotations or other issue): {e}")
+                logger.warning(
+                    f"  ⚠️  Export may have shown alert (no annotations or other issue): {e}"
+                )
                 # This is acceptable - the button works, just no data to export
                 return True
         except Exception as e:
             logger.error(f"  ❌ Export failed: {e}")
             return False
-    
+
     def test_bulk_actions(self):
         """Test 8: Bulk actions are visible and functional."""
         logger.info("Testing: Bulk actions...")
@@ -416,51 +421,51 @@ class ReviewPageTester:
             # Check that bulk actions are visible after loading
             bulk_actions = self.page.locator("#bulkActions")
             expect(bulk_actions).to_be_visible()
-            
+
             # Check submit button
             submit_btn = self.page.locator("#submitAllBtn")
             expect(submit_btn).to_be_visible()
-            
+
             # Check clear button
             clear_btn = self.page.locator("#clearAllBtn")
             expect(clear_btn).to_be_visible()
-            
+
             logger.info("  ✅ Bulk actions visible")
             return True
         except Exception as e:
             logger.error(f"  ❌ Bulk actions check failed: {e}")
             return False
-    
+
     def run_all_tests(self):
         """Run all tests."""
         if not HAS_PLAYWRIGHT:
             logger.error("Playwright not available. Install with: uv add playwright")
             return False
-        
+
         # Wait for API to be ready
         if not wait_for_api(max_retries=30, timeout=TIMEOUTS["fast"]):
             logger.error("API not ready")
             return False
-        
+
         logger.info("=" * 70)
         logger.info("REVIEW PAGE E2E TESTS")
         logger.info("=" * 70)
         logger.info("")
-        
+
         with sync_playwright() as p:
             self.browser = p.chromium.launch(headless=True)
             context = self.browser.new_context()
-            
+
             # Set up API routing
             setup_playwright_routing(context)
-            
+
             self.page = context.new_page()
-            
+
             # Inject API_BASE override
             inject_api_base(self.page)
-            
+
             self.page.set_viewport_size({"width": 1920, "height": 1080})
-            
+
             # Run tests
             self.test_feature("Page loads", self.test_page_loads)
             self.test_feature("Load from API", self.test_load_from_api)
@@ -470,7 +475,7 @@ class ReviewPageTester:
             self.test_feature("Load from file", self.test_load_from_file)
             self.test_feature("Export functionality", self.test_export_functionality)
             self.test_feature("Bulk actions", self.test_bulk_actions)
-            
+
             # Take final screenshot for visual inspection
             try:
                 screenshot_path = Path("/tmp/review_page_final.png")
@@ -478,9 +483,9 @@ class ReviewPageTester:
                 logger.info(f"  📸 Final screenshot saved: {screenshot_path}")
             except Exception as e:
                 logger.warning(f"  ⚠️  Could not save screenshot: {e}")
-            
+
             self.browser.close()
-        
+
         # Print summary
         logger.info("")
         logger.info("=" * 70)
@@ -489,13 +494,13 @@ class ReviewPageTester:
         logger.info(f"Tests run: {self.results['tests_run']}")
         logger.info(f"Tests passed: {self.results['tests_passed']}")
         logger.info(f"Tests failed: {self.results['tests_failed']}")
-        
+
         if self.results["issues"]:
             logger.info("")
             logger.info("Issues:")
             for issue in self.results["issues"]:
                 logger.info(f"  - {issue}")
-        
+
         return self.results["tests_failed"] == 0
 
 
@@ -508,5 +513,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

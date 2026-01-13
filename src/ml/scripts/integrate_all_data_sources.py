@@ -17,16 +17,16 @@ from pathlib import Path
 
 from ..data.incremental_graph import IncrementalCardGraph
 from ..data.pack_database import PackDatabase
-from ..scripts.integrate_packs_into_graph import integrate_packs_into_graph
 from ..scripts.integrate_archetype_relationships import integrate_archetype_relationships
 from ..scripts.integrate_card_attributes_relationships import (
     integrate_attribute_relationships,
     load_card_attributes,
 )
-from ..scripts.integrate_tournament_performance import integrate_tournament_performance
 from ..scripts.integrate_format_legality import integrate_format_legality
+from ..scripts.integrate_tournament_performance import integrate_tournament_performance
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -40,10 +40,14 @@ def integrate_all_data_sources(
     include_attributes: bool = True,
     include_tournament: bool = True,
     include_format: bool = True,
+    include_sideboard: bool = True,
+    include_ban_list: bool = True,
+    include_meta_share: bool = True,
+    include_win_rate: bool = True,
 ) -> dict[str, any]:
     """
     Integrate all data sources into the graph.
-    
+
     Args:
         graph: IncrementalCardGraph instance
         pack_db: PackDatabase instance (required if include_packs=True)
@@ -53,16 +57,20 @@ def integrate_all_data_sources(
         include_attributes: Include card attribute relationships
         include_tournament: Include tournament performance
         include_format: Include format legality
-    
+        include_sideboard: Include sideboard relationships
+        include_ban_list: Include ban list relationships
+        include_meta_share: Include meta share relationships
+        include_win_rate: Include win rate relationships
+
     Returns:
         Combined statistics dict
     """
     logger.info("=" * 70)
     logger.info("Integrating All Data Sources into Graph")
     logger.info("=" * 70)
-    
+
     all_stats = {}
-    
+
     # 1. Pack co-occurrence
     if include_packs:
         if not pack_db:
@@ -71,15 +79,15 @@ def integrate_all_data_sources(
             logger.info("\n" + "=" * 70)
             logger.info("1. Pack Co-occurrence")
             logger.info("=" * 70)
+            from ..scripts.integrate_packs_into_graph import integrate_packs_into_graph
+
             pack_stats = integrate_packs_into_graph(
                 graph,
                 pack_db,
                 game=game,
-                add_pack_edges=True,
-                add_pack_metadata=True,
             )
             all_stats["packs"] = pack_stats
-    
+
     # 2. Archetype relationships
     if include_archetypes:
         logger.info("\n" + "=" * 70)
@@ -91,7 +99,7 @@ def integrate_all_data_sources(
             archetype_edge_weight=2,
         )
         all_stats["archetypes"] = archetype_stats
-    
+
     # 3. Card attribute relationships
     if include_attributes:
         logger.info("\n" + "=" * 70)
@@ -108,7 +116,7 @@ def integrate_all_data_sources(
             all_stats["attributes"] = attribute_stats
         else:
             logger.warning("No card attributes loaded, skipping attribute integration")
-    
+
     # 4. Tournament performance
     if include_tournament:
         logger.info("\n" + "=" * 70)
@@ -120,7 +128,7 @@ def integrate_all_data_sources(
             placement_weight_multiplier=1.5,
         )
         all_stats["tournament"] = tournament_stats
-    
+
     # 5. Format legality
     if include_format:
         logger.info("\n" + "=" * 70)
@@ -132,27 +140,102 @@ def integrate_all_data_sources(
             format_edge_weight=1,
         )
         all_stats["format"] = format_stats
-    
+
+    # 6. Sideboard Relationships
+    if include_sideboard:
+        logger.info("\n" + "=" * 70)
+        logger.info("6. Sideboard Relationships")
+        logger.info("=" * 70)
+        from ..scripts.integrate_sideboard_relationships import (
+            integrate_sideboard_relationships,
+        )
+
+        sideboard_stats = integrate_sideboard_relationships(
+            graph,
+            sideboard_data_path=None,  # Use default path
+            game=game,
+        )
+        all_stats["sideboard"] = sideboard_stats
+
+    # 7. Ban List Relationships
+    if include_ban_list:
+        logger.info("\n" + "=" * 70)
+        logger.info("7. Ban List Relationships")
+        logger.info("=" * 70)
+        from ..scripts.integrate_ban_list_relationships import (
+            integrate_ban_list_relationships,
+        )
+
+        ban_list_stats = integrate_ban_list_relationships(
+            graph,
+            game=game,
+        )
+        all_stats["ban_list"] = ban_list_stats
+
+    # 8. Meta Share Relationships
+    if include_meta_share:
+        logger.info("\n" + "=" * 70)
+        logger.info("8. Meta Share Relationships")
+        logger.info("=" * 70)
+        from ..scripts.integrate_meta_share_relationships import (
+            integrate_meta_share_relationships,
+        )
+
+        meta_share_stats = integrate_meta_share_relationships(
+            graph,
+            decks_path=None,  # Use default path
+            game=game,
+        )
+        all_stats["meta_share"] = meta_share_stats
+
+    # 9. Win Rate Relationships
+    if include_win_rate:
+        logger.info("\n" + "=" * 70)
+        logger.info("9. Win Rate Relationships")
+        logger.info("=" * 70)
+        from ..scripts.integrate_win_rate_relationships import (
+            integrate_win_rate_relationships,
+        )
+
+        win_rate_stats = integrate_win_rate_relationships(
+            graph,
+            decks_path=None,  # Use default path
+            game=game,
+        )
+        all_stats["win_rate"] = win_rate_stats
+
     logger.info("\n" + "=" * 70)
     logger.info("Integration Complete")
     logger.info("=" * 70)
-    
+
     # Summary
     total_edges_created = sum(
-        s.get("pack_edges_added", 0) + s.get("archetype_edges_created", 0) +
-        s.get("total_edges_created", 0) + s.get("format_edges_created", 0)
+        s.get("pack_edges_added", 0)
+        + s.get("archetype_edges_created", 0)
+        + s.get("total_edges_created", 0)
+        + s.get("format_edges_created", 0)
+        + s.get("sideboard_edges_created", 0)
+        + s.get("ban_list_edges_created", 0)
+        + s.get("meta_share_edges_created", 0)
+        + s.get("win_rate_edges_created", 0)
         for s in all_stats.values()
     )
     total_edges_updated = sum(
-        s.get("pack_edges_updated", 0) + s.get("archetype_edges_updated", 0) +
-        s.get("total_edges_updated", 0) + s.get("format_edges_updated", 0) +
-        s.get("performance_edges_updated", 0)
+        s.get("pack_edges_updated", 0)
+        + s.get("archetype_edges_updated", 0)
+        + s.get("total_edges_updated", 0)
+        + s.get("format_edges_updated", 0)
+        + s.get("performance_edges_updated", 0)
+        + s.get("sideboard_edges_updated", 0)
+        + s.get("ban_list_edges_updated", 0)
+        + s.get("meta_share_edges_updated", 0)
+        + s.get("win_rate_edges_updated", 0)
         for s in all_stats.values()
     )
-    
+
     logger.info(f"Total edges created: {total_edges_created:,}")
     logger.info(f"Total edges updated: {total_edges_updated:,}")
-    
+
     return all_stats
 
 
@@ -201,24 +284,44 @@ def main() -> int:
         action="store_true",
         help="Skip format integration",
     )
-    
+    parser.add_argument(
+        "--no-sideboard",
+        action="store_true",
+        help="Skip sideboard integration",
+    )
+    parser.add_argument(
+        "--no-ban-list",
+        action="store_true",
+        help="Skip ban list integration",
+    )
+    parser.add_argument(
+        "--no-meta-share",
+        action="store_true",
+        help="Skip meta share integration",
+    )
+    parser.add_argument(
+        "--no-win-rate",
+        action="store_true",
+        help="Skip win rate integration",
+    )
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 70)
     logger.info("Integrate All Data Sources")
     logger.info("=" * 70)
-    
+
     # Load graph
     graph = IncrementalCardGraph(
         graph_path=args.graph_db,
         use_sqlite=True,
     )
-    
+
     # Load pack database if needed
     pack_db = None
     if not args.no_packs:
         pack_db = PackDatabase(args.pack_db)
-    
+
     # Integrate all sources
     results = integrate_all_data_sources(
         graph,
@@ -229,19 +332,20 @@ def main() -> int:
         include_attributes=not args.no_attributes,
         include_tournament=not args.no_tournament,
         include_format=not args.no_format,
+        include_sideboard=not args.no_sideboard,
     )
-    
+
     # Save graph
     logger.info("\nSaving graph...")
     graph.save_sqlite(args.graph_db)
-    
-    logger.info(f"\n✓ All integrations complete")
+
+    logger.info("\n✓ All integrations complete")
     logger.info(f"✓ Results: {results}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

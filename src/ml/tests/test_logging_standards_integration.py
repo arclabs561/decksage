@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 from io import StringIO
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -200,5 +199,3 @@ class TestLoggingPatterns:
         output = log_capture.getvalue()
         assert "Test message" in output
         # Extra kwargs should be passed (exact format depends on formatter)
-
-

@@ -50,7 +50,7 @@ All accounts must use AWS billing. Your account is already configured for this.
 ## Recommended Approach
 
 1. **For Testing**: Use Developer Sandbox (free, $10k virtual balance)
-2. **For Production**: 
+2. **For Production**:
    - ✅ AWS billing is already enabled
    - ✅ Ready to submit HITs immediately
    - Charges will appear on AWS bill automatically
@@ -76,4 +76,3 @@ You can test the complete integration using:
 - [MTurk Developer Guide](https://docs.aws.amazon.com/AWSMechTurk/latest/AWSMechanicalTurkRequester/SetUpMturk.html)
 - [MTurk Support](mailto:mturk-support@amazon.com)
 - [AWS Billing Console](https://console.aws.amazon.com/billing/)
-

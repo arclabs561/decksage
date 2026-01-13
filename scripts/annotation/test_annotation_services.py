@@ -15,12 +15,12 @@ and analyzes quality vs price.
 """
 
 import argparse
-import asyncio
 import json
 import os
 import sys
 from datetime import datetime
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -39,13 +39,6 @@ if env_file.exists():
 from src.ml.annotation.human_annotation_services import (
     AnnotationTask,
     get_annotation_service,
-    MTurkService,
-    ScaleAIService,
-    CustomAnnotationService,
-)
-from src.ml.annotation.human_annotation_queue import (
-    AnnotationPriority,
-    HumanAnnotationQueue,
 )
 
 
@@ -64,9 +57,9 @@ def test_service(
     Returns:
         Test results dict
     """
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Testing {service_name.upper()} Service")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     results = {
         "service": service_name,
@@ -81,7 +74,7 @@ def test_service(
         # Get service
         service = get_annotation_service(service_name)
         results["setup_ok"] = True
-        print(f"✓ Service initialized")
+        print("✓ Service initialized")
 
         # Estimate cost
         estimated_cost = service.estimate_cost(num_tasks)
@@ -91,7 +84,7 @@ def test_service(
         print(f"  Estimated total ({num_tasks} tasks): ${estimated_cost:.2f}")
 
         if dry_run:
-            print(f"\n  [DRY RUN - Not actually submitting]")
+            print("\n  [DRY RUN - Not actually submitting]")
             results["available"] = True
             return results
 
@@ -131,12 +124,14 @@ Provide:
                 )
 
                 external_id = service.submit_task(task)
-                submitted.append({
-                    "task_id": task.task_id,
-                    "external_id": external_id,
-                    "card1": card1,
-                    "card2": card2,
-                })
+                submitted.append(
+                    {
+                        "task_id": task.task_id,
+                        "external_id": external_id,
+                        "card1": card1,
+                        "card2": card2,
+                    }
+                )
                 print(f"  ✓ Submitted task {i}: {card1} vs {card2} (ID: {external_id})")
 
             except Exception as e:
@@ -148,12 +143,13 @@ Provide:
 
         if submitted:
             print(f"\n  Submitted {len(submitted)}/{num_tasks} tasks successfully")
-            print(f"  Note: Results will be available later (check with retrieve command)")
+            print("  Note: Results will be available later (check with retrieve command)")
 
     except Exception as e:
         print(f"  ✗ Service test failed: {e}")
         results["error"] = str(e)
         import traceback
+
         traceback.print_exc()
 
     return results
@@ -172,9 +168,9 @@ def compare_services(
     Returns:
         Comparison results
     """
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Annotation Services Comparison")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
 
     services = ["mturk", "scale", "custom"]
     results = {}
@@ -188,29 +184,39 @@ def compare_services(
             results[service_name] = {"error": str(e), "available": False}
 
     # Comparison summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Comparison Summary")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
-    print(f"{'Service':<15} {'Available':<12} {'Cost/Task':<12} {'Total (100)':<15} {'Quality':<10}")
+    print(
+        f"{'Service':<15} {'Available':<12} {'Cost/Task':<12} {'Total (100)':<15} {'Quality':<10}"
+    )
     print("-" * 70)
 
     for service_name, result in results.items():
         available = "✓ Yes" if result.get("available") else "✗ No"
         cost_per = result.get("cost_per_task", 0.0)
         total_100 = cost_per * 100
-        quality = "High" if service_name == "scale" else "Medium" if service_name == "mturk" else "Variable"
-        
+        quality = (
+            "High"
+            if service_name == "scale"
+            else "Medium"
+            if service_name == "mturk"
+            else "Variable"
+        )
+
         error = result.get("error")
         if error:
-            available = f"✗ Error"
-        
-        print(f"{service_name:<15} {available:<12} ${cost_per:<11.2f} ${total_100:<14.2f} {quality:<10}")
+            available = "✗ Error"
+
+        print(
+            f"{service_name:<15} {available:<12} ${cost_per:<11.2f} ${total_100:<14.2f} {quality:<10}"
+        )
 
     # Recommendations
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Recommendations")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     if results.get("mturk", {}).get("available"):
         print("✓ MTurk: Best for large-scale, cost-effective annotation")
@@ -230,10 +236,10 @@ def compare_services(
         print("  - Quality depends on annotators")
         print("  - Best for: Expert review, validation")
 
-    print(f"\n  Hybrid Approach:")
-    print(f"    - Use MTurk for large-scale training data")
-    print(f"    - Use Scale AI for critical evaluation data")
-    print(f"    - Use Custom for expert validation")
+    print("\n  Hybrid Approach:")
+    print("    - Use MTurk for large-scale training data")
+    print("    - Use Scale AI for critical evaluation data")
+    print("    - Use Custom for expert validation")
 
     # Save results
     output_file = project_root / "annotations" / "service_comparison.json"
@@ -290,4 +296,3 @@ def main():
 if __name__ == "__main__":
     exit_code = main()
     sys.exit(exit_code)
-

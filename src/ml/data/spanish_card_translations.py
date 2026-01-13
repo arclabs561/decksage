@@ -5,6 +5,7 @@ Maps Spanish card names to English names for proper game detection.
 
 from __future__ import annotations
 
+
 # Common Spanish Magic card name translations
 # Based on official Spanish printings
 SPANISH_TO_ENGLISH: dict[str, str] = {
@@ -102,26 +103,26 @@ SPANISH_TO_ENGLISH: dict[str, str] = {
 def translate_spanish_name(spanish_name: str) -> str | None:
     """
     Translate Spanish card name to English.
-    
+
     Args:
         spanish_name: Spanish card name (case-insensitive)
-    
+
     Returns:
         English name if translation found, original name otherwise
     """
     if not spanish_name:
         return None
-    
+
     name_lower = spanish_name.lower().strip()
     translated = SPANISH_TO_ENGLISH.get(name_lower)
-    
+
     # If no direct translation, try partial matches (for multi-word names)
     if not translated:
         # Try matching first word
         first_word = name_lower.split()[0] if name_lower.split() else ""
         if first_word in SPANISH_TO_ENGLISH:
             translated = SPANISH_TO_ENGLISH[first_word]
-    
+
     return translated if translated else None
 
 
@@ -130,31 +131,31 @@ def is_spanish_name(card_name: str) -> bool:
     # Simple heuristic: contains Spanish-specific characters or common Spanish words
     spanish_chars = "áéíóúñü"
     spanish_words = ["de", "el", "la", "los", "las", "del"]
-    
+
     name_lower = card_name.lower()
-    
+
     # Check for Spanish characters
     if any(char in name_lower for char in spanish_chars):
         return True
-    
+
     # Check for common Spanish words (but not too common English words)
     words = name_lower.split()
     if any(word in spanish_words and len(words) > 1 for word in words):
         return True
-    
+
     return False
 
 
 def normalize_split_card_name(name: str) -> str:
     """
     Normalize split card name spacing.
-    
+
     Handles variations like:
     - "Fire // Ice"
     - "Fire//Ice"
     - "Fire //Ice"
     - "Fire// Ice"
-    
+
     Returns normalized version with consistent spacing.
     """
     if "//" in name:
@@ -162,5 +163,3 @@ def normalize_split_card_name(name: str) -> str:
         parts = [p.strip() for p in name.split("//")]
         return " // ".join(parts)
     return name
-
-

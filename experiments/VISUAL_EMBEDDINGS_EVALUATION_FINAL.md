@@ -1,10 +1,10 @@
 # Visual Embeddings Evaluation - Final Results
 
-**Date:** January 6, 2026  
-**Evaluation Script:** `scripts/evaluation/run_visual_evaluation_simple.py`  
-**Test Set:** `experiments/test_set_unified_magic.json` (940 queries, sampled 100)  
-**Embeddings:** `data/embeddings/multitask_enhanced_vv2024-W01.wv` (26,958 cards)  
-**Graph:** `data/processed/pairs_all_games_combined.csv` (28,726 cards)  
+**Date:** January 6, 2026
+**Evaluation Script:** `scripts/evaluation/run_visual_evaluation_simple.py`
+**Test Set:** `experiments/test_set_unified_magic.json` (940 queries, sampled 100)
+**Embeddings:** `data/embeddings/multitask_enhanced_vv2024-W01.wv` (26,958 cards)
+**Graph:** `data/processed/pairs_all_games_combined.csv` (28,726 cards)
 **Image URLs:** 937 cards with image URLs (from Scryfall API)
 
 ## Data Collection
@@ -88,4 +88,3 @@ Despite having 937 image URLs, visual embeddings show **no improvement**. Possib
 - **Fusion Weights:**
   - With visual: embed=0.20, jaccard=0.15, functional=0.10, text_embed=0.25, visual_embed=0.20, gnn=0.10
   - Without visual: embed=0.25, jaccard=0.20, functional=0.15, text_embed=0.30, visual_embed=0.0, gnn=0.10
-

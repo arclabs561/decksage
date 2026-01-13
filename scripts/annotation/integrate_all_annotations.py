@@ -20,12 +20,12 @@ import argparse
 import json
 import os
 import sys
-from collections import Counter, defaultdict
-from datetime import datetime
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
 import yaml
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -45,21 +45,23 @@ try:
 except ImportError:
     # Fallback: try direct import
     import importlib.util
+
     spec = importlib.util.spec_from_file_location(
-        'annotation_utils',
-        project_root / 'src' / 'ml' / 'utils' / 'annotation_utils.py'
+        "annotation_utils", project_root / "src" / "ml" / "utils" / "annotation_utils.py"
     )
     if spec and spec.loader:
         annotation_utils = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(annotation_utils)
-        convert_relevance_to_similarity_score = annotation_utils.convert_relevance_to_similarity_score
+        convert_relevance_to_similarity_score = (
+            annotation_utils.convert_relevance_to_similarity_score
+        )
         load_hand_annotations = annotation_utils.load_hand_annotations
     else:
         # Final fallback: define minimal version
         def convert_relevance_to_similarity_score(relevance: int, scale: str = "0-4") -> float:
             mapping = {4: 0.95, 3: 0.75, 2: 0.55, 1: 0.35, 0: 0.1}
             return mapping.get(relevance, 0.0)
-        
+
         def load_hand_annotations(path):
             return []
 
@@ -238,7 +240,8 @@ def load_multi_judge_annotations(annotations_dir: Path) -> list[dict]:
                         card = eval_item.get("card", "")
                         relevance = eval_item.get("relevance", 0)
                         similarity_score = convert_relevance_to_similarity_score(
-                            int(relevance) if isinstance(relevance, (int, float)) else 0, scale="0-4"
+                            int(relevance) if isinstance(relevance, (int, float)) else 0,
+                            scale="0-4",
                         )
 
                         annotations.append(
@@ -316,7 +319,7 @@ def deduplicate_annotations(
     fuzzy_threshold: float = 0.85,
 ) -> list[dict]:
     """Remove duplicate annotations (same card1, card2 pair).
-    
+
     Args:
         annotations: List of annotation dictionaries
         use_fuzzy: If True, use fuzzy matching for duplicate detection
@@ -324,10 +327,11 @@ def deduplicate_annotations(
     """
     seen = {}
     deduplicated = []
-    
+
     # Try to use annotation_utils deduplication if available
     try:
         from ml.utils.annotation_utils import deduplicate_annotations as utils_dedup
+
         return utils_dedup(annotations, use_fuzzy=use_fuzzy, fuzzy_threshold=fuzzy_threshold)
     except (ImportError, AttributeError):
         # Fallback to simple deduplication
@@ -443,13 +447,15 @@ def integrate_all_annotations(
         for warning in quality["warnings"][:5]:
             print(f"    - {warning}")
 
-    print(f"\nSource distribution:")
+    print("\nSource distribution:")
     for source, count in quality["source_distribution"].items():
         print(f"  {source}: {count}")
 
     # Filter by quality if requested
     if quality["quality_score"] < min_quality_score:
-        print(f"\n⚠ Quality score {quality['quality_score']:.2f} below threshold {min_quality_score}")
+        print(
+            f"\n⚠ Quality score {quality['quality_score']:.2f} below threshold {min_quality_score}"
+        )
         print("  Consider fixing issues before using annotations")
 
     # Save integrated annotations
@@ -463,7 +469,7 @@ def integrate_all_annotations(
                     f.write(json.dumps(ann, ensure_ascii=False) + "\n")
             temp_path.replace(output_path)
             print(f"\n✓ Saved {len(all_annotations)} annotations to {output_path}")
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 temp_path.unlink()
             raise
@@ -477,9 +483,7 @@ def integrate_all_annotations(
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Integrate annotations from all sources"
-    )
+    parser = argparse.ArgumentParser(description="Integrate annotations from all sources")
     parser.add_argument(
         "--annotations-dir",
         type=Path,
@@ -512,4 +516,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

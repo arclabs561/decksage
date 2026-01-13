@@ -21,11 +21,10 @@ Usage:
 """
 
 import argparse
-import json
 import sys
 import time
 from pathlib import Path
-from typing import Any
+
 
 try:
     import requests
@@ -39,11 +38,12 @@ sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
 
+
 setup_project_paths()
 
 # Import shared utilities and constants
-from test_utils import wait_for_api, logger, API_BASE
 from test_constants import TEST_CARDS, TIMEOUTS
+from test_utils import API_BASE, logger
 
 
 class E2ETestSuite:
@@ -76,7 +76,7 @@ class E2ETestSuite:
                 return False
         except Exception as e:
             self.results["tests_failed"] += 1
-            self.results["errors"].append(f"{name}: {str(e)}")
+            self.results["errors"].append(f"{name}: {e!s}")
             logger.error(f"❌ {name} (error: {e})")
             return False
 
@@ -109,7 +109,9 @@ class E2ETestSuite:
             logger.error(f"   Error: {e}")
             return False
 
-    def test_similarity_search(self, card: str, method: str = "embedding", k: int = 5, timeout: int = 30) -> bool:
+    def test_similarity_search(
+        self, card: str, method: str = "embedding", k: int = 5, timeout: int = 30
+    ) -> bool:
         """Test similarity search."""
         try:
             # Use POST endpoint for method selection
@@ -131,7 +133,9 @@ class E2ETestSuite:
 
             results = data.get("results", [])
             if len(results) < min(k, 3):  # Allow fewer results for fusion
-                logger.warning(f"   Warning: Only {len(results)} results (expected at least {min(k, 3)})")
+                logger.warning(
+                    f"   Warning: Only {len(results)} results (expected at least {min(k, 3)})"
+                )
                 if len(results) == 0:
                     return False
 
@@ -160,13 +164,17 @@ class E2ETestSuite:
 
             # Test invalid k value (too low)
             url = f"{self.base_url}/v1/similar"
-            resp = requests.post(url, json={"query": TEST_CARDS["common"], "top_k": 0}, timeout=TIMEOUTS["normal"])
+            resp = requests.post(
+                url, json={"query": TEST_CARDS["common"], "top_k": 0}, timeout=TIMEOUTS["normal"]
+            )
             if resp.status_code != 422:
                 logger.info(f"   Expected 422 for k=0, got {resp.status_code}")
                 return False
 
             # Test invalid k value (too high)
-            resp = requests.post(url, json={"query": TEST_CARDS["common"], "top_k": 200}, timeout=TIMEOUTS["normal"])
+            resp = requests.post(
+                url, json={"query": TEST_CARDS["common"], "top_k": 200}, timeout=TIMEOUTS["normal"]
+            )
             if resp.status_code != 422:
                 logger.info(f"   Expected 422 for k=200, got {resp.status_code}")
                 return False
@@ -177,7 +185,9 @@ class E2ETestSuite:
             logger.error(f"   Error: {e}")
             return False
 
-    def test_feedback_submission(self, query_card: str, suggested_card: str, rating: int, is_substitute: bool) -> bool:
+    def test_feedback_submission(
+        self, query_card: str, suggested_card: str, rating: int, is_substitute: bool
+    ) -> bool:
         """Test feedback submission."""
         try:
             url = f"{self.base_url}/v1/feedback"
@@ -277,12 +287,12 @@ class E2ETestSuite:
 
     def run_all_tests(self):
         """Run all e2e tests."""
-        logger.info(f"\n{'='*60}")
-        logger.info(f"DeckSage E2E Test Suite")
+        logger.info(f"\n{'=' * 60}")
+        logger.info("DeckSage E2E Test Suite")
         logger.info(f"Base URL: {self.base_url}")
         logger.info(f"Session ID: {self.session_id}")
         logger.info(f"Author: {self.author}")
-        logger.info(f"{'='*60}\n")
+        logger.info(f"{'=' * 60}\n")
 
         # Health checks
         logger.info("1. Health Checks")
@@ -291,10 +301,26 @@ class E2ETestSuite:
 
         # Similarity search tests
         logger.info("2. Similarity Search")
-        self.test("Embedding search - Lightning Bolt", lambda: self.test_similarity_search(TEST_CARDS["common"], "embedding"))
-        self.test("Jaccard search - Sol Ring", lambda: self.test_similarity_search(TEST_CARDS["artifact"], "jaccard"))
-        self.test("Fusion search - Serra Angel (60s timeout)", lambda: self.test_similarity_search(TEST_CARDS["creature"], "fusion", timeout=TIMEOUTS["extreme"]))
-        self.test("Fusion search - Counterspell (60s timeout)", lambda: self.test_similarity_search(TEST_CARDS["instant"], "fusion", timeout=TIMEOUTS["extreme"]))
+        self.test(
+            "Embedding search - Lightning Bolt",
+            lambda: self.test_similarity_search(TEST_CARDS["common"], "embedding"),
+        )
+        self.test(
+            "Jaccard search - Sol Ring",
+            lambda: self.test_similarity_search(TEST_CARDS["artifact"], "jaccard"),
+        )
+        self.test(
+            "Fusion search - Serra Angel (60s timeout)",
+            lambda: self.test_similarity_search(
+                TEST_CARDS["creature"], "fusion", timeout=TIMEOUTS["extreme"]
+            ),
+        )
+        self.test(
+            "Fusion search - Counterspell (60s timeout)",
+            lambda: self.test_similarity_search(
+                TEST_CARDS["instant"], "fusion", timeout=TIMEOUTS["extreme"]
+            ),
+        )
         logger.info()
 
         # Error handling
@@ -325,15 +351,15 @@ class E2ETestSuite:
         logger.info()
 
         # Summary
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
         logger.info("Test Summary")
-        logger.info(f"{'='*60}")
+        logger.info(f"{'=' * 60}")
         logger.info(f"Tests run: {self.results['tests_run']}")
         logger.info(f"Tests passed: {self.results['tests_passed']}")
         logger.error(f"Tests failed: {self.results['tests_failed']}")
         logger.info(f"Feedback submitted: {self.results['feedback_submitted']}")
         if self.results["errors"]:
-            logger.error(f"\nErrors:")
+            logger.error("\nErrors:")
             for error in self.results["errors"]:
                 logger.error(f"  - {error}")
 

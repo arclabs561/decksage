@@ -201,4 +201,3 @@ print(f"Embedding shape: {embedding.shape}")
 - Ensure API dependencies installed
 - Check API is running: `curl http://localhost:8000/live`
 - Verify embeddings loaded: `curl http://localhost:8000/ready`
-

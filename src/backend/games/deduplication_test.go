@@ -197,4 +197,3 @@ func TestGetCanonicalSource(t *testing.T) {
 		t.Errorf("Canonical source = %s, want scryfall", canonSource)
 	}
 }
-

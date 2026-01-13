@@ -12,26 +12,16 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from ..utils.logging_config import get_logger
+from ..utils.paths import PATHS
 
-try:
-    from ..utils.logging_config import get_logger
-    from ..utils.paths import PATHS
 
-    logger = get_logger(__name__)
-except ImportError:
-    import logging
-
-    logger = logging.getLogger(__name__)
-    PATHS = None
+logger = get_logger(__name__)
 
 
 def get_query_history_path() -> Path:
     """Get path to query history storage file."""
-    if PATHS:
-        history_dir = PATHS.DATA_DIR / "analytics"
-    else:
-        history_dir = Path("data/analytics")
-
+    history_dir = PATHS.data / "analytics"
     history_dir.mkdir(parents=True, exist_ok=True)
     return history_dir / "query_history.jsonl"
 

@@ -17,6 +17,7 @@ from pathlib import Path
 
 import pytest
 
+
 try:
     import yaml
 
@@ -265,5 +266,3 @@ def test_annotation_workflow_end_to_end(sample_hand_annotation_yaml):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-
-

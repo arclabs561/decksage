@@ -6,7 +6,7 @@
 - **LLM Annotations (JSONL)**: 2 files
   - `riftbound_llm_annotations.jsonl`
   - `yugioh_llm_annotations.jsonl`
-  
+
 - **Hand Annotations (YAML)**: 9 files
   - `hand_batch_magic_enhanced.yaml`
   - `hand_batch_pokemon.yaml` (+ enhanced, retrofitted variants)

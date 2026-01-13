@@ -10,12 +10,14 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
     from ml.utils.path_setup import setup_project_paths
+
     setup_project_paths()
 except ImportError:
     src_path = project_root / "src"
@@ -23,6 +25,7 @@ except ImportError:
         sys.path.insert(0, str(src_path))
 
 import pandas as pd
+
 from ml.similarity.visual_embeddings import CardVisualEmbedder
 from ml.utils.visual_coverage import compute_visual_coverage
 
@@ -138,7 +141,7 @@ def print_report(stats: dict[str, Any]) -> None:
     # Missing images
     missing = stats.get("missing_images_sample", [])
     total_missing = stats.get("total_missing", 0)
-    print(f"\nMissing Images:")
+    print("\nMissing Images:")
     print(f"  Total missing: {total_missing}")
     if missing:
         print(f"  Sample (first 10): {', '.join(missing[:10])}")
@@ -200,4 +203,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

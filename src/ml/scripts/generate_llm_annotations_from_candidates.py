@@ -14,9 +14,9 @@ import json
 from pathlib import Path
 from typing import Any
 
-from ..annotation.llm_annotator import LLMAnnotator
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -29,7 +29,7 @@ async def generate_annotations_from_candidates(
 ) -> int:
     """Generate LLM annotations from candidate file."""
     logger.info(f"Loading candidates from {candidates_file}...")
-    
+
     # Load candidates
     candidates = []
     with open(candidates_file) as f:
@@ -42,17 +42,18 @@ async def generate_annotations_from_candidates(
             except json.JSONDecodeError as e:
                 logger.warning(f"Skipping invalid JSON: {e}")
                 continue
-    
+
     if limit:
         candidates = candidates[:limit]
-    
+
     logger.info(f"Loaded {len(candidates)} candidates")
-    
+
     # Check for LLM annotator availability
     try:
-        from ..annotation.llm_annotator import LLMAnnotator
         import os
-        
+
+        from ..annotation.llm_annotator import LLMAnnotator
+
         if not os.getenv("OPENROUTER_API_KEY"):
             logger.warning("OPENROUTER_API_KEY not set - creating placeholder annotations")
             use_llm = False
@@ -61,29 +62,31 @@ async def generate_annotations_from_candidates(
             use_llm = True
     except ImportError as e:
         logger.warning(f"LLM annotator not available: {e}")
-        logger.warning("Creating placeholder annotations (install pydantic-ai for real LLM annotations)")
+        logger.warning(
+            "Creating placeholder annotations (install pydantic-ai for real LLM annotations)"
+        )
         use_llm = False
     except Exception as e:
         logger.warning(f"Could not initialize LLM annotator: {e}")
         logger.warning("Creating placeholder annotations")
         use_llm = False
-    
+
     # Generate annotations
     logger.info(f"Generating annotations for {len(candidates)} candidates...")
-    
+
     annotations = []
     for i, candidate in enumerate(candidates, 1):
         card1 = candidate.get("card1")
         card2 = candidate.get("card2")
         game = candidate.get("game", "magic")
         cooccurrence = candidate.get("cooccurrence_count", 0)
-        
+
         if not card1 or not card2:
             logger.warning(f"Skipping candidate {i}: missing card1 or card2")
             continue
-        
+
         logger.info(f"  [{i}/{len(candidates)}] Processing: {card1} <-> {card2}")
-        
+
         try:
             if use_llm:
                 # Use LLM annotator to generate real annotation
@@ -97,24 +100,24 @@ async def generate_annotations_from_candidates(
                 annotation = await _create_enriched_annotation(
                     card1, card2, game, cooccurrence, graph_db
                 )
-            
+
             annotations.append(annotation)
-            
+
         except Exception as e:
             logger.warning(f"Error processing {card1} <-> {card2}: {e}")
             continue
-    
+
     # Save annotations
     output_file.parent.mkdir(parents=True, exist_ok=True)
     temp_file = output_file.with_suffix(output_file.suffix + ".tmp")
-    
+
     with open(temp_file, "w") as f:
         for ann in annotations:
             f.write(json.dumps(ann, ensure_ascii=False) + "\n")
-    
+
     # Atomic write
     temp_file.replace(output_file)
-    
+
     logger.info(f"✓ Generated {len(annotations)} annotations: {output_file}")
     return len(annotations)
 
@@ -128,7 +131,7 @@ async def _create_enriched_annotation(
 ) -> dict[str, Any]:
     """Create an enriched annotation (placeholder or LLM-generated)."""
     from datetime import datetime
-    
+
     # Base annotation structure
     annotation = {
         "card1": card1,
@@ -138,14 +141,14 @@ async def _create_enriched_annotation(
         "timestamp": datetime.now().isoformat(),
         "cooccurrence_count": cooccurrence,
     }
-    
+
     # Try to enrich with graph features if available
     if graph_db and graph_db.exists():
         try:
             from ..annotation.lazy_graph_enricher import LazyGraphEnricher
-            
+
             enricher = LazyGraphEnricher(graph_db, game=game)
-            
+
             # Get graph features
             edge = enricher.get_edge(card1, card2)
             if edge:
@@ -153,11 +156,11 @@ async def _create_enriched_annotation(
                     "weight": edge.get("weight", 0),
                     "jaccard_similarity": enricher.compute_jaccard(card1, card2),
                 }
-                
+
                 # Estimate similarity score from graph features
                 jaccard = annotation["graph_features"]["jaccard_similarity"]
                 weight = edge.get("weight", 0)
-                
+
                 # Heuristic: high jaccard + high weight = high similarity
                 if jaccard > 0.3 and weight > 20:
                     annotation["similarity_score"] = min(0.9, 0.5 + jaccard * 0.4)
@@ -171,7 +174,7 @@ async def _create_enriched_annotation(
                     annotation["similarity_score"] = 0.2
                     annotation["similarity_type"] = "unrelated"
                     annotation["is_substitute"] = False
-                
+
                 annotation["reasoning"] = (
                     f"Co-occur in {weight} decks. "
                     f"Jaccard similarity: {jaccard:.3f}. "
@@ -182,7 +185,9 @@ async def _create_enriched_annotation(
                 annotation["similarity_score"] = 0.1
                 annotation["similarity_type"] = "unrelated"
                 annotation["is_substitute"] = False
-                annotation["reasoning"] = f"Low co-occurrence ({cooccurrence} decks). Cards rarely appear together."
+                annotation["reasoning"] = (
+                    f"Low co-occurrence ({cooccurrence} decks). Cards rarely appear together."
+                )
         except Exception as e:
             logger.debug(f"Could not enrich with graph: {e}")
             # Fallback to basic annotation
@@ -204,33 +209,31 @@ async def _create_enriched_annotation(
             annotation["similarity_score"] = 0.3
             annotation["similarity_type"] = "unrelated"
             annotation["is_substitute"] = False
-        
+
         annotation["reasoning"] = f"Co-occurrence: {cooccurrence} decks"
-    
+
     annotation["context_dependent"] = annotation.get("similarity_type") in ["synergy", "archetype"]
-    
+
     return annotation
-    
+
     # Save annotations
     output_file.parent.mkdir(parents=True, exist_ok=True)
     temp_file = output_file.with_suffix(output_file.suffix + ".tmp")
-    
+
     with open(temp_file, "w") as f:
         for ann in annotations:
             f.write(json.dumps(ann, ensure_ascii=False) + "\n")
-    
+
     # Atomic write
     temp_file.replace(output_file)
-    
+
     logger.info(f"✓ Generated {len(annotations)} annotations: {output_file}")
     return len(annotations)
 
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Generate LLM annotations from candidate file"
-    )
+    parser = argparse.ArgumentParser(description="Generate LLM annotations from candidate file")
     parser.add_argument(
         "--candidates",
         type=Path,
@@ -255,17 +258,17 @@ def main() -> int:
         default=PATHS.incremental_graph_db,
         help="Path to graph database (for enrichment)",
     )
-    
+
     args = parser.parse_args()
-    
+
     if not args.candidates.exists():
         logger.error(f"Candidates file not found: {args.candidates}")
         return 1
-    
+
     logger.info("=" * 70)
     logger.info("Generate LLM Annotations from Candidates")
     logger.info("=" * 70)
-    
+
     # Run async function
     count = asyncio.run(
         generate_annotations_from_candidates(
@@ -275,21 +278,21 @@ def main() -> int:
             limit=args.limit,
         )
     )
-    
+
     if count == 0:
         logger.warning("No annotations generated")
         return 1
-    
+
     logger.info("=" * 70)
     logger.info("Complete")
     logger.info("=" * 70)
     logger.info(f"Generated {count} annotations")
     logger.info(f"Output: {args.output}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

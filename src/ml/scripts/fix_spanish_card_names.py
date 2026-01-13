@@ -16,41 +16,52 @@ from ..data.spanish_card_translations import translate_spanish_name
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
 
+
 logger = setup_script_logging()
 
 
 def fix_spanish_card_names(graph_db: Path, min_decks: int = 100) -> dict[str, int]:
     """Fix Spanish card names by translating and updating game labels."""
     logger.info("Fixing Spanish card names...")
-    
+
     conn = sqlite3.connect(str(graph_db))
     conn.row_factory = sqlite3.Row
-    
+
     # Get unknown nodes with high frequency
-    unknown_nodes = conn.execute("""
+    unknown_nodes = conn.execute(
+        """
         SELECT name, total_decks
         FROM nodes
         WHERE game IS NULL OR game = 'Unknown'
         AND total_decks >= ?
         ORDER BY total_decks DESC
-    """, (min_decks,)).fetchall()
-    
+    """,
+        (min_decks,),
+    ).fetchall()
+
     logger.info(f"Found {len(unknown_nodes)} high-frequency unknown nodes")
-    
+
     card_db = get_card_database()
     card_db.load()
-    
-    game_map = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO", "digimon": "DIG", "onepiece": "OP", "riftbound": "RFT"}
-    
+
+    game_map = {
+        "magic": "MTG",
+        "pokemon": "PKM",
+        "yugioh": "YGO",
+        "digimon": "DIG",
+        "onepiece": "OP",
+        "riftbound": "RFT",
+    }
+
     fixed = 0
     not_found = 0
     updates = []
-    
+
     cursor = conn.cursor()
-    
+
     for i, row in enumerate(unknown_nodes):
         card_name = row["name"]
-        
+
         # Try Spanish translation
         english_name = translate_spanish_name(card_name)
         if english_name and english_name != card_name:
@@ -69,23 +80,23 @@ def fix_spanish_card_names(graph_db: Path, min_decks: int = 100) -> dict[str, in
                 not_found += 1
         else:
             not_found += 1
-        
+
         if (i + 1) % 100 == 0:
             if updates:
                 cursor.executemany("UPDATE nodes SET game = ? WHERE name = ?", updates)
                 conn.commit()
                 updates = []
             logger.info(f"  Processed {i + 1}/{len(unknown_nodes)}... (fixed: {fixed})")
-    
+
     if updates:
         cursor.executemany("UPDATE nodes SET game = ? WHERE name = ?", updates)
         conn.commit()
-    
+
     conn.close()
-    
+
     logger.info(f"Fixed {fixed} Spanish card names")
     logger.info(f"Still unknown: {not_found}")
-    
+
     return {"fixed": fixed, "not_found": not_found}
 
 
@@ -104,21 +115,21 @@ def main() -> int:
         default=100,
         help="Minimum deck count to fix (default: 100)",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 70)
     logger.info("Fix Spanish Card Names")
     logger.info("=" * 70)
-    
+
     results = fix_spanish_card_names(args.graph_db, args.min_decks)
-    
+
     logger.info(f"\n✓ Fixed {results['fixed']} Spanish card names")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

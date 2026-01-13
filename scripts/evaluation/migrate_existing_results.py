@@ -13,11 +13,13 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
+
 
 setup_project_paths()
 
@@ -27,7 +29,7 @@ from ml.utils.evaluation_logger import log_evaluation_run
 def extract_metrics(data: dict) -> dict:
     """Extract metrics from various evaluation result formats."""
     metrics = {}
-    
+
     # Direct metrics
     if "p_at_k" in data:
         metrics["p_at_k"] = data["p_at_k"]
@@ -39,7 +41,7 @@ def extract_metrics(data: dict) -> dict:
         metrics["recall_at_k"] = data["recall_at_k"]
     if "diversity" in data:
         metrics["diversity"] = data["diversity"]
-    
+
     # Nested in results
     if "results" in data:
         results = data["results"]
@@ -51,13 +53,13 @@ def extract_metrics(data: dict) -> dict:
             metrics["mrr"] = results["mrr"]
         if "recall_at_k" in results:
             metrics["recall_at_k"] = results["recall_at_k"]
-    
+
     # Legacy format (p10, p_at_10, etc.)
     if "p10" in data:
         metrics["p_at_k"] = data["p10"]
     if "p_at_10" in data:
         metrics["p_at_k"] = data["p_at_10"]
-    
+
     return metrics
 
 
@@ -66,11 +68,11 @@ def extract_method(filename: str, data: dict) -> str:
     # Try data first
     if "method" in data:
         return data["method"]
-    
+
     # Try results.method
     if "results" in data and "method" in data["results"]:
         return data["results"]["method"]
-    
+
     # Extract from filename
     # Format: {type}_evaluation_v{version}.json
     parts = filename.replace(".json", "").split("_")
@@ -78,7 +80,7 @@ def extract_method(filename: str, data: dict) -> str:
         idx = parts.index("evaluation")
         if idx > 0:
             return "_".join(parts[:idx])
-    
+
     return "unknown"
 
 
@@ -87,7 +89,7 @@ def extract_evaluation_type(filename: str, data: dict) -> str:
     # Try data
     if "evaluation_type" in data:
         return data["evaluation_type"]
-    
+
     # Extract from filename
     if "hybrid" in filename.lower():
         return "hybrid_evaluation"
@@ -108,12 +110,12 @@ def migrate_file(file_path: Path, dry_run: bool = False) -> dict:
             data = json.load(f)
     except Exception as e:
         return {"status": "error", "error": str(e)}
-    
+
     # Extract information
     method = extract_method(file_path.name, data)
     eval_type = extract_evaluation_type(file_path.name, data)
     metrics = extract_metrics(data)
-    
+
     # Extract config
     config = {}
     if "config" in data:
@@ -122,18 +124,18 @@ def migrate_file(file_path: Path, dry_run: bool = False) -> dict:
         config["weights"] = data["weights"]
     if "top_k" in data:
         config["top_k"] = data["top_k"]
-    
+
     # Extract test set path
     test_set_path = data.get("test_set_path") or data.get("test_set")
-    
+
     # Extract num queries
     num_queries = data.get("num_queries") or data.get("results", {}).get("num_queries")
-    
+
     # Create notes
     notes = f"Migrated from {file_path.name}"
     if "timestamp" in data:
         notes += f" (original: {data['timestamp']})"
-    
+
     if dry_run:
         return {
             "status": "dry_run",
@@ -143,7 +145,7 @@ def migrate_file(file_path: Path, dry_run: bool = False) -> dict:
             "metrics": metrics,
             "num_queries": num_queries,
         }
-    
+
     # Log to new system
     try:
         run_id = log_evaluation_run(
@@ -162,7 +164,7 @@ def migrate_file(file_path: Path, dry_run: bool = False) -> dict:
 
 def main():
     import argparse
-    
+
     parser = argparse.ArgumentParser(description="Migrate existing evaluation results")
     parser.add_argument(
         "--dry-run",
@@ -180,37 +182,37 @@ def main():
         default="*.json",
         help="File pattern to match (default: *.json)",
     )
-    
+
     args = parser.parse_args()
-    
+
     eval_dir = Path("experiments/evaluation_results")
     if not eval_dir.exists():
         print(f"Error: {eval_dir} does not exist")
         return 1
-    
+
     json_files = list(eval_dir.glob(args.pattern))
     if args.limit:
-        json_files = json_files[:args.limit]
-    
-    print(f"{'='*80}")
+        json_files = json_files[: args.limit]
+
+    print(f"{'=' * 80}")
     print("Migration of Existing Evaluation Results")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Source: {eval_dir}")
     print(f"Files found: {len(json_files)}")
     if args.dry_run:
         print("Mode: DRY RUN (no changes will be made)")
     print("")
-    
+
     results = {
         "success": [],
         "error": [],
         "dry_run": [],
     }
-    
+
     for file_path in sorted(json_files):
         result = migrate_file(file_path, dry_run=args.dry_run)
         status = result.get("status")
-        
+
         if status == "success":
             results["success"].append(result)
             print(f"✓ Migrated: {file_path.name} -> {result['run_id']}")
@@ -222,21 +224,19 @@ def main():
         elif status == "error":
             results["error"].append(result)
             print(f"✗ Error: {file_path.name} - {result.get('error', 'Unknown error')}")
-    
+
     print("")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print("Summary")
-    print(f"{'='*80}")
+    print(f"{'=' * 80}")
     print(f"Total files: {len(json_files)}")
     print(f"Success: {len(results['success'])}")
     print(f"Errors: {len(results['error'])}")
     if args.dry_run:
         print(f"Would migrate: {len(results['dry_run'])}")
-    
+
     return 0 if len(results["error"]) == 0 else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-

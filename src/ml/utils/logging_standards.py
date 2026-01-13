@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 
@@ -104,7 +105,3 @@ class LoggingStandards:
             logger.error(f"Failed {operation}", extra=kwargs)
         else:
             logger.info(f"{operation}: {status}", extra=kwargs)
-
-
-
-

@@ -15,8 +15,8 @@ import argparse
 import asyncio
 import subprocess
 import sys
-from datetime import datetime
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -37,9 +37,9 @@ async def run_annotation_pipeline(
     print("AUTOMATED ANNOTATION PIPELINE")
     print("=" * 80)
     print()
-    
+
     annotations_dir.mkdir(parents=True, exist_ok=True)
-    
+
     # Step 1: Generate LLM annotations
     print("Step 1: Generating LLM annotations...")
     try:
@@ -64,7 +64,7 @@ async def run_annotation_pipeline(
             print(f"  ⚠ LLM annotation generation had issues: {result.stderr[:200]}")
     except Exception as e:
         print(f"  ⚠ LLM annotation generation failed: {e}")
-    
+
     # Step 2: Integrate all annotations
     print("\nStep 2: Integrating all annotations...")
     integrated_file = annotations_dir / "pipeline_integrated.jsonl"
@@ -88,7 +88,7 @@ async def run_annotation_pipeline(
     except Exception as e:
         print(f"  ✗ Integration failed: {e}")
         return 1
-    
+
     # Step 3: Resolve conflicts
     if resolve_conflicts:
         print("\nStep 3: Resolving conflicts...")
@@ -116,7 +116,7 @@ async def run_annotation_pipeline(
                 print(f"  ⚠ Conflict resolution had issues: {result.stderr[:200]}")
         except Exception as e:
             print(f"  ⚠ Conflict resolution failed: {e}")
-    
+
     # Step 4: Generate analytics
     if generate_analytics:
         print("\nStep 4: Generating analytics...")
@@ -141,7 +141,7 @@ async def run_annotation_pipeline(
                 print(f"  ⚠ Analytics generation had issues: {result.stderr[:200]}")
         except Exception as e:
             print(f"  ⚠ Analytics generation failed: {e}")
-    
+
     # Step 5: Validate
     print("\nStep 5: Validating annotations...")
     try:
@@ -162,7 +162,7 @@ async def run_annotation_pipeline(
             print(f"  ⚠ Validation had issues: {result.stderr[:200]}")
     except Exception as e:
         print(f"  ⚠ Validation failed: {e}")
-    
+
     # Step 6: Sync to S3
     if sync_to_s3:
         print("\nStep 6: Syncing to S3...")
@@ -184,12 +184,12 @@ async def run_annotation_pipeline(
                 print(f"  ⚠ S3 sync had issues: {result.stderr[:200]}")
         except Exception as e:
             print(f"  ⚠ S3 sync failed: {e}")
-    
+
     print("\n" + "=" * 80)
     print("PIPELINE COMPLETE")
     print("=" * 80)
     print(f"Final integrated file: {integrated_file}")
-    
+
     return 0
 
 
@@ -235,9 +235,9 @@ def main() -> int:
         default="s3://games-collections/annotations/",
         help="S3 path for sync",
     )
-    
+
     args = parser.parse_args()
-    
+
     return asyncio.run(
         run_annotation_pipeline(
             annotations_dir=args.annotations_dir,
@@ -253,5 +253,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-
-
