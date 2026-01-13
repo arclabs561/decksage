@@ -104,4 +104,3 @@ func TestComputeContentHashOrderIndependent(t *testing.T) {
 		t.Error("Hash should be order-independent when cards are sorted")
 	}
 }
-

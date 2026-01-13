@@ -10,9 +10,10 @@ Tests invariants that quality scores should always satisfy:
 
 from __future__ import annotations
 
-from hypothesis import given, strategies as st
-
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
+
 
 try:
     from ..deck_building.deck_quality import assess_deck_quality
@@ -38,7 +39,9 @@ class TestDeckQualityProperties:
                             st.lists(
                                 st.dictionaries(
                                     keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(st.text(), st.integers(min_value=1, max_value=4)),
+                                    values=st.one_of(
+                                        st.text(), st.integers(min_value=1, max_value=4)
+                                    ),
                                 ),
                                 min_size=0,
                                 max_size=10,
@@ -84,7 +87,9 @@ class TestDeckQualityProperties:
                             st.lists(
                                 st.dictionaries(
                                     keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(st.text(), st.integers(min_value=1, max_value=4)),
+                                    values=st.one_of(
+                                        st.text(), st.integers(min_value=1, max_value=4)
+                                    ),
                                 ),
                                 min_size=0,
                                 max_size=10,
@@ -120,9 +125,10 @@ class TestDeckQualityProperties:
 
             assert math.isclose(quality1.overall_score, quality2.overall_score, abs_tol=1e-6)
             assert math.isclose(quality1.mana_curve_score, quality2.mana_curve_score, abs_tol=1e-6)
-            assert math.isclose(quality1.tag_balance_score, quality2.tag_balance_score, abs_tol=1e-6)
+            assert math.isclose(
+                quality1.tag_balance_score, quality2.tag_balance_score, abs_tol=1e-6
+            )
             assert math.isclose(quality1.synergy_score, quality2.synergy_score, abs_tol=1e-6)
         except Exception:
             # May fail for invalid decks
             pass
-

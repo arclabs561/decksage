@@ -15,9 +15,9 @@ Retrieves results and updates queue.
 """
 
 import argparse
-import asyncio
 import sys
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -63,12 +63,12 @@ def submit_tasks(
     pending = queue.get_pending_tasks(priority=priority_enum, limit=limit)
 
     if not pending:
-        print(f"No pending tasks to submit")
+        print("No pending tasks to submit")
         return {"submitted": 0, "failed": 0}
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Submitting {len(pending)} tasks to {service_name}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     if dry_run:
         print("  [DRY RUN - Not actually submitting]\n")
@@ -159,17 +159,16 @@ def retrieve_results(
     submitted_tasks = [
         task
         for task in queue.tasks.values()
-        if task.status == AnnotationStatus.SUBMITTED
-        and task.annotation_service == service_name
+        if task.status == AnnotationStatus.SUBMITTED and task.annotation_service == service_name
     ][:limit]
 
     if not submitted_tasks:
-        print(f"No submitted tasks to retrieve")
+        print("No submitted tasks to retrieve")
         return {"retrieved": 0, "pending": 0, "failed": 0}
 
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Retrieving results from {service_name}")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     retrieved = 0
     pending = 0
@@ -271,4 +270,3 @@ def main():
 if __name__ == "__main__":
     exit_code = main()
     sys.exit(exit_code)
-

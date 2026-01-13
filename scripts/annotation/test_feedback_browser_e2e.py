@@ -18,6 +18,7 @@ import sys
 import time
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -27,6 +28,7 @@ def check_api_server_running(base_url: str = "http://localhost:8000") -> bool:
     """Check if API server is running."""
     try:
         import requests
+
         resp = requests.get(f"{base_url}/live", timeout=2)
         return resp.status_code == 200
     except Exception:
@@ -38,7 +40,7 @@ def start_api_server(port: int = 8000) -> subprocess.Popen | None:
     if check_api_server_running(f"http://localhost:{port}"):
         print(f"✓ API server already running on port {port}")
         return None
-    
+
     print(f"Starting API server on port {port}...")
     try:
         # Try to start server
@@ -56,10 +58,10 @@ def start_api_server(port: int = 8000) -> subprocess.Popen | None:
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        
+
         # Wait a bit for server to start
         time.sleep(3)
-        
+
         if check_api_server_running(f"http://localhost:{port}"):
             print(f"✓ API server started on port {port}")
             return process
@@ -79,13 +81,13 @@ def test_browser_feedback_submission(
     api_base: str = "http://localhost:8000",
 ) -> bool:
     """Test feedback submission via browser interactions (using MCP browser tools).
-    
+
     Note: This requires MCP browser tools to be available.
     """
     print("\n" + "=" * 80)
     print("TESTING BROWSER FEEDBACK SUBMISSION")
     print("=" * 80)
-    
+
     # For now, simulate browser interaction by calling API directly
     # In a real scenario, we would use MCP browser tools to:
     # 1. Navigate to test_search.html
@@ -93,13 +95,13 @@ def test_browser_feedback_submission(
     # 3. Select candidate
     # 4. Click rating button
     # 5. Click submit button
-    
+
     print(f"Simulating browser interaction for: {query_card} <-> {candidate_card}")
     print("(In production, this would use MCP browser tools)")
-    
+
     try:
         import requests
-        
+
         # Simulate what the browser would send
         payload = {
             "query_card": query_card,
@@ -113,13 +115,13 @@ def test_browser_feedback_submission(
                 "source": "browser_e2e_test",
             },
         }
-        
+
         resp = requests.post(
             f"{api_base}/v1/feedback",
             json=payload,
             timeout=5,
         )
-        
+
         if resp.status_code == 200:
             data = resp.json()
             if data.get("status") == "success":
@@ -151,15 +153,15 @@ def verify_feedback_saved(
             if p.exists():
                 feedback_path = p
                 break
-        
+
         if feedback_path is None:
             print("✗ Feedback file not found")
             return False
-    
+
     if not feedback_path.exists():
         print(f"✗ Feedback file not found: {feedback_path}")
         return False
-    
+
     # Check if our test feedback is in the file
     if query_card:
         with open(feedback_path) as f:
@@ -169,7 +171,7 @@ def verify_feedback_saved(
                     if entry.get("query_card") == query_card:
                         print(f"✓ Feedback found in file: {feedback_path}")
                         return True
-    
+
     # Just check file has entries
     count = sum(1 for _ in open(feedback_path))
     print(f"✓ Feedback file exists: {feedback_path} ({count} entries)")
@@ -229,14 +231,14 @@ def main() -> int:
         action="store_true",
         help="Skip S3 sync test",
     )
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 80)
     print("FEEDBACK SYSTEM E2E TEST - BROWSER INTERACTIONS")
     print("=" * 80)
     print()
-    
+
     # Check/start API server
     server_process = None
     if args.start_server:
@@ -250,7 +252,7 @@ def main() -> int:
             print("  Use --start-server to start it, or start manually:")
             print(f"  uvicorn src.ml.api.api:app --port {args.port}")
             return 1
-    
+
     # Test browser feedback submission
     if not args.skip_browser:
         browser_ok = test_browser_feedback_submission(
@@ -264,10 +266,10 @@ def main() -> int:
             if server_process:
                 server_process.terminate()
             return 1
-        
+
         # Wait a bit for file to be written
         time.sleep(1)
-        
+
         # Verify feedback saved
         if not verify_feedback_saved(query_card=args.query):
             print("✗ Feedback not saved to file")
@@ -276,13 +278,13 @@ def main() -> int:
             return 1
     else:
         print("Skipping browser interaction test")
-    
+
     # Test integration
     if not args.skip_integration:
         print("\n" + "=" * 80)
         print("TESTING FEEDBACK INTEGRATION")
         print("=" * 80)
-        
+
         try:
             result = subprocess.run(
                 [
@@ -295,10 +297,12 @@ def main() -> int:
                 text=True,
                 timeout=30,
             )
-            
+
             if result.returncode == 0:
                 # Check if feedback appears in integrated file
-                integrated_file = project_root / "annotations" / "test_browser_feedback_integrated.jsonl"
+                integrated_file = (
+                    project_root / "annotations" / "test_browser_feedback_integrated.jsonl"
+                )
                 if integrated_file.exists():
                     feedback_found = False
                     with open(integrated_file) as f:
@@ -308,7 +312,7 @@ def main() -> int:
                                 if ann.get("source") == "user_feedback":
                                     feedback_found = True
                                     break
-                    
+
                     if feedback_found:
                         print("✓ Feedback successfully integrated")
                     else:
@@ -333,13 +337,13 @@ def main() -> int:
             return 1
     else:
         print("Skipping integration test")
-    
+
     # Test S3 sync
     if not args.skip_s3:
         print("\n" + "=" * 80)
         print("TESTING FEEDBACK S3 SYNC")
         print("=" * 80)
-        
+
         try:
             result = subprocess.run(
                 [
@@ -352,20 +356,20 @@ def main() -> int:
                 text=True,
                 timeout=60,
             )
-            
+
             if result.returncode == 0 and "user_feedback.jsonl" in result.stdout:
                 print("✓ Feedback file synced to S3")
             else:
                 print("⚠ S3 sync may have issues (check output)")
         except Exception as e:
             print(f"⚠ S3 sync test failed: {e}")
-    
+
     # Cleanup
     if server_process:
         print("\nStopping API server...")
         server_process.terminate()
         server_process.wait(timeout=5)
-    
+
     # Summary
     print("\n" + "=" * 80)
     print("E2E TEST SUMMARY")
@@ -375,11 +379,9 @@ def main() -> int:
     print("✓ Feedback integrated: Working")
     print("✓ Feedback synced to S3: Working")
     print("\n✓ All E2E tests passed")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-

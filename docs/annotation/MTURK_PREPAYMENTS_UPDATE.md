@@ -65,4 +65,3 @@ Charges will automatically appear on your AWS bill.
 
 1. **Use Developer Sandbox**: Free testing with $10k virtual balance (recommended for initial testing)
 2. **Production**: Ready to use - charges go to AWS account automatically
-

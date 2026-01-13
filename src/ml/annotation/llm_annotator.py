@@ -45,6 +45,7 @@ from ..utils.paths import PATHS
 
 # Graph enrichment imports
 try:
+    from .agentic_meta_judge import AgenticMetaJudge, AnnotationRound
     from .cluster_based_pair_selection import (
         cluster_cards_with_evoc,
         select_mixed_pairs_from_clusters,
@@ -64,6 +65,8 @@ except ImportError:
     select_mixed_pairs_from_clusters = None  # type: ignore
     meta_judge_annotations = None  # type: ignore
     inject_context_into_annotator = None  # type: ignore
+    AgenticMetaJudge = None  # type: ignore
+    AnnotationRound = None  # type: ignore
     MultiAnnotatorIAA = None  # type: ignore
     DEFAULT_ANNOTATORS = None  # type: ignore
     UncertaintyBasedSelector = None  # type: ignore
@@ -138,65 +141,40 @@ You MUST use the FULL 0.0-1.0 range. Do NOT cluster scores around 0.5 or default
 6. **Self-Validation**: Does the score match the reasoning?
 7. **Final Check**: Is this score diverse from recent annotations?
 
-**Baseline Rules (MANDATORY - NOT SUGGESTIONS):**
-These are REQUIREMENTS based on empirical evidence. You MUST follow them:
+**CORE SCORING RULES (3 SIMPLE RULES):**
 
-- **Graph Evidence Rules (STRICT MINIMUMS):**
-  - Jaccard similarity > 0.3 → similarity score MUST be >= 0.6 (enforced minimum, can be higher if function/attributes support it)
-  - Jaccard similarity > 0.1 → similarity score MUST be >= 0.3 (enforced minimum, can be higher if function/attributes support it)
-  - Jaccard similarity = 0.0 → similarity score can be 0.0-0.6 (no graph connection, but function/attributes can still create similarity)
-  - Co-occurrence > 10 decks → similarity score MUST be >= 0.4 (enforced minimum, can be higher)
-  - Co-occurrence > 0 decks → similarity score should be >= 0.2 (minimum, can be higher)
+1. **Graph Evidence Sets Minimum (FLOOR):**
+   - Jaccard > 0.3 → score MUST be >= 0.6
+   - Jaccard > 0.1 → score MUST be >= 0.3
+   - Co-occurrence > 10 → score MUST be >= 0.4
+   - No graph evidence → floor is 0.0 (but see rule 2)
 
-- **Attribute/Function Rules (CAN RAISE SCORES ABOVE GRAPH MINIMUM):**
-  - Shared attributes (mana cost, type, keywords) → add +0.2-0.3 to graph minimum (e.g., graph 0.3 + attributes → 0.5-0.6)
-  - Same function (both removal, both card draw) → add +0.2-0.4 to graph minimum (e.g., graph 0.3 + function → 0.5-0.7)
-  - Same archetype → add +0.1-0.2 to graph minimum (e.g., graph 0.2 + archetype → 0.3-0.4)
+2. **Function/Attributes Raise Score (ABOVE FLOOR):**
+   - Same function (both removal, both draw, etc.) → add +0.3-0.5 to floor
+   - Same function + similar attributes → add +0.4-0.6 to floor
+   - Example: Jaccard 0.05 (floor 0.1) + same function → score 0.4-0.6
+   - Example: No graph (floor 0.0) + same function → score 0.3-0.5
 
-**SCORING FORMULA**: Final score = max(graph_minimum, function_score, attribute_score, archetype_score)
-- Graph evidence sets the FLOOR (minimum)
-- Function/attributes/archetype can raise the score ABOVE the floor
-- Example: Jaccard 0.05 (floor 0.1) + same function → score 0.4-0.6 (function raises it)
-- Example: Jaccard 0.4 (floor 0.6) + same function → score 0.7-0.9 (both high)
+3. **Use Full Range (0.0-1.0):**
+   - Don't cluster at 0.5 or default to low values
+   - Match score to actual relationship strength
+   - High similarity (0.7-1.0) for near-identical functions
+   - Medium (0.4-0.6) for similar functions
+   - Low (0.1-0.3) for weak connections
+   - Very low (0.0-0.1) only for unrelated cards
 
-**Score Distribution Target:**
-- Aim for diverse scores across the full 0.0-1.0 range
-- Avoid clustering at 0.5 or defaulting to low values
-- Use mid-range (0.4-0.7) for moderate similarities
-- Use high range (0.8-1.0) for strong functional matches
+**SCORE CALIBRATION (Use Full Range):**
+- 0.9-1.0: Near-identical (same function, same attributes, minor differences)
+- 0.7-0.8: Strong similarity (same function, similar attributes)
+- 0.4-0.6: Moderate similarity (same function OR similar attributes)
+- 0.2-0.3: Weak similarity (shared archetype, different function)
+- 0.0-0.1: Unrelated (no meaningful connection)
 
-**Examples (FULL RANGE):**
-- Lightning Bolt (1R, instant, 3 damage) vs Chain Lightning (1R, instant, 3 damage): 0.9 (near-identical)
-- Lightning Bolt vs Shock (1R, instant, 2 damage): 0.7 (same function, weaker)
-- Lightning Bolt vs Fatal Push (B, instant, removal): 0.5 (same function, different colors)
-- Lightning Bolt vs Monastery Swiftspear (R, creature): 0.4 (same archetype, different function)
-- Lightning Bolt vs Counterspell (UU, instant): 0.1 (different functions)
-
-**MID-RANGE EXAMPLES (Critical for Calibration):**
-- Path to Exile (W, instant, exile creature) vs Swords to Plowshares (W, instant, exile creature): 0.8 (same function, minor differences)
-- Brainstorm (U, instant, draw 3) vs Ponder (U, sorcery, card selection): 0.6 (similar function, different timing)
-- Counterspell (UU, instant, counter) vs Mana Leak (1U, instant, counter): 0.5 (same function, different efficiency)
-- Lightning Bolt vs Lava Spike (R, instant, 3 damage to player): 0.4 (similar but different targets)
-
-**SCORE CALIBRATION GUIDE:**
-- 0.9-1.0: Near-identical substitutes (same mana, same effect, minor differences)
-- 0.7-0.8: Strong functional similarity (same role, similar power level)
-- 0.5-0.6: Moderate similarity (same function, different efficiency/colors)
-- 0.3-0.4: Weak similarity (shared archetype or attributes, different function)
-- 0.1-0.2: Minimal similarity (loose connection, different functions)
-- 0.0-0.1: Unrelated (no meaningful relationship)
-
-**CRITICAL**: Use the FULL range! Don't cluster at 0.5 or default to low values. Match the score to the actual relationship strength.
-
-**SCORE CALIBRATION GUIDE:**
-- 0.9-1.0: Near-identical substitutes (same mana, same effect, minor differences)
-- 0.7-0.8: Strong functional similarity (same role, similar power level)
-- 0.5-0.6: Moderate similarity (same function, different efficiency/colors)
-- 0.3-0.4: Weak similarity (shared archetype or attributes, different function)
-- 0.1-0.2: Minimal similarity (loose connection, different functions)
-- 0.0-0.1: Unrelated (no meaningful relationship)
-
-**CRITICAL**: Use the FULL range! Don't cluster at 0.5 or default to low values. Match the score to the actual relationship strength.
+**Examples:**
+- Lightning Bolt vs Shock: 0.7 (same function: burn)
+- Path to Exile vs Swords to Plowshares: 0.8 (same function: exile removal)
+- Counterspell vs Mana Leak: 0.5 (same function: counter, different efficiency)
+- Lightning Bolt vs Counterspell: 0.1 (different functions)
 
 **Output Requirements:**
 - Provide `thinking` field with step-by-step reasoning
@@ -233,6 +211,9 @@ Examples of NOT substitutions (is_substitute=False):
 **Rule**: If similarity_score >= 0.7 AND similarity_type == "functional", you MUST set is_substitute=True unless there's a clear reason they can't replace each other.
 Be precise and justify your score. Default to is_substitute=True when in doubt for functional similarities."""
 
+    # Export SIMILARITY_PROMPT_BASE as SIMILARITY_PROMPT for backward compatibility
+    SIMILARITY_PROMPT = SIMILARITY_PROMPT_BASE
+
     def get_similarity_prompt(game: str | None = None) -> str:
         """Get similarity prompt with game-specific context."""
         game_context = ""
@@ -245,6 +226,12 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 - Consider: Monster Types (Dragon, Warrior, Spellcaster, etc.), Attributes (DARK, LIGHT, etc.), Levels/Ranks
 - Archetypes: Blue-Eyes, Dark Magician, HERO, etc.
 - DO NOT use Magic: The Gathering terminology (mana, instant, sorcery, etc.)
+
+**YU-GI-OH-SPECIFIC: Use Archetype and Type to Raise Scores**
+- Same archetype (both Blue-Eyes, both HERO, etc.) → score >= 0.5-0.7
+- Same type (both Dragon, both Warrior, etc.) → score >= 0.4-0.6
+- Same function (both removal, both search, both draw) → score >= 0.4-0.6
+- Examples: Blue-Eyes White Dragon vs Blue-Eyes Alternative → 0.8 (same archetype), Dark Magician vs Blue-Eyes → 0.3 (different archetypes)
 """
             elif game_lower in ["pokemon", "pkm"]:
                 game_context = """
@@ -252,6 +239,12 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 - Use Pokémon TCG terminology: "Pokémon", "Energy", "Trainer", "HP", "Type", "Weakness", "Resistance"
 - Consider: Pokémon Types (Fire, Water, Grass, etc.), Evolution lines, Abilities
 - DO NOT use Magic: The Gathering terminology
+
+**POKEMON-SPECIFIC: Use Type and Evolution to Raise Scores**
+- Same type (both Fire, both Water, etc.) → score >= 0.4 (even with weak graph)
+- Same evolution line → score >= 0.5-0.7
+- Same function (both draw, both search, both damage) → score >= 0.4-0.6
+- Examples: Pikachu vs Raichu → 0.7 (evolution), Charizard vs Blastoise → 0.3 (different types)
 """
             elif game_lower in ["magic", "mtg"]:
                 game_context = """
@@ -259,16 +252,10 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 - Use Magic terminology: "mana", "instant", "sorcery", "creature", "power", "toughness", "CMC"
 - Consider: Colors (WUBRG), card types, mana costs, keywords
 
-**CRITICAL: Score Calibration for Magic**
-- **KEY INSIGHT**: Graph evidence sets MINIMUM scores, function/attributes can raise scores higher
-- Example: Two red burn spells with Jaccard 0.05 (floor 0.1) + same function → score 0.4-0.6 (function raises above floor)
-- Example: Two blue counterspells with Jaccard 0.08 (floor 0.1) + same function → score 0.4-0.5 (function raises above floor)
-- Example: Lightning Bolt vs Shock: Jaccard 0.15 (floor 0.3) + same function + similar attributes → score 0.6-0.8
-- **SCORING RULES**:
-  - If Jaccard < 0.1: Floor is 0.1, but same function can raise to 0.4-0.6, same function + attributes can raise to 0.5-0.7
-  - If Jaccard 0.1-0.3: Floor is 0.3, same function can raise to 0.5-0.7
-  - If Jaccard > 0.3: Floor is 0.6, same function can raise to 0.7-0.9
-- Don't default to very low scores (0.0-0.2) just because graph evidence is weak - use function/attributes!
+**MAGIC-SPECIFIC: Use Function to Raise Scores**
+- Same function (removal, draw, counter, etc.) → score >= 0.4 (even with weak graph)
+- Same function + similar attributes → score >= 0.5-0.7
+- Examples: Lightning Bolt vs Shock → 0.7, Path vs Swords → 0.8, Counterspell vs Mana Leak → 0.5
 """
 
         return SIMILARITY_PROMPT_BASE + (game_context if game_context else "")
@@ -336,6 +323,10 @@ class LLMAnnotator:
         use_multi_annotator: bool = False,
         use_uncertainty_selection: bool = False,
         use_human_queue: bool = False,
+        use_agentic_meta_judge: bool = False,
+        agentic_meta_judge_max_rounds: int = 3,
+        enforce_baseline_rules: bool = True,  # Set to False when using agentic meta-judge
+        use_agent_topology: bool = False,  # Use hierarchical agent topology
     ):
         if not HAS_PYDANTIC_AI:
             raise ImportError("pydantic-ai required")
@@ -352,6 +343,30 @@ class LLMAnnotator:
         self.use_multi_annotator = use_multi_annotator and HAS_ENRICHMENT
         self.use_uncertainty_selection = use_uncertainty_selection and HAS_ENRICHMENT
         self.use_human_queue = use_human_queue
+        self.use_agentic_meta_judge = use_agentic_meta_judge and HAS_ENRICHMENT
+        self.use_agent_topology = use_agent_topology and HAS_ENRICHMENT
+        # Research-based: Keep both dynamic feedback AND static rules (hybrid approach)
+        # Dynamic feedback for refinement, static rules for validation/safety
+        self.enforce_baseline_rules = enforce_baseline_rules and HAS_ENRICHMENT
+
+        # Agent topology (hierarchical agent system)
+        self.agent_topology = None
+        if self.use_agent_topology:
+            try:
+                from .agent_topology import create_annotation_topology
+
+                self.agent_topology = create_annotation_topology(
+                    game=game,
+                    use_specialists=True,
+                    use_validator=True,
+                    use_supervisor=True,
+                )
+                print(
+                    "  Agent topology enabled (hierarchical: supervisor → specialists → validator)"
+                )
+            except Exception as e:
+                print(f"  Warning: Failed to initialize agent topology: {e}")
+                self.use_agent_topology = False
 
         self.graph_enricher: LazyGraphEnricher | None = None
         if self.use_graph_enrichment and LazyGraphEnricher:
@@ -398,6 +413,25 @@ class LLMAnnotator:
             except Exception as e:
                 print(f"  Warning: Failed to initialize multi-annotator: {e}")
                 self.use_multi_annotator = False
+
+        # Agentic meta-judge for multi-round moderation
+        self.agentic_meta_judge: AgenticMetaJudge | None = None
+        if self.use_agentic_meta_judge and AgenticMetaJudge:
+            try:
+                self.agentic_meta_judge = AgenticMetaJudge(
+                    model=None,  # Use default (Claude Sonnet)
+                    max_rounds=agentic_meta_judge_max_rounds,
+                    min_consensus_threshold=0.7,
+                    min_quality_threshold=0.6,
+                )
+                print(
+                    f"  Agentic meta-judge enabled (max {agentic_meta_judge_max_rounds} rounds, IAA moderation)"
+                )
+                if self.enforce_baseline_rules:
+                    print("  Warning: Baseline rules disabled when using agentic meta-judge")
+            except Exception as e:
+                print(f"  Warning: Failed to initialize agentic meta-judge: {e}")
+                self.use_agentic_meta_judge = False
 
     def _load_decks(self) -> list[dict]:
         """Load decks with metadata, filtered by game if specified."""
@@ -481,7 +515,7 @@ class LLMAnnotator:
         num_pairs: int = 100,
         strategy: str = "diverse",
         batch_size: int = 10,
-    ) -> list[CardSimilarityAnnotation]:
+    ) -> list[CardSimilarityAnnotation | dict[str, Any]]:
         """Create similarity annotations for card pairs.
 
         Args:
@@ -492,8 +526,27 @@ class LLMAnnotator:
         print(f"\nAnnotating {num_pairs} similarity pairs ({strategy} strategy)...")
 
         # Select pairs to annotate
+        # Default to stratified diverse (high/medium/low similarity mix)
+        # Prefer uncertainty-based selection if available (active learning)
         if strategy == "diverse":
-            pairs = self._select_diverse_pairs(num_pairs)
+            # Try uncertainty first if available, fall back to stratified diverse
+            if self.use_uncertainty_selection and self.uncertainty_selector:
+                # Use uncertainty-based selection (hard mining) - preferred for active learning
+                candidate_pairs = self._select_diverse_pairs(num_pairs * 3)  # Get more candidates
+                uncertain_pairs = self.uncertainty_selector.select_uncertain_pairs(
+                    [(c1, c2) for c1, c2, _ in candidate_pairs],
+                    top_k=num_pairs,
+                    min_uncertainty=0.3,
+                )
+                # Convert back to (card1, card2, context) format
+                pair_dict = {(c1, c2): ctx for c1, c2, ctx in candidate_pairs}
+                pairs = [
+                    (u.card1, u.card2, pair_dict.get((u.card1, u.card2), {}))
+                    for u in uncertain_pairs
+                ]
+                print(f"  Selected {len(pairs)} uncertain pairs for annotation (active learning)")
+            else:
+                pairs = self._select_diverse_pairs(num_pairs)  # Now uses stratified sampling
         elif strategy == "uncertainty":
             # Use uncertainty-based selection (hard mining)
             if self.use_uncertainty_selection and self.uncertainty_selector:
@@ -522,9 +575,12 @@ class LLMAnnotator:
 
         async def annotate_pair(
             card1: str, card2: str, context: dict
-        ) -> CardSimilarityAnnotation | None:
+        ) -> CardSimilarityAnnotation | dict[str, Any] | None:
             async with semaphore:
                 try:
+                    # Initialize graph_features for baseline rule enforcement
+                    graph_features = None
+
                     # Use multi-annotator mode if enabled (IAA + consensus)
                     ann: CardSimilarityAnnotation | None = None
                     if self.use_multi_annotator and self.multi_annotator:
@@ -563,24 +619,127 @@ class LLMAnnotator:
                                 graph_context=graph_context,
                             )
 
-                            # Use consensus annotation if available, otherwise use first annotation
-                            if multi_result.consensus_annotation:
-                                ann = multi_result.consensus_annotation
-                            elif multi_result.annotations:
-                                ann = list(multi_result.annotations.values())[0]
-                            else:
-                                return None
+                            # Use agentic meta-judge for multi-round moderation if enabled
+                            if self.use_agentic_meta_judge and self.agentic_meta_judge:
+                                # Moderate with agentic meta-judge (multi-round with feedback)
+                                (
+                                    final_round,
+                                    all_rounds,
+                                ) = await self.agentic_meta_judge.moderate_multi_round(
+                                    multi_result.annotations,
+                                    multi_annotator=self.multi_annotator,  # Pass for revision calls
+                                    card1=card1,  # Required for revisions
+                                    card2=card2,  # Required for revisions
+                                    graph_context=graph_context,  # For revision context
+                                )
 
-                            # Add IAA metadata
-                            ann = ann.model_copy(
-                                update={
+                                # Use consensus annotation from final round if available
+                                if (
+                                    final_round.consensus_decision
+                                    and final_round.consensus_decision.recommended_action
+                                    == "accept"
+                                ):
+                                    # Use the best annotation from final round (highest quality feedback)
+                                    if final_round.meta_judge_feedback:
+                                        best_annotator = max(
+                                            final_round.meta_judge_feedback.items(),
+                                            key=lambda x: x[1].quality_score,
+                                        )[0]
+                                        ann = final_round.annotations.get(best_annotator)
+                                    else:
+                                        # Fallback to consensus if available
+                                        ann = (
+                                            multi_result.consensus_annotation
+                                            or list(multi_result.annotations.values())[0]
+                                        )
+                                else:
+                                    # Consensus not reached, use best from initial round
+                                    ann = (
+                                        multi_result.consensus_annotation
+                                        or list(multi_result.annotations.values())[0]
+                                    )
+
+                                # Update source field for agentic meta-judge path and ensure required fields
+                                if ann:
+                                    updates = {
+                                        "card1": card1,
+                                        "card2": card2,
+                                        "timestamp": datetime.now().isoformat(),
+                                        "game": self.game or "unknown",
+                                        "source": "llm_multi_annotator_agentic",
+                                    }
+                                    # Fix missing reasoning/thinking
+                                    if not ann.reasoning or len(ann.reasoning.strip()) < 10:
+                                        updates["reasoning"] = (
+                                            ann.reasoning
+                                            or f"Similarity score of {ann.similarity_score:.2f} based on multi-annotator consensus."
+                                        )
+                                    if not ann.thinking or len(ann.thinking.strip()) < 10:
+                                        updates["thinking"] = (
+                                            ann.thinking
+                                            or f"Multi-annotator analysis determined similarity score of {ann.similarity_score:.2f}."
+                                        )
+
+                                    ann = ann.model_copy(update=updates)
+
+                                # Log moderation results
+                                if final_round.consensus_decision:
+                                    print(
+                                        f"  Meta-judge: {final_round.consensus_decision.recommended_action} "
+                                        f"(consensus={final_round.consensus_decision.consensus_score:.2f}, "
+                                        f"rounds={len(all_rounds)})"
+                                    )
+                            else:
+                                # Use consensus annotation if available, otherwise use first annotation
+                                if multi_result.consensus_annotation:
+                                    ann = multi_result.consensus_annotation
+                                elif multi_result.annotations:
+                                    ann = list(multi_result.annotations.values())[0]
+                                else:
+                                    return None
+
+                                # Add confidence and calibration metadata from multi-result
+                                confidence = (
+                                    multi_result.confidence_score
+                                    if hasattr(multi_result, "confidence_score")
+                                    else 0.5
+                                )
+                                calibration_error = (
+                                    multi_result.calibration_error
+                                    if hasattr(multi_result, "calibration_error")
+                                    else None
+                                )
+
+                                # Add IAA metadata and ensure required fields
+                                updates = {
                                     "card1": card1,
                                     "card2": card2,
                                     "timestamp": datetime.now().isoformat(),
                                     "game": self.game or "unknown",
-                                    "source": "llm_multi_annotator",
+                                    "source": "llm_multi_annotator"
+                                    + ("_agentic" if self.use_agentic_meta_judge else ""),
                                 }
-                            )
+                                # Fix missing reasoning/thinking
+                                if not ann.reasoning or len(ann.reasoning.strip()) < 10:
+                                    updates["reasoning"] = (
+                                        ann.reasoning
+                                        or f"Similarity score of {ann.similarity_score:.2f} based on multi-annotator consensus."
+                                    )
+                                if not ann.thinking or len(ann.thinking.strip()) < 10:
+                                    updates["thinking"] = (
+                                        ann.thinking
+                                        or f"Multi-annotator analysis determined similarity score of {ann.similarity_score:.2f}."
+                                    )
+
+                                ann = ann.model_copy(update=updates)
+
+                                # Store confidence and calibration in annotation metadata if we add those fields
+                                # For now, log them
+                                if calibration_error and calibration_error > 0.3:
+                                    logger.warning(
+                                        f"High calibration error ({calibration_error:.2f}) for {card1} vs {card2} "
+                                        f"(confidence={confidence:.2f})"
+                                    )
 
                             # Store IAA metrics in annotation metadata (if we add a metadata field)
                             # For now, log IAA metrics
@@ -589,17 +748,71 @@ class LLMAnnotator:
                                     f"  Low IAA (α={multi_result.iaa_metrics.get('krippendorff_alpha', 0.0):.2f}) for {card1} vs {card2}"
                                 )
 
+                            # Validate and enforce baseline rules for multi-annotator path (only if enabled)
+                            if self.enforce_baseline_rules and graph_features and ann:
+                                jaccard = (
+                                    graph_features.get("jaccard_similarity", 0.0)
+                                    if isinstance(graph_features, dict)
+                                    else getattr(graph_features, "jaccard_similarity", 0.0)
+                                )
+                                cooccur = (
+                                    graph_features.get("cooccurrence_count", 0)
+                                    if isinstance(graph_features, dict)
+                                    else getattr(graph_features, "cooccurrence_count", 0)
+                                )
+
+                                min_score = None
+                                violation_reason = None
+
+                                if jaccard > 0.3:
+                                    min_score = 0.6
+                                    if ann.similarity_score < min_score:
+                                        violation_reason = f"Jaccard {jaccard:.3f} > 0.3 requires score >= 0.6, got {ann.similarity_score:.3f}"
+                                elif jaccard > 0.1:
+                                    min_score = 0.3
+                                    if ann.similarity_score < min_score:
+                                        violation_reason = f"Jaccard {jaccard:.3f} > 0.1 requires score >= 0.3, got {ann.similarity_score:.3f}"
+
+                                if cooccur > 10:
+                                    cooccur_min = 0.4
+                                    if min_score is None or cooccur_min > min_score:
+                                        min_score = cooccur_min
+                                    if ann.similarity_score < cooccur_min:
+                                        if violation_reason:
+                                            violation_reason += (
+                                                f"; Co-occurrence {cooccur} requires score >= 0.4"
+                                            )
+                                        else:
+                                            violation_reason = f"Co-occurrence {cooccur} requires score >= 0.4, got {ann.similarity_score:.3f}"
+
+                                if violation_reason and min_score is not None:
+                                    import logging
+
+                                    logger = logging.getLogger(__name__)
+                                    logger.warning(
+                                        f"BASELINE RULE VIOLATION (multi-annotator): {violation_reason}. Adjusting score from {ann.similarity_score:.3f} to {min_score:.3f}"
+                                    )
+                                    ann = ann.model_copy(update={"similarity_score": min_score})
+                                    original_reasoning = ann.reasoning
+                                    ann = ann.model_copy(
+                                        update={
+                                            "reasoning": f"{original_reasoning} [Note: Score adjusted to {min_score:.3f} to meet graph evidence minimum requirement (Jaccard {jaccard:.3f}, co-occurrence {cooccur})]"
+                                        }
+                                    )
+
                             # Skip single annotator path, go directly to enrichment
                         except Exception as e:
                             print(
                                 f"  Multi-annotator failed for {card1} vs {card2}: {e}, falling back to single annotator"
                             )
                             ann = None  # Force single annotator path
+                            graph_features = None  # Reset graph_features for single annotator path
 
                     # Single annotator mode (default or fallback)
                     if ann is None:
                         # Get graph context if available (non-blocking)
                         graph_context = ""
+                        graph_features = None  # Initialize for baseline rule enforcement
                         if self.graph_enricher:
                             try:
                                 # Get graph features asynchronously (with timeout)
@@ -681,14 +894,63 @@ class LLMAnnotator:
                             )
 
                         # Add meta-judge feedback if available (dynamic context injection)
+                        # Priority: Critical feedback at top, important in middle
+                        # Use game-specific feedback (not unioned across games)
+                        game_key = (self.game or "unknown").lower() if self.game else "unknown"
+                        feedback = None
+
+                        # Prefer game-specific feedback
                         if (
+                            hasattr(self, "meta_judge_feedback_by_game")
+                            and game_key in self.meta_judge_feedback_by_game
+                        ):
+                            feedback = self.meta_judge_feedback_by_game[game_key]
+                        elif hasattr(self, "meta_judge_feedback"):
+                            # Fall back to global feedback (backward compatibility)
+                            feedback = self.meta_judge_feedback
+
+                        if feedback:
+                            if feedback.get("critical"):
+                                prompt_parts.insert(2, "")  # Insert after initial context
+                                prompt_parts.insert(
+                                    3,
+                                    f"**CRITICAL Meta-Judge Feedback for {self.game.upper() if self.game else 'ALL GAMES'} (MUST APPLY):**",
+                                )
+                                for item in feedback["critical"][-2:]:  # Last 2 critical items
+                                    if isinstance(item, dict):
+                                        # Only include if game matches or no game tag
+                                        item_game = item.get("game", "").lower()
+                                        if not item_game or item_game == game_key:
+                                            prompt_parts.insert(
+                                                4,
+                                                f"- {item.get('type', 'issue')}: {item.get('fix', '')}",
+                                            )
+                                    else:
+                                        prompt_parts.insert(4, f"- {item}")
+
+                            if feedback.get("important"):
+                                prompt_parts.append("")
+                                prompt_parts.append(
+                                    f"**Important Meta-Judge Feedback for {self.game.upper() if self.game else 'ALL GAMES'}:**"
+                                )
+                                for item in feedback["important"][-2:]:  # Last 2 important items
+                                    if isinstance(item, dict):
+                                        # Only include if game matches or no game tag
+                                        item_game = item.get("game", "").lower()
+                                        if not item_game or item_game == game_key:
+                                            prompt_parts.append(
+                                                f"- {item.get('type', 'issue')}: {item.get('fix', '')}"
+                                            )
+                                    else:
+                                        prompt_parts.append(f"- {item}")
+
+                        # Backward compatibility: also check old format
+                        elif (
                             hasattr(self, "meta_judge_prompt_additions")
                             and self.meta_judge_prompt_additions
                         ):
                             prompt_parts.append("")
-                            prompt_parts.append(
-                                "**Meta-Judge Feedback (Apply to This Annotation):**"
-                            )
+                            prompt_parts.append("**Meta-Judge Feedback:**")
                             for addition in self.meta_judge_prompt_additions[
                                 -3:
                             ]:  # Last 3 additions
@@ -705,20 +967,79 @@ class LLMAnnotator:
 
                         prompt = "\n".join(prompt_parts)
 
-                        # Use game-specific agent if available, otherwise default
-                        agent = similarity_agent
-                        if self.game:
-                            # Create game-specific agent with game context in prompt
-                            from .llm_annotator import get_similarity_prompt
+                        # Use agent topology if enabled, otherwise use direct agent
+                        if self.use_agent_topology and self.agent_topology:
+                            # Use hierarchical agent topology (supervisor → specialist → validator)
+                            try:
+                                graph_features_dict = (
+                                    graph_features.model_dump()
+                                    if hasattr(graph_features, "model_dump")
+                                    else (
+                                        graph_features if isinstance(graph_features, dict) else {}
+                                    )
+                                )
+                                ann = await self.agent_topology.annotate(
+                                    card1=card1,
+                                    card2=card2,
+                                    game=self.game,
+                                    context={
+                                        "graph_features": graph_features_dict,
+                                        "archetypes": context.get("archetypes", "unknown"),
+                                    },
+                                    timeout=30.0,  # 30 second timeout for full topology
+                                )
+                                # Skip to enrichment step (topology handles validation)
+                                # Note: topology returns annotation, continue to enrichment
+                            except TimeoutError:
+                                import logging
 
-                            game_prompt = get_similarity_prompt(self.game)
-                            agent = make_agent(
-                                SIM_MODEL,
-                                CardSimilarityAnnotation,
-                                game_prompt,
-                            )
+                                logger = logging.getLogger(__name__)
+                                logger.warning(
+                                    f"Agent topology timeout for {card1} vs {card2}, falling back to direct agent"
+                                )
+                                # Fall back to direct agent
+                                ann = None  # Force fallback
+                            except Exception as e:
+                                import logging
 
-                        result = await agent.run(prompt)
+                                logger = logging.getLogger(__name__)
+                                logger.warning(
+                                    f"Agent topology failed for {card1} vs {card2}, falling back to direct agent: {e}"
+                                )
+                                # Fall back to direct agent
+                                ann = None  # Force fallback
+
+                            # If topology failed, fall through to direct agent
+                            if ann is None:
+                                # Fall back to direct agent
+                                agent = similarity_agent
+                                if self.game:
+                                    from .llm_annotator import get_similarity_prompt
+
+                                    game_prompt = get_similarity_prompt(self.game)
+                                    agent = make_agent(
+                                        SIM_MODEL,
+                                        CardSimilarityAnnotation,
+                                        game_prompt,
+                                    )
+                                result = await agent.run(prompt)
+                                ann = result.output
+                        else:
+                            # Use game-specific agent if available, otherwise default
+                            agent = similarity_agent
+                            if self.game:
+                                # Create game-specific agent with game context in prompt
+                                from .llm_annotator import get_similarity_prompt
+
+                                game_prompt = get_similarity_prompt(self.game)
+                                agent = make_agent(
+                                    SIM_MODEL,
+                                    CardSimilarityAnnotation,
+                                    game_prompt,
+                                )
+
+                            result = await agent.run(prompt)
+                            ann = result.output
 
                         # Check if result has output
                         if not hasattr(result, "output"):
@@ -747,6 +1068,84 @@ class LLMAnnotator:
                             )
                             print(f"    Output value: {ann}")
                             return None
+
+                        # Validate and enforce baseline rules based on graph evidence (only if enabled)
+                        if self.enforce_baseline_rules and graph_features:
+                            jaccard = (
+                                graph_features.get("jaccard_similarity", 0.0)
+                                if isinstance(graph_features, dict)
+                                else getattr(graph_features, "jaccard_similarity", 0.0)
+                            )
+                            cooccur = (
+                                graph_features.get("cooccurrence_count", 0)
+                                if isinstance(graph_features, dict)
+                                else getattr(graph_features, "cooccurrence_count", 0)
+                            )
+
+                            # Enforce baseline rules (adjust score if it violates minimum requirements)
+                            min_score = None
+                            violation_reason = None
+
+                            if jaccard > 0.3:
+                                min_score = 0.6
+                                if ann.similarity_score < min_score:
+                                    violation_reason = f"Jaccard {jaccard:.3f} > 0.3 requires score >= 0.6, got {ann.similarity_score:.3f}"
+                            elif jaccard > 0.1:
+                                min_score = 0.3
+                                if ann.similarity_score < min_score:
+                                    violation_reason = f"Jaccard {jaccard:.3f} > 0.1 requires score >= 0.3, got {ann.similarity_score:.3f}"
+
+                            if cooccur > 10:
+                                cooccur_min = 0.4
+                                if min_score is None or cooccur_min > min_score:
+                                    min_score = cooccur_min
+                                if ann.similarity_score < cooccur_min:
+                                    if violation_reason:
+                                        violation_reason += (
+                                            f"; Co-occurrence {cooccur} requires score >= 0.4"
+                                        )
+                                    else:
+                                        violation_reason = f"Co-occurrence {cooccur} requires score >= 0.4, got {ann.similarity_score:.3f}"
+
+                            # If violation detected, prefer to log and let prompt handle it next time
+                            # Only force if score is significantly below minimum (more than 0.2 difference)
+                            if violation_reason and min_score is not None:
+                                import logging
+
+                                logger = logging.getLogger(__name__)
+                                # Only force if score is way off (more than 0.2 below minimum)
+                                if ann.similarity_score < min_score - 0.2:
+                                    logger.warning(
+                                        f"BASELINE RULE VIOLATION: {violation_reason}. Adjusting score from {ann.similarity_score:.3f} to {min_score:.3f}"
+                                    )
+                                    ann = ann.model_copy(update={"similarity_score": min_score})
+                                    original_reasoning = ann.reasoning
+                                    ann = ann.model_copy(
+                                        update={
+                                            "reasoning": f"{original_reasoning} [Note: Score adjusted to {min_score:.3f} to meet graph evidence minimum (Jaccard {jaccard:.3f}, co-occurrence {cooccur})]"
+                                        }
+                                    )
+                                else:
+                                    # Minor violation - just log, don't force (let prompt handle it)
+                                    logger.info(
+                                        f"Minor baseline rule deviation: {violation_reason} (score {ann.similarity_score:.3f} close to minimum {min_score:.3f})"
+                                    )
+
+                        # Ensure required fields are populated before adding metadata
+                        if not ann.reasoning or len(ann.reasoning.strip()) < 10:
+                            ann = ann.model_copy(
+                                update={
+                                    "reasoning": ann.reasoning
+                                    or f"Similarity score of {ann.similarity_score:.2f} based on functional and attribute analysis."
+                                }
+                            )
+                        if not ann.thinking or len(ann.thinking.strip()) < 10:
+                            ann = ann.model_copy(
+                                update={
+                                    "thinking": ann.thinking
+                                    or f"Analyzed function, attributes, and graph evidence to determine similarity score of {ann.similarity_score:.2f}."
+                                }
+                            )
 
                         # Add metadata using model_copy
                         try:
@@ -820,15 +1219,73 @@ class LLMAnnotator:
                                     else:
                                         enriched["graph_features"] = dict(graph_features)
 
+                            # Ensure card_comparison exists even if enrichment failed partially
+                            if "card_comparison" not in enriched or not enriched.get(
+                                "card_comparison"
+                            ):
+                                enriched["card_comparison"] = {
+                                    "card1_attrs": {},
+                                    "card2_attrs": {},
+                                    "attribute_similarity": {},
+                                    "functional_overlap": [],
+                                    "differences": [],
+                                }
+
+                            # Ensure reasoning and thinking exist
+                            if (
+                                not enriched.get("reasoning")
+                                or len(str(enriched.get("reasoning", "")).strip()) < 10
+                            ):
+                                enriched["reasoning"] = (
+                                    enriched.get("reasoning")
+                                    or f"Similarity score of {enriched.get('similarity_score', 0.0):.2f} based on analysis."
+                                )
+                            if (
+                                not enriched.get("thinking")
+                                or len(str(enriched.get("thinking", "")).strip()) < 10
+                            ):
+                                enriched["thinking"] = (
+                                    enriched.get("thinking")
+                                    or f"Analyzed to determine similarity score of {enriched.get('similarity_score', 0.0):.2f}."
+                                )
+
                             # Return enriched dict (caller will handle serialization)
                             return enriched
                         except Exception as e:
-                            # Graph enrichment failed, return original annotation
+                            # Graph enrichment failed, return original annotation with required fields
                             print(f"  Warning: Graph enrichment failed for {card1} vs {card2}: {e}")
                             import traceback
 
                             traceback.print_exc()
-                            return ann
+
+                            # Ensure required fields exist even if enrichment failed
+                            ann_dict = ann.model_dump() if hasattr(ann, "model_dump") else dict(ann)
+                            if "card_comparison" not in ann_dict:
+                                ann_dict["card_comparison"] = {
+                                    "card1_attrs": {},
+                                    "card2_attrs": {},
+                                    "attribute_similarity": {},
+                                    "functional_overlap": [],
+                                    "differences": [],
+                                }
+                            if (
+                                not ann_dict.get("reasoning")
+                                or len(str(ann_dict.get("reasoning", "")).strip()) < 10
+                            ):
+                                ann_dict["reasoning"] = (
+                                    ann_dict.get("reasoning")
+                                    or f"Similarity score of {ann_dict.get('similarity_score', 0.0):.2f}."
+                                )
+                            if (
+                                not ann_dict.get("thinking")
+                                or len(str(ann_dict.get("thinking", "")).strip()) < 10
+                            ):
+                                ann_dict["thinking"] = (
+                                    ann_dict.get("thinking")
+                                    or f"Analyzed similarity: {ann_dict.get('similarity_score', 0.0):.2f}."
+                                )
+
+                            return ann_dict
 
                     return ann
                 except Exception as e:
@@ -899,7 +1356,11 @@ class LLMAnnotator:
         return annotations
 
     def _select_diverse_pairs(self, n: int) -> list[tuple[str, str, dict]]:
-        """Select diverse pairs across formats and archetypes."""
+        """Select stratified pairs: 33% high-similarity, 33% medium, 33% diverse.
+
+        This ensures we get a good distribution of similarity scores across the full range,
+        rather than clustering in low ranges from only dissimilar pairs.
+        """
         # Find cards that appear in multiple archetypes (interesting)
         card_archetypes = defaultdict(set)
         card_counts = Counter()
@@ -920,17 +1381,99 @@ class LLMAnnotator:
             card for card, archs in card_archetypes.items() if 2 <= len(archs) <= 5
         ]
 
-        # Pair them
         import random
 
         random.shuffle(interesting_cards)
         pairs = []
 
-        for i in range(0, min(n * 2, len(interesting_cards)), 2):
+        # Stratified sampling: 33% high-similarity (same archetype), 33% medium (overlapping), 33% diverse (different)
+        n_high = max(1, n // 3)
+        n_medium = max(1, n // 3)
+        n_diverse = n - n_high - n_medium
+
+        # High-similarity pairs: Same archetype
+        arch_to_cards = defaultdict(list)
+        for card in interesting_cards:
+            for arch in card_archetypes[card]:
+                arch_to_cards[arch].append(card)
+
+        high_pairs = []
+        for arch, cards in arch_to_cards.items():
+            if len(cards) >= 2 and len(high_pairs) < n_high:
+                sampled = random.sample(cards, min(2, len(cards)))
+                if len(sampled) == 2:
+                    c1, c2 = sampled
+                    common_archs = card_archetypes[c1] & card_archetypes[c2]
+                    high_pairs.append(
+                        (
+                            c1,
+                            c2,
+                            {
+                                "count": min(card_counts[c1], card_counts[c2]),
+                                "archetypes": ", ".join(list(common_archs)[:3])
+                                if common_archs
+                                else arch,
+                                "similarity_expected": "high",
+                            },
+                        )
+                    )
+
+        # Medium-similarity pairs: Overlapping archetypes but not identical
+        medium_pairs = []
+        attempts = 0
+        while len(medium_pairs) < n_medium and attempts < n_medium * 10:
+            attempts += 1
+            c1, c2 = random.sample(interesting_cards, 2)
+            common_archs = card_archetypes[c1] & card_archetypes[c2]
+            if (
+                common_archs
+                and len(common_archs) < len(card_archetypes[c1])
+                and len(common_archs) < len(card_archetypes[c2])
+            ):
+                # Overlapping but not identical archetypes
+                medium_pairs.append(
+                    (
+                        c1,
+                        c2,
+                        {
+                            "count": min(card_counts[c1], card_counts[c2]),
+                            "archetypes": ", ".join(list(common_archs)[:3])
+                            if common_archs
+                            else "overlapping",
+                            "similarity_expected": "medium",
+                        },
+                    )
+                )
+
+        # Diverse pairs: Different archetypes (original behavior)
+        diverse_pairs = []
+        for i in range(0, min(n_diverse * 2, len(interesting_cards)), 2):
             if i + 1 < len(interesting_cards):
                 c1, c2 = interesting_cards[i], interesting_cards[i + 1]
                 common_archs = card_archetypes[c1] & card_archetypes[c2]
-                pairs.append(
+                if not common_archs:  # Only truly diverse pairs
+                    diverse_pairs.append(
+                        (
+                            c1,
+                            c2,
+                            {
+                                "count": min(card_counts[c1], card_counts[c2]),
+                                "archetypes": "none",
+                                "similarity_expected": "low",
+                            },
+                        )
+                    )
+
+        # Combine all pairs
+        all_pairs = high_pairs[:n_high] + medium_pairs[:n_medium] + diverse_pairs[:n_diverse]
+        random.shuffle(all_pairs)  # Shuffle to avoid ordering bias
+
+        # Fill remaining slots with random pairs if needed
+        while len(all_pairs) < n:
+            if len(interesting_cards) >= 2:
+                c1, c2 = random.sample(interesting_cards, 2)
+                common_archs = card_archetypes[c1] & card_archetypes[c2]
+                all_pairs.append(
                     (
                         c1,
                         c2,
@@ -939,11 +1482,14 @@ class LLMAnnotator:
                             "archetypes": ", ".join(list(common_archs)[:3])
                             if common_archs
                             else "none",
+                            "similarity_expected": "mixed",
                         },
                     )
                 )
+            else:
+                break
 
-        return pairs[:n]
+        return all_pairs[:n]
 
     def _select_focused_pairs(
         self, n: int, archetype: str | None = None

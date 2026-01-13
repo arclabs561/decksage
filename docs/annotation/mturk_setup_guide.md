@@ -164,4 +164,3 @@ python scripts/annotation/submit_human_annotations.py retrieve \
 - MTurk Pricing: https://www.mturk.com/pricing
 - MTurk Developer Guide: https://docs.aws.amazon.com/AWSMechTurk/latest/AWSMturkAPI/Welcome.html
 - Requester Sandbox: https://requestersandbox.mturk.com
-

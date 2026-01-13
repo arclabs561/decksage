@@ -20,9 +20,9 @@ TEST_CARDS = {
 
 # Timeout Values (in seconds)
 TIMEOUTS = {
-    "fast": 2,      # Health checks, simple requests
-    "normal": 5,    # Standard API requests
-    "slow": 10,     # Complex operations
+    "fast": 2,  # Health checks, simple requests
+    "normal": 5,  # Standard API requests
+    "slow": 10,  # Complex operations
     "very_slow": 30,  # Fusion search, deck completion
     "extreme": 60,  # Very slow operations
 }
@@ -65,4 +65,3 @@ RESULT_SIZES = {
     "medium": 50,
     "large": 100,
 }
-

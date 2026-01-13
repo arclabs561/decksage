@@ -14,7 +14,7 @@ The cursor rules in `.cursor/rules/annotations.mdc` should be updated with learn
 
 **Always use annotation_utils conversion functions for core processing:**
 
-- `convert_relevance_to_similarity_score(relevance, scale="0-4")` 
+- `convert_relevance_to_similarity_score(relevance, scale="0-4")`
   - Uses non-linear mapping: `{4:0.95, 3:0.75, 2:0.55, 1:0.35, 0:0.1}`
 - `convert_similarity_score_to_relevance(similarity_score, scale="0-4")`
   - Reverse mapping with thresholds: >=0.9→4, >=0.7→3, >=0.5→2, >=0.3→1, else→0

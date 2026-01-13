@@ -18,10 +18,10 @@ Review and Test All Annotation Services
 """
 
 import argparse
-import json
 import os
 import sys
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -41,20 +41,16 @@ from src.ml.annotation.human_annotation_services import (
     AnnotationTask,
     get_annotation_service,
 )
-from src.ml.annotation.human_annotation_queue import (
-    AnnotationPriority,
-    HumanAnnotationQueue,
-)
 from src.ml.utils.paths import PATHS
 
 
 def review_task_definition() -> dict:
     """Review and improve task definition."""
-    print("="*70)
+    print("=" * 70)
     print("Task Definition Review")
-    print("="*70)
+    print("=" * 70)
     print()
-    
+
     # Current task definition
     current_instructions = """
 Rate the similarity between these two {game} cards:
@@ -74,12 +70,12 @@ Provide:
 3. Can Card 2 substitute for Card 1? (yes/no)
 4. Reasoning (why this score?)
 """
-    
+
     print("Current Instructions:")
     print("-" * 70)
     print(current_instructions)
     print()
-    
+
     # Improved version with examples and clearer guidelines
     improved_instructions = """
 CARD SIMILARITY ANNOTATION TASK
@@ -94,19 +90,19 @@ SCORING GUIDELINES (0.0 - 1.0):
 
 0.9 - 1.0: Nearly identical (direct substitutes, same function)
   Example: "Lightning Bolt" vs "Shock" (both deal 3 damage)
-  
+
 0.7 - 0.8: Very similar (same role, minor differences)
   Example: "Counterspell" vs "Mana Leak" (both counter spells)
-  
+
 0.5 - 0.6: Moderately similar (related function, same archetype)
   Example: "Lightning Bolt" vs "Lava Spike" (both burn spells)
-  
+
 0.3 - 0.4: Somewhat similar (loose connection, shared theme)
   Example: "Lightning Bolt" vs "Bolt of Keranos" (both red damage)
-  
+
 0.1 - 0.2: Marginally similar (minimal connection)
   Example: "Lightning Bolt" vs "Shocklands" (both red, different purpose)
-  
+
 0.0 - 0.1: Unrelated (different function, color, archetype)
   Example: "Lightning Bolt" vs "Plains" (completely different)
 
@@ -132,36 +128,36 @@ IMPORTANT:
 - Use the full range: Don't cluster scores at 0.0 or 1.0
 - Consider context: Some cards are similar in specific decks only
 """
-    
+
     print("Improved Instructions (with examples):")
     print("-" * 70)
     print(improved_instructions)
     print()
-    
+
     # Assessment
     issues = []
     improvements = []
-    
+
     issues.append("❌ Missing score examples (annotators may not know what 0.5 means)")
     issues.append("❌ No clear substitution criteria")
     issues.append("❌ Vague similarity type definitions")
-    
+
     improvements.append("✅ Added score range examples (0.0-1.0 with card examples)")
     improvements.append("✅ Added clear substitution criteria")
     improvements.append("✅ Added detailed similarity type definitions")
     improvements.append("✅ Added reasoning requirements")
     improvements.append("✅ Added consistency guidelines")
-    
+
     print("Issues Found:")
     for issue in issues:
         print(f"  {issue}")
     print()
-    
+
     print("Improvements Made:")
     for improvement in improvements:
         print(f"  {improvement}")
     print()
-    
+
     return {
         "current": current_instructions,
         "improved": improved_instructions,
@@ -172,11 +168,11 @@ IMPORTANT:
 
 def explain_custom_service():
     """Explain what custom service is."""
-    print("="*70)
+    print("=" * 70)
     print("Custom Annotation Service Explanation")
-    print("="*70)
+    print("=" * 70)
     print()
-    
+
     print("What is 'Custom' Service?")
     print("-" * 70)
     print()
@@ -197,7 +193,7 @@ def explain_custom_service():
     print("Storage:")
     custom_dir = PATHS.experiments / "annotations" / "human_tasks"
     print(f"  Directory: {custom_dir}")
-    print(f"  Format: JSON files (one per task)")
+    print("  Format: JSON files (one per task)")
     print(f"  Example: {custom_dir}/task_001.json")
     print()
     print("Use cases:")
@@ -210,46 +206,46 @@ def explain_custom_service():
 
 def show_annotation_storage():
     """Show where annotations are stored."""
-    print("="*70)
+    print("=" * 70)
     print("Annotation Storage Locations")
-    print("="*70)
+    print("=" * 70)
     print()
-    
+
     # Queue storage
     queue_file = PATHS.experiments / "annotations" / "human_annotation_queue.jsonl"
     print("1. Human Annotation Queue:")
     print(f"   Location: {queue_file}")
-    print(f"   Format: JSONL (one task per line)")
-    print(f"   Contains: All queued tasks (pending, submitted, completed)")
+    print("   Format: JSONL (one task per line)")
+    print("   Contains: All queued tasks (pending, submitted, completed)")
     print(f"   Status: {'✓ Exists' if queue_file.exists() else '✗ Not created yet'}")
     print()
-    
+
     # Custom task storage
     custom_dir = PATHS.experiments / "annotations" / "human_tasks"
     print("2. Custom Annotation Tasks:")
     print(f"   Location: {custom_dir}")
-    print(f"   Format: JSON files (one per task)")
-    print(f"   Contains: Tasks for internal annotation")
+    print("   Format: JSON files (one per task)")
+    print("   Contains: Tasks for internal annotation")
     print(f"   Status: {'✓ Exists' if custom_dir.exists() else '✗ Not created yet'}")
     if custom_dir.exists():
         task_files = list(custom_dir.glob("*.json"))
         print(f"   Files: {len(task_files)} task files")
     print()
-    
+
     # Final annotations (after retrieval)
     annotations_dir = PATHS.experiments / "annotations"
     print("3. Final Human Annotations:")
     print(f"   Location: {annotations_dir}/human_annotations_*.jsonl")
-    print(f"   Format: JSONL (one annotation per line)")
-    print(f"   Contains: Completed human annotations from all services")
-    print(f"   Status: Created when annotations are retrieved")
+    print("   Format: JSONL (one annotation per line)")
+    print("   Contains: Completed human annotations from all services")
+    print("   Status: Created when annotations are retrieved")
     print()
-    
+
     # Integration with main annotation system
     main_annotations = project_root / "annotations"
     print("4. Main Annotation Directory:")
     print(f"   Location: {main_annotations}")
-    print(f"   Contains: All annotation sources (LLM, human, etc.)")
+    print("   Contains: All annotation sources (LLM, human, etc.)")
     print(f"   Status: {'✓ Exists' if main_annotations.exists() else '✗ Not created yet'}")
     print()
 
@@ -260,23 +256,23 @@ def submit_test_tasks(
     num_tasks: int = 1,
 ) -> dict:
     """Submit test tasks to services for comparison."""
-    print("="*70)
+    print("=" * 70)
     print("Submitting Test Tasks")
-    print("="*70)
+    print("=" * 70)
     print()
-    
+
     # Create test tasks
     test_pairs = [
         ("Lightning Bolt", "Shock", "magic", "High similarity - both deal 3 damage"),
         ("Counterspell", "Mana Leak", "magic", "High similarity - both counter spells"),
         ("Black Lotus", "Mox Pearl", "magic", "Medium similarity - both fast mana"),
     ][:num_tasks]
-    
+
     results = {
         "mturk": {"submitted": [], "failed": []},
         "scale": {"submitted": [], "failed": []},
     }
-    
+
     improved_instructions = """
 CARD SIMILARITY ANNOTATION TASK
 
@@ -305,14 +301,14 @@ SUBSTITUTION: Can Card 2 replace Card 1? (yes/no)
 
 REASONING: 2-3 sentences explaining your score
 """
-    
+
     # Submit to MTurk
     if submit_mturk:
         print("Submitting to MTurk...")
         print("-" * 70)
         try:
             mturk_service = get_annotation_service("mturk")
-            
+
             for card1, card2, game, reason in test_pairs:
                 try:
                     task = AnnotationTask(
@@ -325,33 +321,37 @@ REASONING: 2-3 sentences explaining your score
                         ),
                         context={"reason": reason},
                     )
-                    
+
                     external_id = mturk_service.submit_task(task)
-                    results["mturk"]["submitted"].append({
-                        "card1": card1,
-                        "card2": card2,
-                        "external_id": external_id,
-                    })
+                    results["mturk"]["submitted"].append(
+                        {
+                            "card1": card1,
+                            "card2": card2,
+                            "external_id": external_id,
+                        }
+                    )
                     print(f"  ✓ Submitted: {card1} vs {card2} (HIT: {external_id})")
-                    
+
                 except Exception as e:
-                    results["mturk"]["failed"].append({
-                        "card1": card1,
-                        "card2": card2,
-                        "error": str(e),
-                    })
+                    results["mturk"]["failed"].append(
+                        {
+                            "card1": card1,
+                            "card2": card2,
+                            "error": str(e),
+                        }
+                    )
                     print(f"  ✗ Failed: {card1} vs {card2} - {e}")
         except Exception as e:
             print(f"  ✗ MTurk service error: {e}")
         print()
-    
+
     # Submit to Scale AI
     if submit_scale:
         print("Submitting to Scale AI...")
         print("-" * 70)
         try:
             scale_service = get_annotation_service("scale")
-            
+
             for card1, card2, game, reason in test_pairs:
                 try:
                     task = AnnotationTask(
@@ -364,26 +364,30 @@ REASONING: 2-3 sentences explaining your score
                         ),
                         context={"reason": reason},
                     )
-                    
+
                     external_id = scale_service.submit_task(task)
-                    results["scale"]["submitted"].append({
-                        "card1": card1,
-                        "card2": card2,
-                        "external_id": external_id,
-                    })
+                    results["scale"]["submitted"].append(
+                        {
+                            "card1": card1,
+                            "card2": card2,
+                            "external_id": external_id,
+                        }
+                    )
                     print(f"  ✓ Submitted: {card1} vs {card2} (Task: {external_id})")
-                    
+
                 except Exception as e:
-                    results["scale"]["failed"].append({
-                        "card1": card1,
-                        "card2": card2,
-                        "error": str(e),
-                    })
+                    results["scale"]["failed"].append(
+                        {
+                            "card1": card1,
+                            "card2": card2,
+                            "error": str(e),
+                        }
+                    )
                     print(f"  ✗ Failed: {card1} vs {card2} - {e}")
         except Exception as e:
             print(f"  ✗ Scale AI service error: {e}")
         print()
-    
+
     return results
 
 
@@ -448,16 +452,25 @@ def main():
             num_tasks=args.num_tasks,
         )
 
-    if not any([args.review, args.explain_custom, args.show_storage, args.submit_mturk, args.submit_scale, args.all]):
+    if not any(
+        [
+            args.review,
+            args.explain_custom,
+            args.show_storage,
+            args.submit_mturk,
+            args.submit_scale,
+            args.all,
+        ]
+    ):
         # Default: do everything except submit
         review_task_definition()
         explain_custom_service()
         show_annotation_storage()
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("To submit test tasks:")
         print("  python scripts/annotation/review_and_test_services.py \\")
         print("      --submit-mturk --submit-scale --num-tasks 1")
-        print("="*70)
+        print("=" * 70)
 
     return 0
 
@@ -465,4 +478,3 @@ def main():
 if __name__ == "__main__":
     exit_code = main()
     sys.exit(exit_code)
-

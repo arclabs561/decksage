@@ -8,7 +8,7 @@ Based on latest research (2024-2025) on active learning, multi-annotator systems
 
 ### Improvements
 
-1. **Combined Scoring**: 
+1. **Combined Scoring**:
    - Uncertainty (70%) + Informativeness (30%)
    - Informativeness includes: edge cases, rare relationships, diversity
 
@@ -129,4 +129,3 @@ Based on latest research (2024-2025) on active learning, multi-annotator systems
 - CROWDLAB: Weighted consensus algorithm
 - Diversity sampling: Exploration/exploitation balance
 - Hard mining: +5-10% MRR improvement
-

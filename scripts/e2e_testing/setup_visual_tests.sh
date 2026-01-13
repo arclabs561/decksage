@@ -37,4 +37,3 @@ echo "  python3 scripts/e2e_testing/test_visual_ai.py"
 echo ""
 echo "Or directly:"
 echo "  npx @arclabs561/ai-visual-test test --config scripts/e2e_testing/tests/visual/config.json"
-

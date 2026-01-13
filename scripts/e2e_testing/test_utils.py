@@ -11,47 +11,49 @@ Shared utilities for E2E tests:
 - Playwright routing setup
 """
 
+import http.server
 import logging
 import os
-import sys
-import time
-import threading
-import http.server
 import socketserver
+import threading
+import time
+from collections.abc import Callable
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 import requests
+
 
 # Load environment variables from .env files
 # Try multiple locations: current dir, parent dirs, and common locations
 try:
-    from dotenv import load_dotenv
     from pathlib import Path
-    
+
+    from dotenv import load_dotenv
+
     # Try loading from multiple locations
     project_root = Path(__file__).parent.parent.parent
     env_locations = [
-        project_root / ".env",                    # Project root
+        project_root / ".env",  # Project root
         project_root / "scripts" / "e2e_testing" / ".env",  # Test dir
-        Path.cwd() / ".env",                      # Current working directory
-        Path.home() / ".decksage.env",            # Home directory
+        Path.cwd() / ".env",  # Current working directory
+        Path.home() / ".decksage.env",  # Home directory
     ]
-    
+
     # Also check parent repos (for VLM API keys)
     parent_dirs = [
         project_root.parent / "ai-visual-test" / ".env",
         project_root.parent / "developer" / ".env",
     ]
     env_locations.extend(parent_dirs)
-    
+
     # Load all found .env files
     loaded = False
     for env_path in env_locations:
         if env_path.exists():
             load_dotenv(env_path, override=False)  # Don't override existing vars
             loaded = True
-    
+
     # If no .env found, try default load_dotenv() which searches current dir
     if not loaded:
         load_dotenv(override=False)
@@ -61,6 +63,7 @@ except ImportError:
 except Exception as e:
     # Log but don't fail if .env loading has issues
     import logging
+
     logging.getLogger(__name__).debug(f"Note: Could not load some .env files: {e}")
 
 # Configuration from .env
@@ -69,8 +72,7 @@ UI_URL = os.getenv("UI_URL", "http://localhost:8000")
 
 # Setup logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -83,40 +85,41 @@ _http_server_thread = None
 def start_http_server(port=8765):
     """Start a simple HTTP server to serve HTML files."""
     global _http_server, _http_server_port, _http_server_thread
-    
+
     if _http_server is not None:
         return _http_server_port
-    
+
     project_root = Path(__file__).parent.parent.parent
-    
+
     class Handler(http.server.SimpleHTTPRequestHandler):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, directory=str(project_root), **kwargs)
-        
+
         def log_message(self, format, *args):
             # Suppress HTTP server logs
             pass
-    
+
     for attempt in range(10):
         try:
             server = socketserver.TCPServer(("", port), Handler)
             server.allow_reuse_address = True
             _http_server = server
             _http_server_port = port
-            
+
             def run_server():
                 server.serve_forever()
-            
+
             _http_server_thread = threading.Thread(target=run_server, daemon=True)
             _http_server_thread.start()
-            
+
             # Wait for server to be ready
             import socket
+
             for check_attempt in range(20):
                 try:
                     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                     sock.settimeout(0.1)
-                    result = sock.connect_ex(('localhost', port))
+                    result = sock.connect_ex(("localhost", port))
                     sock.close()
                     if result == 0:
                         logger.info(f"Started HTTP server on port {port}")
@@ -124,13 +127,13 @@ def start_http_server(port=8765):
                 except:
                     pass
                 time.sleep(0.1)
-            
+
             return port
         except OSError:
             port += 1
             continue
-    
-    raise RuntimeError(f"Could not start HTTP server after trying 10 ports starting from 8765")
+
+    raise RuntimeError("Could not start HTTP server after trying 10 ports starting from 8765")
 
 
 def get_http_server_port():
@@ -145,7 +148,7 @@ def get_ui_url():
     default_ui = os.getenv("UI_URL", "")
     if default_ui and default_ui.startswith("http") and "localhost" not in default_ui:
         return default_ui
-    
+
     # Use HTTP server for local files
     port = get_http_server_port()
     return f"http://localhost:{port}/test_search.html"
@@ -156,7 +159,7 @@ def get_review_url():
     default_review = os.getenv("REVIEW_URL", "")
     if default_review and default_review.startswith("http") and "localhost" not in default_review:
         return default_review
-    
+
     # Use HTTP server
     port = get_http_server_port()
     return f"http://localhost:{port}/review_similarities.html"
@@ -166,47 +169,45 @@ def setup_playwright_routing(context, api_base=None):
     """Set up Playwright route handler for API calls."""
     if api_base is None:
         api_base = API_BASE
-    
+
     def handle_route(route):
         url = route.request.url
         request = route.request
-        
+
         needs_routing = (
-            ('/v1/' in url or '/similar' in url or '/search' in url or '/cards' in url)
+            ("/v1/" in url or "/similar" in url or "/search" in url or "/cards" in url)
             and not url.startswith(api_base)
-            and ('localhost:876' in url or 'localhost:877' in url or 'localhost:878' in url)
+            and ("localhost:876" in url or "localhost:877" in url or "localhost:878" in url)
         )
-        
+
         if needs_routing:
             try:
                 from urllib.parse import urlparse
+
                 parsed = urlparse(url)
                 path = parsed.path
                 query = parsed.query
-                
-                if path.startswith('/v1/'):
+
+                if path.startswith("/v1/"):
                     new_url = f"{api_base}{path}"
-                elif path == '/similar' or path.startswith('/similar'):
+                elif path == "/similar" or path.startswith("/similar"):
                     new_url = f"{api_base}/v1/similar"
-                elif path.startswith('/search'):
+                elif path.startswith("/search"):
                     new_url = f"{api_base}/v1/search"
-                elif path.startswith('/cards'):
+                elif path.startswith("/cards"):
                     new_url = f"{api_base}/v1/cards"
                 else:
                     new_url = f"{api_base}{path}"
-                
+
                 if query:
                     new_url += f"?{query}"
-                
+
                 headers = dict(request.headers)
-                if request.method == "POST" and "content-type" not in [h.lower() for h in headers.keys()]:
+                if request.method == "POST" and "content-type" not in [h.lower() for h in headers]:
                     headers["Content-Type"] = "application/json"
-                
+
                 route.continue_(
-                    url=new_url,
-                    method=request.method,
-                    headers=headers,
-                    post_data=request.post_data
+                    url=new_url, method=request.method, headers=headers, post_data=request.post_data
                 )
             except:
                 route.continue_()
@@ -214,14 +215,14 @@ def setup_playwright_routing(context, api_base=None):
             route.continue_()
         else:
             route.continue_()
-    
+
     # Route API requests
     for port in range(8765, 8770):
         context.route(f"http://localhost:{port}/v1/**", handle_route)
     context.route("**/v1/similar**", handle_route)
     context.route("**/v1/search**", handle_route)
     context.route("**/v1/cards**", handle_route)
-    
+
     return handle_route
 
 
@@ -229,7 +230,7 @@ def inject_api_base(page, api_base=None):
     """Inject API_BASE override into page."""
     if api_base is None:
         api_base = API_BASE
-    
+
     page.add_init_script(f"""
         (function() {{
             const apiBase = '{api_base}';
@@ -249,7 +250,7 @@ def wait_for_api(max_retries: int = 30, timeout: int = 2, verbose: bool = True) 
     """Wait for API to be ready."""
     if verbose:
         logger.info("Testing API readiness...")
-    
+
     # Try /health first, then /ready
     for i in range(max_retries):
         try:
@@ -282,7 +283,7 @@ def wait_for_api(max_retries: int = 30, timeout: int = 2, verbose: bool = True) 
             pass
         if i < max_retries - 1:
             time.sleep(1)
-    
+
     if verbose:
         logger.error(f"❌ API not ready after {max_retries}s")
     return False
@@ -298,7 +299,7 @@ def retry_with_backoff(
     """Retry a function with exponential backoff."""
     delay = initial_delay
     last_exception = None
-    
+
     for attempt in range(max_retries):
         try:
             return func()
@@ -310,7 +311,7 @@ def retry_with_backoff(
                 delay *= backoff_factor
             else:
                 logger.error(f"All {max_retries} retries failed: {e}")
-    
+
     raise last_exception
 
 
@@ -329,16 +330,16 @@ def validate_cards_response(data: dict[str, Any]) -> bool:
 def generate_test_queries() -> list[str]:
     """Generate test queries for various scenarios."""
     from .test_constants import TEST_CARDS, TEST_PREFIXES
-    
+
     return [
-        TEST_CARDS["common"],   # Common card
+        TEST_CARDS["common"],  # Common card
         TEST_CARDS["instant"],  # Common card
         TEST_CARDS["sorcery"],  # Common card
-        *TEST_PREFIXES,         # Prefixes
-        "damage",               # Text search
-        "instant",              # Type search
-        "",                     # Empty
-        "zzzzzzzzzz",           # No results
+        *TEST_PREFIXES,  # Prefixes
+        "damage",  # Text search
+        "instant",  # Type search
+        "",  # Empty
+        "zzzzzzzzzz",  # No results
     ]
 
 
@@ -363,19 +364,19 @@ def wait_for_element_condition(
 ) -> bool:
     """
     Wait for an element to meet a condition with retry logic.
-    
+
     Args:
         page: Playwright page object
         locator: Element locator
         condition: Condition to wait for ("visible", "hidden", "enabled", "disabled")
         timeout: Maximum time to wait in milliseconds
         retry_interval: Time between retries in seconds
-    
+
     Returns:
         True if condition met, False otherwise
     """
     from playwright.sync_api import expect
-    
+
     try:
         if condition == "visible":
             expect(locator).to_be_visible(timeout=timeout)
@@ -406,13 +407,13 @@ def wait_for_network_idle(page, timeout: int = 30000) -> bool:
 def safe_click(page, locator, timeout: int = 5000, retries: int = 3) -> bool:
     """
     Safely click an element with retry logic.
-    
+
     Args:
         page: Playwright page object
         locator: Element locator
         timeout: Timeout for each attempt
         retries: Number of retry attempts
-    
+
     Returns:
         True if click succeeded, False otherwise
     """
@@ -436,14 +437,14 @@ def safe_click(page, locator, timeout: int = 5000, retries: int = 3) -> bool:
 def safe_type(page, locator, text: str, timeout: int = 5000, clear_first: bool = True) -> bool:
     """
     Safely type text into an element with retry logic.
-    
+
     Args:
         page: Playwright page object
         locator: Element locator
         text: Text to type
         timeout: Timeout for each attempt
         clear_first: Whether to clear the field first
-    
+
     Returns:
         True if typing succeeded, False otherwise
     """
@@ -462,25 +463,25 @@ def safe_type(page, locator, text: str, timeout: int = 5000, clear_first: bool =
 def wait_for_similarities_loaded(page, timeout: int = 15000) -> bool:
     """
     Wait for similarities to be loaded on the review page.
-    
+
     Args:
         page: Playwright page object
         timeout: Maximum time to wait in milliseconds
-    
+
     Returns:
         True if similarities loaded, False otherwise
     """
     from playwright.sync_api import expect
-    
+
     try:
         # Wait for loading to disappear
         loading = page.locator("#loadingContainer")
         expect(loading).to_be_hidden(timeout=timeout)
-        
+
         # Wait for either similarities or empty state
         similarity_items = page.locator(".similarity-item")
         empty_state = page.locator("#emptyState")
-        
+
         # Check if similarities appeared or empty state is shown
         try:
             expect(similarity_items.first).to_be_visible(timeout=2000)

@@ -10,7 +10,8 @@ Tests additional invariants beyond test_patch_properties.py:
 
 from __future__ import annotations
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from ..deck_building.deck_patch import DeckPatch, DeckPatchOp, DeckPatchResult, apply_deck_patch
 
@@ -83,7 +84,9 @@ class TestDeckPatchExtendedProperties:
                             st.lists(
                                 st.dictionaries(
                                     keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(st.text(), st.integers(min_value=0, max_value=4)),
+                                    values=st.one_of(
+                                        st.text(), st.integers(min_value=0, max_value=4)
+                                    ),
                                 ),
                                 min_size=0,
                                 max_size=5,
@@ -157,12 +160,11 @@ class TestDeckPatchExtendedProperties:
             result = apply_deck_patch("magic", deck, patch)
             # Should not crash, may or may not be valid
             assert isinstance(result, DeckPatchResult)
-        except (KeyError, TypeError, AttributeError) as e:
+        except (KeyError, TypeError, AttributeError):
             # These are expected for malformed deck structures
             # The test is about safety, not correctness
             pass
-        except Exception as e:
+        except Exception:
             # Other exceptions should be validation-related
             # (some validation errors are expected)
             pass
-

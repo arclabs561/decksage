@@ -19,25 +19,27 @@ Requires:
 import json
 import os
 import subprocess
-import sys
 import time
 from pathlib import Path
 
 import requests
+
 
 # Import shared utilities (dotenv is loaded automatically by test_utils)
 
 # Use Playwright for browser automation
 try:
     from playwright.sync_api import sync_playwright
+
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
     logger.warning("⚠️  Playwright not installed. Install with: uv add playwright")
 
 # Import shared utilities and constants
-from test_utils import wait_for_api, logger, API_BASE
-from test_constants import TEST_CARDS, TIMEOUTS
+from test_constants import TIMEOUTS
+from test_utils import API_BASE, logger
+
 
 # Configuration from .env
 # API_BASE imported from test_utils
@@ -71,7 +73,7 @@ def install_ai_visual_test() -> bool:
     try:
         # Check if npm is available
         subprocess.run(["npm", "--version"], check=True, capture_output=True)
-        
+
         # Try local installation first (in scripts/e2e_testing)
         package_json = Path(__file__).parent / "package.json"
         if package_json.exists():
@@ -85,7 +87,7 @@ def install_ai_visual_test() -> bool:
             if result.returncode == 0:
                 logger.info("✅ Installed @arclabs561/ai-visual-test (local)")
                 return True
-        
+
         # Fallback to global installation
         result = subprocess.run(
             ["npm", "install", "-g", "@arclabs561/ai-visual-test"],
@@ -127,27 +129,27 @@ def test_api_readiness():
 def test_visual_layout():
     """Test visual layout using AI visual test with Playwright."""
     logger.info("\n🔍 Testing visual layout...")
-    
+
     if not check_ai_visual_test_installed():
         logger.warning("⚠️  @arclabs561/ai-visual-test not installed")
         logger.info("  💡 Install with: npm install -g @arclabs561/ai-visual-test")
         logger.info("  💡 Or run: ./scripts/e2e_testing/setup_visual_tests.sh")
         return None
-    
+
     # Use Playwright to take screenshots, then validate with AI
     try:
         from playwright.sync_api import sync_playwright
-        
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
             page.wait_for_load_state("networkidle")
-            
+
             # Test 1: Search interface layout
             screenshot_path = Path("/tmp/search_interface.png")
             page.screenshot(path=str(screenshot_path), full_page=True)
-            
+
             # Validate screenshot using AI visual test
             # Create a Node.js script to use the package
             node_script = Path("/tmp/validate_screenshot.mjs")
@@ -159,18 +161,18 @@ def test_visual_layout():
             4. Are there any layout shifts or overlapping elements?
             5. Is the overall layout clean and minimal (Google-like)?
             """
-            
+
             with open(node_script, "w") as f:
                 f.write(f"""
                 import {{ validateScreenshot }} from '@arclabs561/ai-visual-test';
-                
+
                 const result = await validateScreenshot(
                     '{screenshot_path}',
                     `{validation_prompt}`
                 );
                 console.log(JSON.stringify(result));
                 """)
-            
+
             result = subprocess.run(
                 ["node", str(node_script)],
                 cwd=str(Path(__file__).parent),
@@ -178,29 +180,29 @@ def test_visual_layout():
                 text=True,
                 timeout=TIMEOUTS["extreme"],
             )
-            
+
             # Cleanup
             if node_script.exists():
                 node_script.unlink()
-            
+
             if result.returncode == 0:
                 try:
                     validation_result = json.loads(result.stdout)
                     score = validation_result.get("score", 0)
                     issues = validation_result.get("issues", [])
-                    
+
                     logger.info(f"✅ Search interface layout score: {score}/10")
                     if issues:
                         logger.warning(f"⚠️  Issues: {', '.join(issues[:3])}")
-                    
+
                     # Test 2: Autocomplete dropdown
                     search_input = page.locator("#cardInput")
                     search_input.type("Light", delay=50)
                     page.wait_for_timeout(300)
-                    
+
                     autocomplete_path = Path("/tmp/autocomplete.png")
                     page.screenshot(path=str(autocomplete_path), full_page=True)
-                    
+
                     autocomplete_prompt = """
                     Evaluate this autocomplete dropdown:
                     1. Does the dropdown appear below the input?
@@ -208,18 +210,24 @@ def test_visual_layout():
                     3. Is matching text highlighted?
                     4. Does the dropdown not overlap other elements?
                     """
-                    
+
                     node_script2 = Path("/tmp/validate_autocomplete.mjs")
-                    provider = "gemini" if os.getenv("GEMINI_API_KEY") else "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
+                    provider = (
+                        "gemini"
+                        if os.getenv("GEMINI_API_KEY")
+                        else "openai"
+                        if os.getenv("OPENAI_API_KEY")
+                        else "anthropic"
+                    )
                     with open(node_script2, "w") as f:
                         f.write(f"""
                         import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
-                        
+
                         const config = createConfig({{
                             provider: '{provider}',
                             apiKey: '{vlm_key}'
                         }});
-                        
+
                         const result = await validateScreenshot(
                             '{autocomplete_path}',
                             `{autocomplete_prompt}`,
@@ -227,7 +235,7 @@ def test_visual_layout():
                         );
                         console.log(JSON.stringify(result));
                         """)
-                    
+
                     result2 = subprocess.run(
                         ["node", str(node_script2)],
                         cwd=str(Path(__file__).parent),
@@ -235,15 +243,15 @@ def test_visual_layout():
                         text=True,
                         timeout=TIMEOUTS["extreme"],
                     )
-                    
+
                     if node_script2.exists():
                         node_script2.unlink()
-                    
+
                     if result2.returncode == 0:
                         validation_result2 = json.loads(result2.stdout)
                         score2 = validation_result2.get("score", 0)
                         logger.info(f"✅ Autocomplete dropdown score: {score2}/10")
-                        
+
                         browser.close()
                         return score >= 7 and score2 >= 7
                     else:
@@ -269,23 +277,23 @@ def test_visual_layout():
 def test_visual_accessibility():
     """Test visual accessibility using AI visual test."""
     logger.info("\n🔍 Testing visual accessibility...")
-    
+
     if not check_ai_visual_test_installed():
         logger.warning("⚠️  @arclabs561/ai-visual-test not installed, skipping")
         return None
-    
+
     try:
         from playwright.sync_api import sync_playwright
-        
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
             page.wait_for_load_state("networkidle")
-            
+
             screenshot_path = Path("/tmp/accessibility_check.png")
             page.screenshot(path=str(screenshot_path), full_page=True)
-            
+
             accessibility_prompt = """
             Evaluate this interface for visual accessibility:
             1. Does text have sufficient contrast against background (WCAG AA)?
@@ -295,18 +303,24 @@ def test_visual_accessibility():
             5. Is there clear visual hierarchy?
             6. Are related elements grouped visually?
             """
-            
+
             node_script = Path("/tmp/validate_accessibility.mjs")
-            provider = "gemini" if os.getenv("GEMINI_API_KEY") else "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
+            provider = (
+                "gemini"
+                if os.getenv("GEMINI_API_KEY")
+                else "openai"
+                if os.getenv("OPENAI_API_KEY")
+                else "anthropic"
+            )
             with open(node_script, "w") as f:
                 f.write(f"""
                 import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
-                
+
                 const config = createConfig({{
                     provider: '{provider}',
                     apiKey: '{vlm_key}'
                 }});
-                
+
                 const result = await validateScreenshot(
                     '{screenshot_path}',
                     `{accessibility_prompt}`,
@@ -315,7 +329,7 @@ def test_visual_accessibility():
                 );
                 console.log(JSON.stringify(result));
                 """)
-            
+
             result = subprocess.run(
                 ["node", str(node_script)],
                 cwd=str(Path(__file__).parent),
@@ -323,24 +337,24 @@ def test_visual_accessibility():
                 text=True,
                 timeout=TIMEOUTS["extreme"],
             )
-            
+
             if node_script.exists():
                 node_script.unlink()
-            
+
             browser.close()
-            
+
             if result.returncode == 0:
                 try:
                     validation_result = json.loads(result.stdout)
                     score = validation_result.get("score", 0)
                     issues = validation_result.get("issues", [])
-                    
+
                     logger.info(f"✅ Visual accessibility score: {score}/10")
                     if issues:
                         logger.warning(f"⚠️  Issues found: {len(issues)}")
                         for issue in issues[:3]:
                             logger.info(f"     - {issue}")
-                    
+
                     return score >= 7
                 except json.JSONDecodeError:
                     logger.warning(f"⚠️  Could not parse result: {result.stdout}")
@@ -356,21 +370,28 @@ def test_visual_accessibility():
 def test_visual_regression():
     """Test for visual regressions using AI visual test."""
     logger.info("\n🔍 Testing visual regression...")
-    
+
     if not check_ai_visual_test_installed():
         logger.warning("⚠️  @arclabs561/ai-visual-test not installed, skipping")
         return None
-    
+
     # Take baseline screenshot if it doesn't exist
-    baseline_dir = Path(__file__).parent.parent.parent / "scripts" / "e2e_testing" / "tests" / "visual" / "baselines"
+    baseline_dir = (
+        Path(__file__).parent.parent.parent
+        / "scripts"
+        / "e2e_testing"
+        / "tests"
+        / "visual"
+        / "baselines"
+    )
     baseline_dir.mkdir(parents=True, exist_ok=True)
-    
+
     baseline_path = baseline_dir / "search_interface.png"
     current_path = Path("/tmp/current_search_interface.png")
-    
+
     try:
         from playwright.sync_api import sync_playwright
-        
+
         # Take current screenshot
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
@@ -379,7 +400,7 @@ def test_visual_regression():
             page.wait_for_load_state("networkidle")
             page.screenshot(path=str(current_path), full_page=True)
             browser.close()
-        
+
         if current_path.exists():
             # Compare with baseline if it exists
             if baseline_path.exists():
@@ -389,20 +410,26 @@ def test_visual_regression():
                 Are they functionally equivalent? Ignore minor spacing/color changes.
                 Focus on: layout structure, element positions, functionality.
                 """
-                
+
                 # For now, validate current screenshot and compare scores
                 # Full comparison would require both images, simplified here
                 node_script = Path("/tmp/validate_regression.mjs")
-                provider = "gemini" if os.getenv("GEMINI_API_KEY") else "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
+                provider = (
+                    "gemini"
+                    if os.getenv("GEMINI_API_KEY")
+                    else "openai"
+                    if os.getenv("OPENAI_API_KEY")
+                    else "anthropic"
+                )
                 with open(node_script, "w") as f:
                     f.write(f"""
                     import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
-                    
+
                     const config = createConfig({{
                         provider: '{provider}',
                         apiKey: '{vlm_key}'
                     }});
-                    
+
                     const result = await validateScreenshot(
                         '{current_path}',
                         'Verify this search interface matches the expected design and layout. Check for any visual regressions or layout issues.',
@@ -410,7 +437,7 @@ def test_visual_regression():
                     );
                     console.log(JSON.stringify(result));
                     """)
-                
+
                 result = subprocess.run(
                     ["node", str(node_script)],
                     cwd=str(Path(__file__).parent),
@@ -418,19 +445,20 @@ def test_visual_regression():
                     text=True,
                     timeout=TIMEOUTS["extreme"],
                 )
-                
+
                 if node_script.exists():
                     node_script.unlink()
-                
+
                 if result.returncode == 0:
                     try:
                         validation_result = json.loads(result.stdout)
                         score = validation_result.get("score", 0)
-                        
+
                         if score >= 8:  # High score = no regression
                             logger.info("✅ No visual regressions detected")
                             # Update baseline
                             import shutil
+
                             shutil.copy(current_path, baseline_path)
                             return True
                         else:
@@ -448,6 +476,7 @@ def test_visual_regression():
             else:
                 # Create baseline
                 import shutil
+
                 shutil.copy(current_path, baseline_path)
                 logger.info(f"✅ Created baseline: {baseline_path}")
                 return True
@@ -465,52 +494,58 @@ def test_visual_regression():
 def test_responsive_design():
     """Test responsive design at different viewport sizes."""
     logger.info("\n🔍 Testing responsive design...")
-    
+
     if not check_ai_visual_test_installed():
         logger.warning("⚠️  @arclabs561/ai-visual-test not installed, skipping")
         return None
-    
+
     viewports = [
         {"width": 375, "height": 667, "name": "mobile"},
         {"width": 768, "height": 1024, "name": "tablet"},
         {"width": 1920, "height": 1080, "name": "desktop"},
     ]
-    
+
     try:
         from playwright.sync_api import sync_playwright
-        
+
         passed = 0
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
-            
+
             for viewport in viewports:
                 page = browser.new_page(viewport=viewport)
                 page.goto(UI_URL)
                 page.wait_for_load_state("networkidle")
-                
+
                 screenshot_path = Path(f"/tmp/responsive_{viewport['name']}.png")
                 page.screenshot(path=str(screenshot_path), full_page=True)
-                
+
                 responsive_prompt = f"""
-                Evaluate this interface at {viewport['name']} size ({viewport['width']}x{viewport['height']}):
+                Evaluate this interface at {viewport["name"]} size ({viewport["width"]}x{viewport["height"]}):
                 1. Is there no horizontal scrolling?
                 2. Are elements properly sized for this viewport?
                 3. Is text readable?
                 4. Are interactive elements accessible?
                 5. Does the layout adapt well to this screen size?
                 """
-                
+
                 node_script = Path(f"/tmp/validate_responsive_{viewport['name']}.mjs")
-                provider = "gemini" if os.getenv("GEMINI_API_KEY") else "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
+                provider = (
+                    "gemini"
+                    if os.getenv("GEMINI_API_KEY")
+                    else "openai"
+                    if os.getenv("OPENAI_API_KEY")
+                    else "anthropic"
+                )
                 with open(node_script, "w") as f:
                     f.write(f"""
                     import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
-                    
+
                     const config = createConfig({{
                         provider: '{provider}',
                         apiKey: '{vlm_key}'
                     }});
-                    
+
                     const result = await validateScreenshot(
                         '{screenshot_path}',
                         `{responsive_prompt}`,
@@ -519,7 +554,7 @@ def test_responsive_design():
                     );
                     console.log(JSON.stringify(result));
                     """)
-                
+
                 result = subprocess.run(
                     ["node", str(node_script)],
                     cwd=str(Path(__file__).parent),
@@ -527,27 +562,29 @@ def test_responsive_design():
                     text=True,
                     timeout=TIMEOUTS["extreme"],
                 )
-                
+
                 if node_script.exists():
                     node_script.unlink()
-                
+
                 if result.returncode == 0:
                     try:
                         validation_result = json.loads(result.stdout)
                         score = validation_result.get("score", 0)
-                        
+
                         if score >= 7:
                             logger.info(f"✅ {viewport['name']} layout: OK (score: {score}/10)")
                             passed += 1
                         else:
-                            logger.warning(f"⚠️  {viewport['name']} layout: Issues (score: {score}/10)")
+                            logger.warning(
+                                f"⚠️  {viewport['name']} layout: Issues (score: {score}/10)"
+                            )
                     except json.JSONDecodeError:
                         logger.warning(f"⚠️  {viewport['name']}: Could not parse result")
-                
+
                 page.close()
-            
+
             browser.close()
-        
+
         logger.info(f"Result: {passed}/{len(viewports)} viewports passed")
         return passed == len(viewports)
     except Exception as e:
@@ -558,23 +595,23 @@ def test_responsive_design():
 def test_review_page_visual():
     """Test review page visual layout using AI visual test."""
     logger.info("\n🔍 Testing review page visual layout...")
-    
+
     if not check_ai_visual_test_installed():
         logger.warning("⚠️  @arclabs561/ai-visual-test not installed, skipping")
         return None
-    
+
     try:
         from playwright.sync_api import sync_playwright
-        
+
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(REVIEW_URL)
             page.wait_for_load_state("networkidle")
-            
+
             screenshot_path = Path("/tmp/review_page_visual.png")
             page.screenshot(path=str(screenshot_path), full_page=True)
-            
+
             review_prompt = """
             Evaluate this similarity review page:
             1. Is the layout clean and organized?
@@ -585,24 +622,36 @@ def test_review_page_visual():
             6. Is the progress/statistics display clear?
             7. Does the page have good visual hierarchy?
             """
-            
-            vlm_key = os.getenv("GEMINI_API_KEY") or os.getenv("OPENAI_API_KEY") or os.getenv("ANTHROPIC_API_KEY")
+
+            vlm_key = (
+                os.getenv("GEMINI_API_KEY")
+                or os.getenv("OPENAI_API_KEY")
+                or os.getenv("ANTHROPIC_API_KEY")
+            )
             if not vlm_key:
-                logger.warning("⚠️  No VLM API key found (GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)")
+                logger.warning(
+                    "⚠️  No VLM API key found (GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)"
+                )
                 browser.close()
                 return None
-            
+
             node_script = Path("/tmp/validate_review_page.mjs")
-            provider = "gemini" if os.getenv("GEMINI_API_KEY") else "openai" if os.getenv("OPENAI_API_KEY") else "anthropic"
+            provider = (
+                "gemini"
+                if os.getenv("GEMINI_API_KEY")
+                else "openai"
+                if os.getenv("OPENAI_API_KEY")
+                else "anthropic"
+            )
             with open(node_script, "w") as f:
                 f.write(f"""
                 import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
-                
+
                 const config = createConfig({{
                     provider: '{provider}',
                     apiKey: '{vlm_key}'
                 }});
-                
+
                 const result = await validateScreenshot(
                     '{screenshot_path}',
                     `{review_prompt}`,
@@ -610,7 +659,7 @@ def test_review_page_visual():
                 );
                 console.log(JSON.stringify(result));
                 """)
-            
+
             result = subprocess.run(
                 ["node", str(node_script)],
                 cwd=str(Path(__file__).parent),
@@ -618,24 +667,24 @@ def test_review_page_visual():
                 text=True,
                 timeout=TIMEOUTS["extreme"],
             )
-            
+
             if node_script.exists():
                 node_script.unlink()
-            
+
             browser.close()
-            
+
             if result.returncode == 0:
                 try:
                     validation_result = json.loads(result.stdout)
                     score = validation_result.get("score", 0)
                     issues = validation_result.get("issues", [])
-                    
+
                     logger.info(f"✅ Review page visual score: {score}/10")
                     if issues:
                         logger.warning(f"⚠️  Issues found: {len(issues)}")
                         for issue in issues[:3]:
                             logger.info(f"     - {issue}")
-                    
+
                     return score >= 7
                 except json.JSONDecodeError:
                     logger.warning("⚠️  Could not parse validation result")
@@ -656,11 +705,11 @@ def main():
     logger.info("=" * 60)
     logger.info("AI-Powered Visual Testing")
     logger.info("=" * 60)
-    
+
     if not test_api_readiness():
         logger.info("\n❌ API not ready. Start with: docker-compose up")
         return 1
-    
+
     results = {
         "layout": test_visual_layout(),
         "accessibility": test_visual_accessibility(),
@@ -668,7 +717,7 @@ def main():
         "responsive": test_responsive_design(),
         "review_page": test_review_page_visual(),
     }
-    
+
     logger.info("\n" + "=" * 60)
     logger.info("Visual Test Results:")
     logger.info("=" * 60)
@@ -680,20 +729,19 @@ def main():
         else:
             status = "❌"
         logger.info(f"{status} {test}")
-    
+
     passed = sum(1 for r in results.values() if r is True)
     total = sum(1 for r in results.values() if r is not None)
     skipped = sum(1 for r in results.values() if r is None)
-    
+
     logger.info(f"\nPassed: {passed}/{total} (skipped: {skipped})")
-    
+
     if skipped > 0:
         logger.warning("\n⚠️  To enable visual tests, install:")
         logger.info("   npm install -g @arclabs561/ai-visual-test")
-    
+
     return 0 if passed == total else 1
 
 
 if __name__ == "__main__":
     exit(main())
-

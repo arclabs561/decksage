@@ -10,9 +10,7 @@ from __future__ import annotations
 import pickle
 import sys
 from pathlib import Path
-from unittest.mock import MagicMock, patch
-
-import pytest
+from unittest.mock import patch
 
 from ..similarity.text_embeddings import CardTextEmbedder
 
@@ -117,5 +115,3 @@ class TestShutdownScenarios:
         with open(cache_file, "rb") as f:
             loaded = pickle.load(f)
         assert loaded == {}
-
-

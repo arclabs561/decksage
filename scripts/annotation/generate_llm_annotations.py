@@ -18,11 +18,12 @@ import os
 import sys
 import time
 from pathlib import Path
-from typing import Any
+
 
 # Load .env if it exists
 try:
     from dotenv import load_dotenv
+
     env_file = Path(__file__).parent.parent.parent / ".env"
     if env_file.exists():
         load_dotenv(env_file)
@@ -53,10 +54,12 @@ async def generate_annotations_for_game(
     num_annotations: int = 50,
     strategy: str = "diverse",
     batch_size: int = 10,
+    use_agentic_meta_judge: bool = False,
+    agentic_max_rounds: int = 3,
 ) -> int:
     """Generate REAL LLM annotations for a game."""
     if not HAS_LLM_ANNOTATOR:
-        print(f"Error: LLM annotator not available. Install dependencies.")
+        print("Error: LLM annotator not available. Install dependencies.")
         return 0
 
     print(f"Generating REAL LLM annotations for {game}...")
@@ -65,7 +68,7 @@ async def generate_annotations_for_game(
 
     # Check for API key before starting
     if not os.getenv("OPENROUTER_API_KEY"):
-        print(f"❌ Error: OPENROUTER_API_KEY not set")
+        print("❌ Error: OPENROUTER_API_KEY not set")
         print("   Set in .env file or: export OPENROUTER_API_KEY=your-key")
         return 0
 
@@ -73,12 +76,21 @@ async def generate_annotations_for_game(
 
     try:
         # Use the real LLM annotator with game filtering
-        print(f"  Initializing LLM annotator...")
-        annotator = LLMAnnotator(output_dir=output_file.parent, game=game)
+        print("  Initializing LLM annotator...")
+        annotator = LLMAnnotator(
+            output_dir=output_file.parent,
+            game=game,
+            use_multi_annotator=use_agentic_meta_judge,  # Enable multi-annotator if using agentic meta-judge
+            use_agentic_meta_judge=use_agentic_meta_judge,
+            agentic_meta_judge_max_rounds=agentic_max_rounds,
+            enforce_baseline_rules=not use_agentic_meta_judge,  # Disable hard rules when using agentic
+        )
         print(f"  Loaded {len(annotator.decks)} decks")
+        if use_agentic_meta_judge:
+            print(f"  Agentic meta-judge enabled (max {agentic_max_rounds} rounds)")
 
         # Generate similarity annotations
-        print(f"  Starting annotation generation (this may take a while)...")
+        print("  Starting annotation generation (this may take a while)...")
         similarity_annotations = await annotator.annotate_similarity_pairs(
             num_pairs=num_annotations,
             strategy=strategy,
@@ -107,7 +119,7 @@ async def generate_annotations_for_game(
                 ann_dict["game"] = game
                 if "source" not in ann_dict or not ann_dict["source"]:
                     ann_dict["source"] = "llm"
-                
+
                 # Fix similarity_score - handle various input formats
                 if "similarity_score" not in ann_dict or ann_dict["similarity_score"] is None:
                     # Try to extract from confidence field
@@ -116,21 +128,29 @@ async def generate_annotations_for_game(
                         # Handle boolean (True/False) - convert to 0.5/0.0
                         if isinstance(conf_value, bool):
                             ann_dict["similarity_score"] = 0.5 if conf_value else 0.0
-                            print(f"  Warning: Converted boolean confidence to similarity_score for {card1} vs {card2}")
+                            print(
+                                f"  Warning: Converted boolean confidence to similarity_score for {card1} vs {card2}"
+                            )
                         elif isinstance(conf_value, (int, float)):
                             ann_dict["similarity_score"] = float(conf_value)
                         else:
                             # Unknown type - use fallback but warn
                             ann_dict["similarity_score"] = 0.5
-                            print(f"  Warning: Unknown confidence type {type(conf_value)}, using fallback 0.5")
+                            print(
+                                f"  Warning: Unknown confidence type {type(conf_value)}, using fallback 0.5"
+                            )
                     else:
                         # No confidence field - this should not happen with proper LLM generation
                         ann_dict["similarity_score"] = 0.5  # Default fallback
-                        print(f"  Warning: Missing similarity_score and confidence for {card1} vs {card2}, using fallback 0.5")
-                
+                        print(
+                            f"  Warning: Missing similarity_score and confidence for {card1} vs {card2}, using fallback 0.5"
+                        )
+
                 # Validate similarity_score is in valid range
                 if not (0.0 <= ann_dict["similarity_score"] <= 1.0):
-                    print(f"  Warning: similarity_score {ann_dict['similarity_score']} out of range, clamping to [0.0, 1.0]")
+                    print(
+                        f"  Warning: similarity_score {ann_dict['similarity_score']} out of range, clamping to [0.0, 1.0]"
+                    )
                     ann_dict["similarity_score"] = max(0.0, min(1.0, ann_dict["similarity_score"]))
 
                 # Write as JSONL
@@ -142,8 +162,10 @@ async def generate_annotations_for_game(
 
         elapsed = time.time() - start_time
         rate = count / elapsed if elapsed > 0 else 0
-        
-        print(f"✅ [{game.upper()}] Generated {count} annotations in {elapsed:.1f}s ({rate:.1f} ann/s)")
+
+        print(
+            f"✅ [{game.upper()}] Generated {count} annotations in {elapsed:.1f}s ({rate:.1f} ann/s)"
+        )
         print(f"   Saved to: {output_file}")
         return count
 
@@ -151,6 +173,7 @@ async def generate_annotations_for_game(
         elapsed = time.time() - start_time
         print(f"❌ [{game.upper()}] Error after {elapsed:.1f}s: {e}")
         import traceback
+
         traceback.print_exc()
         return 0
 
@@ -198,6 +221,17 @@ Examples:
         type=int,
         default=20,
         help="Batch size for parallel annotation generation (default: 20, increase for faster processing)",
+    )
+    parser.add_argument(
+        "--use-agentic-meta-judge",
+        action="store_true",
+        help="Use agentic meta-judge with multi-round conversations (replaces hard rules)",
+    )
+    parser.add_argument(
+        "--agentic-max-rounds",
+        type=int,
+        default=3,
+        help="Maximum rounds for agentic meta-judge (default: 3)",
     )
 
     args = parser.parse_args()
@@ -251,6 +285,8 @@ Examples:
                 num_annotations=args.num_annotations,
                 strategy=args.strategy,
                 batch_size=args.batch_size,
+                use_agentic_meta_judge=args.use_agentic_meta_judge,
+                agentic_max_rounds=args.agentic_max_rounds,
             )
             total_generated += count
         print()

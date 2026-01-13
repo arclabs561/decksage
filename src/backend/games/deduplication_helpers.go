@@ -24,4 +24,3 @@ func (dt *DeduplicationTracker) FindDuplicateForAdapter(adapter CollectionAdapte
 	universal := ConvertToUniversalCollection(adapter)
 	return dt.FindDuplicate(universal)
 }
-

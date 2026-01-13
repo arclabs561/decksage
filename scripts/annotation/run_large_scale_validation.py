@@ -22,6 +22,7 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -42,16 +43,16 @@ async def generate_large_scale_comparison(
     Returns:
         Comparison results
     """
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"Large-Scale Validation: {game}")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"Pairs per method: {num_pairs}")
     print()
 
     results = {}
 
     # Method 1: Single annotator (baseline)
-    print(f"\n1. Single Annotator (Baseline)")
+    print("\n1. Single Annotator (Baseline)")
     print("-" * 70)
     annotator_single = LLMAnnotator(
         game=game,
@@ -70,7 +71,7 @@ async def generate_large_scale_comparison(
     results["single"] = analyze_annotations(annotations_single, "Single Annotator")
 
     # Method 2: Uncertainty-based selection
-    print(f"\n2. Uncertainty-Based Selection")
+    print("\n2. Uncertainty-Based Selection")
     print("-" * 70)
     annotator_uncertainty = LLMAnnotator(
         game=game,
@@ -86,12 +87,10 @@ async def generate_large_scale_comparison(
         strategy="uncertainty",
         batch_size=10,
     )
-    results["uncertainty"] = analyze_annotations(
-        annotations_uncertainty, "Uncertainty Selection"
-    )
+    results["uncertainty"] = analyze_annotations(annotations_uncertainty, "Uncertainty Selection")
 
     # Method 3: Multi-annotator IAA
-    print(f"\n3. Multi-Annotator IAA")
+    print("\n3. Multi-Annotator IAA")
     print("-" * 70)
     annotator_iaa = LLMAnnotator(
         game=game,
@@ -107,14 +106,12 @@ async def generate_large_scale_comparison(
         strategy="diverse",
         batch_size=5,  # Smaller batch for multi-annotator (3x LLM calls)
     )
-    results["multi_annotator"] = analyze_annotations(
-        annotations_iaa, "Multi-Annotator IAA"
-    )
+    results["multi_annotator"] = analyze_annotations(annotations_iaa, "Multi-Annotator IAA")
 
     # Comparison
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Comparison Summary")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     baseline = results["single"]
     for method, data in results.items():
@@ -123,7 +120,7 @@ async def generate_large_scale_comparison(
         print(f"{method.upper()} vs BASELINE:")
         mean_diff = data["score_mean"] - baseline["score_mean"]
         std_diff = data["score_std"] - baseline["score_std"]
-        print(f"  Mean: {mean_diff:+.3f} ({mean_diff/baseline['score_mean']*100:+.1f}%)")
+        print(f"  Mean: {mean_diff:+.3f} ({mean_diff / baseline['score_mean'] * 100:+.1f}%)")
         print(f"  Std: {std_diff:+.3f}")
         print()
 
@@ -175,9 +172,8 @@ def analyze_annotations(annotations: list, label: str) -> dict:
     analysis = {
         "num_annotations": len(annotations),
         "score_mean": sum(scores) / len(scores) if scores else 0.0,
-        "score_std": (
-            sum((s - sum(scores) / len(scores)) ** 2 for s in scores) / len(scores)
-        ) ** 0.5
+        "score_std": (sum((s - sum(scores) / len(scores)) ** 2 for s in scores) / len(scores))
+        ** 0.5
         if scores
         else 0.0,
         "score_min": min(scores) if scores else 0.0,
@@ -191,7 +187,7 @@ def analyze_annotations(annotations: list, label: str) -> dict:
     print(f"    Annotations: {analysis['num_annotations']}")
     print(f"    Score: {analysis['score_mean']:.3f} ± {analysis['score_std']:.3f}")
     print(f"    Range: {analysis['score_min']:.3f} - {analysis['score_max']:.3f}")
-    print(f"    Distribution:")
+    print("    Distribution:")
     for range_name, count in score_ranges.items():
         if count > 0:
             pct = (count / len(annotations)) * 100
@@ -220,9 +216,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    results = asyncio.run(
-        generate_large_scale_comparison(game=args.game, num_pairs=args.num_pairs)
-    )
+    results = asyncio.run(generate_large_scale_comparison(game=args.game, num_pairs=args.num_pairs))
 
     sys.exit(0)
-

@@ -9,7 +9,7 @@
 - **Action Required**: Add balance at https://requester.mturk.com/account
 
 ### Scale AI
-- **Status**: ❌ Failed  
+- **Status**: ❌ Failed
 - **Error**: 402 Payment Required - "You have not been authorized to use this API endpoint, please contact sales at sales@scale.ai to be enabled."
 - **Endpoint**: `/task/textcollection` (correct endpoint)
 - **Action Required**: Contact Scale AI sales to enable textcollection API endpoint
@@ -51,4 +51,3 @@ The code is ready, but external service setup is required:
 - Scale AI: Enable API access
 
 Custom service works immediately with no setup.
-

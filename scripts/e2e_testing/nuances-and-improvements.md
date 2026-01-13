@@ -33,7 +33,7 @@ else:
 
 **Root Cause**: Tests assume results are present but don't ensure they are.
 
-**Fix Needed**: 
+**Fix Needed**:
 - Better wait conditions (wait for specific selectors)
 - More robust result checking
 - Fix advanced options selector (use `.first` or more specific selector)
@@ -45,7 +45,7 @@ else:
 
 **Location**: All visual test files
 
-**Fix Needed**: 
+**Fix Needed**:
 - Use `tempfile` module for automatic cleanup
 - Or add cleanup on script exit
 - Or use context managers
@@ -57,7 +57,7 @@ else:
 
 **Location**: `load_env_keys.sh`
 
-**Fix Needed**: 
+**Fix Needed**:
 - Check if files exist before sourcing
 - Provide clear error messages
 - Fallback to current directory `.env`
@@ -89,7 +89,7 @@ else:
 
 **Location**: Visual test files
 
-**Fix Needed**: 
+**Fix Needed**:
 - Handle specific error codes
 - Retry logic for rate limits
 - Better error messages
@@ -101,7 +101,7 @@ else:
 
 **Location**: Multiple test files
 
-**Fix Needed**: 
+**Fix Needed**:
 - Use `page.wait_for_selector()` instead of `time.sleep()`
 - Wait for network idle
 - Wait for specific conditions
@@ -113,7 +113,7 @@ else:
 
 **Location**: Visual test files
 
-**Fix Needed**: 
+**Fix Needed**:
 - More comprehensive escaping
 - Or use JSON.stringify() in Node.js
 
@@ -124,7 +124,7 @@ else:
 
 **Location**: All test files
 
-**Fix Needed**: 
+**Fix Needed**:
 - Ensure each test starts fresh
 - Clear browser state between tests
 - Use separate browser contexts
@@ -151,7 +151,7 @@ else:
 ### 14. Screenshot Management ⚠️
 **Problem**: Screenshots accumulate in `/tmp/visual_tests/`
 
-**Fix Needed**: 
+**Fix Needed**:
 - Cleanup old screenshots
 - Organize by test run
 - Option to keep screenshots for debugging
@@ -175,4 +175,3 @@ else:
 10. ✅ Centralize test data
 11. ✅ Screenshot cleanup strategy
 12. ✅ Test isolation improvements
-

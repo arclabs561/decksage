@@ -19,11 +19,6 @@ Usage:
     python scripts/e2e_testing/test_expert_experience.py
 """
 
-import json
-import os
-import time
-from typing import Any
-
 try:
     import requests
 except ImportError:
@@ -33,8 +28,9 @@ except ImportError:
 # Import shared utilities (dotenv is loaded automatically by test_utils)
 
 # Import shared utilities and constants
-from test_utils import wait_for_api, logger, API_BASE
 from test_constants import TEST_CARDS, TIMEOUTS
+from test_utils import API_BASE, logger
+
 
 # Configuration from .env
 # API_BASE imported from test_utils
@@ -150,7 +146,7 @@ class ExpertExperienceTester:
                 )
 
                 if resp.status_code == 503:
-                    logger.info(f"     ⚠️  API not ready")
+                    logger.info("     ⚠️  API not ready")
                     continue
                 if resp.status_code != 200:
                     logger.error(f"     ❌ Failed: {resp.status_code}")
@@ -160,13 +156,13 @@ class ExpertExperienceTester:
                 results = data.get("results", [])
 
                 if len(results) == 0:
-                    logger.warning(f"     ⚠️  No results")
+                    logger.warning("     ⚠️  No results")
                     continue
 
                 # Check if metadata is present
                 has_metadata = any(r.get("metadata") for r in results)
                 if has_metadata:
-                    logger.info(f"     ✅ Metadata present")
+                    logger.info("     ✅ Metadata present")
                     # Check for key expert fields
                     first_result = results[0]
                     meta = first_result.get("metadata", {})
@@ -177,7 +173,7 @@ class ExpertExperienceTester:
                     if meta.get("functional_tags"):
                         logger.info(f"     ✅ Functional tags: {meta.get('functional_tags')}")
                 else:
-                    logger.warning(f"     ⚠️  No metadata (expert players need this!)")
+                    logger.warning("     ⚠️  No metadata (expert players need this!)")
                     self.issues.append(
                         f"Missing metadata for {scenario['name']} - expert players need type, mana cost, functional tags"
                     )
@@ -185,7 +181,9 @@ class ExpertExperienceTester:
                 # Check similarity scores
                 low_scores = [r for r in results if r.get("similarity", 0) < 0.2]
                 if low_scores:
-                    logger.warning(f"     ⚠️  {len(low_scores)} results with very low similarity (<0.2)")
+                    logger.warning(
+                        f"     ⚠️  {len(low_scores)} results with very low similarity (<0.2)"
+                    )
                     self.issues.append(
                         f"Low quality results for {scenario['query']}: {len(low_scores)} results < 0.2 similarity"
                     )
@@ -242,7 +240,9 @@ class ExpertExperienceTester:
         critiques.append(
             "⚠️  UNCLEAR: Similarity score doesn't clearly indicate substitutability - Expert players need 'Can I replace X with Y?'"
         )
-        self.suggestions.append("Add clear substitutability indicators (Yes/No/Maybe with reasoning)")
+        self.suggestions.append(
+            "Add clear substitutability indicators (Yes/No/Maybe with reasoning)"
+        )
 
         # 8. Game phase awareness
         critiques.append(
@@ -362,4 +362,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-

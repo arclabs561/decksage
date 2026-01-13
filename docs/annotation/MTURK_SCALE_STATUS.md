@@ -42,7 +42,7 @@
 
 ## Next Steps
 
-1. **Add MTurk Balance**: 
+1. **Add MTurk Balance**:
    - Sign in: https://requester.mturk.com
    - Go to Account Settings → "Prepay for MTurk HITs"
    - (Direct URL no longer works - must go through account settings)
@@ -56,4 +56,3 @@
 | MTurk | AWS billing (✅ enabled) | $0.12 | ✅ Ready for production |
 | Scale AI | API access | $0.50 | ⏳ Ready (waiting for sales) |
 | Custom | None | $0.00 | ✅ Works now |
-

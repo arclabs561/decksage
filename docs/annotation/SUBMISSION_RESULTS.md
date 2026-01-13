@@ -20,7 +20,7 @@
 ## Code Fixes Applied
 
 1. ✅ Fixed MTurk `question_html` variable indentation bug
-2. ✅ Updated Scale AI endpoint to `/task/textcollection` 
+2. ✅ Updated Scale AI endpoint to `/task/textcollection`
 3. ✅ Improved task instructions with score examples
 4. ✅ Enhanced HTML form styling for MTurk
 
@@ -56,4 +56,3 @@
 ## Recommendation
 
 Use **Custom Service** for immediate testing while setting up MTurk/Scale AI access.
-

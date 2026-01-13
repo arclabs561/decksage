@@ -9,8 +9,6 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-import pytest
-
 from ..utils.tagger_utils import extract_tag_dict, extract_tag_set
 
 
@@ -68,6 +66,7 @@ class TestExtractTagDict:
 
     def test_regular_class_empty(self):
         """Test regular class with no attributes."""
+
         class EmptyTags:
             pass
 
@@ -342,6 +341,7 @@ class TestMixedTaggerTypes:
     def test_fusion_switches_between_dataclass_and_regular_class(self):
         """Test fusion handles switching between dataclass and regular class taggers."""
         from dataclasses import dataclass
+
         from ..similarity.fusion import WeightedLateFusion
 
         @dataclass
@@ -389,6 +389,7 @@ class TestMixedTaggerTypes:
     def test_fusion_switches_between_dict_and_dataclass(self):
         """Test fusion handles switching between dict and dataclass taggers."""
         from dataclasses import dataclass
+
         from ..similarity.fusion import WeightedLateFusion
 
         @dataclass
@@ -455,6 +456,7 @@ class TestMalformedTaggerResults:
 
     def test_unexpected_attributes(self):
         """Test handling of unexpected attributes in class."""
+
         class WeirdTags:
             def __init__(self):
                 self.card_name = "Bolt"
@@ -507,6 +509,7 @@ class TestMalformedTaggerResults:
 
     def test_extract_tag_dict_with_malformed_class(self):
         """Test extract_tag_dict with class that has problematic attributes."""
+
         class ProblematicTags:
             def __init__(self):
                 self.card_name = "Bolt"
@@ -523,4 +526,3 @@ class TestMalformedTaggerResults:
         # Should extract what's available in __dict__
         assert "card_name" in result
         assert result["card_name"] == "Bolt"
-

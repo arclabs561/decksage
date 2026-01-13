@@ -1,0 +1,33 @@
+---
+description: Documentation standards and practices
+alwaysApply: true
+---
+
+# Documentation
+
+- **Primary principle**: Code and comments are the primary documentation. Create MD files only when they add lasting value.
+- **When to create docs**: Create documentation files for:
+  - Architecture decisions and system design
+  - Data lineage and workflow documentation (required)
+  - API references and usage guides
+  - Onboarding and setup instructions
+  - Long-term reference material that won't become stale quickly
+- **When to avoid docs**: Don't create MD files for:
+  - Progress updates or session notes (use chat/commits instead)
+  - Temporary analysis or one-off experiments
+  - Information that changes frequently and should live in code
+- **Maintenance**: If documentation exists, keep it current:
+  - Review and update docs when making related code changes
+  - Archive or remove outdated documentation promptly
+  - Prefer updating existing docs over creating new ones
+- **Code documentation**: All scripts should include:
+  - Purpose and usage in docstring
+  - Required arguments and options
+  - Example usage
+  - Dependencies (data lineage orders, environment variables)
+  - Error conditions and exit codes
+- **Lineage documentation**: All data processing scripts MUST include lineage comments (see Data Lineage Architecture section)
+- **Code comments**: Use comments to explain "why", not "what"
+  - Document non-obvious decisions, performance optimizations, and workarounds
+  - Include references to issues, PRs, or discussions when relevant
+  - Keep comments up-to-date with code changes

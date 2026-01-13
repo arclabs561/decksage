@@ -329,4 +329,3 @@ func inferSourceFromPath(url string, filePath string) string {
 
 	return "unknown"
 }
-

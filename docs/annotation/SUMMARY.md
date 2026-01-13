@@ -41,4 +41,3 @@
 3. Submit test tasks (1-2 per service)
 4. Compare quality
 5. Integrate into pipeline
-

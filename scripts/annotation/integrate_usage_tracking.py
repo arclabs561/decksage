@@ -7,6 +7,7 @@ This script patches existing scripts to add usage tracking calls.
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -46,5 +47,3 @@ print()
 print("   uv run python3 scripts/annotation/track_annotation_usage.py report")
 print()
 print("=" * 80)
-
-

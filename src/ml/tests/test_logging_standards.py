@@ -114,5 +114,3 @@ class TestLoggingStandards:
         # Handler should receive extra kwargs (exact format depends on formatter)
         output = log_capture.getvalue()
         assert "Test" in output
-
-

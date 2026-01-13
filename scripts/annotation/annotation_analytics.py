@@ -9,9 +9,10 @@ import argparse
 import json
 import sys
 from collections import Counter, defaultdict
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
 from typing import Any
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -24,7 +25,7 @@ def analyze_annotation_coverage(annotations: list[dict[str, Any]]) -> dict[str, 
     pairs = set()
     sources = Counter()
     games = Counter()
-    
+
     for ann in annotations:
         card1 = ann.get("card1", "")
         card2 = ann.get("card2", "")
@@ -34,10 +35,10 @@ def analyze_annotation_coverage(annotations: list[dict[str, Any]]) -> dict[str, 
             cards.add(card2)
         if card1 and card2:
             pairs.add(tuple(sorted([card1, card2])))
-        
+
         sources[ann.get("source", "unknown")] += 1
         games[ann.get("game", "unknown")] += 1
-    
+
     return {
         "unique_cards": len(cards),
         "unique_pairs": len(pairs),
@@ -52,16 +53,16 @@ def analyze_quality_distribution(annotations: list[dict[str, Any]]) -> dict[str,
     """Analyze quality score distribution."""
     scores = [ann.get("similarity_score", 0) for ann in annotations]
     substitutes = [ann.get("is_substitute", False) for ann in annotations]
-    
+
     if not scores:
         return {}
-    
+
     score_ranges = {
         "high": sum(1 for s in scores if s >= 0.8),
         "medium": sum(1 for s in scores if 0.5 <= s < 0.8),
         "low": sum(1 for s in scores if s < 0.5),
     }
-    
+
     return {
         "min_score": min(scores),
         "max_score": max(scores),
@@ -86,18 +87,18 @@ def analyze_temporal_trends(annotations: list[dict[str, Any]]) -> dict[str, Any]
                     timestamps.append(ts)
             except Exception:
                 pass
-    
+
     if not timestamps:
         return {}
-    
+
     timestamps.sort()
-    
+
     # Group by day
     daily_counts = Counter()
     for ts in timestamps:
         day = ts.date()
         daily_counts[day] += 1
-    
+
     return {
         "first_annotation": timestamps[0].isoformat() if timestamps else None,
         "last_annotation": timestamps[-1].isoformat() if timestamps else None,
@@ -117,34 +118,38 @@ def analyze_source_agreement(annotations: list[dict[str, Any]]) -> dict[str, Any
         if card1 and card2:
             pair = tuple(sorted([card1, card2]))
             pairs[pair].append(ann)
-    
+
     # Find pairs with multiple sources
     multi_source_pairs = {k: v for k, v in pairs.items() if len(v) > 1}
-    
+
     agreements = []
     disagreements = []
-    
+
     for pair, anns in multi_source_pairs.items():
         sources = [ann.get("source") for ann in anns]
         scores = [ann.get("similarity_score", 0) for ann in anns]
-        
+
         # Check agreement (within 0.1)
         score_range = max(scores) - min(scores)
         if score_range <= 0.1:
-            agreements.append({
-                "pair": pair,
-                "sources": sources,
-                "scores": scores,
-                "range": score_range,
-            })
+            agreements.append(
+                {
+                    "pair": pair,
+                    "sources": sources,
+                    "scores": scores,
+                    "range": score_range,
+                }
+            )
         else:
-            disagreements.append({
-                "pair": pair,
-                "sources": sources,
-                "scores": scores,
-                "range": score_range,
-            })
-    
+            disagreements.append(
+                {
+                    "pair": pair,
+                    "sources": sources,
+                    "scores": scores,
+                    "range": score_range,
+                }
+            )
+
     return {
         "total_pairs": len(pairs),
         "multi_source_pairs": len(multi_source_pairs),
@@ -165,12 +170,12 @@ def generate_analytics_report(
     print("ANNOTATION ANALYTICS")
     print("=" * 80)
     print()
-    
+
     report = {
         "generated_at": datetime.now().isoformat(),
         "total_annotations": len(annotations),
     }
-    
+
     # Coverage analysis
     print("Analyzing coverage...")
     coverage = analyze_annotation_coverage(annotations)
@@ -178,7 +183,7 @@ def generate_analytics_report(
     print(f"  Unique cards: {coverage['unique_cards']}")
     print(f"  Unique pairs: {coverage['unique_pairs']}")
     print(f"  Sources: {coverage['sources']}")
-    
+
     # Quality distribution
     print("\nAnalyzing quality distribution...")
     quality = analyze_quality_distribution(annotations)
@@ -187,7 +192,7 @@ def generate_analytics_report(
         print(f"  Avg score: {quality['avg_score']:.3f}")
         print(f"  Substitute rate: {quality['substitute_rate']:.2%}")
         print(f"  Score distribution: {quality['score_distribution']}")
-    
+
     # Temporal trends
     print("\nAnalyzing temporal trends...")
     trends = analyze_temporal_trends(annotations)
@@ -196,7 +201,7 @@ def generate_analytics_report(
         print(f"  First annotation: {trends.get('first_annotation')}")
         print(f"  Last annotation: {trends.get('last_annotation')}")
         print(f"  Avg per day: {trends.get('avg_per_day', 0):.1f}")
-    
+
     # Source agreement
     print("\nAnalyzing source agreement...")
     agreement = analyze_source_agreement(annotations)
@@ -205,7 +210,7 @@ def generate_analytics_report(
         print(f"  Multi-source pairs: {agreement['multi_source_pairs']}")
         print(f"  Agreement rate: {agreement['agreement_rate']:.2%}")
         print(f"  Disagreements: {agreement['disagreements']}")
-    
+
     # Save report (atomic write)
     if output_path:
         temp_path = output_path.with_suffix(output_path.suffix + ".tmp")
@@ -214,11 +219,11 @@ def generate_analytics_report(
                 json.dump(report, f, indent=2)
             temp_path.replace(output_path)
             print(f"\n✓ Saved analytics report: {output_path}")
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 temp_path.unlink()
             raise
-    
+
     return report
 
 
@@ -236,9 +241,9 @@ def main() -> int:
         type=Path,
         help="Output analytics report JSON file",
     )
-    
+
     args = parser.parse_args()
-    
+
     # Load annotations
     annotations = []
     errors = []
@@ -253,7 +258,7 @@ def main() -> int:
                 except Exception as e:
                     errors.append(f"Line {line_num}: Error - {e}")
                     continue
-    
+
     if errors:
         print(f"⚠ {len(errors)} errors encountered while loading:")
         for error in errors[:5]:
@@ -261,14 +266,13 @@ def main() -> int:
         if len(errors) > 5:
             print(f"  ... and {len(errors) - 5} more errors")
         print()
-    
+
     # Generate report
     output_path = args.output or args.input.parent / f"{args.input.stem}_analytics.json"
     generate_analytics_report(annotations, output_path)
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

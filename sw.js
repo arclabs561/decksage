@@ -38,14 +38,14 @@ self.addEventListener('activate', (event) => {
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', (event) => {
     const url = new URL(event.request.url);
-    
+
     // Only handle same-origin requests
     if (url.origin !== location.origin) {
         return; // Let browser handle cross-origin requests
     }
 
     // For HTML pages, try cache first, then network
-    if (event.request.mode === 'navigate' || 
+    if (event.request.mode === 'navigate' ||
         event.request.destination === 'document' ||
         url.pathname.endsWith('.html')) {
         event.respondWith(
@@ -101,7 +101,7 @@ self.addEventListener('fetch', (event) => {
                         // Return error response
                         return new Response(
                             JSON.stringify({ error: 'Offline', detail: 'No cached data available' }),
-                            { 
+                            {
                                 status: 503,
                                 headers: { 'Content-Type': 'application/json' }
                             }
@@ -128,5 +128,3 @@ self.addEventListener('message', (event) => {
         });
     }
 });
-
-

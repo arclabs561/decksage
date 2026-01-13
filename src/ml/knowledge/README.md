@@ -131,4 +131,3 @@ pytest tests/test_knowledge_integration.py -v
 - Vector store for faster retrieval at scale
 - Automatic knowledge updates from external sources
 - Temporal context tracking (ban list changes, meta shifts)
-
