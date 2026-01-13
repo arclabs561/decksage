@@ -68,7 +68,7 @@ func (sdt *SmartDiscoveryTracker) Load(ctx context.Context, datasetName string) 
 	sdt.mu.Lock()
 	sdt.state[datasetName] = &state
 	sdt.mu.Unlock()
-	
+
 	return &state, nil
 }
 
@@ -87,7 +87,7 @@ func (sdt *SmartDiscoveryTracker) Save(ctx context.Context, datasetName string, 
 	sdt.mu.Lock()
 	sdt.state[datasetName] = state
 	sdt.mu.Unlock()
-	
+
 	return nil
 }
 
@@ -157,4 +157,3 @@ func (sdt *SmartDiscoveryTracker) ShouldStopDiscovery(ctx context.Context, datas
 func (sdt *SmartDiscoveryTracker) stateKey(datasetName string) string {
 	return filepath.Join(sdt.prefix, fmt.Sprintf(".discovery_%s.json", datasetName))
 }
-

@@ -163,11 +163,11 @@
 All services tested successfully:
 
 ```
-Service         Available    Cost/Task    Total (100)     Quality   
+Service         Available    Cost/Task    Total (100)     Quality
 ----------------------------------------------------------------------
-mturk           ✓ Yes        $0.12        $12.00          Medium    
-scale           ✓ Yes        $0.50        $50.00          High      
-custom          ✓ Yes        $0.00        $0.00           Variable  
+mturk           ✓ Yes        $0.12        $12.00          Medium
+scale           ✓ Yes        $0.50        $50.00          High
+custom          ✓ Yes        $0.00        $0.00           Variable
 ```
 
 ## Next Steps
@@ -203,4 +203,3 @@ custom          ✓ Yes        $0.00        $0.00           Variable
 - Use MTurk for training data (80-90%)
 - Use Scale AI for evaluation data (10-20%)
 - Use Custom for expert validation (spot checks)
-

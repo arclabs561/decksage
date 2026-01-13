@@ -50,10 +50,17 @@ def create_similarity_function(
         if embeddings_path.exists():
             try:
                 # Handle both .wv extension and without
-                emb_name = str(embeddings_path)
+                # load_embeddings expects just the name, not the full path
+                emb_name = embeddings_path.stem  # Get name without extension
                 if emb_name.endswith(".wv"):
                     emb_name = emb_name[:-3]
-                embeddings = load_embeddings(emb_name)
+                # Use the full path directly if it's absolute, otherwise use name
+                if embeddings_path.is_absolute():
+                    from gensim.models import KeyedVectors
+
+                    embeddings = KeyedVectors.load(str(embeddings_path))
+                else:
+                    embeddings = load_embeddings(emb_name)
                 logger.info(f"Loaded embeddings: {len(embeddings)} cards")
             except Exception as e:
                 logger.warning(f"Failed to load embeddings from {embeddings_path}: {e}")
@@ -146,15 +153,27 @@ def create_similarity_function(
         except (ImportError, Exception):
             pass  # Visual embeddings optional
 
+        # Load card data for visual embeddings (needed for image URL lookup)
+        card_data = None
+        if visual_embedder:
+            try:
+                from ..utils.data_loading import load_card_attributes
+
+                card_data = load_card_attributes()
+                logger.info(f"Loaded card data: {len(card_data)} cards")
+            except Exception as e:
+                logger.warning(f"Failed to load card data for visual embeddings: {e}")
+
         # Create fusion instance
         fusion = WeightedLateFusion(
             embeddings=embeddings,
             adj=adj,
             tagger=tag_set_fn,
             weights=weights,
-            aggregator="weighted",
+            aggregator="rrf",  # RRF recommended for heterogeneous signals
             text_embedder=text_embedder,
             visual_embedder=visual_embedder,
+            card_data=card_data,
         )
 
         def similarity_fn(query: str, k: int) -> list[tuple[str, float]]:

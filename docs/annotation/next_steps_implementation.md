@@ -38,7 +38,7 @@
        --service mturk \
        --priority high \
        --limit 10
-   
+
    # Or use custom interface (saves to files)
    python scripts/annotation/submit_human_annotations.py submit \
        --service custom \
@@ -214,4 +214,3 @@ python scripts/annotation/submit_human_annotations.py submit \
 2. **For Evaluation Data**: Use multi-annotator IAA (LLM consensus)
 3. **For Critical Cases**: Queue for human annotation
 4. **For Cost Optimization**: Use MTurk for large-scale, Scale AI for high-quality
-

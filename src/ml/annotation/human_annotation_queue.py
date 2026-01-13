@@ -19,11 +19,12 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
+
 
 try:
     from ..utils.logging_config import get_logger
@@ -287,9 +288,7 @@ class HumanAnnotationQueue:
 
             # Priority counts
             priority_key = task.priority.value
-            stats["by_priority"][priority_key] = (
-                stats["by_priority"].get(priority_key, 0) + 1
-            )
+            stats["by_priority"][priority_key] = stats["by_priority"].get(priority_key, 0) + 1
 
             # Game counts
             game_key = task.game
@@ -392,4 +391,3 @@ def queue_uncertain_pairs(
 
     logger.info(f"Queued {queued} uncertain pairs for human review")
     return queued
-

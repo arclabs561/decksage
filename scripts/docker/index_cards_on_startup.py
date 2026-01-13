@@ -18,11 +18,13 @@ import os
 import sys
 from pathlib import Path
 
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
     from gensim.models import KeyedVectors
+
     from ml.search.index_cards import index_from_embeddings
 except ImportError as e:
     print(f"Error: Missing dependencies: {e}")
@@ -76,9 +78,7 @@ def main() -> int:
             index = client.index("cards")
             stats = index.get_stats()
             if stats.get("numberOfDocuments", 0) > 0:
-                logger.info(
-                    f"Index already has {stats['numberOfDocuments']} documents. Skipping."
-                )
+                logger.info(f"Index already has {stats['numberOfDocuments']} documents. Skipping.")
                 return 0
         except Exception as e:
             logger.warning(f"Could not check index status: {e}")
@@ -103,4 +103,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import pytest
 
+
 try:
+    from PIL import Image
+
     from ml.similarity.fusion import FusionWeights, WeightedLateFusion
     from ml.similarity.visual_embeddings import CardVisualEmbedder
-    from PIL import Image
 
     VISUAL_EMBEDDINGS_AVAILABLE = True
 except ImportError:
@@ -146,4 +148,3 @@ def test_aggregate_rrf_with_visual():
     assert result > 0.0
     # Higher weight + lower rank = higher contribution
     assert result > 0.0
-

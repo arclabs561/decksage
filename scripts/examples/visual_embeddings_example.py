@@ -14,16 +14,18 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
 
+
 setup_project_paths()
 
+from ml.similarity.fusion import FusionWeights
 from ml.similarity.visual_embeddings import get_visual_embedder
-from ml.similarity.fusion import FusionWeights, WeightedLateFusion
 
 
 def example_basic_usage():
@@ -80,7 +82,7 @@ def example_fusion_integration():
         gnn=0.30,  # GNN
     )
 
-    print(f"\nFusion weights (normalized):")
+    print("\nFusion weights (normalized):")
     normalized = weights.normalized()
     print(f"  Co-occurrence: {normalized.embed:.2%}")
     print(f"  Jaccard: {normalized.jaccard:.2%}")
@@ -153,4 +155,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

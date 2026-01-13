@@ -12,25 +12,24 @@ Tests type-ahead functionality deeply:
 - Integration (Meilisearch vs embeddings fallback)
 """
 
-import json
-import os
 import time
-from pathlib import Path
 
 import requests
+
 
 # Import shared utilities (dotenv is loaded automatically by test_utils)
 
 # Use Playwright for browser automation (faster, auto-waiting, better debugging)
 try:
-    from playwright.sync_api import sync_playwright, Page, expect
+    from playwright.sync_api import Page, expect, sync_playwright
+
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
 
 # Import shared utilities and constants
-from test_utils import wait_for_api, logger, API_BASE, UI_URL
-from test_constants import TEST_CARDS, TIMEOUTS, TEST_PREFIXES
+from test_constants import TEST_CARDS, TEST_PREFIXES, TIMEOUTS
+from test_utils import API_BASE, UI_URL, logger, wait_for_api
 
 
 def test_api_readiness():
@@ -46,26 +45,27 @@ def test_name_prefix_matching():
         ("Count", ["Counterspell", "Counterbalance"]),
         ("Brain", ["Brainstorm"]),
     ]
-    
+
     passed = 0
     for query, expected_prefixes in test_cases:
         try:
             resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix={query}&limit=10",
-                timeout=TIMEOUTS["normal"]
+                f"{API_BASE}/v1/cards?prefix={query}&limit=10", timeout=TIMEOUTS["normal"]
             )
-            assert resp.status_code == 200, \
+            assert resp.status_code == 200, (
                 f"Expected 200, got {resp.status_code} for query '{query}'"
+            )
             data = resp.json()
             items = data.get("items", [])
-            found = [item for item in items if any(item.startswith(exp) for exp in expected_prefixes)]
-            assert found, \
-                f"Expected matches for '{query}', got: {items[:3]}"
+            found = [
+                item for item in items if any(item.startswith(exp) for exp in expected_prefixes)
+            ]
+            assert found, f"Expected matches for '{query}', got: {items[:3]}"
             passed += 1
             logger.info(f"✅ '{query}' → found {len(found)} matches: {found[:3]}")
         except (requests.RequestException, AssertionError) as e:
             logger.error(f"❌ '{query}' → Error: {e}")
-    
+
     logger.info(f"Result: {passed}/{len(test_cases)} passed")
     return passed == len(test_cases)
 
@@ -78,23 +78,25 @@ def test_text_matching():
         ("draw", "Should find cards with 'draw' in text"),
         ("counter", "Should find cards with 'counter' in text"),
     ]
-    
+
     passed = 0
     for query, description in test_cases:
         try:
             resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix={query}&limit=10",
-                timeout=TIMEOUTS["normal"]
+                f"{API_BASE}/v1/cards?prefix={query}&limit=10", timeout=TIMEOUTS["normal"]
             )
             # Handle 404 or 503 gracefully
             if resp.status_code == 404:
                 logger.warning(f"⚠️  '{query}' → 404 (endpoint may not be available)")
                 return False
             elif resp.status_code == 503:
-                logger.warning(f"⚠️  '{query}' → 503 (service unavailable - embeddings may not be loaded)")
+                logger.warning(
+                    f"⚠️  '{query}' → 503 (service unavailable - embeddings may not be loaded)"
+                )
                 return False
-            assert resp.status_code == 200, \
+            assert resp.status_code == 200, (
                 f"Expected 200, got {resp.status_code} for query '{query}'"
+            )
             data = resp.json()
             items = data.get("items", [])
             # Check if we got results (might be name or text matches)
@@ -105,7 +107,7 @@ def test_text_matching():
                 logger.warning(f"⚠️  '{query}' → no results (may need Meilisearch indexed)")
         except (requests.RequestException, AssertionError) as e:
             logger.error(f"❌ '{query}' → Error: {e}")
-    
+
     logger.info(f"Result: {passed}/{len(test_cases)} passed")
     return passed >= len(test_cases) * 0.5  # At least 50% pass
 
@@ -118,23 +120,25 @@ def test_type_matching():
         ("creature", "Should find creature cards"),
         ("sorcery", "Should find sorcery cards"),
     ]
-    
+
     passed = 0
     for query, description in test_cases:
         try:
             resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix={query}&limit=10",
-                timeout=TIMEOUTS["normal"]
+                f"{API_BASE}/v1/cards?prefix={query}&limit=10", timeout=TIMEOUTS["normal"]
             )
             # Handle 404 or 503 gracefully
             if resp.status_code == 404:
                 logger.warning(f"⚠️  '{query}' → 404 (endpoint may not be available)")
                 return False
             elif resp.status_code == 503:
-                logger.warning(f"⚠️  '{query}' → 503 (service unavailable - embeddings may not be loaded)")
+                logger.warning(
+                    f"⚠️  '{query}' → 503 (service unavailable - embeddings may not be loaded)"
+                )
                 return False
-            assert resp.status_code == 200, \
+            assert resp.status_code == 200, (
                 f"Expected 200, got {resp.status_code} for query '{query}'"
+            )
             data = resp.json()
             items = data.get("items", [])
             if items:
@@ -144,7 +148,7 @@ def test_type_matching():
                 logger.warning(f"⚠️  '{query}' → no results")
         except (requests.RequestException, AssertionError) as e:
             logger.error(f"❌ '{query}' → Error: {e}")
-    
+
     logger.info(f"Result: {passed}/{len(test_cases)} passed")
     return passed >= len(test_cases) * 0.5
 
@@ -160,21 +164,21 @@ def test_edge_cases():
         (TEST_CARDS["common"].lower(), "Case insensitive"),
         (TEST_CARDS["common"].upper(), "All caps"),
     ]
-    
+
     passed = 0
     for query, description in edge_cases:
         try:
             resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix={query}&limit=10",
-                timeout=TIMEOUTS["normal"]
+                f"{API_BASE}/v1/cards?prefix={query}&limit=10", timeout=TIMEOUTS["normal"]
             )
-            assert resp.status_code in [200, 400, 422], \
+            assert resp.status_code in [200, 400, 422], (
                 f"Unexpected status {resp.status_code} for {description}"
+            )
             passed += 1
             logger.info(f"✅ '{query[:20]}...' ({description}) → handled correctly")
         except (requests.RequestException, AssertionError) as e:
             logger.error(f"❌ '{query[:20]}...' ({description}) → Error: {e}")
-    
+
     logger.info(f"Result: {passed}/{len(edge_cases)} passed")
     return passed == len(edge_cases)
 
@@ -183,29 +187,29 @@ def test_performance():
     """Test response time and performance."""
     logger.info("Testing performance...")
     queries = TEST_PREFIXES
-    
+
     times = []
     for query in queries:
         try:
             start = time.time()
             resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix={query}&limit=8",
-                timeout=TIMEOUTS["normal"]
+                f"{API_BASE}/v1/cards?prefix={query}&limit=8", timeout=TIMEOUTS["normal"]
             )
             elapsed = time.time() - start
-            
-            assert resp.status_code == 200, \
+
+            assert resp.status_code == 200, (
                 f"Expected 200, got {resp.status_code} for query '{query}'"
+            )
             times.append(elapsed)
-            logger.info(f"'{query}': {elapsed*1000:.1f}ms")
+            logger.info(f"'{query}': {elapsed * 1000:.1f}ms")
         except (requests.RequestException, AssertionError) as e:
             logger.error(f"'{query}': Error - {e}")
-    
+
     if times:
         avg_time = sum(times) / len(times)
         max_time = max(times)
-        logger.info(f"Average: {avg_time*1000:.1f}ms, Max: {max_time*1000:.1f}ms")
-        
+        logger.info(f"Average: {avg_time * 1000:.1f}ms, Max: {max_time * 1000:.1f}ms")
+
         # Should be fast (< 200ms for good UX)
         if avg_time < 0.2:
             logger.info("✅ Performance good (< 200ms average)")
@@ -216,14 +220,14 @@ def test_performance():
         else:
             logger.error("❌ Performance slow (> 500ms average)")
             return False
-    
+
     return False
 
 
 def test_meilisearch_vs_embeddings():
     """Test if Meilisearch is being used vs embeddings fallback."""
     logger.info("Testing Meilisearch vs embeddings fallback...")
-    
+
     # Check Meilisearch status
     try:
         resp = requests.get("http://localhost:7700/indexes/cards", timeout=TIMEOUTS["fast"])
@@ -253,39 +257,39 @@ def test_ui_keyboard_navigation():
     if not HAS_PLAYWRIGHT:
         logger.warning("⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
-            
+
             # Find and focus search input
             search_input = page.locator("#cardInput")
             search_input.wait_for(state="visible")
             search_input.focus()
-            
+
             # Type to trigger autocomplete
             search_input.type("Light", delay=50)
             page.wait_for_timeout(300)  # Wait for debounce
-            
+
             # Check if dropdown appears
             dropdown = page.locator("#autocompleteDropdown")
             if dropdown.is_visible():
                 logger.info("✅ Autocomplete dropdown appeared")
-                
+
                 # Test arrow key navigation
                 search_input.press("ArrowDown")
                 page.wait_for_timeout(100)
-                
+
                 selected = page.locator(".autocomplete-item.selected")
                 if selected.count() > 0:
                     logger.info("✅ Arrow key navigation works")
-                    
+
                     # Test Enter key
                     search_input.press("Enter")
                     page.wait_for_timeout(200)
-                    
+
                     # Check if value was selected
                     value = search_input.input_value()
                     if value and value != "Light":
@@ -298,7 +302,7 @@ def test_ui_keyboard_navigation():
                     logger.warning("⚠️  Arrow key didn't select item")
             else:
                 logger.warning("⚠️  Dropdown exists but not visible")
-            
+
             browser.close()
             return False
     except Exception as e:
@@ -312,31 +316,31 @@ def test_aria_accessibility():
     if not HAS_PLAYWRIGHT:
         logger.warning("⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
-            
+
             # Check search input ARIA
             search_input = page.locator("#cardInput")
             search_input.wait_for(state="visible")
-            
+
             checks = {
                 "role": search_input.get_attribute("role") == "combobox",
                 "aria-autocomplete": search_input.get_attribute("aria-autocomplete") == "list",
                 "aria-label": search_input.get_attribute("aria-label") is not None,
                 "aria-expanded": search_input.get_attribute("aria-expanded") is not None,
             }
-            
+
             passed = sum(checks.values())
             total = len(checks)
-            
+
             for check, passed_check in checks.items():
                 status = "✅" if passed_check else "❌"
                 logger.info(f"{status} {check}")
-            
+
             browser.close()
             logger.info(f"Result: {passed}/{total} ARIA attributes present")
             assert passed == total, f"Expected all ARIA attributes, got {passed}/{total}"
@@ -352,26 +356,26 @@ def test_debounce_timing():
     if not HAS_PLAYWRIGHT:
         logger.warning("⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
-            
+
             search_input = page.locator("#cardInput")
             search_input.wait_for(state="visible")
-            
+
             # Type quickly (should debounce)
             search_input.type("L", delay=10)
             search_input.type("i", delay=10)
             search_input.type("g", delay=10)
             search_input.type("h", delay=10)
             search_input.type("t", delay=10)
-            
+
             # Wait for debounce (200ms) + network
             page.wait_for_timeout(300)
-            
+
             # Check if dropdown appeared (should only trigger once)
             dropdown = page.locator("#autocompleteDropdown")
             if dropdown.is_visible():
@@ -393,18 +397,18 @@ def test_result_highlighting():
     if not HAS_PLAYWRIGHT:
         logger.warning("⚠️  Playwright not available (install with: uv add playwright)")
         return None
-    
+
     try:
         with sync_playwright() as p:
             browser = p.chromium.launch(headless=True)
             page = browser.new_page()
             page.goto(UI_URL)
-            
+
             search_input = page.locator("#cardInput")
             search_input.wait_for(state="visible")
             search_input.type("Light", delay=50)
             page.wait_for_timeout(300)
-            
+
             # Check if suggestions have highlighted text
             dropdown = page.locator("#autocompleteDropdown")
             if dropdown.is_visible():
@@ -436,14 +440,11 @@ def test_limit_enforcement():
     """Test that limit parameter is respected."""
     logger.info("Testing limit enforcement...")
     limits = [5, 8, 10, 20]
-    
+
     passed = 0
     for limit in limits:
         try:
-            resp = requests.get(
-                f"{API_BASE}/v1/cards?prefix=Light&limit={limit}",
-                timeout=5
-            )
+            resp = requests.get(f"{API_BASE}/v1/cards?prefix=Light&limit={limit}", timeout=5)
             if resp.status_code == 200:
                 data = resp.json()
                 items = data.get("items", [])
@@ -454,7 +455,7 @@ def test_limit_enforcement():
                     logger.error(f"❌ limit={limit} → got {len(items)} results (exceeded)")
         except Exception as e:
             logger.error(f"❌ limit={limit} → Error: {e}")
-    
+
     logger.info(f"Result: {passed}/{len(limits)} passed")
     return passed == len(limits)
 
@@ -464,24 +465,18 @@ def test_pagination():
     logger.info("Testing pagination...")
     try:
         # Get first page
-        resp1 = requests.get(
-            f"{API_BASE}/v1/cards?prefix=Light&limit=5&offset=0",
-            timeout=5
-        )
-        
+        resp1 = requests.get(f"{API_BASE}/v1/cards?prefix=Light&limit=5&offset=0", timeout=5)
+
         # Get second page
-        resp2 = requests.get(
-            f"{API_BASE}/v1/cards?prefix=Light&limit=5&offset=5",
-            timeout=5
-        )
-        
+        resp2 = requests.get(f"{API_BASE}/v1/cards?prefix=Light&limit=5&offset=5", timeout=5)
+
         if resp1.status_code == 200 and resp2.status_code == 200:
             data1 = resp1.json()
             data2 = resp2.json()
-            
+
             items1 = set(data1.get("items", []))
             items2 = set(data2.get("items", []))
-            
+
             # Check for overlap (should be minimal)
             overlap = items1 & items2
             if len(overlap) == 0:
@@ -503,11 +498,11 @@ def main():
     logger.info("=" * 60)
     logger.info("Comprehensive Type-Ahead Testing")
     logger.info("=" * 60)
-    
+
     if not test_api_readiness():
         logger.error("API not ready. Start with: docker-compose up")
         return 1
-    
+
     results = {
         "name_prefix": test_name_prefix_matching(),
         "text_matching": test_text_matching(),
@@ -522,7 +517,7 @@ def main():
         "limit": test_limit_enforcement(),
         "pagination": test_pagination(),
     }
-    
+
     logger.info("=" * 60)
     logger.info("Test Results Summary:")
     logger.info("=" * 60)
@@ -534,31 +529,30 @@ def main():
         else:
             status = "❌"
         logger.info(f"{status} {test}")
-    
+
     passed = sum(1 for r in results.values() if r is True)
     total = sum(1 for r in results.values() if r is not None)
     skipped = sum(1 for r in results.values() if r is None)
-    
+
     logger.info(f"Passed: {passed}/{total} (skipped: {skipped})")
-    
+
     # Recommendations
     logger.info("=" * 60)
     logger.info("Recommendations:")
     logger.info("=" * 60)
-    
+
     if not results.get("meilisearch"):
         logger.warning("⚠️  Index Meilisearch for better type-ahead:")
         logger.warning("   python -m ml.search.index_cards --embeddings <path>")
-    
+
     if not results.get("performance"):
         logger.warning("⚠️  Performance could be improved (check network/Meilisearch)")
-    
+
     if not results.get("aria"):
         logger.warning("⚠️  ARIA attributes missing (accessibility issue)")
-    
+
     return 0 if passed == total else 1
 
 
 if __name__ == "__main__":
     exit(main())
-

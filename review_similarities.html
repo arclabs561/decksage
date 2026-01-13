@@ -12,7 +12,7 @@
             padding: 0;
             box-sizing: border-box;
         }
-        
+
         :root {
             --bg-primary: #0f0f0f;
             --bg-secondary: #1a1a1a;
@@ -34,7 +34,7 @@
             --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
             --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
             background: var(--bg-primary);
@@ -43,19 +43,19 @@
             line-height: 1.6;
             min-height: 100vh;
         }
-        
+
         .container {
             max-width: 1600px;
             margin: 0 auto;
             padding: 24px 20px;
         }
-        
+
         .header {
             margin-bottom: 24px;
             padding-bottom: 20px;
             border-bottom: 1px solid var(--border-default);
         }
-        
+
         h1 {
             font-size: 32px;
             font-weight: 600;
@@ -63,13 +63,13 @@
             margin-bottom: 8px;
             letter-spacing: -0.5px;
         }
-        
+
         .subtitle {
             font-size: 16px;
             color: var(--text-secondary);
             font-weight: 400;
         }
-        
+
         .header-controls {
             display: flex;
             gap: 16px;
@@ -82,20 +82,20 @@
             border: 1px solid var(--border-default);
             box-shadow: var(--shadow-sm);
         }
-        
+
         .control-group {
             display: flex;
             gap: 8px;
             align-items: center;
         }
-        
+
         .control-group label {
             font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
             white-space: nowrap;
         }
-        
+
         select, input[type="text"], input[type="number"] {
             padding: 10px 14px;
             background: var(--bg-secondary);
@@ -105,7 +105,7 @@
             font-size: 14px;
             font-family: inherit;
         }
-        
+
         input[type="file"] {
             padding: 8px;
             background: var(--bg-secondary);
@@ -115,27 +115,27 @@
             font-size: 14px;
             cursor: pointer;
         }
-        
+
         input[type="file"]:hover {
             border-color: var(--border-hover);
         }
-        
+
         input[type="file"]:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px var(--accent-light);
         }
-        
+
         select:hover, input:hover {
             border-color: var(--border-hover);
         }
-        
+
         select:focus, input:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px var(--accent-light);
         }
-        
+
         button {
             padding: 10px 20px;
             background: var(--accent-primary);
@@ -148,30 +148,30 @@
             box-shadow: var(--shadow-sm);
             font-family: inherit;
         }
-        
+
         button:hover:not(:disabled) {
             background: var(--accent-hover);
         }
-        
+
         button:active:not(:disabled) {
             background: var(--accent-primary);
         }
-        
+
         button:disabled {
             background: var(--bg-tertiary);
             cursor: not-allowed;
             opacity: 0.5;
         }
-        
+
         button.secondary {
             background: var(--bg-tertiary);
             color: var(--text-primary);
         }
-        
+
         button.secondary:hover:not(:disabled) {
             background: var(--bg-elevated);
         }
-        
+
         .legend {
             background: var(--bg-elevated);
             border: 1px solid var(--border-default);
@@ -180,20 +180,20 @@
             margin-bottom: 24px;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .legend h3 {
             font-size: 16px;
             margin-bottom: 16px;
             color: var(--text-primary);
             font-weight: 600;
         }
-        
+
         .legend-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 12px;
         }
-        
+
         .legend-item {
             display: flex;
             align-items: center;
@@ -203,7 +203,7 @@
             border-radius: 6px;
             font-size: 13px;
         }
-        
+
         .legend-rating {
             display: inline-flex;
             align-items: center;
@@ -216,18 +216,18 @@
             font-weight: 600;
             font-size: 12px;
         }
-        
+
         .legend-item strong {
             color: var(--text-primary);
         }
-        
+
         .stats {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
             gap: 16px;
             margin-bottom: 32px;
         }
-        
+
         .stat-card {
             background: var(--bg-elevated);
             border: 1px solid var(--border-default);
@@ -235,12 +235,12 @@
             padding: 20px;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .stat-card:hover {
             border-color: var(--border-hover);
             box-shadow: var(--shadow-md);
         }
-        
+
         .stat-label {
             font-size: 12px;
             color: var(--text-tertiary);
@@ -249,21 +249,21 @@
             font-weight: 600;
             margin-bottom: 8px;
         }
-        
+
         .stat-value {
             font-size: 32px;
             font-weight: 700;
             color: var(--text-primary);
             line-height: 1;
         }
-        
+
         .stat-value.accent {
             background: var(--accent-primary);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
         }
-        
+
         .progress-indicator {
             position: fixed;
             top: 20px;
@@ -276,11 +276,11 @@
             z-index: 1000;
             display: none;
         }
-        
+
         .progress-indicator.visible {
             display: block;
         }
-        
+
         .progress-bar {
             width: 200px;
             height: 6px;
@@ -289,18 +289,18 @@
             overflow: hidden;
             margin-top: 8px;
         }
-        
+
         .progress-fill {
             height: 100%;
             background: var(--accent-primary);
         }
-        
+
         .similarity-list {
             display: flex;
             flex-direction: column;
             gap: 20px;
         }
-        
+
         .similarity-item {
             background: var(--bg-elevated);
             border: 1px solid var(--border-default);
@@ -310,7 +310,7 @@
             position: relative;
             overflow: hidden;
         }
-        
+
         .similarity-item::before {
             content: '';
             position: absolute;
@@ -321,25 +321,25 @@
             background: var(--accent-primary);
             opacity: 0;
         }
-        
+
         .similarity-item:hover {
             border-color: var(--border-hover);
             box-shadow: var(--shadow-md);
         }
-        
+
         .similarity-item:hover::before {
             opacity: 1;
         }
-        
+
         .similarity-item.annotated {
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 1px var(--accent-light);
         }
-        
+
         .similarity-item.annotated::before {
             opacity: 1;
         }
-        
+
         .similarity-header {
             display: flex;
             justify-content: space-between;
@@ -347,19 +347,19 @@
             margin-bottom: 20px;
             gap: 24px;
         }
-        
+
         .card-pair {
             display: flex;
             gap: 20px;
             align-items: center;
             flex: 1;
         }
-        
+
         .card-info {
             flex: 1;
             min-width: 0;
         }
-        
+
         .card-name {
             font-size: 20px;
             font-weight: 600;
@@ -367,7 +367,7 @@
             margin-bottom: 6px;
             line-height: 1.3;
         }
-        
+
         .card-meta {
             font-size: 13px;
             color: var(--text-tertiary);
@@ -375,13 +375,13 @@
             gap: 12px;
             flex-wrap: wrap;
         }
-        
+
         .card-meta-item {
             display: flex;
             align-items: center;
             gap: 4px;
         }
-        
+
         .card-separator {
             display: flex;
             align-items: center;
@@ -395,7 +395,7 @@
             font-weight: 600;
             flex-shrink: 0;
         }
-        
+
         .similarity-score {
             display: flex;
             flex-direction: column;
@@ -403,7 +403,7 @@
             gap: 8px;
             flex-shrink: 0;
         }
-        
+
         .score-value {
             font-size: 32px;
             font-weight: 700;
@@ -413,7 +413,7 @@
             background-clip: text;
             line-height: 1;
         }
-        
+
         .score-label {
             font-size: 11px;
             color: var(--text-tertiary);
@@ -421,7 +421,7 @@
             letter-spacing: 0.5px;
             font-weight: 600;
         }
-        
+
         .similarity-bar {
             width: 120px;
             height: 6px;
@@ -430,32 +430,32 @@
             overflow: hidden;
             margin-top: 4px;
         }
-        
+
         .similarity-fill {
             height: 100%;
             background: var(--accent-primary);
         }
-        
+
         .metadata-section {
             margin-top: 20px;
             padding-top: 20px;
             border-top: 1px solid var(--border-default);
         }
-        
+
         /* Metadata section is always visible for test compatibility */
-        
+
         .metadata-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 16px;
         }
-        
+
         .metadata-item {
             display: flex;
             flex-direction: column;
             gap: 6px;
         }
-        
+
         .metadata-label {
             font-size: 11px;
             color: var(--text-tertiary);
@@ -463,18 +463,18 @@
             letter-spacing: 0.5px;
             font-weight: 600;
         }
-        
+
         .metadata-value {
             font-size: 14px;
             color: var(--text-secondary);
             line-height: 1.5;
         }
-        
+
         .metadata-value.empty {
             color: var(--text-tertiary);
             font-style: italic;
         }
-        
+
         .metadata-badge {
             display: inline-block;
             padding: 4px 10px;
@@ -484,7 +484,7 @@
             font-size: 12px;
             color: var(--text-secondary);
         }
-        
+
         .annotation-controls {
             display: flex;
             gap: 12px;
@@ -494,13 +494,13 @@
             border-top: 1px solid var(--border-default);
             flex-wrap: wrap;
         }
-        
+
         .rating-section {
             display: flex;
             flex-direction: column;
             gap: 8px;
         }
-        
+
         .rating-label {
             font-size: 12px;
             color: var(--text-tertiary);
@@ -508,12 +508,12 @@
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
-        
+
         .rating-buttons {
             display: flex;
             gap: 6px;
         }
-        
+
         .rating-btn {
             padding: 8px 14px;
             background: var(--bg-secondary);
@@ -525,28 +525,28 @@
             cursor: pointer;
             min-width: 44px;
         }
-        
+
         .rating-btn:focus {
             outline: 2px solid var(--accent-primary);
             outline-offset: 2px;
         }
-        
+
         .rating-btn:hover {
             background: var(--bg-tertiary);
             border-color: var(--border-hover);
             color: var(--text-primary);
         }
-        
+
         .rating-btn.selected {
             background: var(--accent-primary);
             border-color: var(--accent-primary);
             color: #fff;
         }
-        
+
         .rating-btn.selected:hover {
             background: var(--accent-hover);
         }
-        
+
         .substitute-section {
             display: flex;
             align-items: center;
@@ -556,26 +556,26 @@
             border-radius: 8px;
             border: 1px solid var(--border-default);
         }
-        
+
         .substitute-section input[type="checkbox"] {
             width: 20px;
             height: 20px;
             cursor: pointer;
             accent-color: var(--accent-primary);
         }
-        
+
         .substitute-section label {
             font-size: 14px;
             color: var(--text-secondary);
             cursor: pointer;
             font-weight: 500;
         }
-        
+
         .notes-section {
             flex: 1;
             min-width: 200px;
         }
-        
+
         .notes-input {
             width: 100%;
             padding: 10px 14px;
@@ -586,17 +586,17 @@
             font-size: 14px;
             font-family: inherit;
         }
-        
+
         .notes-input:focus {
             outline: none;
             border-color: var(--accent-primary);
             box-shadow: 0 0 0 3px var(--accent-light);
         }
-        
+
         .notes-input::placeholder {
             color: var(--text-tertiary);
         }
-        
+
         .bulk-actions {
             position: sticky;
             bottom: 0;
@@ -612,29 +612,29 @@
             justify-content: space-between;
             box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.15);
         }
-        
+
         .bulk-actions-left {
             display: flex;
             gap: 12px;
             align-items: center;
         }
-        
+
         .bulk-stats {
             font-size: 14px;
             color: var(--text-secondary);
             font-weight: 500;
         }
-        
+
         .bulk-stats strong {
             color: var(--accent-primary);
         }
-        
+
         .loading {
             text-align: center;
             padding: 60px 20px;
             color: var(--text-tertiary);
         }
-        
+
         .loading-spinner {
             display: inline-block;
             width: 40px;
@@ -645,11 +645,11 @@
             animation: spin 0.8s linear infinite;
             margin-bottom: 16px;
         }
-        
+
         @keyframes spin {
             to { transform: rotate(360deg); }
         }
-        
+
         .error {
             background: rgba(244, 67, 54, 0.1);
             border: 1px solid var(--error);
@@ -659,66 +659,66 @@
             margin-bottom: 24px;
             box-shadow: var(--shadow-sm);
         }
-        
+
         .empty-state {
             text-align: center;
             padding: 80px 20px;
             color: var(--text-tertiary);
         }
-        
+
         .empty-state-icon {
             font-size: 64px;
             margin-bottom: 16px;
             opacity: 0.5;
         }
-        
+
         .empty-state h2 {
             font-size: 24px;
             margin-bottom: 8px;
             color: var(--text-secondary);
             font-weight: 600;
         }
-        
+
         .empty-state p {
             font-size: 16px;
             color: var(--text-tertiary);
         }
-        
+
         @media (max-width: 768px) {
             .container {
                 padding: 20px 16px;
             }
-            
+
             h1 {
                 font-size: 32px;
             }
-            
+
             .header-controls {
                 flex-direction: column;
                 align-items: stretch;
             }
-            
+
             .control-group {
                 width: 100%;
             }
-            
+
             .card-pair {
                 flex-direction: column;
                 align-items: flex-start;
             }
-            
+
             .card-separator {
                 transform: rotate(90deg);
             }
-            
+
             .similarity-header {
                 flex-direction: column;
             }
-            
+
             .similarity-score {
                 align-items: flex-start;
             }
-            
+
             .bulk-actions {
                 flex-direction: column;
                 align-items: stretch;
@@ -732,7 +732,7 @@
             <h1>Similarity Review</h1>
             <p class="subtitle">Review and annotate card similarities in bulk with comprehensive metadata</p>
         </div>
-        
+
         <div class="header-controls">
             <div class="control-group">
                 <label for="dataSource">Data Source:</label>
@@ -819,7 +819,7 @@
             <h2>No similarities loaded</h2>
             <p>Load similarities from API or file to start reviewing.</p>
         </div>
-        
+
         <div id="progressIndicator" class="progress-indicator">
             <div style="font-size: 14px; font-weight: 600; margin-bottom: 4px;">Progress</div>
             <div class="progress-bar">
@@ -871,21 +871,21 @@
                 document.getElementById('topKGroup').style.display = 'flex';
             }
         });
-        
+
         sortBy.addEventListener('change', () => {
             sortSimilarities();
         });
-        
+
         function sortSimilarities() {
             if (similarities.length === 0) return;
-            
+
             const sortValue = sortBy.value;
             const sortedIndices = [...Array(similarities.length).keys()].sort((a, b) => {
                 const simA = similarities[a];
                 const simB = similarities[b];
                 const annA = annotations.get(a);
                 const annB = annotations.get(b);
-                
+
                 switch (sortValue) {
                     case 'similarity':
                         return simB.similarity - simA.similarity;
@@ -907,7 +907,7 @@
                         return 0;
                 }
             });
-            
+
             // Reorder similarities and annotations
             const newSimilarities = sortedIndices.map(i => similarities[i]);
             const newAnnotations = new Map();
@@ -916,10 +916,10 @@
                     newAnnotations.set(newIdx, annotations.get(oldIdx));
                 }
             });
-            
+
             similarities = newSimilarities;
             annotations = newAnnotations;
-            
+
             // Re-render
             renderSimilarities();
         }
@@ -1024,7 +1024,7 @@
             // Use requestAnimationFrame for smooth transition
             requestAnimationFrame(() => {
                 loadingContainer.style.display = 'none';
-                
+
                 if (similarities.length === 0) {
                     emptyState.style.display = 'block';
                     stats.style.display = 'none';
@@ -1045,7 +1045,7 @@
                 });
 
                 updateStats();
-                
+
                 // Scroll to top of list
                 similarityList.scrollIntoView({ behavior: 'smooth', block: 'start' });
             });
@@ -1071,7 +1071,7 @@
             // For file results, might be nested in card1_attrs/card2_attrs
             const card1Meta = metadata.card1_attrs || metadata.card1 || {};
             const card2Meta = metadata.card2_attrs || metadata.card2 || {};
-            
+
             // Also check if metadata is directly on sim (API format) - card2 gets the enriched metadata
             const finalCard2Meta = {
                 type: sim.type || metadata.type || card2Meta.type,
@@ -1106,8 +1106,8 @@
                         <div class="card-info">
                             ${finalCard2Meta.image_url ? `
                             <div style="display: flex; gap: 12px; align-items: flex-start;">
-                                <img src="${escapeHtml(finalCard2Meta.image_url)}" 
-                                     alt="${escapeHtml(sim.card2)}" 
+                                <img src="${escapeHtml(finalCard2Meta.image_url)}"
+                                     alt="${escapeHtml(sim.card2)}"
                                      style="width: 60px; height: auto; border-radius: 8px; border: 1px solid var(--border-default); flex-shrink: 0;"
                                      onerror="this.style.display='none'">
                                 <div style="flex: 1; min-width: 0;">
@@ -1215,7 +1215,7 @@
                             <div class="metadata-value">${card1Meta.toughness} → ${finalCard2Meta.toughness}</div>
                         </div>
                         ` : ''}
-                        ${!sim.similarity_type && !sim.reasoning && !sim.source && 
+                        ${!sim.similarity_type && !sim.reasoning && !sim.source &&
                           !finalCard2Meta.functional_tags && !finalCard2Meta.format_legal && !finalCard2Meta.archetype &&
                           !finalCard2Meta.cooccurrence_note && !finalCard2Meta.archetype_staples &&
                           !finalCard2Meta.archetype_cooccurrence && !finalCard2Meta.format_cooccurrence &&
@@ -1232,8 +1232,8 @@
                         <div class="rating-label">Rating</div>
                         <div class="rating-buttons">
                             ${[0, 1, 2, 3, 4].map(r => `
-                                <button class="rating-btn ${rating === r ? 'selected' : ''}" 
-                                        data-rating="${r}" 
+                                <button class="rating-btn ${rating === r ? 'selected' : ''}"
+                                        data-rating="${r}"
                                         data-index="${index}"
                                         title="${getRatingLabel(r)}">
                                     ${r}
@@ -1246,7 +1246,7 @@
                         <label for="substitute-${index}">Substitute?</label>
                     </div>
                     <div class="notes-section">
-                        <input type="text" class="notes-input" placeholder="Notes (optional)" 
+                        <input type="text" class="notes-input" placeholder="Notes (optional)"
                                id="notes-${index}" data-index="${index}" value="${escapeHtml(notes)}">
                     </div>
                 </div>
@@ -1259,7 +1259,7 @@
                     const rating = parseInt(btn.dataset.rating);
                     setRating(idx, rating);
                 });
-                
+
                 // Keyboard support
                 btn.addEventListener('keydown', (e) => {
                     if (e.key === 'Enter' || e.key === ' ') {
@@ -1298,15 +1298,15 @@
                 annotations.set(index, {});
             }
             annotations.get(index).rating = rating;
-            
+
             // Update UI
             const item = document.querySelector(`[data-index="${index}"]`);
             item.querySelectorAll('.rating-btn').forEach(btn => {
                 btn.classList.toggle('selected', parseInt(btn.dataset.rating) === rating);
             });
-            
+
             item.classList.add('annotated');
-            
+
             updateStats();
         }
 
@@ -1336,12 +1336,12 @@
             document.getElementById('statPending').textContent = pending;
 
             document.getElementById('bulkStats').innerHTML = `<strong>${annotated}</strong> of <strong>${total}</strong> annotated`;
-            
+
             // Update progress indicator
             const progressIndicator = document.getElementById('progressIndicator');
             const progressFill = document.getElementById('progressFill');
             const progressText = document.getElementById('progressText');
-            
+
             if (total > 0) {
                 progressIndicator.classList.add('visible');
                 progressFill.style.width = `${progress}%`;
@@ -1353,7 +1353,7 @@
 
         submitAllBtn.addEventListener('click', async () => {
             const feedbacks = [];
-            
+
             annotations.forEach((annotation, index) => {
                 if (annotation.rating !== undefined && annotation.rating !== null) {
                     const sim = similarities[index];
@@ -1395,7 +1395,7 @@
 
                 const result = await response.json();
                 alert(`Successfully submitted ${result.processed} annotations!`);
-                
+
                 // Clear annotations after successful submission
                 annotations.clear();
                 renderSimilarities();
@@ -1416,7 +1416,7 @@
 
         exportBtn.addEventListener('click', () => {
             const exportData = [];
-            
+
             similarities.forEach((sim, index) => {
                 const annotation = annotations.get(index);
                 if (annotation && annotation.rating !== undefined) {
@@ -1460,32 +1460,32 @@
             div.textContent = String(text);
             return div.innerHTML;
         }
-        
+
         // Keyboard shortcuts for faster annotation
         document.addEventListener('keydown', (e) => {
             // Only handle shortcuts when not typing in inputs
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
                 return;
             }
-            
+
             // Number keys 0-4 for rating
             if (e.key >= '0' && e.key <= '4' && similarities.length > 0) {
                 const firstUnannotated = similarities.findIndex((sim, idx) => {
                     const ann = annotations.get(idx);
                     return !ann || ann.rating === undefined || ann.rating === null;
                 });
-                
+
                 if (firstUnannotated !== -1) {
                     const rating = parseInt(e.key);
                     setRating(firstUnannotated, rating);
-                    
+
                     // Scroll to next unannotated
                     const nextUnannotated = similarities.findIndex((sim, idx) => {
                         if (idx <= firstUnannotated) return false;
                         const ann = annotations.get(idx);
                         return !ann || ann.rating === undefined || ann.rating === null;
                     });
-                    
+
                     if (nextUnannotated !== -1) {
                         const nextItem = document.querySelector(`[data-index="${nextUnannotated}"]`);
                         if (nextItem) {
@@ -1500,14 +1500,14 @@
                     e.preventDefault();
                 }
             }
-            
+
             // 's' for substitute toggle
             if (e.key === 's' && similarities.length > 0) {
                 const firstUnannotated = similarities.findIndex((sim, idx) => {
                     const ann = annotations.get(idx);
                     return !ann || ann.rating === undefined || ann.rating === null;
                 });
-                
+
                 if (firstUnannotated !== -1) {
                     const item = document.querySelector(`[data-index="${firstUnannotated}"]`);
                     if (item) {
@@ -1521,14 +1521,14 @@
                 }
             }
         });
-        
+
         // Add tooltip for keyboard shortcuts
         const helpText = document.createElement('div');
         helpText.style.cssText = 'position: fixed; bottom: 80px; right: 24px; background: var(--bg-elevated); border: 1px solid var(--border-default); border-radius: 8px; padding: 12px; font-size: 12px; color: var(--text-secondary); max-width: 200px; z-index: 1000; box-shadow: var(--shadow-lg); display: none;';
         helpText.innerHTML = '<strong>Keyboard Shortcuts:</strong><br>0-4: Rate first unannotated<br>S: Toggle substitute<br>Click to dismiss';
         helpText.addEventListener('click', () => helpText.style.display = 'none');
         document.body.appendChild(helpText);
-        
+
         // Show help on '?' key
         document.addEventListener('keydown', (e) => {
             if (e.key === '?' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {

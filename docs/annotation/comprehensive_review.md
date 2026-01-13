@@ -249,4 +249,3 @@ python scripts/annotation/submit_human_annotations.py retrieve \
 python scripts/annotation/queue_human_annotations.py --stats
 python scripts/annotation/queue_human_annotations.py --list-queue
 ```
-

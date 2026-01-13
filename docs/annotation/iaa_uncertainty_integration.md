@@ -17,7 +17,7 @@ This document describes the integration of **Inter-Annotator Agreement (IAA)** m
    - It works with multiple annotators (not just pairs)
    - It's more robust than Cohen's Kappa for continuous scales
 
-3. **Minimum IAA Thresholds**: 
+3. **Minimum IAA Thresholds**:
    - **α ≥ 0.8**: High agreement (almost perfect)
    - **α ≥ 0.6**: Substantial agreement (acceptable for production)
    - **α ≥ 0.4**: Moderate agreement (may need review)
@@ -168,4 +168,3 @@ uv run python3 scripts/annotation/test_iaa_uncertainty.py
 - Hard mining improves MRR by +5-10%
 - Krippendorff's Alpha is the standard for continuous/interval data with multiple annotators
 - Minimum acceptable IAA: α ≥ 0.6 (substantial agreement)
-

@@ -9,6 +9,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Any
 
+
 try:
     from ..data.incremental_graph import IncrementalCardGraph
     from ..utils.shared_operations import jaccard_similarity
@@ -125,10 +126,10 @@ def load_card_attributes(
     """Load card attributes from card_attributes dict with case-insensitive matching."""
     if not card_attributes:
         return CardAttributes()
-    
+
     # Try exact match first
     attrs = card_attributes.get(card_name, {})
-    
+
     # If not found, try case-insensitive match
     if not attrs:
         card_name_lower = card_name.strip().lower()
@@ -158,12 +159,13 @@ def load_card_attributes(
             return None
         if isinstance(val, float):
             import math
+
             if math.isnan(val):
                 return None
         if isinstance(val, str) and val.lower() in ("nan", "none", ""):
             return None
         return val
-    
+
     return CardAttributes(
         mana_cost=clean_value(attrs.get("mana_cost")),
         cmc=clean_value(attrs.get("cmc")),
@@ -184,7 +186,7 @@ def compare_card_attributes(
     card_attributes: dict[str, dict[str, Any]] | None = None,
 ) -> CardComparison | None:
     """Compare card attributes and compute similarities.
-    
+
     Returns CardComparison even if card_attributes is None or cards not found,
     but with empty CardAttributes. This ensures card_comparison field exists
     even for non-Magic games (allowing meta-judge to detect missing data).
@@ -193,7 +195,7 @@ def compare_card_attributes(
     # This allows downstream code to detect missing data vs missing field
     attrs1 = load_card_attributes(card1, card_attributes) if card_attributes else CardAttributes()
     attrs2 = load_card_attributes(card2, card_attributes) if card_attributes else CardAttributes()
-    
+
     # If we have no attributes at all, still return CardComparison but with empty attrs
     # This is better than returning None, as it allows detection of missing data
 
@@ -202,9 +204,7 @@ def compare_card_attributes(
 
     # Mana cost similarity (exact match = 1.0, partial = 0.5, different = 0.0)
     if attrs1.mana_cost and attrs2.mana_cost:
-        attribute_similarity["mana_cost"] = (
-            1.0 if attrs1.mana_cost == attrs2.mana_cost else 0.0
-        )
+        attribute_similarity["mana_cost"] = 1.0 if attrs1.mana_cost == attrs2.mana_cost else 0.0
     elif attrs1.mana_cost or attrs2.mana_cost:
         attribute_similarity["mana_cost"] = 0.0
 
@@ -330,9 +330,7 @@ def extract_contextual_analysis(
                 temporal_trend = "stable"
 
             # Find peak periods
-            sorted_periods = sorted(
-                edge.monthly_counts.items(), key=lambda x: x[1], reverse=True
-            )
+            sorted_periods = sorted(edge.monthly_counts.items(), key=lambda x: x[1], reverse=True)
             peak_periods = [period for period, _ in sorted_periods[:3]]
 
     # Tournament context (if available in metadata)
@@ -362,7 +360,7 @@ def enrich_annotation_with_graph(
     game: str | None = None,
 ) -> dict[str, Any]:
     """Enrich an annotation with graph features, card attributes, and contextual analysis.
-    
+
     Preserves all original annotation fields including 'source' which is required for validation.
     """
     card1 = annotation.get("card1")
@@ -386,17 +384,39 @@ def enrich_annotation_with_graph(
     # Extract graph features
     graph_features = extract_graph_features(graph, card1, card2, game)
     if graph_features:
-        annotation["graph_features"] = graph_features.model_dump() if hasattr(graph_features, "model_dump") else graph_features.__dict__
+        annotation["graph_features"] = (
+            graph_features.model_dump()
+            if hasattr(graph_features, "model_dump")
+            else graph_features.__dict__
+        )
 
-    # Compare card attributes
+    # Compare card attributes - ALWAYS create card_comparison (even if empty)
+    # This ensures the field exists for meta-judge to detect missing data
     card_comparison = compare_card_attributes(card1, card2, card_attributes)
-    if card_comparison:
-        annotation["card_comparison"] = card_comparison.model_dump() if hasattr(card_comparison, "model_dump") else card_comparison.__dict__
+    # Always set card_comparison, even if it's empty (allows detection of missing data)
+    annotation["card_comparison"] = (
+        (
+            card_comparison.model_dump()
+            if hasattr(card_comparison, "model_dump")
+            else card_comparison.__dict__
+        )
+        if card_comparison
+        else {
+            "card1_attrs": {},
+            "card2_attrs": {},
+            "attribute_similarity": {},
+            "functional_overlap": [],
+            "differences": [],
+        }
+    )
 
     # Extract contextual analysis
     contextual_analysis = extract_contextual_analysis(graph, card1, card2, game)
     if contextual_analysis:
-        annotation["contextual_analysis"] = contextual_analysis.model_dump() if hasattr(contextual_analysis, "model_dump") else contextual_analysis.__dict__
+        annotation["contextual_analysis"] = (
+            contextual_analysis.model_dump()
+            if hasattr(contextual_analysis, "model_dump")
+            else contextual_analysis.__dict__
+        )
 
     return annotation
-

@@ -17,6 +17,7 @@ import logging
 from pathlib import Path
 from typing import Any
 
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -251,7 +252,7 @@ def main() -> int:
 
     try:
         stats = collect_images(args.game, args.output, limit=args.limit)
-        print(f"\nCollection Statistics:")
+        print("\nCollection Statistics:")
         print(f"  Total cards: {stats['total']}")
         print(f"  Downloaded: {stats['downloaded']}")
         print(f"  Failed: {stats['failed']}")
@@ -266,4 +267,3 @@ if __name__ == "__main__":
     import sys
 
     sys.exit(main())
-

@@ -19,6 +19,7 @@ from ..data.multilingual_translations import detect_language, translate_card_nam
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
 
+
 logger = setup_script_logging()
 
 
@@ -29,23 +30,24 @@ def validate_fixes(
 ) -> dict[str, any]:
     """
     Validate multilingual card fixes.
-    
+
     Args:
         graph_db: Path to graph database
         sample_size: Number of fixed cards to sample
         min_decks: Minimum deck count to consider
-        
+
     Returns:
         Validation results
     """
     logger.info("Validating multilingual card fixes...")
-    
+
     conn = sqlite3.connect(str(graph_db))
     conn.row_factory = sqlite3.Row
-    
+
     # Get sample of recently fixed cards (cards that were unknown but now have games)
     # We'll check cards that have games and appear to be multilingual
-    fixed_cards = conn.execute("""
+    fixed_cards = conn.execute(
+        """
         SELECT name, game, total_decks
         FROM nodes
         WHERE game IS NOT NULL
@@ -53,38 +55,47 @@ def validate_fixes(
         AND total_decks >= ?
         ORDER BY total_decks DESC
         LIMIT ?
-    """, (min_decks, sample_size * 2)).fetchall()
-    
+    """,
+        (min_decks, sample_size * 2),
+    ).fetchall()
+
     logger.info(f"Sampling {len(fixed_cards)} cards for validation...")
-    
+
     card_db = get_card_database()
     card_db.load()
-    
+
     validated = 0
     errors = []
     warnings = []
-    
+
     for row in fixed_cards[:sample_size]:
         card_name = row["name"]
         assigned_game = row["game"]
         decks = row["total_decks"]
-        
+
         # Check if card name appears multilingual
         lang = detect_language(card_name)
         if not lang:
             continue  # Skip non-multilingual cards
-        
+
         # Try to translate
         translated = translate_card_name(card_name, from_lang=lang, use_api=False)
-        
+
         if translated:
             # Verify the translated name exists in the assigned game
             game = card_db.get_game(translated, fuzzy=True)
-            
+
             if game:
-                game_map = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO", "digimon": "DIG", "onepiece": "OP", "riftbound": "RFT"}
+                game_map = {
+                    "magic": "MTG",
+                    "pokemon": "PKM",
+                    "yugioh": "YGO",
+                    "digimon": "DIG",
+                    "onepiece": "OP",
+                    "riftbound": "RFT",
+                }
                 expected_game_code = game_map.get(game.lower())
-                
+
                 if expected_game_code == assigned_game:
                     validated += 1
                     logger.debug(f"  ✓ {card_name} -> {translated} -> {assigned_game}")
@@ -101,9 +112,9 @@ def validate_fixes(
             warning = f"Multilingual card '{card_name}' has no translation"
             warnings.append(warning)
             logger.debug(f"  ~ {warning}")
-    
+
     conn.close()
-    
+
     results = {
         "validated": validated,
         "errors": len(errors),
@@ -111,9 +122,11 @@ def validate_fixes(
         "error_details": errors[:10],  # First 10 errors
         "warning_details": warnings[:10],  # First 10 warnings
     }
-    
-    logger.info(f"Validation complete: {validated} correct, {len(errors)} errors, {len(warnings)} warnings")
-    
+
+    logger.info(
+        f"Validation complete: {validated} correct, {len(errors)} errors, {len(warnings)} warnings"
+    )
+
     return results
 
 
@@ -138,29 +151,29 @@ def main() -> int:
         default=100,
         help="Minimum deck count to consider",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 70)
     logger.info("Validate Multilingual Card Fixes")
     logger.info("=" * 70)
-    
+
     results = validate_fixes(args.graph_db, args.sample_size, args.min_decks)
-    
-    logger.info(f"\n✓ Validation Results:")
+
+    logger.info("\n✓ Validation Results:")
     logger.info(f"  Validated: {results['validated']}")
     logger.info(f"  Errors: {results['errors']}")
     logger.info(f"  Warnings: {results['warnings']}")
-    
-    if results['errors'] > 0:
+
+    if results["errors"] > 0:
         logger.warning("\nErrors found:")
-        for error in results['error_details']:
+        for error in results["error_details"]:
             logger.warning(f"  {error}")
-    
-    return 0 if results['errors'] == 0 else 1
+
+    return 0 if results["errors"] == 0 else 1
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

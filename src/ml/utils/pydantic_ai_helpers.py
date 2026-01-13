@@ -35,6 +35,8 @@ def make_agent(
     result_cls,
     system_prompt: str,
     provider: str | None = None,
+    model_settings: dict[str, Any] | None = None,
+    tools: list[Any] | None = None,
 ) -> Agent:
     """
     Create a Pydantic AI agent with consistent configuration.
@@ -44,6 +46,8 @@ def make_agent(
         result_cls: Pydantic model for structured output
         system_prompt: System prompt for the agent
         provider: Provider prefix (default: from env or "openrouter")
+        model_settings: Optional model settings (temperature, max_tokens, etc.)
+        tools: Optional list of tools (functions decorated with @tool) for the agent
 
     Returns:
         Configured Agent instance
@@ -53,17 +57,37 @@ def make_agent(
             "gpt-4o-mini",
             MyModel,
             "You are an expert...",
+            model_settings={"temperature": 0.3, "max_tokens": 1000},
+            tools=[my_tool_function],
         )
     """
     if not HAS_PYDANTIC_AI:
         raise ImportError("pydantic-ai required: uv add pydantic-ai")
 
     provider = provider or os.getenv("LLM_PROVIDER", "openrouter")
-    return Agent(
-        f"{provider}:{model_name}",
-        output_type=result_cls,
-        system_prompt=system_prompt,
-    )
+
+    # Convert model_settings dict to ModelSettings if provided
+    if model_settings:
+        from pydantic_ai import ModelSettings
+
+        settings = ModelSettings(**model_settings)
+    else:
+        settings = None
+
+    # Build agent kwargs
+    agent_kwargs = {
+        "model": f"{provider}:{model_name}",
+        "output_type": result_cls,
+        "system_prompt": system_prompt,
+    }
+
+    if settings:
+        agent_kwargs["model_settings"] = settings
+
+    if tools:
+        agent_kwargs["tools"] = tools
+
+    return Agent(**agent_kwargs)
 
 
 def get_default_model(purpose: str = "general") -> str:

@@ -13,7 +13,8 @@ from pathlib import Path
 
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
-from .update_graph_incremental import update_graph_incremental, run_post_update_quality_fixes
+from .update_graph_incremental import run_post_update_quality_fixes, update_graph_incremental
+
 
 logger = setup_script_logging()
 
@@ -28,7 +29,7 @@ def run_integrated_pipeline(
 ) -> dict[str, any]:
     """
     Run integrated graph update pipeline with quality assurance.
-    
+
     Args:
         graph_path: Path to graph database
         new_decks_path: Path to new decks JSONL file
@@ -36,16 +37,16 @@ def run_integrated_pipeline(
         run_quality_fixes: Run post-update quality fixes
         api_fallback: Use API fallback for unknown nodes
         run_qa_check: Run comprehensive QA check after fixes
-        
+
     Returns:
         Dictionary with pipeline results
     """
     results = {}
-    
+
     logger.info("=" * 70)
     logger.info("Integrated Graph Update Pipeline")
     logger.info("=" * 70)
-    
+
     # Step 1: Update graph
     logger.info("\nStep 1: Updating graph...")
     try:
@@ -63,7 +64,7 @@ def run_integrated_pipeline(
         results["graph_updated"] = False
         results["error"] = str(e)
         return results
-    
+
     # Step 2: Run quality fixes
     if run_quality_fixes:
         logger.info("\nStep 2: Running quality fixes...")
@@ -77,27 +78,29 @@ def run_integrated_pipeline(
         except Exception as e:
             logger.warning(f"Quality fixes failed: {e}")
             results["quality_fixes"] = {}
-    
+
     # Step 3: Run QA check (optional)
     if run_qa_check:
         logger.info("\nStep 3: Running QA check...")
         try:
             from ..qa.graph_quality_agent import GraphQualityAgent
-            
+
             qa_agent = GraphQualityAgent(graph_db=graph_path, sample_size=50)
             qa_report = qa_agent.run_quality_check()
-            
+
             results["qa_score"] = qa_report.get("overall_score", 0)
             results["qa_issues"] = len(qa_report.get("issues", []))
-            logger.info(f"✓ QA check completed: {results['qa_score']:.0%} score, {results['qa_issues']} issues")
+            logger.info(
+                f"✓ QA check completed: {results['qa_score']:.0%} score, {results['qa_issues']} issues"
+            )
         except Exception as e:
             logger.warning(f"QA check failed: {e}")
             results["qa_score"] = None
-    
+
     logger.info("\n" + "=" * 70)
     logger.info("Pipeline Complete")
     logger.info("=" * 70)
-    
+
     return results
 
 
@@ -136,13 +139,13 @@ def main() -> int:
         action="store_true",
         help="Run comprehensive QA check after fixes",
     )
-    
+
     args = parser.parse_args()
-    
+
     if not args.new_decks:
         logger.error("Must provide --new-decks")
         return 1
-    
+
     results = run_integrated_pipeline(
         graph_path=args.graph_path,
         new_decks_path=args.new_decks,
@@ -151,14 +154,14 @@ def main() -> int:
         api_fallback=args.api_fallback,
         run_qa_check=args.qa_check,
     )
-    
+
     if not results.get("graph_updated"):
         return 1
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

@@ -66,4 +66,3 @@ COPY scripts/docker/index_cards_on_startup.py /app/scripts/docker/
 # Run the API (with optional indexing on startup)
 # Set INDEX_ON_STARTUP=true to auto-index cards
 CMD ["sh", "-c", "if [ \"$INDEX_ON_STARTUP\" = \"true\" ] && [ -f \"$EMBEDDINGS_PATH\" ]; then python /app/scripts/docker/index_cards_on_startup.py --embeddings \"$EMBEDDINGS_PATH\" --meilisearch-url \"${MEILISEARCH_URL:-http://meilisearch:7700}\" --qdrant-url \"${QDRANT_URL:-http://qdrant:6333}\" --skip-if-exists || echo 'Indexing failed, continuing anyway...'; fi && uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000"]
-

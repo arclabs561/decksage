@@ -45,4 +45,3 @@ if [ -n "$GEMINI_API_KEY" ] || [ -n "$OPENAI_API_KEY" ] || [ -n "$ANTHROPIC_API_
 else
     echo "⚠️  No VLM API keys found"
 fi
-

@@ -23,7 +23,12 @@ def test_visual_embedder_initialization():
     """Test that embedder can be initialized."""
     embedder = CardVisualEmbedder()
     assert embedder is not None
-    assert embedder.model is not None
+    # For SigLIP: vision_model is used; for CLIP: model is used
+    if embedder._use_transformers:
+        assert embedder.vision_model is not None
+        assert embedder.processor is not None
+    else:
+        assert embedder.model is not None
 
 
 @pytest.mark.skipif(not VISUAL_EMBEDDINGS_AVAILABLE, reason="Visual embeddings not available")
@@ -184,4 +189,3 @@ def test_similarity_with_missing_image():
     similarity = embedder.similarity(img1, card2)
     # Should return 0.0 when one image is missing
     assert similarity == 0.0
-

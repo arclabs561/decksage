@@ -10,15 +10,16 @@ because it accounts for result ordering and weights higher-ranked results more h
 """
 
 import argparse
-import json
 import sys
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
+
 
 setup_project_paths()
 
@@ -50,13 +51,13 @@ def evaluate_with_ndcg(
 ) -> dict:
     """
     Evaluate similarity function with NDCG@K metric.
-    
+
     Args:
         test_set: Dict mapping query -> relevance labels
         similarity_fn: Function(query, k) -> list[(card, score)]
         top_k: Top K for evaluation
         relevance_weights: Dict mapping relevance level -> weight
-        
+
     Returns:
         Dict with metrics including ndcg@k
     """
@@ -68,18 +69,18 @@ def evaluate_with_ndcg(
             "marginally_relevant": 0.25,
             "irrelevant": 0.0,
         }
-    
+
     ndcg_scores = []
     p_at_k_scores = []
     mrr_scores = []
-    
+
     for query, labels in test_set.items():
         try:
             # Get predictions
             predictions = similarity_fn(query, top_k)
             if not predictions:
                 continue
-            
+
             # Build relevance vector for top_k results
             relevances = []
             for card, _ in predictions[:top_k]:
@@ -89,15 +90,15 @@ def evaluate_with_ndcg(
                         relevance = weight
                         break
                 relevances.append(relevance)
-            
+
             # Compute NDCG@K
             ndcg = ndcg_at_k(relevances, top_k)
             ndcg_scores.append(ndcg)
-            
+
             # Also compute P@K for comparison
             p_at_k = sum(1 for r in relevances if r > 0) / top_k
             p_at_k_scores.append(p_at_k)
-            
+
             # Compute MRR
             mrr = 0.0
             for rank, (card, _) in enumerate(predictions, 1):
@@ -105,11 +106,11 @@ def evaluate_with_ndcg(
                     mrr = 1.0 / rank
                     break
             mrr_scores.append(mrr)
-            
+
         except Exception as e:
             print(f"Error evaluating query '{query}': {e}")
             continue
-    
+
     return {
         "ndcg_at_k": float(np.mean(ndcg_scores)) if ndcg_scores else 0.0,
         "p_at_k": float(np.mean(p_at_k_scores)) if p_at_k_scores else 0.0,
@@ -125,23 +126,27 @@ def main():
     parser.add_argument("--test-set", type=str, required=True, help="Path to test set JSON")
     parser.add_argument("--embeddings", type=str, help="Path to embeddings (for baseline)")
     parser.add_argument("--top-k", type=int, default=10, help="Top K for evaluation")
-    
+
     args = parser.parse_args()
-    
+
     # Load test set
     from ml.utils.data_loading import load_test_set
-    
+
     test_set_data = load_test_set(path=Path(args.test_set))
-    test_set = test_set_data.get("queries", test_set_data) if isinstance(test_set_data, dict) else test_set_data
-    
+    test_set = (
+        test_set_data.get("queries", test_set_data)
+        if isinstance(test_set_data, dict)
+        else test_set_data
+    )
+
     print(f"Loaded {len(test_set)} queries")
-    
+
     # Create similarity function
     if args.embeddings:
         from gensim.models import KeyedVectors
-        
+
         embeddings = KeyedVectors.load(args.embeddings)
-        
+
         def similarity_fn(query: str, k: int):
             if query not in embeddings:
                 return []
@@ -150,20 +155,19 @@ def main():
     else:
         print("Error: --embeddings required for now")
         return 1
-    
+
     # Evaluate
     print(f"\nEvaluating with NDCG@{args.top_k}...")
     results = evaluate_with_ndcg(test_set, similarity_fn, top_k=args.top_k)
-    
-    print(f"\nResults:")
+
+    print("\nResults:")
     print(f"  NDCG@{args.top_k}: {results['ndcg_at_k']:.4f}")
     print(f"  P@{args.top_k}: {results['p_at_k']:.4f}")
     print(f"  MRR: {results['mrr']:.4f}")
     print(f"  Queries evaluated: {results['num_queries']}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

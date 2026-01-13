@@ -18,6 +18,15 @@ import sys
 from pathlib import Path
 
 
+# Add src to path for imports
+script_dir = Path(__file__).parent
+src_dir = script_dir.parent.parent / "src"
+if str(src_dir) not in sys.path:
+    sys.path.insert(0, str(src_dir))
+
+from ml.utils.lineage import safe_write
+
+
 def calculate_target(current: int, format: str, archetype: str) -> int:
     """Calculate target based on current coverage and format popularity."""
     # Base targets by format popularity
@@ -87,8 +96,11 @@ def update_targets(input_path: Path, output_path: Path | None = None) -> int:
         else:
             target["priority"] = "low"
 
-    with open(output_path, "w") as f:
-        json.dump(targets, f, indent=2)
+    # Write with lineage validation (Order 1: configuration data)
+    # Note: scraping_targets.json is configuration, not processed data, but we validate anyway
+    with safe_write(output_path, order=1, strict=False) as validated_path:
+        with open(validated_path, "w") as f:
+            json.dump(targets, f, indent=2)
 
     print(f"Updated {updated} targets")
     print("Priority distribution:")

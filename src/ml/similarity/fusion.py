@@ -2,19 +2,31 @@
 """
 Weighted Late Fusion for Multi-Modal Card Similarity
 
-Combines three similarity signals:
+This module implements manual fusion (weighted combination) of similarity signals.
+For learned reranking (learning-to-rank), see src/ml/reranking/learned_reranker.py
+
+Combines multiple similarity signals:
 1. Embedding similarity (cosine similarity in embedding space)
 2. Jaccard similarity (co-occurrence graph)
 3. Functional tag similarity (Jaccard on functional tags)
+4. Text embedding similarity (instruction-tuned embeddings)
+5. Visual embedding similarity (SigLIP/CLIP on card images)
+6. GNN embedding similarity (GraphSAGE learned representations)
 
 Supports multiple aggregation methods:
-- weighted: Linear combination of normalized scores
-- rrf: Reciprocal Rank Fusion
+- rrf: Reciprocal Rank Fusion (default, recommended for heterogeneous signals)
+- isr: Inverse Square Root (slower rank decay, gives more weight to lower ranks)
+- weighted: Linear combination of normalized scores (requires weight tuning)
 - combsum: Sum of scores
+- combmnz: Sum of scores × overlap count (rewards agreement between modalities)
 - combmax: Maximum of scores
 - combmin: Minimum of scores
 
 Also supports MMR (Maximal Marginal Relevance) for result diversification.
+
+NOTE: This is manual fusion. For optimal performance, consider using learned reranking
+(learning-to-rank) which learns optimal feature combination from labeled data.
+See docs/LTR_CRITIQUE_AND_REFINEMENT.md for details.
 """
 
 from __future__ import annotations
@@ -125,7 +137,7 @@ class WeightedLateFusion:
         adj: dict[str, set[str]] | None = None,
         tagger: Any | None = None,
         weights: FusionWeights | None = None,
-        aggregator: str = "weighted",
+        aggregator: str = "rrf",  # RRF recommended for heterogeneous signals (more robust than weighted)
         rrf_k: int = 60,
         mmr_lambda: float = 0.0,
         candidate_topn: int = 100,
@@ -151,7 +163,7 @@ class WeightedLateFusion:
             adj: Adjacency dict mapping card -> set of neighbors
             tagger: Functional tagger with `tag_card(name)` method returning tags object
             weights: FusionWeights instance (will be normalized)
-            aggregator: "weighted", "rrf", "combsum", "combmax", "combmin"
+            aggregator: "rrf", "isr", "weighted", "combsum", "combmnz", "combmax", "combmin"
             rrf_k: RRF constant (typically 60)
             mmr_lambda: MMR diversification parameter (0.0 = no diversification, 1.0 = max diversity)
             candidate_topn: Number of candidates to consider from each modality before fusion
@@ -719,6 +731,33 @@ class WeightedLateFusion:
             total += self.weights.format / (self.rrf_k + ranks["format"])
         return total
 
+    def _aggregate_isr(self, ranks: dict[str, int]) -> float:
+        """Inverse Square Root rank fusion (slower decay than RRF, gives more weight to lower ranks)."""
+        import math
+
+        total = 0.0
+        if self.weights.embed > 0.0 and "embed" in ranks:
+            total += self.weights.embed / math.sqrt(self.rrf_k + ranks["embed"])
+        if self.weights.jaccard > 0.0 and "jaccard" in ranks:
+            total += self.weights.jaccard / math.sqrt(self.rrf_k + ranks["jaccard"])
+        if self.weights.functional > 0.0 and "functional" in ranks:
+            total += self.weights.functional / math.sqrt(self.rrf_k + ranks["functional"])
+        if self.weights.text_embed > 0.0 and "text_embed" in ranks:
+            total += self.weights.text_embed / math.sqrt(self.rrf_k + ranks["text_embed"])
+        if self.weights.visual_embed > 0.0 and "visual_embed" in ranks:
+            total += self.weights.visual_embed / math.sqrt(self.rrf_k + ranks["visual_embed"])
+        if self.weights.sideboard > 0.0 and "sideboard" in ranks:
+            total += self.weights.sideboard / math.sqrt(self.rrf_k + ranks["sideboard"])
+        if self.weights.temporal > 0.0 and "temporal" in ranks:
+            total += self.weights.temporal / math.sqrt(self.rrf_k + ranks["temporal"])
+        if self.weights.gnn > 0.0 and "gnn" in ranks:
+            total += self.weights.gnn / math.sqrt(self.rrf_k + ranks["gnn"])
+        if self.weights.archetype > 0.0 and "archetype" in ranks:
+            total += self.weights.archetype / math.sqrt(self.rrf_k + ranks["archetype"])
+        if self.weights.format > 0.0 and "format" in ranks:
+            total += self.weights.format / math.sqrt(self.rrf_k + ranks["format"])
+        return total
+
     def _aggregate_combsum(self, scores: dict[str, float]) -> float:
         """Sum of scores."""
         total = 0.0
@@ -743,6 +782,36 @@ class WeightedLateFusion:
         if self.weights.format > 0.0 and "format" in scores:
             total += self.weights.format * scores["format"]
         return total
+
+    def _aggregate_combmnz(self, scores: dict[str, float]) -> float:
+        """Combined Multiple Normalized Z-scores (rewards agreement between modalities).
+
+        Formula: (Σ normalized_scores) × overlap_count
+        Where overlap_count is the number of modalities that have scores for this candidate.
+        """
+        # Count how many modalities have scores (overlap count)
+        overlap_count = sum(
+            1
+            for key, weight in [
+                ("embed", self.weights.embed),
+                ("jaccard", self.weights.jaccard),
+                ("functional", self.weights.functional),
+                ("text_embed", self.weights.text_embed),
+                ("visual_embed", self.weights.visual_embed),
+                ("sideboard", self.weights.sideboard),
+                ("temporal", self.weights.temporal),
+                ("gnn", self.weights.gnn),
+                ("archetype", self.weights.archetype),
+                ("format", self.weights.format),
+            ]
+            if weight > 0.0 and key in scores
+        )
+
+        # Sum of normalized scores (same as CombSUM)
+        score_sum = self._aggregate_combsum(scores)
+
+        # Multiply by overlap count to reward agreement
+        return score_sum * overlap_count
 
     def _aggregate_combmax(self, scores: dict[str, float]) -> float:
         """Maximum of scores (optimized)."""
@@ -890,7 +959,7 @@ class WeightedLateFusion:
             modality_scores = self._compute_similarity_scores(query, candidates)
 
             # Aggregate scores based on method
-            if self.aggregator == "rrf":
+            if self.aggregator == "rrf" or self.aggregator == "isr":
                 # For RRF, we need ranks instead of scores
                 # Build ranked lists per modality
                 embed_ranked = []
@@ -990,11 +1059,14 @@ class WeightedLateFusion:
                         ranks[candidate] = {}
                     ranks[candidate]["format"] = rank
 
-                # Compute RRF scores
+                # Compute RRF or ISR scores
                 fused_scores = {}
                 for candidate in candidates:
                     candidate_ranks = ranks.get(candidate, {})
-                    fused_scores[candidate] = self._aggregate_rrf(candidate_ranks)
+                    if self.aggregator == "rrf":
+                        fused_scores[candidate] = self._aggregate_rrf(candidate_ranks)
+                    elif self.aggregator == "isr":
+                        fused_scores[candidate] = self._aggregate_isr(candidate_ranks)
 
             else:
                 # For other aggregators, use scores directly
@@ -1005,6 +1077,8 @@ class WeightedLateFusion:
                         fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
                     elif self.aggregator == "combsum":
                         fused_scores[candidate] = self._aggregate_combsum(candidate_scores)
+                    elif self.aggregator == "combmnz":
+                        fused_scores[candidate] = self._aggregate_combmnz(candidate_scores)
                     elif self.aggregator == "combmax":
                         fused_scores[candidate] = self._aggregate_combmax(candidate_scores)
                     elif self.aggregator == "combmin":
@@ -1076,6 +1150,8 @@ class WeightedLateFusion:
                         score = self._aggregate_weighted(candidate_modality)
                     elif self.aggregator == "combsum":
                         score = self._aggregate_combsum(candidate_modality)
+                    elif self.aggregator == "combmnz":
+                        score = self._aggregate_combmnz(candidate_modality)
                     elif self.aggregator == "combmax":
                         score = self._aggregate_combmax(candidate_modality)
                     elif self.aggregator == "combmin":

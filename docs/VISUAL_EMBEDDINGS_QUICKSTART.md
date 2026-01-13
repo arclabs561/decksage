@@ -124,4 +124,3 @@ uv add sentence-transformers pillow requests transformers sentencepiece
 3. **Optimize**: Tune fusion weights based on results
 
 See `docs/VISUAL_EMBEDDINGS_USAGE.md` for detailed documentation.
-

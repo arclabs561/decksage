@@ -1,0 +1,229 @@
+{
+  "overall": {
+    "count": 48,
+    "mean": 0.5795833333333333,
+    "min": 0.0,
+    "max": 0.85,
+    "std_dev": 0.19657439572730614,
+    "diversity": 0.3931487914546123,
+    "ranges": {
+      "0.0-0.2": 3,
+      "0.2-0.4": 4,
+      "0.4-0.6": 18,
+      "0.6-0.8": 21,
+      "0.8-1.0": 2
+    },
+    "range_utilization": 0.85
+  },
+  "by_source": {
+    "llm_multi_annotator_agentic": {
+      "count": 15,
+      "score_distribution": {
+        "count": 15,
+        "mean": 0.42933333333333334,
+        "min": 0.0,
+        "max": 0.75,
+        "std_dev": 0.2489569351425173,
+        "diversity": 0.4979138702850346,
+        "ranges": {
+          "0.0-0.2": 3,
+          "0.2-0.4": 4,
+          "0.4-0.6": 3,
+          "0.6-0.8": 5,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.75
+      },
+      "games": {
+        "pokemon": 10,
+        "magic": 5
+      }
+    },
+    "llm_generated": {
+      "count": 3,
+      "score_distribution": {
+        "count": 3,
+        "mean": 0.5,
+        "min": 0.5,
+        "max": 0.5,
+        "std_dev": 0.0,
+        "diversity": 0.0,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 3,
+          "0.6-0.8": 0,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.0
+      },
+      "games": {
+        "riftbound": 3
+      }
+    },
+    "llm": {
+      "count": 20,
+      "score_distribution": {
+        "count": 20,
+        "mean": 0.7190000000000001,
+        "min": 0.45,
+        "max": 0.85,
+        "std_dev": 0.09219002115196633,
+        "diversity": 0.18438004230393265,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 2,
+          "0.6-0.8": 16,
+          "0.8-1.0": 2
+        },
+        "range_utilization": 0.39999999999999997
+      },
+      "games": {
+        "yugioh": 20
+      }
+    },
+    "llm_judgment": {
+      "count": 10,
+      "score_distribution": {
+        "count": 10,
+        "mean": 0.55,
+        "min": 0.55,
+        "max": 0.55,
+        "std_dev": 0.0,
+        "diversity": 0.0,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 10,
+          "0.6-0.8": 0,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.0
+      },
+      "games": {
+        "unknown": 10
+      }
+    }
+  },
+  "by_game": {
+    "pokemon": {
+      "count": 10,
+      "score_distribution": {
+        "count": 10,
+        "mean": 0.5740000000000001,
+        "min": 0.35,
+        "max": 0.75,
+        "std_dev": 0.14485855169785455,
+        "diversity": 0.2897171033957091,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 2,
+          "0.4-0.6": 3,
+          "0.6-0.8": 5,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.4
+      },
+      "sources": {
+        "llm_multi_annotator_agentic": 10
+      }
+    },
+    "magic": {
+      "count": 5,
+      "score_distribution": {
+        "count": 5,
+        "mean": 0.13999999999999999,
+        "min": 0.0,
+        "max": 0.35,
+        "std_dev": 0.13564659966250533,
+        "diversity": 0.27129319932501067,
+        "ranges": {
+          "0.0-0.2": 3,
+          "0.2-0.4": 2,
+          "0.4-0.6": 0,
+          "0.6-0.8": 0,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.35
+      },
+      "sources": {
+        "llm_multi_annotator_agentic": 5
+      }
+    },
+    "riftbound": {
+      "count": 3,
+      "score_distribution": {
+        "count": 3,
+        "mean": 0.5,
+        "min": 0.5,
+        "max": 0.5,
+        "std_dev": 0.0,
+        "diversity": 0.0,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 3,
+          "0.6-0.8": 0,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.0
+      },
+      "sources": {
+        "llm_generated": 3
+      }
+    },
+    "yugioh": {
+      "count": 20,
+      "score_distribution": {
+        "count": 20,
+        "mean": 0.7190000000000001,
+        "min": 0.45,
+        "max": 0.85,
+        "std_dev": 0.09219002115196633,
+        "diversity": 0.18438004230393265,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 2,
+          "0.6-0.8": 16,
+          "0.8-1.0": 2
+        },
+        "range_utilization": 0.39999999999999997
+      },
+      "sources": {
+        "llm": 20
+      }
+    },
+    "unknown": {
+      "count": 10,
+      "score_distribution": {
+        "count": 10,
+        "mean": 0.55,
+        "min": 0.55,
+        "max": 0.55,
+        "std_dev": 0.0,
+        "diversity": 0.0,
+        "ranges": {
+          "0.0-0.2": 0,
+          "0.2-0.4": 0,
+          "0.4-0.6": 10,
+          "0.6-0.8": 0,
+          "0.8-1.0": 0
+        },
+        "range_utilization": 0.0
+      },
+      "sources": {
+        "llm_judgment": 10
+      }
+    }
+  },
+  "issues": {
+    "missing_card_data": 13,
+    "low_score_diversity": 0,
+    "missing_reasoning": 13,
+    "missing_thinking": 13,
+    "missing_graph_features": 13
+  },
+  "total_annotations": 48
+}

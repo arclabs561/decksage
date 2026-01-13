@@ -7,8 +7,6 @@ Covers ErrorMessages class and get_error_message function.
 
 from __future__ import annotations
 
-import pytest
-
 from ..utils.error_messages import ErrorMessages, get_error_message
 
 
@@ -100,5 +98,3 @@ class TestErrorMessages:
         # Use a template string since constants don't have placeholders
         result = get_error_message("Card {card} not found", card="Lightning Bolt")
         assert result == "Card Lightning Bolt not found"
-
-

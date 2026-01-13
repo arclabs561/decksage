@@ -10,6 +10,7 @@ from typing import Any
 
 from .models import GameKnowledge, KnowledgeChunk
 
+
 logger = logging.getLogger(__name__)
 
 # Set up logging if not configured
@@ -28,13 +29,13 @@ def _get_default_knowledge_dir() -> Path:
     env_root = os.getenv("DECKSAGE_ROOT")
     if env_root:
         return Path(env_root) / "data" / "game_knowledge"
-    
+
     # Try relative to this file
     current = Path(__file__).parent.parent.parent.parent
     markers = ["pyproject.toml", "runctl.toml", ".git"]
     if any((current / m).exists() for m in markers):
         return current / "data" / "game_knowledge"
-    
+
     # Fallback
     return current / "data" / "game_knowledge"
 
@@ -77,7 +78,9 @@ class GameKnowledgeBase:
                 data = json.load(f)
             knowledge = GameKnowledge(**data)
             self._knowledge_cache[game] = knowledge
-            logger.debug(f"Loaded knowledge for {game}: {len(knowledge.archetypes)} archetypes, {len(knowledge.formats)} formats")
+            logger.debug(
+                f"Loaded knowledge for {game}: {len(knowledge.archetypes)} archetypes, {len(knowledge.formats)} formats"
+            )
             return knowledge
         except json.JSONDecodeError as e:
             logger.error(f"Invalid JSON in {knowledge_file}: {e}")
@@ -91,17 +94,21 @@ class GameKnowledgeBase:
         chunks: list[KnowledgeChunk] = []
 
         # Mechanics chunk
-        card_types_str = ', '.join(knowledge.mechanics.card_types) if knowledge.mechanics.card_types else 'None'
-        keywords_str = ', '.join(knowledge.mechanics.keywords) if knowledge.mechanics.keywords else 'None'
-        
+        card_types_str = (
+            ", ".join(knowledge.mechanics.card_types) if knowledge.mechanics.card_types else "None"
+        )
+        keywords_str = (
+            ", ".join(knowledge.mechanics.keywords) if knowledge.mechanics.keywords else "None"
+        )
+
         mechanics_text = f"""
 Game: {knowledge.game}
 Mechanics:
-- Resource System: {knowledge.mechanics.mana_system or 'N/A'}
-- Color/Attribute System: {knowledge.mechanics.color_system or 'N/A'}
+- Resource System: {knowledge.mechanics.mana_system or "N/A"}
+- Color/Attribute System: {knowledge.mechanics.color_system or "N/A"}
 - Card Types: {card_types_str}
 - Keywords: {keywords_str}
-- Special Rules: {knowledge.mechanics.special_rules or 'N/A'}
+- Special Rules: {knowledge.mechanics.special_rules or "N/A"}
 """
         chunks.append(
             KnowledgeChunk(
@@ -116,10 +123,10 @@ Mechanics:
         # Archetype chunks
         for arch in knowledge.archetypes:
             # Safely format lists
-            core_cards_str = ', '.join(arch.core_cards[:10]) if arch.core_cards else 'None'
-            flex_slots_str = ', '.join(arch.flex_slots[:5]) if arch.flex_slots else 'None'
-            key_features_str = ', '.join(arch.key_features) if arch.key_features else 'None'
-            
+            core_cards_str = ", ".join(arch.core_cards[:10]) if arch.core_cards else "None"
+            flex_slots_str = ", ".join(arch.flex_slots[:5]) if arch.flex_slots else "None"
+            key_features_str = ", ".join(arch.key_features) if arch.key_features else "None"
+
             arch_text = f"""
 Archetype: {arch.name}
 Description: {arch.description}
@@ -129,7 +136,7 @@ Flex Slots: {flex_slots_str}
 Key Features: {key_features_str}
 """
             # Sanitize ID (remove special chars)
-            arch_id = arch.name.lower().replace(' ', '_').replace('/', '_').replace('-', '_')
+            arch_id = arch.name.lower().replace(" ", "_").replace("/", "_").replace("-", "_")
             chunks.append(
                 KnowledgeChunk(
                     id=f"{knowledge.game}_archetype_{arch_id}",
@@ -144,15 +151,15 @@ Key Features: {key_features_str}
         # Format chunks
         for fmt in knowledge.formats:
             # Safely format lists
-            legal_sets_str = ', '.join(fmt.legal_sets[:10]) if fmt.legal_sets else 'N/A'
-            ban_list_str = ', '.join(fmt.ban_list[:10]) if fmt.ban_list else 'None'
-            
+            legal_sets_str = ", ".join(fmt.legal_sets[:10]) if fmt.legal_sets else "N/A"
+            ban_list_str = ", ".join(fmt.ban_list[:10]) if fmt.ban_list else "None"
+
             fmt_text = f"""
 Format: {fmt.name}
 Legal Sets: {legal_sets_str}
-Rotation: {fmt.rotation_schedule or 'N/A'}
+Rotation: {fmt.rotation_schedule or "N/A"}
 Banned Cards: {ban_list_str}
-Meta Context: {fmt.meta_context or 'N/A'}
+Meta Context: {fmt.meta_context or "N/A"}
 """
             chunks.append(
                 KnowledgeChunk(
@@ -191,10 +198,10 @@ Meta Context: {fmt.meta_context or 'N/A'}
         if not game or not isinstance(game, str):
             logger.warning(f"Invalid game parameter: {game}")
             return {"mechanics": "", "archetypes": "", "formats": "", "examples": []}
-        
+
         if not query or not isinstance(query, str):
             query = "general"
-        
+
         knowledge = self.load_game_knowledge(game)
         if not knowledge:
             logger.debug(f"No knowledge loaded for {game}")
@@ -210,7 +217,7 @@ Meta Context: {fmt.meta_context or 'N/A'}
         query_lower = query.lower().strip()
         if not query_lower:
             query_lower = "general"
-        
+
         scored_chunks: list[tuple[KnowledgeChunk, float]] = []
 
         for chunk in chunks:
@@ -307,7 +314,7 @@ def retrieve_game_knowledge(
 
     Returns:
         Dictionary with knowledge sections (mechanics, archetypes, formats, examples)
-        
+
     Example:
         >>> knowledge = retrieve_game_knowledge("magic", "Lightning Bolt", format="Modern")
         >>> print(knowledge["mechanics"][:100])
@@ -315,7 +322,6 @@ def retrieve_game_knowledge(
     if not game:
         logger.warning("Empty game parameter provided")
         return {"mechanics": "", "archetypes": "", "formats": "", "examples": []}
-    
+
     kb = GameKnowledgeBase()
     return kb.retrieve_relevant_knowledge(game, query, format, archetype)
-

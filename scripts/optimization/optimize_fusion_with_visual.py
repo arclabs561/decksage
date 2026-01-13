@@ -8,12 +8,14 @@ Extends existing optimization scripts to include visual embeddings in the weight
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
     from ml.utils.path_setup import setup_project_paths
+
     setup_project_paths()
 except ImportError:
     src_path = project_root / "src"
@@ -24,6 +26,7 @@ import argparse
 import json
 import logging
 from typing import Any
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -38,49 +41,54 @@ def optimize_fusion_weights_with_visual(
 ) -> dict[str, Any]:
     """Optimize fusion weights including visual embeddings."""
     logger.info("Optimizing fusion weights (with visual embeddings)...")
-    
+
     try:
+        import numpy as np
         from gensim.models import KeyedVectors
+        from scipy.optimize import minimize
+
         from ml.similarity.fusion import FusionWeights, WeightedLateFusion
         from ml.similarity.similarity_methods import load_graph
         from ml.utils.evaluation import evaluate_similarity
-        from scipy.optimize import minimize
-        import numpy as np
-        
+
         # Load data
         logger.info(f"Loading embeddings from {embeddings_path}...")
         embeddings = KeyedVectors.load(str(embeddings_path))
-        
+
         logger.info(f"Loading graph from {pairs_path}...")
         adj, _ = load_graph(pairs_path, filter_lands=True)
-        
+
         logger.info(f"Loading test set from {test_set_path}...")
         with open(test_set_path) as f:
             test_set = json.load(f)
-        
+
         # Load embedders
         text_embedder = None
         visual_embedder = None
         card_data = {}
-        
+
         try:
             from ml.similarity.text_embeddings import get_text_embedder
+
             text_embedder = get_text_embedder()
             logger.info("  Text embedder loaded")
         except Exception as e:
             logger.debug(f"  Text embedder not available: {e}")
-        
+
         if include_visual:
             try:
                 from ml.similarity.visual_embeddings import get_visual_embedder
+
                 visual_embedder = get_visual_embedder()
                 logger.info("  Visual embedder loaded")
-                
+
                 # Try to load card data for image URLs
                 from ml.utils.paths import PATHS
+
                 card_attrs_path = PATHS.card_attributes
                 if card_attrs_path.exists():
                     import pandas as pd
+
                     df = pd.read_csv(card_attrs_path, nrows=50000)
                     for _, row in df.iterrows():
                         name = str(row["name"])
@@ -93,7 +101,7 @@ def optimize_fusion_weights_with_visual(
                     logger.info(f"  Loaded {len(card_data)} card records with image URLs")
             except Exception as e:
                 logger.debug(f"  Visual embedder not available: {e}")
-        
+
         # Optimization function
         def objective(weights_array: np.ndarray) -> float:
             """Objective: negative P@10."""
@@ -121,7 +129,7 @@ def optimize_fusion_weights_with_visual(
                     functional=float(weights_array[2]),
                     gnn=float(weights_array[3]),
                 )
-            
+
             fusion = WeightedLateFusion(
                 embeddings=embeddings,
                 adj=adj,
@@ -131,18 +139,20 @@ def optimize_fusion_weights_with_visual(
                 visual_embedder=visual_embedder,
                 card_data=card_data if card_data else None,
             )
-            
+
             def similarity_fn(query: str, k: int) -> list[tuple[str, float]]:
                 results = fusion.similar(query, k)
                 return [(card, float(score)) for card, score in results]
-            
+
             results = evaluate_similarity(test_set, similarity_fn, top_k=top_k)
             p_at_k = results.get("p_at_k", 0.0)
             return -p_at_k  # Negative for minimization
-        
+
         # Initial guess and bounds
         if include_visual and visual_embedder:
-            x0 = np.array([0.15, 0.10, 0.05, 0.20, 0.20, 0.30])  # embed, jaccard, functional, text, visual, gnn
+            x0 = np.array(
+                [0.15, 0.10, 0.05, 0.20, 0.20, 0.30]
+            )  # embed, jaccard, functional, text, visual, gnn
             bounds = [(0.0, 1.0)] * 6
         elif text_embedder:
             x0 = np.array([0.20, 0.15, 0.10, 0.25, 0.30])  # embed, jaccard, functional, text, gnn
@@ -150,24 +160,24 @@ def optimize_fusion_weights_with_visual(
         else:
             x0 = np.array([0.25, 0.25, 0.10, 0.40])  # embed, jaccard, functional, gnn
             bounds = [(0.0, 1.0)] * 4
-        
+
         # Constraint: weights sum to 1
         def constraint(x):
             return np.sum(x) - 1.0
-        
-        constraints = {'type': 'eq', 'fun': constraint}
-        
+
+        constraints = {"type": "eq", "fun": constraint}
+
         # Optimize
         logger.info("Running optimization...")
         result = minimize(
             objective,
             x0,
-            method='SLSQP',
+            method="SLSQP",
             bounds=bounds,
             constraints=constraints,
-            options={'maxiter': 50},
+            options={"maxiter": 50},
         )
-        
+
         # Extract best weights
         if include_visual and visual_embedder:
             best_weights = FusionWeights(
@@ -193,12 +203,12 @@ def optimize_fusion_weights_with_visual(
                 functional=float(result.x[2]),
                 gnn=float(result.x[3]),
             )
-        
+
         best_p_at_k = -result.fun
-        
+
         logger.info(f"  Best P@{top_k}: {best_p_at_k:.4f}")
         logger.info(f"  Best weights: {best_weights}")
-        
+
         return {
             "best_weights": {
                 "embed": best_weights.embed,
@@ -215,6 +225,7 @@ def optimize_fusion_weights_with_visual(
     except Exception as e:
         logger.error(f"Optimization failed: {e}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
@@ -259,14 +270,14 @@ def main() -> int:
         action="store_true",
         help="Disable visual embeddings (optimize without them)",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 60)
     logger.info("Fusion Weight Optimization (with Visual Embeddings)")
     logger.info("=" * 60)
     logger.info("")
-    
+
     results = optimize_fusion_weights_with_visual(
         embeddings_path=args.embeddings,
         pairs_path=args.pairs,
@@ -274,17 +285,16 @@ def main() -> int:
         top_k=args.top_k,
         include_visual=not args.no_visual,
     )
-    
+
     # Save results
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with open(args.output, "w") as f:
         json.dump(results, f, indent=2)
-    
+
     logger.info(f"\nResults saved to {args.output}")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

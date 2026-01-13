@@ -1,6 +1,6 @@
 # Architecture Issues - Recommended Solutions
 
-**Date**: 2025-01-XX  
+**Date**: 2025-01-XX
 **Based on**: Code inspection and best practices research
 
 ---
@@ -42,14 +42,14 @@ class DeckExport(BaseModel):
     event_date: Optional[str] = Field(None, description="Event date (ISO format)")
     scraped_at: str = Field(..., description="Scrape timestamp (ISO format)")
     cards: list[CardInDeck] = Field(..., min_length=1, description="Cards in deck")
-    
+
     # Backward compatibility aliases
     timestamp: Optional[str] = Field(None, alias="scraped_at")
     created_at: Optional[str] = Field(None, alias="scraped_at")
-    
+
     # Export version metadata
     export_version: str = Field("1.0", description="Export format version")
-    
+
     @classmethod
     def model_json_schema(cls) -> dict:
         """Generate JSON Schema for cross-language validation."""
@@ -99,7 +99,7 @@ def validate_deck_record(record: dict, strict: bool = False) -> tuple[bool, str 
     schema = _load_export_schema()
     if not schema:
         return True, None  # No schema = skip validation
-    
+
     try:
         jsonschema.validate(instance=record, schema=schema)
         return True, None
@@ -117,12 +117,12 @@ def load_decks_jsonl(...):
     # ... existing code ...
     for line in f:
         deck = json.loads(line)
-        
+
         # Validate schema (non-strict by default)
         is_valid, error = validate_deck_record(deck, strict=False)
         if not is_valid and strict:
             continue  # Skip invalid records in strict mode
-        
+
         # ... rest of processing ...
 ```
 
@@ -152,12 +152,12 @@ import "github.com/xeipuuv/gojsonschema"
 func validateDeckRecord(record map[string]interface{}, schemaPath string) error {
     schemaLoader := gojsonschema.NewReferenceLoader("file://" + schemaPath)
     documentLoader := gojsonschema.NewGoLoader(record)
-    
+
     result, err := gojsonschema.Validate(schemaLoader, documentLoader)
     if err != nil {
         return err
     }
-    
+
     if !result.Valid() {
         var errors []string
         for _, err := range result.Errors() {
@@ -165,13 +165,13 @@ func validateDeckRecord(record map[string]interface{}, schemaPath string) error 
         }
         return fmt.Errorf("validation failed: %v", errors)
     }
-    
+
     return nil
 }
 ```
 
-**Effort**: 4-6 hours  
-**Priority**: High  
+**Effort**: 4-6 hours
+**Priority**: High
 **Dependencies**: `jsonschema` package (already in pyproject.toml likely)
 
 ---
@@ -210,7 +210,7 @@ from typing import Any
 def check_hardcoded_paths(tree: ast.AST) -> list[tuple[int, int, str]]:
     """AST visitor to find hardcoded paths."""
     issues = []
-    
+
     class PathVisitor(ast.NodeVisitor):
         def visit_Call(self, node: ast.Call):
             # Check for Path("data/...") or Path("experiments/...")
@@ -225,7 +225,7 @@ def check_hardcoded_paths(tree: ast.AST) -> list[tuple[int, int, str]]:
                                 f"Hardcoded path: {path_str}. Use PATHS utility instead."
                             ))
             self.generic_visit(node)
-    
+
     PathVisitor().visit(tree)
     return issues
 ```
@@ -252,8 +252,8 @@ from ml.utils.paths import PATHS
 pairs_path = PATHS.pairs_large  # Or PATHS.backend / "pairs.csv"
 ```
 
-**Effort**: 1-2 hours  
-**Priority**: High  
+**Effort**: 1-2 hours
+**Priority**: High
 **Dependencies**: None (just fix code)
 
 ---
@@ -279,20 +279,20 @@ from typing import Generator
 def safe_write(path: Path | str, order: int, strict: bool = True) -> Generator[Path, None, None]:
     """
     Context manager for safe data writes with lineage validation.
-    
+
     Args:
         path: Path to write to
         order: Data lineage order (1-6)
         strict: If True, raise error on validation failure. If False, log warning.
-    
+
     Yields:
         Path object for writing
-        
+
     Raises:
         ValueError: If path violates lineage rules (when strict=True)
     """
     path_obj = Path(path) if isinstance(path, str) else path
-    
+
     # Validate before opening
     is_valid, error = validate_write_path(path_obj, order)
     if not is_valid:
@@ -302,7 +302,7 @@ def safe_write(path: Path | str, order: int, strict: bool = True) -> Generator[P
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Lineage warning: {error}")
-    
+
     # Check dependencies
     deps_satisfied, missing = check_dependencies(order)
     if not deps_satisfied:
@@ -312,10 +312,10 @@ def safe_write(path: Path | str, order: int, strict: bool = True) -> Generator[P
             import logging
             logger = logging.getLogger(__name__)
             logger.warning(f"Missing dependencies: {missing}")
-    
+
     # Yield path for writing
     yield path_obj
-    
+
     # Post-write validation (optional)
     if not path_obj.exists():
         import logging
@@ -352,15 +352,15 @@ def save_graph(self, path: Path | None = None):
     """Save graph with lineage validation."""
     if path is None:
         path = PATHS.incremental_graph_json
-    
+
     with safe_write(path, order=3, strict=True):
         # Save graph
         with open(path, "w") as f:
             json.dump(self.to_dict(), f)
 ```
 
-**Effort**: 2-3 hours  
-**Priority**: High  
+**Effort**: 2-3 hours
+**Priority**: High
 **Dependencies**: None (uses existing lineage.py)
 
 ---
@@ -382,14 +382,14 @@ FastAPI `app.state` is per-worker. Need documentation and optional shared state 
 async def lifespan(app: FastAPI):
     """
     FastAPI lifespan handler: load resources on startup, free on shutdown.
-    
+
     **Worker Configuration**:
     - Each worker loads embeddings independently (memory duplication)
     - Recommended: Use single worker for development/testing
     - Production: Use multiple workers only if memory allows
       - Each worker needs ~2-4GB RAM for embeddings
       - Example: 4 workers = 8-16GB RAM total
-    
+
     **Shared State** (if needed):
     - For shared caches/counters, use Redis (see load_signals.py)
     - Embeddings are read-only, so per-worker loading is acceptable
@@ -419,7 +419,7 @@ if worker_count > 1:
 # src/ml/api/load_signals.py (optional enhancement)
 try:
     import redis.asyncio as redis
-    
+
     REDIS_CLIENT = redis.Redis(host=os.getenv("REDIS_HOST", "localhost"), port=6379, db=0)
     USE_REDIS = os.getenv("USE_REDIS_FOR_SIGNALS", "false").lower() == "true"
 except ImportError:
@@ -434,13 +434,13 @@ def load_signals_to_state(...):
         if cached:
             state.sideboard_cooccurrence = json.loads(cached)
             return
-    
+
     # Fall back to file loading
     # ... existing code ...
 ```
 
-**Effort**: 1 hour (documentation) + 3-4 hours (Redis if needed)  
-**Priority**: Medium (documentation is high, Redis is low)  
+**Effort**: 1 hour (documentation) + 3-4 hours (Redis if needed)
+**Priority**: Medium (documentation is high, Redis is low)
 **Dependencies**: None for documentation, `redis` package for shared state
 
 ---
@@ -457,7 +457,7 @@ Don't know which signals are actually loaded at runtime.
 def load_signals_to_state(...) -> dict[str, bool]:
     """
     Load signals and return availability status.
-    
+
     Returns:
         Dict mapping signal name -> is_loaded
     """
@@ -470,7 +470,7 @@ def load_signals_to_state(...) -> dict[str, bool]:
         "archetype": False,
         "format": False,
     }
-    
+
     # Load each signal and update status
     if sideboard_path.exists():
         state.sideboard_cooccurrence = json.load(f)
@@ -478,9 +478,9 @@ def load_signals_to_state(...) -> dict[str, bool]:
         logger.info(f"✓ Loaded sideboard signal: {len(state.sideboard_cooccurrence)} cards")
     else:
         logger.debug(f"✗ Sideboard signal not found: {sideboard_path}")
-    
+
     # ... repeat for each signal ...
-    
+
     # Log summary
     loaded_count = sum(status.values())
     total_count = len(status)
@@ -488,12 +488,12 @@ def load_signals_to_state(...) -> dict[str, bool]:
         f"Signal loading complete: {loaded_count}/{total_count} signals loaded. "
         f"Available: {', '.join(k for k, v in status.items() if v)}"
     )
-    
+
     return status
 ```
 
-**Effort**: 1 hour  
-**Priority**: Medium  
+**Effort**: 1 hour
+**Priority**: Medium
 **Dependencies**: None
 
 ---
@@ -529,17 +529,17 @@ def load_signals_to_state(...) -> dict[str, bool]:
 def test_deck_export_schema():
     """Test deck export schema validation."""
     from ml.data.export_schema import DeckExport
-    
+
     valid_deck = {
         "deck_id": "test-123",
         "scraped_at": "2025-01-01T00:00:00Z",
         "cards": [{"name": "Lightning Bolt", "count": 4, "partition": "mainboard"}],
         "export_version": "1.0"
     }
-    
+
     deck = DeckExport(**valid_deck)
     assert deck.deck_id == "test-123"
-    
+
     # Test invalid
     invalid = valid_deck.copy()
     invalid["cards"] = []  # Empty cards
@@ -555,7 +555,7 @@ def test_safe_write_validates_order():
     with pytest.raises(ValueError, match="Order 0"):
         with safe_write(Path("src/backend/data-full/games/test.json"), order=0):
             pass
-    
+
     # Valid write
     with safe_write(tmp_path / "test.json", order=1):
         Path(tmp_path / "test.json").write_text("test")
@@ -569,4 +569,3 @@ def test_safe_write_validates_order():
 - jsonschema library: https://python-jsonschema.readthedocs.io/
 - FastAPI state management: https://fastapi.tiangolo.com/deployment/server-workers/
 - Context managers: https://docs.python.org/3/library/contextlib.html
-

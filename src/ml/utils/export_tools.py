@@ -9,6 +9,12 @@ import tempfile
 from pathlib import Path
 
 
+try:
+    from .paths import PATHS
+except ImportError:
+    PATHS = None
+
+
 # Consistent temp directory for export binaries
 TEMP_DIR = Path(tempfile.gettempdir()) / "decksage"
 TEMP_DIR.mkdir(exist_ok=True)
@@ -25,7 +31,7 @@ def build_export_tool(
     Args:
         tool_name: Name of tool (e.g., "export-hetero", "export-multi-game-graph")
         go_source: Path to main.go file
-        backend_dir: Backend directory (default: src/backend)
+        backend_dir: Backend directory (default: from PATHS)
 
     Returns:
         Path to built binary
@@ -34,7 +40,11 @@ def build_export_tool(
         RuntimeError: If build fails
     """
     if backend_dir is None:
-        backend_dir = Path("src/backend")
+        if PATHS:
+            backend_dir = PATHS.backend
+        else:
+            # Fallback only if PATHS not available (shouldn't happen in normal usage)
+            backend_dir = Path("src/backend")
 
     if not go_source.exists():
         raise FileNotFoundError(f"Go source not found: {go_source}")

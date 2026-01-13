@@ -1031,10 +1031,58 @@ integrate-format game='':
     fi
     uv run python -m ml.scripts.integrate_format_legality $GAME_FLAG
 
+# Integrate sideboard relationships
+integrate-sideboard game='':
+    #!/usr/bin/env bash
+    # Integrate sideboard relationships into graph
+    # Usage: just integrate-sideboard
+    #        just integrate-sideboard game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_sideboard_relationships $GAME_FLAG
+
+# Integrate ban list relationships
+integrate-ban-list game='':
+    #!/usr/bin/env bash
+    # Integrate ban list relationships (cards banned together)
+    # Usage: just integrate-ban-list
+    #        just integrate-ban-list game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_ban_list_relationships $GAME_FLAG
+
+# Integrate meta share relationships
+integrate-meta-share game='':
+    #!/usr/bin/env bash
+    # Integrate meta share relationships (cards with similar popularity)
+    # Usage: just integrate-meta-share
+    #        just integrate-meta-share game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_meta_share_relationships $GAME_FLAG
+
+# Integrate win rate relationships
+integrate-win-rate game='':
+    #!/usr/bin/env bash
+    # Integrate win rate relationships (cards in winning decks together)
+    # Usage: just integrate-win-rate
+    #        just integrate-win-rate game=MTG
+    GAME_FLAG=""
+    if [ -n "{{game}}" ]; then
+        GAME_FLAG="--game {{game}}"
+    fi
+    uv run python -m ml.scripts.integrate_win_rate_relationships $GAME_FLAG
+
 # Integrate all data sources
 integrate-all game='':
     #!/usr/bin/env bash
-    # Integrate all data sources (packs, archetypes, attributes, tournament, format)
+    # Integrate all data sources (packs, archetypes, attributes, tournament, format, sideboard, ban-list, meta-share, win-rate)
     # Usage: just integrate-all
     #        just integrate-all game=MTG
     GAME_FLAG=""

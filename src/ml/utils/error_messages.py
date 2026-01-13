@@ -108,7 +108,3 @@ def get_error_message(key: str, **kwargs: str) -> str:
         'Embeddings not loaded'
     """
     return ErrorMessages.format(key, **kwargs)
-
-
-
-

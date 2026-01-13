@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+
 logger = logging.getLogger("decksage.visual_coverage")
 
 
@@ -81,16 +82,25 @@ def compute_visual_coverage(
             # Check if image URL exists
             if card_data and card_name in card_data:
                 card_dict = card_data[card_name]
-                image_url = visual_embedder._get_image_url(card_dict) if hasattr(visual_embedder, "_get_image_url") else None
+                image_url = (
+                    visual_embedder._get_image_url(card_dict)
+                    if hasattr(visual_embedder, "_get_image_url")
+                    else None
+                )
                 if image_url:
                     cards_with_images += 1
 
             # Check embedding (if cached)
             if hasattr(visual_embedder, "_memory_cache"):
-                cache_key = visual_embedder._get_cache_key(card) if hasattr(visual_embedder, "_get_cache_key") else None
+                cache_key = (
+                    visual_embedder._get_cache_key(card)
+                    if hasattr(visual_embedder, "_get_cache_key")
+                    else None
+                )
                 if cache_key and cache_key in visual_embedder._memory_cache:
                     embedding = visual_embedder._memory_cache[cache_key]
                     import numpy as np
+
                     if np.allclose(embedding, 0):
                         zero_embeddings += 1
                     else:
@@ -178,5 +188,4 @@ def adjust_weights_for_coverage(
         return weights.normalized()
 
 
-__all__ = ["compute_visual_coverage", "adjust_weights_for_coverage"]
-
+__all__ = ["adjust_weights_for_coverage", "compute_visual_coverage"]

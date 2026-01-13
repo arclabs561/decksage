@@ -7,7 +7,6 @@ Collects user judgments on model suggestions for training data.
 from __future__ import annotations
 
 import json
-import logging
 from collections import defaultdict
 from datetime import datetime
 from enum import Enum
@@ -18,17 +17,11 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, Field
 
+from ..utils.logging_config import get_logger
+from ..utils.paths import PATHS
 
-try:
-    from ..utils.logging_config import get_logger
-    from ..utils.paths import PATHS
 
-    logger = get_logger(__name__)
-except ImportError:
-    import logging
-
-    logger = logging.getLogger(__name__)
-    PATHS = None
+logger = get_logger(__name__)
 
 # Import for card validation
 # Note: get_state() requires app to be initialized, so we use lazy import
@@ -101,11 +94,7 @@ class BatchFeedbackResponse(BaseModel):
 
 def get_feedback_storage_path() -> Path:
     """Get path to feedback storage file."""
-    if PATHS:
-        feedback_dir = PATHS.DATA_DIR / "annotations"
-    else:
-        feedback_dir = Path("data/annotations")
-
+    feedback_dir = PATHS.data / "annotations"
     feedback_dir.mkdir(parents=True, exist_ok=True)
     return feedback_dir / "user_feedback.jsonl"
 

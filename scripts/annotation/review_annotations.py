@@ -5,10 +5,11 @@ from __future__ import annotations
 
 import json
 import sys
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
 import yaml
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -260,9 +261,7 @@ def analyze_judgment_file(file_path: Path) -> dict:
     # Check for issues
     issues = []
     if len(relevance_dist) == 1:
-        issues.append(
-            f"All evaluations have same relevance: {list(relevance_dist.keys())[0]}"
-        )
+        issues.append(f"All evaluations have same relevance: {list(relevance_dist.keys())[0]}")
     if stats["bias_flags"]["groupthink_candidates"] == len(evaluations):
         issues.append("All candidates flagged for groupthink (suspicious)")
     if stats["avg_confidence"] == 1.0:
@@ -296,20 +295,22 @@ def main() -> int:
             print(f"  Game: {stats['game']}")
             print(f"  Queries: {stats['total_queries']}")
             print(f"  Candidates: {stats['total_candidates']}")
-            print(f"  Completion: {stats['graded_candidates']}/{stats['total_candidates']} ({stats['completion_rate']:.1%})")
+            print(
+                f"  Completion: {stats['graded_candidates']}/{stats['total_candidates']} ({stats['completion_rate']:.1%})"
+            )
             print(f"  Queries completed: {stats['queries_completed']}")
             print(f"  Queries partial: {stats['queries_partial']}")
             print(f"  Queries empty: {stats['queries_empty']}")
             if stats["relevance_distribution"]:
                 print(f"  Relevance distribution: {dict(stats['relevance_distribution'])}")
             if stats["has_enhanced_fields"]:
-                print(f"  ✓ Has enhanced fields (similarity_type, is_substitute, etc.)")
+                print("  ✓ Has enhanced fields (similarity_type, is_substitute, etc.)")
             if stats["validation_errors"]:
                 print(f"  ⚠ Validation errors: {len(stats['validation_errors'])}")
                 for err in stats["validation_errors"][:5]:
                     print(f"    - {err}")
             if stats["completion_rate"] == 0.0:
-                print(f"  ⚠ No annotations completed")
+                print("  ⚠ No annotations completed")
         print()
 
     # Analyze user feedback files
@@ -331,7 +332,7 @@ def main() -> int:
                 print(f"  Authors: {stats['authors']}")
                 print(f"  Unique sessions: {stats['unique_sessions']}")
                 if stats["issues"]:
-                    print(f"  ⚠ Issues:")
+                    print("  ⚠ Issues:")
                     for issue in stats["issues"]:
                         print(f"    - {issue}")
         print()
@@ -355,7 +356,7 @@ def main() -> int:
                 if stats["avg_confidence"]:
                     print(f"  Avg confidence: {stats['avg_confidence']:.2f}")
                 if stats["issues"]:
-                    print(f"  ⚠ Issues:")
+                    print("  ⚠ Issues:")
                     for issue in stats["issues"]:
                         print(f"    - {issue}")
         print()
@@ -376,7 +377,7 @@ def main() -> int:
             print(f"  Methods used: {stats['methods_used']}")
             print(f"  Bias flags: {stats['bias_flags']}")
             if stats["issues"]:
-                print(f"  ⚠ Issues:")
+                print("  ⚠ Issues:")
                 for issue in stats["issues"]:
                     print(f"    - {issue}")
         print()
@@ -391,11 +392,9 @@ def main() -> int:
         total_queries = sum(s["total_queries"] for s in hand_stats)
         total_candidates = sum(s["total_candidates"] for s in hand_stats)
         total_graded = sum(s["graded_candidates"] for s in hand_stats)
-        overall_completion = (
-            total_graded / total_candidates if total_candidates > 0 else 0.0
-        )
+        overall_completion = total_graded / total_candidates if total_candidates > 0 else 0.0
 
-        print(f"\nHand Annotations:")
+        print("\nHand Annotations:")
         print(f"  Total queries: {total_queries}")
         print(f"  Total candidates: {total_candidates}")
         print(f"  Graded: {total_graded} ({overall_completion:.1%})")
@@ -405,22 +404,22 @@ def main() -> int:
     feedback_stats = [s for s in all_stats if s.get("type") == "user_feedback"]
     if feedback_stats:
         total_feedback = sum(s["total"] for s in feedback_stats)
-        print(f"\nUser Feedback:")
+        print("\nUser Feedback:")
         print(f"  Total feedback entries: {total_feedback}")
 
     llm_stats = [s for s in all_stats if s.get("type") == "llm_jsonl"]
     if llm_stats:
         total_llm = sum(s["total"] for s in llm_stats)
-        print(f"\nLLM Annotations:")
+        print("\nLLM Annotations:")
         print(f"  Total annotations: {total_llm}")
 
     judgment_stats = [s for s in all_stats if s.get("type") == "judgment_json"]
     if judgment_stats:
-        print(f"\nJudgment Files:")
+        print("\nJudgment Files:")
         print(f"  Total files: {len(judgment_stats)}")
 
     # Key issues
-    print(f"\n⚠ KEY ISSUES:")
+    print("\n⚠ KEY ISSUES:")
     issues_found = False
 
     for stats in all_stats:
@@ -432,7 +431,9 @@ def main() -> int:
                 print(f"  - {Path(stats['file']).name}: {issue}")
                 issues_found = True
         if stats.get("validation_errors"):
-            print(f"  - {Path(stats['file']).name}: {len(stats['validation_errors'])} validation errors")
+            print(
+                f"  - {Path(stats['file']).name}: {len(stats['validation_errors'])} validation errors"
+            )
             issues_found = True
 
     if not issues_found:
@@ -443,4 +444,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

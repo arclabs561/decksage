@@ -17,5 +17,3 @@ uv run python scripts/data_processing/unified_export_pipeline.py \
 
 echo ""
 echo "✓ All deck sources exported"
-
-

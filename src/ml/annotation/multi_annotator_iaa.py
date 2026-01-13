@@ -15,18 +15,17 @@ Research basis:
 
 from __future__ import annotations
 
-import asyncio
-import json
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
-from pathlib import Path
 from typing import Any
 
+
 try:
+    import os
+
     from pydantic import BaseModel
     from pydantic_ai import Agent, ModelSettings
-    import os
 
     HAS_PYDANTIC_AI = True
 except ImportError:
@@ -34,12 +33,12 @@ except ImportError:
     ModelSettings = None
 
 try:
-    from ..evaluation.krippendorff_alpha import krippendorff_alpha
     from ..evaluation.inter_annotator_agreement import InterAnnotatorAgreement
+    from ..evaluation.krippendorff_alpha import krippendorff_alpha
     from ..utils.pydantic_ai_helpers import make_agent
-    
+
     HAS_IAA_UTILS = True
-except ImportError as e:
+except ImportError:
     HAS_IAA_UTILS = False
     krippendorff_alpha = None
     InterAnnotatorAgreement = None
@@ -49,25 +48,29 @@ except ImportError as e:
 # Use TYPE_CHECKING to avoid circular import at runtime
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
-    from .llm_annotator import CardSimilarityAnnotation, SIMILARITY_PROMPT
+    from .llm_annotator import SIMILARITY_PROMPT, CardSimilarityAnnotation
 else:
     # Runtime import - delay until actually needed
     CardSimilarityAnnotation = None
     SIMILARITY_PROMPT = None
+
 
 def _get_llm_annotator_imports():
     """Lazy import to avoid circular dependency."""
     global CardSimilarityAnnotation, SIMILARITY_PROMPT, HAS_LLM_ANNOTATOR
     if CardSimilarityAnnotation is None:
         try:
-            from .llm_annotator import CardSimilarityAnnotation, SIMILARITY_PROMPT
+            from .llm_annotator import SIMILARITY_PROMPT, CardSimilarityAnnotation
+
             HAS_LLM_ANNOTATOR = True
         except ImportError:
             HAS_LLM_ANNOTATOR = False
             CardSimilarityAnnotation = None
             SIMILARITY_PROMPT = None
     return CardSimilarityAnnotation, SIMILARITY_PROMPT
+
 
 HAS_LLM_ANNOTATOR = True  # Will be checked lazily
 HAS_IAA = HAS_IAA_UTILS  # Check LLM annotator lazily
@@ -150,12 +153,16 @@ class MultiAnnotatorIAA:
         if not HAS_PYDANTIC_AI:
             raise ImportError("pydantic-ai required. Install: pip install pydantic-ai")
         if not HAS_IAA_UTILS:
-            raise ImportError("IAA utilities required (krippendorff_alpha, InterAnnotatorAgreement, make_agent)")
-        
+            raise ImportError(
+                "IAA utilities required (krippendorff_alpha, InterAnnotatorAgreement, make_agent)"
+            )
+
         # Lazy import LLM annotator to avoid circular dependency
         CardSimilarityAnnotation_cls, SIMILARITY_PROMPT_str = _get_llm_annotator_imports()
         if CardSimilarityAnnotation_cls is None:
-            raise ImportError("LLM annotator required (CardSimilarityAnnotation, SIMILARITY_PROMPT)")
+            raise ImportError(
+                "LLM annotator required (CardSimilarityAnnotation, SIMILARITY_PROMPT)"
+            )
 
         self.annotator_configs = annotator_configs or DEFAULT_ANNOTATORS
         self.min_iaa_threshold = min_iaa_threshold
@@ -163,14 +170,14 @@ class MultiAnnotatorIAA:
 
         # Lazy import LLM annotator
         CardSimilarityAnnotation_cls, SIMILARITY_PROMPT_str = _get_llm_annotator_imports()
-        
+
         # Create agents for each annotator with model-specific settings
         self.agents: dict[str, Agent] = {}
         self.annotator_weights: dict[str, float] = {}  # Track reliability weights
-        
+
         for config in self.annotator_configs:
             from pydantic_ai import ModelSettings
-            
+
             # Create agent with model-specific settings
             provider = os.getenv("LLM_PROVIDER", "openrouter")
             agent = Agent(
@@ -194,6 +201,7 @@ class MultiAnnotatorIAA:
         card1: str,
         card2: str,
         graph_context: str | None = None,
+        message_history: dict[str, list] | None = None,
     ) -> MultiAnnotatorResult:
         """Annotate a pair with multiple annotators and compute IAA.
 
@@ -218,7 +226,9 @@ class MultiAnnotatorIAA:
         tasks = []
         for config in self.annotator_configs:
             agent = self.agents[config.name]
-            task = self._annotate_with_agent(agent, config, prompt, card1, card2)
+            # Get message history for this annotator if available (for multi-round feedback)
+            annotator_history = message_history.get(config.name, []) if message_history else None
+            task = self._annotate_with_agent(agent, config, prompt, card1, card2, annotator_history)
             tasks.append((config.name, task))
 
         # Wait for all annotations
@@ -269,11 +279,25 @@ class MultiAnnotatorIAA:
         prompt: str,
         card1: str,
         card2: str,
+        message_history: list | None = None,
     ) -> CardSimilarityAnnotation | None:
-        """Annotate with a single agent."""
+        """Annotate with a single agent.
+
+        Args:
+            agent: Pydantic AI agent
+            config: Annotator configuration
+            prompt: Annotation prompt
+            card1: First card name
+            card2: Second card name
+            message_history: Optional conversation history for multi-round feedback
+        """
         try:
             # Model settings are already configured at agent creation time
-            result = await agent.run(prompt)
+            # Pass message_history if provided (for agentic meta-judge feedback)
+            if message_history:
+                result = await agent.run(prompt, message_history=message_history)
+            else:
+                result = await agent.run(prompt)
             if result.output:
                 ann = result.output
                 # Set metadata
@@ -288,9 +312,7 @@ class MultiAnnotatorIAA:
             logger.warning(f"Annotator {config.name} failed: {e}")
             return None
 
-    def _compute_iaa(
-        self, annotations: dict[str, CardSimilarityAnnotation]
-    ) -> dict[str, Any]:
+    def _compute_iaa(self, annotations: dict[str, CardSimilarityAnnotation]) -> dict[str, Any]:
         """Compute IAA metrics for annotations.
 
         For similarity scores (continuous 0-1), we:
@@ -334,16 +356,20 @@ class MultiAnnotatorIAA:
         )
 
         # Overall alpha (weighted average)
-        overall_alpha = (score_alpha * 0.5 + type_alpha * 0.3 + sub_alpha * 0.2)
+        overall_alpha = score_alpha * 0.5 + type_alpha * 0.3 + sub_alpha * 0.2
 
         # Agreement rates
-        score_agreement = sum(1 for s in score_bins if score_bins.count(s) > 1) / len(
-            score_bins
-        ) if score_bins else 0.0
+        score_agreement = (
+            sum(1 for s in score_bins if score_bins.count(s) > 1) / len(score_bins)
+            if score_bins
+            else 0.0
+        )
         type_agreement = sum(1 for t in types if types.count(t) > 1) / len(types) if types else 0.0
-        sub_agreement = sum(1 for s in substitutes if substitutes.count(s) > 1) / len(
-            substitutes
-        ) if substitutes else 0.0
+        sub_agreement = (
+            sum(1 for s in substitutes if substitutes.count(s) > 1) / len(substitutes)
+            if substitutes
+            else 0.0
+        )
 
         return {
             "krippendorff_alpha": overall_alpha,
@@ -355,7 +381,12 @@ class MultiAnnotatorIAA:
             "substitute_agreement_rate": sub_agreement,
             "num_annotators": len(annotations),
             "score_range": (min(scores), max(scores)),
-            "score_std": float(sum((s - sum(scores) / len(scores)) ** 2 for s in scores) / len(scores)) ** 0.5 if scores else 0.0,
+            "score_std": float(
+                sum((s - sum(scores) / len(scores)) ** 2 for s in scores) / len(scores)
+            )
+            ** 0.5
+            if scores
+            else 0.0,
         }
 
     def _create_consensus(
@@ -391,7 +422,9 @@ class MultiAnnotatorIAA:
 
         # Combine reasoning
         consensus_reasoning = f"Consensus from {len(annotations)} annotators (IAA α={iaa_metrics['krippendorff_alpha']:.2f}). "
-        consensus_reasoning += " | ".join(f"{name}: {r[:100]}" for name, r in zip(annotations.keys(), reasonings))
+        consensus_reasoning += " | ".join(
+            f"{name}: {r[:100]}" for name, r in zip(annotations.keys(), reasonings)
+        )
 
         # Use first annotation as template
         first_ann = list(annotations.values())[0]
@@ -444,13 +477,13 @@ class MultiAnnotatorIAA:
         )
 
         return accepted, rejected
-    
+
     def update_annotator_weights(
         self,
         annotator_performance: dict[str, float],
     ) -> None:
         """Update annotator reliability weights based on performance.
-        
+
         Args:
             annotator_performance: Dict mapping annotator_name -> performance_score (0-1)
         """
@@ -463,5 +496,6 @@ class MultiAnnotatorIAA:
                     new_weight = perf / total_performance
                     # Smooth update (0.3 = learning rate)
                     self.annotator_weights[name] = 0.7 * old_weight + 0.3 * new_weight
-                    logger.info(f"Updated weight for {name}: {old_weight:.3f} -> {self.annotator_weights[name]:.3f}")
-
+                    logger.info(
+                        f"Updated weight for {name}: {old_weight:.3f} -> {self.annotator_weights[name]:.3f}"
+                    )

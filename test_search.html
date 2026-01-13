@@ -1013,17 +1013,17 @@
             try {
                 const cached = localStorage.getItem(cacheKey);
                 if (!cached) return null;
-                
+
                 const data = JSON.parse(cached);
                 const now = Date.now();
-                
+
                 // Check if cache is expired
                 if (now - data.timestamp > CACHE_CONFIG.RESULTS_TTL) {
                     localStorage.removeItem(cacheKey);
                     updateCacheMetadata();
                     return null;
                 }
-                
+
                 performanceMetrics.cacheHits++;
                 return data.result;
             } catch {
@@ -1071,7 +1071,7 @@
             try {
                 const keys = Object.keys(localStorage);
                 const cacheKeys = keys.filter(k => k.startsWith(CACHE_CONFIG.CACHE_KEY_PREFIX));
-                
+
                 if (cacheKeys.length <= CACHE_CONFIG.MAX_CACHE_SIZE && !aggressive) {
                     return;
                 }
@@ -1087,7 +1087,7 @@
                 }).sort((a, b) => b.timestamp - a.timestamp); // Newest first
 
                 // Remove oldest entries
-                const toRemove = aggressive 
+                const toRemove = aggressive
                     ? entries.slice(Math.floor(entries.length * 0.5)) // Remove 50% if aggressive
                     : entries.slice(CACHE_CONFIG.MAX_CACHE_SIZE); // Keep only MAX_CACHE_SIZE
 
@@ -1104,7 +1104,7 @@
         // Privacy-respecting analytics
         function trackEvent(eventType, eventData = {}) {
             if (!ANALYTICS_CONFIG.enabled) return;
-            
+
             try {
                 const disabled = localStorage.getItem('decksage_analytics_disabled') === 'true';
                 if (disabled) return;
@@ -1127,7 +1127,7 @@
                 }
 
                 events.push(event);
-                
+
                 // Keep only last N events
                 if (events.length > ANALYTICS_CONFIG.maxEvents) {
                     events = events.slice(-ANALYTICS_CONFIG.maxEvents);
@@ -1192,13 +1192,13 @@
         function showStatus(message, type = 'info', dismissible = true, containerId = 'statusMessage') {
             const statusEl = document.getElementById(containerId);
             if (!statusEl) return;
-            
+
             statusEl.innerHTML = message + (dismissible ? '<button class="status-close" onclick="this.parentElement.classList.add(\'hidden\')" aria-label="Dismiss">×</button>' : '');
             statusEl.className = `status ${type} ${dismissible ? 'dismissible' : ''}`;
             statusEl.classList.remove('hidden');
             statusEl.setAttribute('role', 'status');
             statusEl.setAttribute('aria-live', 'polite');
-            
+
             // Auto-hide after 8 seconds (increased from 5)
             if (dismissible) {
                 setTimeout(() => {
@@ -1210,7 +1210,7 @@
         function showSkeletonLoading(containerId, count = 5) {
             const container = document.getElementById(containerId);
             if (!container) return;
-            
+
             container.innerHTML = Array(count).fill(0).map(() => `
                 <div class="skeleton-result skeleton">
                     <div class="skeleton-title skeleton"></div>
@@ -1254,7 +1254,7 @@
             });
             document.getElementById(`${tabName}-tab-btn`).classList.add('active');
             document.getElementById(`${tabName}-tab-btn`).setAttribute('aria-selected', 'true');
-            
+
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
@@ -1274,40 +1274,40 @@
         async function unifiedSearch(event) {
             event.preventDefault();
             const query = document.getElementById('unifiedInput').value.trim();
-            
+
             if (!query) {
                 showStatus('Please enter a search query', 'error');
                 return;
             }
-            
+
             // Check if query is a card name by checking autocomplete results
             // If autocomplete shows exact match, use similarity search
             // Otherwise, use hybrid search
             const indicator = document.getElementById('searchModeIndicator');
             indicator.textContent = 'Checking query type...';
-            
+
             try {
                 // Quick check: fetch autocomplete to see if it's a card name
                 const autocompleteResponse = await fetch(`${API_BASE}/v1/cards?prefix=${encodeURIComponent(query)}&limit=5`);
                 let isCardName = false;
-                
+
                 if (autocompleteResponse.ok) {
                     const autocompleteData = await autocompleteResponse.json();
                     // Check if query exactly matches any card name (case-insensitive)
                     const exactMatch = autocompleteData.items?.some(
                         item => item.toLowerCase() === query.toLowerCase()
                     );
-                    
+
                     // Also check if query is short and looks like a card name (not a description)
-                    const looksLikeCardName = query.length < 50 && 
-                                            !query.includes(' that ') && 
+                    const looksLikeCardName = query.length < 50 &&
+                                            !query.includes(' that ') &&
                                             !query.includes(' which ') &&
                                             !query.includes(' with ') &&
                                             query.split(' ').length <= 5;
-                    
+
                     isCardName = exactMatch || (looksLikeCardName && autocompleteData.items?.length > 0);
                 }
-                
+
                 if (isCardName) {
                     // Use similarity search
                     indicator.textContent = 'Using similarity search (card name detected)';
@@ -1359,15 +1359,15 @@
             // Check cache first
             const cacheKey = getCacheKey(cardName, method, useCase, k);
             const cached = getCachedResult(cacheKey);
-            
+
             if (cached) {
                 currentQuery = cardName;
                 currentResults = cached.results || [];
                 currentModelInfo = cached.model_info || null;
                 displayResults(cached);
-                trackEvent('search', { 
-                    query: cardName, 
-                    method: method, 
+                trackEvent('search', {
+                    query: cardName,
+                    method: method,
                     useCase: useCase,
                     cached: true,
                 });
@@ -1379,7 +1379,7 @@
             currentQuery = cardName;
             const resultsSection = document.getElementById('resultsSection');
             const resultsContainer = document.getElementById('resultsContainer');
-            
+
             // Show skeleton loading
             resultsSection.style.display = 'block';
             showSkeletonLoading('resultsContainer', k);
@@ -1393,7 +1393,7 @@
                 const controller = new AbortController();
                 currentSearchController = controller;
                 const timeoutId = setTimeout(() => controller.abort(), 60000);
-                
+
                 const response = await fetch(url, {
                     method: 'POST',
                     headers: {
@@ -1429,7 +1429,7 @@
 
                 const data = await response.json();
                 const responseTime = performance.now() - startTime;
-                
+
                 // Update performance metrics
                 performanceMetrics.searchCount++;
                 performanceMetrics.totalResponseTime += responseTime;
@@ -1437,10 +1437,10 @@
 
                 currentResults = data.results || [];
                 currentModelInfo = data.model_info || null;
-                
+
                 // Cache the result
                 setCachedResult(cacheKey, data);
-                
+
                 if (currentResults.length === 0) {
                     showStatus('No results found', 'info');
                     resultsContainer.innerHTML = `
@@ -1458,11 +1458,11 @@
                 } else {
                     showStatus(`Found ${currentResults.length} results`, 'success');
                 }
-                
+
                 displayResults(data);
-                trackEvent('search_complete', { 
-                    query: cardName, 
-                    method: method, 
+                trackEvent('search_complete', {
+                    query: cardName,
+                    method: method,
                     useCase: useCase,
                     resultCount: currentResults.length,
                     responseTime: Math.round(responseTime),
@@ -1473,7 +1473,7 @@
                 if (error.name === 'AbortError' && currentSearchController === null) {
                     return; // New search started, ignore this error
                 }
-                
+
                 const friendlyError = getUserFriendlyError(error.message);
                 if (error.name === 'AbortError') {
                     showStatus('Request timed out. Try a different method or fewer results.', 'error');
@@ -1518,7 +1518,7 @@
 
             const resultsSection = document.getElementById('hybridResultsSection') || document.getElementById('resultsSection');
             const resultsContainer = document.getElementById('hybridResultsContainer') || document.getElementById('resultsContainer');
-            
+
             if (resultsSection) resultsSection.style.display = 'block';
             if (resultsContainer) {
                 const containerId = resultsContainer.id;
@@ -1585,7 +1585,7 @@
 
             const resultsSection = document.getElementById('contextualResultsSection');
             const resultsContainer = document.getElementById('contextualResultsContainer');
-            
+
             resultsSection.style.display = 'block';
             showSkeletonLoading('contextualResultsContainer', topK * 3);
 
@@ -1698,7 +1698,7 @@
 
             const resultsSection = document.getElementById('deckResultsSection');
             const resultsContainer = document.getElementById('deckResultsContainer');
-            
+
             resultsSection.style.display = 'block';
             showSkeletonLoading('deckResultsContainer', 3);
 
@@ -1736,7 +1736,7 @@
             const container = document.getElementById('deckResultsContainer');
             const mainCount = data.deck.Main ? data.deck.Main.length : 0;
             const sideCount = data.deck.Sideboard ? data.deck.Sideboard.length : 0;
-            
+
             let html = `
                 <div class="deck-stats">
                     <div class="deck-stat">
@@ -1757,7 +1757,7 @@
                     <textarea class="deck-input" readonly style="min-height: 300px;">${JSON.stringify(data.deck, null, 2)}</textarea>
                 </div>
             `;
-            
+
             if (data.steps && data.steps.length > 0) {
                 html += '<div style="margin-top: 24px;"><h3 style="margin-bottom: 12px; color: #6b8eff;">Completion Steps</h3>';
                 html += data.steps.map((step, idx) => `
@@ -1770,7 +1770,7 @@
                 `).join('');
                 html += '</div>';
             }
-            
+
             container.innerHTML = html;
         }
 
@@ -1789,9 +1789,9 @@
         function toggleFeedbackMode() {
             feedbackModeEnabled = document.getElementById('enableFeedback').checked;
             if (currentResults.length > 0) {
-                const data = { 
-                    results: currentResults, 
-                    model_info: currentModelInfo 
+                const data = {
+                    results: currentResults,
+                    model_info: currentModelInfo
                 };
                 displayResults(data);
             }
@@ -1809,7 +1809,7 @@
                 item.setAttribute('tabindex', '0');
                 item.setAttribute('role', 'article');
                 item.setAttribute('aria-label', `Result ${index + 1}: ${escapeHtml(result.card)}`);
-                
+
                 const ratingLabels = {
                     4: 'Extremely similar (near substitutes)',
                     3: 'Very similar (similar role)',
@@ -1820,8 +1820,8 @@
                 const feedbackControlsHtml = feedbackModeEnabled ? `
                     <div class="feedback-controls">
                         <div class="rating-buttons">
-                            ${[0, 1, 2, 3, 4].map(rating => 
-                                `<button class="rating-btn" data-rating="${rating}" data-index="${index}" 
+                            ${[0, 1, 2, 3, 4].map(rating =>
+                                `<button class="rating-btn" data-rating="${rating}" data-index="${index}"
                                     title="${ratingLabels[rating]}" aria-label="Rate ${rating}: ${ratingLabels[rating]}">${rating}</button>`
                             ).join('')}
                         </div>
@@ -1837,14 +1837,14 @@
                                        result.similarity >= 0.7 ? 'Very similar' :
                                        result.similarity >= 0.4 ? 'Somewhat similar' :
                                        result.similarity >= 0.2 ? 'Marginally similar' : 'Weak connection';
-                
+
                 const meta = result.metadata || {};
                 const metaParts = [];
                 if (meta.type) metaParts.push(meta.type);
                 if (meta.mana_cost) metaParts.push(meta.mana_cost);
                 if (meta.cmc !== undefined && meta.cmc !== null) metaParts.push(`CMC ${meta.cmc}`);
                 const metaText = metaParts.length > 0 ? metaParts.join(' · ') : '';
-                
+
                 const functionalTags = meta.functional_tags ? meta.functional_tags.split(',').slice(0, 3).join(', ') : '';
                 const formatLegal = meta.format_legal ? meta.format_legal.split(',').slice(0, 3).join(', ') : '';
                 const cooccurNote = meta.cooccurrence_note || '';
@@ -1852,7 +1852,7 @@
                 const archetypeCooccur = meta.archetype_cooccurrence || '';
                 const formatCooccur = meta.format_cooccurrence || '';
                 const oraclePreview = meta.oracle_text ? (meta.oracle_text.length > 100 ? meta.oracle_text.substring(0, 100) + '...' : meta.oracle_text) : '';
-                
+
                 const isSubstitutable = result.similarity >= 0.7;
                 const isPartial = result.similarity >= 0.4 && result.similarity < 0.7;
                 let substitutabilityClass = 'not-substitutable';
@@ -1864,11 +1864,11 @@
                     substitutabilityClass = 'partial-substitute';
                     substitutabilityText = '~ Partial substitute';
                 }
-                
+
                 // Escape all user data to prevent XSS
                 const cardNameEscaped = escapeHtml(result.card);
                 const cardImage = meta.image_url ? `<img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : '';
-                
+
                 item.innerHTML = `
                     <div class="result-info">
                         <div class="result-header">
@@ -1916,8 +1916,8 @@
                 const source = data.model_info.embedding_source || 'unknown';
                 const numCards = data.model_info.num_cards?.toLocaleString() || 'N/A';
                 modelInfo.innerHTML = `
-                    ${escapeHtml(source)} · 
-                    ${escapeHtml(numCards)} cards · 
+                    ${escapeHtml(source)} ·
+                    ${escapeHtml(numCards)} cards ·
                     ${escapeHtml(method)}
                 `;
             } else {
@@ -1954,8 +1954,8 @@
                 return;
             }
 
-            trackEvent('feedback_submit', { 
-                query: currentQuery, 
+            trackEvent('feedback_submit', {
+                query: currentQuery,
                 suggested: result.card,
                 rating: rating,
                 isSubstitute: isSubstitute,
@@ -2000,7 +2000,7 @@
                 const data = await response.json();
                 showStatus(`Feedback submitted (ID: ${data.feedback_id.substring(0, 8)}...)`, 'success');
                 trackEvent('feedback_success', { feedbackId: data.feedback_id.substring(0, 8) });
-                
+
                 const item = document.querySelectorAll('.result-item')[index];
                 item.style.opacity = '0.6';
                 item.style.borderLeftColor = '#2a8a2a';
@@ -2025,7 +2025,7 @@
                 }
                 return;
             }
-            
+
             try {
                 const useLLM = localStorage.getItem('decksage_use_llm') === 'true';
                 const url = `${API_BASE}/v1/cards?prefix=${encodeURIComponent(query)}&limit=8${useLLM ? '&use_llm=true' : ''}`;
@@ -2039,13 +2039,13 @@
                     }
                     return;
                 }
-                
+
                 const data = await response.json();
-                const history = getSearchHistory().filter(item => 
-                    item.toLowerCase().includes(query.toLowerCase()) && 
+                const history = getSearchHistory().filter(item =>
+                    item.toLowerCase().includes(query.toLowerCase()) &&
                     item.toLowerCase() !== query.toLowerCase()
                 );
-                
+
                 if (data.items && data.items.length > 0) {
                     showAutocomplete(data.items, query, history);
                 } else if (history.length > 0) {
@@ -2068,9 +2068,9 @@
             const dropdown = document.getElementById('autocompleteDropdown');
             const cardInput = document.getElementById('cardInput') || document.getElementById('unifiedInput');
             const queryLower = query.toLowerCase();
-            
+
             let html = '';
-            
+
             // Show history first if available
             if (history.length > 0 && query.length === 0) {
                 html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Recent Searches</div>';
@@ -2079,25 +2079,25 @@
                 });
                 html += '</div>';
             }
-            
+
             // Show API suggestions
             if (items.length > 0) {
                 if (history.length > 0) html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Suggestions</div>';
                 items.forEach((item, index) => {
                     const itemLower = item.toLowerCase();
                     let highlighted = escapeHtml(item);
-                    
+
                     // Improved highlighting: highlight all matches, not just first
                     if (itemLower.includes(queryLower)) {
                         const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
                         highlighted = escapeHtml(item).replace(regex, '<strong class="match">$1</strong>');
                     }
-                    
+
                     html += `<div class="autocomplete-item" data-index="${history.length + index}" data-value="${item}" role="option" aria-label="Card: ${item}" tabindex="0">${highlighted}</div>`;
                 });
                 if (history.length > 0) html += '</div>';
             }
-            
+
             dropdown.innerHTML = html;
             dropdown.setAttribute('role', 'listbox');
             dropdown.setAttribute('aria-label', `${items.length + history.length} suggestions`);
@@ -2152,14 +2152,14 @@
         // Setup autocomplete for both unified and legacy inputs
         function setupAutocomplete(inputElement) {
             if (!inputElement) return;
-            
+
             inputElement.addEventListener('input', (e) => {
                 const query = e.target.value.trim();
-                
+
                 if (autocompleteTimeout) {
                     clearTimeout(autocompleteTimeout);
                 }
-                
+
                 // Adaptive debouncing based on query length
                 const delay = getDebounceDelay(query);
                 autocompleteTimeout = setTimeout(() => {
@@ -2180,7 +2180,7 @@
             inputElement.addEventListener('keydown', (e) => {
                 const dropdown = document.getElementById('autocompleteDropdown');
                 if (!dropdown || !dropdown.classList.contains('visible')) return;
-                
+
                 if (e.key === 'ArrowDown') {
                     e.preventDefault();
                     selectedAutocompleteIndex = Math.min(selectedAutocompleteIndex + 1, autocompleteItems.length - 1);
@@ -2209,13 +2209,13 @@
                 }
             });
         }
-        
+
         // Setup for unified input
         const unifiedInput = document.getElementById('unifiedInput');
         if (unifiedInput) {
             setupAutocomplete(unifiedInput);
         }
-        
+
         // Setup for legacy cardInput (backward compatibility)
         const cardInput = document.getElementById('cardInput');
         if (cardInput) {
@@ -2264,7 +2264,7 @@
         function detectAndApplyGameStyle(cardName) {
             const body = document.body;
             body.classList.remove('game-magic', 'game-pokemon', 'game-yugioh');
-            
+
             const nameLower = cardName.toLowerCase();
             if (nameLower.includes('-ex') || nameLower.includes('-gx') || nameLower.includes('-v') || nameLower.includes('pikachu') || nameLower.includes('charizard')) {
                 body.classList.add('game-pokemon');
@@ -2285,7 +2285,7 @@
                 unifiedSearch(e);
             });
         }
-        
+
         // Legacy form handlers (backward compatibility)
         const searchForm = document.getElementById('searchForm');
         if (searchForm) {
@@ -2401,4 +2401,3 @@
     </script>
 </body>
 </html>
-

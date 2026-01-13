@@ -64,7 +64,7 @@ def get_formats_together(annotation: dict[str, Any]) -> list[str]:
 
 def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, Any]:
     """Validate LLM annotation against graph data.
-    
+
     Returns validation results including:
     - Graph consistency (does graph support the similarity score?)
     - Attribute consistency (do attributes match the similarity type?)
@@ -87,19 +87,19 @@ def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, A
     if graph_features:
         jaccard = graph_features.get("jaccard_similarity", 0.0)
         cooccurrence = graph_features.get("cooccurrence_count", 0)
-        
+
         # High similarity score but low Jaccard might indicate inconsistency
         if similarity_score > 0.7 and jaccard < 0.3:
             validation["warnings"].append(
                 f"High similarity score ({similarity_score:.2f}) but low Jaccard ({jaccard:.2f})"
             )
-        
+
         # Low similarity score but high Jaccard might indicate inconsistency
         if similarity_score < 0.3 and jaccard > 0.7:
             validation["warnings"].append(
                 f"Low similarity score ({similarity_score:.2f}) but high Jaccard ({jaccard:.2f})"
             )
-        
+
         validation["graph_consistency"] = {
             "jaccard": jaccard,
             "cooccurrence": cooccurrence,
@@ -110,7 +110,7 @@ def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, A
     if card_comparison:
         similarity_type = annotation.get("similarity_type", "")
         attribute_sim = card_comparison.get("attribute_similarity", {})
-        
+
         # Functional similarity should have high type/function similarity
         if similarity_type == "functional":
             type_sim = attribute_sim.get("type", 0.0)
@@ -118,7 +118,7 @@ def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, A
                 validation["warnings"].append(
                     f"Functional similarity but low type similarity ({type_sim:.2f})"
                 )
-        
+
         # Manabase similarity should have high mana cost similarity
         if similarity_type == "manabase":
             mana_sim = attribute_sim.get("mana_cost", 0.0)
@@ -126,7 +126,7 @@ def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, A
                 validation["warnings"].append(
                     f"Manabase similarity but low mana cost similarity ({mana_sim:.2f})"
                 )
-        
+
         validation["attribute_consistency"] = {
             "attribute_similarities": attribute_sim,
             "type_consistency": True,  # Simplified
@@ -136,14 +136,14 @@ def validate_annotation_against_graph(annotation: dict[str, Any]) -> dict[str, A
     if contextual:
         archetypes = contextual.get("archetypes_together", [])
         formats = contextual.get("formats_together", [])
-        
+
         # If context_dependent is True, should have specific archetypes/formats
         if annotation.get("context_dependent", False):
             if not archetypes and not formats:
                 validation["warnings"].append(
                     "Context-dependent but no archetype/format context found"
                 )
-        
+
         validation["contextual_consistency"] = {
             "archetypes": archetypes,
             "formats": formats,
@@ -165,27 +165,27 @@ def format_enriched_annotation_for_display(
     score = annotation.get("similarity_score", 0.0)
     sim_type = annotation.get("similarity_type", "unknown")
     is_sub = annotation.get("is_substitute", False)
-    
+
     lines = [
         f"Similarity: {card1} ↔ {card2}",
         f"  Score: {score:.2f} ({sim_type})",
         f"  Substitutable: {is_sub}",
     ]
-    
+
     # Add graph features
     graph_features = extract_graph_features_from_annotation(annotation)
     if graph_features:
         jaccard = graph_features.get("jaccard_similarity", 0.0)
         cooccur = graph_features.get("cooccurrence_count", 0)
         lines.append(f"  Graph: Jaccard={jaccard:.3f}, Co-occurrence={cooccur}")
-    
+
     # Add contextual info
     contextual = extract_contextual_analysis_from_annotation(annotation)
     if contextual:
         archetypes = contextual.get("archetypes_together", [])
         if archetypes:
             lines.append(f"  Archetypes: {', '.join(archetypes[:3])}")
-    
+
     return "\n".join(lines)
 
 
@@ -200,13 +200,13 @@ def filter_annotations_by_graph_quality(
         graph_features = extract_graph_features_from_annotation(ann)
         if not graph_features:
             continue
-        
+
         jaccard = graph_features.get("jaccard_similarity", 0.0)
         cooccur = graph_features.get("cooccurrence_count", 0)
-        
+
         if jaccard >= min_jaccard and cooccur >= min_cooccurrence:
             filtered.append(ann)
-    
+
     return filtered
 
 
@@ -216,10 +216,10 @@ def get_enrichment_summary(annotations: list[dict[str, Any]]) -> dict[str, Any]:
     with_graph = 0
     with_attributes = 0
     with_context = 0
-    
+
     jaccard_scores = []
     cooccurrence_counts = []
-    
+
     for ann in annotations:
         if extract_graph_features_from_annotation(ann):
             with_graph += 1
@@ -231,13 +231,13 @@ def get_enrichment_summary(annotations: list[dict[str, Any]]) -> dict[str, Any]:
                     jaccard_scores.append(jaccard)
                 if cooccur > 0:
                     cooccurrence_counts.append(cooccur)
-        
+
         if extract_card_comparison_from_annotation(ann):
             with_attributes += 1
-        
+
         if extract_contextual_analysis_from_annotation(ann):
             with_context += 1
-    
+
     summary = {
         "total": total,
         "with_graph_features": with_graph,
@@ -249,21 +249,19 @@ def get_enrichment_summary(annotations: list[dict[str, Any]]) -> dict[str, Any]:
             "context": with_context / total if total > 0 else 0.0,
         },
     }
-    
+
     if jaccard_scores:
         summary["jaccard_stats"] = {
             "mean": sum(jaccard_scores) / len(jaccard_scores),
             "min": min(jaccard_scores),
             "max": max(jaccard_scores),
         }
-    
+
     if cooccurrence_counts:
         summary["cooccurrence_stats"] = {
             "mean": sum(cooccurrence_counts) / len(cooccurrence_counts),
             "min": min(cooccurrence_counts),
             "max": max(cooccurrence_counts),
         }
-    
+
     return summary
-
-

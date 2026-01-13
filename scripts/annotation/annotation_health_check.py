@@ -26,7 +26,7 @@ def check_file_integrity(annotations_dir: Path) -> dict[str, Any]:
     """Check integrity of annotation files."""
     issues = []
     warnings = []
-    
+
     # Check for JSONL files
     jsonl_files = list(annotations_dir.glob("*.jsonl"))
     for f in jsonl_files:
@@ -43,7 +43,7 @@ def check_file_integrity(annotations_dir: Path) -> dict[str, Any]:
             issues.append(f"Invalid JSON in {f.name}: {e}")
         except Exception as e:
             issues.append(f"Error reading {f.name}: {e}")
-    
+
     return {
         "jsonl_files": len(jsonl_files),
         "issues": issues,
@@ -55,16 +55,16 @@ def check_file_integrity(annotations_dir: Path) -> dict[str, Any]:
 def check_data_quality(annotations_dir: Path) -> dict[str, Any]:
     """Check data quality of annotations."""
     issues = []
-    
+
     # Check integrated file
     integrated_files = list(annotations_dir.glob("*integrated*.jsonl"))
     if not integrated_files:
         issues.append("No integrated annotation file found")
         return {"status": "missing", "issues": issues}
-    
+
     # Check latest integrated file
     latest = max(integrated_files, key=lambda p: p.stat().st_mtime)
-    
+
     annotations = []
     errors = []
     with open(latest) as f:
@@ -79,19 +79,19 @@ def check_data_quality(annotations_dir: Path) -> dict[str, Any]:
                 except Exception as e:
                     errors.append(f"Line {line_num}: Error - {e}")
                     continue
-    
+
     if errors:
         issues.extend(errors[:5])
         if len(errors) > 5:
             issues.append(f"... and {len(errors) - 5} more errors")
-                
+
                 # Validate structure
                     if not ann.get("card1") or not ann.get("card2"):
                     issues.append(f"Missing card names in annotation")
                 score = ann.get("similarity_score", -1)
                 if not (0 <= score <= 1):
                     issues.append(f"Invalid similarity_score: {score}")
-    
+
     return {
         "integrated_file": str(latest),
         "total_annotations": len(annotations),
@@ -109,21 +109,21 @@ def check_integration_status(annotations_dir: Path) -> dict[str, Any]:
         "user_feedback": list(annotations_dir.glob("user_feedback.jsonl")),
         "multi_judge": list(annotations_dir.glob("judgment_*.jsonl")),
     }
-    
+
     # Check if integrated file is newer than source files
     integrated_files = list(annotations_dir.glob("*integrated*.jsonl"))
     if not integrated_files:
         return {"status": "missing", "message": "No integrated file found"}
-    
+
     latest_integrated = max(integrated_files, key=lambda p: p.stat().st_mtime)
     integrated_time = latest_integrated.stat().st_mtime
-    
+
     outdated_sources = []
     for source_name, files in sources.items():
         for f in files:
             if f.stat().st_mtime > integrated_time:
                 outdated_sources.append(f"{source_name}: {f.name}")
-    
+
     return {
         "integrated_file": str(latest_integrated),
         "outdated_sources": outdated_sources,
@@ -140,7 +140,7 @@ def check_s3_sync_status(s3_path: str = "s3://games-collections/annotations/") -
             text=True,
             timeout=10,
         )
-        
+
         if result.returncode == 0:
             files = [line for line in result.stdout.strip().split("\n") if line.strip()]
             return {
@@ -168,7 +168,7 @@ def check_s3_sync_status(s3_path: str = "s3://games-collections/annotations/") -
 def check_dependencies() -> dict[str, Any]:
     """Check system dependencies."""
     dependencies = {}
-    
+
     # Check Python packages
     packages = ["pydantic", "pydantic_ai", "fastapi", "uvicorn"]
     for pkg in packages:
@@ -177,7 +177,7 @@ def check_dependencies() -> dict[str, Any]:
             dependencies[pkg] = "installed"
         except ImportError:
             dependencies[pkg] = "missing"
-    
+
     # Check tools
     tools = ["s5cmd"]
     for tool in tools:
@@ -186,9 +186,9 @@ def check_dependencies() -> dict[str, Any]:
             dependencies[tool] = "installed"
         except (FileNotFoundError, subprocess.TimeoutExpired):
             dependencies[tool] = "missing"
-    
+
     missing = [k for k, v in dependencies.items() if v == "missing"]
-    
+
     return {
         "dependencies": dependencies,
         "status": "healthy" if not missing else "missing_dependencies",
@@ -216,19 +216,19 @@ def main() -> int:
         type=Path,
         help="Output health report JSON",
     )
-    
+
     args = parser.parse_args()
-    
+
     print("=" * 80)
     print("ANNOTATION SYSTEM HEALTH CHECK")
     print("=" * 80)
     print()
-    
+
     health_report = {
         "timestamp": __import__("datetime").datetime.now().isoformat(),
         "checks": {},
     }
-    
+
     # File integrity
     print("Checking file integrity...")
     integrity = check_file_integrity(args.annotations_dir)
@@ -240,7 +240,7 @@ def main() -> int:
             print(f"    - {issue}")
     if integrity["warnings"]:
         print(f"  Warnings: {len(integrity['warnings'])}")
-    
+
     # Data quality
     print("\nChecking data quality...")
     quality = check_data_quality(args.annotations_dir)
@@ -250,7 +250,7 @@ def main() -> int:
         print(f"  Annotations: {quality['total_annotations']}")
     if quality["issues"]:
         print(f"  Issues: {len(quality['issues'])}")
-    
+
     # Integration status
     print("\nChecking integration status...")
     integration = check_integration_status(args.annotations_dir)
@@ -258,7 +258,7 @@ def main() -> int:
     print(f"  Status: {integration['status']}")
     if integration.get("outdated_sources"):
         print(f"  Outdated sources: {len(integration['outdated_sources'])}")
-    
+
     # S3 sync
     print("\nChecking S3 sync status...")
     s3_status = check_s3_sync_status(args.s3_path)
@@ -266,7 +266,7 @@ def main() -> int:
     print(f"  Status: {s3_status['status']}")
     if "files_in_s3" in s3_status:
         print(f"  Files in S3: {s3_status['files_in_s3']}")
-    
+
     # Dependencies
     print("\nChecking dependencies...")
     deps = check_dependencies()
@@ -274,28 +274,27 @@ def main() -> int:
     print(f"  Status: {deps['status']}")
     if deps["missing"]:
         print(f"  Missing: {', '.join(deps['missing'])}")
-    
+
     # Overall health
     all_healthy = all(
         check.get("status") in ["healthy", "up_to_date", "synced"]
         for check in health_report["checks"].values()
     )
     health_report["overall_status"] = "healthy" if all_healthy else "needs_attention"
-    
+
     print("\n" + "=" * 80)
     print("HEALTH CHECK SUMMARY")
     print("=" * 80)
     print(f"Overall status: {health_report['overall_status']}")
-    
+
     # Save report
     if args.output:
         with open(args.output, "w") as f:
             json.dump(health_report, f, indent=2)
         print(f"\n✓ Saved health report: {args.output}")
-    
+
     return 0 if all_healthy else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

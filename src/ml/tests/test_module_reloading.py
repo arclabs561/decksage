@@ -11,8 +11,6 @@ from __future__ import annotations
 import importlib
 from unittest.mock import patch
 
-import pytest
-
 
 class TestModuleReloadingPattern:
     """Tests for module reloading pattern used in tests."""
@@ -41,6 +39,7 @@ class TestModuleReloadingPattern:
 
         with patch("builtins.__import__", side_effect=mock_import):
             import ml.scripts.validate_deck_quality
+
             importlib.reload(ml.scripts.validate_deck_quality)
 
             # Module should be reloaded with mocked import
@@ -94,5 +93,3 @@ class TestModuleReloadingPattern:
             current_state = getattr(ml.scripts.validate_deck_quality, "_test_state", None)
             # State may be reset or may be same depending on module implementation
             pass
-
-

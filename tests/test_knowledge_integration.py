@@ -65,7 +65,9 @@ def test_yugioh_knowledge_retrieval(real_knowledge_base: GameKnowledgeBase):
 
     # Should include Yu-Gi-Oh-specific mechanics
     if result["mechanics"]:
-        assert "hand trap" in result["mechanics"].lower() or "starter" in result["mechanics"].lower()
+        assert (
+            "hand trap" in result["mechanics"].lower() or "starter" in result["mechanics"].lower()
+        )
 
 
 def test_knowledge_includes_examples(real_knowledge_base: GameKnowledgeBase):
@@ -106,4 +108,3 @@ def test_format_filtering_works(real_knowledge_base: GameKnowledgeBase):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

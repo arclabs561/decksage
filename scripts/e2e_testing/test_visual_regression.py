@@ -13,9 +13,18 @@ import time
 from pathlib import Path
 from typing import Any
 
+from test_constants import TIMEOUTS
+
 # Import shared utilities (dotenv is loaded automatically by test_utils)
-from test_utils import wait_for_api, logger, API_BASE, get_ui_url, start_http_server, setup_playwright_routing, inject_api_base
-from test_constants import TEST_CARDS, TIMEOUTS
+from test_utils import (
+    get_ui_url,
+    inject_api_base,
+    logger,
+    setup_playwright_routing,
+    start_http_server,
+    wait_for_api,
+)
+
 
 # Start HTTP server and get UI URL
 start_http_server()
@@ -24,6 +33,7 @@ UI_URL = get_ui_url()
 # Use Playwright for browser automation
 try:
     from playwright.sync_api import sync_playwright
+
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
@@ -36,7 +46,7 @@ def check_ai_visual_test_installed() -> bool:
     node_modules = test_dir / "node_modules" / "@arclabs561" / "ai-visual-test"
     if node_modules.exists():
         return True
-    
+
     try:
         result = subprocess.run(
             ["npx", "--yes", "@arclabs561/ai-visual-test", "--help"],
@@ -54,15 +64,15 @@ def get_vlm_api_key() -> tuple[str, str] | None:
     key = os.getenv("GEMINI_API_KEY")
     if key:
         return "gemini", key
-    
+
     key = os.getenv("OPENAI_API_KEY")
     if key:
         return "openai", key
-    
+
     key = os.getenv("ANTHROPIC_API_KEY")
     if key:
         return "anthropic", key
-    
+
     return None
 
 
@@ -74,13 +84,13 @@ def test_visual_regression(
 ) -> dict[str, Any]:
     """
     Test screenshot for visual regression.
-    
+
     Args:
         screenshot_path: Path to current screenshot
         baseline_path: Path to baseline screenshot (optional)
         prompt: Prompt for AI evaluation
         threshold: Minimum score to pass (0-1)
-    
+
     Returns:
         Dict with score, passed, issues, etc.
     """
@@ -88,21 +98,24 @@ def test_visual_regression(
     if not vlm_info:
         logger.warning("⚠️  No VLM API key found - skipping visual regression test")
         return {"score": 0, "passed": False, "error": "No API key"}
-    
+
     provider, api_key = vlm_info
-    
+
     test_dir = Path(__file__).parent
     # Use tempfile for automatic cleanup
     import tempfile
-    temp_file = tempfile.NamedTemporaryFile(mode='w', suffix='.mjs', delete=False, dir=str(test_dir))
+
+    temp_file = tempfile.NamedTemporaryFile(
+        mode="w", suffix=".mjs", delete=False, dir=str(test_dir)
+    )
     node_script = Path(temp_file.name)
     temp_file.close()
     try:
         baseline_arg = f"'{baseline_path}'" if baseline_path and baseline_path.exists() else "null"
-        
+
         # Escape prompt for template string
         escaped_prompt = prompt.replace("`", "\\`").replace("$", "\\$").replace("\\", "\\\\")
-        
+
         with open(node_script, "w") as f:
             f.write(f"""import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
 
@@ -131,7 +144,7 @@ try {{
     }}));
 }}
 """)
-        
+
         # The package is an ES module, so we need to use .mjs extension and proper import
         # Run from test_dir where node_modules exists
         result = subprocess.run(
@@ -142,7 +155,7 @@ try {{
             timeout=TIMEOUTS["extreme"],
             env={**os.environ, "NODE_PATH": str(test_dir / "node_modules")},
         )
-        
+
         if result.returncode == 0:
             try:
                 validation_result = json.loads(result.stdout)
@@ -156,7 +169,7 @@ try {{
                 else:
                     score = 0
                 passed = score >= threshold
-                
+
                 return {
                     "score": score,
                     "passed": passed,
@@ -177,7 +190,7 @@ try {{
 
 class VisualRegressionTester:
     """Visual regression tester for all UI pages."""
-    
+
     def __init__(self):
         self.results = {
             "tests_run": 0,
@@ -191,7 +204,7 @@ class VisualRegressionTester:
         self.baselines_dir.mkdir(parents=True, exist_ok=True)
         self.page = None
         self.browser = None
-    
+
     def test_page(self, name: str, url: str, baseline_name: str, prompt: str):
         """Test a page for visual regression."""
         self.results["tests_run"] += 1
@@ -199,19 +212,19 @@ class VisualRegressionTester:
             self.page.goto(url)
             self.page.wait_for_load_state("networkidle")
             time.sleep(1)  # Let page settle
-            
+
             screenshot_path = self.screenshots_dir / f"{baseline_name}_current.png"
             self.page.screenshot(path=str(screenshot_path), full_page=True)
-            
+
             baseline_path = self.baselines_dir / f"{baseline_name}_baseline.png"
-            
+
             result = test_visual_regression(
                 screenshot_path,
                 baseline_path if baseline_path.exists() else None,
                 prompt,
                 threshold=0.8,
             )
-            
+
             if result.get("passed", False):
                 self.results["tests_passed"] += 1
                 logger.info(f"✅ {name} (score: {result['score']:.2f})")
@@ -228,50 +241,50 @@ class VisualRegressionTester:
                 return False
         except Exception as e:
             self.results["tests_failed"] += 1
-            self.results["issues"].append(f"{name}: {str(e)}")
+            self.results["issues"].append(f"{name}: {e!s}")
             logger.error(f"❌ {name} (error: {e})")
             return False
-    
+
     def run_all_tests(self):
         """Run all visual regression tests."""
         if not HAS_PLAYWRIGHT:
             logger.error("Playwright not available. Install with: uv add playwright")
             return False
-        
+
         if not check_ai_visual_test_installed():
             logger.warning("⚠️  @arclabs561/ai-visual-test not installed")
             logger.info("  💡 Install with: npm install -g @arclabs561/ai-visual-test")
             return False
-        
+
         if not get_vlm_api_key():
             logger.warning("⚠️  No VLM API key found")
             logger.info("  💡 Set GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY")
             return False
-        
+
         # Wait for API
         if not wait_for_api(max_retries=30, timeout=TIMEOUTS["fast"]):
             logger.error("API not ready")
             return False
-        
+
         logger.info("=" * 70)
         logger.info("VISUAL REGRESSION TESTS")
         logger.info("=" * 70)
         logger.info("")
-        
+
         try:
             with sync_playwright() as p:
                 self.browser = p.chromium.launch(headless=True)
                 context = self.browser.new_context()
-                
+
                 # Set up API routing
                 setup_playwright_routing(context)
-                
+
                 self.page = context.new_page()
-                
+
                 # Inject API_BASE override
                 inject_api_base(self.page)
                 self.page.set_viewport_size({"width": 1920, "height": 1080})
-                
+
                 # Test landing page
                 self.test_page(
                     "Landing page",
@@ -279,7 +292,7 @@ class VisualRegressionTester:
                     "landing",
                     "Check for visual regressions: layout, colors, typography, spacing, component positions",
                 )
-                
+
                 # Test search page
                 self.test_page(
                     "Search page",
@@ -287,7 +300,7 @@ class VisualRegressionTester:
                     "search",
                     "Check for visual regressions: search form, layout, styling consistency",
                 )
-                
+
                 # Test review page
                 self.test_page(
                     "Review page",
@@ -295,14 +308,14 @@ class VisualRegressionTester:
                     "review",
                     "Check for visual regressions: form layout, controls, rating scale display",
                 )
-                
+
                 self.browser.close()
         except Exception as e:
             logger.error(f"❌ Browser test failed: {e}")
             if self.browser:
                 self.browser.close()
             return False
-        
+
         # Summary
         logger.info("")
         logger.info("=" * 70)
@@ -313,13 +326,13 @@ class VisualRegressionTester:
         logger.info(f"Tests failed: {self.results['tests_failed']}")
         logger.info("")
         logger.info(f"Screenshots saved to: {self.screenshots_dir}")
-        
+
         if self.results["issues"]:
             logger.info("")
             logger.info("Issues:")
             for issue in self.results["issues"]:
                 logger.info(f"  - {issue}")
-        
+
         return self.results["tests_failed"] == 0
 
 
@@ -332,5 +345,5 @@ def main():
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())
