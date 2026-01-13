@@ -185,6 +185,9 @@ def build_incremental_graph(
                 if timestamp_str:
                     try:
                         timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
+                        # Normalize to naive datetime for consistent comparison
+                        if timestamp.tzinfo is not None:
+                            timestamp = timestamp.replace(tzinfo=None)
                     except:
                         timestamp = datetime.now()
                 else:
@@ -442,7 +445,6 @@ def train_gnn_embeddings(
         model_type=model_type,
         hidden_dim=hidden_dim,
         num_layers=num_layers,
-        text_embedder=instruction_embedder,
     )
 
     # Train
@@ -706,6 +708,23 @@ def main() -> int:
         type=Path,
         help="Directory to save training progress (metrics, checkpoints, summaries)",
     )
+    parser.add_argument(
+        "--use-contrastive",
+        action="store_true",
+        help="Use contrastive learning objective for GNN training",
+    )
+    parser.add_argument(
+        "--contrastive-temperature",
+        type=float,
+        default=0.1,
+        help="Temperature for contrastive loss",
+    )
+    parser.add_argument(
+        "--contrastive-weight",
+        type=float,
+        default=0.5,
+        help="Weight for contrastive loss term",
+    )
 
     args = parser.parse_args()
 
@@ -755,7 +774,6 @@ def main() -> int:
                 logger.info(f"GNN model exists at {args.gnn_output}, loading...")
                 gnn_embedder = CardGNNEmbedder(
                     model_path=args.gnn_output,
-                    text_embedder=instruction_embedder,
                 )
                 logger.info("✓ GNN embeddings loaded")
             else:
