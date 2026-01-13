@@ -195,23 +195,27 @@ Examples:
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
-        with open(args.output, "w") as f:
-            json.dump(
-                {
-                    "test_set": str(args.test_set),
-                    "min_coverage": args.min_coverage,
-                    "summary": {
-                        "total": len(embeddings_to_check),
-                        "passed": len(passed),
-                        "failed": len(failed),
-                        "evaluated": len(results),
+        # Order 5: evaluation results (derived from test sets and embeddings)
+        from ml.utils.lineage import safe_write
+
+        with safe_write(args.output, order=5, strict=False) as validated_path:
+            with open(validated_path, "w") as f:
+                json.dump(
+                    {
+                        "test_set": str(args.test_set),
+                        "min_coverage": args.min_coverage,
+                        "summary": {
+                            "total": len(embeddings_to_check),
+                            "passed": len(passed),
+                            "failed": len(failed),
+                            "evaluated": len(results),
+                        },
+                        "results": results,
+                        "failed": [{"path": str(p), "coverage": c} for p, c in failed],
                     },
-                    "results": results,
-                    "failed": [{"path": str(p), "coverage": c} for p, c in failed],
-                },
-                f,
-                indent=2,
-            )
+                    f,
+                    indent=2,
+                )
         print(f"\nResults saved to: {args.output}")
 
     return 0 if results else 1

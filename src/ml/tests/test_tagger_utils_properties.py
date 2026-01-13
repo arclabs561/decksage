@@ -7,10 +7,10 @@ Tests invariants that should always hold true for extract_tag_dict and extract_t
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from typing import Any
 
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from ..utils.tagger_utils import extract_tag_dict, extract_tag_set
 
@@ -53,10 +53,12 @@ class TestTaggerUtilsProperties:
         ),
         exclude_fields=st.sets(st.text(min_size=1, max_size=20), min_size=0, max_size=5),
     )
-    def test_extract_tag_set_excludes_specified_fields(self, tag_set: set[str], exclude_fields: set[str]):
+    def test_extract_tag_set_excludes_specified_fields(
+        self, tag_set: set[str], exclude_fields: set[str]
+    ):
         """extract_tag_set should exclude specified fields."""
         # Create dict with all tags as True
-        tag_dict = {tag: True for tag in tag_set}
+        tag_dict = dict.fromkeys(tag_set, True)
         tag_dict["card_name"] = "Test Card"  # Add card_name (excluded by default)
 
         result = extract_tag_set(tag_dict, exclude_fields=exclude_fields)
@@ -130,7 +132,9 @@ class TestTaggerUtilsProperties:
             max_size=10,
         ),
     )
-    def test_extract_tag_set_union_property(self, tag_dict1: dict[str, bool], tag_dict2: dict[str, bool]):
+    def test_extract_tag_set_union_property(
+        self, tag_dict1: dict[str, bool], tag_dict2: dict[str, bool]
+    ):
         """extract_tag_set should handle union of tag sets correctly."""
         tag_dict1["card_name"] = "Card 1"
         tag_dict2["card_name"] = "Card 2"
@@ -143,12 +147,12 @@ class TestTaggerUtilsProperties:
         # So we need to ensure True values are preserved in the union
         union_dict = {**tag_dict1, **tag_dict2}
         union_dict["card_name"] = "Union Card"
-        
+
         # For keys that exist in both, preserve True if either was True
         for key in set(tag_dict1.keys()) & set(tag_dict2.keys()):
             if key != "card_name":
                 union_dict[key] = tag_dict1[key] or tag_dict2[key]
-        
+
         union_set = extract_tag_set(union_dict)
 
         # Union set should contain all True tags from both sets
@@ -189,10 +193,9 @@ class TestTaggerUtilsProperties:
         result = extract_tag_set(tag_dict)
 
         # Size should be at most number of non-card_name keys
-        max_possible = len([k for k in tag_dict.keys() if k != "card_name"])
+        max_possible = len([k for k in tag_dict if k != "card_name"])
         assert len(result) <= max_possible
 
         # Size should equal number of True bools (excluding card_name)
         true_count = sum(1 for k, v in tag_dict.items() if k != "card_name" and v is True)
         assert len(result) == true_count
-

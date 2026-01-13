@@ -2,10 +2,10 @@ package moxfield
 
 import (
 	"context"
+	"path/filepath"
+
 	"collections/blob"
-	"collections/games"
 	"collections/games/magic/dataset"
-	"collections/games/magic/game"
 	"collections/logger"
 	"collections/scraper"
 )
@@ -35,4 +35,13 @@ func (d *Dataset) Extract(
 	// Format: Commander decks primarily
 	d.log.Infof(ctx, "Moxfield scraper not yet implemented")
 	return nil
+}
+
+func (d *Dataset) IterItems(
+	ctx context.Context,
+	fn func(dataset.Item) error,
+	options ...dataset.IterItemsOption,
+) error {
+	prefix := filepath.Join("magic", "moxfield", "collections")
+	return dataset.IterItemsBlobPrefix(ctx, d.blob, prefix, dataset.DeserializeAsCollection, fn, options...)
 }

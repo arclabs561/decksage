@@ -18,6 +18,7 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add src to path
 script_dir = Path(__file__).parent
 project_root = script_dir.parent.parent
@@ -27,6 +28,7 @@ if str(src_dir) not in sys.path:
 
 try:
     from ml.annotation.meta_judge import meta_judge_annotations
+
     HAS_META_JUDGE = True
 except ImportError as e:
     HAS_META_JUDGE = False
@@ -100,7 +102,7 @@ async def main():
 
     # Print results
     print(f"\nOverall Quality: {judgment.overall_quality:.2f}")
-    print(f"\nMetrics:")
+    print("\nMetrics:")
     print(f"  Score Diversity: {judgment.metrics.score_diversity:.2f}")
     print(f"  Score Range Utilization: {judgment.metrics.score_range_utilization:.2f}")
     print(f"  Reasoning Quality: {judgment.metrics.reasoning_quality:.2f}")
@@ -115,16 +117,16 @@ async def main():
                 print(f"    Fix: {issue.suggested_fix}")
 
     if judgment.strengths:
-        print(f"\nStrengths:")
+        print("\nStrengths:")
         for strength in judgment.strengths:
             print(f"  - {strength}")
 
     if judgment.recommendations:
-        print(f"\nRecommendations:")
+        print("\nRecommendations:")
         for rec in judgment.recommendations:
             print(f"  - {rec}")
 
-    print(f"\nFeedback:")
+    print("\nFeedback:")
     print(judgment.feedback)
 
     # Save output
@@ -148,4 +150,3 @@ async def main():
 
 if __name__ == "__main__":
     sys.exit(asyncio.run(main()))
-

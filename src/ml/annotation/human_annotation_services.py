@@ -26,6 +26,7 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+
 try:
     from ..utils.logging_config import get_logger
 
@@ -160,8 +161,8 @@ class MTurkService(HumanAnnotationService):
         # Use improved instructions if provided, otherwise use task.instructions
         instructions = task.instructions
         if not instructions or len(instructions.strip()) < 50:
-                # Generate improved instructions
-                instructions = f"""
+            # Generate improved instructions
+            instructions = f"""
 CARD SIMILARITY ANNOTATION TASK
 
 Your task: Rate how similar two {task.game} cards are to each other.
@@ -174,19 +175,19 @@ SCORING GUIDELINES (0.0 - 1.0):
 
 0.9 - 1.0: Nearly identical (direct substitutes, same function)
   Example: "Lightning Bolt" vs "Shock" (both deal 3 damage)
-  
+
 0.7 - 0.8: Very similar (same role, minor differences)
   Example: "Counterspell" vs "Mana Leak" (both counter spells)
-  
+
 0.5 - 0.6: Moderately similar (related function, same archetype)
   Example: "Lightning Bolt" vs "Lava Spike" (both burn spells)
-  
+
 0.3 - 0.4: Somewhat similar (loose connection, shared theme)
   Example: "Lightning Bolt" vs "Bolt of Keranos" (both red damage)
-  
+
 0.1 - 0.2: Marginally similar (minimal connection)
   Example: "Lightning Bolt" vs "Shocklands" (both red, different purpose)
-  
+
 0.0 - 0.1: Unrelated (different function, color, archetype)
   Example: "Lightning Bolt" vs "Plains" (completely different)
 
@@ -212,7 +213,7 @@ IMPORTANT:
 - Use the full range: Don't cluster scores at 0.0 or 1.0
 - Consider context: Some cards are similar in specific decks only
 """
-        
+
         question_html = f"""
         <HTMLQuestion xmlns="http://mechanicalturk.amazonaws.com/AWSMechanicalTurkDataSchemas/2011-11-11/HTMLQuestion.xsd">
             <HTMLContent><![CDATA[
@@ -245,11 +246,11 @@ IMPORTANT:
                     <pre style="white-space: pre-wrap; font-family: Arial, sans-serif;">{instructions}</pre>
                 </div>
                 <form>
-                    <label>Similarity Score (0.0-1.0): 
+                    <label>Similarity Score (0.0-1.0):
                         <input type="number" name="similarity" min="0" max="1" step="0.01" required/>
                         <small>Use full range: 0.0 (unrelated) to 1.0 (nearly identical)</small>
                     </label><br/><br/>
-                    <label>Similarity Type: 
+                    <label>Similarity Type:
                         <select name="type" required>
                             <option value="">-- Select Type --</option>
                             <option value="functional">Functional (same function)</option>
@@ -260,10 +261,10 @@ IMPORTANT:
                         </select>
                     </label><br/><br/>
                     <label>
-                        <input type="checkbox" name="substitute"/> 
+                        <input type="checkbox" name="substitute"/>
                         Can Card 2 substitute for Card 1? (Check if YES)
                     </label><br/><br/>
-                    <label>Reasoning (2-3 sentences, required): 
+                    <label>Reasoning (2-3 sentences, required):
                         <textarea name="reasoning" placeholder="Explain why you chose this score, what similarities/differences you noticed, and context where they might be used together..." required></textarea>
                     </label>
                 </form>
@@ -383,9 +384,9 @@ IMPORTANT:
         commission = reward_per_hit * commission_rate
         # Total per HIT (reward + commission)
         cost_per_hit = reward_per_hit + commission
-        
+
         return num_tasks * cost_per_hit
-    
+
     def get_account_balance(self) -> dict[str, float]:
         """Get MTurk account balance.
 
@@ -394,30 +395,31 @@ IMPORTANT:
         """
         if not self.client:
             raise RuntimeError("MTurk client not initialized")
-        
+
         try:
             response = self.client.get_account_balance()
-            
+
             # Parse response (can be dict or string)
             import json
+
             if isinstance(response, str):
                 response = json.loads(response)
-            
-            available = response.get('AvailableBalance', {})
+
+            available = response.get("AvailableBalance", {})
             if isinstance(available, dict):
-                available_amt = float(available.get('Amount', '0.00'))
+                available_amt = float(available.get("Amount", "0.00"))
             else:
                 available_amt = float(available) if available else 0.00
-            
-            on_hold = response.get('OnHoldBalance', {})
+
+            on_hold = response.get("OnHoldBalance", {})
             if isinstance(on_hold, dict):
-                hold_amt = float(on_hold.get('Amount', '0.00'))
+                hold_amt = float(on_hold.get("Amount", "0.00"))
             else:
                 hold_amt = float(on_hold) if on_hold else 0.00
-            
+
             return {
-                'available': available_amt,
-                'on_hold': hold_amt,
+                "available": available_amt,
+                "on_hold": hold_amt,
             }
         except Exception as e:
             logger.error(f"Failed to get MTurk account balance: {e}")
@@ -461,14 +463,15 @@ class ScaleAIService(HumanAnnotationService):
             raise RuntimeError("Scale AI API key not set. Set SCALE_API_KEY environment variable.")
 
         try:
-            import requests
             import base64
+
+            import requests
 
             # Scale AI uses Basic auth with API key as username (password empty)
             # Format: base64(api_key:)
             auth_string = f"{self.api_key}:"
-            auth_bytes = auth_string.encode('ascii')
-            auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+            auth_bytes = auth_string.encode("ascii")
+            auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
 
             # Use improved instructions if provided, otherwise use task.instructions
             instructions = task.instructions
@@ -512,7 +515,7 @@ IMPORTANT:
 - Use the full range: Don't cluster scores at 0.0 or 1.0
 - Consider context: Some cards are similar in specific decks only
 """
-            
+
             payload = {
                 "type": "annotation",
                 "instruction": instructions,
@@ -543,15 +546,17 @@ IMPORTANT:
             task_id = result.get("task_id") or result.get("id")
             if not task_id:
                 raise ValueError(f"Unexpected response format: {result}")
-            
+
             logger.info(f"Submitted Scale AI task {task.task_id} as {task_id}")
             return str(task_id)
 
         except ImportError:
-            raise RuntimeError("requests library required for Scale AI. Install: pip install requests")
+            raise RuntimeError(
+                "requests library required for Scale AI. Install: pip install requests"
+            )
         except Exception as e:
             logger.error(f"Failed to submit Scale AI task: {e}")
-            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            if hasattr(e, "response") and hasattr(e.response, "text"):
                 logger.error(f"Response: {e.response.text}")
             raise
 
@@ -568,13 +573,14 @@ IMPORTANT:
             raise RuntimeError("Scale AI API key not set. Set SCALE_API_KEY environment variable.")
 
         try:
-            import requests
             import base64
+
+            import requests
 
             # Scale AI uses Basic auth with API key as username (password empty)
             auth_string = f"{self.api_key}:"
-            auth_bytes = auth_string.encode('ascii')
-            auth_b64 = base64.b64encode(auth_bytes).decode('ascii')
+            auth_bytes = auth_string.encode("ascii")
+            auth_b64 = base64.b64encode(auth_bytes).decode("ascii")
 
             response = requests.get(
                 f"{self.base_url}/task/{external_task_id}",
@@ -587,33 +593,33 @@ IMPORTANT:
 
             data = response.json()
             status = data.get("status") or data.get("task_status")
-            
+
             if status not in ["completed", "completed_and_approved"]:
                 return None  # Not ready yet
 
             # Parse response (Scale AI format)
             # Response might be in 'response', 'result', or 'annotation' field
-            annotation = (
-                data.get("response") or 
-                data.get("result") or 
-                data.get("annotation") or 
-                {}
-            )
-            
+            annotation = data.get("response") or data.get("result") or data.get("annotation") or {}
+
             # Handle both dict and string formats
             if isinstance(annotation, str):
                 try:
                     import json
+
                     annotation = json.loads(annotation)
                 except:
                     # If it's a string, try to extract key-value pairs
                     annotation = {"raw_response": annotation}
-            
+
             result = AnnotationResult(
                 task_id="",  # Will be set by caller
                 external_task_id=external_task_id,
-                similarity_score=float(annotation.get("similarity_score", annotation.get("score", 0.0))),
-                similarity_type=annotation.get("similarity_type", annotation.get("type", "unrelated")),
+                similarity_score=float(
+                    annotation.get("similarity_score", annotation.get("score", 0.0))
+                ),
+                similarity_type=annotation.get(
+                    "similarity_type", annotation.get("type", "unrelated")
+                ),
                 reasoning=annotation.get("reasoning", annotation.get("explanation", "")),
                 is_substitute=annotation.get("is_substitute", annotation.get("substitute", False)),
                 annotator_id=data.get("annotator_id") or data.get("worker_id"),
@@ -624,7 +630,7 @@ IMPORTANT:
 
         except Exception as e:
             logger.error(f"Failed to get Scale AI result: {e}")
-            if hasattr(e, 'response') and hasattr(e.response, 'text'):
+            if hasattr(e, "response") and hasattr(e.response, "text"):
                 logger.error(f"Response: {e.response.text}")
             return None
 
@@ -755,4 +761,3 @@ def get_annotation_service(service_name: str) -> HumanAnnotationService:
         return CustomAnnotationService()
     else:
         raise ValueError(f"Unknown annotation service: {service_name}")
-

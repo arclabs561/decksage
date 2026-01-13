@@ -47,4 +47,3 @@ echo ""
 echo "🚀 Running comprehensive browser test..."
 echo "=========================================="
 python3 scripts/e2e_testing/test_browser_comprehensive.py
-

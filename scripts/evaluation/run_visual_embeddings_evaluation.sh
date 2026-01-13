@@ -58,4 +58,3 @@ echo "Results saved to: $OUTPUT_PATH"
 echo ""
 echo "To view results:"
 echo "  cat $OUTPUT_PATH | python3 -m json.tool"
-

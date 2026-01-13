@@ -74,4 +74,3 @@ Scale AI provides:
 - API key is stored in `.env` (not committed to git)
 - Use live API key for production
 - Test API key available for development: `test_fbc28723bd4a4a1c833f224e1c18291e`
-

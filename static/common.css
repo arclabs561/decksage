@@ -20,26 +20,26 @@
     --success: #4caf50;
     --warning: #ff9800;
     --error: #f44336;
-    
+
     /* Spacing */
     --spacing-xs: 4px;
     --spacing-sm: 8px;
     --spacing-md: 16px;
     --spacing-lg: 24px;
     --spacing-xl: 32px;
-    
+
     /* Shadows */
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.1);
     --shadow-md: 0 2px 4px rgba(0, 0, 0, 0.1);
     --shadow-lg: 0 4px 8px rgba(0, 0, 0, 0.15);
-    
+
     /* Typography */
     --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     --font-size-base: 14px;
     --font-size-lg: 16px;
     --font-size-xl: 20px;
     --font-size-2xl: 32px;
-    
+
     /* Transitions */
     --transition-fast: 0.1s;
     --transition-base: 0.15s;
@@ -208,4 +208,3 @@ h2 {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-md);
 }
-

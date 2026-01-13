@@ -8,10 +8,6 @@ and error handling scenarios.
 
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
-
-import pytest
-
 from ..utils.error_messages import ErrorMessages, get_error_message
 
 
@@ -140,4 +136,3 @@ class TestErrorMessageConstants:
         result = ErrorMessages.format(template)
         # Should return template as-is when KeyError occurs
         assert result == template
-

@@ -28,6 +28,7 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
+
 try:
     import yaml
 
@@ -38,21 +39,18 @@ except ImportError:
 
 import sys
 
+
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 from ml.utils.annotation_utils import (
-    convert_annotations_to_substitution_pairs,
     convert_judgments_to_annotations,
     extract_substitution_pairs_from_annotations,
-    load_judgment_files,
     load_similarity_annotations,
 )
 from ml.utils.paths import PATHS
-
-
 
 
 def find_all_annotation_files(annotations_dir: Path) -> dict[str, list[Path]]:
@@ -104,7 +102,7 @@ def integrate_all_annotations(
 
     # Find all annotation files
     all_files = find_all_annotation_files(annotations_dir)
-    print(f"Found annotation files:")
+    print("Found annotation files:")
     print(f"  LLM annotations (JSONL): {len(all_files['llm_jsonl'])}")
     print(f"  Hand annotations (YAML): {len(all_files['hand_yaml'])}")
     print(f"  LLM judgments (JSONL/JSON): {len(all_files['judgments'])}")
@@ -126,7 +124,9 @@ def integrate_all_annotations(
                 all_annotations.append(ann)
                 seen_pairs.add(pair)
                 new_count += 1
-        print(f"  Loaded {len(annotations)} annotations ({new_count} new, {len(annotations) - new_count} duplicates skipped)")
+        print(
+            f"  Loaded {len(annotations)} annotations ({new_count} new, {len(annotations) - new_count} duplicates skipped)"
+        )
 
     # Load hand annotations (YAML)
     for yaml_file in all_files["hand_yaml"]:
@@ -161,7 +161,9 @@ def integrate_all_annotations(
                         judgment_annotations.append(ann)
                         seen_pairs.add(pair)
                         new_count += 1
-                print(f"    Added {new_count} new annotations (skipped {len(annotations) - new_count} duplicates)")
+                print(
+                    f"    Added {new_count} new annotations (skipped {len(annotations) - new_count} duplicates)"
+                )
             else:
                 # Old format: JSON judgment, need conversion
                 print(f"  Converting judgment from {judgment_file.name}...")
@@ -178,7 +180,9 @@ def integrate_all_annotations(
                             judgment_annotations.append(ann)
                             seen_pairs.add(pair)
                             new_count += 1
-                    print(f"    Added {new_count} new annotations (skipped {len(converted) - new_count} duplicates)")
+                    print(
+                        f"    Added {new_count} new annotations (skipped {len(converted) - new_count} duplicates)"
+                    )
                 except Exception as e:
                     print(f"    Warning: Failed to convert {judgment_file.name}: {e}")
                     continue
@@ -210,7 +214,7 @@ def integrate_all_annotations(
             with open(temp_path, "w") as f:
                 json.dump(pairs_list, f, indent=2)
             temp_path.replace(output_substitution_pairs)
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 try:
                     temp_path.unlink()
@@ -256,10 +260,11 @@ def integrate_all_annotations(
                     score = max(0.0, min(1.0, float(score)))
                 except (ValueError, TypeError):
                     score = 0.0
-                
+
                 # Convert similarity_score (0-1) to relevance (0-4)
                 # Use consistent conversion function from annotation_utils
                 from ml.utils.annotation_utils import convert_similarity_score_to_relevance
+
                 relevance = convert_similarity_score_to_relevance(score, scale="0-4")
                 relevance = max(0, min(4, relevance))  # Clamp to valid range
 
@@ -283,7 +288,7 @@ def integrate_all_annotations(
             with open(temp_path, "w") as f:
                 json.dump(test_set, f, indent=2)
             temp_path.replace(output_test_set)
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 try:
                     temp_path.unlink()
@@ -298,7 +303,9 @@ def integrate_all_annotations(
         pairs_count = len(pairs)
     elif output_test_set:
         # Count pairs from test set for stats
-        pairs_count = sum(len(buckets.get("highly_relevant", [])) for buckets in test_set["queries"].values())
+        pairs_count = sum(
+            len(buckets.get("highly_relevant", [])) for buckets in test_set["queries"].values()
+        )
 
     stats = {
         "total_annotations": len(all_annotations),
@@ -356,7 +363,9 @@ def main() -> int:
     args = parser.parse_args()
 
     if not args.output_substitution_pairs and not args.output_test_set:
-        parser.error("Must specify at least one of --output-substitution-pairs or --output-test-set")
+        parser.error(
+            "Must specify at least one of --output-substitution-pairs or --output-test-set"
+        )
 
     try:
         stats = integrate_all_annotations(
@@ -377,4 +386,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     sys.exit(main())
-

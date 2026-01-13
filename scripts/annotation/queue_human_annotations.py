@@ -23,9 +23,9 @@ Supports integration with:
 
 import argparse
 import asyncio
-import json
 import sys
 from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -34,11 +34,8 @@ sys.path.insert(0, str(project_root))
 from src.ml.annotation.human_annotation_queue import (
     AnnotationPriority,
     HumanAnnotationQueue,
-    queue_low_iaa_annotations,
-    queue_uncertain_pairs,
 )
 from src.ml.annotation.llm_annotator import LLMAnnotator
-from src.ml.annotation.multi_annotator_iaa import MultiAnnotatorIAA
 
 
 async def queue_from_llm_annotations(
@@ -64,9 +61,9 @@ async def queue_from_llm_annotations(
     Returns:
         Dict with counts of queued tasks
     """
-    print(f"\n{'='*70}")
-    print(f"Generating LLM Annotations and Queueing for Human Review")
-    print(f"{'='*70}")
+    print(f"\n{'=' * 70}")
+    print("Generating LLM Annotations and Queueing for Human Review")
+    print(f"{'=' * 70}")
     print(f"Game: {game}")
     print(f"Pairs: {num_pairs}")
     print(f"Multi-annotator: {use_multi_annotator}")
@@ -223,9 +220,9 @@ async def main():
     # List queue
     if args.list_queue:
         pending = queue.get_pending_tasks()
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print(f"Pending Human Annotation Tasks: {len(pending)}")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         for task in pending[:20]:  # Show first 20
             print(f"  {task.task_id}")
@@ -241,20 +238,20 @@ async def main():
     # Show stats
     if args.stats:
         stats = queue.get_statistics()
-        print(f"\n{'='*70}")
+        print(f"\n{'=' * 70}")
         print("Human Annotation Queue Statistics")
-        print(f"{'='*70}\n")
+        print(f"{'=' * 70}\n")
 
         print(f"Total tasks: {stats['total']}")
-        print(f"\nBy Status:")
+        print("\nBy Status:")
         for status, count in stats["by_status"].items():
             print(f"  {status}: {count}")
 
-        print(f"\nBy Priority:")
+        print("\nBy Priority:")
         for priority, count in stats["by_priority"].items():
             print(f"  {priority}: {count}")
 
-        print(f"\nBy Game:")
+        print("\nBy Game:")
         for game, count in stats["by_game"].items():
             print(f"  {game}: {count}")
 
@@ -281,9 +278,9 @@ async def main():
         all_stats[game] = stats
 
     # Summary
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print("Summary")
-    print(f"{'='*70}\n")
+    print(f"{'=' * 70}\n")
 
     for game, stats in all_stats.items():
         print(f"{game}:")
@@ -291,8 +288,8 @@ async def main():
         print(f"  Queued: {stats['queued_total']}")
 
     print(f"\n✓ Queue saved to: {queue.queue_file}")
-    print(f"  Use --list-queue to view pending tasks")
-    print(f"  Use --stats to view statistics")
+    print("  Use --list-queue to view pending tasks")
+    print("  Use --stats to view statistics")
 
     return 0
 
@@ -300,4 +297,3 @@ async def main():
 if __name__ == "__main__":
     exit_code = asyncio.run(main())
     sys.exit(exit_code)
-

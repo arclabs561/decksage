@@ -351,10 +351,10 @@
             // Remove selected class from all buttons in this group
             const container = btn.closest('.candidate');
             container.querySelectorAll('.rating-btn').forEach(b => b.classList.remove('selected'));
-            
+
             // Add selected class to clicked button
             btn.classList.add('selected');
-            
+
             // Store rating
             const rating = parseInt(btn.dataset.rating);
             ratings[index] = rating;
@@ -363,15 +363,15 @@
 
         document.getElementById('annotation-form').addEventListener('submit', function(e) {
             e.preventDefault();
-            
+
             const annotations = [];
             const candidates = document.querySelectorAll('.candidate');
-            
+
             candidates.forEach((candidateEl, index) => {
                 const candidate = candidateEl.dataset.candidate;
                 const rating = ratings[index];
                 const note = document.getElementById(`notes-${index}`).value;
-                
+
                 if (rating !== undefined) {
                     annotations.push({
                         candidate: candidate,
@@ -380,13 +380,13 @@
                     });
                 }
             });
-            
+
             const result = {
                 query: 'Stalking Tiger',
                 timestamp: new Date().toISOString(),
                 annotations: annotations
             };
-            
+
             // Download as JSON
             const blob = new Blob([JSON.stringify(result, null, 2)], {type: 'application/json'});
             const url = URL.createObjectURL(blob);
@@ -395,7 +395,7 @@
             a.download = 'annotations_' + Date.now() + '.json';
             a.click();
             URL.revokeObjectURL(url);
-            
+
             alert('Annotations saved! Check your downloads folder.');
         });
     </script>

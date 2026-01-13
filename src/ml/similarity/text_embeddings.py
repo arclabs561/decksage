@@ -178,8 +178,12 @@ class CardTextEmbedder:
 
         similarity = dot_product / (norm1 * norm2)
 
+        # Cosine similarity is in [-1, 1], normalize to [0, 1] for consistency
+        # (same normalization as visual embeddings)
+        normalized_similarity = (similarity + 1.0) / 2.0
+
         # Ensure in [0, 1] (should be, but clamp for safety)
-        return max(0.0, min(1.0, similarity))
+        return max(0.0, min(1.0, normalized_similarity))
 
     def embed_batch(self, cards: list[dict[str, Any] | str]) -> np.ndarray:
         """

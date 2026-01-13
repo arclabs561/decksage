@@ -2,8 +2,9 @@ package lands17
 
 import (
 	"context"
+	"path/filepath"
+
 	"collections/blob"
-	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/logger"
 	"collections/scraper"
@@ -34,4 +35,13 @@ func (d *Dataset) Extract(
 	// Unique: Draft pick orders, win rates, synergy data
 	d.log.Infof(ctx, "17Lands scraper not yet implemented")
 	return nil
+}
+
+func (d *Dataset) IterItems(
+	ctx context.Context,
+	fn func(dataset.Item) error,
+	options ...dataset.IterItemsOption,
+) error {
+	prefix := filepath.Join("magic", "17lands", "collections")
+	return dataset.IterItemsBlobPrefix(ctx, d.blob, prefix, dataset.DeserializeAsCollection, fn, options...)
 }

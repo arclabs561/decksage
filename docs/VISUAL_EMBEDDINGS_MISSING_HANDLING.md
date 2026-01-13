@@ -31,12 +31,12 @@ def embed_card(self, card: dict[str, Any] | str | Image.Image) -> np.ndarray:
 def similarity(self, card1, card2) -> float:
     emb1 = self.embed_card(card1)
     emb2 = self.embed_card(card2)
-    
+
     # Cosine similarity
     dot_product = np.dot(emb1, emb2)
     norm1 = np.linalg.norm(emb1)
     norm2 = np.linalg.norm(emb2)
-    
+
     if norm1 == 0 or norm2 == 0:
         return 0.0  # Zero vectors → 0.0 similarity
 ```
@@ -96,7 +96,7 @@ except Exception:
 ```python
 def normalized(self) -> FusionWeights:
     total = (
-        self.embed + self.jaccard + self.functional + 
+        self.embed + self.jaccard + self.functional +
         self.text_embed + self.visual_embed + self.gnn + ...
     )
     return FusionWeights(
@@ -119,7 +119,7 @@ def _aggregate_weighted(self, scores: dict[str, dict[str, float]]) -> dict[str, 
     if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
         weight_score_pairs.append((self.weights.visual_embed, scores["visual_embed"]))
     # ... other signals
-    
+
     # Weighted sum
     total = sum(weight * score for weight, score in weight_score_pairs)
     return total
@@ -232,4 +232,3 @@ The current design is **robust and correct**:
 - ✅ No crashes or errors
 
 The system works correctly with **any level of image coverage** (0% to 100%), making visual embeddings a **truly optional enhancement** rather than a requirement.
-

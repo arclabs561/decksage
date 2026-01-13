@@ -12,17 +12,17 @@ Checks for:
 - System consolidation
 """
 
-import json
 import sqlite3
 import sys
 from pathlib import Path
-from collections import defaultdict
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
+
 
 setup_project_paths()
 
@@ -35,7 +35,7 @@ def analyze_systems():
         "integration_opportunities": [],
         "cleanup_needed": [],
     }
-    
+
     # 1. New evaluation logger
     new_db = Path("experiments/evaluation_logs/evaluation_runs.db")
     if new_db.exists():
@@ -50,7 +50,7 @@ def analyze_systems():
             "records": count,
             "purpose": "Unified evaluation run tracking",
         }
-    
+
     # 2. Old evaluation registry
     old_db = Path("experiments/evaluation_registry.db")
     if old_db.exists():
@@ -68,7 +68,7 @@ def analyze_systems():
         except:
             pass
         conn.close()
-    
+
     # 3. EXPERIMENT_LOG
     exp_log = Path("experiments/EXPERIMENT_LOG_CANONICAL.jsonl")
     if exp_log.exists():
@@ -80,7 +80,7 @@ def analyze_systems():
             "records": lines,
             "purpose": "General experiment tracking",
         }
-    
+
     # 4. Individual JSON files
     eval_results = Path("experiments/evaluation_results")
     if eval_results.exists():
@@ -91,40 +91,43 @@ def analyze_systems():
             "records": len(json_files),
             "purpose": "Legacy evaluation results",
         }
-    
+
     # Check for duplicates
     if "evaluation_registry" in results["systems"] and "evaluation_logger" in results["systems"]:
         results["duplicates"].append(
             "Both evaluation_registry and evaluation_logger track evaluations"
         )
-    
+
     # Integration opportunities
     if "experiment_log" in results["systems"]:
         results["integration_opportunities"].append(
             "EvaluationLogger could optionally write to EXPERIMENT_LOG_CANONICAL.jsonl"
         )
-    
+
     if "evaluation_registry" in results["systems"]:
         results["integration_opportunities"].append(
             "Bridge EvaluationLogger to EvaluationRegistry for model-centric queries"
         )
-    
-    if "individual_json" in results["systems"] and results["systems"]["individual_json"]["records"] > 0:
+
+    if (
+        "individual_json" in results["systems"]
+        and results["systems"]["individual_json"]["records"] > 0
+    ):
         results["cleanup_needed"].append(
             f"Migrate remaining {results['systems']['individual_json']['records']} JSON files"
         )
-    
+
     return results
 
 
 def main():
     results = analyze_systems()
-    
+
     print("=" * 80)
     print("Evaluation Logging Systems Analysis")
     print("=" * 80)
     print("")
-    
+
     print("📊 Current Systems:")
     for name, info in results["systems"].items():
         print(f"  {name}:")
@@ -133,36 +136,34 @@ def main():
         print(f"    Records: {info['records']}")
         print(f"    Purpose: {info['purpose']}")
         print("")
-    
+
     if results["duplicates"]:
         print("⚠️  Duplicate Systems:")
         for dup in results["duplicates"]:
             print(f"  - {dup}")
         print("")
-    
+
     if results["integration_opportunities"]:
         print("🔗 Integration Opportunities:")
         for opp in results["integration_opportunities"]:
             print(f"  - {opp}")
         print("")
-    
+
     if results["cleanup_needed"]:
         print("🧹 Cleanup Needed:")
         for cleanup in results["cleanup_needed"]:
             print(f"  - {cleanup}")
         print("")
-    
+
     print("💡 Recommendations:")
     print("  1. Keep evaluation_logger as primary system")
     print("  2. Make EvaluationLogger optionally bridge to EvaluationRegistry")
     print("  3. Add option to write to EXPERIMENT_LOG for unified experiment tracking")
     print("  4. Complete migration of old JSON files")
     print("  5. Document when to use which system")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-

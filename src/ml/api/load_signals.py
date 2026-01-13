@@ -76,6 +76,7 @@ def load_signals_to_state(
     archetype_cooccur_path: Path | str | None = None,
     format_cooccur_path: Path | str | None = None,
     cross_format_path: Path | str | None = None,
+    reranker_path: Path | str | None = None,
 ) -> dict[str, bool]:
     """
     Load pre-computed signals into API state.
@@ -309,5 +310,27 @@ def load_signals_to_state(
     )
     if missing_signals:
         logger.debug(f"Missing signals: {', '.join(missing_signals)}")
+
+    # Load reranker (optional)
+    if reranker_path is None:
+        # Try default path
+        reranker_path = PATHS.experiments / "models" / "reranker.pkl"
+    else:
+        reranker_path = Path(reranker_path)
+
+    if reranker_path.exists():
+        try:
+            from ..reranking.learned_reranker import LearnedReranker
+
+            reranker = LearnedReranker()
+            reranker.load(reranker_path)
+            state.reranker = reranker
+            status["reranker"] = True
+            logger.info(f"✓ Loaded reranker from {reranker_path}")
+        except Exception as e:
+            logger.warning(f"✗ Failed to load reranker from {reranker_path}: {e}")
+            status["reranker"] = False
+    else:
+        logger.debug(f"Reranker not found at {reranker_path} (optional)")
 
     return status

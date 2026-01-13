@@ -116,4 +116,3 @@ The implementation is correct and aligned. All systems are working as designed:
 - ModelSettings applied at runtime ✅
 - Metadata tracked ✅
 - IAA calculated correctly ✅
-

@@ -23,7 +23,7 @@ This document tracks refinements and improvements made to the visual embeddings 
 
 **Issue**: Basic download with minimal error handling.
 
-**Refinement**: 
+**Refinement**:
 - Added User-Agent header to avoid blocking
 - Improved error handling with specific exception types
 - Better retry logic with exponential backoff hints
@@ -61,7 +61,7 @@ if not hasattr(self, "_embedding_dim"):
 
 **Issue**: Generic error messages made debugging difficult.
 
-**Refinement**: 
+**Refinement**:
 - More specific exception handling (Timeout vs RequestException)
 - Include URL in error messages
 - Log attempt numbers for retries
@@ -148,4 +148,3 @@ Based on SigLIP 2 research:
 - All refinements maintain backward compatibility
 - Zero-vector returns for missing images ensure system continues working
 - Research-based improvements align with SigLIP 2 best practices
-

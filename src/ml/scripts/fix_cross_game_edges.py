@@ -15,34 +15,35 @@ from pathlib import Path
 from ..utils.logging_config import setup_script_logging
 from ..utils.paths import PATHS
 
+
 logger = setup_script_logging()
 
 
 def fix_cross_game_edges(graph_db: Path) -> dict[str, int]:
     """Fix cross-game edges by setting game = NULL."""
     logger.info("Fixing cross-game edges...")
-    
+
     conn = sqlite3.connect(str(graph_db))
     conn.row_factory = sqlite3.Row
-    
+
     # Find edges where nodes are from different games
     cross_game = conn.execute("""
-        SELECT COUNT(*) 
+        SELECT COUNT(*)
         FROM edges e
         JOIN nodes n1 ON e.card1 = n1.name
         JOIN nodes n2 ON e.card2 = n2.name
-        WHERE n1.game IS NOT NULL 
+        WHERE n1.game IS NOT NULL
           AND n2.game IS NOT NULL
           AND n1.game != n2.game
           AND e.game IS NOT NULL
     """).fetchone()[0]
-    
+
     logger.info(f"Found {cross_game:,} edges connecting nodes from different games")
-    
+
     if cross_game == 0:
         conn.close()
         return {"fixed": 0}
-    
+
     # Set game = NULL for legitimate cross-game edges
     cursor = conn.cursor()
     cursor.execute("""
@@ -59,13 +60,13 @@ def fix_cross_game_edges(graph_db: Path) -> dict[str, int]:
         )
         AND edges.game IS NOT NULL
     """)
-    
+
     fixed = cursor.rowcount
     conn.commit()
     conn.close()
-    
+
     logger.info(f"Fixed {fixed:,} cross-game edges (set game = NULL)")
-    
+
     return {"fixed": fixed}
 
 
@@ -78,21 +79,21 @@ def main() -> int:
         default=PATHS.incremental_graph_db,
         help="Path to graph database",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger.info("=" * 70)
     logger.info("Fix Cross-Game Edges")
     logger.info("=" * 70)
-    
+
     results = fix_cross_game_edges(args.graph_db)
-    
+
     logger.info(f"\n✓ Fixed {results['fixed']:,} cross-game edges")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     import sys
-    sys.exit(main())
 
+    sys.exit(main())

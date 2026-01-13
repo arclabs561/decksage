@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import math
 
-from hypothesis import assume, given, strategies as st
+from hypothesis import assume, given
+from hypothesis import strategies as st
 
 from ..similarity.fusion import WeightedLateFusion, _clamp01, _cosine_to_unit, _jaccard_sets
 
@@ -140,5 +141,3 @@ class TestSimilarityScoreProperties:
         func_2 = fusion._get_functional_tag_similarity(candidate1, query)
         # Functional tag similarity uses Jaccard, so should be commutative
         assert math.isclose(func_1, func_2, abs_tol=1e-10)
-
-

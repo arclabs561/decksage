@@ -44,13 +44,15 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent.parent
 sys.path.insert(0, str(project_root))
 
+from ml.utils.annotation_utils import convert_relevance_to_similarity_score
 from ml.utils.path_setup import setup_project_paths
 from ml.utils.paths import PATHS
-from ml.utils.annotation_utils import convert_relevance_to_similarity_score
+
 
 setup_project_paths()
 
@@ -143,7 +145,7 @@ def convert_feedback_file(
                 for ann in annotations:
                     f.write(json.dumps(ann, ensure_ascii=False) + "\n")
             temp_path.replace(output_path)
-        except Exception as e:
+        except Exception:
             if temp_path.exists():
                 try:
                     temp_path.unlink()
@@ -199,7 +201,7 @@ def main():
             if ann["is_substitute"]:
                 substitute_count += 1
 
-        print(f"\nRating distribution:")
+        print("\nRating distribution:")
         for rating in sorted(rating_dist.keys()):
             print(f"  {rating}: {rating_dist[rating]}")
         print(f"\nSubstitutes: {substitute_count}/{len(annotations)}")
@@ -209,4 +211,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-

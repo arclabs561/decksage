@@ -12,23 +12,27 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
+
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.annotation_utils import load_similarity_annotations
-from ml.utils.enriched_annotation_utils import get_enrichment_summary, validate_annotation_against_graph
+from ml.utils.enriched_annotation_utils import (
+    get_enrichment_summary,
+    validate_annotation_against_graph,
+)
 
 
 def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
     """Generate HTML dashboard."""
-    
+
     # Collect data
     annotation_files = list(annotations_dir.glob("*_llm_annotations*.jsonl"))
-    
+
     stats = {
         "total_files": len(annotation_files),
         "total_annotations": 0,
@@ -36,17 +40,17 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
         "validation_stats": defaultdict(int),
         "files": [],
     }
-    
+
     for ann_file in annotation_files:
         try:
             annotations = load_similarity_annotations(ann_file)
             if not annotations:
                 continue
-            
+
             stats["total_annotations"] += len(annotations)
-            
+
             summary = get_enrichment_summary(annotations)
-            
+
             # Validation
             valid_count = 0
             invalid_count = 0
@@ -56,37 +60,42 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
                     valid_count += 1
                 else:
                     invalid_count += 1
-            
+
             file_stats = {
                 "file": ann_file.name,
                 "count": len(annotations),
                 "enriched": summary["with_graph_features"] + summary["with_card_attributes"],
-                "enrichment_rate": (summary["with_graph_features"] + summary["with_card_attributes"]) / len(annotations) if annotations else 0.0,
+                "enrichment_rate": (
+                    summary["with_graph_features"] + summary["with_card_attributes"]
+                )
+                / len(annotations)
+                if annotations
+                else 0.0,
                 "valid": valid_count,
                 "invalid": invalid_count,
                 "graph_features": summary["with_graph_features"],
                 "card_attributes": summary["with_card_attributes"],
                 "contextual": summary["with_contextual_analysis"],
             }
-            
+
             stats["files"].append(file_stats)
             stats["enrichment_stats"]["with_graph"] += summary["with_graph_features"]
             stats["enrichment_stats"]["with_attributes"] += summary["with_card_attributes"]
             stats["enrichment_stats"]["with_context"] += summary["with_contextual_analysis"]
             stats["validation_stats"]["valid"] += valid_count
             stats["validation_stats"]["invalid"] += invalid_count
-            
+
         except Exception as e:
             print(f"Error processing {ann_file}: {e}")
             continue
-    
+
     # Load usage tracking if available
     usage_tracking_file = annotations_dir / "usage_tracking.json"
     usage_data = {}
     if usage_tracking_file.exists():
         with open(usage_tracking_file) as f:
             usage_data = json.load(f)
-    
+
     # Generate HTML
     html = f"""<!DOCTYPE html>
 <html>
@@ -172,28 +181,28 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
 <body>
     <div class="header">
         <h1>Annotation Enrichment Dashboard</h1>
-        <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        <p>Generated: {datetime.now().strftime("%Y-%m-%d %H:%M:%S")}</p>
     </div>
-    
+
     <div class="stats">
         <div class="stat-card">
-            <div class="stat-value">{stats['total_files']}</div>
+            <div class="stat-value">{stats["total_files"]}</div>
             <div class="stat-label">Annotation Files</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{stats['total_annotations']:,}</div>
+            <div class="stat-value">{stats["total_annotations"]:,}</div>
             <div class="stat-label">Total Annotations</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{stats['enrichment_stats']['with_attributes']:,}</div>
+            <div class="stat-value">{stats["enrichment_stats"]["with_attributes"]:,}</div>
             <div class="stat-label">With Card Attributes</div>
         </div>
         <div class="stat-card">
-            <div class="stat-value">{stats['validation_stats']['valid']:,}</div>
+            <div class="stat-value">{stats["validation_stats"]["valid"]:,}</div>
             <div class="stat-label">Valid Annotations</div>
         </div>
     </div>
-    
+
     <h2>File Statistics</h2>
     <table>
         <thead>
@@ -211,28 +220,34 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
         </thead>
         <tbody>
 """
-    
+
     for file_stat in sorted(stats["files"], key=lambda x: x["count"], reverse=True):
-        enrichment_badge = "badge-success" if file_stat["enrichment_rate"] > 0.8 else "badge-warning" if file_stat["enrichment_rate"] > 0.5 else "badge-error"
+        enrichment_badge = (
+            "badge-success"
+            if file_stat["enrichment_rate"] > 0.8
+            else "badge-warning"
+            if file_stat["enrichment_rate"] > 0.5
+            else "badge-error"
+        )
         html += f"""
             <tr>
-                <td>{file_stat['file']}</td>
-                <td>{file_stat['count']}</td>
-                <td>{file_stat['enriched']}</td>
-                <td><span class="badge {enrichment_badge}">{file_stat['enrichment_rate']:.1%}</span></td>
-                <td>{file_stat['graph_features']}</td>
-                <td>{file_stat['card_attributes']}</td>
-                <td>{file_stat['contextual']}</td>
-                <td>{file_stat['valid']}</td>
-                <td>{file_stat['invalid']}</td>
+                <td>{file_stat["file"]}</td>
+                <td>{file_stat["count"]}</td>
+                <td>{file_stat["enriched"]}</td>
+                <td><span class="badge {enrichment_badge}">{file_stat["enrichment_rate"]:.1%}</span></td>
+                <td>{file_stat["graph_features"]}</td>
+                <td>{file_stat["card_attributes"]}</td>
+                <td>{file_stat["contextual"]}</td>
+                <td>{file_stat["valid"]}</td>
+                <td>{file_stat["invalid"]}</td>
             </tr>
 """
-    
+
     html += """
         </tbody>
     </table>
 """
-    
+
     # Usage statistics
     if usage_data:
         html += """
@@ -242,7 +257,7 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
         training_files = len(usage_data.get("training_usage", {}))
         api_queries = len(usage_data.get("api_queries", {}))
         graph_integrations = len(usage_data.get("graph_integration", {}))
-        
+
         html += f"""
         <div class="stat-card">
             <div class="stat-value">{training_files}</div>
@@ -260,18 +275,18 @@ def generate_dashboard(output_path: Path, annotations_dir: Path) -> None:
         html += """
     </div>
 """
-    
+
     html += """
 </body>
 </html>
 """
-    
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
     temp_file = output_path.with_suffix(output_path.suffix + ".tmp")
     with open(temp_file, "w") as f:
         f.write(html)
     temp_file.replace(output_path)
-    
+
     print(f"Dashboard generated: {output_path}")
 
 
@@ -290,15 +305,13 @@ def main() -> int:
         default=Path("annotations"),
         help="Annotations directory",
     )
-    
+
     args = parser.parse_args()
-    
+
     generate_dashboard(args.output, args.annotations_dir)
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-
-

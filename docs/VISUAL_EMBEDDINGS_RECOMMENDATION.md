@@ -24,7 +24,7 @@ After comprehensive research into state-of-the-art vision models (2024-2025), th
 #### 1. SigLIP 2 (Recommended)
 - **Performance**: Outperforms CLIP and original SigLIP on zero-shot classification, image-text retrieval, and transfer learning
 - **Efficiency**: ViT-B-16 achieves ~152 images/sec on RTX 3090
-- **Features**: 
+- **Features**:
   - Multilingual support
   - Dynamic resolution variants (`-naflex` suffix)
   - Improved training objectives (captioning, self-distillation, masked prediction)
@@ -153,4 +153,3 @@ Visual embeddings should contribute 5-10 percentage points to P@10, bringing us 
 - Vision encoder survey: https://jina.ai/vision-encoder-survey.pdf
 - DINOv3: https://arxiv.org/html/2508.10104v1
 - RADIO: https://github.com/NVlabs/RADIO
-

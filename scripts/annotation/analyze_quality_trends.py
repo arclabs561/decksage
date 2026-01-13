@@ -10,7 +10,7 @@ import json
 import sys
 from collections import defaultdict
 from pathlib import Path
-from datetime import datetime
+
 
 # Add src to path
 script_dir = Path(__file__).parent
@@ -45,11 +45,13 @@ def analyze_trends(judgments: list[dict]) -> dict:
             "avg_quality": 0.0,
             "quality_trend": "stable",  # improving, declining, stable
         },
-        "by_game": defaultdict(lambda: {
-            "quality_scores": [],
-            "issues": defaultdict(list),
-            "recommendations": [],
-        }),
+        "by_game": defaultdict(
+            lambda: {
+                "quality_scores": [],
+                "issues": defaultdict(list),
+                "recommendations": [],
+            }
+        ),
         "common_issues": defaultdict(int),
         "common_recommendations": defaultdict(int),
         "metrics_trends": {
@@ -80,17 +82,25 @@ def analyze_trends(judgments: list[dict]) -> dict:
         metrics = judgment.get("metrics", {})
         if metrics:
             trends["metrics_trends"]["score_diversity"].append(metrics.get("score_diversity", 0.0))
-            trends["metrics_trends"]["reasoning_quality"].append(metrics.get("reasoning_quality", 0.0))
+            trends["metrics_trends"]["reasoning_quality"].append(
+                metrics.get("reasoning_quality", 0.0)
+            )
             trends["metrics_trends"]["completeness"].append(metrics.get("completeness", 0.0))
 
     # Calculate averages
     if trends["overall"]["quality_scores"]:
-        trends["overall"]["avg_quality"] = sum(trends["overall"]["quality_scores"]) / len(trends["overall"]["quality_scores"])
-        
+        trends["overall"]["avg_quality"] = sum(trends["overall"]["quality_scores"]) / len(
+            trends["overall"]["quality_scores"]
+        )
+
         # Determine trend
         if len(trends["overall"]["quality_scores"]) >= 2:
             recent = trends["overall"]["quality_scores"][-3:]  # Last 3
-            older = trends["overall"]["quality_scores"][:-3] if len(trends["overall"]["quality_scores"]) > 3 else []
+            older = (
+                trends["overall"]["quality_scores"][:-3]
+                if len(trends["overall"]["quality_scores"]) > 3
+                else []
+            )
             if older:
                 recent_avg = sum(recent) / len(recent)
                 older_avg = sum(older) / len(older)
@@ -116,34 +126,42 @@ def print_report(trends: dict):
     print("=" * 80)
 
     # Overall quality
-    print(f"\nOverall Quality:")
+    print("\nOverall Quality:")
     print(f"  Average: {trends['overall']['avg_quality']:.2f}")
     print(f"  Trend: {trends['overall']['quality_trend']}")
     print(f"  Batches analyzed: {len(trends['overall']['quality_scores'])}")
-    if trends['overall']['quality_scores']:
-        print(f"  Range: {min(trends['overall']['quality_scores']):.2f} - {max(trends['overall']['quality_scores']):.2f}")
+    if trends["overall"]["quality_scores"]:
+        print(
+            f"  Range: {min(trends['overall']['quality_scores']):.2f} - {max(trends['overall']['quality_scores']):.2f}"
+        )
 
     # By game
-    print(f"\nQuality by Game:")
+    print("\nQuality by Game:")
     for game, data in sorted(trends["by_game"].items()):
         if data["quality_scores"]:
             print(f"  {game.upper()}:")
             print(f"    Average: {data.get('avg_quality', 0.0):.2f}")
             print(f"    Batches: {len(data['quality_scores'])}")
-            print(f"    Range: {min(data['quality_scores']):.2f} - {max(data['quality_scores']):.2f}")
+            print(
+                f"    Range: {min(data['quality_scores']):.2f} - {max(data['quality_scores']):.2f}"
+            )
 
     # Common issues
-    print(f"\nMost Common Issues:")
-    for issue_type, count in sorted(trends["common_issues"].items(), key=lambda x: x[1], reverse=True)[:5]:
+    print("\nMost Common Issues:")
+    for issue_type, count in sorted(
+        trends["common_issues"].items(), key=lambda x: x[1], reverse=True
+    )[:5]:
         print(f"  {issue_type}: {count} occurrences")
 
     # Common recommendations
-    print(f"\nMost Common Recommendations:")
-    for rec, count in sorted(trends["common_recommendations"].items(), key=lambda x: x[1], reverse=True)[:5]:
+    print("\nMost Common Recommendations:")
+    for rec, count in sorted(
+        trends["common_recommendations"].items(), key=lambda x: x[1], reverse=True
+    )[:5]:
         print(f"  {rec}: {count} occurrences")
 
     # Metrics trends
-    print(f"\nMetrics Trends:")
+    print("\nMetrics Trends:")
     for metric, values in trends["metrics_trends"].items():
         if values:
             print(f"  {metric}:")
@@ -182,7 +200,7 @@ def main():
 
     # Load all meta-judgments
     judgments = load_meta_judgments(args.annotations_dir)
-    
+
     if not judgments:
         print(f"No meta-judgment files found in {args.annotations_dir}")
         return 1
@@ -206,4 +224,3 @@ def main():
 
 if __name__ == "__main__":
     sys.exit(main())
-
