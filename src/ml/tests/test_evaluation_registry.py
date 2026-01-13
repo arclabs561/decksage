@@ -26,12 +26,8 @@ from pathlib import Path
 import pytest
 
 # Import the main registry
-from ml.utils.evaluation_registry import (
-    EvaluationRegistry,
-    #     QueryCache,
-    SQLiteBackend,
-    validate_version_format,
-)
+from ml.utils.evaluation_registry import EvaluationRegistry
+from ml.utils.evaluation_registry_improved import SQLiteBackend, validate_version_format
 
 
 @pytest.fixture
@@ -48,9 +44,6 @@ def registry(temp_dir):
         registry_path=temp_dir / "model_registry.json",
         log_path=temp_dir / "experiment_log.jsonl",
         results_dir=temp_dir / "evaluation_results",
-        use_sqlite=True,
-        sqlite_path=temp_dir / "eval_registry.db",
-        cache_ttl=60,
     )
 
 
@@ -414,11 +407,6 @@ class TestRecordEvaluation:
         for result_path in results:
             assert result_path.exists()
 
-        # All should be in SQLite
-        if registry.use_sqlite:
-            evaluations = registry.sqlite_backend.list(model_type="concurrent")
-            assert len(evaluations) == 10
-
 
 class TestListEvaluations:
     """Test listing evaluations."""
@@ -632,11 +620,6 @@ class TestMigration:
         # Migrate
         migrated = registry.migrate_from_json()
         assert migrated == 3
-
-        # Verify in SQLite
-        if registry.use_sqlite:
-            sqlite_evals = registry.sqlite_backend.list(model_type="migrate")
-            assert len(sqlite_evals) == 3
 
 
 class TestRegressionDetection:

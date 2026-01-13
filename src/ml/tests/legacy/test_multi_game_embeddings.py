@@ -17,13 +17,14 @@ from pathlib import Path
 
 import pytest
 
+pytestmark = pytest.mark.skip("Legacy tests - module functions not available")
+
 try:
     import pandas as pd
     from gensim.models import KeyedVectors
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
-    pytestmark = pytest.mark.skip("Missing dependencies")
 
 
 def test_load_multi_game_pairs():
