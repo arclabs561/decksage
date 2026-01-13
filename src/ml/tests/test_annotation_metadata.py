@@ -118,7 +118,8 @@ def test_annotation_metadata_extraction():
         ann_path = Path(f.name)
 
     try:
-        annotations = load_similarity_annotations(ann_path)
+        # Disable test card filtering for unit test
+        annotations = load_similarity_annotations(ann_path, filter_test_cards=False)
         assert len(annotations) == 1
 
         ann = annotations[0]
