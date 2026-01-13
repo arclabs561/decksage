@@ -16,10 +16,8 @@ from __future__ import annotations
 
 import json
 import os
-from collections import Counter, defaultdict
-from datetime import datetime
-from pathlib import Path
 from typing import Any
+
 
 try:
     from dotenv import load_dotenv
@@ -38,7 +36,7 @@ except ImportError:
     BaseModel = None
     Field = None
 
-from ..utils.pydantic_ai_helpers import get_default_model, make_agent
+from ..utils.pydantic_ai_helpers import make_agent
 
 
 class AnnotationQualityMetrics(BaseModel):
@@ -82,16 +80,16 @@ class AnnotationIssue(BaseModel):
     )
     description: str = Field(description="Human-readable description of the issue")
     affected_count: int = Field(description="Number of annotations affected")
-    examples: list[str] = Field(default_factory=list, description="Example annotation IDs or card pairs")
+    examples: list[str] = Field(
+        default_factory=list, description="Example annotation IDs or card pairs"
+    )
     suggested_fix: str | None = Field(None, description="Suggested fix or improvement")
 
 
 class MetaJudgment(BaseModel):
     """Meta-judge evaluation of annotation batch."""
 
-    overall_quality: float = Field(
-        ge=0.0, le=1.0, description="Overall quality score (0.0-1.0)"
-    )
+    overall_quality: float = Field(ge=0.0, le=1.0, description="Overall quality score (0.0-1.0)")
     metrics: AnnotationQualityMetrics
     issues: list[AnnotationIssue] = Field(default_factory=list)
     strengths: list[str] = Field(default_factory=list, description="What's working well")
@@ -233,9 +231,9 @@ def compute_quality_metrics(annotations: list[dict[str, Any]]) -> AnnotationQual
             "because",
             "why",
         ]
-        specificity_score = sum(1 for term in specificity_indicators if term.lower() in reasoning.lower()) / len(
-            specificity_indicators
-        )
+        specificity_score = sum(
+            1 for term in specificity_indicators if term.lower() in reasoning.lower()
+        ) / len(specificity_indicators)
 
         reasoning_scores.append((length_score + specificity_score) / 2.0)
 
@@ -267,10 +265,10 @@ def _get_stratified_samples(annotations: list[dict[str, Any]], n: int = 5) -> li
     """Get stratified sample of annotations (high, medium, low scores)."""
     if len(annotations) <= n:
         return annotations
-    
+
     # Sort by score
     sorted_anns = sorted(annotations, key=lambda a: a.get("similarity_score", 0.5))
-    
+
     # Sample from different regions
     samples = []
     if n >= 3:
@@ -289,7 +287,7 @@ def _get_stratified_samples(annotations: list[dict[str, Any]], n: int = 5) -> li
         for i in range(0, len(sorted_anns), len(sorted_anns) // n):
             if len(samples) < n:
                 samples.append(sorted_anns[i])
-    
+
     return samples[:n]
 
 
@@ -318,13 +316,14 @@ async def meta_judge_annotations(
     # Quantitative validation: Check card attributes presence
     has_card_comparison = sum(1 for a in annotations if a.get("card_comparison"))
     card_comparison_coverage = has_card_comparison / len(annotations) if annotations else 0.0
-    
+
     # Check if card_comparison has actual data (not just empty dict)
     has_meaningful_card_data = sum(
-        1 for a in annotations 
-        if a.get("card_comparison") and 
-        a.get("card_comparison", {}).get("card1_attrs") and
-        a.get("card_comparison", {}).get("card2_attrs")
+        1
+        for a in annotations
+        if a.get("card_comparison")
+        and a.get("card_comparison", {}).get("card1_attrs")
+        and a.get("card_comparison", {}).get("card2_attrs")
     )
     meaningful_data_coverage = has_meaningful_card_data / len(annotations) if annotations else 0.0
 
@@ -337,7 +336,9 @@ async def meta_judge_annotations(
         "score_distribution": {
             "min": min((a.get("similarity_score", 0.5) for a in annotations), default=0.5),
             "max": max((a.get("similarity_score", 0.5) for a in annotations), default=0.5),
-            "mean": sum(a.get("similarity_score", 0.5) for a in annotations) / len(annotations) if annotations else 0.5,
+            "mean": sum(a.get("similarity_score", 0.5) for a in annotations) / len(annotations)
+            if annotations
+            else 0.5,
         },
         "card_attributes_coverage": {
             "has_card_comparison": has_card_comparison,
@@ -349,9 +350,38 @@ async def meta_judge_annotations(
         "sample_annotations": _get_stratified_samples(annotations, n=5),
     }
 
-    # Build prompt for meta-judge
-    prompt = f"""Evaluate this batch of {len(annotations)} card similarity annotations for {game or 'unknown game'}.
+    # Build prompt for meta-judge with game-specific guidance
+    game_guidance = ""
+    if game:
+        game_lower = game.lower()
+        if game_lower in ["magic", "mtg"]:
+            game_guidance = """
+**GAME-SPECIFIC EVALUATION FOR MAGIC:**
+- Magic cards often cluster in low scores (0.0-0.2) when pairs are genuinely dissimilar
+- However, functionally similar cards (both removal, both draw) should score >= 0.4 even with weak graph evidence
+- Pay special attention to: same function + similar attributes → should be 0.5-0.7, not 0.1-0.2
+- Examples of correct high scores: Lightning Bolt vs Shock (0.7), Path vs Swords (0.8)
+"""
+        elif game_lower in ["pokemon", "pkm"]:
+            game_guidance = """
+**GAME-SPECIFIC EVALUATION FOR POKEMON:**
+- Pokemon cards should use type and evolution line for scoring
+- Same type (Fire, Water, etc.) → should score >= 0.4
+- Same evolution line → should score >= 0.5-0.7
+- Pay attention to: type similarity, evolution relationships, function similarity
+"""
+        elif game_lower in ["yugioh", "ygo"]:
+            game_guidance = """
+**GAME-SPECIFIC EVALUATION FOR YU-GI-OH:**
+- Yu-Gi-Oh cards should use archetype and type for scoring
+- Same archetype → should score >= 0.5-0.7
+- Same type (Dragon, Warrior, etc.) → should score >= 0.4-0.6
+- Pay attention to: archetype relationships, type similarity, function similarity
+"""
 
+    # Build prompt for meta-judge
+    prompt = f"""Evaluate this batch of {len(annotations)} card similarity annotations for {game or "unknown game"}.
+{game_guidance}
 **Quantitative Metrics:**
 - Score diversity: {metrics.score_diversity:.2f}
 - Score range utilization: {metrics.score_range_utilization:.2f}
@@ -360,16 +390,16 @@ async def meta_judge_annotations(
 - Completeness: {metrics.completeness:.2f}
 
 **Score Distribution:**
-- Range: {context['score_distribution']['min']:.2f} - {context['score_distribution']['max']:.2f}
-- Mean: {context['score_distribution']['mean']:.2f}
+- Range: {context["score_distribution"]["min"]:.2f} - {context["score_distribution"]["max"]:.2f}
+- Mean: {context["score_distribution"]["mean"]:.2f}
 
 **Card Attributes Coverage (QUANTITATIVE):**
-- Annotations with card_comparison field: {context['card_attributes_coverage']['has_card_comparison']}/{len(annotations)} ({context['card_attributes_coverage']['coverage']:.1%})
-- Annotations with meaningful card data: {context['card_attributes_coverage']['meaningful_data']}/{len(annotations)} ({context['card_attributes_coverage']['meaningful_coverage']:.1%})
+- Annotations with card_comparison field: {context["card_attributes_coverage"]["has_card_comparison"]}/{len(annotations)} ({context["card_attributes_coverage"]["coverage"]:.1%})
+- Annotations with meaningful card data: {context["card_attributes_coverage"]["meaningful_data"]}/{len(annotations)} ({context["card_attributes_coverage"]["meaningful_coverage"]:.1%})
 - **NOTE**: card_comparison field contains card1_attrs and card2_attrs with actual card data. Check this field, not a separate "card_attributes" field.
 
 **Sample Annotations (stratified by score):**
-{json.dumps(context['sample_annotations'], indent=2, ensure_ascii=False)}
+{json.dumps(context["sample_annotations"], indent=2, ensure_ascii=False)}
 
 **Important Notes:**
 - Check if annotations have 'card_comparison' field - this contains card attributes
@@ -408,27 +438,108 @@ def inject_context_into_annotator(
     This acts as the "keel" - providing stability by updating prompts,
     thresholds, or other context based on quality feedback.
 
+    **Game-Specific Context Injection**: Feedback is stored per-game to avoid
+    cross-contamination (e.g., Magic-specific advice shouldn't affect Pokemon).
+
     Args:
         judgment: Meta-judgment with feedback
         annotator: LLMAnnotator instance to update
     """
     # Store judgment for potential future use
-    if not hasattr(annotator, 'meta_judgments'):
+    if not hasattr(annotator, "meta_judgments"):
         annotator.meta_judgments = []
     annotator.meta_judgments.append(judgment)
-    
+
+    # Get game from annotator (for game-specific feedback storage)
+    game = getattr(annotator, "game", None)
+    game_key = (game or "unknown").lower()
+
     # Extract actionable feedback from issues and recommendations
-    actionable_feedback = []
-    
-    # Process issues for context injection
+    # Store as structured data, organized by game (not unioned)
+    if not hasattr(annotator, "meta_judge_feedback_by_game"):
+        annotator.meta_judge_feedback_by_game = {}
+
+    # Initialize game-specific feedback structure
+    if game_key not in annotator.meta_judge_feedback_by_game:
+        annotator.meta_judge_feedback_by_game[game_key] = {
+            "critical": [],  # High-priority feedback (goes at top of prompt)
+            "important": [],  # Medium-priority feedback
+            "suggestions": [],  # Lower-priority suggestions
+        }
+
+    # Get game-specific feedback structure
+    game_feedback = annotator.meta_judge_feedback_by_game[game_key]
+
+    # Backward compatibility: also maintain global feedback (for non-game-specific use)
+    if not hasattr(annotator, "meta_judge_feedback"):
+        annotator.meta_judge_feedback = {
+            "critical": [],
+            "important": [],
+            "suggestions": [],
+        }
+
+    # Process issues for context injection - prioritize by severity
+    # Store in game-specific feedback (not unioned across games)
     for issue in judgment.issues:
         if issue.suggested_fix:
-            actionable_feedback.append(f"{issue.issue_type}: {issue.suggested_fix}")
-    
-    # Process recommendations
+            feedback_item = {
+                "type": issue.issue_type,
+                "fix": issue.suggested_fix,
+                "severity": getattr(issue, "severity", 3),
+                "game": game_key,  # Tag with game for filtering
+            }
+            # Categorize by severity (4-5 = critical, 3 = important, 1-2 = suggestions)
+            severity = getattr(issue, "severity", 3)
+            if isinstance(severity, int):
+                if severity >= 4:
+                    game_feedback["critical"].append(feedback_item)
+                    # Also add to global for backward compatibility
+                    annotator.meta_judge_feedback["critical"].append(feedback_item)
+                elif severity >= 3:
+                    game_feedback["important"].append(feedback_item)
+                    annotator.meta_judge_feedback["important"].append(feedback_item)
+                else:
+                    game_feedback["suggestions"].append(feedback_item)
+                    annotator.meta_judge_feedback["suggestions"].append(feedback_item)
+            else:
+                game_feedback["important"].append(feedback_item)
+                annotator.meta_judge_feedback["important"].append(feedback_item)
+
+    # Process recommendations - store game-specifically
     for rec in judgment.recommendations:
-        actionable_feedback.append(rec)
-    
+        rec_item = {"type": "recommendation", "fix": rec, "game": game_key}
+        game_feedback["suggestions"].append(rec_item)
+        annotator.meta_judge_feedback["suggestions"].append(rec_item)
+
+    # Also maintain backward-compatible text list for prompt injection
+    if not hasattr(annotator, "meta_judge_prompt_additions"):
+        annotator.meta_judge_prompt_additions = []
+
+    # Add critical feedback to prompt additions (will be injected at top)
+    # Use game-specific feedback if available, fall back to global
+    feedback_to_use = (
+        game_feedback
+        if game_key in annotator.meta_judge_feedback_by_game
+        else annotator.meta_judge_feedback
+    )
+
+    for item in feedback_to_use["critical"][-3:]:  # Last 3 critical items
+        if isinstance(item, dict):
+            annotator.meta_judge_prompt_additions.append(
+                f"CRITICAL: {item.get('type', 'issue')} - {item.get('fix', '')}"
+            )
+        else:
+            annotator.meta_judge_prompt_additions.append(f"CRITICAL: {item}")
+
+    # Add important feedback
+    for item in feedback_to_use["important"][-2:]:  # Last 2 important items
+        if isinstance(item, dict):
+            annotator.meta_judge_prompt_additions.append(
+                f"IMPORTANT: {item.get('type', 'issue')} - {item.get('fix', '')}"
+            )
+        else:
+            annotator.meta_judge_prompt_additions.append(f"IMPORTANT: {item}")
+
     # Inject context from judgment (dynamic prompt updates)
     if judgment.context_injections:
         # Inject prompt improvements
@@ -438,7 +549,7 @@ def inject_context_into_annotator(
                 additions = [additions]
             print(f"  Meta-judge context injection: {len(additions)} prompt additions")
             # Store for dynamic prompt updates
-            if not hasattr(annotator, 'meta_judge_prompt_additions'):
+            if not hasattr(annotator, "meta_judge_prompt_additions"):
                 annotator.meta_judge_prompt_additions = []
             annotator.meta_judge_prompt_additions.extend(additions)
 
@@ -447,36 +558,38 @@ def inject_context_into_annotator(
             examples = judgment.context_injections["examples"]
             if isinstance(examples, list):
                 print(f"  Meta-judge context injection: {len(examples)} example updates")
-                if not hasattr(annotator, 'meta_judge_examples'):
+                if not hasattr(annotator, "meta_judge_examples"):
                     annotator.meta_judge_examples = []
                 annotator.meta_judge_examples.extend(examples)
 
         # Inject threshold updates
         if "thresholds" in judgment.context_injections:
             thresholds = judgment.context_injections["thresholds"]
-            print(f"  Meta-judge context injection: threshold updates")
-            if not hasattr(annotator, 'meta_judge_thresholds'):
+            print("  Meta-judge context injection: threshold updates")
+            if not hasattr(annotator, "meta_judge_thresholds"):
                 annotator.meta_judge_thresholds = {}
             annotator.meta_judge_thresholds.update(thresholds)
-    
+
     # Extract actionable feedback from recommendations and issues
     # Convert to prompt additions for dynamic injection
     for rec in judgment.recommendations:
         if "score" in rec.lower() or "calibration" in rec.lower() or "example" in rec.lower():
-            if not hasattr(annotator, 'meta_judge_prompt_additions'):
+            if not hasattr(annotator, "meta_judge_prompt_additions"):
                 annotator.meta_judge_prompt_additions = []
             # Add as prompt addition if it's about scoring/calibration
             annotator.meta_judge_prompt_additions.append(rec)
-    
+
     for issue in judgment.issues:
-        if issue.suggested_fix and ("score" in issue.suggested_fix.lower() or "example" in issue.suggested_fix.lower()):
-            if not hasattr(annotator, 'meta_judge_prompt_additions'):
+        if issue.suggested_fix and (
+            "score" in issue.suggested_fix.lower() or "example" in issue.suggested_fix.lower()
+        ):
+            if not hasattr(annotator, "meta_judge_prompt_additions"):
                 annotator.meta_judge_prompt_additions = []
             annotator.meta_judge_prompt_additions.append(issue.suggested_fix)
-    
+
     # Log actionable feedback
     if actionable_feedback:
-        print(f"  Meta-judge actionable feedback:")
+        print("  Meta-judge actionable feedback:")
         for feedback in actionable_feedback[:5]:  # Show top 5
             print(f"    → {feedback}")
 
@@ -513,4 +626,3 @@ if __name__ == "__main__":
         print(f"\nFeedback:\n{judgment.feedback}")
 
     asyncio.run(test())
-

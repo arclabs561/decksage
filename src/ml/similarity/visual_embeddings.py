@@ -30,14 +30,14 @@ except ImportError:
 def _patch_siglip_config():
     """
     Patch SiglipConfig to work with sentence-transformers.
-    
+
     sentence-transformers expects config.hidden_size, but SigLIP stores it in
     config.vision_config.hidden_size. This patch adds a hidden_size property
     that reads from vision_config.
     """
     try:
         from transformers import SiglipConfig
-        
+
         # Only patch if not already patched and if hidden_size doesn't exist
         if not hasattr(SiglipConfig, '_siglip_patched'):
             if not hasattr(SiglipConfig, 'hidden_size') or not isinstance(
@@ -51,7 +51,7 @@ def _patch_siglip_config():
                         f"'{self.__class__.__name__}' object has no attribute 'hidden_size' "
                         f"and vision_config.hidden_size is not available"
                     )
-                
+
                 SiglipConfig.hidden_size = property(_get_hidden_size)
                 SiglipConfig._siglip_patched = True
                 logger.debug("Patched SiglipConfig.hidden_size for sentence-transformers compatibility")
@@ -79,8 +79,15 @@ class CardVisualEmbedder:
     """
     Embed cards using their visual content (images).
 
-    Uses sentence-transformers with vision models (CLIP/SigLIP) for efficient visual embeddings.
-    Caches embeddings and images to disk for performance.
+    Supports both SigLIP (via transformers) and CLIP (via sentence-transformers) models.
+    Automatically selects the appropriate backend based on model name.
+
+    Features:
+    - Efficient batch processing
+    - Multi-level caching (memory + disk)
+    - Image download with retries
+    - GPU/CPU device management
+    - Robust error handling
     """
 
     def __init__(
@@ -114,7 +121,7 @@ class CardVisualEmbedder:
         self.model_name = model_name
         self._memory_cache: dict[str, np.ndarray] = {}
         self.image_size = image_size
-        
+
         # Setup cache directories (before model loading so cache_file is always set)
         if cache_dir is None:
             cache_dir = Path(".cache") / "visual_embeddings"
@@ -134,35 +141,39 @@ class CardVisualEmbedder:
 
         self.image_cache_dir = image_cache_dir
         self.image_cache_dir.mkdir(parents=True, exist_ok=True)
-        
+
         # Determine if we should use transformers directly (for SigLIP) or sentence-transformers (for CLIP)
         use_transformers_direct = model_name.startswith("google/siglip")
-        
+
         if use_transformers_direct:
             # SigLIP: Use transformers directly (sentence-transformers has compatibility issues)
             try:
                 from transformers import AutoModel, AutoProcessor
                 import torch
-                
+
                 self.processor = AutoProcessor.from_pretrained(model_name)
                 self.vision_model = AutoModel.from_pretrained(model_name)
                 self.vision_model.eval()
                 self._use_transformers = True
                 self._sentence_transformer = None
                 self.model = None  # Not used for SigLIP
-                
+
                 logger.info(f"Loaded SigLIP model with transformers: {model_name}")
-                
+
                 # Verify model works and get embedding dimension
                 test_img = Image.new("RGB", (self.image_size, self.image_size))
                 inputs = self.processor(images=test_img, return_tensors="pt")
+                # Move inputs to same device as model
+                device = next(self.vision_model.parameters()).device
+                inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+
                 with torch.no_grad():
                     outputs = self.vision_model.get_image_features(**inputs)
-                test_emb = outputs[0].cpu().numpy()
-                
+                test_emb = outputs[0].cpu().numpy().astype(np.float32)
+
                 self._embedding_dim = len(test_emb)
                 logger.info(f"Model embedding dimension: {self._embedding_dim}")
-                
+
             except Exception as e:
                 raise RuntimeError(
                     f"Failed to load SigLIP model '{model_name}': {e}\n"
@@ -177,15 +188,15 @@ class CardVisualEmbedder:
                 self._sentence_transformer = self.model
                 self.processor = None
                 self.vision_model = None
-                
+
                 logger.info(f"Loaded visual embedding model: {model_name}")
-                
+
                 # Verify model works by encoding a test image and get embedding dimension
                 test_img = Image.new("RGB", (self.image_size, self.image_size))
                 test_emb = self.model.encode(test_img, convert_to_numpy=True)
                 self._embedding_dim = len(test_emb)
                 logger.info(f"Model embedding dimension: {self._embedding_dim}")
-                
+
             except Exception as e:
                 raise RuntimeError(
                     f"Failed to load visual embedding model '{model_name}': {e}\n"
@@ -255,11 +266,11 @@ class CardVisualEmbedder:
             return card["image_url"]
         if "image" in card and card["image"]:
             return card["image"]
-        
+
         # Scryfall format: image_uris.png
         if "image_uris" in card and isinstance(card["image_uris"], dict):
             return card["image_uris"].get("png") or card["image_uris"].get("large") or card["image_uris"].get("normal")
-        
+
         # Pokemon TCG format: images.large
         if "images" in card:
             images = card["images"]
@@ -270,17 +281,17 @@ class CardVisualEmbedder:
                     return images[0].get("url") or images[0].get("URL") or images[0].get("image_url")
                 if isinstance(images[0], str):
                     return images[0]
-        
+
         # Yu-Gi-Oh format: card_images[0].image_url
         if "card_images" in card and isinstance(card["card_images"], list) and len(card["card_images"]) > 0:
             img = card["card_images"][0]
             if isinstance(img, dict):
                 return img.get("image_url") or img.get("image_url_small") or img.get("url")
-        
+
         # Riftcodex format: media.image_url
         if "media" in card and isinstance(card["media"], dict):
             return card["media"].get("image_url") or card["media"].get("url")
-        
+
         # Handle card faces for multi-faced cards (e.g., Magic DFCs)
         if "card_faces" in card and isinstance(card["card_faces"], list) and len(card["card_faces"]) > 0:
             face = card["card_faces"][0]
@@ -376,7 +387,7 @@ class CardVisualEmbedder:
                 logger.warning(f"Failed to download image from {url} (attempt {attempt + 1}/{max_retries}): {e}")
             except Exception as e:
                 logger.error(f"Unexpected error downloading {url} (attempt {attempt + 1}/{max_retries}): {e}")
-            
+
             # Exponential backoff
             if attempt < max_retries - 1:
                 import time
@@ -395,9 +406,15 @@ class CardVisualEmbedder:
         Returns:
             Preprocessed PIL Image
         """
+        # Early return if already correct size (avoid unnecessary processing)
+        if image.size == (self.image_size, self.image_size):
+            return image.copy()  # Return copy to avoid mutating original
+
         # Resize to target size (maintain aspect ratio, then center crop)
         # Most vision models expect square images
-        image.thumbnail((self.image_size, self.image_size), Image.Resampling.LANCZOS)
+        # Use thumbnail for downscaling (more efficient than resize for large images)
+        if max(image.size) > self.image_size:
+            image.thumbnail((self.image_size, self.image_size), Image.Resampling.LANCZOS)
 
         # Create square image with center crop
         width, height = image.size
@@ -409,8 +426,9 @@ class CardVisualEmbedder:
             bottom = top + size
             image = image.crop((left, top, right, bottom))
 
-        # Resize to exact size
-        image = image.resize((self.image_size, self.image_size), Image.Resampling.LANCZOS)
+        # Resize to exact size (only if needed)
+        if image.size != (self.image_size, self.image_size):
+            image = image.resize((self.image_size, self.image_size), Image.Resampling.LANCZOS)
 
         return image
 
@@ -497,10 +515,15 @@ class CardVisualEmbedder:
         if self._use_transformers:
             # SigLIP: Use transformers directly
             import torch
+            # Move inputs to same device as model (if not already)
             inputs = self.processor(images=image, return_tensors="pt")
+            device = next(self.vision_model.parameters()).device
+            inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+
             with torch.no_grad():
                 outputs = self.vision_model.get_image_features(**inputs)
-            embedding = outputs[0].cpu().numpy()
+            # Move to CPU and convert to numpy immediately to free GPU memory
+            embedding = outputs[0].cpu().numpy().astype(np.float32)
         else:
             # CLIP: Use sentence-transformers
             embedding = self.model.encode(image, convert_to_numpy=True)
@@ -592,9 +615,14 @@ class CardVisualEmbedder:
             # SigLIP: Use transformers directly with batch processing
             import torch
             inputs = self.processor(images=images, return_tensors="pt")
+            # Move inputs to same device as model (if not already)
+            device = next(self.vision_model.parameters()).device
+            inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+
             with torch.no_grad():
                 outputs = self.vision_model.get_image_features(**inputs)
-            embeddings = outputs.cpu().numpy()
+            # Move to CPU and convert to numpy immediately to free GPU memory
+            embeddings = outputs.cpu().numpy().astype(np.float32)
         else:
             # CLIP: Use sentence-transformers
             embeddings = self.model.encode(images, convert_to_numpy=True, show_progress_bar=False)
@@ -652,4 +680,3 @@ def get_visual_embedder(
 
 
 __all__ = ["CardVisualEmbedder", "get_visual_embedder"]
-

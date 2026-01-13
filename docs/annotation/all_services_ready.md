@@ -93,7 +93,7 @@ python scripts/annotation/test_annotation_services.py \
        --service mturk \
        --priority high \
        --limit 20
-   
+
    # For critical annotations (evaluation data)
    python scripts/annotation/submit_human_annotations.py submit \
        --service scale \
@@ -121,4 +121,3 @@ For 100 annotations:
 2. ⏳ Test with small batch (1-3 tasks per service)
 3. ⏳ Compare quality across services
 4. ⏳ Integrate results into annotation pipeline
-

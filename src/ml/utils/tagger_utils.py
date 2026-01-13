@@ -92,12 +92,4 @@ def extract_tag_set(tags_obj: Any, exclude_fields: set[str] | None = None) -> se
         exclude_fields = {"card_name"}
 
     tag_dict = extract_tag_dict(tags_obj)
-    return {
-        k
-        for k, v in tag_dict.items()
-        if k not in exclude_fields and isinstance(v, bool) and v
-    }
-
-
-
-
+    return {k for k, v in tag_dict.items() if k not in exclude_fields and isinstance(v, bool) and v}

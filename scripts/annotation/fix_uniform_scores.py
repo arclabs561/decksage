@@ -9,6 +9,7 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -22,15 +23,17 @@ def detect_uniform_scores(file_path: Path) -> dict:
             line = line.strip()
             if line:
                 annotations.append(json.loads(line))
-    
+
     if not annotations:
         return {"error": "No annotations found"}
-    
-    scores = [a.get("similarity_score") for a in annotations if a.get("similarity_score") is not None]
-    
+
+    scores = [
+        a.get("similarity_score") for a in annotations if a.get("similarity_score") is not None
+    ]
+
     unique_scores = set(scores)
     is_uniform = len(unique_scores) == 1 and len(annotations) > 5
-    
+
     return {
         "total": len(annotations),
         "unique_scores": len(unique_scores),
@@ -54,29 +57,31 @@ def main() -> int:
         action="store_true",
         help="Attempt to fix by flagging for regeneration (creates .needs_regeneration file)",
     )
-    
+
     args = parser.parse_args()
-    
+
     if not args.input.exists():
         print(f"Error: Input file not found: {args.input}")
         return 1
-    
+
     result = detect_uniform_scores(args.input)
-    
+
     if "error" in result:
         print(f"Error: {result['error']}")
         return 1
-    
+
     print(f"File: {args.input.name}")
     print(f"Total annotations: {result['total']}")
     print(f"Unique similarity scores: {result['unique_scores']}")
     print(f"Score range: {result['score_range']}")
-    
+
     if result["is_uniform"]:
-        print(f"\n⚠️  WARNING: All annotations have uniform similarity_score: {result['score_value']}")
+        print(
+            f"\n⚠️  WARNING: All annotations have uniform similarity_score: {result['score_value']}"
+        )
         print("   This indicates a generation issue - LLM may not be generating diverse scores.")
         print("   Recommendation: Regenerate annotations with improved prompt/model.")
-        
+
         if args.fix:
             flag_file = args.input.with_suffix(args.input.suffix + ".needs_regeneration")
             with open(flag_file, "w") as f:
@@ -86,10 +91,9 @@ def main() -> int:
             print(f"\n✅ Flagged for regeneration: {flag_file}")
     else:
         print("\n✅ Score diversity is good")
-    
+
     return 0 if not result["is_uniform"] else 1
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

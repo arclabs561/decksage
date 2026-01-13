@@ -170,4 +170,3 @@ Image URL enrichment is part of **Order 0-1: Card Attribute Enrichment**:
 - Depends on: Order 0 (Primary Source Data)
 - Produces: Enriched card attributes with `image_url` field
 - Used by: Order 4 (Visual Embeddings), Order 6 (Annotations)
-

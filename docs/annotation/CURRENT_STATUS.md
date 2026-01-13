@@ -35,7 +35,7 @@
 - Mean: ~0.18
 - **Issue**: Score clustering in very_low range (0.0-0.2)
 
-**Pokemon**: 10 annotations  
+**Pokemon**: 10 annotations
 - Score range: 0.35 - 0.45
 - Mean: ~0.40
 - **Issue**: Limited range utilization
@@ -61,7 +61,7 @@
 ### Next Steps
 
 1. **Fix Model IDs**: Verify and update OpenRouter model IDs for multi-annotator
-2. **Address Score Clustering**: 
+2. **Address Score Clustering**:
    - Add more diverse examples to prompts
    - Improve score calibration
    - Use uncertainty selection to find diverse pairs
@@ -87,4 +87,3 @@ uv run python3 scripts/annotation/run_continuous_improvement.py \
 # Test E2E
 uv run python3 scripts/annotation/test_e2e_annotation_system.py
 ```
-

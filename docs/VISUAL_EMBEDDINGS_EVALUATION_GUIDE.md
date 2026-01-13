@@ -142,7 +142,7 @@ If evaluation is slow:
 
 ## Next Steps After Evaluation
 
-1. **If improvement > 5%**: 
+1. **If improvement > 5%**:
    - Optimize weights based on results
    - Consider fine-tuning on card images
    - Deploy to production
@@ -156,4 +156,3 @@ If evaluation is slow:
    - Verify visual embedder is working (run validation script)
    - Check if cards have image URLs
    - Review fusion weights (visual_embed may be too low)
-

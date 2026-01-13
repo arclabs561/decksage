@@ -64,4 +64,3 @@
 ## Summary
 
 **Your MTurk account is fully configured and ready for production use. No prepaid balance or additional setup is needed. Charges will automatically go to your AWS account.**
-

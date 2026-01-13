@@ -111,7 +111,7 @@ func (et *ExportTracker) ShouldExport(ctx context.Context, blobKey string, blobM
 	et.mu.RLock()
 	lastExported, exists := et.exported[blobKey]
 	et.mu.RUnlock()
-	
+
 	if !exists {
 		return true // Never exported
 	}
@@ -156,4 +156,3 @@ func (et *ExportTracker) GetStats() (total, recent int) {
 func (et *ExportTracker) trackingKey() string {
 	return filepath.Join(et.prefix, ".export_tracker.json")
 }
-

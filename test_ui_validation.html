@@ -177,7 +177,7 @@
         // Test 2: Cache System
         function testCacheSystem() {
             clearResults('storage-tests');
-            
+
             try {
                 // Test localStorage availability
                 if (typeof Storage === 'undefined') {
@@ -197,7 +197,7 @@
                 };
                 localStorage.setItem('test_cache_key', JSON.stringify(testData));
                 const retrieved = JSON.parse(localStorage.getItem('test_cache_key'));
-                
+
                 if (retrieved && retrieved.result) {
                     addResult('storage-tests', '✓ Cache storage/retrieval works', 'pass');
                 } else {
@@ -212,7 +212,7 @@
                 localStorage.setItem('test_expired_cache', JSON.stringify(expiredData));
                 const expired = JSON.parse(localStorage.getItem('test_expired_cache'));
                 const isExpired = Date.now() - expired.timestamp > 3600000; // 1 hour TTL
-                
+
                 if (isExpired) {
                     addResult('storage-tests', '✓ Cache expiration detection works', 'pass');
                 } else {
@@ -244,7 +244,7 @@
 
         function testCacheCleanup() {
             clearResults('storage-tests');
-            
+
             try {
                 // Create multiple cache entries
                 const now = Date.now();
@@ -290,7 +290,7 @@
         // Test 3: Service Worker
         async function testServiceWorker() {
             clearResults('sw-tests');
-            
+
             if (!('serviceWorker' in navigator)) {
                 addResult('sw-tests', '✗ Service Worker not supported', 'fail');
                 return;
@@ -331,7 +331,7 @@
 
         async function testOfflineMode() {
             clearResults('sw-tests');
-            
+
             if (!navigator.onLine) {
                 addResult('sw-tests', '⚠ Already offline', 'warning');
             }
@@ -354,7 +354,7 @@
         // Test 4: Analytics
         function testAnalytics() {
             clearResults('analytics-tests');
-            
+
             try {
                 // Test analytics storage
                 const testEvent = {
@@ -405,7 +405,7 @@
 
         function testAnalyticsPrivacy() {
             clearResults('analytics-tests');
-            
+
             // Test anonymization
             const testData = {
                 userId: 'user123',
@@ -435,7 +435,7 @@
         // Test 5: XSS Protection
         function testXSSProtection() {
             clearResults('xss-tests');
-            
+
             // Test escapeHtml function
             const testCases = [
                 { input: '<script>alert("xss")</script>', expected: '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;' },
@@ -448,7 +448,7 @@
                 const div = document.createElement('div');
                 div.textContent = input;
                 const escaped = div.innerHTML;
-                
+
                 if (escaped === expected) {
                     addResult('xss-tests', `✓ Escaped: ${input.substring(0, 30)}...`, 'pass');
                 } else {
@@ -461,7 +461,7 @@
             const container = document.createElement('div');
             container.innerHTML = malicious; // This would be dangerous
             const hasScript = container.querySelector('script');
-            
+
             if (hasScript) {
                 addResult('xss-tests', '⚠ Unescaped content contains script tags (expected)', 'warning');
             }
@@ -472,7 +472,7 @@
             tempDiv.textContent = malicious;
             safeContainer.innerHTML = tempDiv.innerHTML;
             const safeHasScript = safeContainer.querySelector('script');
-            
+
             if (!safeHasScript) {
                 addResult('xss-tests', '✓ Properly escaped content is safe', 'pass');
             } else {
@@ -483,7 +483,7 @@
         // Test 6: Input Validation
         function testInputValidation() {
             clearResults('validation-tests');
-            
+
             // Test weight validation
             const weightTests = [
                 { text: 0.5, vector: 0.5, valid: true },
@@ -539,7 +539,7 @@
                 } else if (deck.Main && Array.isArray(deck.Main)) {
                     hasMain = true;
                 }
-                
+
                 if (hasMain === valid) {
                     addResult('validation-tests', `✓ Deck validation: ${hasMain}`, 'pass');
                 } else {
@@ -551,7 +551,7 @@
         // Test 7: Performance
         function testPerformance() {
             clearResults('performance-tests');
-            
+
             if (typeof performance === 'undefined' || !performance.now) {
                 addResult('performance-tests', '✗ Performance API not available', 'fail');
                 return;
@@ -581,7 +581,7 @@
         // Test 8: Edge Cases
         function testEdgeCases() {
             clearResults('edge-tests');
-            
+
             // Test empty inputs
             const emptyTests = ['', '   ', '\n', '\t'];
             emptyTests.forEach(input => {
@@ -623,7 +623,7 @@
         // Test 9: API Integration
         async function testAPIIntegration() {
             clearResults('api-tests');
-            
+
             // Test API base URL
             addResult('api-tests', `API Base: ${API_BASE}`, 'info');
 
@@ -656,7 +656,7 @@
             // Test AbortController
             if (typeof AbortController !== 'undefined') {
                 addResult('api-tests', '✓ AbortController available', 'pass');
-                
+
                 const controller = new AbortController();
                 controller.abort();
                 if (controller.signal.aborted) {
@@ -670,7 +670,7 @@
         // Test 10: Accessibility
         function testAccessibility() {
             clearResults('a11y-tests');
-            
+
             // Test ARIA attributes
             const mainContent = document.getElementById('main-content');
             if (mainContent) {
@@ -719,5 +719,3 @@
     </script>
 </body>
 </html>
-
-

@@ -261,4 +261,3 @@ curl -X POST "http://localhost:8000/v1/similar" \
 2. **Fine-tune**: Collect card images and fine-tune on domain data
 3. **Optimize**: Tune fusion weights for your specific use case
 4. **Monitor**: Track visual embedding coverage and performance metrics
-

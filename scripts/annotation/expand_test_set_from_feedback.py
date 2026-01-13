@@ -13,11 +13,13 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
+
 
 setup_project_paths()
 
@@ -29,7 +31,7 @@ def load_feedback_annotations(feedback_path: Path) -> list[dict]:
     annotations = []
     if not feedback_path.exists():
         return annotations
-    
+
     with open(feedback_path) as f:
         for line in f:
             if line.strip():
@@ -37,7 +39,7 @@ def load_feedback_annotations(feedback_path: Path) -> list[dict]:
                     annotations.append(json.loads(line))
                 except json.JSONDecodeError:
                     continue
-    
+
     return annotations
 
 
@@ -48,14 +50,14 @@ def convert_feedback_to_test_set_entry(annotation: dict) -> dict | None:
     similarity_score = annotation.get("similarity_score", 0.0)
     similarity_type = annotation.get("similarity_type", "substitute")
     is_substitute = annotation.get("is_substitute", False)
-    
+
     if not card1 or not card2:
         return None
-    
+
     # Only use high-quality feedback (rating >= 3, score >= 0.75)
     if similarity_score < 0.75:
         return None
-    
+
     # Determine relevance level based on score
     if similarity_score >= 0.9:
         relevance_level = "highly_relevant"
@@ -65,7 +67,7 @@ def convert_feedback_to_test_set_entry(annotation: dict) -> dict | None:
         relevance_level = "somewhat_relevant"
     else:
         return None
-    
+
     return {
         "card1": card1,
         "card2": card2,
@@ -84,17 +86,17 @@ def expand_test_set(
     min_rating: float = 0.75,
 ) -> dict:
     """Expand test set with feedback entries."""
-    
+
     # Load existing test set
     with open(test_set_path) as f:
         test_set = json.load(f)
-    
+
     queries = test_set.get("queries", test_set) if isinstance(test_set, dict) else test_set
-    
+
     # Load feedback annotations
     feedback_annotations = load_feedback_annotations(feedback_path)
     print(f"Loaded {len(feedback_annotations)} feedback annotations")
-    
+
     # Convert feedback to test set entries
     new_entries = []
     for annotation in feedback_annotations:
@@ -104,9 +106,9 @@ def expand_test_set(
             similarity_score = annotation.get("similarity_score", 0.0)
             if similarity_score >= min_rating:
                 new_entries.append(entry)
-    
+
     print(f"Found {len(new_entries)} high-quality feedback entries (score >= {min_rating})")
-    
+
     # Group by query card
     query_groups = {}
     for entry in new_entries:
@@ -119,18 +121,18 @@ def expand_test_set(
                 "marginally_relevant": [],
                 "irrelevant": [],
             }
-        
+
         relevance_level = entry["relevance_level"]
         candidate = entry["card2"]
-        
+
         # Avoid duplicates
         if candidate not in query_groups[query][relevance_level]:
             query_groups[query][relevance_level].append(candidate)
-    
+
     # Merge into test set
     added_queries = 0
     updated_queries = 0
-    
+
     for query, labels in query_groups.items():
         if query not in queries:
             # New query - create entry
@@ -153,35 +155,35 @@ def expand_test_set(
                         if level not in existing:
                             existing[level] = []
                         existing[level].append(candidate)
-            
+
             # Update sources
             if "sources" not in existing:
                 existing["sources"] = []
             if "user_feedback" not in existing["sources"]:
                 existing["sources"].append("user_feedback")
-            
+
             updated_queries += 1
-    
+
     # Prepare output
     if isinstance(test_set, dict) and "queries" in test_set:
         test_set["queries"] = queries
         output_data = test_set
     else:
         output_data = {"version": "unified_v1", "game": "magic", "queries": queries}
-    
+
     # Save
     if output_path is None:
         output_path = test_set_path.parent / f"{test_set_path.stem}_expanded.json"
-    
+
     with open(output_path, "w") as f:
         json.dump(output_data, f, indent=2)
-    
-    print(f"\nExpanded test set:")
+
+    print("\nExpanded test set:")
     print(f"  Added {added_queries} new queries")
     print(f"  Updated {updated_queries} existing queries")
     print(f"  Total queries: {len(queries)}")
     print(f"  Saved to {output_path}")
-    
+
     return {
         "added_queries": added_queries,
         "updated_queries": updated_queries,
@@ -215,19 +217,18 @@ def main():
         default=0.75,
         help="Minimum similarity score to include (default: 0.75)",
     )
-    
+
     args = parser.parse_args()
-    
+
     result = expand_test_set(
         Path(args.test_set),
         Path(args.feedback),
         Path(args.output) if args.output else None,
         min_rating=args.min_rating,
     )
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

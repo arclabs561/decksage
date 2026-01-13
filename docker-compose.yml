@@ -14,24 +14,24 @@ services:
       - EMBEDDINGS_PATH=${EMBEDDINGS_PATH:-/app/data/embeddings/model.wv}
       - PAIRS_PATH=${PAIRS_PATH:-/app/data/graphs/pairs.csv}
       - ATTRIBUTES_PATH=${ATTRIBUTES_PATH:-/app/data/attributes/card_attrs.csv}
-      
+
       # Asset Version Tracking
       - ASSET_METADATA_PATH=${ASSET_METADATA_PATH:-/app/data/ASSET_METADATA.json}
       - ASSET_VERSION=${ASSET_VERSION:-}
-      
+
       # Optional: Additional Signals
       - SIDEBOARD_SIGNAL_PATH=${SIDEBOARD_SIGNAL_PATH:-/app/data/signals/sideboard.json}
       - TEMPORAL_SIGNAL_PATH=${TEMPORAL_SIGNAL_PATH:-/app/data/signals/temporal.json}
       - GNN_PATH=${GNN_PATH:-/app/data/signals/gnn_graphsage.json}
       - TEXT_EMBEDDER_MODEL=${TEXT_EMBEDDER_MODEL:-all-MiniLM-L6-v2}
       - INSTRUCTION_EMBEDDER_MODEL=${INSTRUCTION_EMBEDDER_MODEL:-intfloat/e5-base-v2}
-      
+
       # Optional: Search Services
       - MEILISEARCH_URL=${MEILISEARCH_URL:-http://meilisearch:7700}
       - MEILISEARCH_KEY=${MEILISEARCH_KEY:-}
       - QDRANT_URL=${QDRANT_URL:-http://qdrant:6333}
       - QDRANT_API_KEY=${QDRANT_API_KEY:-}
-      
+
       # API Configuration
       - PORT=8000
       - ENVIRONMENT=${ENVIRONMENT:-development}
@@ -39,7 +39,7 @@ services:
       # Development: Set CORS_ORIGINS=* or specific origins (e.g., http://localhost:3000)
       # Production: MUST set CORS_ORIGINS to specific domains (comma-separated)
       - CORS_ORIGINS=${CORS_ORIGINS:-}
-      
+
       # Optional: Auto-index cards on startup (set to "true" to enable)
       - INDEX_ON_STARTUP=${INDEX_ON_STARTUP:-false}
     volumes:
@@ -137,4 +137,3 @@ volumes:
 networks:
   decksage-network:
     driver: bridge
-

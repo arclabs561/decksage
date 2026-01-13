@@ -196,4 +196,3 @@ func (em *ExtractionMonitor) LoadHealthCheck(ctx context.Context, datasetName st
 	}
 	return &check, nil
 }
-

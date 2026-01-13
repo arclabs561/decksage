@@ -10,9 +10,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
-import sys
 
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent
@@ -21,7 +21,6 @@ if str(src_dir) not in sys.path:
 
 from ml.utils.annotation_utils import (
     convert_judgments_to_annotations,
-    load_judgment_files,
 )
 from ml.utils.paths import PATHS
 
@@ -56,7 +55,7 @@ def migrate_judgment_file(judgment_file: Path, output_dir: Path) -> int:
             for ann in annotations:
                 f.write(json.dumps(ann) + "\n")
         temp_path.replace(output_file)
-    except Exception as e:
+    except Exception:
         if temp_path.exists():
             try:
                 temp_path.unlink()
@@ -150,4 +149,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     exit(main())
-

@@ -17,11 +17,13 @@ import json
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 from ml.utils.path_setup import setup_project_paths
+
 
 setup_project_paths()
 
@@ -78,18 +80,18 @@ def main():
         type=str,
         help="Export results to JSON file",
     )
-    
+
     args = parser.parse_args()
-    
+
     logger = EvaluationLogger()
-    
+
     # Get specific run
     if args.run_id:
         run = logger.get_run_by_id(args.run_id)
         if not run:
             print(f"Run ID '{args.run_id}' not found")
             return 1
-        
+
         if args.format == "json":
             print(json.dumps(run, indent=2))
         else:
@@ -118,9 +120,9 @@ def main():
                 print("")
             if run.get("notes"):
                 print(f"Notes: {run.get('notes')}")
-        
+
         return 0
-    
+
     # Query runs
     runs = logger.query_runs(
         evaluation_type=args.type,
@@ -129,22 +131,22 @@ def main():
         date_from=args.from_date,
         date_to=args.to_date,
     )
-    
+
     # Limit to recent if not filtering
     if not any([args.type, args.method, args.min_p_at_k, args.from_date, args.to_date]):
-        runs = runs[:args.recent]
-    
+        runs = runs[: args.recent]
+
     if not runs:
         print("No evaluation runs found matching criteria")
         return 0
-    
+
     # Export if requested
     if args.export:
         with open(args.export, "w") as f:
             json.dump(runs, f, indent=2)
         print(f"Exported {len(runs)} runs to {args.export}")
         return 0
-    
+
     # Display results
     if args.format == "json":
         print(json.dumps(runs, indent=2))
@@ -165,9 +167,11 @@ def main():
                     print(f"  {key}: {value}")
             print("")
     else:  # table
-        print(f"{'Run ID':<30} {'Type':<20} {'Method':<15} {'P@10':<10} {'NDCG@10':<10} {'Queries':<10}")
+        print(
+            f"{'Run ID':<30} {'Type':<20} {'Method':<15} {'P@10':<10} {'NDCG@10':<10} {'Queries':<10}"
+        )
         print("-" * 100)
-        
+
         for run in runs:
             run_id = run.get("run_id", "")[:30]
             eval_type = run.get("evaluation_type", "")[:20]
@@ -176,7 +180,7 @@ def main():
             p_at_k = metrics.get("p_at_k") or metrics.get("p_at_10", 0.0)
             ndcg = metrics.get("ndcg_at_k") or metrics.get("ndcg_at_10", 0.0)
             num_queries = run.get("num_queries") or 0
-            
+
             print(
                 f"{run_id:<30} "
                 f"{eval_type:<20} "
@@ -185,13 +189,12 @@ def main():
                 f"{ndcg:<10.4f} "
                 f"{num_queries:<10}"
             )
-        
+
         print("")
         print(f"Total: {len(runs)} runs")
-    
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

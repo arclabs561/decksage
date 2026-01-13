@@ -16,8 +16,6 @@ import logging
 import re
 import shutil
 import sqlite3
-import tempfile
-from collections.abc import Iterator
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -41,6 +39,7 @@ try:
     HAS_PYDANTIC = True
 except ImportError:
     HAS_PYDANTIC = False
+
     # Create minimal stubs for type checking
     class BaseModel:
         def __init__(self, **kwargs):
@@ -57,6 +56,7 @@ except ImportError:
             return func
 
         return decorator
+
 
 try:
     from .structured_logging import StructuredLogger
@@ -215,9 +215,7 @@ class SQLiteBackend:
 
             # Create indices for common queries
             conn.execute("CREATE INDEX IF NOT EXISTS idx_model_type ON evaluations(model_type)")
-            conn.execute(
-                "CREATE INDEX IF NOT EXISTS idx_timestamp ON evaluations(timestamp DESC)"
-            )
+            conn.execute("CREATE INDEX IF NOT EXISTS idx_timestamp ON evaluations(timestamp DESC)")
             conn.execute(
                 "CREATE INDEX IF NOT EXISTS idx_production ON evaluations(is_production, model_type)"
             )
@@ -253,9 +251,7 @@ class SQLiteBackend:
             conn.commit()
             return cursor.lastrowid
 
-    def list(
-        self, model_type: str | None = None, limit: int | None = None
-    ) -> list[dict[str, Any]]:
+    def list(self, model_type: str | None = None, limit: int | None = None) -> list[dict[str, Any]]:
         """List evaluations with optional filtering."""
         query = "SELECT * FROM evaluations"
         params: list[Any] = []
@@ -412,7 +408,7 @@ class EvaluationRegistry:
                 json.dump(data, f, indent=2)
             # Atomic rename (POSIX-compliant)
             temp_path.replace(path)
-        except Exception as e:
+        except Exception:
             # Clean up temp file on error
             if temp_path.exists():
                 try:
@@ -571,7 +567,7 @@ class EvaluationRegistry:
                 logger.warning(f"Failed to log to structured log: {e}")
 
         # Invalidate cache
-        self.cache.invalidate_pattern(f"list:*")
+        self.cache.invalidate_pattern("list:*")
         self.cache.invalidate_pattern(f"get:{model_type}:*")
 
         return results_file
@@ -675,9 +671,7 @@ class EvaluationRegistry:
             # Fallback to file-based listing
             evaluations = []
             pattern = (
-                "*_evaluation*.json"
-                if model_type is None
-                else f"{model_type}_evaluation*.json"
+                "*_evaluation*.json" if model_type is None else f"{model_type}_evaluation*.json"
             )
 
             for results_file in sorted(self.results_dir.glob(pattern), reverse=True):
@@ -766,12 +760,8 @@ class EvaluationRegistry:
                 eval1 = self.sqlite_backend.get(model_type, version1)
                 eval2 = self.sqlite_backend.get(model_type, version2)
             else:
-                results1_file = (
-                    self.results_dir / f"{model_type}_evaluation_v{version1}.json"
-                )
-                results2_file = (
-                    self.results_dir / f"{model_type}_evaluation_v{version2}.json"
-                )
+                results1_file = self.results_dir / f"{model_type}_evaluation_v{version1}.json"
+                results2_file = self.results_dir / f"{model_type}_evaluation_v{version2}.json"
 
                 if results1_file.exists():
                     with open(results1_file) as f:
@@ -1059,4 +1049,3 @@ class EvaluationRegistry:
 
         logger.info(f"Migrated {migrated} evaluations to SQLite")
         return migrated
-

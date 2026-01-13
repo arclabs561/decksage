@@ -6,7 +6,6 @@ from pathlib import Path
 import pytest
 
 from ml.knowledge import GameKnowledgeBase, retrieve_game_knowledge
-from ml.knowledge.models import GameKnowledge
 
 
 @pytest.fixture
@@ -14,7 +13,7 @@ def knowledge_base(tmp_path: Path) -> GameKnowledgeBase:
     """Create knowledge base with test data."""
     kb_dir = tmp_path / "game_knowledge"
     kb_dir.mkdir()
-    
+
     # Create minimal test knowledge
     test_knowledge = {
         "game": "magic",
@@ -24,7 +23,7 @@ def knowledge_base(tmp_path: Path) -> GameKnowledgeBase:
             "card_types": ["Creature", "Instant"],
             "keywords": ["Flash", "Haste"],
             "special_rules": "Test rules",
-            "terminology": {"CMC": "Converted Mana Cost"}
+            "terminology": {"CMC": "Converted Mana Cost"},
         },
         "archetypes": [
             {
@@ -36,7 +35,7 @@ def knowledge_base(tmp_path: Path) -> GameKnowledgeBase:
                 "key_features": ["Fast", "Linear"],
                 "typical_curve": "Low",
                 "interaction_level": "Light",
-                "meta_position": "Tier 1"
+                "meta_position": "Tier 1",
             }
         ],
         "formats": [
@@ -47,7 +46,7 @@ def knowledge_base(tmp_path: Path) -> GameKnowledgeBase:
                 "ban_list": ["Birthing Pod"],
                 "restricted_list": [],
                 "meta_context": "Diverse format",
-                "last_updated": "2025-01-01"
+                "last_updated": "2025-01-01",
             }
         ],
         "examples": [
@@ -57,16 +56,16 @@ def knowledge_base(tmp_path: Path) -> GameKnowledgeBase:
                 "card2": "Chain Lightning",
                 "score": 0.92,
                 "reasoning": "Both are 1-mana red burn",
-                "format": "Legacy"
+                "format": "Legacy",
             }
         ],
         "temporal_context": {},
-        "last_updated": "2025-01-01T00:00:00"
+        "last_updated": "2025-01-01T00:00:00",
     }
-    
+
     with open(kb_dir / "magic.json", "w") as f:
         json.dump(test_knowledge, f)
-    
+
     return GameKnowledgeBase(knowledge_dir=kb_dir)
 
 
@@ -95,7 +94,7 @@ def test_retrieve_relevant_knowledge(knowledge_base: GameKnowledgeBase):
         archetype="Burn",
         top_k=5,
     )
-    
+
     assert "mechanics" in result
     assert "archetypes" in result
     assert "formats" in result
@@ -111,7 +110,7 @@ def test_retrieve_knowledge_with_format_filter(knowledge_base: GameKnowledgeBase
         format="Modern",
         top_k=3,
     )
-    
+
     # Should include format-specific knowledge
     assert "formats" in result
     # Format content should mention Modern
@@ -126,29 +125,31 @@ def test_retrieve_knowledge_with_archetype_filter(knowledge_base: GameKnowledgeB
         archetype="Burn",
         top_k=3,
     )
-    
+
     # Should include archetype-specific knowledge
     assert "archetypes" in result
     # Archetype content should mention Burn
     assert "Burn" in result["archetypes"] or result["archetypes"] == ""
 
 
-def test_retrieve_game_knowledge_convenience_function(knowledge_base: GameKnowledgeBase, monkeypatch):
+def test_retrieve_game_knowledge_convenience_function(
+    knowledge_base: GameKnowledgeBase, monkeypatch
+):
     """Test convenience function for knowledge retrieval."""
     # Mock the GameKnowledgeBase to use our test instance
     from ml import knowledge as kb_module
-    
+
     def mock_kb():
         return knowledge_base
-    
+
     monkeypatch.setattr(kb_module, "GameKnowledgeBase", lambda *args, **kwargs: knowledge_base)
-    
+
     result = retrieve_game_knowledge(
         game="magic",
         query="Lightning Bolt",
         format="Modern",
     )
-    
+
     assert "mechanics" in result
     assert "examples" in result
 
@@ -157,18 +158,18 @@ def test_knowledge_chunking(knowledge_base: GameKnowledgeBase):
     """Test that knowledge is properly chunked."""
     knowledge = knowledge_base.load_game_knowledge("magic")
     assert knowledge is not None
-    
+
     chunks = knowledge_base._chunk_knowledge(knowledge)
-    
+
     # Should have at least mechanics, archetype, and format chunks
     assert len(chunks) >= 3
-    
+
     # Check chunk structure
     mechanics_chunk = next((c for c in chunks if c.category == "mechanics"), None)
     assert mechanics_chunk is not None
     assert mechanics_chunk.game == "magic"
     assert "Test mana system" in mechanics_chunk.content
-    
+
     archetype_chunk = next((c for c in chunks if c.category == "archetype"), None)
     assert archetype_chunk is not None
     assert "Burn" in archetype_chunk.content
@@ -179,7 +180,7 @@ def test_knowledge_caching(knowledge_base: GameKnowledgeBase):
     # First load
     knowledge1 = knowledge_base.load_game_knowledge("magic")
     assert knowledge1 is not None
-    
+
     # Second load should use cache
     knowledge2 = knowledge_base.load_game_knowledge("magic")
     assert knowledge2 is knowledge1  # Same object from cache
@@ -192,7 +193,7 @@ def test_empty_knowledge_handling(knowledge_base: GameKnowledgeBase):
         query="test",
         top_k=5,
     )
-    
+
     # Should return empty structure, not crash
     assert result["mechanics"] == ""
     assert result["archetypes"] == ""
@@ -202,4 +203,3 @@ def test_empty_knowledge_handling(knowledge_base: GameKnowledgeBase):
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
-

@@ -36,4 +36,3 @@ func (c *Collection) GetPartitions() []games.Partition {
 	}
 	return result
 }
-

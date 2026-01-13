@@ -1,12 +1,16 @@
 #!/usr/bin/env python3
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """
-Convert integrated annotations to training data formats.
+Convert similarity annotations to training data format.
 
-Converts:
-1. Integrated annotations → Substitution pairs (for training)
-2. Integrated annotations → Test set (for evaluation)
-
-This is a standalone script that doesn't require pandas or other heavy dependencies.
+This script:
+1. Loads similarity annotations (from integrated_all.jsonl or individual files)
+2. Filters out test set cards (prevents data leakage)
+3. Converts to training example format
+4. Saves in format ready for training scripts
 """
 
 import argparse
@@ -15,244 +19,236 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Add project root to path
-project_root = Path(__file__).parent.parent.parent
-sys.path.insert(0, str(project_root))
 
+def convert_annotation_to_training_example(annotation: dict[str, Any]) -> dict[str, Any] | None:
+    """Convert similarity annotation to training example format."""
+    card1 = annotation.get("card1")
+    card2 = annotation.get("card2")
+    similarity_score = annotation.get("similarity_score", 0.0)
+    similarity_type = annotation.get("similarity_type", "functional")
+    is_substitute = annotation.get("is_substitute", False)
+    source = annotation.get("source", "unknown")
+    game = annotation.get("game", "unknown")
 
-def convert_relevance_to_similarity_score(relevance: int, scale: str = "0-4") -> float:
-    """Convert relevance score (0-4) to similarity score (0-1)."""
-    mapping = {4: 0.95, 3: 0.75, 2: 0.55, 1: 0.35, 0: 0.1}
-    return mapping.get(relevance, 0.0)
+    if not card1 or not card2:
+        return None
 
-
-def extract_substitution_pairs(
-    annotations: list[dict[str, Any]],
-    min_similarity: float = 0.8,
-    require_substitute_flag: bool = True,
-) -> list[tuple[str, str]]:
-    """Extract substitution pairs from annotations."""
-    pairs = []
-    
-    for ann in annotations:
-        card1 = ann.get("card1")
-        card2 = ann.get("card2")
-        
-        if not card1 or not card2:
-            continue
-        
-        # Get similarity score
-        similarity_score = ann.get("similarity_score")
-        if similarity_score is None:
-            # Try to convert from relevance
-            relevance = ann.get("relevance")
-            if relevance is not None:
-                similarity_score = convert_relevance_to_similarity_score(int(relevance))
-            else:
-                continue
-        
-        # Check threshold
-        if similarity_score < min_similarity:
-            continue
-        
-        # Check substitute flag
-        if require_substitute_flag:
-            is_substitute = ann.get("is_substitute", False)
-            if not is_substitute:
-                continue
-        
-        pairs.append((card1, card2))
-    
-    return pairs
-
-
-def convert_to_test_set(
-    annotations: list[dict[str, Any]],
-) -> dict[str, Any]:
-    """Convert annotations to test set format."""
-    test_set = {
-        "version": "1.0",
-        "queries": {},
+    # Create training example
+    example = {
+        "card1": card1,
+        "card2": card2,
+        "similarity_score": float(similarity_score),
+        "similarity_type": similarity_type,
+        "is_substitute": bool(is_substitute),
+        "source": source,
+        "game": game,
+        # Include metadata for tracking
+        "metadata": {
+            "model_name": annotation.get("model_name"),
+            "annotator_id": annotation.get("annotator_id"),
+            "timestamp": annotation.get("timestamp"),
+            "reasoning": annotation.get("reasoning", "")[:200],  # Truncate for size
+        },
     }
-    
-    # Group by query card
-    queries: dict[str, dict[str, list[str]]] = {}
-    
+
+    # Add weight based on source (higher quality = higher weight)
+    if "agentic" in source or "multi_annotator" in source:
+        example["weight"] = 1.5  # Multi-annotator consensus is higher quality
+    elif source == "hand":
+        example["weight"] = 2.0  # Hand annotations are highest quality
+    elif source == "user_feedback":
+        example["weight"] = 2.0  # User feedback is highest quality
+    else:
+        example["weight"] = 1.0  # Default weight
+
+    return example
+
+
+def convert_annotations_to_training_data(
+    annotation_path: Path,
+    output_path: Path,
+    min_score: float = 0.0,
+    filter_test_cards: bool = True,
+    game: str | None = None,
+) -> dict[str, Any]:
+    """Convert annotations to training data format."""
+    print("=" * 80)
+    print("CONVERTING ANNOTATIONS TO TRAINING DATA")
+    print("=" * 80)
+    print(f"Input: {annotation_path}")
+    print(f"Output: {output_path}")
+    print(f"Min score: {min_score}")
+    print(f"Filter test cards: {filter_test_cards}")
+    print()
+
+    # Load annotations
+    print("Loading annotations...")
+    annotations = []
+    with open(annotation_path) as f:
+        for line in f:
+            if line.strip():
+                try:
+                    ann = json.loads(line)
+                    annotations.append(ann)
+                except json.JSONDecodeError:
+                    continue
+
+    print(f"  Loaded {len(annotations)} annotations")
+
+    # Filter by game if specified
+    if game:
+        annotations = [a for a in annotations if a.get("game", "").lower() == game.lower()]
+        print(f"  Filtered to {len(annotations)} {game} annotations")
+
+    # Filter test set cards if requested
+    if filter_test_cards:
+        print("\nFiltering test set cards (preventing data leakage)...")
+        try:
+            # Add src to path
+            project_root = Path(__file__).parent.parent.parent
+            src_dir = project_root / "src"
+            if str(src_dir) not in sys.path:
+                sys.path.insert(0, str(src_dir))
+
+            from ml.utils.annotation_utils import filter_annotations_for_training
+
+            filtered, stats = filter_annotations_for_training(
+                annotations,
+                test_set_path=None,  # Use default test sets
+                game=game,
+                strict=True,
+            )
+            annotations = filtered
+            print(f"  Filtered {stats['filtered']} annotations with test set cards")
+            print(f"  Remaining: {len(annotations)} annotations safe for training")
+        except Exception as e:
+            print(f"  ⚠ Could not filter test cards: {e}")
+            print("  Proceeding without filtering (WARNING: may cause data leakage)")
+
+    # Convert to training examples
+    print("\nConverting to training examples...")
+    training_examples = []
     for ann in annotations:
-        card1 = ann.get("card1")
-        card2 = ann.get("card2")
-        
-        if not card1 or not card2:
+        score = ann.get("similarity_score", 0.0)
+        if score < min_score:
             continue
-        
-        # Get similarity score or convert from relevance
-        similarity_score = ann.get("similarity_score")
-        if similarity_score is None:
-            relevance = ann.get("relevance")
-            if relevance is not None:
-                similarity_score = convert_relevance_to_similarity_score(int(relevance))
-            else:
-                continue
-        
-        # Initialize query if needed
-        if card1 not in queries:
-            queries[card1] = {
-                "highly_relevant": [],
-                "relevant": [],
-                "somewhat_relevant": [],
-                "marginally_relevant": [],
-                "irrelevant": [],
-            }
-        
-        # Categorize by similarity score
-        if similarity_score >= 0.8:
-            queries[card1]["highly_relevant"].append(card2)
-        elif similarity_score >= 0.6:
-            queries[card1]["relevant"].append(card2)
-        elif similarity_score >= 0.4:
-            queries[card1]["somewhat_relevant"].append(card2)
-        elif similarity_score >= 0.2:
-            queries[card1]["marginally_relevant"].append(card2)
+
+        example = convert_annotation_to_training_example(ann)
+        if example:
+            training_examples.append(example)
+
+    print(f"  Created {len(training_examples)} training examples (score >= {min_score})")
+
+    # Save training data
+    print(f"\nSaving to {output_path}...")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        for example in training_examples:
+            f.write(json.dumps(example) + "\n")
+
+    # Summary statistics
+    sources = {}
+    games = {}
+    score_ranges = {"0.0-0.2": 0, "0.2-0.4": 0, "0.4-0.6": 0, "0.6-0.8": 0, "0.8-1.0": 0}
+
+    for ex in training_examples:
+        source = ex.get("source", "unknown")
+        sources[source] = sources.get(source, 0) + 1
+
+        game = ex.get("game", "unknown")
+        games[game] = games.get(game, 0) + 1
+
+        score = ex.get("similarity_score", 0.0)
+        if score < 0.2:
+            score_ranges["0.0-0.2"] += 1
+        elif score < 0.4:
+            score_ranges["0.2-0.4"] += 1
+        elif score < 0.6:
+            score_ranges["0.4-0.6"] += 1
+        elif score < 0.8:
+            score_ranges["0.6-0.8"] += 1
         else:
-            queries[card1]["irrelevant"].append(card2)
-    
-    test_set["queries"] = queries
-    return test_set
+            score_ranges["0.8-1.0"] += 1
+
+    print("\n" + "=" * 80)
+    print("CONVERSION SUMMARY")
+    print("=" * 80)
+    print(f"Total training examples: {len(training_examples)}")
+    print("\nBy source:")
+    for source, count in sorted(sources.items(), key=lambda x: -x[1]):
+        print(f"  {source}: {count}")
+    print("\nBy game:")
+    for game, count in sorted(games.items(), key=lambda x: -x[1]):
+        print(f"  {game}: {count}")
+    print("\nBy score range:")
+    for range_name, count in sorted(score_ranges.items()):
+        print(f"  {range_name}: {count}")
+
+    return {
+        "total_examples": len(training_examples),
+        "sources": sources,
+        "games": games,
+        "score_ranges": score_ranges,
+        "output_path": str(output_path),
+    }
 
 
 def main() -> int:
     """Main entry point."""
     parser = argparse.ArgumentParser(
-        description="Convert integrated annotations to training data formats"
+        description="Convert similarity annotations to training data format"
     )
     parser.add_argument(
-        "--input",
+        "--annotation-path",
         type=Path,
-        required=True,
-        help="Input integrated annotations JSONL file",
+        default=Path("annotations/integrated_all.jsonl"),
+        help="Path to annotation file (JSONL)",
     )
     parser.add_argument(
-        "--output-substitution-pairs",
+        "--output",
         type=Path,
-        help="Output path for substitution pairs JSON",
+        default=Path("data/processed/training_data_from_annotations.jsonl"),
+        help="Output path for training data",
     )
     parser.add_argument(
-        "--output-test-set",
-        type=Path,
-        help="Output path for test set JSON",
-    )
-    parser.add_argument(
-        "--min-similarity",
+        "--min-score",
         type=float,
-        default=0.8,
-        help="Minimum similarity score for substitution pairs (default: 0.8)",
+        default=0.0,
+        help="Minimum similarity score to include (default: 0.0)",
     )
     parser.add_argument(
-        "--require-substitute-flag",
+        "--no-filter-test-cards",
         action="store_true",
-        default=True,
-        help="Require is_substitute=True for substitution pairs (default: True)",
+        help="Don't filter test set cards (WARNING: may cause data leakage)",
     )
-    
+    parser.add_argument(
+        "--game",
+        type=str,
+        help="Filter by game (magic, pokemon, yugioh)",
+    )
+
     args = parser.parse_args()
-    
-    if not args.input.exists():
-        print(f"Error: Input file not found: {args.input}")
+
+    if not args.annotation_path.exists():
+        print(f"Error: Annotation file not found: {args.annotation_path}")
         return 1
-    
-    if not args.output_substitution_pairs and not args.output_test_set:
-        parser.error("Must specify at least one of --output-substitution-pairs or --output-test-set")
-    
-    # Load annotations
-    print(f"Loading annotations from {args.input}...")
-    annotations = []
-    errors = []
-    with open(args.input) as f:
-        for line_num, line in enumerate(f, 1):
-            if line.strip():
-                try:
-                    ann = json.loads(line)
-                    # Basic validation
-                    if ann.get("card1") and ann.get("card2"):
-                        annotations.append(ann)
-                    else:
-                        errors.append(f"Line {line_num}: Missing card1 or card2")
-                except json.JSONDecodeError as e:
-                    errors.append(f"Line {line_num}: Invalid JSON - {e}")
-                    continue
-                except Exception as e:
-                    errors.append(f"Line {line_num}: Error - {e}")
-                    continue
-    
-    if errors:
-        print(f"⚠ {len(errors)} errors encountered while loading:")
-        for error in errors[:5]:
-            print(f"  {error}")
-        if len(errors) > 5:
-            print(f"  ... and {len(errors) - 5} more errors")
-        print()
-    
-    print(f"Loaded {len(annotations)} annotations")
-    
-    # Convert to substitution pairs
-    if args.output_substitution_pairs:
-        print(f"\nExtracting substitution pairs (min_similarity={args.min_similarity})...")
-        pairs = extract_substitution_pairs(
-            annotations,
-            min_similarity=args.min_similarity,
-            require_substitute_flag=args.require_substitute_flag,
-        )
-        
-        print(f"Extracted {len(pairs)} substitution pairs")
-        
-        # Save
-        args.output_substitution_pairs.parent.mkdir(parents=True, exist_ok=True)
-        pairs_list = [[c1, c2] for c1, c2 in pairs]
-        
-        temp_path = args.output_substitution_pairs.with_suffix(
-            args.output_substitution_pairs.suffix + ".tmp"
-        )
-        try:
-            with open(temp_path, "w") as f:
-                json.dump(pairs_list, f, indent=2)
-            temp_path.replace(args.output_substitution_pairs)
-            print(f"✓ Saved substitution pairs to {args.output_substitution_pairs}")
-        except Exception as e:
-            if temp_path.exists():
-                temp_path.unlink()
-            raise
-    
-    # Convert to test set
-    if args.output_test_set:
-        print(f"\nConverting to test set format...")
-        test_set = convert_to_test_set(annotations)
-        
-        queries = test_set["queries"]
-        total_relevant = sum(
-            len(v.get("highly_relevant", [])) + len(v.get("relevant", []))
-            for v in queries.values()
-        )
-        
-        print(f"Created test set with {len(queries)} queries, {total_relevant} relevant cards")
-        
-        # Save
-        args.output_test_set.parent.mkdir(parents=True, exist_ok=True)
-        temp_path = args.output_test_set.with_suffix(
-            args.output_test_set.suffix + ".tmp"
-        )
-        try:
-            with open(temp_path, "w") as f:
-                json.dump(test_set, f, indent=2)
-            temp_path.replace(args.output_test_set)
-            print(f"✓ Saved test set to {args.output_test_set}")
-        except Exception as e:
-            if temp_path.exists():
-                temp_path.unlink()
-            raise
-    
+
+    result = convert_annotations_to_training_data(
+        annotation_path=args.annotation_path,
+        output_path=args.output,
+        min_score=args.min_score,
+        filter_test_cards=not args.no_filter_test_cards,
+        game=args.game,
+    )
+
+    print(f"\n✓ Training data ready: {result['output_path']}")
+    print("\nNext steps:")
+    print("  1. Use this file with training scripts")
+    print("  2. Run validate_training_data.py to verify no leakage")
+    print("  3. Check score distribution matches expectations")
+
     return 0
 
 
 if __name__ == "__main__":
     sys.exit(main())
-

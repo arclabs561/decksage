@@ -155,4 +155,3 @@ ann.model_params = {
 1. ✅ **Current implementation is correct** - no changes needed
 2. **Optional enhancement**: Add more temperature diversity if desired (but current approach is good)
 3. **Optional enhancement**: Consider adding GPT-5.2 as 4th annotator for more diversity (but 3 is sufficient)
-
