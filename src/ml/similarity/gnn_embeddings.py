@@ -126,7 +126,7 @@ if HAS_PYG:
             return 1  # Single graph
 
         def get(self, idx: int) -> Data:
-            return torch.load(self.processed_paths[0])
+            return torch.load(self.processed_paths[0], weights_only=False)
 
 
     class GCNEncoder(nn.Module):
