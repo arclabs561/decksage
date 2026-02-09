@@ -16,6 +16,7 @@ Tests:
 from __future__ import annotations
 
 import argparse
+import logging
 import sys
 
 from ..data.incremental_graph import IncrementalCardGraph
@@ -24,6 +25,8 @@ from ..scripts.integrate_hybrid_embeddings import (
     load_hybrid_embeddings,
 )
 from ..utils.paths import PATHS
+
+logger = logging.getLogger(__name__)
 
 
 def test_graph_updates() -> bool:
@@ -176,6 +179,7 @@ def test_fusion_integration() -> bool:
 
 def main() -> int:
     """Run all tests."""
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
     parser = argparse.ArgumentParser(description="Test hybrid embedding system")
     parser.add_argument(
         "--test",

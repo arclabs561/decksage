@@ -11,7 +11,6 @@ Tests:
 
 from __future__ import annotations
 
-import tempfile
 from pathlib import Path
 
 import pytest
@@ -135,29 +134,9 @@ def test_get_similar_by_cooccurrence():
 @pytest.mark.skipif(not HAS_GENSIM, reason="Requires gensim")
 def test_get_similar_by_embeddings():
     """Test finding similar cards by embeddings."""
-    # Function exists in fallback_labeling.py but file is corrupted (all on one line)
-    # Skip this test for now - requires embeddings and corrupted file
-    pytest.skip("get_similar_by_embeddings requires embeddings and corrupted file")
-
-    # Create minimal test embeddings
-    with tempfile.TemporaryDirectory() as tmpdir:
-        from gensim.models import Word2Vec
-
-        # Train minimal model
-        sentences = [
-            ["Lightning", "Bolt"],
-            ["Shock", "Bolt"],
-            ["Fire", "Bolt"],
-        ]
-        model = Word2Vec(sentences, vector_size=10, window=2, min_count=1, epochs=1)
-        wv = model.wv
-
-        similar = get_similar_by_embeddings("Lightning", wv, top_k=2)
-
-        assert len(similar) > 0
-        # Should find similar words
-        similar_names = [name for name, _ in similar]
-        assert len(similar_names) > 0
+    pytest.skip(
+        "get_similar_by_embeddings requires embeddings and the fallback_labeling script is not importable here"
+    )
 
 
 if __name__ == "__main__":

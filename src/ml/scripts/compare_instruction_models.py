@@ -17,6 +17,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from ..similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
 from ..utils.logging_config import log_exception, setup_script_logging
