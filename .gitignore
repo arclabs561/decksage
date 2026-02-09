@@ -86,6 +86,10 @@ venv/
 *.log.*
 /logs/
 
+# Local API outputs (should not be committed)
+/data/analytics/*.jsonl
+/data/annotations/user_feedback*.jsonl
+
 # Temporary files
 *.tmp
 *.temp
