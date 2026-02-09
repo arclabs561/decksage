@@ -126,12 +126,13 @@ If you have access, some pipelines sync from S3 (see `data/README.md`).
 ## Development
 
 ```bash
-uv run pytest -q
-uv run ruff check .
-uv run ruff format .
+just test-quick
+just test
+just lint
+just format
 ```
 
-`just` wrappers exist; see `justfile`.
+See `justfile` for additional targets.
 
 ## Docs
 

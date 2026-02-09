@@ -15,6 +15,42 @@ from ml.utils.path_setup import setup_project_paths
 setup_project_paths()
 
 
+@pytest.fixture(autouse=True)
+def reset_api_state() -> None:
+    """
+    Reset global/per-process API state between tests.
+
+    The FastAPI app and module-level caches are process globals; without an explicit
+    reset, tests can leak state into each other (especially after multi-game changes).
+    """
+    try:
+        import fastapi  # noqa: F401
+    except ImportError:
+        # If FastAPI isn't installed, API tests will be skipped anyway.
+        return
+
+    from ml.api import api as api_mod
+
+    # Clear per-game state and caches.
+    for attr in (
+        "api_by_game",
+        "search_by_game",
+        "games",
+        "default_game",
+        "price_manager",
+        "mtg_tagger",
+    ):
+        try:
+            delattr(api_mod.app.state, attr)
+        except Exception:
+            pass
+
+    # Clear legacy module-level globals used by _adopt_legacy_globals().
+    api_mod.embeddings = None
+    api_mod.graph_data = None
+    api_mod.model_info = {}
+
+
 @pytest.fixture
 def temp_test_set(tmp_path: Path) -> Path:
     """Create a temporary test set file for testing."""
@@ -144,7 +180,7 @@ def mock_cmc_fn():
 
 
 @pytest.fixture()
-def api_client():
+def api_client(reset_api_state):
     """Create a test client for the API."""
     from fastapi.testclient import TestClient
 
