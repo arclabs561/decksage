@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from typing import Any
 
@@ -174,6 +175,11 @@ Examples:
         help="API base URL (default: http://localhost:8000)",
     )
     parser.add_argument(
+        "--game",
+        default=os.getenv("DECKSAGE_DEFAULT_GAME", "magic"),
+        help="Game name (magic|pokemon|yugioh) (default: DECKSAGE_DEFAULT_GAME or magic)",
+    )
+    parser.add_argument(
         "--direct",
         action="store_true",
         help="Use direct API imports (faster, local only)",
@@ -233,7 +239,7 @@ Examples:
         return 1
 
     # Create client
-    client = DeckSageClient(base_url=args.url, direct_mode=args.direct)
+    client = DeckSageClient(base_url=args.url, game=args.game, direct_mode=args.direct)
 
     # Route to command handler
     handlers = {

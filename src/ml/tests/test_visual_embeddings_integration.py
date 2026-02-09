@@ -118,7 +118,7 @@ class TestVisualEmbeddingsAPIIntegration:
         mock_embedder_class.return_value = mock_embedder
 
         state = get_state()
-        load_signals_to_state(visual_embedder_model="clip-ViT-B-16")
+        load_signals_to_state(state=state, visual_embedder_model="clip-ViT-B-16")
 
         # Visual embedder should be initialized
         assert state.visual_embedder is not None
