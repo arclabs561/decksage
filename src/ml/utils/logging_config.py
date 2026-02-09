@@ -42,7 +42,7 @@ from contextvars import ContextVar
 from datetime import UTC, datetime, timedelta
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, ClassVar, Literal
 
 
 # Context variables for correlation IDs and experiment names
@@ -122,7 +122,7 @@ class ProgressFormatter(logging.Formatter):
     - [STAGE] for stage transitions
     """
 
-    PROGRESS_KEYWORDS = {
+    PROGRESS_KEYWORDS: ClassVar[dict[str, str]] = {
         "epoch": "[PROGRESS]",
         "checkpoint": "[CHECKPOINT]",
         "saved": "[CHECKPOINT]",
@@ -351,8 +351,10 @@ def configure_logging(
     """
     global _logging_configured
 
-    if _logging_configured and not force:
-        return
+    # If logging was already configured, keep existing handlers unless `force=True`.
+    # We still allow adding missing handlers (e.g., a file handler) on subsequent
+    # calls so tests and scripts can opt into file logging without restarting the
+    # process.
 
     # Get configuration from args or environment
     if level is None:
@@ -391,10 +393,7 @@ def configure_logging(
         formatter = logging.Formatter(format_str)
 
     # Add correlation ID filter if enabled
-    if enable_correlation_ids:
-        corr_filter = CorrelationIDFilter()
-    else:
-        corr_filter = None
+    corr_filter = CorrelationIDFilter() if enable_correlation_ids else None
 
     # Console handler (always add, unless already exists)
     if not has_console:
@@ -457,10 +456,7 @@ def get_logger(name: str | None = None) -> logging.Logger:
         import inspect
 
         frame = inspect.currentframe()
-        if frame and frame.f_back:
-            name = frame.f_back.f_globals.get("__name__", "root")
-        else:
-            name = "root"
+        name = frame.f_back.f_globals.get("__name__", "root") if frame and frame.f_back else "root"
 
     return logging.getLogger(name)
 
@@ -570,9 +566,9 @@ def log_progress(
 
     # Add metadata as key=value pairs (structured, easy to parse)
     # Limit to prevent extremely long log lines
-    MAX_METADATA_ITEMS = 15
+    max_metadata_items = 15
     if metadata:
-        metadata_items = list(metadata.items())[:MAX_METADATA_ITEMS]
+        metadata_items = list(metadata.items())[:max_metadata_items]
         for k, v in metadata_items:
             # Format values appropriately
             if isinstance(v, float):
@@ -592,8 +588,8 @@ def log_progress(
             else:
                 parts.append(f"{k}={v}")
 
-        if len(metadata) > MAX_METADATA_ITEMS:
-            parts.append(f"...({len(metadata) - MAX_METADATA_ITEMS}_more)")
+        if len(metadata) > max_metadata_items:
+            parts.append(f"...({len(metadata) - max_metadata_items}_more)")
 
     # Add context fields if available
     context_parts = []
@@ -777,7 +773,24 @@ def setup_script_logging(
         log_dir = Path(log_dir)
         log_dir.mkdir(parents=True, exist_ok=True)
 
-    configure_logging(level=level, log_dir=log_dir)
+    # Determine script name early so file logging is deterministic.
+    if script_name is None:
+        import inspect
+
+        frame = inspect.currentframe()
+        if frame and frame.f_back:
+            script_path = frame.f_back.f_globals.get("__file__", "script")
+            script_name = Path(script_path).stem
+        else:
+            script_name = "script"
+
+    # If a log directory was requested, force a file handler at a predictable path.
+    # This avoids leaking a stale file handler across tests or long-running REPLs.
+    if log_dir:
+        log_file = Path(log_dir) / f"{script_name}.log"
+        configure_logging(level=level, log_file=log_file, force=True)
+    else:
+        configure_logging(level=level)
 
     # Set correlation ID
     if correlation_id is None:
@@ -799,19 +812,7 @@ def setup_script_logging(
     if git_commit or auto_detect_git:
         set_git_commit(git_commit)
 
-    if script_name:
-        logger = get_logger(script_name)
-    else:
-        # Auto-detect from script path
-        import inspect
-
-        frame = inspect.currentframe()
-        if frame and frame.f_back:
-            script_path = frame.f_back.f_globals.get("__file__", "script")
-            script_name = Path(script_path).stem
-        else:
-            script_name = "script"
-        logger = get_logger(script_name)
+    logger = get_logger(script_name)
 
     # Log startup with correlation ID
     logger.info(f"Starting {script_name} [correlation_id={correlation_id}]")

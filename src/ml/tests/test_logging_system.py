@@ -12,23 +12,13 @@ from pathlib import Path
 
 import pytest
 
+from ml.utils.log_monitor import LocalLogMonitor, LogParser, TrainingStatus, format_status
 from ml.utils.logging_config import (
     configure_logging,
     log_checkpoint,
     log_progress,
     setup_script_logging,
 )
-
-
-# Skip test - log_monitor.py is corrupted (all on one line)
-pytestmark = pytest.mark.skip(reason="log_monitor.py is corrupted and needs manual repair")
-
-# from ml.utils.log_monitor import (
-#     LocalLogMonitor,
-#     LogParser,
-#     TrainingStatus,
-#     format_status,
-# )
 
 
 class TestLogParser:
