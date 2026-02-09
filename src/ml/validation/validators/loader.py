@@ -1,4 +1,10 @@
-"""Deck loading and validation utilities."""
+"""Deck loading and validation utilities.
+
+This module is the *parser boundary* between exported JSONL deck records
+(from the backend) and deterministic, game-specific Pydantic models.
+
+Design goal: be explicit and fail-closed (no silent "valid anyway" fallbacks).
+"""
 
 from __future__ import annotations
 
@@ -9,24 +15,7 @@ from pathlib import Path
 from typing import Any
 
 
-# Re-export models if available
-try:
-    from .models import (
-        BASIC_LANDS,
-        CardDesc,
-        Collection,
-        MTGDeck,
-        Partition,
-        PokemonDeck,
-        YugiohDeck,
-    )
-except ImportError:
-    # Fallback to __init__.py definitions
-    from . import (
-        MTGDeck,
-        PokemonDeck,
-        YugiohDeck,
-    )
+from .models import MTGDeck, PokemonDeck, YugiohDeck
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +103,7 @@ def iter_decks_validated(
         path: Path to JSONL file
         game: Game name or "auto" for auto-detection
         max_decks: Maximum number of decks to yield
-        check_legality: Whether to check format legality (currently ignored)
+        check_legality: If True, enforce deterministic ban-list legality.
         **kwargs: Additional arguments (ignored)
 
     Yields:
@@ -143,10 +132,20 @@ def iter_decks_validated(
             yield (None, result)
             continue
 
+        if not deck_dict.get("source") and deck_dict.get("url"):
+            deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
+
         # Detect game if auto
         detected_game = game
         if game == "auto":
             detected_game = _detect_game_from_deck(deck_dict, path)
+
+        if detected_game not in {"magic", "pokemon", "yugioh"}:
+            from types import SimpleNamespace
+
+            result = SimpleNamespace(is_valid=False, errors=["Unknown/unsupported game"])
+            yield (None, result)
+            continue
 
         # Try to parse as Pydantic model
         try:
@@ -162,6 +161,18 @@ def iter_decks_validated(
             from types import SimpleNamespace
 
             result = SimpleNamespace(is_valid=True, errors=[])
+
+            if check_legality:
+                try:
+                    from .legality import check_deck_legality
+
+                    issues = check_deck_legality(deck_model, game=detected_game)
+                    if issues:
+                        result.is_valid = False
+                        result.errors = issues
+                except Exception as e:
+                    result.is_valid = False
+                    result.errors = [f"legality_check_failed: {e}"]
             yield (deck_model, result)
             count += 1
         except Exception as e:
@@ -215,15 +226,17 @@ def _detect_game_from_deck(deck_dict: dict[str, Any], file_path: Path | str | No
     try:
         from ...utils.game_detection import detect_game
 
-        return detect_game(deck=deck_dict, file_path=file_path, default="magic")
+        return detect_game(deck=deck_dict, file_path=file_path, default="unknown")
     except ImportError:
-        # Fallback: simple heuristics
-        source = str(deck_dict.get("source", "")).lower()
-        if "pokemon" in source or "limitless" in source:
+        # Minimal fallback (should be rare). Prefer URL over "source" (often null in exports).
+        url_or_source = str(deck_dict.get("url") or deck_dict.get("source") or "").lower()
+        if "pokemon" in url_or_source or "limitless" in url_or_source:
             return "pokemon"
-        if "yugioh" in source or "ygo" in source:
+        if "yugioh" in url_or_source or "ygoprodeck" in url_or_source or "ygo" in url_or_source:
             return "yugioh"
-        return "magic"
+        if any(x in url_or_source for x in ["mtgtop8", "mtggoldfish", "deckbox", "scryfall", "mtg"]):
+            return "magic"
+        return "unknown"
 
 
 def _parse_deck_model(
@@ -251,7 +264,7 @@ def load_decks_lenient(
     check_legality: bool = False,
     verbose: bool = False,
     **kwargs: Any,
-) -> list[dict[str, Any]]:
+) -> list[MTGDeck | PokemonDeck | YugiohDeck]:
     """
     Load decks with lenient validation (allows some errors).
 
@@ -259,19 +272,19 @@ def load_decks_lenient(
         path: Path to JSONL file
         game: Game name or "auto" for auto-detection
         max_decks: Maximum number of decks to load
-        check_legality: Whether to check format legality (currently ignored)
+        check_legality: If True, enforce deterministic ban-list legality (invalid decks skipped)
         verbose: Whether to print progress
         **kwargs: Additional arguments (ignored)
 
     Returns:
-        List of deck dictionaries (may have validation errors)
+        List of validated deck models. Invalid decks are skipped.
     """
     path = Path(path)
     if not path.exists():
         logger.warning(f"Deck file not found: {path}")
         return []
 
-    decks: list[dict[str, Any]] = []
+    decks: list[MTGDeck | PokemonDeck | YugiohDeck] = []
     skipped = 0
 
     try:
@@ -291,10 +304,22 @@ def load_decks_lenient(
                     skipped += 1
                     continue
 
+                # Ensure "source" is populated if possible (exports often have source=null).
+                if not deck_dict.get("source") and deck_dict.get("url"):
+                    deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
+
                 # Detect game if auto
                 detected_game = game
                 if game == "auto":
                     detected_game = _detect_game_from_deck(deck_dict, path)
+
+                if detected_game not in {"magic", "pokemon", "yugioh"}:
+                    skipped += 1
+                    if verbose:
+                        logger.debug(
+                            f"Skipping deck with unknown game at line {line_num}: {deck_dict.get('deck_id', 'unknown')}"
+                        )
+                    continue
 
                 # Try to parse as Pydantic model (lenient: skip if fails)
                 deck_model = _parse_deck_model(deck_dict, detected_game)
@@ -307,7 +332,35 @@ def load_decks_lenient(
                         )
                     continue
 
-                # Return Pydantic model (caller will convert to dict if needed)
+                # Optional deterministic legality checking (ban lists). If requested,
+                # fail-closed: decks with issues are skipped.
+                if check_legality:
+                    try:
+                        from .legality import check_deck_legality
+
+                        issues = check_deck_legality(deck_model, game=detected_game)
+                        if issues:
+                            skipped += 1
+                            if verbose:
+                                logger.debug(
+                                    "Skipping illegal deck at line %s (%s): %s",
+                                    line_num,
+                                    deck_dict.get("deck_id", "unknown"),
+                                    issues[:3],
+                                )
+                            continue
+                    except Exception as e:
+                        skipped += 1
+                        if verbose:
+                            logger.debug(
+                                "Skipping deck due to legality check failure at line %s (%s): %s",
+                                line_num,
+                                deck_dict.get("deck_id", "unknown"),
+                                e,
+                            )
+                        continue
+
+                # Return Pydantic model (caller may model_dump() if needed)
                 decks.append(deck_model)
 
     except OSError as e:
@@ -324,7 +377,8 @@ def load_decks_strict(
     path: Path | str,
     game: str = "auto",
     max_decks: int | None = None,
-) -> list[dict[str, Any]]:
+    check_legality: bool = False,
+) -> list[MTGDeck | PokemonDeck | YugiohDeck]:
     """
     Load decks with strict validation (rejects invalid decks).
 
@@ -334,9 +388,57 @@ def load_decks_strict(
         max_decks: Maximum number of decks to load
 
     Returns:
-        List of validated deck dictionaries
+        List of validated deck models.
+
+    Raises:
+        ValueError on the first invalid record (JSON or schema/validation error).
     """
-    return []
+    path = Path(path)
+    if not path.exists():
+        raise FileNotFoundError(f"Deck file not found: {path}")
+
+    decks: list[MTGDeck | PokemonDeck | YugiohDeck] = []
+
+    with open(path, encoding="utf-8") as f:
+        for line_num, line in enumerate(f, 1):
+            if max_decks and len(decks) >= max_decks:
+                break
+            if not line.strip():
+                continue
+            try:
+                deck_dict = json.loads(line)
+            except json.JSONDecodeError as e:
+                raise ValueError(f"Line {line_num}: invalid JSON: {e}") from e
+
+            if not deck_dict.get("source") and deck_dict.get("url"):
+                deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
+
+            detected_game = game
+            if game == "auto":
+                detected_game = _detect_game_from_deck(deck_dict, path)
+
+            if detected_game not in {"magic", "pokemon", "yugioh"}:
+                raise ValueError(
+                    f"Line {line_num}: could not detect game for deck_id={deck_dict.get('deck_id', 'unknown')}"
+                )
+
+            deck_model = _parse_deck_model(deck_dict, detected_game)
+            if deck_model is None:
+                raise ValueError(
+                    f"Line {line_num}: failed to parse/validate deck_id={deck_dict.get('deck_id', 'unknown')}"
+                )
+
+            if check_legality:
+                from .legality import check_deck_legality
+
+                issues = check_deck_legality(deck_model, game=detected_game)
+                if issues:
+                    raise ValueError(
+                        f"Line {line_num}: illegal deck_id={deck_dict.get('deck_id', 'unknown')}: {issues[:3]}"
+                    )
+            decks.append(deck_model)
+
+    return decks
 
 
 def stream_decks_lenient(
@@ -353,7 +455,7 @@ def stream_decks_lenient(
         path: Path to JSONL file
         game: Game name or "auto" for auto-detection
         max_decks: Maximum number of decks to yield
-        check_legality: Whether to check format legality (currently ignored)
+        check_legality: If True, enforce deterministic ban-list legality (invalid decks skipped)
         **kwargs: Additional arguments (ignored)
 
     Yields:
@@ -377,15 +479,31 @@ def stream_decks_lenient(
         except json.JSONDecodeError:
             continue
 
+        if not deck_dict.get("source") and deck_dict.get("url"):
+            deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
+
         # Detect game if auto
         detected_game = game
         if game == "auto":
             detected_game = _detect_game_from_deck(deck_dict, path)
 
+        if detected_game not in {"magic", "pokemon", "yugioh"}:
+            continue
+
         # Try to parse as Pydantic model (lenient: skip if fails)
         deck_model = _parse_deck_model(deck_dict, detected_game)
         if deck_model is None:
             continue
+
+        if check_legality:
+            try:
+                from .legality import check_deck_legality
+
+                issues = check_deck_legality(deck_model, game=detected_game)
+                if issues:
+                    continue
+            except Exception:
+                continue
 
         yield deck_model
         count += 1

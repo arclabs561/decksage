@@ -129,11 +129,11 @@ def validate_deck_record(
         validated = DeckExport(**record)
         return True, None, validated.model_dump(exclude_none=False)
     except Exception as e:
-        if strict:
-            return False, str(e), None
-        else:
+        # Fail-closed: schema mismatches are real data issues. In non-strict mode we
+        # *do not raise*, but we still report invalid so callers can skip records.
+        if not strict:
             import logging
 
             logger = logging.getLogger(__name__)
-            logger.warning(f"Schema validation warning: {e}")
-            return True, None, record  # Return original record in non-strict mode
+            logger.warning(f"Schema validation failed: {e}")
+        return False, str(e), None
