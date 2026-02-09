@@ -64,46 +64,45 @@ def main():
             config["existing_test_set"] = None
             print(f"Warning: Test set not found: {test_set_path}")
 
+    # Generate batches
+    output_dir = Path("annotations")
+    output_dir.mkdir(exist_ok=True)
 
-# Generate batches
-output_dir = Path("annotations")
-output_dir.mkdir(exist_ok=True)
+    for game, config in games.items():
+        n_new = config["target"] - config["current"]
+        if n_new <= 0:
+            print(
+                f"✓ {game.upper()}: Already has {config['current']} queries (target: {config['target']})"
+            )
+            continue
 
-for game, config in games.items():
-    n_new = config["target"] - config["current"]
-    if n_new <= 0:
-        print(
-            f"✓ {game.upper()}: Already has {config['current']} queries (target: {config['target']})"
-        )
-        continue
+        print(f"\nGenerating batch for {game.upper()}:")
+        print(f" Current: {config['current']} queries")
+        print(f" Target: {config['target']} queries")
+        print(f" Need: {n_new} new queries")
 
-    print(f"\n📋 Generating batch for {game.upper()}:")
-    print(f" Current: {config['current']} queries")
-    print(f" Target: {config['target']} queries")
-    print(f" Need: {n_new} new queries")
+        if not config["pairs"].exists():
+            print(f" Error: Pairs CSV not found: {config['pairs']}")
+            continue
 
-    if not config["pairs"].exists():
-        print(f" Error: Pairs CSV not found: {config['pairs']}")
-        continue
+        output_file = output_dir / f"hand_batch_{game}_expansion.yaml"
 
-    output_file = output_dir / f"hand_batch_{game}_expansion.yaml"
+        try:
+            create_annotation_batch(
+                game=game,
+                target_queries=config["target"],
+                current_queries=config["current"],
+                pairs_csv=config["pairs"],
+                embeddings_path=None,  # Can add later if embeddings available
+                output_path=output_file,
+                existing_test_set=config.get("existing_test_set"),
+                seed=42,
+            )
+        except Exception as e:
+            print(f" Error: {e}")
+            import traceback
 
-    try:
-        create_annotation_batch(
-            game=game,
-            target_queries=config["target"],
-            current_queries=config["current"],
-            pairs_csv=config["pairs"],
-            embeddings_path=None,  # Can add later if embeddings available
-            output_path=output_file,
-            existing_test_set=config.get("existing_test_set"),
-            seed=42,
-        )
-    except Exception as e:
-        print(f" Error: Error: {e}")
-        import traceback
-
-        traceback.print_exc()
+            traceback.print_exc()
 
     print("\n" + "=" * 60)
     print(" Summary")

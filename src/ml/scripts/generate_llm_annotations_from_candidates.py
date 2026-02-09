@@ -216,20 +216,6 @@ async def _create_enriched_annotation(
 
     return annotation
 
-    # Save annotations
-    output_file.parent.mkdir(parents=True, exist_ok=True)
-    temp_file = output_file.with_suffix(output_file.suffix + ".tmp")
-
-    with open(temp_file, "w") as f:
-        for ann in annotations:
-            f.write(json.dumps(ann, ensure_ascii=False) + "\n")
-
-    # Atomic write
-    temp_file.replace(output_file)
-
-    logger.info(f"✓ Generated {len(annotations)} annotations: {output_file}")
-    return len(annotations)
-
 
 def main() -> int:
     """Main entry point."""
