@@ -67,10 +67,18 @@ def cmd_ready(client: DeckSageClient, args: argparse.Namespace) -> int:
             print(json.dumps(ready, indent=2))
         else:
             print(f"Status: {ready.get('status', 'unknown')}")
-            methods = ready.get("available_methods", [])
-            print(f"Available methods: {', '.join(methods)}")
-            if "fusion_default_weights" in ready:
-                print(f"Fusion weights: {json.dumps(ready['fusion_default_weights'])}")
+            # Multi-game shape
+            if "games" in ready and isinstance(ready["games"], dict):
+                print(f"Default game: {ready.get('default_game')}")
+                for g, info in ready["games"].items():
+                    rdy = info.get("ready")
+                    methods = info.get("available_methods", [])
+                    print(f"- {g}: ready={rdy} methods={methods}")
+            else:
+                methods = ready.get("available_methods", [])
+                print(f"Available methods: {', '.join(methods)}")
+                if "fusion_default_weights" in ready:
+                    print(f"Fusion weights: {json.dumps(ready['fusion_default_weights'])}")
         return 0
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
