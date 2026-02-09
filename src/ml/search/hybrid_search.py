@@ -20,17 +20,19 @@ import numpy as np
 logger = logging.getLogger("decksage.search")
 
 try:
-    from meilisearch import Client as MeilisearchClient
-    from meilisearch.errors import MeilisearchApiError
+    from meilisearch import Client as MeilisearchClient  # type: ignore[import-not-found]
+    from meilisearch.errors import MeilisearchApiError  # type: ignore[import-not-found]
 except ImportError:
     MeilisearchClient = None
     MeilisearchApiError = Exception
     logger.warning("meilisearch not installed. Install with: uv add meilisearch")
 
 try:
-    from qdrant_client import QdrantClient
-    from qdrant_client.http import models
-    from qdrant_client.http.exceptions import UnexpectedResponse
+    from qdrant_client import QdrantClient  # type: ignore[import-not-found]
+    from qdrant_client.http import models  # type: ignore[import-not-found]
+    from qdrant_client.http.exceptions import (  # type: ignore[import-not-found]
+        UnexpectedResponse,
+    )
 except ImportError:
     QdrantClient = None
     models = None
@@ -38,7 +40,7 @@ except ImportError:
     logger.warning("qdrant-client not installed. Install with: uv add qdrant-client")
 
 try:
-    from gensim.models import KeyedVectors
+    from gensim.models import KeyedVectors  # type: ignore[import-not-found]
 except ImportError:
     KeyedVectors = None
 
@@ -156,10 +158,15 @@ class HybridSearch:
         except Exception as e:
             logger.warning(f"Failed to check Qdrant collections: {e}")
 
-        # Determine vector size from embeddings if available
-        vector_size = 128  # default
-        if self.embeddings is not None:
-            vector_size = self.embeddings.vector_size
+        # We cannot safely create a collection without knowing the embedding dimensionality.
+        # If embeddings are not provided, vector search is disabled anyway.
+        if self.embeddings is None:
+            logger.info(
+                "Skipping Qdrant init for '%s' (no embeddings provided)",
+                self.collection_name,
+            )
+            return
+        vector_size = self.embeddings.vector_size
 
         try:
             self.qdrant.create_collection(

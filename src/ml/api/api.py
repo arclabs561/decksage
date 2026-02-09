@@ -34,6 +34,12 @@ Multi-game serving (single process, multiple games):
     # Optional per-game signals directory (default: experiments/signals/<game>/)
     export SIGNALS_DIR_MAGIC=/path/to/signals/magic
 
+    # Optional per-game tuned fusion weights (JSON)
+    export FUSION_WEIGHTS_PATH_MAGIC=/path/to/fusion_weights_magic.json
+
+    # Optional per-game learned reranker (pickle)
+    export RERANKER_PATH_MAGIC=/path/to/reranker_magic.pkl
+
     # Optional per-game search namespaces (default: cards_<game>)
     export MEILISEARCH_INDEX_MAGIC=cards_magic
     export QDRANT_COLLECTION_MAGIC=cards_magic
@@ -344,7 +350,8 @@ def load_embeddings_to_state(
     logger.info("Loaded %s cards (%sD)", f"{len(emb):,}", emb.vector_size)
     if pairs_csv:
         logger.info("Loading graph from %s...", pairs_csv)
-        adj, weights = sm_load_graph(pairs_csv, filter_lands=True)
+        # Only MTG has "lands" semantics; do not apply land filtering to other games.
+        adj, weights = sm_load_graph(pairs_csv, filter_lands=(game == "magic"))
         state.graph_data = {"adj": adj, "weights": weights}
         state.model_info["methods"].append("jaccard")
         logger.info("Loaded graph: %s cards, %s weights", f"{len(adj):,}", f"{len(weights):,}")
@@ -1009,6 +1016,7 @@ def find_similar_v1(request: SimilarityRequest):
             user_id=user_id,
             session_id=session_id,
             metadata={
+                "game": request.game,
                 "method": getattr(request, "mode", None),
                 "top_k": request.top_k,
                 "use_case": request.use_case.value
@@ -1037,7 +1045,11 @@ def get_similar_v1(
             query=name,
             user_id=None,  # Could extract from request if available
             session_id=None,
-            metadata={"mode": mode.value if hasattr(mode, "value") else str(mode), "top_k": k},
+            metadata={
+                "game": game,
+                "mode": mode.value if hasattr(mode, "value") else str(mode),
+                "top_k": k,
+            },
         )
     except Exception:
         pass  # Non-fatal - don't break API if logging fails
@@ -1048,7 +1060,7 @@ def get_similar_v1(
 @router.get("/cards/{card}/contextual", response_model=ContextualResponse)
 def get_contextual_suggestions(
     card: str,
-    game: str = Query(..., description="Game name (magic, yugioh, pokemon)"),
+    game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
     format: str | None = Query(None, description="Format name (e.g., Modern, Legacy)"),
     archetype: str | None = Query(None, description="Archetype name (e.g., Burn, Control)"),
     top_k: int = Query(10, description="Number of results per category"),
@@ -1264,8 +1276,6 @@ def _get_search_client(game: str) -> HybridSearch | None:
         return None
 
     state = get_state(game)
-    if state.embeddings is None:
-        return None
 
     # Check if search client is cached in app state (per game)
     by_game = getattr(app.state, "search_by_game", None)
@@ -1274,7 +1284,14 @@ def _get_search_client(game: str) -> HybridSearch | None:
         app.state.search_by_game = by_game
     cached = by_game.get(game)
     if cached is not None:
-        return cached
+        # If embeddings were loaded after caching, rebuild so vector search can activate.
+        try:
+            cached_has_emb = getattr(cached, "embeddings", None) is not None
+        except Exception:
+            cached_has_emb = False
+        if cached_has_emb == (state.embeddings is not None):
+            return cached
+        by_game.pop(game, None)
 
     # Per-game index/collection naming (override via env)
     idx_env = os.getenv(f"MEILISEARCH_INDEX_{game.upper()}")
@@ -1289,11 +1306,22 @@ def _get_search_client(game: str) -> HybridSearch | None:
             index_name=index_name,
             collection_name=collection_name,
         )
-        # Quintessential functionality: do not pretend search exists if both
-        # backends are unavailable. (HybridSearch will otherwise return empty lists.)
-        if getattr(client, "meilisearch", None) is None and getattr(client, "qdrant", None) is None:
-            logger.error("Search backends unavailable (Meilisearch and Qdrant both missing)")
+        has_text = getattr(client, "meilisearch", None) is not None
+        has_vector = getattr(client, "qdrant", None) is not None and state.embeddings is not None
+
+        # Quintessential functionality: do not pretend search exists if neither backend
+        # can answer queries for this game.
+        if not has_text and not has_vector:
+            logger.error(
+                "Search backends unavailable for game=%s (no Meilisearch; Qdrant needs embeddings)",
+                game,
+            )
             return None
+        if getattr(client, "qdrant", None) is not None and state.embeddings is None:
+            logger.warning(
+                "Qdrant is configured for game=%s but embeddings are not loaded; vector search disabled",
+                game,
+            )
         by_game[game] = client
         return client
     except Exception as e:
@@ -1305,7 +1333,9 @@ def _get_search_client(game: str) -> HybridSearch | None:
 def search_cards_v1(request: SearchRequest):
     """
     Hybrid card search combining Meilisearch (text) and Qdrant (vector).
-    Falls back to embeddings-only search if Meilisearch/Qdrant unavailable.
+    Requires at least one configured backend per game:
+    - Text search works if Meilisearch is configured.
+    - Vector search works if Qdrant is configured *and* embeddings are loaded.
 
     Performs both text-based keyword search and semantic vector search,
     then combines results based on weights.
