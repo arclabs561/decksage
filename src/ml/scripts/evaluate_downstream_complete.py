@@ -37,7 +37,6 @@ from typing import Any
 
 
 try:
-    import numpy as np
     from gensim.models import KeyedVectors
 
     HAS_DEPS = True
@@ -85,16 +84,16 @@ else:
     if src_dir.exists() and str(src_dir) not in sys.path:
         sys.path.insert(0, str(src_dir))
 
-from ml.deck_building.contextual_discovery import ContextualCardDiscovery
-from ml.deck_building.deck_completion import (
+from ml.deck_building.contextual_discovery import ContextualCardDiscovery  # noqa: E402
+from ml.deck_building.deck_completion import (  # noqa: E402
     CompletionConfig,
     greedy_complete,
 )
-from ml.deck_building.deck_quality import assess_deck_quality
-from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
-from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-from ml.utils.logging_config import setup_script_logging
-from ml.utils.paths import PATHS
+from ml.deck_building.deck_quality import assess_deck_quality  # noqa: E402
+from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints  # noqa: E402
+from ml.similarity.fusion import FusionWeights, WeightedLateFusion  # noqa: E402
+from ml.utils.logging_config import setup_script_logging  # noqa: E402
+from ml.utils.paths import PATHS  # noqa: E402
 
 
 logger = setup_script_logging()
@@ -126,7 +125,6 @@ def load_trained_assets(
     # Priority: EBS volume (/mnt/data) > local paths > S3 download
     # EBS volumes are mounted at /mnt/data by runctl's user-data script
     ebs_data_dir = Path("/mnt/data")
-    local_data_dir = PATHS.data
 
     if embeddings_path is None:
         # Try to find game-specific embedding
@@ -171,10 +169,9 @@ def load_trained_assets(
                     all_wv = list(trained_dir.glob("*.wv"))
                     if all_wv:
                         game_matches = [p for p in all_wv if game.lower() in p.name.lower()]
-                        if game_matches:
-                            embeddings_path = game_matches[0]
-                        else:
-                            embeddings_path = all_wv[0]  # Use first available
+                        embeddings_path = (
+                            game_matches[0] if game_matches else all_wv[0]
+                        )  # Use first available
 
     # Convert string paths to Path objects
     if embeddings_path and isinstance(embeddings_path, str):
@@ -182,22 +179,24 @@ def load_trained_assets(
 
     # Try to load from S3 if local path doesn't exist
     # Only download if not on EBS (EBS should be pre-warmed)
-    if embeddings_path and not embeddings_path.exists():
-        # Check if it's an S3 path or try to download from S3
-        if str(embeddings_path).startswith("s3://"):
-            # Download to EBS if available, else /tmp
-            download_dir = ebs_data_dir if ebs_data_dir.exists() else Path("/tmp")
-            logger.info(f"Downloading embeddings from S3 to {download_dir}: {embeddings_path}")
-            import boto3
+    if (
+        embeddings_path
+        and not embeddings_path.exists()
+        and str(embeddings_path).startswith("s3://")
+    ):
+        # Download to EBS if available, else /tmp
+        download_dir = ebs_data_dir if ebs_data_dir.exists() else Path("/tmp")
+        logger.info(f"Downloading embeddings from S3 to {download_dir}: {embeddings_path}")
+        import boto3
 
-            s3 = boto3.client("s3")
-            # Extract bucket and key
-            s3_path = str(embeddings_path).replace("s3://", "")
-            bucket, key = s3_path.split("/", 1)
-            local_path = download_dir / Path(key).name
-            local_path.parent.mkdir(parents=True, exist_ok=True)
-            s3.download_file(bucket, key, str(local_path))
-            embeddings_path = local_path
+        s3 = boto3.client("s3")
+        # Extract bucket and key
+        s3_path = str(embeddings_path).replace("s3://", "")
+        bucket, key = s3_path.split("/", 1)
+        local_path = download_dir / Path(key).name
+        local_path.parent.mkdir(parents=True, exist_ok=True)
+        s3.download_file(bucket, key, str(local_path))
+        embeddings_path = local_path
 
     if embeddings_path and embeddings_path.exists():
         logger.info(f"Loading embeddings from {embeddings_path}")
@@ -281,19 +280,18 @@ def load_trained_assets(
             pairs_path = Path(pairs_path)
 
         # Try S3 if local doesn't exist (download to EBS if available)
-        if pairs_path and not pairs_path.exists():
-            if str(pairs_path).startswith("s3://"):
-                download_dir = ebs_data_dir if ebs_data_dir.exists() else Path("/tmp")
-                logger.info(f"Downloading pairs from S3 to {download_dir}: {pairs_path}")
-                import boto3
+        if pairs_path and not pairs_path.exists() and str(pairs_path).startswith("s3://"):
+            download_dir = ebs_data_dir if ebs_data_dir.exists() else Path("/tmp")
+            logger.info(f"Downloading pairs from S3 to {download_dir}: {pairs_path}")
+            import boto3
 
-                s3 = boto3.client("s3")
-                s3_path = str(pairs_path).replace("s3://", "")
-                bucket, key = s3_path.split("/", 1)
-                local_path = download_dir / Path(key).name
-                local_path.parent.mkdir(parents=True, exist_ok=True)
-                s3.download_file(bucket, key, str(local_path))
-                pairs_path = local_path
+            s3 = boto3.client("s3")
+            s3_path = str(pairs_path).replace("s3://", "")
+            bucket, key = s3_path.split("/", 1)
+            local_path = download_dir / Path(key).name
+            local_path.parent.mkdir(parents=True, exist_ok=True)
+            s3.download_file(bucket, key, str(local_path))
+            pairs_path = local_path
 
         if pairs_path and pairs_path.exists() and pairs_path.stat().st_size > 1000:
             logger.info(f"Loading graph from CSV: {pairs_path}")
@@ -323,10 +321,12 @@ def load_trained_assets(
 
                 tagger = FunctionalTagger()
             except ImportError:
-                try:
-                    # Try unified tagger (doesn't support MTG yet but has structure)
-                    from ml.enrichment.card_functional_tagger_unified import UnifiedFunctionalTagger
+                import importlib.util
 
+                if (
+                    importlib.util.find_spec("ml.enrichment.card_functional_tagger_unified")
+                    is not None
+                ):
                     # Create a stub tagger for MTG
                     class MTGTaggerStub:
                         def tag_card(self, card_name: str):
@@ -334,7 +334,7 @@ def load_trained_assets(
                             return type("Tags", (), {})()
 
                     tagger = MTGTaggerStub()
-                except ImportError:
+                else:
                     tagger = None
         elif game == "pokemon":
             from ml.enrichment.pokemon_functional_tagger import PokemonFunctionalTagger
@@ -552,7 +552,7 @@ def evaluate_deck_completion_task(
                 method="fusion",
             )
 
-            completed_deck, steps, quality_metrics = greedy_complete(
+            completed_deck, steps, _quality_metrics = greedy_complete(
                 game=game,
                 deck=partial_deck,
                 candidate_fn=candidate_fn,
