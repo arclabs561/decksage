@@ -12,8 +12,10 @@ Supports:
 
 from __future__ import annotations
 
+import importlib.util
 import json
 import sqlite3
+from contextlib import suppress
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -29,12 +31,7 @@ try:
 except ImportError:
     HAS_PANDAS = False
 
-try:
-    import pyarrow.parquet as pq
-
-    HAS_PARQUET = True
-except ImportError:
-    HAS_PARQUET = False
+HAS_PARQUET = importlib.util.find_spec("pyarrow.parquet") is not None
 
 try:
     from ml.data.card_database import get_card_database
@@ -429,7 +426,7 @@ class IncrementalCardGraph:
             cards_with_counts.extend([(card_name, count, partition, game)] * count)
 
         # Add/update nodes
-        for card_name, count, partition, game in card_metadata:
+        for card_name, _count, _partition, game in card_metadata:
             if card_name not in self.nodes:
                 # Load card attributes if available
                 attrs = self._card_attributes.get(card_name, {})
@@ -546,10 +543,8 @@ class IncrementalCardGraph:
     def _get_card_database(self):
         """Lazy-load card database for game detection."""
         if self._card_db is None and HAS_CARD_DB:
-            try:
+            with suppress(Exception):
                 self._card_db = get_card_database()
-            except Exception:
-                pass
         return self._card_db
 
     def _detect_game(self, card_name: str, deck: dict[str, Any] | None = None) -> str | None:
@@ -816,9 +811,8 @@ class IncrementalCardGraph:
                 continue
             if game and edge.game != game:
                 continue
-            if format and edge.metadata.get("formats"):
-                if format not in edge.metadata["formats"]:
-                    continue
+            if format and edge.metadata.get("formats") and format not in edge.metadata["formats"]:
+                continue
             if since and edge.last_seen < since:
                 continue
             results.append(edge)
@@ -827,7 +821,7 @@ class IncrementalCardGraph:
     def get_statistics(self) -> dict[str, Any]:
         """Get graph statistics."""
         node_degrees = {}
-        for (card1, card2), edge in self.edges.items():
+        for (card1, card2), _edge in self.edges.items():
             node_degrees[card1] = node_degrees.get(card1, 0) + 1
             node_degrees[card2] = node_degrees.get(card2, 0) + 1
 
@@ -904,15 +898,11 @@ class IncrementalCardGraph:
             """)
 
             # Migrate existing databases: add temporal columns if they don't exist
-            try:
+            with suppress(sqlite3.OperationalError):
                 self._db_conn.execute("ALTER TABLE edges ADD COLUMN monthly_counts TEXT")
-            except sqlite3.OperationalError:
-                pass  # Column already exists
 
-            try:
+            with suppress(sqlite3.OperationalError):
                 self._db_conn.execute("ALTER TABLE edges ADD COLUMN format_periods TEXT")
-            except sqlite3.OperationalError:
-                pass  # Column already exists
 
             # Indexes for common queries
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_game ON nodes(game)")
