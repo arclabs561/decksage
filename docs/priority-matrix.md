@@ -3,6 +3,8 @@
 Context: Post-fixes deep review of DeckSage ML system
 Date: October 6, 2025
 
+Note: This is a planning document. Estimates and metric targets may be stale; do not treat this as current system state.
+
 ---
 
 ## Visual Priority Map
@@ -43,7 +45,7 @@ START: What are you optimizing for?
 ├─ Research Performance (P@10 goal)?
 │  └─> Do: T0.1 (100 queries) + T1.1 (text embeddings)
 │      Time: 20-30 hours
-│      Result: P@10 = 0.18-0.22 (meeting README goal)
+│      Result: P@10 = 0.18-0.22 (meeting target)
 │
 ├─ Production + Performance?
 │  └─> Do: All T0 + T1.1 + T1.2
@@ -120,7 +122,7 @@ Goal: Break P@10 plateau
 - Week 3: T1.2 (A/B testing framework)
 - Week 4: Re-tune fusion, generate comparison reports
 
-Outcome: P@10 = 0.18-0.22 (meeting README goal)
+Outcome: P@10 = 0.18-0.22 (meeting target)
 
 ### Month 3: Production Readiness
 Goal: Reliable, maintainable system
@@ -144,7 +146,7 @@ T0.2 (deck quality) → Validate use case works
 ```
 Time: 6-10 hours
 
-To Meet README Goals (P@10 = 0.20):
+To Meet Performance Targets (P@10 = 0.20):
 ```
 T0.1 (test set) → T1.1 (text embeddings) → Recompute metrics
     ↓                  ↓                         ↓
@@ -225,7 +227,7 @@ Question: Should I do this next action?
 
 Decision rubric:
 1. Does it validate core assumptions? → **T0** (do first)
-2. Does it achieve README goals? → **T1** (do next)
+2. Does it achieve performance targets? → **T1** (do next)
 3. Does it reduce tech debt? → **T2** (do when stable)
 4. Is it nice-to-have? → **T3** (do if time permits)
 
