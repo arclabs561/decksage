@@ -20,10 +20,12 @@ import json
 import logging
 import time
 from collections import Counter
+from collections.abc import Iterable
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from ...utils.paths import PATHS
+
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +124,9 @@ def _extract_mtg_rules(cache: dict[str, Any], fmt: str | None) -> tuple[set[str]
     formats_obj = cache.get("formats") if isinstance(cache.get("formats"), dict) else None
     fmt_obj = None
     if fmt and formats_obj:
-        fmt_obj = formats_obj.get(fmt) or formats_obj.get(fmt.title()) or formats_obj.get(fmt.upper())
+        fmt_obj = (
+            formats_obj.get(fmt) or formats_obj.get(fmt.title()) or formats_obj.get(fmt.upper())
+        )
         if fmt_obj is None:
             # try case-insensitive match
             want = _normalize_key(fmt)
@@ -177,7 +181,9 @@ def _extract_pokemon_rules(cache: dict[str, Any]) -> set[str]:
     return set(map(str, banned))
 
 
-def check_deck_legality(deck: Any, *, game: str | None = None, format: str | None = None) -> list[str]:
+def check_deck_legality(
+    deck: Any, *, game: str | None = None, format: str | None = None
+) -> list[str]:
     """
     Check deck legality for a given game/format.
 
@@ -187,7 +193,16 @@ def check_deck_legality(deck: Any, *, game: str | None = None, format: str | Non
     Raises:
         FileNotFoundError / ValueError if legality data is not available/configured.
     """
-    game_l = (game or getattr(deck, "game", None) or (deck.get("game") if isinstance(deck, dict) else None) or "").strip().lower()  # type: ignore[union-attr]
+    game_l = (
+        (
+            game
+            or getattr(deck, "game", None)
+            or (deck.get("game") if isinstance(deck, dict) else None)
+            or ""
+        )
+        .strip()
+        .lower()
+    )  # type: ignore[union-attr]
     fmt = format or _get_deck_format(deck)
 
     if game_l not in {"magic", "pokemon", "yugioh"}:
@@ -243,4 +258,3 @@ def check_deck_legality(deck: Any, *, game: str | None = None, format: str | Non
 
 
 __all__ = ["check_deck_legality"]
-
