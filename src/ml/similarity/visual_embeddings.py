@@ -11,10 +11,12 @@ from __future__ import annotations
 import hashlib
 import logging
 import pickle
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
 
 logger = logging.getLogger("decksage.visual_embeddings")
 
@@ -25,6 +27,7 @@ except ImportError:
     logger.warning(
         "sentence-transformers not installed. Install with: uv add sentence-transformers"
     )
+
 
 # Patch SigLIP config compatibility before any model loading
 def _patch_siglip_config():
@@ -37,26 +40,30 @@ def _patch_siglip_config():
     """
     try:
         from transformers import SiglipConfig
-
-        # Only patch if not already patched and if hidden_size doesn't exist
-        if not hasattr(SiglipConfig, '_siglip_patched'):
-            if not hasattr(SiglipConfig, 'hidden_size') or not isinstance(
-                getattr(SiglipConfig, 'hidden_size', None), property
-            ):
-                def _get_hidden_size(self):
-                    """Get hidden_size from vision_config for sentence-transformers compatibility."""
-                    if hasattr(self, 'vision_config') and hasattr(self.vision_config, 'hidden_size'):
-                        return self.vision_config.hidden_size
-                    raise AttributeError(
-                        f"'{self.__class__.__name__}' object has no attribute 'hidden_size' "
-                        f"and vision_config.hidden_size is not available"
-                    )
-
-                SiglipConfig.hidden_size = property(_get_hidden_size)
-                SiglipConfig._siglip_patched = True
-                logger.debug("Patched SiglipConfig.hidden_size for sentence-transformers compatibility")
     except ImportError:
-        pass  # transformers not available, skip patching
+        return  # transformers not available, skip patching
+
+    # Only patch if not already patched and if hidden_size doesn't exist (or isn't a property).
+    if hasattr(SiglipConfig, "_siglip_patched"):
+        return
+
+    hidden_size_attr = getattr(SiglipConfig, "hidden_size", None)
+    if isinstance(hidden_size_attr, property):
+        SiglipConfig._siglip_patched = True
+        return
+
+    def _get_hidden_size(self):
+        """Get hidden_size from vision_config for sentence-transformers compatibility."""
+        if hasattr(self, "vision_config") and hasattr(self.vision_config, "hidden_size"):
+            return self.vision_config.hidden_size
+        raise AttributeError(
+            f"'{self.__class__.__name__}' object has no attribute 'hidden_size' "
+            "and vision_config.hidden_size is not available"
+        )
+
+    SiglipConfig.hidden_size = property(_get_hidden_size)
+    SiglipConfig._siglip_patched = True
+    logger.debug("Patched SiglipConfig.hidden_size for sentence-transformers compatibility")
 
 
 # Apply patch on module import
@@ -123,10 +130,7 @@ class CardVisualEmbedder:
         self.image_size = image_size
 
         # Setup cache directories (before model loading so cache_file is always set)
-        if cache_dir is None:
-            cache_dir = Path(".cache") / "visual_embeddings"
-        else:
-            cache_dir = Path(cache_dir)
+        cache_dir = Path(".cache") / "visual_embeddings" if cache_dir is None else Path(cache_dir)
 
         if image_cache_dir is None:
             image_cache_dir = Path(".cache") / "card_images"
@@ -136,7 +140,7 @@ class CardVisualEmbedder:
         self.cache_dir = cache_dir
         self.cache_dir.mkdir(parents=True, exist_ok=True)
         # Use model name for cache file (set before model loading)
-        cache_model_name = self.model_name.replace('/', '_')
+        cache_model_name = self.model_name.replace("/", "_")
         self.cache_file = self.cache_dir / f"{cache_model_name}.pkl"
 
         self.image_cache_dir = image_cache_dir
@@ -148,8 +152,8 @@ class CardVisualEmbedder:
         if use_transformers_direct:
             # SigLIP: Use transformers directly (sentence-transformers has compatibility issues)
             try:
-                from transformers import AutoModel, AutoProcessor
                 import torch
+                from transformers import AutoModel, AutoProcessor
 
                 self.processor = AutoProcessor.from_pretrained(model_name)
                 self.vision_model = AutoModel.from_pretrained(model_name)
@@ -165,7 +169,9 @@ class CardVisualEmbedder:
                 inputs = self.processor(images=test_img, return_tensors="pt")
                 # Move inputs to same device as model
                 device = next(self.vision_model.parameters()).device
-                inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+                inputs = {
+                    k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()
+                }
 
                 with torch.no_grad():
                     outputs = self.vision_model.get_image_features(**inputs)
@@ -262,28 +268,43 @@ class CardVisualEmbedder:
 
         # Try various image URL fields (order matters - most specific first)
         # Direct image URL fields
-        if "image_url" in card and card["image_url"]:
-            return card["image_url"]
-        if "image" in card and card["image"]:
-            return card["image"]
+        if card.get("image_url"):
+            return str(card.get("image_url"))
+        if card.get("image"):
+            return str(card.get("image"))
 
         # Scryfall format: image_uris.png
         if "image_uris" in card and isinstance(card["image_uris"], dict):
-            return card["image_uris"].get("png") or card["image_uris"].get("large") or card["image_uris"].get("normal")
+            return (
+                card["image_uris"].get("png")
+                or card["image_uris"].get("large")
+                or card["image_uris"].get("normal")
+            )
 
         # Pokemon TCG format: images.large
         if "images" in card:
             images = card["images"]
             if isinstance(images, dict):
-                return images.get("large") or images.get("small") or images.get("png") or images.get("url")
+                return (
+                    images.get("large")
+                    or images.get("small")
+                    or images.get("png")
+                    or images.get("url")
+                )
             if isinstance(images, list) and len(images) > 0:
                 if isinstance(images[0], dict):
-                    return images[0].get("url") or images[0].get("URL") or images[0].get("image_url")
+                    return (
+                        images[0].get("url") or images[0].get("URL") or images[0].get("image_url")
+                    )
                 if isinstance(images[0], str):
                     return images[0]
 
         # Yu-Gi-Oh format: card_images[0].image_url
-        if "card_images" in card and isinstance(card["card_images"], list) and len(card["card_images"]) > 0:
+        if (
+            "card_images" in card
+            and isinstance(card["card_images"], list)
+            and len(card["card_images"]) > 0
+        ):
             img = card["card_images"][0]
             if isinstance(img, dict):
                 return img.get("image_url") or img.get("image_url_small") or img.get("url")
@@ -293,7 +314,11 @@ class CardVisualEmbedder:
             return card["media"].get("image_url") or card["media"].get("url")
 
         # Handle card faces for multi-faced cards (e.g., Magic DFCs)
-        if "card_faces" in card and isinstance(card["card_faces"], list) and len(card["card_faces"]) > 0:
+        if (
+            "card_faces" in card
+            and isinstance(card["card_faces"], list)
+            and len(card["card_faces"]) > 0
+        ):
             face = card["card_faces"][0]
             if "image_uris" in face and isinstance(face["image_uris"], dict):
                 return face["image_uris"].get("png") or face["image_uris"].get("large")
@@ -326,6 +351,7 @@ class CardVisualEmbedder:
         if isinstance(card, dict) and "image" in card and isinstance(card["image"], Image.Image):
             # Use hash of PIL Image data
             import io
+
             img_bytes = io.BytesIO()
             card["image"].save(img_bytes, format="PNG")
             img_hash = hashlib.sha256(img_bytes.getvalue()).hexdigest()
@@ -372,6 +398,7 @@ class CardVisualEmbedder:
 
                 # Load image from bytes (more reliable than response.raw)
                 from io import BytesIO
+
                 img = Image.open(BytesIO(response.content)).convert("RGB")
 
                 # Cache it
@@ -382,16 +409,23 @@ class CardVisualEmbedder:
 
                 return img
             except requests.exceptions.Timeout:
-                logger.warning(f"Timeout downloading image from {url} (attempt {attempt + 1}/{max_retries})")
+                logger.warning(
+                    f"Timeout downloading image from {url} (attempt {attempt + 1}/{max_retries})"
+                )
             except requests.exceptions.RequestException as e:
-                logger.warning(f"Failed to download image from {url} (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.warning(
+                    f"Failed to download image from {url} (attempt {attempt + 1}/{max_retries}): {e}"
+                )
             except Exception as e:
-                logger.error(f"Unexpected error downloading {url} (attempt {attempt + 1}/{max_retries}): {e}")
+                logger.error(
+                    f"Unexpected error downloading {url} (attempt {attempt + 1}/{max_retries}): {e}"
+                )
 
             # Exponential backoff
             if attempt < max_retries - 1:
                 import time
-                time.sleep(2 ** attempt)  # 1s, 2s, 4s...
+
+                time.sleep(2**attempt)  # 1s, 2s, 4s...
 
         logger.warning(f"Failed to download image after {max_retries} attempts: {url}")
         return None
@@ -452,10 +486,8 @@ class CardVisualEmbedder:
             return None
 
         # Check if card dict has PIL Image directly (for testing/advanced usage)
-        if isinstance(card, dict):
-            # Check for PIL Image in 'image' field (not just URL)
-            if "image" in card and isinstance(card["image"], Image.Image):
-                return self._preprocess_image(card["image"])
+        if isinstance(card, dict) and isinstance(card.get("image"), Image.Image):
+            return self._preprocess_image(card["image"])
 
         # Extract image URL from card dict
         image_url = self._get_image_url(card)
@@ -491,13 +523,14 @@ class CardVisualEmbedder:
         image = self._card_to_image(card)
         if image is None:
             # Return zero vector if image unavailable
-            logger.debug(f"Could not get image for card, returning zero vector")
+            logger.debug("Could not get image for card, returning zero vector")
             # Get embedding dimension from model (cache it to avoid repeated dummy encoding)
             if not hasattr(self, "_embedding_dim"):
                 try:
                     dummy_img = Image.new("RGB", (self.image_size, self.image_size))
                     if self._use_transformers:
                         import torch
+
                         inputs = self.processor(images=dummy_img, return_tensors="pt")
                         with torch.no_grad():
                             outputs = self.vision_model.get_image_features(**inputs)
@@ -515,10 +548,13 @@ class CardVisualEmbedder:
         if self._use_transformers:
             # SigLIP: Use transformers directly
             import torch
+
             # Move inputs to same device as model (if not already)
             inputs = self.processor(images=image, return_tensors="pt")
             device = next(self.vision_model.parameters()).device
-            inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+            inputs = {
+                k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()
+            }
 
             with torch.no_grad():
                 outputs = self.vision_model.get_image_features(**inputs)
@@ -599,6 +635,7 @@ class CardVisualEmbedder:
                     dummy_img = Image.new("RGB", (self.image_size, self.image_size))
                     if self._use_transformers:
                         import torch
+
                         inputs = self.processor(images=dummy_img, return_tensors="pt")
                         with torch.no_grad():
                             outputs = self.vision_model.get_image_features(**inputs)
@@ -614,10 +651,13 @@ class CardVisualEmbedder:
         if self._use_transformers:
             # SigLIP: Use transformers directly with batch processing
             import torch
+
             inputs = self.processor(images=images, return_tensors="pt")
             # Move inputs to same device as model (if not already)
             device = next(self.vision_model.parameters()).device
-            inputs = {k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()}
+            inputs = {
+                k: v.to(device) if isinstance(v, torch.Tensor) else v for k, v in inputs.items()
+            }
 
             with torch.no_grad():
                 outputs = self.vision_model.get_image_features(**inputs)
@@ -643,10 +683,8 @@ class CardVisualEmbedder:
 
     def __del__(self):
         """Save cache on destruction."""
-        try:
+        with suppress(Exception):
             self._save_cache()
-        except Exception:
-            pass
 
 
 # Global instance (lazy initialization)
