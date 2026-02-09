@@ -12,7 +12,7 @@ from __future__ import annotations
 import logging
 from collections.abc import Callable
 from dataclasses import dataclass
-from typing import Literal
+from typing import Any, Literal
 
 
 # from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
@@ -34,6 +34,32 @@ except ImportError:
     Partition = None
 
 logger = logging.getLogger("decksage.completion")
+
+POKEMON_BASIC_ENERGY: set[str] = {
+    "Grass Energy",
+    "Fire Energy",
+    "Water Energy",
+    "Lightning Energy",
+    "Psychic Energy",
+    "Fighting Energy",
+    "Darkness Energy",
+    "Metal Energy",
+    "Fairy Energy",
+}
+
+MAGIC_BASIC_LANDS: set[str] = {
+    "Plains",
+    "Island",
+    "Swamp",
+    "Mountain",
+    "Forest",
+    "Wastes",
+    "Snow-Covered Plains",
+    "Snow-Covered Island",
+    "Snow-Covered Swamp",
+    "Snow-Covered Mountain",
+    "Snow-Covered Forest",
+}
 
 
 CandidateFn = Callable[[str, int], list[tuple[str, float]]]
@@ -98,37 +124,12 @@ def _legal_add(
 
     if game == "pokemon":
         # Basic Energy exempt from 4-copy rule
-        BASIC_ENERGY = {
-            "Grass Energy",
-            "Fire Energy",
-            "Water Energy",
-            "Lightning Energy",
-            "Psychic Energy",
-            "Fighting Energy",
-            "Darkness Energy",
-            "Metal Energy",
-            "Fairy Energy",
-        }
-        if card in BASIC_ENERGY:
+        if card in POKEMON_BASIC_ENERGY:
             return True
         return total + 1 <= 4
 
     # magic
-    BASIC_LANDS = {
-        "Plains",
-        "Island",
-        "Swamp",
-        "Mountain",
-        "Forest",
-        "Wastes",
-        "Snow-Covered Plains",
-        "Snow-Covered Island",
-        "Snow-Covered Swamp",
-        "Snow-Covered Mountain",
-        "Snow-Covered Forest",
-    }
-
-    if card in BASIC_LANDS:
+    if card in MAGIC_BASIC_LANDS:
         return True
 
     fmt = (deck.get("format") or "").strip()
@@ -523,7 +524,7 @@ def suggest_removals(
             if archetype not in card_staples:
                 # Card not in archetype staples - candidate for removal
                 # Check if it appears in other archetypes (might be meta call)
-                other_archetypes = [arch for arch in card_staples.keys() if arch != archetype]
+                other_archetypes = [arch for arch in card_staples if arch != archetype]
                 if not other_archetypes:
                     # Not in any archetype staples - likely weak
                     removals.append((card, 0.8, "low_archetype_match"))
@@ -594,7 +595,7 @@ def suggest_removals(
 
                 # Suggest removing weakest cards
                 excess = len(role_cards[role]) - threshold
-                for card, score in scored_cards[:excess]:
+                for card, _score in scored_cards[:excess]:
                     if card not in [r[0] for r in removals]:  # Avoid duplicates
                         removals.append((card, 0.7, f"redundant_{role} (excess {role} cards)"))
 
@@ -634,7 +635,6 @@ def suggest_replacements(
     3. Consider downgrades (worse, cheaper)
     4. Maintain role coverage
     """
-    part = _main_partition_name(game)
     resolver = CardResolver()
 
     # Get current card's role
@@ -679,15 +679,13 @@ def suggest_replacements(
         # Consider upgrades/downgrades
         replacement_price = price_fn(replacement) if price_fn else None
 
-        if upgrade and current_price and replacement_price:
-            if replacement_price > current_price:
-                score *= 1.3  # Boost upgrades
-                reason = f"upgrade (${current_price:.2f} → ${replacement_price:.2f})"
+        if upgrade and current_price and replacement_price and replacement_price > current_price:
+            score *= 1.3  # Boost upgrades
+            reason = f"upgrade (${current_price:.2f} → ${replacement_price:.2f})"
 
-        if downgrade and current_price and replacement_price:
-            if replacement_price < current_price:
-                score *= 1.2  # Boost downgrades
-                reason = f"budget_alternative (${current_price:.2f} → ${replacement_price:.2f})"
+        if downgrade and current_price and replacement_price and replacement_price < current_price:
+            score *= 1.2  # Boost downgrades
+            reason = f"budget_alternative (${current_price:.2f} → ${replacement_price:.2f})"
 
         # Boost archetype staples
         if archetype and archetype_staples:
