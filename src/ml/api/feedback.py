@@ -53,6 +53,7 @@ class TaskType(str, Enum):
 class FeedbackRequest(BaseModel):
     """User feedback on a model suggestion."""
 
+    game: str | None = Field(None, description="Game name (magic, pokemon, yugioh)")
     query_card: str = Field(..., description="Query card name")
     suggested_card: str = Field(..., description="Suggested card name")
     task_type: TaskType = Field(..., description="Type of task")
@@ -150,7 +151,7 @@ def _validate_card_name(card_name: str, game: str | None = None) -> tuple[bool, 
 
         # First check embeddings (faster) - but only if app is initialized
         try:
-            state = get_state()
+            state = get_state(game) if game else get_state()
             if state and hasattr(state, "embeddings") and state.embeddings:
                 # Check if card exists in embeddings
                 if card_name in state.embeddings:
@@ -161,7 +162,7 @@ def _validate_card_name(card_name: str, game: str | None = None) -> tuple[bool, 
                 for emb_card in list(state.embeddings.index_to_key)[:1000]:
                     if emb_card.lower() == card_lower:
                         return True, None
-        except (AttributeError, RuntimeError) as e:
+        except (AttributeError, RuntimeError, ValueError) as e:
             # App not initialized or state not available
             logger.debug(f"State not available for validation: {e}")
 
@@ -193,6 +194,7 @@ def _validate_card_name(card_name: str, game: str | None = None) -> tuple[bool, 
 def _check_duplicate_feedback(
     query_card: str,
     suggested_card: str,
+    game: str | None = None,
     user_id: str | None = None,
     session_id: str | None = None,
 ) -> bool:
@@ -223,6 +225,17 @@ def _check_duplicate_feedback(
                             existing.get("query_card") == query_card
                             and existing.get("suggested_card") == suggested_card
                         ):
+                            # If game is provided, match on game too (avoid cross-game false duplicates).
+                            if game:
+                                existing_game = existing.get("game")
+                                if existing_game is None:
+                                    ctx = existing.get("context") or {}
+                                    if isinstance(ctx, dict):
+                                        existing_game = ctx.get("game")
+                                if existing_game is None:
+                                    continue
+                                if str(existing_game).strip().lower() != str(game).strip().lower():
+                                    continue
                             # If user_id provided, check for same user
                             if user_id and existing.get("user_id") == user_id:
                                 return True
@@ -263,7 +276,10 @@ def store_feedback(feedback: dict[str, Any]) -> str:
     # Use MD5 hash for more reliable ID generation (Python hash() can collide)
     import hashlib
 
-    id_string = f"{feedback.get('query_card', '')}_{feedback.get('suggested_card', '')}_{feedback['timestamp']}"
+    id_string = (
+        f"{feedback.get('game', '')}_{feedback.get('query_card', '')}_"
+        f"{feedback.get('suggested_card', '')}_{feedback['timestamp']}"
+    )
     feedback["feedback_id"] = hashlib.md5(id_string.encode()).hexdigest()
 
     # Append to JSONL file with error handling
@@ -295,7 +311,7 @@ def submit_feedback(req: FeedbackRequest) -> FeedbackResponse:
     - Model evaluation (user satisfaction metrics)
     - Quality tracking (IAA with other annotators)
 
-    TODO: Add validation, duplicate detection, rate limiting
+    Includes basic validation, best-effort duplicate detection, and simple in-memory rate limiting.
     """
     try:
         # Validate and normalize card names
@@ -327,15 +343,42 @@ def submit_feedback(req: FeedbackRequest) -> FeedbackResponse:
             raise HTTPException(status_code=429, detail=error_msg)
 
         # Validate card names (non-fatal, but logs warnings)
-        game = req.context.get("game") if req.context else None
-        _validate_card_name(query_card, game)
-        _validate_card_name(suggested_card, game)
+        game_in = req.game
+        if game_in is None and req.context:
+            try:
+                game_in = req.context.get("game")  # type: ignore[assignment]
+            except Exception:
+                game_in = None
+        game_norm: str | None = None
+        try:
+            # Lazy import to avoid circular dependency (api.py imports feedback.py).
+            from ..api.api import _require_game
+
+            game_norm = _require_game(game_in)
+        except HTTPException:
+            raise
+        except Exception:
+            # Non-fatal: if api state isn't initialized, fall back to DB-only validation.
+            game_norm = game_in
+
+        _validate_card_name(query_card, game_norm)
+        _validate_card_name(suggested_card, game_norm)
 
         # Check for duplicate feedback (if user_id or session_id provided)
         if req.user_id or req.session_id:
+            dup_game = game_norm
+            try:
+                # Only treat game as a duplicate key in multi-game mode.
+                from ..api.api import _configured_games
+
+                if len(_configured_games()) <= 1:
+                    dup_game = None
+            except Exception:
+                pass
             is_duplicate = _check_duplicate_feedback(
                 query_card,
                 suggested_card,
+                dup_game,
                 req.user_id,
                 req.session_id,
             )
@@ -345,6 +388,8 @@ def submit_feedback(req: FeedbackRequest) -> FeedbackResponse:
 
         # Prepare feedback data with normalized names
         feedback_data = req.model_dump(exclude_none=True)
+        if game_norm:
+            feedback_data["game"] = game_norm
         feedback_data["query_card"] = query_card
         feedback_data["suggested_card"] = suggested_card
         feedback_id = store_feedback(feedback_data)
@@ -469,6 +514,7 @@ def get_feedback_stats() -> dict[str, Any]:
     total = 0
     by_task_type: dict[str, int] = {}
     by_rating: dict[int, int] = {}
+    by_game: dict[str, int] = {}
     substitutions = 0
 
     try:
@@ -482,6 +528,15 @@ def get_feedback_stats() -> dict[str, Any]:
 
                         task_type = feedback.get("task_type", "unknown")
                         by_task_type[task_type] = by_task_type.get(task_type, 0) + 1
+
+                        game = feedback.get("game")
+                        if game is None:
+                            ctx = feedback.get("context") or {}
+                            if isinstance(ctx, dict):
+                                game = ctx.get("game")
+                        if isinstance(game, str) and game.strip():
+                            g = game.strip().lower()
+                            by_game[g] = by_game.get(g, 0) + 1
 
                         rating = feedback.get("rating", 0)
                         by_rating[rating] = by_rating.get(rating, 0) + 1
@@ -518,6 +573,7 @@ def get_feedback_stats() -> dict[str, Any]:
         "total_feedback": total,
         "by_task_type": by_task_type,
         "by_rating": by_rating,
+        "by_game": by_game,
         "substitution_rate": substitutions / total if total > 0 else 0.0,
     }
 

@@ -3,7 +3,7 @@
 Index cards into Meilisearch and Qdrant for search.
 
 Usage:
-    python -m ml.search.index_cards --embeddings data/embeddings/model.wv
+    python -m ml.search.index_cards --game magic --embeddings data/embeddings/magic.wv
 """
 
 from __future__ import annotations
@@ -12,7 +12,7 @@ import argparse
 import logging
 from pathlib import Path
 
-from gensim.models import KeyedVectors
+from gensim.models import KeyedVectors  # type: ignore[import-not-found]
 
 from .hybrid_search import HybridSearch
 
@@ -29,6 +29,8 @@ def index_from_embeddings(
     embeddings_path: str,
     meilisearch_url: str | None = None,
     qdrant_url: str | None = None,
+    index_name: str | None = None,
+    collection_name: str | None = None,
     batch_size: int = 100,
 ) -> None:
     """
@@ -38,6 +40,8 @@ def index_from_embeddings(
         embeddings_path: Path to gensim KeyedVectors file
         meilisearch_url: Meilisearch server URL
         qdrant_url: Qdrant server URL
+        index_name: Meilisearch index name (default: cards_<game> in API)
+        collection_name: Qdrant collection name (default: cards_<game> in API)
         batch_size: Number of cards to index per batch
     """
     logger.info(f"Loading embeddings from {embeddings_path}")
@@ -49,6 +53,8 @@ def index_from_embeddings(
         meilisearch_url=meilisearch_url,
         qdrant_url=qdrant_url,
         embeddings=embeddings,
+        index_name=index_name or "cards",
+        collection_name=collection_name or "cards",
     )
 
     # Index all cards
@@ -77,6 +83,11 @@ def main() -> int:
     """CLI entry point."""
     parser = argparse.ArgumentParser(description="Index cards for search")
     parser.add_argument(
+        "--game",
+        default=None,
+        help="Game name (magic|pokemon|yugioh). Used to default index/collection names to cards_<game>.",
+    )
+    parser.add_argument(
         "--embeddings",
         required=True,
         help="Path to gensim KeyedVectors embeddings file",
@@ -90,6 +101,16 @@ def main() -> int:
         "--qdrant-url",
         default=None,
         help="Qdrant server URL (default: http://localhost:6333)",
+    )
+    parser.add_argument(
+        "--index-name",
+        default=None,
+        help="Meilisearch index name (default: cards_<game> if --game is set; else cards)",
+    )
+    parser.add_argument(
+        "--collection-name",
+        default=None,
+        help="Qdrant collection name (default: cards_<game> if --game is set; else cards)",
     )
     parser.add_argument(
         "--batch-size",
@@ -117,10 +138,17 @@ def main() -> int:
         return 1
 
     try:
+        default_ns = None
+        if args.game:
+            g = str(args.game).strip().lower()
+            if g:
+                default_ns = f"cards_{g}"
         index_from_embeddings(
             embeddings_path=str(emb_path),
             meilisearch_url=args.meilisearch_url,
             qdrant_url=args.qdrant_url,
+            index_name=args.index_name or default_ns,
+            collection_name=args.collection_name or default_ns,
             batch_size=args.batch_size,
         )
         return 0
