@@ -11,9 +11,10 @@ from __future__ import annotations
 
 import unicodedata
 from collections import Counter
-from typing import Any, Literal
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
+
 
 # ---------------------------------------------------------------------------
 # Helpers (Unicode/name hygiene)
@@ -196,7 +197,9 @@ class MTGDeck(_DeckBase):
                 continue
             if fmt_lower in singleton_formats:
                 if n > 1:
-                    raise ValueError(f"{fmt or 'Singleton format'} allows max 1 copy, but {card} has {n}")
+                    raise ValueError(
+                        f"{fmt or 'Singleton format'} allows max 1 copy, but {card} has {n}"
+                    )
             else:
                 if n > 4:
                     raise ValueError(f"Modern-style formats allow max 4 copies, but {card} has {n}")
@@ -285,4 +288,3 @@ __all__ = [
     "PokemonDeck",
     "YugiohDeck",
 ]
-
