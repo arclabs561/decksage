@@ -995,6 +995,11 @@ def _get_search_client() -> HybridSearch | None:
     # Create new client
     try:
         client = HybridSearch(embeddings=state.embeddings)
+        # Quintessential functionality: do not pretend search exists if both
+        # backends are unavailable. (HybridSearch will otherwise return empty lists.)
+        if getattr(client, "meilisearch", None) is None and getattr(client, "qdrant", None) is None:
+            logger.error("Search backends unavailable (Meilisearch and Qdrant both missing)")
+            return None
         app.state.search_client = client
         return client
     except Exception as e:
@@ -1013,92 +1018,14 @@ def search_cards_v1(request: SearchRequest):
     """
     client = _get_search_client()
 
-    # Fallback to embeddings-only search if hybrid search unavailable
     if client is None:
-        state = get_state()
-        if not hasattr(state, "embeddings") or not state.embeddings:
-            raise HTTPException(
-                status_code=503,
-                detail="Search not available. Embeddings not loaded.",
-            )
-
-        # Use embeddings for simple name matching
-        try:
-            from gensim.models import KeyedVectors
-
-            embeddings = state.embeddings
-            if embeddings and isinstance(embeddings, KeyedVectors):
-                # Simple fallback: find cards with query in name using embeddings
-                query_lower = request.query.lower()
-                matching_cards = [
-                    card for card in embeddings.key_to_index.keys() if query_lower in card.lower()
-                ][: request.limit]
-
-                # Create fallback results from embeddings
-                results = []
-                for i, card_name in enumerate(matching_cards):
-                    # Try to get full metadata from card attributes if available
-                    metadata = {}
-                    if state.card_attrs:
-                        card_data = state.card_attrs.get(card_name) or state.card_attrs.get(
-                            card_name.lower()
-                        )
-                        if card_data and isinstance(card_data, dict):
-                            # Extract all available metadata
-                            metadata = {
-                                "image_url": (
-                                    card_data.get("image_url")
-                                    or card_data.get("image")
-                                    or (
-                                        card_data.get("images", {}).get("large")
-                                        if isinstance(card_data.get("images"), dict)
-                                        else None
-                                    )
-                                ),
-                                "ref_url": card_data.get("ref_url")
-                                or card_data.get("scryfall_uri"),
-                                "type": card_data.get("type") or card_data.get("type_line", ""),
-                                "mana_cost": card_data.get("mana_cost", ""),
-                                "cmc": card_data.get("cmc", 0),
-                                "colors": card_data.get("colors", ""),
-                                "rarity": card_data.get("rarity", ""),
-                                "power": card_data.get("power", ""),
-                                "toughness": card_data.get("toughness", ""),
-                                "set": card_data.get("set", ""),
-                                "set_name": card_data.get("set_name", ""),
-                                "oracle_text": card_data.get("oracle_text", ""),
-                                "keywords": card_data.get("keywords", ""),
-                                "functional_tags": card_data.get("functional_tags", ""),
-                                "archetype": card_data.get("archetype", ""),
-                                "format_legal": card_data.get("format_legal", ""),
-                            }
-                            # Remove empty values
-                            metadata = {k: v for k, v in metadata.items() if v}
-
-                    results.append(
-                        SearchResultItem(
-                            card_name=card_name,
-                            score=max(0.5, 1.0 - (i * 0.05)),  # Decreasing scores, min 0.5
-                            source="embedding_fallback",
-                            metadata=metadata if metadata else {"image_url": None, "ref_url": None},
-                        )
-                    )
-
-                if results:
-                    return SearchResponse(query=request.query, total=len(results), results=results)
-                else:
-                    raise HTTPException(
-                        status_code=404,
-                        detail=f"No cards found matching '{request.query}'. Try a different search term.",
-                    )
-        except HTTPException:
-            raise
-        except Exception as e:
-            logger.warning(f"Fallback search failed: {e}")
-
         raise HTTPException(
             status_code=503,
-            detail="Search not available. Ensure Meilisearch and Qdrant are running and embeddings are loaded.",
+            detail=(
+                "Search not available: hybrid search backends are not configured. "
+                "Run Meilisearch and/or Qdrant and ensure deps are installed "
+                "(see src/ml/search/README.md)."
+            ),
         )
 
     results = client.search(
