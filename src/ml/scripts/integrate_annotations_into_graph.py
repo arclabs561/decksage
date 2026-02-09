@@ -33,7 +33,6 @@ def load_all_annotations(annotations_dir: Path) -> dict[tuple[str, str], dict[st
 
     logger.info(f"Found {len(annotation_files)} annotation files")
 
-    enriched_count = 0
     for annotation_file in annotation_files:
         logger.info(f"Loading {annotation_file.name}...")
 
@@ -79,6 +78,12 @@ def load_all_annotations(annotations_dir: Path) -> dict[tuple[str, str], dict[st
             continue
 
     logger.info(f"Loaded {len(annotations_by_pair)} unique card pairs from annotations")
+    total_count = len(annotations_by_pair)
+    enriched_count = sum(
+        1
+        for ann in annotations_by_pair.values()
+        if ann.get("graph_features") or ann.get("card_comparison") or ann.get("contextual_analysis")
+    )
     if total_count > 0:
         logger.info(
             f"  Enriched annotations: {enriched_count}/{total_count} ({enriched_count / total_count:.1%})"

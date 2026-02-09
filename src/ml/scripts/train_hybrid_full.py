@@ -39,6 +39,7 @@ import json
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import Any
 
 from ..data.incremental_graph import IncrementalCardGraph
 from ..similarity.gnn_embeddings import CardGNNEmbedder

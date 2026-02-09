@@ -15,6 +15,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 from ..evaluation.evaluate import compute_precision_at_k
 from ..scripts.integrate_hybrid_embeddings import (

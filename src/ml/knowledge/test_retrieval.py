@@ -2,6 +2,7 @@
 """Test knowledge retrieval without dependencies."""
 
 import json
+import sys
 from pathlib import Path
 
 

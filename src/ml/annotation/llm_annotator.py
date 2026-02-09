@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import logging
 import os
 from collections import Counter, defaultdict
 from datetime import datetime
@@ -41,6 +42,8 @@ except ImportError:
     print("Install pydantic-ai: pip install pydantic-ai")
 
 from ..utils.paths import PATHS
+
+logger = logging.getLogger(__name__)
 
 
 # Graph enrichment imports
@@ -786,9 +789,6 @@ class LLMAnnotator:
                                             violation_reason = f"Co-occurrence {cooccur} requires score >= 0.4, got {ann.similarity_score:.3f}"
 
                                 if violation_reason and min_score is not None:
-                                    import logging
-
-                                    logger = logging.getLogger(__name__)
                                     logger.warning(
                                         f"BASELINE RULE VIOLATION (multi-annotator): {violation_reason}. Adjusting score from {ann.similarity_score:.3f} to {min_score:.3f}"
                                     )
