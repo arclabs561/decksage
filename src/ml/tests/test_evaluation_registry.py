@@ -26,8 +26,12 @@ from pathlib import Path
 import pytest
 
 # Import the main registry
-from ml.utils.evaluation_registry import EvaluationRegistry
-from ml.utils.evaluation_registry_improved import SQLiteBackend, validate_version_format
+from ml.utils.evaluation_registry_improved import (
+    EvaluationRegistry,
+    QueryCache,
+    SQLiteBackend,
+    validate_version_format,
+)
 
 
 @pytest.fixture
@@ -44,6 +48,8 @@ def registry(temp_dir):
         registry_path=temp_dir / "model_registry.json",
         log_path=temp_dir / "experiment_log.jsonl",
         results_dir=temp_dir / "evaluation_results",
+        use_sqlite=True,
+        sqlite_path=temp_dir / "evaluation_registry.db",
     )
 
 
@@ -102,10 +108,8 @@ class TestAtomicWrites:
         test_file.parent.chmod(0o555)
 
         try:
-            registry._atomic_write(test_file, {"key": "value"})
-            assert False, "Should have raised exception"
-        except Exception:
-            pass
+            with pytest.raises(OSError):
+                registry._atomic_write(test_file, {"key": "value"})
         finally:
             test_file.parent.chmod(0o755)
 
@@ -287,27 +291,32 @@ class TestSQLiteBackend:
         assert backend.count(model_type="test") == 3
         assert backend.count(model_type="other") == 0
 
-    # Note: TestQueryCache tests moved here but cache fixture not available
-    # Skip all cache tests until QueryCache is integrated
-
-    @pytest.mark.skip("QueryCache not available")
     def test_cache_get_set(self):
         """Test basic cache get/set."""
-        pass
+        cache = QueryCache(ttl_seconds=60)
+        assert cache.get("k") is None
+        cache.set("k", {"v": 1})
+        assert cache.get("k") == {"v": 1}
 
-    @pytest.mark.skip("QueryCache not available")
     def test_cache_expiration(self):
         """Test cache expiration."""
-        pass
+        cache = QueryCache(ttl_seconds=0)
+        cache.set("k", "v")
+        time.sleep(0.01)
+        assert cache.get("k") is None
 
-    @pytest.mark.skip("QueryCache not available")
     def test_cache_clear(self):
         """Test cache clearing."""
-        pass
+        cache = QueryCache(ttl_seconds=60)
+        cache.set("k1", "v1")
+        cache.set("k2", "v2")
+        cache.clear()
+        assert cache.get("k1") is None
+        assert cache.get("k2") is None
 
-    @pytest.mark.skip("QueryCache not available - inline test body references undefined 'cache'")
     def test_cache_invalidate_pattern(self):
         """Test pattern-based cache invalidation."""
+        cache = QueryCache(ttl_seconds=60)
         cache.set("list:test:10", "value1")
         cache.set("list:other:10", "value2")
         cache.set("get:test:v1", "value3")
@@ -757,17 +766,11 @@ class TestPerformance:
             evaluation_results={"p@10": 0.1},
         )
 
-        import time
-
         # First call (no cache)
-        start1 = time.time()
         evals1 = registry.list_evaluations(use_cache=True)
-        time1 = time.time() - start1
 
         # Second call (cached)
-        start2 = time.time()
         evals2 = registry.list_evaluations(use_cache=True)
-        time2 = time.time() - start2
 
         # Cached call should be faster (or at least not slower)
         # Note: For small datasets, difference may be negligible
