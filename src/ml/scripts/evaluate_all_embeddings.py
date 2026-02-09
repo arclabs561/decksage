@@ -36,19 +36,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
-# Set up project paths
-import sys
 from ml.utils.path_setup import setup_project_paths
-setup_project_paths()
 
-from ml.utils.paths import PATHS
 
 try:
-    import pandas as pd
     import numpy as np
     from gensim.models import KeyedVectors
 
@@ -57,20 +54,11 @@ except ImportError as e:
     HAS_DEPS = False
     print(f"Missing dependencies: {e}")
 
-try:
-    from ml.utils.aim_helpers import create_training_run, track_evaluation_metrics
-    HAS_AIM = True
-except ImportError:
-    HAS_AIM = False
-    create_training_run = None
-    track_evaluation_metrics = None
+setup_project_paths()
 
 
 def load_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
     """Load test set (canonical format: dict mapping query to relevance labels)."""
-    import sys
-    import os
-
     print(f"  Loading test set from {test_set_path}...", end="", flush=True)
     sys.stdout.flush()
 
@@ -87,10 +75,7 @@ def load_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
         data = canonical_load(path=test_set_path)
 
         # Handle both formats: direct dict or wrapped in "queries"
-        if "queries" in data:
-            result = data["queries"]
-        else:
-            result = data
+        result = data.get("queries", data)
 
         print(f"  Loaded {len(result)} queries", flush=True)
         sys.stdout.flush()
@@ -116,6 +101,7 @@ def load_graph_for_jaccard(
 ) -> dict[str, set[str]]:
     """Load graph adjacency for Jaccard similarity."""
     from ml.utils.shared_operations import load_graph_for_jaccard as shared_load_graph
+
     return shared_load_graph(pairs_csv=pairs_csv, graph_db=graph_db, game=game)
 
 
@@ -139,9 +125,10 @@ def evaluate_embedding(
     # Import canonical metric calculation
     try:
         from ml.utils.evaluation import compute_precision_at_k
-        USE_CANONICAL = True
+
+        use_canonical = True
     except ImportError:
-        USE_CANONICAL = False
+        use_canonical = False
         # Fallback relevance weights
         relevance_weights = {
             "highly_relevant": 1.0,
@@ -170,6 +157,7 @@ def evaluate_embedding(
     # Apply name mapping upfront for consistency
     if name_mapper:
         from ml.utils.name_normalizer import apply_name_mapping_to_test_set
+
         test_set = apply_name_mapping_to_test_set(test_set, name_mapper)
 
     for query, labels in test_set.items():
@@ -210,7 +198,7 @@ def evaluate_embedding(
             continue
 
         # Use canonical metric calculation if available
-        if USE_CANONICAL:
+        if use_canonical:
             score = compute_precision_at_k(candidates, labels, k=top_k)
         else:
             # Fallback: manual calculation
@@ -306,6 +294,7 @@ def evaluate_jaccard(
     # Apply name mapping upfront for consistency
     if name_mapper:
         from ml.utils.name_normalizer import apply_name_mapping_to_test_set
+
         test_set = apply_name_mapping_to_test_set(test_set, name_mapper)
 
     # Diagnostic tracking
@@ -346,7 +335,7 @@ def evaluate_jaccard(
         query_neighbors = adj[query]
         similarities = []
 
-        for candidate in adj.keys():
+        for candidate in adj:
             if candidate == query:
                 continue
             candidate_neighbors = adj[candidate]
@@ -360,6 +349,7 @@ def evaluate_jaccard(
         # Use canonical metric calculation if available
         try:
             from ml.utils.evaluation import compute_precision_at_k
+
             precision_at_k = compute_precision_at_k(candidates, labels, k=top_k)
         except ImportError:
             # Fallback: manual calculation
@@ -501,6 +491,8 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    from ml.utils.paths import PATHS
+
     # Use PATHS defaults if not provided
     if args.test_set is None:
         args.test_set = str(PATHS.test_magic)
@@ -514,8 +506,6 @@ def main() -> int:
     if not HAS_DEPS:
         print("Error: Missing dependencies")
         return 1
-
-    import sys
     sys.stdout.flush()
 
     print("=" * 70)
@@ -535,17 +525,18 @@ def main() -> int:
         print("  Validating test set coverage...")
         try:
             from ml.evaluation.test_set_validation import validate_test_set_coverage
+
             validation_result = validate_test_set_coverage(
                 test_set_path=test_set_path,
                 min_queries=100,
                 min_labels_per_query=5,
             )
             if not validation_result["valid"]:
-                print(f"  Warning: Test set validation issues found:")
+                print("  Warning: Test set validation issues found:")
                 for issue in validation_result.get("issues", []):
                     print(f"     - {issue}")
             else:
-                print(f"  Test set validation passed")
+                print("  Test set validation passed")
         except Exception as e:
             print(f"  Warning: Test set validation failed: {e}")
 
@@ -557,20 +548,19 @@ def main() -> int:
     if mapping_path.exists():
         try:
             # Try importing NameMapper - it's optional
-            import sys
-            from pathlib import Path as P
             # Add src to path if needed
-            script_dir = P(__file__).parent
+            script_dir = Path(__file__).parent
             src_dir = script_dir.parent.parent
             if str(src_dir) not in sys.path:
                 sys.path.insert(0, str(src_dir))
 
             from ml.utils.name_normalizer import NameMapper
+
             print(f"Loading name mapping from {mapping_path}")
             name_mapper = NameMapper.load_from_file(mapping_path)
             print(f"  Loaded {len(name_mapper.mapping)} name mappings")
         except ImportError:
-            print(f"Warning: NameMapper not available, proceeding without name mapping")
+            print("Warning: NameMapper not available, proceeding without name mapping")
     else:
         print(f"Warning: No name mapping found at {mapping_path}, proceeding without mapping")
     print()
@@ -580,7 +570,18 @@ def main() -> int:
 
     # Initialize Aim tracking for evaluation
     aim_run = None
-    if HAS_AIM and create_training_run:
+    create_training_run = None
+    track_evaluation_metrics = None
+    try:
+        from ml.utils.aim_helpers import create_training_run as _create_training_run
+        from ml.utils.aim_helpers import track_evaluation_metrics as _track_evaluation_metrics
+    except ImportError:
+        pass
+    else:
+        create_training_run = _create_training_run
+        track_evaluation_metrics = _track_evaluation_metrics
+
+    if create_training_run:
         aim_run = create_training_run(
             experiment_name="embedding_evaluation",
             hparams={
@@ -645,14 +646,14 @@ def main() -> int:
                     except ImportError:
                         from ml.utils.evaluation import evaluate_with_confidence
 
-                    def similarity_func(query: str, k: int) -> list[tuple[str, float]]:
+                    def similarity_func(query: str, k: int, _wv=wv) -> list[tuple[str, float]]:
                         """Similarity function for evaluation."""
                         mapped_query = name_mapper.map_name(query) if name_mapper else query
-                        if mapped_query not in wv:
+                        if mapped_query not in _wv:
                             # Return empty list if query not in vocabulary
                             return []
                         try:
-                            similar = wv.most_similar(mapped_query, topn=k)
+                            similar = _wv.most_similar(mapped_query, topn=k)
                             return similar
                         except KeyError:
                             return []
@@ -664,7 +665,12 @@ def main() -> int:
                         if isinstance(labels, dict):
                             # Combine all relevant cards (excluding irrelevant)
                             all_relevant = []
-                            for level in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant"]:
+                            for level in [
+                                "highly_relevant",
+                                "relevant",
+                                "somewhat_relevant",
+                                "marginally_relevant",
+                            ]:
                                 all_relevant.extend(labels.get(level, []))
                             if all_relevant:
                                 flat_test_set[query] = all_relevant
@@ -677,7 +683,7 @@ def main() -> int:
                     }
 
                     # Check coverage before evaluation
-                    for query in test_set.keys():
+                    for query in test_set:
                         mapped_query = name_mapper.map_name(query) if name_mapper else query
                         if mapped_query in wv:
                             vocab_coverage["found_in_vocab"] += 1
@@ -685,8 +691,10 @@ def main() -> int:
                             vocab_coverage["not_in_vocab"] += 1
 
                     # Use evaluate_with_confidence - it expects dict[str, list[str]] format
-                    print(f"  Running evaluation with confidence intervals (n_bootstrap={args.n_bootstrap})...")
-                    print(f"  This may take a few minutes for large test sets...")
+                    print(
+                        f"  Running evaluation with confidence intervals (n_bootstrap={args.n_bootstrap})..."
+                    )
+                    print("  This may take a few minutes for large test sets...")
                     sys.stdout.flush()
                     metrics = evaluate_with_confidence(
                         flat_test_set,  # Converted to flat format
@@ -696,7 +704,7 @@ def main() -> int:
                         confidence=0.95,
                         verbose=False,  # Disable verbose to avoid per-query spam
                     )
-                    print(f"  Evaluation complete")
+                    print("  Evaluation complete")
                     sys.stdout.flush()
                     # Convert to expected format
                     metrics = {
@@ -710,16 +718,25 @@ def main() -> int:
                         "num_evaluated": metrics.get("num_evaluated", metrics.get("n_queries", 0)),
                         "vocab_coverage": vocab_coverage,
                     }
-                    print(f"  P@10: {metrics['p@10']:.4f} (95% CI: {metrics['p@10_ci_lower']:.4f}, {metrics['p@10_ci_upper']:.4f})")
-                    print(f"  MRR: {metrics['mrr']:.4f} (95% CI: {metrics['mrr_ci_lower']:.4f}, {metrics['mrr_ci_upper']:.4f})")
+                    print(
+                        f"  P@10: {metrics['p@10']:.4f} (95% CI: {metrics['p@10_ci_lower']:.4f}, {metrics['p@10_ci_upper']:.4f})"
+                    )
+                    print(
+                        f"  MRR: {metrics['mrr']:.4f} (95% CI: {metrics['mrr_ci_lower']:.4f}, {metrics['mrr_ci_upper']:.4f})"
+                    )
                     print(f"  Queries: {metrics['num_evaluated']}")
-                    if 'vocab_coverage' in metrics:
-                        cov = metrics['vocab_coverage']
-                        print(f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab")
+                    if "vocab_coverage" in metrics:
+                        cov = metrics["vocab_coverage"]
+                        print(
+                            f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab"
+                        )
                 except ImportError as e:
                     import logging
+
                     logger = logging.getLogger(__name__)
-                    logger.warning(f"  Confidence intervals not available: {e}, using standard evaluation")
+                    logger.warning(
+                        f"  Confidence intervals not available: {e}, using standard evaluation"
+                    )
                     metrics = evaluate_embedding(
                         wv,
                         test_set,
@@ -728,14 +745,18 @@ def main() -> int:
                         per_query=args.per_query,
                         verbose=args.per_query,  # Verbose if per-query requested
                     )
-                    print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}")
-                    if 'vocab_coverage' in metrics:
-                        cov = metrics['vocab_coverage']
-                        print(f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab")
+                    print(
+                        f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}"
+                    )
+                    if "vocab_coverage" in metrics:
+                        cov = metrics["vocab_coverage"]
+                        print(
+                            f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab"
+                        )
                     sys.stdout.flush()
             else:
                 # Standard evaluation
-                print(f"  Running standard evaluation...")
+                print("  Running standard evaluation...")
                 sys.stdout.flush()
                 metrics = evaluate_embedding(
                     wv,
@@ -744,10 +765,14 @@ def main() -> int:
                     name_mapper=name_mapper,
                     verbose=False,
                 )
-                print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}")
-                if 'vocab_coverage' in metrics:
-                    cov = metrics['vocab_coverage']
-                    print(f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab")
+                print(
+                    f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}"
+                )
+                if "vocab_coverage" in metrics:
+                    cov = metrics["vocab_coverage"]
+                    print(
+                        f"  Coverage: {cov.get('found_in_vocab', 0)}/{cov.get('total_queries', 0)} in vocab"
+                    )
                 sys.stdout.flush()
 
             results[method_name] = metrics
@@ -758,13 +783,14 @@ def main() -> int:
             if aim_run and track_evaluation_metrics:
                 track_evaluation_metrics(
                     aim_run,
-                    p10=metrics['p@10'],
+                    p10=metrics["p@10"],
                     ndcg=None,  # Not computed in this script
-                    mrr=metrics['mrr'],
+                    mrr=metrics["mrr"],
                     method=method_name,
                 )
         except Exception as e:
             import traceback
+
             print(f"  Error: {e}")
             if args.per_query:
                 traceback.print_exc()
@@ -774,9 +800,16 @@ def main() -> int:
         sys.stdout.flush()
 
     # Evaluate Jaccard baseline
-    from ml.utils.paths import PATHS
-    pairs_csv = Path(args.pairs_csv) if args.pairs_csv else (PATHS.pairs_large if PATHS.pairs_large.exists() else None)
-    graph_db = Path(args.graph_db) if args.graph_db else (PATHS.incremental_graph_db if PATHS.incremental_graph_db.exists() else None)
+    pairs_csv = (
+        Path(args.pairs_csv)
+        if args.pairs_csv
+        else (PATHS.pairs_large if PATHS.pairs_large.exists() else None)
+    )
+    graph_db = (
+        Path(args.graph_db)
+        if args.graph_db
+        else (PATHS.incremental_graph_db if PATHS.incremental_graph_db.exists() else None)
+    )
 
     if (pairs_csv and pairs_csv.exists()) or (graph_db and graph_db.exists()):
         print("Evaluating Jaccard (baseline)...")
@@ -794,16 +827,20 @@ def main() -> int:
             if aim_run and track_evaluation_metrics:
                 track_evaluation_metrics(
                     aim_run,
-                    p10=metrics['p@10'],
+                    p10=metrics["p@10"],
                     ndcg=None,
-                    mrr=metrics['mrr'],
+                    mrr=metrics["mrr"],
                     method="jaccard",
                 )
 
-            print(f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}")
-            if 'vocab_coverage' in metrics:
-                cov = metrics['vocab_coverage']
-                print(f"  Coverage: {cov.get('found_in_graph', 0)}/{cov.get('total_queries', 0)} in graph")
+            print(
+                f"  P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics.get('num_evaluated', metrics.get('num_queries', 0))}"
+            )
+            if "vocab_coverage" in metrics:
+                cov = metrics["vocab_coverage"]
+                print(
+                    f"  Coverage: {cov.get('found_in_graph', 0)}/{cov.get('total_queries', 0)} in graph"
+                )
             sys.stdout.flush()
         except Exception as e:
             print(f"  Error: {e}")
@@ -831,23 +868,21 @@ def main() -> int:
     print("-" * 75)
     for method, metrics in sorted_results:
         coverage_str = "N/A"
-        if 'vocab_coverage' in metrics:
-            cov = metrics['vocab_coverage']
-            total = cov.get('total_queries', 0)
-            found = cov.get('found_in_vocab', cov.get('found_in_graph', 0))
+        if "vocab_coverage" in metrics:
+            cov = metrics["vocab_coverage"]
+            total = cov.get("total_queries", 0)
+            found = cov.get("found_in_vocab", cov.get("found_in_graph", 0))
             coverage_str = f"{found}/{total}" if total > 0 else "N/A"
-        elif 'num_evaluated' in metrics and 'num_queries' in metrics:
-            eval_count = metrics.get('num_evaluated', 0)
-            total_count = metrics.get('num_queries', len(test_set) if 'test_set' in locals() else 0)
+        elif "num_evaluated" in metrics and "num_queries" in metrics:
+            eval_count = metrics.get("num_evaluated", 0)
+            total_count = metrics.get("num_queries", len(test_set) if "test_set" in locals() else 0)
             coverage_str = f"{eval_count}/{total_count}" if total_count > 0 else "N/A"
 
-        p10 = metrics.get('p@10', 0.0)
-        mrr = metrics.get('mrr', metrics.get('mrr@10', 0.0))
-        queries = metrics.get('num_evaluated', metrics.get('num_queries', 0))
+        p10 = metrics.get("p@10", 0.0)
+        mrr = metrics.get("mrr", metrics.get("mrr@10", 0.0))
+        queries = metrics.get("num_evaluated", metrics.get("num_queries", 0))
 
-        print(
-            f"{method:<25} {p10:<12.4f} {mrr:<12.4f} {queries:<10} {coverage_str:<12}"
-        )
+        print(f"{method:<25} {p10:<12.4f} {mrr:<12.4f} {queries:<10} {coverage_str:<12}")
     sys.stdout.flush()
 
     # Save results
@@ -869,7 +904,9 @@ def main() -> int:
 
     # Add confidence intervals if per-query results available
     try:
-        from ml.evaluation.confidence_intervals_integration import add_confidence_intervals_to_evaluation_results
+        from ml.evaluation.confidence_intervals_integration import (
+            add_confidence_intervals_to_evaluation_results,
+        )
 
         # Extract per-query metrics from results if available
         per_query_metrics = {}
@@ -900,7 +937,10 @@ def main() -> int:
     # Auto-generate quality dashboard if requested
     if args.generate_dashboard or (args.output and "experiments" in str(args.output)):
         try:
-            from ml.evaluation.quality_dashboard import compute_system_health, generate_dashboard_html
+            from ml.evaluation.quality_dashboard import (
+                compute_system_health,
+                generate_dashboard_html,
+            )
 
             # Create dashboard from evaluation results
             health = compute_system_health(
@@ -940,7 +980,11 @@ def main() -> int:
             embeddings_dir = Path(args.embeddings_dir)
             if embeddings_dir.exists():
                 # Common naming patterns
-                for pattern in [f"{best_method.lower()}.wv", f"{best_method}.wv", f"*{best_method.lower()}*.wv"]:
+                for pattern in [
+                    f"{best_method.lower()}.wv",
+                    f"{best_method}.wv",
+                    f"*{best_method.lower()}*.wv",
+                ]:
                     matches = list(embeddings_dir.glob(pattern))
                     if matches:
                         best_embedding_path = str(matches[0])
@@ -978,4 +1022,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())
