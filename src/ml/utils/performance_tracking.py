@@ -1,1 +1,108 @@
-"""Performance tracking utilities for training and evaluation scripts.""" import json import time from collections import defaultdict from datetime import datetime from pathlib import Path from typing import Any, Dict, Optional, Union import logging try: from .logging_config import get_logger logger = get_logger(__name__) except ImportError: logger = logging.getLogger(__name__) class PerformanceTracker: """Track performance metrics for training/evaluation runs.""" def __init__(self, output_path: Optional[Union[Path, str]] = None): """ Initialize performance tracker. Args: output_path: Path to save performance logs (JSON format) """ self.output_path = Path(output_path) if output_path else None self.metrics: Dict[str, Any] = { "start_time": datetime.now().isoformat(), "stages": {}, "total_time": None, "memory_usage": {}, } self.stage_start_times: Dict[str, float] = {} self.stage_counts: Dict[str, int] = defaultdict(int) def start_stage(self, stage_name: str) -> None: """Start timing a stage.""" self.stage_start_times[stage_name] = time.time() self.stage_counts[stage_name] += 1 logger.info(f"⏱️ Starting stage: {stage_name}") def end_stage(self, stage_name: str, metadata: Optional[Dict[str, Any]] = None) -> float: """ End timing a stage and record metrics. Args: stage_name: Name of the stage metadata: Optional metadata (e.g., rows processed, edges created) Returns: Elapsed time in seconds """ if stage_name not in self.stage_start_times: logger.warning(f"Stage {stage_name} was not started") return 0.0 elapsed = time.time() - self.stage_start_times[stage_name] stage_key = f"{stage_name}_{self.stage_counts[stage_name]}" self.metrics["stages"][stage_key] = { "elapsed_seconds": elapsed, "elapsed_formatted": f"{elapsed:.2f}s", "metadata": metadata or {}, } logger.info(f" Completed stage: {stage_name} in {elapsed:.2f}s") if metadata: for key, value in metadata.items(): logger.info(f" {key}: {value}") del self.stage_start_times[stage_name] return elapsed def record_metric(self, name: str, value: Any, unit: Optional[str] = None) -> None: """Record a custom metric.""" if "custom_metrics" not in self.metrics: self.metrics["custom_metrics"] = {} metric_key = name if unit: metric_key = f"{name}_{unit}" self.metrics["custom_metrics"][metric_key] = value def record_memory(self, stage: str, memory_mb: float) -> None: """Record memory usage for a stage.""" if "memory_usage" not in self.metrics: self.metrics["memory_usage"] = {} self.metrics["memory_usage"][stage] = memory_mb def finish(self, success: bool = True, error: Optional[str] = None) -> Dict[str, Any]: """ Finish tracking and save results. Args: success: Whether the run was successful error: Error message if failed Returns: Final metrics dictionary """ total_time = time.time() - time.mktime( datetime.fromisoformat(self.metrics["start_time"]).timetuple() ) self.metrics["total_time"] = total_time self.metrics["total_time_formatted"] = f"{total_time:.2f}s ({total_time/60:.1f} min)" self.metrics["end_time"] = datetime.now().isoformat() self.metrics["success"] = success if error: self.metrics["error"] = error # Calculate summary statistics stage_times = [s["elapsed_seconds"] for s in self.metrics["stages"].values()] if stage_times: self.metrics["summary"] = { "num_stages": len(self.metrics["stages"]), "total_stage_time": sum(stage_times), "avg_stage_time": sum(stage_times) / len(stage_times), "slowest_stage": max(self.metrics["stages"].items(), key=lambda x: x[1]["elapsed_seconds"]), "fastest_stage": min(self.metrics["stages"].items(), key=lambda x: x[1]["elapsed_seconds"]), } # Save to file if output path provided if self.output_path: self.output_path.parent.mkdir(parents=True, exist_ok=True) with open(self.output_path, "w") as f: json.dump(self.metrics, f, indent=2) logger.info(f" Performance metrics saved to {self.output_path}") return self.metrics def get_summary(self) -> str: """Get a human-readable summary of performance metrics.""" if "summary" not in self.metrics: return "No metrics recorded yet" summary = self.metrics["summary"] lines = [ "=== Performance Summary ===", f"Total time: {self.metrics.get('total_time_formatted', 'N/A')}", f"Number of stages: {summary['num_stages']}", f"Average stage time: {summary['avg_stage_time']:.2f}s", ] if "slowest_stage" in summary: slowest_name, slowest_data = summary["slowest_stage"] lines.append(f"Slowest stage: {slowest_name} ({slowest_data['elapsed_formatted']})") if "fastest_stage" in summary: fastest_name, fastest_data = summary["fastest_stage"] lines.append(f"Fastest stage: {fastest_name} ({fastest_data['elapsed_formatted']})") return "\n".join(lines)
+"""Performance tracking utilities for training and evaluation scripts.
+
+This module is small on purpose: it provides timing + structured metadata that
+can be written to a JSON file for later inspection.
+"""
+
+from __future__ import annotations
+
+import json
+import logging
+import time
+from collections import defaultdict
+from dataclasses import dataclass, field
+from datetime import datetime
+from pathlib import Path
+from typing import Any
+
+
+try:
+    from .logging_config import get_logger
+
+    logger = get_logger(__name__)
+except Exception:
+    logger = logging.getLogger(__name__)
+
+
+@dataclass
+class StageRecord:
+    elapsed_seconds: float
+    metadata: dict[str, Any] = field(default_factory=dict)
+
+
+class PerformanceTracker:
+    """Track wall-clock timings and lightweight metrics."""
+
+    def __init__(self, output_path: Path | str | None = None):
+        self.output_path = Path(output_path) if output_path else None
+        self.started_at = datetime.now()
+        self._stage_started_at: dict[str, float] = {}
+        self._stage_counts: dict[str, int] = defaultdict(int)
+
+        self.metrics: dict[str, Any] = {
+            "start_time": self.started_at.isoformat(),
+            "end_time": None,
+            "success": None,
+            "error": None,
+            "total_time_seconds": None,
+            "stages": {},
+            "custom_metrics": {},
+            "memory_usage_mb": {},
+        }
+
+    def start_stage(self, stage_name: str) -> None:
+        """Start timing a stage."""
+        self._stage_started_at[stage_name] = time.time()
+        self._stage_counts[stage_name] += 1
+        logger.info("Starting stage: %s", stage_name)
+
+    def end_stage(self, stage_name: str, metadata: dict[str, Any] | None = None) -> float:
+        """Stop timing a stage and record its elapsed time."""
+        if stage_name not in self._stage_started_at:
+            logger.warning("Stage %s was not started", stage_name)
+            return 0.0
+
+        elapsed = time.time() - self._stage_started_at[stage_name]
+        idx = self._stage_counts[stage_name]
+        stage_key = f"{stage_name}_{idx}"
+        self.metrics["stages"][stage_key] = {
+            "elapsed_seconds": elapsed,
+            "metadata": metadata or {},
+        }
+        logger.info("Completed stage: %s (%.2fs)", stage_name, elapsed)
+        self._stage_started_at.pop(stage_name, None)
+        return float(elapsed)
+
+    def record_metric(self, name: str, value: Any, *, unit: str | None = None) -> None:
+        """Record a custom metric."""
+        key = f"{name}_{unit}" if unit else name
+        self.metrics["custom_metrics"][key] = value
+
+    def record_memory(self, stage: str, memory_mb: float) -> None:
+        """Record memory usage for a stage (best-effort)."""
+        self.metrics["memory_usage_mb"][stage] = float(memory_mb)
+
+    def finish(self, *, success: bool = True, error: str | None = None) -> dict[str, Any]:
+        """Finalize metrics and optionally write them to disk."""
+        ended_at = datetime.now()
+        total_seconds = (ended_at - self.started_at).total_seconds()
+
+        self.metrics["end_time"] = ended_at.isoformat()
+        self.metrics["success"] = bool(success)
+        self.metrics["error"] = error
+        self.metrics["total_time_seconds"] = float(total_seconds)
+
+        if self.output_path:
+            self.output_path.parent.mkdir(parents=True, exist_ok=True)
+            self.output_path.write_text(json.dumps(self.metrics, indent=2, sort_keys=True) + "\n")
+            logger.info("Wrote performance metrics to %s", self.output_path)
+
+        return self.metrics
+
+    def get_summary(self) -> str:
+        """Return a small human-readable summary (no tables)."""
+        total = self.metrics.get("total_time_seconds")
+        if total is None:
+            return "No metrics recorded yet"
+        num_stages = len(self.metrics.get("stages", {}))
+        return f"total_time_seconds={total:.2f}, stages={num_stages}"
