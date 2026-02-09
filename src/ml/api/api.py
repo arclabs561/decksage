@@ -113,6 +113,64 @@ if not HAS_GENSIM:
     logger.warning("gensim is not installed; embedding features will be unavailable")
 
 
+# ---------------------------------------------------------------------------
+# Multi-game support
+# ---------------------------------------------------------------------------
+
+SUPPORTED_GAMES: set[str] = {"magic", "pokemon", "yugioh"}
+
+
+def _normalize_game(game: str | None) -> str | None:
+    if game is None:
+        return None
+    g = str(game).strip().lower()
+    return g or None
+
+
+def _configured_games() -> list[str]:
+    """Return configured games from app state (fallback: [default_game])."""
+    try:
+        games = getattr(app.state, "games", None)
+        if isinstance(games, list) and games:
+            return [str(g).strip().lower() for g in games if str(g).strip()]
+    except Exception:
+        pass
+    # Fallback to a single default game
+    return [_default_game()]
+
+
+def _default_game() -> str:
+    try:
+        g = getattr(app.state, "default_game", None)
+        if isinstance(g, str) and g.strip():
+            return g.strip().lower()
+    except Exception:
+        pass
+    return os.getenv("DECKSAGE_DEFAULT_GAME", "magic").strip().lower() or "magic"
+
+
+def _require_game(game: str | None) -> str:
+    """
+    Require an explicit game in multi-game mode.
+
+    - If only one game is configured, default to it.
+    - If multiple games are configured, require request to specify it.
+    """
+    cfg = _configured_games()
+    g = _normalize_game(game)
+    if g is None:
+        if len(cfg) == 1:
+            g = cfg[0]
+        else:
+            raise HTTPException(
+                status_code=400,
+                detail=f"game is required (configured_games={cfg})",
+            )
+    if g not in SUPPORTED_GAMES:
+        raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
+    return g
+
+
 # Models
 class SimilarCard(BaseModel):
     card: str = Field(..., description="Card name")
@@ -126,6 +184,7 @@ class UseCaseEnum(str, Enum):
 
 
 class SimilarityRequest(BaseModel):
+    game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
     query: str = Field(..., description="Query card name")
     top_k: int = Field(10, ge=1, le=100, description="Number of results")
     use_case: UseCaseEnum = Field(
@@ -174,6 +233,7 @@ class SimilarityResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str
+    game: str
     num_cards: int
     embedding_dim: int
 
@@ -214,17 +274,41 @@ class ApiState:
         self.reranker: object | None = None  # Learned reranker (optional)
 
 
-def get_state() -> ApiState:
-    state = getattr(app.state, "api", None)
+def get_state(game: str | None = None) -> ApiState:
+    """
+    Get (or create) the API state for a specific game.
+
+    In single-game mode, callers may omit `game` and the default game is used.
+    In multi-game mode, request handlers should call `_require_game(...)` and
+    pass the resolved game here.
+    """
+    # Store per-game state in app.state
+    by_game = getattr(app.state, "api_by_game", None)
+    if by_game is None:
+        by_game = {}
+        app.state.api_by_game = by_game
+
+    g = _normalize_game(game) or _default_game()
+    if g not in SUPPORTED_GAMES:
+        # Keep this as ValueError (not HTTPException) so non-request call sites
+        # don't accidentally turn into 4xx responses.
+        raise ValueError(f"Unknown game: {game}")
+
+    state = by_game.get(g)
     if state is None:
         state = ApiState()
-        app.state.api = state
+        by_game[g] = state
     return state
 
 
-def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> None:
-    """Load embeddings and graph data into app.state.api."""
-    state = get_state()
+def load_embeddings_to_state(
+    game: str,
+    emb_path: str,
+    pairs_csv: str | None = None,
+    tuned_weights_path: str | None = None,
+) -> None:
+    """Load embeddings and graph data into app.state for a specific game."""
+    state = get_state(game)
     logger.info("Loading embeddings from %s...", emb_path)
     emb = KeyedVectors.load(emb_path)
     state.embeddings = emb
@@ -232,6 +316,7 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
         "num_cards": len(emb),
         "embedding_dim": emb.vector_size,
         "model_path": emb_path,
+        "game": game,
         "methods": ["embedding"],
     }
     logger.info("Loaded %s cards (%sD)", f"{len(emb):,}", emb.vector_size)
@@ -242,14 +327,19 @@ def load_embeddings_to_state(emb_path: str, pairs_csv: str | None = None) -> Non
         state.model_info["methods"].append("jaccard")
         logger.info("Loaded graph: %s cards, %s weights", f"{len(adj):,}", f"{len(weights):,}")
 
-    # Load tuned fusion weights if available (non-fatal)
-    # Try optimized_fusion_weights_latest.json first (from evaluation), then fusion_grid_search_latest.json
+    # Load tuned fusion weights if available (non-fatal).
+    # In multi-game mode this must be configured per game to avoid cross-game contamination.
     try:
-        weights_path = PATHS.experiments / "optimized_fusion_weights_latest.json"
-        if not weights_path.exists():
-            weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
+        weights_path: Path | None = None
+        if tuned_weights_path:
+            weights_path = Path(tuned_weights_path)
+        elif len(_configured_games()) == 1:
+            # Legacy single-game behavior
+            weights_path = PATHS.experiments / "optimized_fusion_weights_latest.json"
+            if not weights_path.exists():
+                weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
 
-        if weights_path.exists():
+        if weights_path and weights_path.exists():
             with open(weights_path) as fh:
                 data = json.load(fh)
 
@@ -359,63 +449,135 @@ async def lifespan(app: FastAPI):
         load_dotenv()
     except Exception:
         pass
-    emb_path = os.getenv("EMBEDDINGS_PATH")
-    pairs_path = os.getenv("PAIRS_PATH")
-    attrs_path = os.getenv("ATTRIBUTES_PATH")
-    if emb_path:
-        if not HAS_GENSIM:
-            logger.error("gensim is not installed; cannot load embeddings from %s", emb_path)
-        else:
-            try:
-                load_embeddings_to_state(emb_path, pairs_path)
-            except Exception:
-                logger.exception("Failed to load embeddings/graph during startup")
+
+    # ------------------------------------------------------------
+    # Configure multi-game mode
+    # ------------------------------------------------------------
+    games_env = os.getenv("DECKSAGE_GAMES", "").strip()
+    if games_env:
+        games = [g.strip().lower() for g in games_env.split(",") if g.strip()]
     else:
-        logger.info("EMBEDDINGS_PATH not set; service will start but /ready returns 503")
-    # Optional attributes CSV
-    if attrs_path and sm_load_attrs is not None and os.path.exists(attrs_path):
-        try:
-            state = get_state()
-            state.card_attrs = sm_load_attrs(attrs_path)
+        games = [os.getenv("DECKSAGE_DEFAULT_GAME", "magic").strip().lower() or "magic"]
+    games = [g for g in games if g in SUPPORTED_GAMES]
+    if not games:
+        games = ["magic"]
+    default_game = os.getenv("DECKSAGE_DEFAULT_GAME", games[0]).strip().lower() or games[0]
+    if default_game not in games:
+        default_game = games[0]
+
+    app.state.games = games
+    app.state.default_game = default_game
+
+    multi = len(games) > 1
+    logger.info("Configured games: %s (default=%s)", games, default_game)
+
+    # Shared settings (global)
+    text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
+    visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
+
+    # Load resources per game
+    for game in games:
+        suffix = game.upper()
+        emb_key = f"EMBEDDINGS_PATH_{suffix}" if multi else "EMBEDDINGS_PATH"
+        pairs_key = f"PAIRS_PATH_{suffix}" if multi else "PAIRS_PATH"
+        attrs_key = f"ATTRIBUTES_PATH_{suffix}" if multi else "ATTRIBUTES_PATH"
+        weights_key = f"FUSION_WEIGHTS_PATH_{suffix}"
+        signals_key = f"SIGNALS_DIR_{suffix}"
+        reranker_key = f"RERANKER_PATH_{suffix}" if multi else "RERANKER_PATH"
+
+        emb_path = os.getenv(emb_key)
+        pairs_path = os.getenv(pairs_key)
+        attrs_path = os.getenv(attrs_key)
+        tuned_weights_path = os.getenv(weights_key)
+        signals_dir = os.getenv(signals_key) or None
+        reranker_path = os.getenv(reranker_key) or None
+
+        if emb_path:
+            if not HAS_GENSIM:
+                logger.error(
+                    "gensim is not installed; cannot load embeddings for %s from %s",
+                    game,
+                    emb_path,
+                )
+            else:
+                try:
+                    load_embeddings_to_state(
+                        game,
+                        emb_path,
+                        pairs_path,
+                        tuned_weights_path=tuned_weights_path,
+                    )
+                except Exception:
+                    logger.exception("Failed to load embeddings/graph during startup for game=%s", game)
+        else:
             logger.info(
-                "Loaded card attributes from %s (count=%d)", attrs_path, len(state.card_attrs)
+                "%s not set; %s will be unavailable until embeddings are configured",
+                emb_key,
+                game,
+            )
+
+        # Optional attributes CSV (per game)
+        if attrs_path and sm_load_attrs is not None and os.path.exists(attrs_path):
+            try:
+                state = get_state(game)
+                state.card_attrs = sm_load_attrs(attrs_path)
+                logger.info(
+                    "Loaded %s attributes from %s (count=%d)",
+                    game,
+                    attrs_path,
+                    len(state.card_attrs),
+                )
+            except Exception:
+                logger.exception("Failed to load attributes CSV for game=%s: %s", game, attrs_path)
+
+        # Additional signals (per game)
+        try:
+            from .load_signals import load_signals_to_state
+
+            state = get_state(game)
+            default_signals_dir = (
+                (PATHS.experiments / "signals" / game) if multi else (PATHS.experiments / "signals")
+            )
+            signal_status = load_signals_to_state(
+                state=state,
+                signals_dir=(signals_dir or default_signals_dir),
+                text_embedder_model=text_embedder_model,
+                visual_embedder_model=visual_embedder_model,
+                reranker_path=reranker_path,
+            )
+            state.signal_status = signal_status
+
+            loaded_signals = [name for name, loaded in signal_status.items() if loaded]
+            missing_signals = [name for name, loaded in signal_status.items() if not loaded]
+            logger.info(
+                "Game=%s signals: %d/%d loaded. Available=%s Missing=%s",
+                game,
+                len(loaded_signals),
+                len(signal_status),
+                (", ".join(loaded_signals) if loaded_signals else "none"),
+                (", ".join(missing_signals) if missing_signals else "none"),
             )
         except Exception:
-            logger.exception("Failed to load attributes CSV: %s", attrs_path)
-    # Load additional signals (sideboard, temporal, GNN, text embeddings)
-    try:
-        from .load_signals import load_signals_to_state
-
-        text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
-        visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
-        reranker_path = os.getenv("RERANKER_PATH", None)  # Optional reranker model path
-        signal_status = load_signals_to_state(
-            text_embedder_model=text_embedder_model,
-            visual_embedder_model=visual_embedder_model,
-            reranker_path=reranker_path,
-        )
-        # Store signal status in state for /ready endpoint
-        state = get_state()
-        state.signal_status = signal_status
-
-        # Log comprehensive signal availability summary
-        loaded_signals = [name for name, loaded in signal_status.items() if loaded]
-        missing_signals = [name for name, loaded in signal_status.items() if not loaded]
-        logger.info(
-            f"API Signal Status: {len(loaded_signals)}/{len(signal_status)} signals loaded. "
-            f"Available: {', '.join(loaded_signals) if loaded_signals else 'none'}. "
-            f"Missing: {', '.join(missing_signals) if missing_signals else 'none'}"
-        )
-    except Exception:
-        logger.debug("Failed to load additional signals (this is optional)", exc_info=True)
+            logger.debug(
+                "Failed to load additional signals for game=%s (optional)", game, exc_info=True
+            )
     try:
         yield
     finally:
         # Best-effort cleanup
-        state = get_state()
-        state.embeddings = None
-        state.graph_data = None
-        state.card_attrs = None
+        by_game = getattr(app.state, "api_by_game", None) or {}
+        for _g, state in by_game.items():
+            state.embeddings = None
+            state.graph_data = None
+            state.card_attrs = None
+            state.sideboard_cooccurrence = None
+            state.temporal_cooccurrence = None
+            state.archetype_staples = None
+            state.archetype_cooccurrence = None
+            state.format_cooccurrence = None
+            state.cross_format_patterns = None
+            state.signal_status = None
+            state.reranker = None
         # Clear optional app-scoped helpers if they were created
         try:
             delattr(app.state, "price_manager")
@@ -423,6 +585,11 @@ async def lifespan(app: FastAPI):
             pass
         try:
             delattr(app.state, "mtg_tagger")
+        except Exception:
+            pass
+        # Clear cached search clients
+        try:
+            delattr(app.state, "search_by_game")
         except Exception:
             pass
 
@@ -509,20 +676,53 @@ def root(request: Request):
 router = APIRouter(prefix="/v1")
 
 
-def _health_impl() -> HealthResponse:
-    state = get_state()
+def _health_impl(game: str | None = None) -> HealthResponse:
+    g = _require_game(game)
+    state = get_state(g)
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     return HealthResponse(
         status="ok",
+        game=g,
         num_cards=len(state.embeddings),  # type: ignore[arg-type]
         embedding_dim=state.embeddings.vector_size,  # type: ignore[union-attr]
     )
 
 
 @router.get("/health", response_model=HealthResponse)
-def health_v1():
-    return _health_impl()
+def health_v1(game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)")):
+    g = _require_game(game)
+    state = get_state(g)
+    if state.embeddings is None:
+        raise HTTPException(status_code=503, detail="Embeddings not loaded")
+    return HealthResponse(
+        status="ok",
+        game=g,
+        num_cards=len(state.embeddings),  # type: ignore[arg-type]
+        embedding_dim=state.embeddings.vector_size,  # type: ignore[union-attr]
+    )
+
+
+@router.get("/games")
+def games_v1():
+    """
+    List configured games and readiness for each.
+
+    In multi-game mode, clients should treat `game` as required on most endpoints.
+    """
+    games = _configured_games()
+    default_game = _default_game()
+    out: dict[str, Any] = {"default_game": default_game, "games": {}}
+    for g in games:
+        state = get_state(g)
+        ready = state.embeddings is not None
+        out["games"][g] = {
+            "ready": bool(ready),
+            "num_cards": int(len(state.embeddings)) if ready else 0,  # type: ignore[arg-type]
+            "embedding_dim": int(getattr(state.embeddings, "vector_size", 0)) if ready else 0,
+            "methods": list((state.model_info or {}).get("methods", [])),
+        }
+    return out
 
 
 @app.get("/live")
@@ -533,29 +733,77 @@ def live():
 @app.get("/ready")
 def ready():
     _adopt_legacy_globals()
-    state = get_state()
-    if state.embeddings is None:
-        raise HTTPException(status_code=503, detail="not ready: embeddings not loaded")
-    available = ["embedding"] + (["jaccard"] if state.graph_data is not None else [])
-    if state.graph_data is not None:
-        available.append("fusion")
-    if (
-        state.graph_data is not None
-        and state.card_attrs is not None
-        and sm_jaccard_faceted is not None
-    ):
-        available.append("jaccard_faceted")
-    resp = {"status": "ready", "available_methods": available}
-    if state.fusion_default_weights is not None:
-        resp["fusion_default_weights"] = {
-            "embed": state.fusion_default_weights.embed,
-            "jaccard": state.fusion_default_weights.jaccard,
-            "functional": state.fusion_default_weights.functional,
-            "text_embed": state.fusion_default_weights.text_embed,
-            "visual_embed": state.fusion_default_weights.visual_embed,
-            "gnn": state.fusion_default_weights.gnn,
+    games = _configured_games()
+    default_game = _default_game()
+    multi = len(games) > 1
+
+    def _methods_for(state: ApiState) -> list[str]:
+        available = ["embedding"] + (["jaccard"] if state.graph_data is not None else [])
+        if state.graph_data is not None:
+            available.append("fusion")
+        if state.graph_data is not None and state.card_attrs is not None and sm_jaccard_faceted is not None:
+            available.append("jaccard_faceted")
+        return available
+
+    if not multi:
+        g = games[0] if games else default_game
+        state = get_state(g)
+        if state.embeddings is None:
+            raise HTTPException(status_code=503, detail="not ready: embeddings not loaded")
+        resp: dict[str, Any] = {
+            "status": "ready",
+            "game": g,
+            "available_methods": _methods_for(state),
         }
-    return resp
+        if state.fusion_default_weights is not None:
+            resp["fusion_default_weights"] = {
+                "embed": state.fusion_default_weights.embed,
+                "jaccard": state.fusion_default_weights.jaccard,
+                "functional": state.fusion_default_weights.functional,
+                "text_embed": state.fusion_default_weights.text_embed,
+                "visual_embed": state.fusion_default_weights.visual_embed,
+                "gnn": state.fusion_default_weights.gnn,
+            }
+        return resp
+
+    # Multi-game readiness
+    status_by_game: dict[str, Any] = {}
+    missing: list[str] = []
+    for g in games:
+        state = get_state(g)
+        if state.embeddings is None:
+            status_by_game[g] = {"ready": False, "reason": "embeddings not loaded"}
+            missing.append(g)
+            continue
+        entry: dict[str, Any] = {
+            "ready": True,
+            "available_methods": _methods_for(state),
+            "num_cards": int(len(state.embeddings)),  # type: ignore[arg-type]
+            "embedding_dim": int(getattr(state.embeddings, "vector_size", 0)),
+        }
+        if state.fusion_default_weights is not None:
+            entry["fusion_default_weights"] = {
+                "embed": state.fusion_default_weights.embed,
+                "jaccard": state.fusion_default_weights.jaccard,
+                "functional": state.fusion_default_weights.functional,
+                "text_embed": state.fusion_default_weights.text_embed,
+                "visual_embed": state.fusion_default_weights.visual_embed,
+                "gnn": state.fusion_default_weights.gnn,
+            }
+        status_by_game[g] = entry
+
+    if missing:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "status": "not ready",
+                "default_game": default_game,
+                "missing_games": missing,
+                "games": status_by_game,
+            },
+        )
+
+    return {"status": "ready", "default_game": default_game, "games": status_by_game}
 
 
 def _resolve_method(request: SimilarityRequest) -> str:
@@ -569,8 +817,7 @@ def _resolve_method(request: SimilarityRequest) -> str:
     return "embedding"
 
 
-def _similar_embedding(query: str, k: int) -> list[SimilarCard]:
-    state = get_state()
+def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]:
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     if query not in state.embeddings:
@@ -586,24 +833,24 @@ def _similar_embedding(query: str, k: int) -> list[SimilarCard]:
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
-def _similar_jaccard(query: str, k: int) -> list[SimilarCard]:
-    state = get_state()
+def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[SimilarCard]:
     if state.graph_data is None:
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     adj = state.graph_data["adj"]
     if query not in adj:
         raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
-    similarities = sm_jaccard(query, adj, top_k=k, filter_lands=True)
+    similarities = sm_jaccard(query, adj, top_k=k, filter_lands=(game == "magic"))
     return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similarities]
 
 
-def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[SimilarCard]:
-    state = get_state()
+def _similar_fusion(
+    state: ApiState, request: SimilarityRequest, query: str, k: int, *, game: str
+) -> list[SimilarCard]:
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     if state.graph_data is None:
         raise HTTPException(status_code=503, detail="Graph data not loaded")
-    tagger = FunctionalTagger() if FunctionalTagger is not None else None
+    tagger = FunctionalTagger() if (FunctionalTagger is not None and game == "magic") else None
     w = request.weights or {}
     base_fw = (
         state.fusion_default_weights or FusionWeights()
@@ -683,8 +930,11 @@ def _similar_fusion(request: SimilarityRequest, query: str, k: int) -> list[Simi
     return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
 
 
-def _similar_jaccard_faceted(request: SimilarityRequest, query: str, k: int) -> list[SimilarCard]:
-    state = get_state()
+def _similar_jaccard_faceted(
+    state: ApiState, request: SimilarityRequest, query: str, k: int, *, game: str
+) -> list[SimilarCard]:
+    if game != "magic":
+        raise HTTPException(status_code=400, detail="jaccard_faceted is only supported for magic")
     if state.graph_data is None:
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     if state.card_attrs is None or sm_jaccard_faceted is None:
@@ -700,24 +950,25 @@ def _similar_jaccard_faceted(request: SimilarityRequest, query: str, k: int) -> 
 def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     """Find similar cards based on resolved method and return normalized response."""
     _adopt_legacy_globals()
+    game = _require_game(request.game)
+    state = get_state(game)
     query = request.query
     k = request.top_k
     method = _resolve_method(request)
     if method == "embedding":
-        results = _similar_embedding(query, k)
+        results = _similar_embedding(state, query, k)
     elif method == "jaccard":
-        results = _similar_jaccard(query, k)
+        results = _similar_jaccard(state, query, k, game=game)
     elif method == "jaccard_faceted":
-        results = _similar_jaccard_faceted(request, query, k)
+        results = _similar_jaccard_faceted(state, request, query, k, game=game)
     elif method == "fusion":
-        results = _similar_fusion(request, query, k)
+        results = _similar_fusion(state, request, query, k, game=game)
     else:  # pragma: no cover - shouldn't happen
         raise HTTPException(status_code=400, detail=f"Unknown similarity method: {method}")
-    state = get_state()
     return SimilarityResponse(
         query=query,
         results=results,
-        model_info={**state.model_info, "method_used": method},
+        model_info={**state.model_info, "method_used": method, "game": game},
         feedback_url="/v1/feedback",  # Endpoint for submitting feedback
     )
 
@@ -753,6 +1004,7 @@ def get_similar_v1(
     name: str,
     mode: UseCaseEnum = UseCaseEnum.substitute,
     k: int = Query(10, ge=1, le=100),
+    game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
 ):
     # Log query for analytics
     try:
@@ -767,7 +1019,7 @@ def get_similar_v1(
         )
     except Exception:
         pass  # Non-fatal - don't break API if logging fails
-    req = SimilarityRequest(query=name, top_k=k, use_case=mode)
+    req = SimilarityRequest(game=game, query=name, top_k=k, use_case=mode)
     return _similar_impl(req)
 
 
@@ -800,11 +1052,13 @@ def get_contextual_suggestions(
     except Exception:
         pass  # Non-fatal
 
-    game_lower = game.lower()
-    if game_lower not in {"magic", "yugioh", "pokemon"}:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
-
-    state = get_state()
+    game_lower = _require_game(game)
+    state = get_state(game_lower)
+    if state.embeddings is None or state.graph_data is None:
+        raise HTTPException(
+            status_code=503,
+            detail=f"not ready for game={game_lower}: embeddings/graph not loaded",
+        )
 
     # Build fusion instance for similarity with task-specific instructions
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
@@ -930,6 +1184,7 @@ def get_contextual_suggestions(
 
 @router.get("/cards", response_model=CardsResponse)
 def list_cards_v1(
+    game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
     prefix: str | None = None,
     limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
@@ -937,7 +1192,8 @@ def list_cards_v1(
     """
     List available cards with pagination.
     """
-    state = get_state()
+    g = _require_game(game)
+    state = get_state(g)
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
 
@@ -960,6 +1216,7 @@ def list_cards_v1(
 
 
 class SearchRequest(BaseModel):
+    game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
     query: str = Field(..., description="Search query text")
     limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
     text_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for text search (0-1)")
@@ -979,28 +1236,43 @@ class SearchResponse(BaseModel):
     total: int = Field(..., description="Total number of results")
 
 
-def _get_search_client() -> HybridSearch | None:
-    """Get or create hybrid search client."""
+def _get_search_client(game: str) -> HybridSearch | None:
+    """Get or create hybrid search client for a specific game."""
     if not HAS_SEARCH or HybridSearch is None:
         return None
 
-    state = get_state()
+    state = get_state(game)
     if state.embeddings is None:
         return None
 
-    # Check if search client is cached in app state
-    if hasattr(app.state, "search_client"):
-        return app.state.search_client
+    # Check if search client is cached in app state (per game)
+    by_game = getattr(app.state, "search_by_game", None)
+    if by_game is None:
+        by_game = {}
+        app.state.search_by_game = by_game
+    cached = by_game.get(game)
+    if cached is not None:
+        return cached
+
+    # Per-game index/collection naming (override via env)
+    idx_env = os.getenv(f"MEILISEARCH_INDEX_{game.upper()}")
+    col_env = os.getenv(f"QDRANT_COLLECTION_{game.upper()}")
+    index_name = (idx_env or f"cards_{game}").strip()
+    collection_name = (col_env or f"cards_{game}").strip()
 
     # Create new client
     try:
-        client = HybridSearch(embeddings=state.embeddings)
+        client = HybridSearch(
+            embeddings=state.embeddings,
+            index_name=index_name,
+            collection_name=collection_name,
+        )
         # Quintessential functionality: do not pretend search exists if both
         # backends are unavailable. (HybridSearch will otherwise return empty lists.)
         if getattr(client, "meilisearch", None) is None and getattr(client, "qdrant", None) is None:
             logger.error("Search backends unavailable (Meilisearch and Qdrant both missing)")
             return None
-        app.state.search_client = client
+        by_game[game] = client
         return client
     except Exception as e:
         logger.error(f"Failed to create search client: {e}")
@@ -1016,13 +1288,14 @@ def search_cards_v1(request: SearchRequest):
     Performs both text-based keyword search and semantic vector search,
     then combines results based on weights.
     """
-    client = _get_search_client()
+    game = _require_game(request.game)
+    client = _get_search_client(game)
 
     if client is None:
         raise HTTPException(
             status_code=503,
             detail=(
-                "Search not available: hybrid search backends are not configured. "
+                f"Search not available for game={game}: hybrid search backends are not configured. "
                 "Run Meilisearch and/or Qdrant and ensure deps are installed "
                 "(see src/ml/search/README.md)."
             ),
@@ -1052,6 +1325,7 @@ def search_cards_v1(request: SearchRequest):
 
 @router.get("/search", response_model=SearchResponse)
 def search_cards_get_v1(
+    game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
     q: str = Query(..., description="Search query"),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of results"),
     text_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for text search"),
@@ -1059,7 +1333,7 @@ def search_cards_get_v1(
 ):
     """GET version of card search endpoint."""
     request = SearchRequest(
-        query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight
+        game=game, query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight
     )
     return search_cards_v1(request)
 
@@ -1079,9 +1353,7 @@ class PatchRequest(BaseModel):
 
 @router.post("/deck/apply_patch", response_model=DeckPatchResult)
 def deck_apply_patch(req: PatchRequest):
-    game = req.game.lower()
-    if game not in {"magic", "yugioh", "pokemon"}:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
+    game = _require_game(req.game)
     return apply_deck_patch(
         game,
         req.deck,
@@ -1121,12 +1393,12 @@ class SuggestActionsResponse(BaseModel):
     metrics: dict | None = None
 
 
-def _make_candidate_fn(mode: str | None, task_type: str | None = None):
+def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None):
     forced = (mode or "").lower().strip()
 
     def fn(card: str, k: int):
         # If no embeddings, default to jaccard if available
-        state = get_state()
+        state = get_state(game)
         effective_mode = forced
         if not effective_mode:
             if state.embeddings is not None:
@@ -1145,8 +1417,9 @@ def _make_candidate_fn(mode: str | None, task_type: str | None = None):
         elif task_type == "substitution":
             use_case = UseCaseEnum.substitute
 
-        req = SimilarityRequest(query=card, top_k=k, use_case=use_case)
-        req.mode = effective_mode  # type: ignore
+        req = SimilarityRequest(
+            game=game, query=card, top_k=k, use_case=use_case, mode=effective_mode
+        )
         try:
             resp = _similar_impl(req)
             return [(r.card, r.similarity) for r in resp.results]
@@ -1174,11 +1447,9 @@ def suggest_actions(req: SuggestActionsRequest):
     except Exception:
         pass  # Non-fatal
 
-    game = req.game.lower()
-    if game not in {"magic", "yugioh", "pokemon"}:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
-
-    cand_fn = _make_candidate_fn(req.mode)
+    game = _require_game(req.game)
+    state = get_state(game)
+    cand_fn = _make_candidate_fn(game, req.mode)
 
     # Optional price and tag hooks
     price_fn = None
@@ -1226,7 +1497,7 @@ def suggest_actions(req: SuggestActionsRequest):
 
     # Build cmc fn from attributes if present
     def cmc_fn(card: str) -> int | None:
-        attrs = get_state().card_attrs
+        attrs = state.card_attrs
         if not attrs:
             return None
         data = attrs.get(card) or attrs.get(card.lower())
@@ -1239,7 +1510,6 @@ def suggest_actions(req: SuggestActionsRequest):
 
     # Get archetype from request or infer from deck
     archetype = getattr(req, "archetype", None)
-    state = get_state()
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
 
     part = {"magic": "Main", "yugioh": "Main Deck"}.get(game, "Main Deck")
@@ -1254,7 +1524,7 @@ def suggest_actions(req: SuggestActionsRequest):
         "remove": None,  # No instruction needed for removal
     }
     task_type = action_to_task.get(action_type, "substitution")
-    cand_fn = _make_candidate_fn(req.mode, task_type=task_type)
+    cand_fn = _make_candidate_fn(game, req.mode, task_type=task_type)
 
     # Handle different action types
     if action_type in ("add", "suggest"):
@@ -1270,7 +1540,7 @@ def suggest_actions(req: SuggestActionsRequest):
             tag_set_fn=tag_set_fn,
             tag_weight_fn=tag_weight_fn if tw else None,
             coverage_weight=(req.coverage_weight or 0.0),
-            cmc_fn=cmc_fn if get_state().card_attrs else None,
+            cmc_fn=cmc_fn if state.card_attrs else None,
             curve_target=req.curve_target,
             curve_weight=(req.curve_weight or 0.0),
             return_metrics=True,
@@ -1382,7 +1652,7 @@ def suggest_actions(req: SuggestActionsRequest):
         "num_actions": len(actions),
         "budget_max": req.budget_max,
         "coverage_weight": req.coverage_weight,
-        "facets_available": bool(get_state().card_attrs is not None),
+        "facets_available": bool(state.card_attrs is not None),
     }
 
     return SuggestActionsResponse(actions=actions, metrics=metrics, feedback_url="/v1/feedback")
@@ -1433,12 +1703,11 @@ def complete_deck(req: CompleteRequest):
     except Exception:
         pass  # Non-fatal
 
-    game = req.game.lower()
-    if game not in {"magic", "yugioh", "pokemon"}:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {req.game}")
+    game = _require_game(req.game)
+    state = get_state(game)
 
     # Deck completion uses "completion" task type
-    cand_fn = _make_candidate_fn(req.mode, task_type="completion")
+    cand_fn = _make_candidate_fn(game, req.mode, task_type="completion")
     cfg = CompletionConfig(
         game=game,
         target_main_size=req.target_main_size,
@@ -1491,7 +1760,6 @@ def complete_deck(req: CompleteRequest):
 
         # Build CMC function for beam search
         def cmc_fn(card: str) -> int | None:
-            state = get_state()
             attrs = state.card_attrs
             if not attrs:
                 return None
@@ -1570,7 +1838,6 @@ def complete_deck(req: CompleteRequest):
 
             # Build CMC function from card attributes
             def cmc_fn(card: str) -> int | None:
-                state = get_state()
                 attrs = state.card_attrs
                 if not attrs:
                     return None
@@ -1659,6 +1926,12 @@ if _search_html.exists():
 
 def main():
     parser = argparse.ArgumentParser(description="Run similarity API")
+    parser.add_argument(
+        "--game",
+        type=str,
+        default=os.getenv("DECKSAGE_DEFAULT_GAME", "magic"),
+        help="Game name (magic|pokemon|yugioh). For true multi-game serving, use DECKSAGE_GAMES + per-game env vars.",
+    )
     parser.add_argument("--embeddings", type=str, required=True, help="Path to .wv file")
     parser.add_argument("--pairs", type=str, help="Path to pairs.csv (for Jaccard)")
     parser.add_argument("--host", type=str, default="0.0.0.0")
@@ -1671,9 +1944,13 @@ def main():
         return 1
 
     # Load embeddings and graph
-    load_embeddings_to_state(args.embeddings, args.pairs)
+    game = _require_game(args.game)
+    # In single-game CLI mode, set app state hints for downstream helpers.
+    app.state.games = [game]
+    app.state.default_game = game
+    load_embeddings_to_state(game, args.embeddings, args.pairs)
 
-    logger.info("Available methods: %s", get_state().model_info["methods"])
+    logger.info("Available methods (%s): %s", game, get_state(game).model_info.get("methods"))
     logger.info(
         "Recommendation: Use 'jaccard' if co-occurrence is available. See README for latest metrics."
     )
@@ -1684,7 +1961,7 @@ def main():
         logger.error("uvicorn is not installed; cannot start the server")
         return 1
     # annotate model_info with embedding source for clarity
-    state = get_state()
+    state = get_state(game)
     src = Path(args.embeddings).name if args.embeddings else "unknown"
     state.model_info["embedding_source"] = src
     uvicorn.run(app, host=args.host, port=args.port)

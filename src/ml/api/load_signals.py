@@ -11,6 +11,7 @@ from __future__ import annotations
 import json
 import logging
 from pathlib import Path
+from typing import Any
 
 
 logger = logging.getLogger("decksage.api.signals")
@@ -48,7 +49,6 @@ except ImportError:
     CardVisualEmbedder = None
 
 from ..utils.paths import PATHS
-from .api import get_state
 
 
 try:
@@ -67,6 +67,8 @@ except ImportError:
 
 
 def load_signals_to_state(
+    state: Any,
+    signals_dir: Path | str | None = None,
     sideboard_path: Path | str | None = None,
     temporal_path: Path | str | None = None,
     gnn_path: Path | str | None = None,
@@ -95,8 +97,10 @@ def load_signals_to_state(
     Returns:
         Dict mapping signal name -> is_loaded (bool)
     """
-    state = get_state()
-    signals_dir = PATHS.experiments / "signals"
+    if signals_dir is None:
+        signals_dir = PATHS.experiments / "signals"
+    if isinstance(signals_dir, str):
+        signals_dir = Path(signals_dir)
 
     # Track signal loading status
     status: dict[str, bool] = {
