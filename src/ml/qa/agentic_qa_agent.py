@@ -17,8 +17,18 @@ try:
 except ImportError:
     HAS_PYDANTIC_AI = False
     BaseModel = object
-    Field = lambda **kwargs: lambda x: x
-    tool = lambda **kwargs: lambda x: x
+
+    def _field(*args, **kwargs):
+        return None
+
+    Field = _field  # type: ignore[assignment]
+
+    def tool(func=None, **_kwargs):
+        def decorator(f):
+            return f
+
+        return decorator if func is None else func
+
 
 from ..utils.lineage import DATA_ORDERS
 from ..utils.logging_config import (
@@ -420,9 +430,11 @@ Be thorough - use multiple tools to build complete picture before concluding."""
             "needs investigation",
         ]
         root_cause_lower = analysis.root_cause.lower()
-        if any(phrase in root_cause_lower for phrase in generic_phrases):
-            if len(analysis.root_cause) < 50:  # Only flag if also short
-                issues.append("generic_root_cause")
+        if (
+            any(phrase in root_cause_lower for phrase in generic_phrases)
+            and len(analysis.root_cause) < 50
+        ):
+            issues.append("generic_root_cause")
 
         # Check for actionable recommendations (should contain verbs/commands)
         action_verbs = [
@@ -474,6 +486,7 @@ Be thorough - use multiple tools to build complete picture before concluding."""
     async def investigate_sample(self, sample_size: int = 10) -> list[dict[str, Any]]:
         """Investigate a sample of graph data using the agent."""
         logger.info(f"Investigating sample of {sample_size} items using agentic tools...")
+        corr_id = get_correlation_id() or "unknown"
 
         if not self.agent:
             # Fallback to non-agentic investigation
@@ -760,6 +773,7 @@ Provide a comprehensive analysis with:
 
             analysis = result.output
             validation_time = time.time() - validation_start
+            logger.debug("Agent analysis completed in %.2fs", validation_time)
 
             log_progress(logger, "pipeline_validation", progress=1, total=7, stage="agent_analysis")
 
