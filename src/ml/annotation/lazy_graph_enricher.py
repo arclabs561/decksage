@@ -7,6 +7,7 @@ SQLite directly for only the data needed for enrichment.
 from __future__ import annotations
 
 import sqlite3
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -14,7 +15,6 @@ from typing import Any
 try:
     from ..data.incremental_graph import IncrementalCardGraph
     from .enriched_annotation import GraphFeatures
-    from .graph_enricher import compare_card_attributes, extract_contextual_analysis
 
     HAS_GRAPH = True
 except ImportError:
@@ -66,10 +66,8 @@ class LazyGraphEnricher:
 
             # Apply performance optimizations for 2GB database
             # Use WAL mode for better concurrency (but may slow down if many connections)
-            try:
-                self._conn.execute("PRAGMA journal_mode = WAL")
-            except sqlite3.OperationalError:
-                pass  # May fail if DB is locked
+            with suppress(sqlite3.OperationalError):
+                self._conn.execute("PRAGMA journal_mode = WAL")  # May fail if DB is locked
 
             # For read-only queries, use OFF for maximum speed
             # (WAL mode already provides durability for writes)
@@ -79,13 +77,13 @@ class LazyGraphEnricher:
                 self._conn.execute("PRAGMA synchronous = NORMAL")  # Fallback
 
             # Memory-map the database (OS handles caching) - increase to 3GB for better coverage
-            try:
+            mmap_ok = False
+            with suppress(sqlite3.OperationalError):
                 self._conn.execute("PRAGMA mmap_size = 3000000000")  # ~3GB
-            except sqlite3.OperationalError:
-                try:
+                mmap_ok = True
+            if not mmap_ok:
+                with suppress(sqlite3.OperationalError):
                     self._conn.execute("PRAGMA mmap_size = 2000000000")  # Fallback to 2GB
-                except sqlite3.OperationalError:
-                    pass  # May not be available in all SQLite versions
 
             # Increase cache size (negative = KB, so -2000000 = 2GB)
             self._conn.execute("PRAGMA cache_size = -2000000")
@@ -94,15 +92,13 @@ class LazyGraphEnricher:
             self._conn.execute("PRAGMA temp_store = MEMORY")
 
             # Enable query-only mode if available (read-only optimization)
-            try:
-                self._conn.execute("PRAGMA query_only = 1")
-            except sqlite3.OperationalError:
-                pass  # Requires SQLite 3.8.0+
+            with suppress(sqlite3.OperationalError):
+                self._conn.execute("PRAGMA query_only = 1")  # Requires SQLite 3.8.0+
 
             # Create composite indexes for common query patterns
             # Note: SQLite can't index LOWER() directly, so we create indexes on the columns
             # and use case-insensitive matching in queries
-            try:
+            with suppress(sqlite3.OperationalError):
                 # Composite index for edge lookups: (game, card1, card2) covers most queries
                 self._conn.execute("""
                     CREATE INDEX IF NOT EXISTS idx_edges_game_card1_card2
@@ -129,15 +125,10 @@ class LazyGraphEnricher:
                 """)
                 # Run ANALYZE to update query planner statistics
                 self._conn.execute("ANALYZE")
-            except sqlite3.OperationalError:
-                # Indexes may already exist or DB may be read-only
-                pass
 
             # Optimize query planner (runs ANALYZE and updates statistics)
-            try:
+            with suppress(sqlite3.OperationalError):
                 self._conn.execute("PRAGMA optimize")
-            except sqlite3.OperationalError:
-                pass
 
     def get_neighbors(self, card: str, min_weight: int = 1) -> set[str]:
         """Get neighbors of a card by querying SQLite directly.
@@ -270,16 +261,6 @@ class LazyGraphEnricher:
                 return default
         return value
 
-        return {
-            "weight": row[0],
-            "first_seen": row[1],
-            "last_seen": row[2],
-            "deck_sources": row[3],
-            "metadata": row[4],
-            "monthly_counts": row[5],
-            "format_periods": row[6],
-        }
-
     def get_node(self, card: str) -> dict[str, Any] | None:
         """Get node data for a card by querying SQLite directly.
 
@@ -394,10 +375,8 @@ class LazyGraphEnricher:
         """Close SQLite connection and cleanup prepared statements."""
         if self._prepared_stmts:
             for stmt in self._prepared_stmts.values():
-                try:
+                with suppress(Exception):
                     stmt.close()
-                except Exception:
-                    pass
             self._prepared_stmts.clear()
 
         if self._conn:
