@@ -49,7 +49,7 @@ import argparse
 import json
 import logging
 import os
-from contextlib import asynccontextmanager
+from contextlib import asynccontextmanager, suppress
 from enum import Enum
 from pathlib import Path
 from typing import Any
@@ -479,10 +479,8 @@ async def lifespan(app: FastAPI):
     - Consider shared memory (mmap) for very large embeddings if needed
     """
     # Load environment variables lazily (respects test-time monkeypatching)
-    try:
+    with suppress(Exception):
         load_dotenv()
-    except Exception:
-        pass
 
     # ------------------------------------------------------------
     # Configure multi-game mode
@@ -542,7 +540,9 @@ async def lifespan(app: FastAPI):
                         tuned_weights_path=tuned_weights_path,
                     )
                 except Exception:
-                    logger.exception("Failed to load embeddings/graph during startup for game=%s", game)
+                    logger.exception(
+                        "Failed to load embeddings/graph during startup for game=%s", game
+                    )
         else:
             logger.info(
                 "%s not set; %s will be unavailable until embeddings are configured",
@@ -613,26 +613,18 @@ async def lifespan(app: FastAPI):
             state.signal_status = None
             state.reranker = None
         # Clear optional app-scoped helpers if they were created
-        try:
+        with suppress(Exception):
             delattr(app.state, "price_manager")
-        except Exception:
-            pass
-        try:
+        with suppress(Exception):
             delattr(app.state, "mtg_tagger")
-        except Exception:
-            pass
         # Clear cached search clients
-        try:
+        with suppress(Exception):
             delattr(app.state, "search_by_game")
-        except Exception:
-            pass
 
 
 # Ensure env is loaded early so CORS and other env-driven settings are honored
-try:
+with suppress(Exception):
     load_dotenv()
-except Exception:
-    pass
 
 app = FastAPI(
     title="DeckSage Similarity API",
@@ -752,7 +744,7 @@ def games_v1():
         ready = state.embeddings is not None
         out["games"][g] = {
             "ready": bool(ready),
-            "num_cards": int(len(state.embeddings)) if ready else 0,  # type: ignore[arg-type]
+            "num_cards": len(state.embeddings) if ready else 0,  # type: ignore[arg-type]
             "embedding_dim": int(getattr(state.embeddings, "vector_size", 0)) if ready else 0,
             "methods": list((state.model_info or {}).get("methods", [])),
         }
@@ -775,7 +767,11 @@ def ready():
         available = ["embedding"] + (["jaccard"] if state.graph_data is not None else [])
         if state.graph_data is not None:
             available.append("fusion")
-        if state.graph_data is not None and state.card_attrs is not None and sm_jaccard_faceted is not None:
+        if (
+            state.graph_data is not None
+            and state.card_attrs is not None
+            and sm_jaccard_faceted is not None
+        ):
             available.append("jaccard_faceted")
         return available
 
@@ -812,7 +808,7 @@ def ready():
         entry: dict[str, Any] = {
             "ready": True,
             "available_methods": _methods_for(state),
-            "num_cards": int(len(state.embeddings)),  # type: ignore[arg-type]
+            "num_cards": len(state.embeddings),  # type: ignore[arg-type]
             "embedding_dim": int(getattr(state.embeddings, "vector_size", 0)),
         }
         if state.fusion_default_weights is not None:

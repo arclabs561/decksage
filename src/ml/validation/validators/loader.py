@@ -14,8 +14,8 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-
 from .models import MTGDeck, PokemonDeck, YugiohDeck
+
 
 logger = logging.getLogger(__name__)
 
@@ -115,72 +115,73 @@ def iter_decks_validated(
         return
 
     count = 0
-    for line_num, line in enumerate(open(path, encoding="utf-8"), 1):
-        if max_decks and count >= max_decks:
-            break
+    with open(path, encoding="utf-8") as f:
+        for _line_num, line in enumerate(f, 1):
+            if max_decks and count >= max_decks:
+                break
 
-        if not line.strip():
-            continue
+            if not line.strip():
+                continue
 
-        try:
-            deck_dict = json.loads(line)
-        except json.JSONDecodeError:
-            # Yield None deck with invalid result
-            from types import SimpleNamespace
-
-            result = SimpleNamespace(is_valid=False, errors=["Invalid JSON"])
-            yield (None, result)
-            continue
-
-        if not deck_dict.get("source") and deck_dict.get("url"):
-            deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
-
-        # Detect game if auto
-        detected_game = game
-        if game == "auto":
-            detected_game = _detect_game_from_deck(deck_dict, path)
-
-        if detected_game not in {"magic", "pokemon", "yugioh"}:
-            from types import SimpleNamespace
-
-            result = SimpleNamespace(is_valid=False, errors=["Unknown/unsupported game"])
-            yield (None, result)
-            continue
-
-        # Try to parse as Pydantic model
-        try:
-            deck_model = _parse_deck_model(deck_dict, detected_game)
-            if deck_model is None:
+            try:
+                deck_dict = json.loads(line)
+            except json.JSONDecodeError:
+                # Yield None deck with invalid result
                 from types import SimpleNamespace
 
-                result = SimpleNamespace(is_valid=False, errors=["Failed to parse deck"])
+                result = SimpleNamespace(is_valid=False, errors=["Invalid JSON"])
                 yield (None, result)
                 continue
 
-            # Create validation result
-            from types import SimpleNamespace
+            if not deck_dict.get("source") and deck_dict.get("url"):
+                deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
 
-            result = SimpleNamespace(is_valid=True, errors=[])
+            # Detect game if auto
+            detected_game = game
+            if game == "auto":
+                detected_game = _detect_game_from_deck(deck_dict, path)
 
-            if check_legality:
-                try:
-                    from .legality import check_deck_legality
+            if detected_game not in {"magic", "pokemon", "yugioh"}:
+                from types import SimpleNamespace
 
-                    issues = check_deck_legality(deck_model, game=detected_game)
-                    if issues:
+                result = SimpleNamespace(is_valid=False, errors=["Unknown/unsupported game"])
+                yield (None, result)
+                continue
+
+            # Try to parse as Pydantic model
+            try:
+                deck_model = _parse_deck_model(deck_dict, detected_game)
+                if deck_model is None:
+                    from types import SimpleNamespace
+
+                    result = SimpleNamespace(is_valid=False, errors=["Failed to parse deck"])
+                    yield (None, result)
+                    continue
+
+                # Create validation result
+                from types import SimpleNamespace
+
+                result = SimpleNamespace(is_valid=True, errors=[])
+
+                if check_legality:
+                    try:
+                        from .legality import check_deck_legality
+
+                        issues = check_deck_legality(deck_model, game=detected_game)
+                        if issues:
+                            result.is_valid = False
+                            result.errors = issues
+                    except Exception as e:
                         result.is_valid = False
-                        result.errors = issues
-                except Exception as e:
-                    result.is_valid = False
-                    result.errors = [f"legality_check_failed: {e}"]
-            yield (deck_model, result)
-            count += 1
-        except Exception as e:
-            from types import SimpleNamespace
+                        result.errors = [f"legality_check_failed: {e}"]
+                yield (deck_model, result)
+                count += 1
+            except Exception as e:
+                from types import SimpleNamespace
 
-            result = SimpleNamespace(is_valid=False, errors=[str(e)])
-            yield (None, result)
-            continue
+                result = SimpleNamespace(is_valid=False, errors=[str(e)])
+                yield (None, result)
+                continue
 
 
 def _normalize_deck_data(deck_dict: dict[str, Any]) -> dict[str, Any]:
@@ -234,7 +235,9 @@ def _detect_game_from_deck(deck_dict: dict[str, Any], file_path: Path | str | No
             return "pokemon"
         if "yugioh" in url_or_source or "ygoprodeck" in url_or_source or "ygo" in url_or_source:
             return "yugioh"
-        if any(x in url_or_source for x in ["mtgtop8", "mtggoldfish", "deckbox", "scryfall", "mtg"]):
+        if any(
+            x in url_or_source for x in ["mtgtop8", "mtggoldfish", "deckbox", "scryfall", "mtg"]
+        ):
             return "magic"
         return "unknown"
 
@@ -467,43 +470,44 @@ def stream_decks_lenient(
         return
 
     count = 0
-    for line in open(path, encoding="utf-8"):
-        if max_decks and count >= max_decks:
-            break
+    with open(path, encoding="utf-8") as f:
+        for line in f:
+            if max_decks and count >= max_decks:
+                break
 
-        if not line.strip():
-            continue
-
-        try:
-            deck_dict = json.loads(line)
-        except json.JSONDecodeError:
-            continue
-
-        if not deck_dict.get("source") and deck_dict.get("url"):
-            deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
-
-        # Detect game if auto
-        detected_game = game
-        if game == "auto":
-            detected_game = _detect_game_from_deck(deck_dict, path)
-
-        if detected_game not in {"magic", "pokemon", "yugioh"}:
-            continue
-
-        # Try to parse as Pydantic model (lenient: skip if fails)
-        deck_model = _parse_deck_model(deck_dict, detected_game)
-        if deck_model is None:
-            continue
-
-        if check_legality:
-            try:
-                from .legality import check_deck_legality
-
-                issues = check_deck_legality(deck_model, game=detected_game)
-                if issues:
-                    continue
-            except Exception:
+            if not line.strip():
                 continue
 
-        yield deck_model
-        count += 1
+            try:
+                deck_dict = json.loads(line)
+            except json.JSONDecodeError:
+                continue
+
+            if not deck_dict.get("source") and deck_dict.get("url"):
+                deck_dict["source"] = _infer_source_from_url(str(deck_dict.get("url") or ""))
+
+            # Detect game if auto
+            detected_game = game
+            if game == "auto":
+                detected_game = _detect_game_from_deck(deck_dict, path)
+
+            if detected_game not in {"magic", "pokemon", "yugioh"}:
+                continue
+
+            # Try to parse as Pydantic model (lenient: skip if fails)
+            deck_model = _parse_deck_model(deck_dict, detected_game)
+            if deck_model is None:
+                continue
+
+            if check_legality:
+                try:
+                    from .legality import check_deck_legality
+
+                    issues = check_deck_legality(deck_model, game=detected_game)
+                    if issues:
+                        continue
+                except Exception:
+                    continue
+
+            yield deck_model
+            count += 1
