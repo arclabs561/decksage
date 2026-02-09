@@ -9,7 +9,7 @@ Supports two modes:
 from __future__ import annotations
 
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import quote, urljoin
 
 
 try:
@@ -17,7 +17,7 @@ try:
 
     HAS_HTTPX = True
 except ImportError:
-    httpx = None
+    httpx = None  # type: ignore[assignment]
     HAS_HTTPX = False
 
 
@@ -27,6 +27,7 @@ class DeckSageClient:
     def __init__(
         self,
         base_url: str | None = None,
+        game: str | None = None,
         direct_mode: bool = False,
         timeout: float = 30.0,
     ):
@@ -35,10 +36,12 @@ class DeckSageClient:
 
         Args:
             base_url: API base URL (default: http://localhost:8000)
+            game: Game name (magic|pokemon|yugioh). In multi-game serving, this is required.
             direct_mode: If True, import API code directly (faster, local only)
             timeout: Request timeout in seconds
         """
         self.base_url = base_url or "http://localhost:8000"
+        self.game = game
         self.direct_mode = direct_mode
         self.timeout = timeout
         self._api_state = None
@@ -50,7 +53,7 @@ class DeckSageClient:
 
                 self._app = app
                 self._get_state = get_state
-                self._api_state = get_state()
+                self._api_state = get_state(game)
             except Exception:
                 # Fall back to HTTP mode if direct import fails
                 self.direct_mode = False
@@ -80,9 +83,11 @@ class DeckSageClient:
         )
 
         if path == "/v1/health":
-            health = _health_impl()
+            game = (body or {}).get("game") if isinstance(body, dict) else None
+            health = _health_impl(game=game)
             return {
                 "status": health.status,
+                "game": health.game,
                 "num_cards": health.num_cards,
                 "embedding_dim": health.embedding_dim,
             }
@@ -101,12 +106,15 @@ class DeckSageClient:
             # Parse query params from body or use defaults
             mode = body.get("mode", "substitute") if body else "substitute"
             k = body.get("k", 10) if body else 10
+            game = body.get("game") if isinstance(body, dict) else None
             use_case = (
                 UseCaseEnum(mode)
                 if mode in ["substitute", "synergy", "meta"]
                 else UseCaseEnum.substitute
             )
-            req = SimilarityRequest(query=card_name, top_k=k, use_case=use_case)
+            req = SimilarityRequest(  # type: ignore[call-arg]
+                game=game, query=card_name, top_k=k, use_case=use_case
+            )
             resp = _similar_impl(req)
             return {
                 "query": resp.query,
@@ -144,7 +152,12 @@ class DeckSageClient:
 
     def health(self) -> dict[str, Any]:
         """Check API health."""
-        return self._request("GET", "/v1/health")
+        game = self.game
+        if self.direct_mode:
+            body = {"game": game} if game else None
+            return self._request("GET", "/v1/health", body)
+        q = f"?game={quote(game)}" if game else ""
+        return self._request("GET", f"/v1/health{q}")
 
     def ready(self) -> dict[str, Any]:
         """Check API readiness."""
@@ -165,14 +178,16 @@ class DeckSageClient:
         if use_case is None:
             use_case = mode if mode in ["substitute", "synergy", "meta"] else "substitute"
 
+        game = self.game
         if self.direct_mode:
             # Use direct mode
-            body = {"k": k, "mode": mode}
+            body = {"k": k, "mode": mode, "game": game} if game else {"k": k, "mode": mode}
             path = f"/v1/cards/{card_name.replace(' ', '%20')}/similar"
             return self._request("GET", path, body)
         else:
             # Use HTTP POST
             body = {
+                "game": game,
                 "query": card_name,
                 "top_k": k,
                 "use_case": use_case,
@@ -181,10 +196,16 @@ class DeckSageClient:
             return self._request("POST", "/v1/similar", body)
 
     def search(
-        self, query: str, limit: int = 10, text_weight: float = 0.5, vector_weight: float = 0.5
+        self,
+        query: str,
+        limit: int = 10,
+        text_weight: float = 0.5,
+        vector_weight: float = 0.5,
     ) -> dict[str, Any]:
         """Search cards."""
+        game = self.game
         body = {
+            "game": game,
             "query": query,
             "limit": limit,
             "text_weight": text_weight,
@@ -193,10 +214,16 @@ class DeckSageClient:
         return self._request("POST", "/v1/search", body)
 
     def list_cards(
-        self, prefix: str | None = None, limit: int = 100, offset: int = 0
+        self,
+        prefix: str | None = None,
+        limit: int = 100,
+        offset: int = 0,
     ) -> dict[str, Any]:
         """List available cards."""
+        game = self.game
         params = []
+        if game:
+            params.append(f"game={quote(game)}")
         if prefix:
             params.append(f"prefix={prefix}")
         if limit:
