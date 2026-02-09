@@ -11,7 +11,8 @@ This is a lightweight interface for planning/learning:
 from __future__ import annotations
 
 import logging
-from typing import Literal
+from dataclasses import dataclass
+from typing import Any, Literal
 
 from .deck_patch import DeckPatch, apply_deck_patch
 
@@ -19,8 +20,16 @@ from .deck_patch import DeckPatch, apply_deck_patch
 logger = logging.getLogger("decksage.deck_env")
 
 
+@dataclass
+class StepResult:
+    deck: dict
+    reward: float
+    done: bool
+    info: dict[str, Any]
+
+
 # Simplified Deck model for the environment; real validation happens elsewhere
-class Deck:
+class DeckCompletionEnv:
     def __init__(
         self, game: Literal["magic", "yugioh", "pokemon"], target_main_size: int | None = None
     ):
@@ -72,4 +81,6 @@ class Deck:
         return StepResult(deck=self._deck, reward=reward, done=done, info={})
 
 
-__all__ = ["DeckCompletionEnv", "StepResult"]
+Deck = DeckCompletionEnv
+
+__all__ = ["Deck", "DeckCompletionEnv", "StepResult"]
