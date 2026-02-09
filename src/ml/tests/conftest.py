@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from contextlib import suppress
 from pathlib import Path
 from typing import Any
 
@@ -40,10 +41,8 @@ def reset_api_state() -> None:
         "price_manager",
         "mtg_tagger",
     ):
-        try:
+        with suppress(Exception):
             delattr(api_mod.app.state, attr)
-        except Exception:
-            pass
 
     # Clear legacy module-level globals used by _adopt_legacy_globals().
     api_mod.embeddings = None
