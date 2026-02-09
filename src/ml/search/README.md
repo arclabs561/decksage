@@ -1,46 +1,60 @@
-# Card Search with Meilisearch + Qdrant
+# Card search (Meilisearch + Qdrant)
 
-Hybrid card search combining:
-- **Meilisearch**: Fast text/keyword search on card names and text
-- **Qdrant**: Semantic vector search using card embeddings
+DeckSage exposes `/v1/search` as an optional hybrid search endpoint:
+
+- **Meilisearch**: text/keyword search
+- **Qdrant**: vector search (requires embeddings)
+
+In multi-game serving, requests must specify `game`.
 
 ## Setup
 
-1. Install dependencies:
-```bash
-uv add qdrant-client meilisearch
-```
+Start backends (Docker):
 
-2. Start Meilisearch (Docker):
 ```bash
 docker run -d -p 7700:7700 getmeili/meilisearch:latest
-```
-
-3. Start Qdrant (Docker):
-```bash
 docker run -d -p 6333:6333 qdrant/qdrant
 ```
 
-## Indexing Cards
+## Namespacing (multi-game)
 
-Index cards from your embeddings file:
+The API defaults to per-game namespaces:
+
+- **Meilisearch index**: `cards_<game>` (override: `MEILISEARCH_INDEX_<GAME>`)
+- **Qdrant collection**: `cards_<game>` (override: `QDRANT_COLLECTION_<GAME>`)
+
+If you index into different names, set the env vars (or pass explicit names when indexing).
+
+## Indexing cards
+
+Index from an embeddings file:
 
 ```bash
 python -m ml.search.index_cards \
-  --embeddings data/embeddings/magic_128d_test_pecanpy.wv \
+  --game magic \
+  --embeddings data/embeddings/magic.wv \
   --meilisearch-url http://localhost:7700 \
   --qdrant-url http://localhost:6333
 ```
 
-## API Usage
+Override names:
 
-The search endpoint is available at `/v1/search`:
+```bash
+python -m ml.search.index_cards \
+  --embeddings data/embeddings/magic.wv \
+  --index-name cards_magic \
+  --collection-name cards_magic
+```
 
-### POST Request
+## API usage
+
+### POST
+
 ```bash
 curl -X POST http://localhost:8000/v1/search \
   -H "Content-Type: application/json" \
   -d '{
+    "game": "magic",
     "query": "lightning bolt",
     "limit": 10,
     "text_weight": 0.5,
@@ -48,53 +62,22 @@ curl -X POST http://localhost:8000/v1/search \
   }'
 ```
 
-### GET Request
+### GET
+
 ```bash
-curl "http://localhost:8000/v1/search?q=lightning+bolt&limit=10&text_weight=0.5&vector_weight=0.5"
-```
-
-### Response
-```json
-{
-  "query": "lightning bolt",
-  "total": 10,
-  "results": [
-    {
-      "card_name": "Lightning Bolt",
-      "score": 0.95,
-      "source": "hybrid",
-      "metadata": {
-        "image_url": "...",
-        "ref_url": "..."
-      }
-    }
-  ]
-}
-```
-
-## Python Usage
-
-```python
-from ml.search import HybridSearch
-from gensim.models import KeyedVectors
-
-# Load embeddings
-embeddings = KeyedVectors.load("data/embeddings/model.wv")
-
-# Create search client
-search = HybridSearch(embeddings=embeddings)
-
-# Search
-results = search.search("lightning bolt", limit=10)
-
-for result in results:
-    print(f"{result.card_name}: {result.score} ({result.source})")
+curl "http://localhost:8000/v1/search?game=magic&q=lightning+bolt&limit=10&text_weight=0.5&vector_weight=0.5"
 ```
 
 ## Configuration
 
-Environment variables:
-- `MEILISEARCH_URL`: Meilisearch server URL (default: http://localhost:7700)
-- `MEILISEARCH_KEY`: Meilisearch API key (optional)
-- `QDRANT_URL`: Qdrant server URL (default: http://localhost:6333)
-- `QDRANT_API_KEY`: Qdrant API key (optional)
+Backends:
+
+- `MEILISEARCH_URL` (default: `http://localhost:7700`)
+- `MEILISEARCH_KEY` (optional)
+- `QDRANT_URL` (default: `http://localhost:6333`)
+- `QDRANT_API_KEY` (optional)
+
+Per-game namespaces:
+
+- `MEILISEARCH_INDEX_<GAME>`
+- `QDRANT_COLLECTION_<GAME>`
