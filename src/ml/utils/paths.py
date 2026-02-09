@@ -83,6 +83,7 @@ class PATHS:
     """Namespace for canonical paths."""
 
     # Directories
+    project_root = PROJECT_ROOT
     data = DATA_DIR
     processed = PROCESSED_DIR
     embeddings = EMBEDDINGS_DIR

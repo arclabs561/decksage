@@ -159,8 +159,28 @@ def apply_deck_patch(
                         break
 
     # Validate deck
-    errors = []
-    warnings = []
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    def _norm(s: str | None) -> str:
+        return (s or "").strip().lower()
+
+    def _partition_size(*names: str) -> int:
+        want = {_norm(n) for n in names if n and n.strip()}
+        total = 0
+        for p in modified_deck.get("partitions", []) or []:
+            pname = _norm(p.get("name"))
+            if pname in want:
+                for card in p.get("cards", []) or []:
+                    total += int(card.get("count", 0) or 0)
+        return total
+
+    def _total_size() -> int:
+        total = 0
+        for p in modified_deck.get("partitions", []) or []:
+            for card in p.get("cards", []) or []:
+                total += int(card.get("count", 0) or 0)
+        return total
 
     # Check copy limits (4-of rule in Magic, etc.)
     if game == "magic":
@@ -217,36 +237,43 @@ def apply_deck_patch(
     if not lenient_size:
         # Check size constraints
         if game == "magic":
-            main_deck_size = 0
-            for p in modified_deck["partitions"]:
-                if p["name"] == "Main":
-                    for card in p["cards"]:
-                        main_deck_size += card["count"]
+            main_deck_size = _partition_size("main", "mainboard")
+            sideboard_size = _partition_size("sideboard", "side board")
 
             if main_deck_size < 60:
                 errors.append(f"Main deck requires at least 60 cards (has {main_deck_size})")
+            if sideboard_size > 15:
+                errors.append(f"Sideboard cannot exceed 15 cards (has {sideboard_size})")
 
         elif game == "yugioh":
-            main_deck_size = 0
-            for p in modified_deck["partitions"]:
-                if p["name"] == "Main":
-                    for card in p["cards"]:
-                        main_deck_size += card["count"]
+            main_deck_size = _partition_size("main deck", "main")
+            extra_deck_size = _partition_size("extra deck", "extra")
+            side_deck_size = _partition_size("side deck", "sideboard", "side")
 
             if main_deck_size < 40:
-                errors.append(f"Main deck requires at least 40 cards (has {main_deck_size})")
+                errors.append(f"Main Deck requires at least 40 cards (has {main_deck_size})")
             elif main_deck_size > 60:
-                errors.append(f"Main deck cannot exceed 60 cards (has {main_deck_size})")
+                errors.append(f"Main Deck cannot exceed 60 cards (has {main_deck_size})")
+            if extra_deck_size > 15:
+                errors.append(f"Extra Deck cannot exceed 15 cards (has {extra_deck_size})")
+            if side_deck_size > 15:
+                errors.append(f"Side Deck cannot exceed 15 cards (has {side_deck_size})")
 
         elif game == "pokemon":
-            main_deck_size = 0
-            for p in modified_deck["partitions"]:
-                if p["name"] == "Main":
-                    for card in p["cards"]:
-                        main_deck_size += card["count"]
+            total = _total_size()
+            if total != 60:
+                errors.append(f"Pokémon deck requires exactly 60 total cards (has {total})")
 
-            if main_deck_size != 60:
-                errors.append(f"Main deck requires exactly 60 cards (has {main_deck_size})")
+    # Deterministic ban list / legality checking (optional, fail-closed if requested)
+    if check_legality:
+        try:
+            from ..validation.validators.legality import check_deck_legality
+
+            issues = check_deck_legality(modified_deck, game=game)
+            if issues:
+                errors.extend(issues)
+        except Exception as e:
+            errors.append(f"Legality check failed/unavailable: {e}")
 
     is_valid = len(errors) == 0
 

@@ -28,24 +28,49 @@ logger = setup_script_logging()
 
 def load_evaluation_results(path: Path | str) -> dict[str, Any]:
     """Load evaluation results from file or S3."""
-    path = Path(path)
+    path_str = str(path)
 
-    if not path.exists():
-        # Try S3 path
-        if str(path).startswith("s3://"):
-            import subprocess
+    # S3 support: keep as string (pathlib mangles "s3://..." into "s3:/...").
+    if path_str.startswith("s3://"):
+        import os
+        import subprocess
+        import tempfile
 
+        tmp = tempfile.NamedTemporaryFile(prefix="decksage_eval_", suffix=".json", delete=False)
+        tmp_path = tmp.name
+        tmp.close()
+
+        try:
             result = subprocess.run(
-                ["s5cmd", "cp", str(path), "/tmp/temp_eval.json"], capture_output=True, text=True
+                ["s5cmd", "cp", path_str, tmp_path],
+                capture_output=True,
+                text=True,
             )
-            if result.returncode == 0:
-                path = Path("/tmp/temp_eval.json")
-            else:
-                raise FileNotFoundError(f"Could not load from S3: {path}")
-        else:
-            raise FileNotFoundError(f"Evaluation file not found: {path}")
+            if result.returncode != 0:
+                raise FileNotFoundError(
+                    f"Could not load from S3: {path_str}\n{result.stderr.strip()}"
+                )
+            with open(tmp_path, encoding="utf-8") as f:
+                return json.load(f)
+        except FileNotFoundError as e:
+            # Distinguish missing s5cmd vs missing object.
+            if "No such file or directory" in str(e) and "s5cmd" in str(e):
+                raise RuntimeError(
+                    "s5cmd is required to load S3 paths. Install s5cmd or download the file locally."
+                ) from e
+            raise
+        finally:
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
 
-    with open(path) as f:
+    # Local file
+    local = Path(path)
+    if not local.exists():
+        raise FileNotFoundError(f"Evaluation file not found: {local}")
+
+    with open(local, encoding="utf-8") as f:
         return json.load(f)
 
 
