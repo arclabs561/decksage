@@ -47,6 +47,23 @@ except ImportError:
     get_similarity_prompt = None
     SIMILARITY_PROMPT_BASE = None
 
+
+def _lazy_import_prompts() -> None:
+    """Best-effort import of prompt helpers to avoid eager import side-effects."""
+    global SIMILARITY_PROMPT_BASE, get_similarity_prompt
+    if SIMILARITY_PROMPT_BASE is not None and get_similarity_prompt is not None:
+        return
+    try:
+        from .llm_annotator import (
+            SIMILARITY_PROMPT_BASE as SIMILARITY_PROMPT_BASE_IMPORTED,
+        )
+        from .llm_annotator import get_similarity_prompt as gsp
+    except ImportError:
+        return
+    SIMILARITY_PROMPT_BASE = SIMILARITY_PROMPT_BASE_IMPORTED
+    get_similarity_prompt = gsp
+
+
 logger = logging.getLogger(__name__)
 
 # Forward reference to avoid circular import
@@ -497,11 +514,6 @@ Thinking: {annotation.thinking if hasattr(annotation, "thinking") else "N/A"}
         if self.use_supervisor and self.supervisor_agent:
             try:
                 # Format annotation for supervisor (compact format)
-                ann_dict = (
-                    annotation.model_dump()
-                    if hasattr(annotation, "model_dump")
-                    else (dict(annotation) if isinstance(annotation, dict) else str(annotation))
-                )
                 # Include validation result if available
                 validation_info = ""
                 if (
