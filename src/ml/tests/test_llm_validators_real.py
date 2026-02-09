@@ -85,10 +85,7 @@ def test_llm_annotator_actually_annotates():
     try:
         from ..annotation.llm_annotator import LLMAnnotator
     except ImportError as e:
-        pytest.skip(f"Could not import LLMAnnotator: {e}"), HAS_PYDANTIC_AI
-
-    if not HAS_PYDANTIC_AI:
-        pytest.skip("pydantic-ai not available")
+        pytest.skip(f"Could not import LLMAnnotator: {e}")
 
     annotator = LLMAnnotator()
     assert len(annotator.decks) > 0
@@ -126,11 +123,13 @@ def test_caching_now_works_for_llm_judge():
     start = time.time()
     result1 = judge.evaluate_similarity("Test Card", [("Similar Card", 0.9)], context="Test")
     time1 = time.time() - start
+    assert result1 is not None
 
     # Second identical call - should be cached
     start = time.time()
     result2 = judge.evaluate_similarity("Test Card", [("Similar Card", 0.9)], context="Test")
     time2 = time.time() - start
+    assert result2 is not None
 
     # Document current behavior
     print(f"\nFirst call: {time1:.2f}s")
