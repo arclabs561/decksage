@@ -26,15 +26,15 @@ class CardResolver:
 
     def __post_init__(self) -> None:
         if self.scryfall_dir is None:
-            # Default to backend Scryfall cards dir if present
-            self.scryfall_dir = (
-                Path(__file__).parent.parent
-                / "backend"
-                / "data-full"
-                / "magic"
-                / "scryfall"
-                / "cards"
-            )
+            # Canonical location: <project>/src/backend/data-full/games/magic/scryfall/cards
+            try:
+                from ..utils.paths import PATHS
+
+                self.scryfall_dir = (
+                    PATHS.backend / "data-full" / "games" / "magic" / "scryfall" / "cards"
+                )
+            except Exception:
+                self.scryfall_dir = Path("src/backend/data-full/games/magic/scryfall/cards")
         self._name_to_canonical: dict[str, str] = {}
         self._name_to_id: dict[str, str] = {}
         self._loaded = False

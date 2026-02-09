@@ -33,7 +33,14 @@ class CardDatabase:
     def __init__(self, data_dir: Path | None = None):
         """Initialize card database from backend data."""
         if data_dir is None:
-            data_dir = Path(__file__).parent.parent.parent / "backend" / "data-full"
+            # Canonical location: <project>/src/backend/data-full
+            try:
+                from ..utils.paths import PATHS
+
+                data_dir = PATHS.backend / "data-full"
+            except Exception:
+                # Last-resort fallback for unusual execution contexts.
+                data_dir = Path("src/backend/data-full")
 
         self.data_dir = data_dir
         self._magic_cards: set[str] = set()
