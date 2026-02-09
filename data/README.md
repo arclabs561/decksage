@@ -1,16 +1,16 @@
 # Data directory
 
-This repo commits small metadata and local outputs under `data/`. Most large artifacts (decks, graphs, embeddings) are ignored and must be generated or synced.
+This repo commits small metadata under `data/`. Most runtime outputs and large artifacts (decks, graphs, embeddings) are ignored and must be generated or synced.
 
 ## What is tracked vs ignored
 
 Tracked (in git):
 
 - small metadata (JSON/YAML) used by the system
-- local outputs created by the API during development (query history, feedback)
 
 Ignored / external (not in git):
 
+- local API outputs (e.g. query history, user feedback JSONL)
 - large raw exports and processed datasets
 - graph edgelists and derived graph artifacts
 - embedding models (`*.wv`) and other model outputs
@@ -21,8 +21,8 @@ The exact ignore rules live in `.gitignore`.
 
 ```
 data/
-  analytics/        # local logs (e.g. query_history.jsonl)
-  annotations/      # local feedback/annotation artifacts
+  analytics/        # local logs (ignored by default)
+  annotations/      # tracked examples + local feedback outputs (JSONL ignored)
   game_knowledge/   # small, tracked JSON knowledge per game
 
   raw/              # ignored (large)
