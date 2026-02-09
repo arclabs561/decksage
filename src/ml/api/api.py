@@ -15,6 +15,28 @@ Usage:
 
     # Or via console script after install:
     decksage-api --embeddings /path/to/model.wv --port 8000
+
+Multi-game serving (single process, multiple games):
+    export DECKSAGE_GAMES=magic,pokemon,yugioh
+    export DECKSAGE_DEFAULT_GAME=magic
+
+    # Per-game artifacts (required per game you want to serve)
+    export EMBEDDINGS_PATH_MAGIC=/path/to/magic.wv
+    export PAIRS_PATH_MAGIC=/path/to/magic_pairs.csv
+    export ATTRIBUTES_PATH_MAGIC=/path/to/magic_attrs.csv
+
+    export EMBEDDINGS_PATH_POKEMON=/path/to/pokemon.wv
+    export PAIRS_PATH_POKEMON=/path/to/pokemon_pairs.csv
+
+    export EMBEDDINGS_PATH_YUGIOH=/path/to/yugioh.wv
+    export PAIRS_PATH_YUGIOH=/path/to/yugioh_pairs.csv
+
+    # Optional per-game signals directory (default: experiments/signals/<game>/)
+    export SIGNALS_DIR_MAGIC=/path/to/signals/magic
+
+    # Optional per-game search namespaces (default: cards_<game>)
+    export MEILISEARCH_INDEX_MAGIC=cards_magic
+    export QDRANT_COLLECTION_MAGIC=cards_magic
 """
 
 import argparse
