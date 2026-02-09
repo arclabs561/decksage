@@ -1,184 +1,57 @@
-# Data Directory
+# Data directory
 
-This directory contains all data artifacts for the DeckSage project.
+This repo commits small metadata and local outputs under `data/`. Most large artifacts (decks, graphs, embeddings) are ignored and must be generated or synced.
 
-## Structure
+## What is tracked vs ignored
+
+Tracked (in git):
+
+- small metadata (JSON/YAML) used by the system
+- local outputs created by the API during development (query history, feedback)
+
+Ignored / external (not in git):
+
+- large raw exports and processed datasets
+- graph edgelists and derived graph artifacts
+- embedding models (`*.wv`) and other model outputs
+
+The exact ignore rules live in `.gitignore`.
+
+## Expected layout (conceptual)
 
 ```
 data/
-├── raw/              # Scraped data from various sources
-│   ├── data-full/    # Full dataset
-│   └── data-sample/  # Sample dataset for testing
-│
-├── processed/        # Transformed data ready for ML
-│   ├── pairs_large.csv          # Primary training data (7.5M pairs, MTG)
-│   ├── pairs_multi_game.csv     # Multi-game pairs (24.6M pairs, currently MTG-only)
-│   ├── card_attributes_enriched.csv  # Card attributes (27K cards)
-│   ├── decks_pokemon.jsonl      # Pokemon decks (1,208)
-│   ├── decks_all_unified.jsonl  # All decks unified (87K decks, raw export)
-│   ├── decks_all_enhanced.jsonl # Enhanced decks (69K decks, normalized, deduplicated)
-│   └── decks_all_final.jsonl    # Final decks (69K decks, ✅ RECOMMENDED for training)
-│
-├── decks/            # Per-game deck exports
-│   ├── magic_*.jsonl            # Magic decks by source
-│   ├── pokemon_*.jsonl          # Pokemon decks
-│   └── yugioh_*.jsonl           # Yu-Gi-Oh decks
-│
-├── graphs/           # Graph edgelists for node2vec
-│   └── *.edg         # Edge list files (gitignored)
-│
-├── embeddings/       # Trained embedding models
-│   └── *.wv          # Word2Vec format embeddings (gitignored)
-│
-└── archive/          # Deprecated/old data
-    ├── old-scraper-data/
-    ├── frontend-old/
-    └── *.json, *.csv  # Old artifacts
+  analytics/        # local logs (e.g. query_history.jsonl)
+  annotations/      # local feedback/annotation artifacts
+  game_knowledge/   # small, tracked JSON knowledge per game
+
+  raw/              # ignored (large)
+  processed/        # ignored (large)
+  decks/            # ignored (large)
+  graphs/           # ignored (generated)
+  embeddings/       # ignored (generated)
 ```
 
-## Data Sources
+## Pipelines
 
-### Raw Data
-- **Scryfall**: MTG card database
-- **MTGTop8**: Tournament decklists
-- **MTGGoldfish**: Meta analysis
-- **Deckbox**: Community decks
+Unified deck export pipeline:
 
-### Processed Data
-- **pairs_large.csv**: Primary training data (7.5M pairs, 265 MB, MTG)
-- **pairs_multi_game.csv**: Multi-game pairs (24.6M pairs, 1.6 GB, currently MTG-only)
-- **card_attributes_enriched.csv**: Card attributes with functional tags (27K cards, 6 MB)
-- **decks_pokemon.jsonl**: Pokemon tournament decks (1,208 decks, 2.1 MB) ✅ EXISTS
-- **decks_all_final.jsonl**: All decks enhanced (69K decks, 241 MB) ⚠️ GENERATE VIA PIPELINE
-  - Normalized card names
-  - Deduplicated by URL and card signature
-  - Filtered invalid deck sizes
-  - Source attribution backfilled
-  - **Status**: File does not exist by default. Generate using `scripts/data_processing/unified_export_pipeline.py`
-- **decks_all_unified.jsonl**: Raw unified export (87K decks, 292 MB, before enhancement) ⚠️ GENERATE VIA PIPELINE
-- **decks_all_enhanced.jsonl**: Enhanced decks (69K decks, 241 MB, intermediate step) ⚠️ GENERATE VIA PIPELINE
-
-### Deck Exports
-- **data/decks/**: Per-game and per-source deck exports
-  - `magic_mtgtop8_decks.jsonl`: MTGTop8 tournament decks (56K+)
-  - `pokemon_limitless_decks.jsonl`: Limitless TCG decks (1,208)
-  - `yugioh_ygoprodeck_decks.jsonl`: YGOPRODeck tournament decks (794)
-
-## Gitignore Policy
-
-**Tracked** (committed to git):
-- Small metadata files (JSON configs, READMEs)
-- Small processed CSVs (<10MB)
-- This README
-
-**Ignored** (local only, synced to S3):
-- `raw/` - Large scraped data
-- `processed/pairs_multi_game.csv` - 1.5GB multi-game pairs
-- `processed/pairs_large.csv` - 266MB large pairs
-- `processed/decks_all_*.jsonl` - Large deck files (241-292MB)
-- `decks/*.jsonl` - Large deck exports (94-147MB)
-- `graphs/*.edg` - Generated graphs
-- `graphs/node_features*.json` - Large graph node features (10MB+)
-- `embeddings/*.wv` - Trained models
-- `embeddings/*.pkl` - Pickled embeddings (39MB+)
-- `embeddings/backups/*.wv` - Backup embeddings
-- `archive/` - Deprecated files
-
-**All large data files are synced to S3:** `s3://games-collections/`
-
-## Usage
-
-### Training Embeddings
-
-**Co-occurrence training:**
 ```bash
-cd src/ml
-python card_similarity_pecan.py \
-  --input ../../data/processed/pairs_large.csv \
-  --output magic_128d
-```
-
-**Deck-based training:**
-```bash
-# Use enhanced final decks (recommended)
-python train_with_decks.py \
-  --input ../../data/processed/decks_all_final.jsonl \
-  --output deck_based_128d
-```
-
-This will create:
-- `data/graphs/magic_128d_graph.edg`
-- `data/embeddings/magic_128d_pecanpy.wv`
-
-### Loading Embeddings
-```python
-from gensim.models import KeyedVectors
-wv = KeyedVectors.load('../../data/embeddings/magic_128d_pecanpy.wv')
-similar = wv.most_similar('Lightning Bolt', topn=10)
-```
-
-## Data Sizes (Current)
-
-- `raw/`: ~3.8GB (canonical storage in `src/backend/data-full/`)
-- `processed/`:
-  - `pairs_large.csv`: 265 MB (7.5M pairs) ✅ EXISTS
-  - `pairs_multi_game.csv`: 1.6 GB (24.6M pairs) ✅ EXISTS
-  - `decks_pokemon.jsonl`: 2.1 MB (1,208 decks) ✅ EXISTS
-  - `decks_all_final.jsonl`: 241 MB (69K decks) ⚠️ GENERATE VIA PIPELINE
-  - `card_attributes_enriched.csv`: 6 MB (27K cards) ✅ EXISTS
-- `graphs/`: ~3MB per graph
-- `embeddings/`: ~1MB per model (22 files total)
-
-## Data Pipeline
-
-### Unified Pipeline (Recommended)
-
-**Single command**: `scripts/data_processing/unified_export_pipeline.py`
-
-Stages:
-1. **Export**: Extract decks from raw `.zst` files (per game/source)
-2. **Unify**: Combine all game exports into single JSONL
-3. **Enhance**: Normalize, deduplicate, validate, backfill metadata
-
-**Usage**:
-```bash
-# Full pipeline
+uv run scripts/data_processing/unified_export_pipeline.py --help
 uv run scripts/data_processing/unified_export_pipeline.py
-
-# Skip export (use existing files)
-uv run scripts/data_processing/unified_export_pipeline.py --skip-export
-
-# Skip enhancement (just unify)
-uv run scripts/data_processing/unified_export_pipeline.py --skip-enhance
 ```
 
-**Output**: `decks_all_final.jsonl` ✅
-- Normalized card names
-- Deduplicated by URL and card signature
-- Source field backfilled
-- `scraped_at` timestamps added
-- Invalid deck sizes filtered
+Multi-game pairs regeneration:
 
-### Legacy Pipeline (Still Supported)
-
-1. **Export**: `scripts/test_sets/export_and_unify_all_decks.py` → `decks_all_unified.jsonl`
-2. **Enhance**: `scripts/enhance_exported_decks.py` → `decks_all_enhanced.jsonl`
-3. **Final**: `scripts/backfill_metadata.py` → `decks_all_final.jsonl`
-
-**Note**: Use unified pipeline for new exports. Legacy scripts maintained for backward compatibility.
-
-### Multi-Game Pairs
-
-**Regenerate**: `scripts/data_processing/regenerate_multi_game_pairs.py`
-
-Generates `pairs_multi_game.csv` with all games (MTG, Pokemon, Yu-Gi-Oh).
-
-**Usage**:
 ```bash
+uv run scripts/data_processing/regenerate_multi_game_pairs.py --help
 uv run scripts/data_processing/regenerate_multi_game_pairs.py
-
-# Rebuild even if exists
-uv run scripts/data_processing/regenerate_multi_game_pairs.py --rebuild
 ```
 
-See `docs/DATA_PIPELINE.md` for complete documentation.
+## Syncing (optional)
+
+Some workflows sync to/from S3 (project bucket typically looks like `s3://games-collections/...`). See:
+
+- `scripts/data_processing/export_from_s3.sh`
+- `scripts/data_processing/sync_to_s3.sh`
+- `scripts/data_processing/sync_all_to_s3.sh`
