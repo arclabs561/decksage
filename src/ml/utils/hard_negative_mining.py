@@ -34,7 +34,8 @@ def compute_hard_negatives(
     vocabulary: set[str],
     top_k: int = 100,
     exclude_positives: bool = True,
-) -> dict[str, list[str]]:
+    max_pairs: int | None = None,
+) -> dict[tuple[str, str], list[str]]:
     """
     Compute hard negatives for each positive pair using teacher model.
 
@@ -59,10 +60,7 @@ def compute_hard_negatives(
         raise ImportError("gensim required for hard negative mining")
 
     # Get KeyedVectors from model if needed
-    if isinstance(teacher_model, Word2Vec):
-        wv = teacher_model.wv
-    else:
-        wv = teacher_model
+    wv = teacher_model.wv if isinstance(teacher_model, Word2Vec) else teacher_model
 
     hard_negatives: dict[tuple[str, str], list[str]] = {}
 
@@ -173,6 +171,7 @@ def two_stage_training_with_hard_negatives(
     workers: int = 4,
     negative: int = 5,
     hard_negative_top_k: int = 100,
+    hard_negative_ratio: float = 0.3,
     **kwargs: Any,
 ) -> Word2Vec:
     """
