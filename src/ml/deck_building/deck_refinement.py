@@ -106,10 +106,7 @@ class DeckRefiner:
             if p.get("name") == main_partition:
                 for c in p.get("cards", []) or []:
                     # Handle both dict format {"name": "...", "count": ...} and string format
-                    if isinstance(c, dict):
-                        card_name = str(c.get("name", ""))
-                    else:
-                        card_name = str(c)
+                    card_name = str(c.get("name", "")) if isinstance(c, dict) else str(c)
                     if card_name:
                         current_cards.add(resolver.canonical(card_name))
 
@@ -188,7 +185,7 @@ class DeckRefiner:
                         continue
 
                 # Convert to list of tuples
-                fusion_suggestions = [(card, score) for card, score in candidate_scores.items()]
+                fusion_suggestions = list(candidate_scores.items())
                 # Sort by score descending
                 fusion_suggestions.sort(key=lambda x: x[1], reverse=True)
                 logger.debug(f"Generated {len(fusion_suggestions)} fusion suggestions")
@@ -223,7 +220,7 @@ class DeckRefiner:
                         new_score = score * boost
                         reason = f"Fills {role} gap (deck has {gap_size} too few {role} cards)"
                         if card in scored:
-                            old_score, old_reason = scored[card]
+                            old_score, _old_reason = scored[card]
                             if new_score > old_score:
                                 scored[card] = (new_score, reason)
                         else:
@@ -294,10 +291,7 @@ class DeckRefiner:
         3. Consider format legality
         4. Preserve role coverage if requested
         """
-        from ..data.card_resolver import CardResolver
         from ..deck_building.deck_completion import suggest_removals as completion_suggest_removals
-
-        resolver = CardResolver()
 
         # Use completion module's suggest_removals which is already implemented
         archetype_staples: dict[str, dict[str, float]] | None = None
@@ -346,12 +340,9 @@ class DeckRefiner:
         3. Consider downgrades (worse, cheaper)
         4. Maintain role coverage
         """
-        from ..data.card_resolver import CardResolver
         from ..deck_building.deck_completion import (
             suggest_replacements as completion_suggest_replacements,
         )
-
-        resolver = CardResolver()
 
         # Create candidate function from fusion using substitution task type
         def candidate_fn(query_card: str, k: int) -> list[tuple[str, float]]:
@@ -485,7 +476,7 @@ class DeckRefiner:
         # 2. Identify sideboard cards that should be main
         # Main deck material: broad answers, format staples, core engine pieces
         if self.tag_set_fn:
-            for card, count in sideboard_cards.items():
+            for card, _count in sideboard_cards.items():
                 tags = self.tag_set_fn(card)
                 score = 0.0
                 reason_parts = []
@@ -497,16 +488,15 @@ class DeckRefiner:
                     reason_parts.append("broad answer (should be in main)")
 
                 # Format staples should be main
-                if constraints.archetype and hasattr(self.fusion, "archetype_staples"):
-                    if self.fusion.archetype_staples:
-                        card_staples = self.fusion.archetype_staples.get(card, {})
-                        if constraints.archetype in card_staples:
-                            inclusion_rate = card_staples[constraints.archetype]
-                            if inclusion_rate > 0.7:  # High inclusion rate
-                                score = max(score, 0.9)
-                                reason_parts.append(
-                                    f"archetype staple ({inclusion_rate:.0%} inclusion)"
-                                )
+                if constraints.archetype and getattr(self.fusion, "archetype_staples", None):
+                    card_staples = self.fusion.archetype_staples.get(card, {})
+                    if constraints.archetype in card_staples:
+                        inclusion_rate = card_staples[constraints.archetype]
+                        if inclusion_rate > 0.7:  # High inclusion rate
+                            score = max(score, 0.9)
+                            reason_parts.append(
+                                f"archetype staple ({inclusion_rate:.0%} inclusion)"
+                            )
 
                 if score > 0.0:
                     suggestions.append(

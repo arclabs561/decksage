@@ -16,6 +16,7 @@ import logging
 import re
 import shutil
 import sqlite3
+from contextlib import suppress
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -48,8 +49,10 @@ except ImportError:
         def model_dump(self):
             return {}
 
-    def Field(*args, **kwargs):
+    def _field(*args, **kwargs):
         return None
+
+    Field = _field  # type: ignore[assignment]
 
     def field_validator(*args, **kwargs):
         def decorator(func):
@@ -125,7 +128,7 @@ if HAS_PYDANTIC:
             for key, value in v.items():
                 try:
                     float_val = float(value)
-                    if not (float_val == float_val):  # Check for NaN
+                    if float_val != float_val:  # Check for NaN
                         logger.warning(f"Metric {key} is NaN, skipping")
                         continue
                     if not (float("-inf") < float_val < float("inf")):  # Check for inf
@@ -174,7 +177,7 @@ class QueryCache:
         """Invalidate cache entries matching pattern."""
         import fnmatch
 
-        keys_to_remove = [k for k in self._cache.keys() if fnmatch.fnmatch(k, pattern)]
+        keys_to_remove = [k for k in self._cache if fnmatch.fnmatch(k, pattern)]
         for key in keys_to_remove:
             del self._cache[key]
 
@@ -411,10 +414,8 @@ class EvaluationRegistry:
         except Exception:
             # Clean up temp file on error
             if temp_path.exists():
-                try:
+                with suppress(Exception):
                     temp_path.unlink()
-                except Exception:
-                    pass
             raise
 
     def _write_with_lock(self, path: Path, data: dict[str, Any]) -> None:
@@ -536,7 +537,7 @@ class EvaluationRegistry:
 
             # Handle production model promotion
             if is_production:
-                for key, model in registry_data["models"].items():
+                for _key, model in registry_data["models"].items():
                     if (
                         model["model_type"] == model_type
                         and model["version"] != model_version
@@ -854,12 +855,11 @@ class EvaluationRegistry:
             )
 
         # Backup SQLite database
-        if self.use_sqlite and self.sqlite_backend:
-            if self.sqlite_backend.db_path.exists():
-                shutil.copy2(
-                    self.sqlite_backend.db_path,
-                    backup_path / self.sqlite_backend.db_path.name,
-                )
+        if self.use_sqlite and self.sqlite_backend and self.sqlite_backend.db_path.exists():
+            shutil.copy2(
+                self.sqlite_backend.db_path,
+                backup_path / self.sqlite_backend.db_path.name,
+            )
 
         # Backup evaluation results directory
         results_backup = backup_path / "evaluation_results"
@@ -947,9 +947,11 @@ class EvaluationRegistry:
                         # Compress using gzip
                         import gzip
 
-                        with open(archive_file, "rb") as f_in:
-                            with gzip.open(f"{archive_file}.gz", "wb") as f_out:
-                                shutil.copyfileobj(f_in, f_out)
+                        with (
+                            open(archive_file, "rb") as f_in,
+                            gzip.open(f"{archive_file}.gz", "wb") as f_out,
+                        ):
+                            shutil.copyfileobj(f_in, f_out)
                         archive_file.unlink()
                         archive_file = Path(f"{archive_file}.gz")
 
