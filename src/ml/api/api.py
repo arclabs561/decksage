@@ -437,9 +437,14 @@ graph_data = None
 model_info = {}
 
 
-def _adopt_legacy_globals() -> None:
-    """If legacy module-level globals are set (by tests), copy them into ApiState."""
-    state = get_state()
+def _adopt_legacy_globals(game: str | None = None) -> None:
+    """
+    If legacy module-level globals are set (by tests), copy them into ApiState.
+
+    In multi-game mode, callers should pass the resolved `game` so adoption targets
+    the correct per-game state.
+    """
+    state = get_state(game)
     global embeddings, graph_data, model_info
     if state.embeddings is None and embeddings is not None:
         state.embeddings = embeddings
@@ -978,8 +983,8 @@ def _similar_jaccard_faceted(
 
 def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     """Find similar cards based on resolved method and return normalized response."""
-    _adopt_legacy_globals()
     game = _require_game(request.game)
+    _adopt_legacy_globals(game)
     state = get_state(game)
     query = request.query
     k = request.top_k
