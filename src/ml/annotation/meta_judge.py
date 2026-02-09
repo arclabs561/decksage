@@ -572,12 +572,14 @@ def inject_context_into_annotator(
 
     # Extract actionable feedback from recommendations and issues
     # Convert to prompt additions for dynamic injection
+    actionable_feedback: list[str] = []
     for rec in judgment.recommendations:
         if "score" in rec.lower() or "calibration" in rec.lower() or "example" in rec.lower():
             if not hasattr(annotator, "meta_judge_prompt_additions"):
                 annotator.meta_judge_prompt_additions = []
             # Add as prompt addition if it's about scoring/calibration
             annotator.meta_judge_prompt_additions.append(rec)
+            actionable_feedback.append(rec)
 
     for issue in judgment.issues:
         if issue.suggested_fix and (
@@ -586,6 +588,7 @@ def inject_context_into_annotator(
             if not hasattr(annotator, "meta_judge_prompt_additions"):
                 annotator.meta_judge_prompt_additions = []
             annotator.meta_judge_prompt_additions.append(issue.suggested_fix)
+            actionable_feedback.append(issue.suggested_fix)
 
     # Log actionable feedback
     if actionable_feedback:
