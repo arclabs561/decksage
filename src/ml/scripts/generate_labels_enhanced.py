@@ -494,8 +494,8 @@ def generate_labels_with_context(
             result = run_with_tracking(
                 agent=agent,
                 prompt=prompt,
-                model=model_name if "model_name" in locals() else "unknown",
-                provider=provider if "provider" in locals() else "openrouter",
+                model=locals().get("model_name", "unknown"),
+                provider=locals().get("provider", "openrouter"),
                 operation="label_generation",
             )
         else:
