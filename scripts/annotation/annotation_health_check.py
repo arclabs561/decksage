@@ -73,6 +73,11 @@ def check_data_quality(annotations_dir: Path) -> dict[str, Any]:
                 try:
                     ann = json.loads(line)
                     annotations.append(ann)
+                    if not ann.get("card1") or not ann.get("card2"):
+                        issues.append("Missing card names in annotation")
+                    score = ann.get("similarity_score", -1)
+                    if not (0 <= score <= 1):
+                        issues.append(f"Invalid similarity_score: {score}")
                 except json.JSONDecodeError as e:
                     errors.append(f"Line {line_num}: Invalid JSON - {e}")
                     continue
@@ -84,13 +89,6 @@ def check_data_quality(annotations_dir: Path) -> dict[str, Any]:
         issues.extend(errors[:5])
         if len(errors) > 5:
             issues.append(f"... and {len(errors) - 5} more errors")
-
-                # Validate structure
-                    if not ann.get("card1") or not ann.get("card2"):
-                    issues.append(f"Missing card names in annotation")
-                score = ann.get("similarity_score", -1)
-                if not (0 <= score <= 1):
-                    issues.append(f"Invalid similarity_score: {score}")
 
     return {
         "integrated_file": str(latest),

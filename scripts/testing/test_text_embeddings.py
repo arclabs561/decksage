@@ -142,23 +142,23 @@ def main():
         args.queries,
     )
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Test Summary")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"Card attributes loaded: {'✓' if results['card_attrs_loaded'] else '✗'}")
     print(f"Text embedder available: {'✓' if results['text_embedder_available'] else '✗'}")
     print(f"Test queries: {len(results['test_results'])}")
 
-    if results['card_attrs_loaded'] and results['text_embedder_available']:
+    if results["card_attrs_loaded"] and results["text_embedder_available"]:
         print("\n✓ Text embeddings are working!")
     else:
         print("\n✗ Text embeddings not fully functional")
-        if not results['card_attrs_loaded']:
+        if not results["card_attrs_loaded"]:
             print("  - Card attributes not loaded")
-        if not results['text_embedder_available']:
+        if not results["text_embedder_available"]:
             print("  - Text embedder not available")
 
-    return 0 if (results['card_attrs_loaded'] and results['text_embedder_available']) else 1
+    return 0 if (results["card_attrs_loaded"] and results["text_embedder_available"]) else 1
 
 
 if __name__ == "__main__":
