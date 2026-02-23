@@ -57,7 +57,9 @@ class TestVisualEmbeddingsFusionIntegration:
 
         assert fusion.visual_embedder is not None
         # WeightedLateFusion normalizes weights on init.
-        assert fusion.weights.visual_embed == FusionWeights(visual_embed=0.5).normalized().visual_embed
+        assert (
+            fusion.weights.visual_embed == FusionWeights(visual_embed=0.5).normalized().visual_embed
+        )
 
     def test_fusion_without_visual_embeddings(self):
         """Test fusion system works without visual embeddings (backward compatibility)."""

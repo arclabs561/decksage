@@ -671,7 +671,7 @@ def root(request: Request):
     # Serve HTML for browsers (default)
     if not wants_json:
         # Serve HTML landing page for browsers
-        _landing_html = Path(__file__).parent.parent.parent.parent / "test_search.html"
+        _landing_html = Path(__file__).parent.parent.parent.parent / "frontend" / "test_search.html"
         if _landing_html.exists():
             return FileResponse(str(_landing_html), media_type="text/html")
         # Fallback to redirect
@@ -1952,7 +1952,7 @@ except ImportError:
 
 # Serve static HTML files for frontend interface
 # Mount static directory if it exists
-_static_dir = Path(__file__).parent.parent.parent.parent / "test"
+_static_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "static"
 if _static_dir.exists():
     try:
         app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
@@ -1960,7 +1960,7 @@ if _static_dir.exists():
         logger.debug("Could not mount static files: %s", e)
 
 # Serve main search interface at /search.html
-_search_html = Path(__file__).parent.parent.parent.parent / "test_search.html"
+_search_html = Path(__file__).parent.parent.parent.parent / "frontend" / "test_search.html"
 if _search_html.exists():
 
     @app.get("/search.html")
