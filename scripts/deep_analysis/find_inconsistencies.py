@@ -121,7 +121,7 @@ def find_version_mismatches() -> list[dict[str, Any]]:
 
         version_match = re.search(r'version\s*=\s*["\']([^"\']+)["\']', content)
         if version_match:
-            pyproject_version = version_match.group(1)
+            _ = version_match.group(1)
 
             # Check if version appears elsewhere
             # This is a simplified check
@@ -159,7 +159,7 @@ def find_data_format_inconsistencies() -> list[dict[str, Any]]:
             if isinstance(queries, dict):
                 sample_query = list(queries.keys())[0] if queries else None
                 if sample_query:
-                    sample_labels = queries[sample_query]
+                    _ = queries[sample_query]
                     format_key = "has_queries_key" if has_queries_key else "direct_dict"
                     if format_key not in formats:
                         formats[format_key] = []

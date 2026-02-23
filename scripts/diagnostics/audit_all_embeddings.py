@@ -16,6 +16,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 try:
     from gensim.models import KeyedVectors
 

@@ -8,13 +8,13 @@ Compares fusion with and without visual embeddings to measure improvement.
 import sys
 from pathlib import Path
 
+
 # Add src to path for imports
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent / "src"
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-from ml.utils.lineage import safe_write
 
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
@@ -33,6 +33,7 @@ import argparse
 import json
 import logging
 from typing import Any
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -88,11 +89,12 @@ def evaluate_without_visual_embeddings(
     logger.info("Evaluating without visual embeddings...")
 
     try:
-        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-        from ml.evaluation.similarity_helper import create_similarity_function
-        from ml.utils.evaluation import evaluate_similarity
-        from gensim.models import KeyedVectors
         import json
+
+        from gensim.models import KeyedVectors
+
+        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+        from ml.utils.evaluation import evaluate_similarity
 
         # Load embeddings
         if embeddings_path:

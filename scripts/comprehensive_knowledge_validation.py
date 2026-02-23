@@ -55,13 +55,12 @@ def validate_content_quality():
     knowledge_dir = project_root / "data" / "game_knowledge"
 
     files = list(knowledge_dir.glob("*.json"))
-    all_valid = True
 
     for f in files:
         with open(f, encoding="utf-8") as file:
             data = json.load(file)
 
-        game = data.get("game", "")
+        _game = data.get("game", "")
 
         # Check mechanics completeness
         mechanics = data.get("mechanics", {})

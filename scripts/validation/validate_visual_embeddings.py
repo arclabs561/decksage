@@ -12,6 +12,7 @@ Quick validation that visual embeddings are working correctly:
 import sys
 from pathlib import Path
 
+
 # Add project root to path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
@@ -26,7 +27,7 @@ except ImportError:
         sys.path.insert(0, str(src_path))
 
 import logging
-from typing import Any
+
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -37,9 +38,9 @@ def validate_imports() -> tuple[bool, str]:
     logger.info("Validating imports...")
 
     try:
-        from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
+        from ml.api.api import ApiState, get_state
         from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-        from ml.api.api import get_state, ApiState
+        from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
 
         logger.info("  ✓ All imports successful")
         return True, "All imports successful"
@@ -72,8 +73,9 @@ def validate_embedding_generation() -> tuple[bool, str]:
     logger.info("Validating embedding generation...")
 
     try:
-        from ml.similarity.visual_embeddings import CardVisualEmbedder
         from PIL import Image
+
+        from ml.similarity.visual_embeddings import CardVisualEmbedder
 
         embedder = CardVisualEmbedder()
 
@@ -97,9 +99,10 @@ def validate_fusion_integration() -> tuple[bool, str]:
     logger.info("Validating fusion integration...")
 
     try:
-        from ml.similarity.visual_embeddings import CardVisualEmbedder
-        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
         from unittest.mock import MagicMock
+
+        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+        from ml.similarity.visual_embeddings import CardVisualEmbedder
 
         visual_embedder = CardVisualEmbedder()
 
@@ -135,7 +138,7 @@ def validate_api_state() -> tuple[bool, str]:
     logger.info("Validating API state...")
 
     try:
-        from ml.api.api import get_state, ApiState
+        from ml.api.api import get_state
 
         state = get_state()
         assert hasattr(state, "visual_embedder")
