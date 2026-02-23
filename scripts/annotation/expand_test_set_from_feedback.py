@@ -220,7 +220,7 @@ def main():
 
     args = parser.parse_args()
 
-    result = expand_test_set(
+    _ = expand_test_set(
         Path(args.test_set),
         Path(args.feedback),
         Path(args.output) if args.output else None,

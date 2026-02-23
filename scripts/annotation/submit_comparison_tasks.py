@@ -343,7 +343,7 @@ def main():
     submit_mturk = not args.scale_only
     submit_scale = not args.mturk_only
 
-    results = submit_comparison_tasks(
+    _ = submit_comparison_tasks(
         submit_mturk=submit_mturk,
         submit_scale=submit_scale,
         num_tasks=args.num_tasks,

@@ -286,9 +286,9 @@ def main():
     dry_run = not args.submit
 
     if args.service == "all":
-        results = compare_services(num_tasks=args.num_tasks, dry_run=dry_run)
+        _ = compare_services(num_tasks=args.num_tasks, dry_run=dry_run)
     else:
-        results = test_service(args.service, num_tasks=args.num_tasks, dry_run=dry_run)
+        _ = test_service(args.service, num_tasks=args.num_tasks, dry_run=dry_run)
 
     return 0
 

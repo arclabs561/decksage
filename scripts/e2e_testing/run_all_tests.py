@@ -245,7 +245,7 @@ def main():
 
     total_tests = sum(r.tests_run for r in results)
     total_passed = sum(r.tests_passed for r in results)
-    total_failed = sum(r.tests_failed for r in results)
+    _total_failed = sum(r.tests_failed for r in results)
 
     logger.info(f"Test Suites: {passed_suites}/{total_suites} passed")
     if total_tests > 0:
