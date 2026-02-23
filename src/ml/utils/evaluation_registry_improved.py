@@ -17,7 +17,7 @@ import re
 import shutil
 import sqlite3
 from contextlib import suppress
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
@@ -527,7 +527,7 @@ class EvaluationRegistry:
                 "model_type": model_type,
                 "version": model_version,
                 "path": str(model_path),
-                "registered_at": datetime.utcnow().isoformat() + "Z",
+                "registered_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
                 "metrics": metrics,
                 "metadata": {
                     **(metadata or {}),
@@ -547,7 +547,7 @@ class EvaluationRegistry:
                     ):
                         model["is_production"] = False
 
-            registry_data["metadata"]["updated_at"] = datetime.utcnow().isoformat() + "Z"
+            registry_data["metadata"]["updated_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
             self._write_with_lock(registry_path, registry_data)
             self.model_registry._registry = registry_data
             logger.info(f"Registered model: {model_type}_{model_version}")
