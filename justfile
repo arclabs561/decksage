@@ -82,7 +82,7 @@ check-architecture:
 # Run architecture validation tests
 test-architecture:
     #!/usr/bin/env bash
-    uv run pytest tests/test_lineage_validation.py tests/test_schema_validation.py -v
+    uv run pytest src/ml/tests/test_lineage_validation.py src/ml/tests/test_schema_validation.py -v
 
 # Count adoption metrics
 check-adoption:
