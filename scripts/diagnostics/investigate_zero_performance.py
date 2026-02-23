@@ -118,7 +118,7 @@ def investigate_embedding(
         diagnostics["similarity_works"] = None
 
     # Check 4: Test set format
-    sample_query = list(test_set.keys())[0] if test_set else None
+    sample_query = next(iter(test_set.keys())) if test_set else None
     if sample_query:
         labels = test_set[sample_query]
         if not isinstance(labels, dict):
