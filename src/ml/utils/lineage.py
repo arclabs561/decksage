@@ -81,10 +81,6 @@ def validate_write_path(path: str | Path, order: int) -> tuple[bool, str | None]
     if is_order_0_location(path_str):
         return False, f"Cannot write to Order 0 location (immutable): {path_str}"
 
-    # Check if path matches expected location for order
-    order_info = DATA_ORDERS.get(order, {})
-    expected_locations = order_info.get("locations", [])
-
     # For now, just check it's not Order 0
     # Could add stricter validation later
     return True, None
@@ -154,7 +150,7 @@ def validate_before_processing(order: int, input_paths: list[Path]) -> tuple[boo
             missing_paths.append(str(path))
 
     if missing_paths:
-        return False, [f"Missing input files: {missing_paths}"] + missing
+        return False, [f"Missing input files: {missing_paths}", *missing]
 
     return all_satisfied, missing
 

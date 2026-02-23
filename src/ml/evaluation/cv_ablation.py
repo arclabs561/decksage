@@ -518,8 +518,6 @@ def run_ablation_study(
                 test_set = Path(graph.test_set_path)
 
             if test_set and test_set.exists():
-                import json
-
                 from ml.scripts.evaluate_all_embeddings import evaluate_embedding
 
                 with open(test_set_path) as f:

@@ -31,7 +31,9 @@ try:
 except ImportError:
     HAS_PANDAS = False
 
-HAS_PARQUET = importlib.util.find_spec("pyarrow.parquet") is not None
+HAS_PARQUET = False
+with suppress(ModuleNotFoundError):
+    HAS_PARQUET = importlib.util.find_spec("pyarrow.parquet") is not None
 
 try:
     from ml.data.card_database import get_card_database

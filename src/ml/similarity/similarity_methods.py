@@ -82,7 +82,10 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                 # Fall back to CSV if graph DB fails
                 import warnings
 
-                warnings.warn(f"Could not load from graph database: {e}, falling back to CSV")
+                warnings.warn(
+                    f"Could not load from graph database: {e}, falling back to CSV",
+                    stacklevel=2,
+                )
 
     # Fallback to CSV (legacy or explicit csv_path)
     if csv_path is None:
@@ -109,7 +112,7 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                     break
             else:
                 raise FileNotFoundError(
-                    f"Could not find pairs CSV. Tried: {[csv_path] + alternatives}"
+                    f"Could not find pairs CSV. Tried: {[csv_path, *alternatives]}"
                 )
 
     df = pd.read_csv(csv_path)
@@ -143,7 +146,7 @@ def load_card_attributes_csv(csv_path: str):
         name = row["NAME"]
         cmc = float(row.get("CMC", 0) or 0)
         type_line = str(row.get("TYPE_LINE", "") or "")
-        types = set([t.strip() for t in type_line.split() if t.strip()])
+        types = {t.strip() for t in type_line.split() if t.strip()}
         attrs[name] = {"cmc": cmc, "type_line": type_line, "types": types}
     return attrs
 

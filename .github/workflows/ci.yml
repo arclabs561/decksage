@@ -70,12 +70,10 @@ jobs:
           uv pip install --system ruff
 
       - name: Run Ruff check
-        continue-on-error: true
-        run: uv run ruff check src/ml --output-format=concise
+        run: ruff check src/ml --output-format=concise
 
       - name: Check Ruff format
-        continue-on-error: true
-        run: uv run ruff format --check src/ml
+        run: ruff format --check src/ml
 
   go-lint:
     name: Lint (Go)
@@ -89,7 +87,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v6
         with:
-          go-version: "1.23"
+          go-version-file: src/backend/go.mod
 
       - name: Install golangci-lint
         uses: golangci/golangci-lint-action@v8
@@ -121,14 +119,13 @@ jobs:
         with:
           path: |
             ~/.cache/uv
-            src/ml/.venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('src/ml/pyproject.toml') }}
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
 
       - name: Install dependencies
         run: |
-          cd src/ml
           uv sync --extra dev
 
       - name: Run fast tests
@@ -172,14 +169,13 @@ jobs:
         with:
           path: |
             ~/.cache/uv
-            src/ml/.venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('src/ml/pyproject.toml') }}
+            .venv
+          key: ${{ runner.os }}-uv-${{ hashFiles('pyproject.toml', 'uv.lock') }}
           restore-keys: |
             ${{ runner.os }}-uv-
 
       - name: Install dependencies
         run: |
-          cd src/ml
           uv sync --extra dev
 
       - name: Run slow/integration tests
@@ -197,46 +193,6 @@ jobs:
           path: |
             src/ml/.pytest_cache/
             src/ml/htmlcov/
-
-  type-check:
-    name: Type Check
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
-      - name: Install uv
-        uses: astral-sh/setup-uv@v4
-        with:
-          version: "latest"
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Cache uv dependencies
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            src/ml/.venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('src/ml/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
-
-      - name: Install dependencies
-        run: |
-          cd src/ml
-          uv sync --extra dev
-          uv pip install --system ty
-
-      - name: Run type checker
-        run: |
-          cd src/ml
-          uvx ty check src/ml || true  # Non-blocking for now
 
   # Summary: CI runs tests from project root to include both tests/ and src/ml/tests/
   # PYTHONPATH is set to allow imports from scripts/ and src/ml/

@@ -24,11 +24,12 @@ from typing import Any
 
 
 try:
-    from pydantic_ai import Agent
-
-    HAS_PYDANTIC_AI = True
+    import pydantic_ai  # type: ignore[import-not-found]
 except ImportError:
     HAS_PYDANTIC_AI = False
+else:
+    HAS_PYDANTIC_AI = True
+    del pydantic_ai
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

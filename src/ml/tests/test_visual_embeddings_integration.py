@@ -22,7 +22,7 @@ try:
 
     from ml.api.api import ApiState, get_state
     from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-    from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
+    from ml.similarity.visual_embeddings import CardVisualEmbedder
 
     VISUAL_EMBEDDINGS_AVAILABLE = True
 except ImportError:
@@ -56,7 +56,8 @@ class TestVisualEmbeddingsFusionIntegration:
         )
 
         assert fusion.visual_embedder is not None
-        assert fusion.weights.visual_embed == 0.5
+        # WeightedLateFusion normalizes weights on init.
+        assert fusion.weights.visual_embed == FusionWeights(visual_embed=0.5).normalized().visual_embed
 
     def test_fusion_without_visual_embeddings(self):
         """Test fusion system works without visual embeddings (backward compatibility)."""

@@ -133,6 +133,27 @@ test-api:
     #!/usr/bin/env bash
     . .venv/bin/activate && pytest src/ml/tests/test_api_basic.py src/ml/tests/test_api_smoke.py
 
+# Run E2E tests
+test-e2e:
+    #!/usr/bin/env bash
+    uv run python scripts/e2e_testing/run_all_tests.py
+
+test-e2e-browser:
+    #!/usr/bin/env bash
+    uv run python scripts/e2e_testing/run_all_tests.py --suites test_browser_comprehensive test_edge_cases
+
+test-e2e-visual:
+    #!/usr/bin/env bash
+    uv run python scripts/e2e_testing/run_all_tests.py --suites test_visual_regression test_all_pages_visual
+
+test-e2e-review:
+    #!/usr/bin/env bash
+    uv run python scripts/e2e_testing/run_all_tests.py --suites test_review_page
+
+test-e2e-quick:
+    #!/usr/bin/env bash
+    uv run python scripts/e2e_testing/test_browser_comprehensive.py
+
 # Run integration tests
 test-integration:
     #!/usr/bin/env bash
@@ -143,9 +164,17 @@ lint:
     #!/usr/bin/env bash
     uv run ruff check src/ml
 
+lint-scripts:
+    #!/usr/bin/env bash
+    uv run ruff check src/ml/scripts --config "exclude=[]"
+
 format:
     #!/usr/bin/env bash
     uv run ruff format src/ml
+
+format-scripts:
+    #!/usr/bin/env bash
+    uv run ruff format src/ml/scripts --config "exclude=[]"
 
 # Pre-commit hooks (using prek - fast pre-commit alternative)
 pre-commit-install:

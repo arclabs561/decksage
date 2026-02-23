@@ -22,11 +22,12 @@ from typing import Any
 
 
 try:
-    from pydantic_ai import Agent
-
-    HAS_PYDANTIC_AI = True
+    import pydantic_ai  # type: ignore[import-not-found]
 except ImportError:
     HAS_PYDANTIC_AI = False
+else:
+    HAS_PYDANTIC_AI = True
+    del pydantic_ai
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -132,10 +133,7 @@ def generate_labels_single_judge(
 
         if cached:
             # Extract data from annotated cache entry or use directly
-            if isinstance(cached, dict) and "data" in cached:
-                labels = cached["data"]
-            else:
-                labels = cached
+            labels = cached["data"] if isinstance(cached, dict) and "data" in cached else cached
             logger.debug(f"  Using cached labels for judge {judge_id}")
             return labels if labels and any(labels.values()) else {}
 
@@ -273,14 +271,14 @@ def generate_labels_parallel(
         for card, levels in card_to_levels.items():
             if len(levels) > 1:
                 # Contradiction detected - keep highest level
-                best_level = max(levels, key=lambda l: level_priority[l])
+                best_level = max(levels, key=lambda level: level_priority[level])
                 logger.warning(
                     f"Judge {i} contradiction: {card} in multiple levels {levels}, keeping {best_level}"
                 )
                 cleaned_judgment[best_level].append(card)
             else:
                 # No contradiction
-                cleaned_judgment[list(levels)[0]].append(card)
+                cleaned_judgment[next(iter(levels))].append(card)
 
         validated_judgments.append(cleaned_judgment)
 
@@ -316,8 +314,7 @@ def generate_labels_parallel(
     # Use validated_judgments for consistency (after contradiction removal)
     num_judges = len(validated_judgments)
     agreement_scores = []
-    for card, votes in card_votes.items():
-        total_votes = sum(votes.values())
+    for _card, votes in card_votes.items():
         max_votes = max(votes.values()) if votes else 0
         agreement = max_votes / num_judges if num_judges > 0 else 0.0
         agreement_scores.append(agreement)

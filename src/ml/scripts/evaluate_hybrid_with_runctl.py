@@ -74,7 +74,7 @@ def evaluate_hybrid(
         test_data = json.load(f)
 
     queries = test_data.get("queries", test_data) if isinstance(test_data, dict) else test_data
-    original_query_count = len(queries) if isinstance(queries, dict) else len(queries)
+    original_query_count = len(queries)
 
     # Quick evaluation mode: limit queries
     if quick or limit:
@@ -96,7 +96,7 @@ def evaluate_hybrid(
                 f"Quick evaluation: Limited to {len(limited_queries)} queries (from {original_query_count})"
             )
 
-    logger.info(f" {len(queries) if isinstance(queries, dict) else len(queries)} test queries")
+    logger.info(f" {len(queries)} test queries")
 
     # Load graph and split temporally to prevent leakage
     adj = {}

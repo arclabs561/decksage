@@ -6,7 +6,6 @@ to enrich similarity annotations with graph DB data.
 
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import Any
 
 
@@ -291,7 +290,6 @@ def extract_contextual_analysis(
 
     # Extract archetypes
     archetypes_together = []
-    archetype_counts = defaultdict(int)
 
     # Check edge metadata
     if "archetype" in metadata:
@@ -302,7 +300,6 @@ def extract_contextual_analysis(
 
     # Extract formats
     formats_together = []
-    format_counts = defaultdict(int)
 
     if "format" in metadata:
         formats_together.append(str(metadata["format"]))

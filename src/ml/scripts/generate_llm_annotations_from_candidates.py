@@ -58,7 +58,7 @@ async def generate_annotations_from_candidates(
             logger.warning("OPENROUTER_API_KEY not set - creating placeholder annotations")
             use_llm = False
         else:
-            annotator = LLMAnnotator(output_dir=output_file.parent)
+            LLMAnnotator(output_dir=output_file.parent)
             use_llm = True
     except ImportError as e:
         logger.warning(f"LLM annotator not available: {e}")

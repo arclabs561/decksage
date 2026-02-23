@@ -71,7 +71,7 @@ class LeakageAnalyzer:
                     try:
                         ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
                         timestamps.append(ts)
-                    except:
+                    except ValueError:
                         pass
 
             if timestamps:
@@ -106,9 +106,6 @@ class LeakageAnalyzer:
         Issue: If GNN is trained on edges from test period, test data influences training.
         """
         issues = []
-
-        # Check if edgelist includes test period edges
-        graph = IncrementalCardGraph(graph_path)
 
         # If graph was built from all decks, GNN training will leak
         # This is a consequence of graph construction leakage
@@ -313,7 +310,6 @@ class LeakageAnalyzer:
         val_end = train_end + int(n * val_frac)
 
         train_decks = sorted_decks[:train_end]
-        val_decks = sorted_decks[train_end:val_end]
         test_decks = sorted_decks[val_end:]
 
         if not train_decks or not test_decks:

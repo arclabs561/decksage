@@ -247,8 +247,8 @@ def validate_text_embeddings_integration() -> dict[str, Any]:
     logger.info("T1.1: Validating text embeddings integration")
 
     try:
-        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-        from ml.similarity.text_embeddings import CardTextEmbedder, get_text_embedder
+        from ml.similarity.fusion import FusionWeights
+        from ml.similarity.text_embeddings import get_text_embedder
 
         # Check if text embedder can be created
         try:

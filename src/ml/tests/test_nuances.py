@@ -204,7 +204,7 @@ def test_fusion_gracefully_handles_missing_tagger():
     weights = FusionWeights(embed=0.0, jaccard=1.0, functional=1.0)  # functional ignored
     fusion = WeightedLateFusion(embeddings=None, adj=adj, tagger=None, weights=weights)
     ranked = fusion.similar("Bolt", k=2)
-    assert set(c for c, _ in ranked) == {"A", "B"}
+    assert {c for c, _ in ranked} == {"A", "B"}
 
 
 def test_market_api_stubs_require_credentials():

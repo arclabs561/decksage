@@ -74,6 +74,7 @@ def test_fusion_weights_normalize_sum_to_one(embed_list, jacc_list):
         + fw.jaccard
         + fw.functional
         + fw.text_embed
+        + fw.visual_embed
         + fw.sideboard
         + fw.temporal
         + fw.gnn
@@ -93,6 +94,7 @@ def test_fusion_weight_scale_invariance_property(scale: float):
         jaccard=0.35,
         functional=0.25,
         text_embed=0.0,
+        visual_embed=0.0,
         sideboard=0.0,
         temporal=0.0,
         gnn=0.0,
@@ -104,6 +106,7 @@ def test_fusion_weight_scale_invariance_property(scale: float):
         jaccard=base.jaccard * scale,
         functional=base.functional * scale,
         text_embed=0.0,
+        visual_embed=0.0,
         sideboard=0.0,
         temporal=0.0,
         gnn=0.0,

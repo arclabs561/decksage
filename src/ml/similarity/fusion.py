@@ -266,31 +266,15 @@ class WeightedLateFusion:
         if not self.tagger:
             return 0.0
         try:
-            from dataclasses import asdict, is_dataclass
+            from ..utils.tagger_utils import extract_tag_set
 
             query_tags = self.tagger.tag_card(query)
             candidate_tags = self.tagger.tag_card(candidate)
 
-            # Extract boolean fields that are True
-            # Handle both dataclasses and regular classes
-            if is_dataclass(query_tags):
-                query_tag_dict = asdict(query_tags)
-            else:
-                # Fallback to vars() for regular classes
-                query_tag_dict = vars(query_tags) if hasattr(query_tags, "__dict__") else {}
-
-            if is_dataclass(candidate_tags):
-                candidate_tag_dict = asdict(candidate_tags)
-            else:
-                # Fallback to vars() for regular classes
-                candidate_tag_dict = (
-                    vars(candidate_tags) if hasattr(candidate_tags, "__dict__") else {}
-                )
-
-            query_tag_set = {k for k, v in query_tag_dict.items() if isinstance(v, bool) and v}
-            candidate_tag_set = {
-                k for k, v in candidate_tag_dict.items() if isinstance(v, bool) and v
-            }
+            # Taggers can return dicts, dataclasses, or regular classes. Use the
+            # shared extraction utility for consistent behavior.
+            query_tag_set = extract_tag_set(query_tags, exclude_fields={"card_name"})
+            candidate_tag_set = extract_tag_set(candidate_tags, exclude_fields={"card_name"})
 
             return _jaccard_sets(query_tag_set, candidate_tag_set)
         except Exception:

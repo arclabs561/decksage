@@ -71,14 +71,13 @@ def create_similarity_function(
 
     # Load graph for Jaccard
     adj = None
-    weights_dict = None
     if pairs_path:
         if isinstance(pairs_path, str):
             pairs_path = Path(pairs_path)
 
         if pairs_path.exists():
             try:
-                adj, weights_dict = load_graph(str(pairs_path), filter_lands=True)
+                adj, _ = load_graph(str(pairs_path), filter_lands=True)
                 if adj:
                     logger.info(f"Loaded graph: {len(adj)} cards")
                 else:
@@ -87,11 +86,9 @@ def create_similarity_function(
             except Exception as e:
                 logger.warning(f"Failed to load graph from {pairs_path}: {e}")
                 adj = None
-                weights_dict = None
         else:
             logger.warning(f"Pairs file not found: {pairs_path}")
             adj = None
-            weights_dict = None
 
     # Create similarity function based on method
     if method == "embedding":

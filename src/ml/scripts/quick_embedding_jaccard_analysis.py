@@ -122,8 +122,8 @@ def main() -> int:
             overlaps.append(overlap / 10.0)
 
             # Correlation (for common cards)
-            emb_dict = {c: s for c, s in emb_similar}
-            jac_dict = {c: s for c, s in jaccard_scores}
+            emb_dict = dict(emb_similar)
+            jac_dict = dict(jaccard_scores)
             common = set(emb_cards) & set(jaccard_cards)
 
             if len(common) >= 5:

@@ -342,7 +342,8 @@ class TestDataTypeConsistency:
         loaded = json.loads(json_str)
 
         assert isinstance(loaded["monthly_counts"], dict)
-        assert isinstance(list(loaded["monthly_counts"].values())[0], int)
+        assert loaded["monthly_counts"]
+        assert isinstance(next(iter(loaded["monthly_counts"].values())), int)
 
 
 class TestConsistencyCalculations:

@@ -64,9 +64,9 @@ def filter_pairs_by_timestamp(
                             timestamp = datetime.fromisoformat(timestamp_str.replace("Z", "+00:00"))
                             deck["_parsed_timestamp"] = timestamp
                             all_decks.append(deck)
-                        except:
+                        except Exception:
                             pass
-                except:
+                except Exception:
                     continue
 
     if not all_decks:

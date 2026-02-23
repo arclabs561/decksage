@@ -25,8 +25,6 @@ def tagger(monkeypatch):
     if FunctionalTagger is None:
         pytest.skip("FunctionalTagger not available")
 
-    from ..enrichment.card_functional_tagger import FunctionalTagger
-
     def mock_load_db(self):
         return {
             "Lightning Bolt": {

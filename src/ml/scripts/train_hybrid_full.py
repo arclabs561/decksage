@@ -189,7 +189,7 @@ def build_incremental_graph(
                         # Normalize to naive datetime for consistent comparison
                         if timestamp.tzinfo is not None:
                             timestamp = timestamp.replace(tzinfo=None)
-                    except:
+                    except Exception:
                         timestamp = datetime.now()
                 else:
                     timestamp = datetime.now()
@@ -796,7 +796,7 @@ def main() -> int:
             logger.info("Skipping GNN training (--skip-gnn)")
 
         # Step 4: Quick evaluation
-        eval_results = evaluate_components(
+        evaluate_components(
             graph,
             gnn_embedder,
             instruction_embedder,
