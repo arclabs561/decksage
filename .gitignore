@@ -216,3 +216,20 @@ experiments/backups/eval_registry_*/
 
 # Local scratch artifacts
 ruff-check.txt
+
+# Tracking and analysis noise
+docs/archive/
+docs/annotation/
+experiments/annotations*/
+experiments/backups/
+experiments/evaluation_logs/
+experiments/test_sets_archive/
+experiments/downstream_eval_*/
+experiments/data/
+experiments/evaluations/
+experiments/*.md
+experiments/*.jsonl
+experiments/profile_results.txt
+experiments/model_registry.lock
+annotations/
+archive/
