@@ -14,6 +14,7 @@ import argparse
 import json
 import os
 import random
+from datetime import UTC, datetime
 from pathlib import Path
 
 
@@ -83,7 +84,7 @@ def write_batch_yaml(output_path: Path, drafts: list[QueryDraft]) -> None:
     batch = {
         "batch_metadata": {
             "batch_id": "002",
-            "created_date": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%d"),
+            "created_date": datetime.now(UTC).strftime("%Y-%m-%d"),
             "status": "draft",
             "num_queries": len(drafts),
             "annotators": ["llm_draft"],
@@ -110,7 +111,7 @@ def write_batch_yaml(output_path: Path, drafts: list[QueryDraft]) -> None:
                 "query_id": f"q_{d.query.replace(' ', '_')[:24]}",
                 "query_card": d.query,
                 "annotator": "llm_bootstrap",
-                "annotation_date": __import__("datetime").datetime.utcnow().strftime("%Y-%m-%d"),
+                "annotation_date": datetime.now(UTC).strftime("%Y-%m-%d"),
                 "candidates": items,
             }
         )

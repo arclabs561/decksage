@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import json
 import logging
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -45,14 +45,14 @@ class ModelRegistry:
                 logger.warning(f"Failed to load registry: {e}. Starting fresh.")
                 return {
                     "models": {},
-                    "metadata": {"created_at": datetime.utcnow().isoformat() + "Z"},
+                    "metadata": {"created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")},
                 }
         else:
-            return {"models": {}, "metadata": {"created_at": datetime.utcnow().isoformat() + "Z"}}
+            return {"models": {}, "metadata": {"created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")}}
 
     def _save_registry(self) -> None:
         """Save registry to disk."""
-        self._registry["metadata"]["updated_at"] = datetime.utcnow().isoformat() + "Z"
+        self._registry["metadata"]["updated_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
         with open(self.registry_path, "w") as f:
             json.dump(self._registry, f, indent=2)
 
@@ -82,7 +82,7 @@ class ModelRegistry:
             "model_type": model_type,
             "version": version,
             "path": str(path),
-            "registered_at": datetime.utcnow().isoformat() + "Z",
+            "registered_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
             "metrics": metrics or {},
             "metadata": metadata or {},
             "is_production": is_production,
@@ -193,7 +193,7 @@ class ModelRegistry:
 
         # Mark this version as production
         model["is_production"] = True
-        model["promoted_at"] = datetime.utcnow().isoformat() + "Z"
+        model["promoted_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
 
         self._save_registry()
         logger.info(f"Promoted {model_type}_{version} to production")
