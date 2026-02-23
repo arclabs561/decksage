@@ -76,19 +76,19 @@ def profile_enrichment():
 
             # Time get_edge
             start = time.time()
-            edge = enricher.get_edge(card1, card2)
+            _ = enricher.get_edge(card1, card2)
             edge_time = time.time() - start
             print(f"  get_edge: {edge_time * 1000:.1f}ms")
 
             # Time extract_graph_features
             start = time.time()
-            graph_features = enricher.extract_graph_features(card1, card2)
+            _ = enricher.extract_graph_features(card1, card2)
             features_time = time.time() - start
             print(f"  extract_graph_features: {features_time * 1000:.1f}ms")
 
             # Time enrich_annotation_with_graph
             start = time.time()
-            enriched = enrich_annotation_with_graph(annotation, None, card_attributes)
+            _ = enrich_annotation_with_graph(annotation, None, card_attributes)
             enrich_time = time.time() - start
             print(f"  enrich_annotation_with_graph: {enrich_time * 1000:.1f}ms")
 

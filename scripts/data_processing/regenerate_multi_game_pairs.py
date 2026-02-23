@@ -21,7 +21,7 @@ src_dir = script_dir.parent.parent / "src"
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-from ml.utils.paths import PATHS  # noqa: E402
+from ml.utils.paths import PATHS
 
 
 def regenerate_multi_game_pairs(

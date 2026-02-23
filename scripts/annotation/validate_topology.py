@@ -75,7 +75,7 @@ async def test_timeout_handling():
 
     try:
         start = time.time()
-        ann = await topology.annotate("Lightning Bolt", "Shock", game="magic", timeout=5.0)
+        _ = await topology.annotate("Lightning Bolt", "Shock", game="magic", timeout=5.0)
         elapsed = time.time() - start
         print(f"  ✓ Completed in {elapsed:.1f}s (with short timeouts)")
     except TimeoutError:
@@ -143,7 +143,7 @@ async def test_performance():
     for card1, card2 in test_pairs:
         try:
             start = time.time()
-            ann = await topology.annotate(card1, card2, game="magic")
+            _ = await topology.annotate(card1, card2, game="magic")
             elapsed = time.time() - start
             topology_times.append(elapsed)
             print(f"  {card1} vs {card2}: {elapsed:.1f}s")
@@ -166,7 +166,7 @@ async def test_performance():
     for card1, card2 in test_pairs:
         try:
             start = time.time()
-            ann = await annotator.annotate_pair(card1, card2, {})
+            _ = await annotator.annotate_pair(card1, card2, {})
             elapsed = time.time() - start
             direct_times.append(elapsed)
             print(f"  {card1} vs {card2}: {elapsed:.1f}s")

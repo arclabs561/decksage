@@ -128,7 +128,7 @@ def analyze_file(file_path: Path) -> dict[str, Any]:
         analyzer.visit(tree)
 
         # Check for unused imports (simplified)
-        unused_imports = []
+        _unused_imports = []
         for imp in analyzer.imports:
             if imp not in analyzer.used_names and imp not in ["sys", "os", "json", "pathlib"]:
                 # This is a simplified check - may have false positives
