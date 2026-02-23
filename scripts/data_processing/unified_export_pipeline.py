@@ -25,14 +25,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add src to path
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent / "src"
 if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
-from ml.utils.paths import PATHS
 from ml.utils.lineage import safe_write
+from ml.utils.paths import PATHS
 
 
 def export_decks_from_raw(
