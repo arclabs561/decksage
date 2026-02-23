@@ -223,6 +223,7 @@ docs/annotation/
 experiments/annotations*/
 experiments/backups/
 experiments/evaluation_logs/
+experiments/evaluation_results/
 experiments/test_sets_archive/
 experiments/downstream_eval_*/
 experiments/data/
