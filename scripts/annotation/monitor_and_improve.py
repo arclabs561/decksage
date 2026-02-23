@@ -71,7 +71,7 @@ def analyze_trends(annotations: list[dict[str, Any]]) -> dict[str, Any]:
 
     # Check clustering
     low_pct = ranges["0.0-0.2"] / len(scores) * 100
-    mid_pct = (ranges["0.2-0.4"] + ranges["0.4-0.6"]) / len(scores) * 100
+    _mid_pct = (ranges["0.2-0.4"] + ranges["0.4-0.6"]) / len(scores) * 100
     high_pct = (ranges["0.6-0.8"] + ranges["0.8-1.0"]) / len(scores) * 100
 
     if low_pct > 40:

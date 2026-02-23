@@ -51,7 +51,7 @@ def analyze_enrichment_quality(annotations: list[dict]) -> dict:
             enriched_count += 1
 
         # Validate against graph
-        validation = validate_annotation_against_graph(ann)
+        _ = validate_annotation_against_graph(ann)
 
         similarity_score = ann.get("similarity_score", 0.0)
         graph_features = ann.get("graph_features", {})

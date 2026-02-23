@@ -315,7 +315,7 @@ async def main():
 
     args = parser.parse_args()
 
-    results = await generate_and_improve(
+    _ = await generate_and_improve(
         game=args.game,
         num_pairs=args.num_pairs,
         iterations=args.iterations,
