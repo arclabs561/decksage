@@ -23,7 +23,7 @@ API:
 
 Utilities:
 - `utils/` - Shared utilities (paths, constants, data loading)
-- `tests/` - 31 passing tests
+- `src/ml/tests/` - unit and integration tests
 
 ## Setup
 
