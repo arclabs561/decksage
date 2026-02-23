@@ -27,7 +27,7 @@ except ImportError:
     HAS_LLM_ANNOTATOR = False
 
 try:
-    import yaml
+    import yaml  # noqa: F401
 
     HAS_YAML = True
 except ImportError:
@@ -85,10 +85,8 @@ def test_hand_annotation_iaa_structure():
         # Instead, check that the function exists and has IAA support
         import inspect
 
-        from ml.annotation import hand_annotate
-
         # Check if IAA tracking is mentioned in the code
-        source = inspect.getsource(hand_annotate.create_annotation_batch)
+        source = inspect.getsource(create_annotation_batch)
         assert "iaa_tracking" in source or "annotator" in source.lower()
 
     finally:

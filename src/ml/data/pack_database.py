@@ -18,13 +18,6 @@ from typing import Any
 
 
 try:
-    import requests
-
-    HAS_REQUESTS = True
-except ImportError:
-    HAS_REQUESTS = False
-
-try:
     from ..utils.logging_config import get_logger
 
     logger = get_logger(__name__)

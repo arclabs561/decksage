@@ -23,6 +23,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 
 # Auto-load .env for provider keys with minimal config
 try:
@@ -33,15 +35,16 @@ except Exception:
     pass
 
 try:
-    from pydantic import BaseModel, Field
-    from pydantic_ai import Agent, ModelRetry
-
-    HAS_PYDANTIC_AI = True
+    import pydantic_ai  # type: ignore[import-not-found]
 except ImportError:
     HAS_PYDANTIC_AI = False
     print("Install pydantic-ai: pip install pydantic-ai")
+else:
+    HAS_PYDANTIC_AI = True
+    del pydantic_ai
 
 from ..utils.paths import PATHS
+
 
 logger = logging.getLogger(__name__)
 
@@ -112,9 +115,21 @@ class CardSimilarityAnnotation(BaseModel):
     source: str = Field(default="llm", description="Annotation source")
 
 
+class ArchetypeDescription(BaseModel):
+    """LLM description of an archetype label."""
+
+    archetype_name: str = Field(description="Archetype name/label")
+    description: str = Field(description="Short archetype description (2-4 sentences)")
+    example_cards: list[str] = Field(default_factory=list, description="Representative cards")
+    game: str | None = Field(default=None, description="Game (magic, pokemon, yugioh)")
+    format: str | None = Field(default=None, description="Format context, if known")
+
+
 # ============================================================================
 # Annotation Agents
 # ============================================================================
+
+archetype_description_agent = None
 
 if HAS_PYDANTIC_AI:
     from ..utils.pydantic_ai_helpers import make_agent
@@ -271,6 +286,20 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
     )
     # Note: temperature and max_tokens would need to be set via ModelSettings
     # if pydantic-ai supports it, but make_agent doesn't accept these directly
+
+    ARCHETYPE_DESC_MODEL = os.getenv("ANNOTATOR_MODEL_ARCHETYPE", "openai/gpt-4o-mini")
+    ARCHETYPE_DESC_PROMPT = """You are an expert TCG deck analyst.
+
+Given an archetype label and a small sample of representative cards, write a concise description
+of the archetype. Keep it concrete and game-appropriate.
+
+Return a structured response that matches the output schema."""
+
+    archetype_description_agent = make_agent(
+        ARCHETYPE_DESC_MODEL,
+        ArchetypeDescription,
+        ARCHETYPE_DESC_PROMPT,
+    )
 
     # Add output validator (non-blocking - only logs warnings, doesn't retry)
     # CRITICAL: Validator MUST return the output, not None!
@@ -438,12 +467,21 @@ class LLMAnnotator:
 
     def _load_decks(self) -> list[dict]:
         """Load decks with metadata, filtered by game if specified."""
+        # Small, tracked fixture for tests and dev environments that don't have
+        # full processed datasets checked out.
+        test_fixture = (
+            Path(__file__).resolve().parent.parent
+            / "tests"
+            / "fixtures"
+            / "decks_export_hetero_small.jsonl"
+        )
         candidates: list[Path] = [
             PATHS.decks_with_metadata,
             PATHS.decks_all_final,
             PATHS.decks_all_enhanced,
             PATHS.decks_all_unified,
             PATHS.backend / "decks_hetero.jsonl",
+            test_fixture,
         ]
 
         decks: list[dict] = []
@@ -512,6 +550,70 @@ class LLMAnnotator:
                 decks.append(d)
 
         return decks
+
+    async def annotate_archetypes(self, top_n: int = 10) -> list[ArchetypeDescription]:
+        """Generate short archetype descriptions for the most common archetypes."""
+        if not HAS_PYDANTIC_AI or archetype_description_agent is None:
+            raise ImportError("pydantic-ai required")
+
+        # Pick the most common archetypes (exclude missing/unknown)
+        arch_counts = Counter(
+            a for a in (d.get("archetype") for d in self.decks) if isinstance(a, str) and a.strip()
+        )
+        archetypes = [a for a, _ in arch_counts.most_common(max(1, int(top_n)))]
+
+        results: list[ArchetypeDescription] = []
+
+        for arch in archetypes:
+            arch_decks = [d for d in self.decks if d.get("archetype") == arch]
+
+            # Best-effort format context: use the most common non-empty format.
+            fmt_counts = Counter(
+                f for f in (d.get("format") for d in arch_decks) if isinstance(f, str) and f.strip()
+            )
+            fmt = fmt_counts.most_common(1)[0][0] if fmt_counts else None
+
+            # Collect representative cards (dedupe, preserve order)
+            raw_cards: list[str] = []
+            for d in arch_decks:
+                cs = d.get("cards")
+                if not isinstance(cs, list):
+                    continue
+                for c in cs:
+                    if isinstance(c, str):
+                        raw_cards.append(c)
+                    elif isinstance(c, dict):
+                        name = c.get("name") or c.get("Name")
+                        if isinstance(name, str):
+                            raw_cards.append(name)
+
+            seen: set[str] = set()
+            sample_cards: list[str] = []
+            for c in raw_cards:
+                c = str(c).strip()
+                if not c or c in seen:
+                    continue
+                seen.add(c)
+                sample_cards.append(c)
+                if len(sample_cards) >= 20:
+                    break
+
+            prompt = (
+                "Game: "
+                + str(self.game or "all")
+                + "\nFormat: "
+                + str(fmt or "Unknown")
+                + "\nArchetype: "
+                + arch
+                + "\nSample Cards: "
+                + ", ".join(sample_cards)
+                + "\n\nWrite a concise archetype description."
+            )
+
+            run = await archetype_description_agent.run(prompt)
+            results.append(run.output)
+
+        return results
 
     async def annotate_similarity_pairs(
         self,
@@ -651,15 +753,13 @@ class LLMAnnotator:
                                         ann = final_round.annotations.get(best_annotator)
                                     else:
                                         # Fallback to consensus if available
-                                        ann = (
-                                            multi_result.consensus_annotation
-                                            or list(multi_result.annotations.values())[0]
+                                        ann = multi_result.consensus_annotation or next(
+                                            iter(multi_result.annotations.values())
                                         )
                                 else:
                                     # Consensus not reached, use best from initial round
-                                    ann = (
-                                        multi_result.consensus_annotation
-                                        or list(multi_result.annotations.values())[0]
+                                    ann = multi_result.consensus_annotation or next(
+                                        iter(multi_result.annotations.values())
                                     )
 
                                 # Update source field for agentic meta-judge path and ensure required fields
@@ -697,7 +797,7 @@ class LLMAnnotator:
                                 if multi_result.consensus_annotation:
                                     ann = multi_result.consensus_annotation
                                 elif multi_result.annotations:
-                                    ann = list(multi_result.annotations.values())[0]
+                                    ann = next(iter(multi_result.annotations.values()))
                                 else:
                                     return None
 
@@ -748,7 +848,7 @@ class LLMAnnotator:
                             # For now, log IAA metrics
                             if multi_result.iaa_metrics.get("krippendorff_alpha", 0.0) < 0.6:
                                 print(
-                                    f"  Low IAA (α={multi_result.iaa_metrics.get('krippendorff_alpha', 0.0):.2f}) for {card1} vs {card2}"
+                                    f"  Low IAA (alpha={multi_result.iaa_metrics.get('krippendorff_alpha', 0.0):.2f}) for {card1} vs {card2}"
                                 )
 
                             # Validate and enforce baseline rules for multi-annotator path (only if enabled)
@@ -1368,10 +1468,7 @@ class LLMAnnotator:
         for deck in self.decks:
             arch = deck.get("archetype", "Unknown")
             for card in deck.get("cards", []):
-                if isinstance(card, dict):
-                    card_name = card.get("name", "")
-                else:
-                    card_name = str(card)
+                card_name = card.get("name", "") if isinstance(card, dict) else str(card)
                 if card_name:
                     card_archetypes[card_name].add(arch)
                     card_counts[card_name] += 1
@@ -1384,7 +1481,6 @@ class LLMAnnotator:
         import random
 
         random.shuffle(interesting_cards)
-        pairs = []
 
         # Stratified sampling: 33% high-similarity (same archetype), 33% medium (overlapping), 33% diverse (different)
         n_high = max(1, n // 3)
@@ -1507,10 +1603,7 @@ class LLMAnnotator:
 
         for deck in arch_decks:
             for card in deck.get("cards", []):
-                if isinstance(card, dict):
-                    card_name = card.get("name", "")
-                else:
-                    card_name = str(card)
+                card_name = card.get("name", "") if isinstance(card, dict) else str(card)
                 if card_name:
                     card_counts[card_name] += 1
 

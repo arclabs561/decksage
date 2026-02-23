@@ -15,7 +15,6 @@ import logging
 
 try:
     from sentence_transformers import InputExample, SentenceTransformer
-    from sentence_transformers.losses import MultipleNegativesRankingLoss
 
     HAS_SENTENCE_TRANSFORMERS = True
 except ImportError:

@@ -46,7 +46,7 @@ SPANISH_TO_ENGLISH: dict[str, str] = {
     "isla nevada": "snow-covered island",
     # Common Spanish card names found in data
     "humo": "smoke",
-    "sino": "if not",
+    "sino": "if not",  # Might need context; could be part of a longer name
     "volar": "fly",
     "tio istvan": "uncle istvan",
     "drenar vida": "drain life",
@@ -67,8 +67,6 @@ SPANISH_TO_ENGLISH: dict[str, str] = {
     "buitres de osai": "osai vultures",
     "forma gaseosa": "gaseous form",
     # Additional Spanish cards found in data
-    "ave mecánica": "mechanical bird",
-    "druida de lei": "druid of lei",
     "canto de sirena": "siren song",
     "choque de maná": "mana clash",
     "descarga astral": "astral projection",
@@ -95,8 +93,6 @@ SPANISH_TO_ENGLISH: dict[str, str] = {
     "ciudad sumergida": "sunken city",
     "cetro disruptor": "disrupting scepter",
     "exatraer energia": "extract energy",
-    # Common words that might be part of card names
-    "sino": "if not",  # This might need context - could be part of a longer name
 }
 
 
@@ -140,10 +136,7 @@ def is_spanish_name(card_name: str) -> bool:
 
     # Check for common Spanish words (but not too common English words)
     words = name_lower.split()
-    if any(word in spanish_words and len(words) > 1 for word in words):
-        return True
-
-    return False
+    return len(words) > 1 and any(word in spanish_words for word in words)
 
 
 def normalize_split_card_name(name: str) -> str:

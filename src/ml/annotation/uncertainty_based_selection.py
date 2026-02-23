@@ -22,7 +22,7 @@ from typing import Any
 
 
 try:
-    from gensim.models import KeyedVectors
+    from gensim.models import KeyedVectors  # type: ignore[import-not-found]
 
     HAS_GENSIM = True
 except ImportError:
@@ -95,12 +95,11 @@ class UncertaintyBasedSelector:
                 jaccard = features.jaccard_similarity if features else None
                 cooccurrence = features.cooccurrence_count if features else None
 
-                if jaccard is not None:
+                if jaccard is not None and 0.3 <= jaccard <= 0.7:
                     # Ambiguous range: 0.3-0.7 (neither clearly similar nor dissimilar)
-                    if 0.3 <= jaccard <= 0.7:
-                        ambiguity = abs(jaccard - 0.5) / 0.2  # Distance from 0.5, normalized
-                        uncertainty_scores.append(1.0 - ambiguity)  # Closer to 0.5 = more uncertain
-                        uncertainty_types.append("ambiguous_graph")
+                    ambiguity = abs(jaccard - 0.5) / 0.2  # Distance from 0.5, normalized
+                    uncertainty_scores.append(1.0 - ambiguity)  # Closer to 0.5 = more uncertain
+                    uncertainty_types.append("ambiguous_graph")
             except Exception as e:
                 logger.debug(f"Failed to get graph features: {e}")
 
@@ -136,12 +135,11 @@ class UncertaintyBasedSelector:
             uncertainty_types.append("low_cooccurrence")
 
         # 4. Edge cases (very high or very low similarity)
-        if jaccard is not None:
-            if jaccard < 0.1 or jaccard > 0.9:
-                # Edge cases might be misclassified
-                edge_case_score = 0.3  # Moderate uncertainty
-                uncertainty_scores.append(edge_case_score)
-                uncertainty_types.append("edge_case")
+        if jaccard is not None and (jaccard < 0.1 or jaccard > 0.9):
+            # Edge cases might be misclassified
+            edge_case_score = 0.3  # Moderate uncertainty
+            uncertainty_scores.append(edge_case_score)
+            uncertainty_types.append("edge_case")
 
         # Combine uncertainty scores (weighted average, research-based weights)
         if uncertainty_scores:
@@ -158,7 +156,10 @@ class UncertaintyBasedSelector:
             total_weight = sum(weights)
             if total_weight > 0:
                 weighted_uncertainty = (
-                    sum(score * weight for score, weight in zip(uncertainty_scores, weights))
+                    sum(
+                        score * weight
+                        for score, weight in zip(uncertainty_scores, weights, strict=True)
+                    )
                     / total_weight
                 )
             else:
@@ -172,10 +173,9 @@ class UncertaintyBasedSelector:
         informativeness = weighted_uncertainty
 
         # Boost informativeness for edge cases (rare but important)
-        if jaccard is not None:
-            if jaccard < 0.1 or jaccard > 0.9:
-                informativeness += 0.2  # Edge cases are informative
-                informativeness = min(informativeness, 1.0)
+        if jaccard is not None and (jaccard < 0.1 or jaccard > 0.9):
+            informativeness += 0.2  # Edge cases are informative
+            informativeness = min(informativeness, 1.0)
 
         # Boost for low co-occurrence (rare relationships)
         if cooccurrence is not None and cooccurrence < 3:
@@ -277,7 +277,7 @@ class UncertaintyBasedSelector:
                 f"  Uncertainty range: {selected[-1].uncertainty_score:.2f} - "
                 f"{selected[0].uncertainty_score:.2f}"
             )
-            type_counts = defaultdict(int)
+            type_counts: defaultdict[str, int] = defaultdict(int)
             for u in selected:
                 type_counts[u.uncertainty_type] += 1
             logger.info(f"  Types: {dict(type_counts)}")

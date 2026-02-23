@@ -252,7 +252,7 @@ def beam_search_completion(
                         deck=new_deck,
                         score=new_score,
                         step=step + 1,
-                        path=state.path + [card],
+                        path=[*state.path, card],
                     )
                 )
 

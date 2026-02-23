@@ -433,7 +433,7 @@ def submit_batch_feedback(req: BatchFeedbackRequest) -> BatchFeedbackResponse:
 
     # Estimate if batch would exceed rate limit
     # Allow batch if user has at least (batch_size + 10) requests remaining
-    allowed, error_msg = _check_rate_limit(user_id, session_id)
+    allowed, _ = _check_rate_limit(user_id, session_id)
     if not allowed:
         # Check if we can still process some entries
         # Get current count

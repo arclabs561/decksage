@@ -13,7 +13,7 @@ import json
 from collections import defaultdict
 from pathlib import Path
 
-from utils.evaluation import compute_precision_at_k, jaccard_similarity
+from utils.evaluation import compute_precision_at_k
 
 from ml.utils.shared_operations import jaccard_similarity
 

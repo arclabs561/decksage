@@ -213,15 +213,15 @@ def main() -> int:
 
     # Fix node game labels
     if args.fix_nodes:
-        node_results = fix_game_labels(graph)
+        fix_game_labels(graph)
 
     # Fix edge game labels
     if args.fix_edges:
-        edge_results = fix_edge_game_labels(graph)
+        fix_edge_game_labels(graph)
 
     # Enrich with attributes
     if args.enrich_attributes and card_attributes:
-        enriched = enrich_with_attributes(graph, card_attributes)
+        enrich_with_attributes(graph, card_attributes)
 
     # Save graph
     if args.save:

@@ -39,8 +39,6 @@ if str(_src_dir) not in sys.path:
 try:
     import numpy as np
     import pandas as pd
-    from gensim.models import KeyedVectors, Word2Vec
-    from pecanpy.pecanpy import SparseOTF
 
     HAS_DEPS = True
 except ImportError as e:
@@ -103,7 +101,6 @@ def create_enhanced_edgelist_optimized(
     total_processed = 0
     for chunk_start in range(0, len(filtered_df), chunk_size):
         chunk = filtered_df.iloc[chunk_start : chunk_start + chunk_size]
-        chunk_end = min(chunk_start + chunk_size, len(filtered_df))
         total_processed += len(chunk)
 
         if total_processed % 500000 == 0:
@@ -118,9 +115,13 @@ def create_enhanced_edgelist_optimized(
         weight_multipliers = np.ones(len(chunk))
 
         if deck_metadata:
-            # Get deck IDs if available
-            deck_id_col = chunk.get("DECK_ID") or chunk.get("deck_id")
-            if deck_id_col is not None:
+            # Get deck ID column name if available
+            deck_id_key = (
+                "DECK_ID"
+                if "DECK_ID" in chunk.columns
+                else ("deck_id" if "deck_id" in chunk.columns else None)
+            )
+            if deck_id_key is not None:
                 # Vectorized format filtering
                 if formats:
                     format_mask = chunk.apply(
@@ -134,21 +135,32 @@ def create_enhanced_edgelist_optimized(
                     chunk = chunk[format_mask]
                     base_weights = base_weights[format_mask.values]
                     weight_multipliers = weight_multipliers[format_mask.values]
-                    deck_id_col = chunk.get("DECK_ID") or chunk.get("deck_id")
+                    deck_id_key = (
+                        "DECK_ID"
+                        if "DECK_ID" in chunk.columns
+                        else ("deck_id" if "deck_id" in chunk.columns else None)
+                    )
 
                 # Vectorized placement filtering
-                if max_placement is not None and deck_id_col is not None:
-                    placement_mask = chunk.apply(
-                        lambda row: (
-                            lambda meta: meta.get("placement", 0) > 0
-                            and meta.get("placement", 0) <= max_placement
-                        )(deck_metadata.get(row.get("DECK_ID") or row.get("deck_id"), {})),
-                        axis=1,
-                    )
+                if max_placement is not None and deck_id_key is not None:
+
+                    def _placement_ok(row: pd.Series) -> bool:
+                        meta = deck_metadata.get(
+                            row.get("DECK_ID") or row.get("deck_id"),
+                            {},
+                        )
+                        placement = meta.get("placement", 0)
+                        return placement > 0 and placement <= max_placement
+
+                    placement_mask = chunk.apply(_placement_ok, axis=1)
                     chunk = chunk[placement_mask]
                     base_weights = base_weights[placement_mask.values]
                     weight_multipliers = weight_multipliers[placement_mask.values]
-                    deck_id_col = chunk.get("DECK_ID") or chunk.get("deck_id")
+                    deck_id_key = (
+                        "DECK_ID"
+                        if "DECK_ID" in chunk.columns
+                        else ("deck_id" if "deck_id" in chunk.columns else None)
+                    )
 
                 # Apply metadata weighting (still requires some iteration, but on filtered subset)
                 if use_placement_weighting or use_temporal_weighting or use_format_weighting:
@@ -181,7 +193,7 @@ def create_enhanced_edgelist_optimized(
                                         ).days
                                         weight = np.exp(-days_ago / temporal_decay_days)
                                         weight_multipliers[idx] *= max(0.1, weight)
-                                    except:
+                                    except Exception:
                                         pass
 
                             if use_format_weighting and meta.get("format"):

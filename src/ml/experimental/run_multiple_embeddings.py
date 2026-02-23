@@ -13,13 +13,15 @@ All use same 500-deck graph for fair comparison.
 
 import json
 
+# Use PATHS for canonical paths
+import sys
+from pathlib import Path
+
 import pandas as pd
 from gensim.models import Word2Vec
 from pecanpy.pecanpy import SparseOTF
 
-# Use PATHS for canonical paths
-import sys
-from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.paths import PATHS
 

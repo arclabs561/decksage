@@ -270,7 +270,10 @@ class GraphQATools:
         """).fetchall()
 
         total_edges = conn.execute("SELECT COUNT(*) FROM edges").fetchone()[0]
-        integrity_score = 1.0 - (orphaned_count / max(1, total_edges))
+        integrity_score = 1.0 - min(
+            1.0,
+            (orphaned_count + duplicates + invalid_weights) / max(1, total_edges),
+        )
 
         # Log with structured format for monitoring
         log_level = (
@@ -296,7 +299,6 @@ class GraphQATools:
             "orphaned_edges": orphaned_count,
             "orphaned_percentage": round((orphaned_count / max(1, total_edges)) * 100, 2),
             "orphaned_samples": orphaned_details,
-            "integrity_score": integrity_score,
             "total_edges": total_edges,
             "duplicate_edges": duplicates,
             "invalid_weights": invalid_weights,
@@ -309,9 +311,7 @@ class GraphQATools:
                 }
                 for row in invalid_weight_samples
             ],
-            "total_edges": total_edges,
-            "integrity_score": 1.0
-            - min(1.0, (orphaned_count + duplicates + invalid_weights) / max(1, total_edges)),
+            "integrity_score": integrity_score,
             "diagnostics": {
                 "most_common_missing_card": self._find_most_common_missing_card(orphaned_details)
                 if orphaned_details
@@ -503,7 +503,7 @@ class GraphQATools:
                 "max_weight": edge_stats[3],
                 "suspicious_weights": edge_stats[4],
             },
-            "game_distribution": {game: count for game, count in game_dist},
+            "game_distribution": dict(game_dist),
         }
 
     def check_file_timestamp(self, path: str | Path) -> dict[str, Any]:
@@ -658,14 +658,12 @@ class GraphQATools:
 
         # Get graph nodes
         if game:
-            graph_nodes = set(
+            graph_nodes = {
                 row["name"]
                 for row in conn.execute("SELECT name FROM nodes WHERE game = ?", (game,)).fetchall()
-            )
+            }
         else:
-            graph_nodes = set(
-                row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall()
-            )
+            graph_nodes = {row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall()}
 
         # Check deck files
         deck_files = list(PATHS.processed.glob("decks_*.jsonl"))
@@ -946,7 +944,7 @@ class GraphQATools:
         """Validate embedding vocabulary matches graph nodes."""
         # Get graph nodes
         conn = self._get_connection()
-        graph_nodes = set(row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall())
+        graph_nodes = {row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall()}
 
         # Try to load embedding
         embeddings_dir = PATHS.embeddings
@@ -1052,10 +1050,10 @@ class GraphQATools:
 
         # Check against graph
         conn = self._get_connection()
-        graph_nodes = set(row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall())
+        graph_nodes = {row["name"] for row in conn.execute("SELECT name FROM nodes").fetchall()}
 
-        queries_in_graph = [q for q in queries.keys() if q in graph_nodes]
-        queries_not_in_graph = [q for q in queries.keys() if q not in graph_nodes]
+        queries_in_graph = [q for q in queries if q in graph_nodes]
+        queries_not_in_graph = [q for q in queries if q not in graph_nodes]
 
         graph_coverage = len(queries_in_graph) / len(queries) if queries else 0.0
 
@@ -1071,8 +1069,8 @@ class GraphQATools:
 
                     newest_emb = max(emb_files, key=lambda p: p.stat().st_mtime)
                     emb = KeyedVectors.load(str(newest_emb))
-                    emb_vocab = set(emb.key_to_index.keys())
-                    queries_in_emb = [q for q in queries.keys() if q in emb_vocab]
+                    emb_vocab = set(emb.key_to_index)
+                    queries_in_emb = [q for q in queries if q in emb_vocab]
                     emb_coverage = len(queries_in_emb) / len(queries) if queries else 0.0
                 except Exception:
                     pass

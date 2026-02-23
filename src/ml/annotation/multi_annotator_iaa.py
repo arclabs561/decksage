@@ -24,7 +24,6 @@ from typing import Any
 try:
     import os
 
-    from pydantic import BaseModel
     from pydantic_ai import Agent, ModelSettings
 
     HAS_PYDANTIC_AI = True
@@ -158,8 +157,8 @@ class MultiAnnotatorIAA:
             )
 
         # Lazy import LLM annotator to avoid circular dependency
-        CardSimilarityAnnotation_cls, SIMILARITY_PROMPT_str = _get_llm_annotator_imports()
-        if CardSimilarityAnnotation_cls is None:
+        card_similarity_annotation_cls, similarity_prompt_str = _get_llm_annotator_imports()
+        if card_similarity_annotation_cls is None:
             raise ImportError(
                 "LLM annotator required (CardSimilarityAnnotation, SIMILARITY_PROMPT)"
             )
@@ -169,7 +168,7 @@ class MultiAnnotatorIAA:
         self.use_consensus = use_consensus
 
         # Lazy import LLM annotator
-        CardSimilarityAnnotation_cls, SIMILARITY_PROMPT_str = _get_llm_annotator_imports()
+        card_similarity_annotation_cls, similarity_prompt_str = _get_llm_annotator_imports()
 
         # Create agents for each annotator with model-specific settings
         self.agents: dict[str, Agent] = {}
@@ -182,8 +181,8 @@ class MultiAnnotatorIAA:
             provider = os.getenv("LLM_PROVIDER", "openrouter")
             agent = Agent(
                 f"{provider}:{config.model}",
-                output_type=CardSimilarityAnnotation_cls,
-                system_prompt=SIMILARITY_PROMPT_str,
+                output_type=card_similarity_annotation_cls,
+                system_prompt=similarity_prompt_str,
                 model_settings=ModelSettings(
                     temperature=config.temperature,
                     max_tokens=config.max_tokens,
@@ -421,13 +420,13 @@ class MultiAnnotatorIAA:
         consensus_substitute = sum(substitutes) > len(substitutes) / 2
 
         # Combine reasoning
-        consensus_reasoning = f"Consensus from {len(annotations)} annotators (IAA α={iaa_metrics['krippendorff_alpha']:.2f}). "
+        consensus_reasoning = f"Consensus from {len(annotations)} annotators (IAA alpha={iaa_metrics['krippendorff_alpha']:.2f}). "
         consensus_reasoning += " | ".join(
-            f"{name}: {r[:100]}" for name, r in zip(annotations.keys(), reasonings)
+            f"{name}: {r[:100]}" for name, r in zip(annotations.keys(), reasonings, strict=True)
         )
 
         # Use first annotation as template
-        first_ann = list(annotations.values())[0]
+        first_ann = next(iter(annotations.values()))
 
         return CardSimilarityAnnotation(
             card1=first_ann.card1,
@@ -472,7 +471,7 @@ class MultiAnnotatorIAA:
                 rejected.append(result)
 
         logger.info(
-            f"Filtered {len(results)} results: {len(accepted)} accepted (α≥{min_alpha}), "
+            f"Filtered {len(results)} results: {len(accepted)} accepted (alpha>={min_alpha}), "
             f"{len(rejected)} rejected"
         )
 

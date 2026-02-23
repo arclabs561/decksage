@@ -211,7 +211,7 @@ async def agentic_analysis(
         node1_vs_node2 = edge_analysis.get("patterns", {}).get("node1_vs_node2", {})
         if node1_vs_node2:
             pattern = (
-                list(node1_vs_node2.keys())[0]
+                next(iter(node1_vs_node2.keys()))
                 if isinstance(node1_vs_node2, dict)
                 else str(node1_vs_node2)
             )

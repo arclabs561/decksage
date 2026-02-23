@@ -48,12 +48,9 @@ from ml.utils.path_setup import setup_project_paths
 
 setup_project_paths()
 
-from ml.utils.paths import PATHS
-
 
 try:
     import numpy as np
-    import pandas as pd
     from gensim.models import KeyedVectors
 
     HAS_DEPS = True
@@ -92,10 +89,7 @@ def load_test_set(test_set_path: Path) -> dict[str, dict[str, Any]]:
         data = canonical_load(path=test_set_path)
 
         # Handle both formats: direct dict or wrapped in "queries"
-        if "queries" in data:
-            result = data["queries"]
-        else:
-            result = data
+        result = data.get("queries", data)
 
         print(f"  Loaded {len(result)} queries", flush=True)
         sys.stdout.flush()
@@ -146,9 +140,9 @@ def evaluate_embedding(
     try:
         from ml.utils.evaluation import compute_precision_at_k
 
-        USE_CANONICAL = True
+        use_canonical = True
     except ImportError:
-        USE_CANONICAL = False
+        use_canonical = False
         # Fallback relevance weights
         relevance_weights = {
             "highly_relevant": 1.0,
@@ -218,7 +212,7 @@ def evaluate_embedding(
             continue
 
         # Use canonical metric calculation if available
-        if USE_CANONICAL:
+        if use_canonical:
             score = compute_precision_at_k(candidates, labels, k=top_k)
         else:
             # Fallback: manual calculation
@@ -511,6 +505,8 @@ def main() -> int:
 
     args = parser.parse_args()
 
+    from ml.utils.paths import PATHS
+
     # Use PATHS defaults if not provided
     if args.test_set is None:
         args.test_set = str(PATHS.test_magic)
@@ -524,8 +520,6 @@ def main() -> int:
     if not HAS_DEPS:
         print("Error: Missing dependencies")
         return 1
-
-    import sys
 
     sys.stdout.flush()
 
@@ -569,11 +563,8 @@ def main() -> int:
     if mapping_path.exists():
         try:
             # Try importing NameMapper - it's optional
-            import sys
-            from pathlib import Path as P
-
             # Add src to path if needed
-            script_dir = P(__file__).parent
+            script_dir = Path(__file__).parent
             src_dir = script_dir.parent.parent
             if str(src_dir) not in sys.path:
                 sys.path.insert(0, str(src_dir))
@@ -659,14 +650,14 @@ def main() -> int:
                     except ImportError:
                         from ml.utils.evaluation import evaluate_with_confidence
 
-                    def similarity_func(query: str, k: int) -> list[tuple[str, float]]:
+                    def similarity_func(query: str, k: int, _wv=wv) -> list[tuple[str, float]]:
                         """Similarity function for evaluation."""
                         mapped_query = name_mapper.map_name(query) if name_mapper else query
-                        if mapped_query not in wv:
+                        if mapped_query not in _wv:
                             # Return empty list if query not in vocabulary
                             return []
                         try:
-                            similar = wv.most_similar(mapped_query, topn=k)
+                            similar = _wv.most_similar(mapped_query, topn=k)
                             return similar
                         except KeyError:
                             return []
@@ -696,7 +687,7 @@ def main() -> int:
                     }
 
                     # Check coverage before evaluation
-                    for query in test_set.keys():
+                    for query in test_set:
                         mapped_query = name_mapper.map_name(query) if name_mapper else query
                         if mapped_query in wv:
                             vocab_coverage["found_in_vocab"] += 1
@@ -813,8 +804,6 @@ def main() -> int:
         sys.stdout.flush()
 
     # Evaluate Jaccard baseline
-    from ml.utils.paths import PATHS
-
     pairs_csv = (
         Path(args.pairs_csv)
         if args.pairs_csv

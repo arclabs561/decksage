@@ -20,7 +20,7 @@ def main():
         return 1
 
     operation = sys.argv[1]
-    args = sys.argv[2:]
+    sys.argv[2:]
 
     # Route to appropriate script
     if operation == "evaluate":

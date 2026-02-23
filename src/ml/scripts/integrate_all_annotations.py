@@ -368,7 +368,7 @@ def main() -> int:
         )
 
     try:
-        stats = integrate_all_annotations(
+        integrate_all_annotations(
             annotations_dir=args.annotations_dir,
             output_substitution_pairs=args.output_substitution_pairs,
             output_test_set=args.output_test_set,

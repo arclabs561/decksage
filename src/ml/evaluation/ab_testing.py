@@ -264,7 +264,6 @@ class ABTestFramework:
         # Permutation test for p-value
         combined = np.concatenate([scores_a, scores_b])
         n_a = len(scores_a)
-        n_b = len(scores_b)
 
         n_permutations = 10000
         permuted_diffs = []
@@ -452,6 +451,7 @@ def main():
     # Load test set
     with open(args.test_set) as f:
         test_set = json.load(f)
+    print(f"Loaded test set: {len(test_set)} records")
 
     # Example: Compare two models
     # tester.evaluate_model("model_a", similarity_fn_a, test_set)
@@ -459,7 +459,7 @@ def main():
     # comparison = tester.compare_models("model_a", "model_b")
     # tester.generate_report(args.output)
 
-    print("A/B testing framework ready. See ab_testing.py for usage examples.")
+    print(f"A/B testing framework ready (confidence={tester.config.confidence}).")
 
 
 if __name__ == "__main__":

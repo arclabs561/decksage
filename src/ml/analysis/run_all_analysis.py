@@ -19,7 +19,7 @@ from ..utils.logging_config import setup_script_logging
 logger = setup_script_logging()
 
 
-def run_analysis_script(script_name: str, args: list[str] = None) -> dict:
+def run_analysis_script(script_name: str, args: list[str] | None = None) -> dict:
     """
     Run an analysis script and return results.
 

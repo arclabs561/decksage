@@ -61,22 +61,22 @@ def load_all_methods():
 
     try:
         methods["deepwalk"] = KeyedVectors.load("../../data/embeddings/deepwalk.wv")
-    except:
+    except Exception:
         print("  DeepWalk not found")
 
     try:
         methods["node2vec_default"] = KeyedVectors.load("../../data/embeddings/node2vec_default.wv")
-    except:
+    except Exception:
         print("  Node2Vec-Default not found")
 
     try:
         methods["node2vec_bfs"] = KeyedVectors.load("../../data/embeddings/node2vec_bfs.wv")
-    except:
+    except Exception:
         print("  Node2Vec-BFS not found")
 
     try:
         methods["node2vec_dfs"] = KeyedVectors.load("../../data/embeddings/node2vec_dfs.wv")
-    except:
+    except Exception:
         print("  Node2Vec-DFS not found")
 
     # Jaccard

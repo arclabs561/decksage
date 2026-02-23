@@ -104,7 +104,7 @@ def extract_comprehensive_signals():
                             "format": fmt,
                         }
                     )
-                except:
+                except ValueError:
                     pass
 
             # Extract archetype signals

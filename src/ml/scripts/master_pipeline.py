@@ -48,8 +48,6 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    project_root = Path(__file__).parent.parent.parent
-
     # Import PATHS once at the top
     from ml.utils.paths import PATHS
 

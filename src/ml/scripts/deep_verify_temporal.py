@@ -359,7 +359,10 @@ try:
     json_str = json.dumps(edge_dict)
     loaded = json.loads(json_str)
     check("JSON preserves dict types", isinstance(loaded["monthly_counts"], dict))
-    check("JSON preserves int types", isinstance(list(loaded["monthly_counts"].values())[0], int))
+    check(
+        "JSON preserves int types",
+        isinstance(next(iter(loaded["monthly_counts"].values())), int),
+    )
 
 except Exception as e:
     check("Data type consistency", False, str(e))
@@ -383,7 +386,7 @@ try:
     check("Format periods created", len(edge.format_periods) > 0)
 
     # Check period keys are valid
-    for period_key in edge.format_periods.keys():
+    for period_key in edge.format_periods:
         check(f"Period key '{period_key}' is valid", len(period_key) > 0 and "_" in period_key)
 
     # Test without format

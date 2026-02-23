@@ -390,9 +390,6 @@ def main():
     if args.output:
         output_path = Path(args.output)
     else:
-        # Import PATHS
-        from pathlib import Path
-
         _project_root = Path(__file__).parent.parent.parent.parent
         output_path = _project_root / "experiments" / "missing_evaluation_dimensions.json"
 

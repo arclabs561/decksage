@@ -44,7 +44,7 @@ def load_yugioh_cards(cards_dir: Path) -> dict[str, str]:
                     card_name = card.get("name") or card.get("card", {}).get("name")
                     if card_id and card_name:
                         mapping[card_id] = card_name
-        except:
+        except Exception:
             continue
 
     print(f"Loaded {len(mapping)} card mappings")

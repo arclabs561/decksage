@@ -27,13 +27,11 @@ except ImportError:
     HAS_PYDANTIC_AI = False
     BaseModel = object
 
-    def Field(default=None, **kwargs):
+    def _field(default=None, **_kwargs):
         """Fallback Field for when pydantic is not available."""
+        return default
 
-        def _field(x):
-            return x
-
-        return _field
+    Field = _field
 
 
 # Avoid circular import - use TYPE_CHECKING for forward reference
@@ -375,11 +373,10 @@ Evaluate this annotation and provide SPECIFIC, ACTIONABLE feedback. Consider:
         # Extract graph features from annotation if available
         # This would need to be adapted based on how graph features are stored
         graph_features = getattr(annotation, "graph_features", None)
-        if graph_features:
-            if isinstance(graph_features, dict):
-                jaccard = graph_features.get("jaccard_similarity", "N/A")
-                cooccur = graph_features.get("cooccurrence_count", "N/A")
-                return f"Jaccard: {jaccard}, Co-occurrence: {cooccur}"
+        if graph_features and isinstance(graph_features, dict):
+            jaccard = graph_features.get("jaccard_similarity", "N/A")
+            cooccur = graph_features.get("cooccurrence_count", "N/A")
+            return f"Jaccard: {jaccard}, Co-occurrence: {cooccur}"
         return "No graph features available"
 
     def _create_feedback_messages(
@@ -450,15 +447,18 @@ Evaluate this annotation and provide SPECIFIC, ACTIONABLE feedback. Consider:
             all_rounds.append(round_data)
 
             # Check if we should stop
-            if round_data.consensus_decision:
-                if round_data.consensus_decision.recommended_action in [
+            if (
+                round_data.consensus_decision
+                and round_data.consensus_decision.recommended_action
+                in [
                     "accept",
                     "reject",
-                ]:
-                    logger.info(
-                        f"Round {round_num}: Stopping early - {round_data.consensus_decision.recommended_action}"
-                    )
-                    return round_data, all_rounds
+                ]
+            ):
+                logger.info(
+                    f"Round {round_num}: Stopping early - {round_data.consensus_decision.recommended_action}"
+                )
+                return round_data, all_rounds
 
             # If continuing and we have annotator access, call for revisions
             if (
@@ -534,7 +534,7 @@ Evaluate this annotation and provide SPECIFIC, ACTIONABLE feedback. Consider:
             for prev_round in all_previous_rounds:
                 if prev_round.conversation_history:
                     # Distribute feedback to each annotator's history
-                    for annotator_id in prev_round.annotations.keys():
+                    for annotator_id in prev_round.annotations:
                         if annotator_id not in message_history:
                             message_history[annotator_id] = []
                         # Add feedback messages to each annotator's history

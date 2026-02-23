@@ -15,8 +15,10 @@ import logging
 from pathlib import Path
 from typing import Any
 
+
 try:
     from ..utils.logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger(__name__)
@@ -26,24 +28,25 @@ try:
     import torch.nn as nn
     import torch.nn.functional as F
     from torch_geometric.data import Data, Dataset
-    from torch_geometric.nn import GCNConv, GATConv, SAGEConv
     from torch_geometric.loader import DataLoader
-    from torch_geometric.utils import add_self_loops, degree
+    from torch_geometric.nn import GATConv, GCNConv, SAGEConv
+    from torch_geometric.utils import degree
 
     HAS_PYG = True
 except ImportError:
     HAS_PYG = False
     # Create dummy classes to prevent NameError
-    Dataset = type('Dataset', (), {})
-    Data = type('Data', (), {})
-    GCNConv = type('GCNConv', (), {})
-    GATConv = type('GATConv', (), {})
-    SAGEConv = type('SAGEConv', (), {})
-    DataLoader = type('DataLoader', (), {})
+    Dataset = type("Dataset", (), {})
+    Data = type("Data", (), {})
+    GCNConv = type("GCNConv", (), {})
+    GATConv = type("GATConv", (), {})
+    SAGEConv = type("SAGEConv", (), {})
+    DataLoader = type("DataLoader", (), {})
     print("Install PyTorch Geometric: pip install torch torch-geometric")
 
 
 if HAS_PYG:
+
     class CardGraphDataset(Dataset):
         """PyG Dataset for card co-occurrence graph."""
 
@@ -128,7 +131,6 @@ if HAS_PYG:
         def get(self, idx: int) -> Data:
             return torch.load(self.processed_paths[0], weights_only=False)
 
-
     class GCNEncoder(nn.Module):
         """Graph Convolutional Network encoder."""
 
@@ -152,7 +154,6 @@ if HAS_PYG:
                     x = F.dropout(x, p=0.5, training=self.training)
             return x
 
-
     class GATEncoder(nn.Module):
         """Graph Attention Network encoder."""
 
@@ -170,13 +171,9 @@ if HAS_PYG:
             self.convs = nn.ModuleList()
             self.convs.append(GATConv(num_nodes, hidden_dim, heads=heads, concat=True))
             for _ in range(num_layers - 2):
-                self.convs.append(
-                    GATConv(hidden_dim * heads, hidden_dim, heads=heads, concat=True)
-                )
+                self.convs.append(GATConv(hidden_dim * heads, hidden_dim, heads=heads, concat=True))
             if num_layers > 1:
-                self.convs.append(
-                    GATConv(hidden_dim * heads, hidden_dim, heads=1, concat=False)
-                )
+                self.convs.append(GATConv(hidden_dim * heads, hidden_dim, heads=1, concat=False))
 
         def forward(self, x: torch.Tensor, edge_index: torch.Tensor) -> torch.Tensor:
             for i, conv in enumerate(self.convs):
@@ -185,7 +182,6 @@ if HAS_PYG:
                     x = F.relu(x)
                     x = F.dropout(x, p=0.5, training=self.training)
             return x
-
 
     class GraphSAGEEncoder(nn.Module):
         """GraphSAGE encoder."""
@@ -209,7 +205,6 @@ if HAS_PYG:
                     x = F.relu(x)
                     x = F.dropout(x, p=0.5, training=self.training)
             return x
-
 
     class LightGCNEncoder(nn.Module):
         """LightGCN encoder - simplified GCN for recommendation systems.
@@ -257,7 +252,7 @@ if HAS_PYG:
                 row, col = edge_index
                 deg = degree(col, num_nodes=self.num_nodes, dtype=embeddings.dtype)
                 deg_inv_sqrt = deg.pow(-0.5)
-                deg_inv_sqrt[deg_inv_sqrt == float('inf')] = 0
+                deg_inv_sqrt[deg_inv_sqrt == float("inf")] = 0
 
                 norm = deg_inv_sqrt[row] * deg_inv_sqrt[col]
 
@@ -277,6 +272,7 @@ else:
     # Dummy classes when PyG not available
     class CardGraphDataset:
         """Dummy class when PyTorch Geometric is not installed."""
+
         pass
 
     class GCNEncoder:
@@ -369,7 +365,9 @@ class CardGNNEmbedder:
         elif self.model_type == "LightGCN":
             self.model = LightGCNEncoder(num_nodes, self.hidden_dim, self.num_layers)
         else:
-            raise ValueError(f"Unknown model type: {self.model_type}. Supported: GCN, GAT, GraphSAGE, LightGCN")
+            raise ValueError(
+                f"Unknown model type: {self.model_type}. Supported: GCN, GAT, GraphSAGE, LightGCN"
+            )
 
         # Resume from checkpoint if provided
         start_epoch = 0
@@ -384,14 +382,16 @@ class CardGNNEmbedder:
                         metadata = json.load(f)
                         start_epoch = metadata.get("last_epoch", 0) + 1
                         logger.info(f"Resuming from epoch {start_epoch}")
-                except:
-                    logger.warning("Could not determine epoch from checkpoint, starting from beginning")
+                except Exception:
+                    logger.warning(
+                        "Could not determine epoch from checkpoint, starting from beginning"
+                    )
 
         # Training setup - Link prediction (expert recommended)
         optimizer = torch.optim.Adam(self.model.parameters(), lr=lr, weight_decay=5e-4)
 
         self.model.train()
-        best_loss = float('inf')
+        best_loss = float("inf")
         patience = 10
         patience_counter = 0
 
@@ -455,7 +455,7 @@ class CardGNNEmbedder:
             else:
                 patience_counter += 1
                 if patience_counter >= patience:
-                    logger.info(f"Early stopping at epoch {epoch+1}")
+                    logger.info(f"Early stopping at epoch {epoch + 1}")
                     break
 
             # Log metrics every epoch (for progress tracking)
@@ -470,7 +470,7 @@ class CardGNNEmbedder:
                 metrics["contrastive_loss"] = contrastive_loss.item()
 
             if (epoch + 1) % 10 == 0:
-                log_msg = f"Epoch {epoch+1}/{epochs}, Loss: {loss.item():.4f}, Link: {link_loss.item():.4f}"
+                log_msg = f"Epoch {epoch + 1}/{epochs}, Loss: {loss.item():.4f}, Link: {link_loss.item():.4f}"
                 if use_contrastive:
                     log_msg += f", Contrastive: {contrastive_loss.item():.4f}"
                 logger.info(log_msg)
@@ -481,7 +481,7 @@ class CardGNNEmbedder:
                 from ..training.progress_tracker import TrainingProgressTracker
 
                 # Initialize tracker if not exists (lazy init to avoid circular import)
-                if not hasattr(self, '_progress_tracker'):
+                if not hasattr(self, "_progress_tracker"):
                     self._progress_tracker = TrainingProgressTracker(
                         output_dir=progress_dir,
                         checkpoint_interval=checkpoint_interval or 10,
@@ -494,7 +494,10 @@ class CardGNNEmbedder:
 
             # Checkpointing (per cursor rules - for long runs)
             if checkpoint_interval and (epoch + 1) % checkpoint_interval == 0:
-                checkpoint_path = Path(output_path).parent / f"{Path(output_path).stem}_checkpoint_epoch_{epoch+1}.json"
+                checkpoint_path = (
+                    Path(output_path).parent
+                    / f"{Path(output_path).stem}_checkpoint_epoch_{epoch + 1}.json"
+                )
                 self.save(checkpoint_path)
 
                 # Save metadata for resume
@@ -511,7 +514,7 @@ class CardGNNEmbedder:
                     json.dump(metadata, f, indent=2)
 
                 # Also save via progress tracker
-                if hasattr(self, '_progress_tracker'):
+                if hasattr(self, "_progress_tracker"):
                     self._progress_tracker.save_checkpoint(
                         epoch + 1,
                         {
@@ -550,8 +553,10 @@ class CardGNNEmbedder:
 
         # Convert torch tensors to lists for JSON serialization
         if state["model_state"]:
-            state["model_state"] = {k: v.cpu().tolist() if isinstance(v, torch.Tensor) else v
-                                   for k, v in state["model_state"].items()}
+            state["model_state"] = {
+                k: v.cpu().tolist() if isinstance(v, torch.Tensor) else v
+                for k, v in state["model_state"].items()
+            }
 
         with open(path, "w") as f:
             json.dump(state, f)
@@ -569,9 +574,7 @@ class CardGNNEmbedder:
         self.idx_to_node = {int(k): v for k, v in state["idx_to_node"].items()}
 
         # Load embeddings
-        self.embeddings = {
-            k: torch.tensor(v) for k, v in state["embeddings"].items()
-        }
+        self.embeddings = {k: torch.tensor(v) for k, v in state["embeddings"].items()}
 
         # Reconstruct model if state dict available (for resuming training)
         if state.get("model_state") and self.model is None:
@@ -586,8 +589,10 @@ class CardGNNEmbedder:
             # Load model state (convert lists back to tensors)
             if self.model and state["model_state"]:
                 try:
-                    model_state = {k: torch.tensor(v) if isinstance(v, list) else v
-                                 for k, v in state["model_state"].items()}
+                    model_state = {
+                        k: torch.tensor(v) if isinstance(v, list) else v
+                        for k, v in state["model_state"].items()
+                    }
                     self.model.load_state_dict(model_state)
                     logger.info("Loaded model state from checkpoint")
                 except Exception as e:
@@ -671,14 +676,12 @@ class CardGNNEmbedder:
                 elif fallback_embedder:
                     # No neighbors with embeddings - use text embedder
                     self.embeddings[card] = torch.tensor(
-                        fallback_embedder.embed_card(card),
-                        dtype=torch.float32
+                        fallback_embedder.embed_card(card), dtype=torch.float32
                     )
             elif fallback_embedder:
                 # Isolated card - use text embedder
                 self.embeddings[card] = torch.tensor(
-                    fallback_embedder.embed_card(card),
-                    dtype=torch.float32
+                    fallback_embedder.embed_card(card), dtype=torch.float32
                 )
             else:
                 # No neighbors and no fallback - use zero embedding

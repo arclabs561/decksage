@@ -107,7 +107,7 @@ def fix_unknown_nodes_with_api(
     cursor = conn.cursor()
     for i, row in enumerate(unknown_nodes):
         card_name = row["name"]
-        total_decks = row["total_decks"]
+        row["total_decks"]
 
         if i % 10 == 0 and i > 0:
             logger.info(f"  Processing {i}/{len(unknown_nodes)}... (fixed: {fixed})")

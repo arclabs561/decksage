@@ -71,7 +71,7 @@ def validate_fixes(
     for row in fixed_cards[:sample_size]:
         card_name = row["name"]
         assigned_game = row["game"]
-        decks = row["total_decks"]
+        row["total_decks"]
 
         # Check if card name appears multilingual
         lang = detect_language(card_name)
