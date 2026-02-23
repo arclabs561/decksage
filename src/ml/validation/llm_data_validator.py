@@ -26,6 +26,7 @@ except ImportError:  # pragma: no cover - pydantic is expected in dev/test
     def Field(*_args: Any, **_kwargs: Any) -> Any:  # type: ignore
         return None
 
+
 from ..utils.paths import PATHS
 from ..utils.pydantic_ai_helpers import HAS_PYDANTIC_AI, make_agent
 
