@@ -18,6 +18,7 @@ from typing import Any
 
 try:
     from gensim.models import KeyedVectors
+
     HAS_GENSIM = True
 except ImportError:
     HAS_GENSIM = False
@@ -100,7 +101,9 @@ def main() -> int:
                 "missing": result["missing"],
                 "missing_queries": result["missing_queries"][:5],  # Sample
             }
-            print(f"✓ {result['coverage']:.1%} coverage ({result['found_direct']}/{result['total_queries']})")
+            print(
+                f"✓ {result['coverage']:.1%} coverage ({result['found_direct']}/{result['total_queries']})"
+            )
         except Exception as e:
             print(f"✗ Error: {e}")
             results[emb_path.name] = {
@@ -138,18 +141,22 @@ def main() -> int:
     # Save report
     args.output.parent.mkdir(parents=True, exist_ok=True)
     with open(args.output, "w") as f:
-        json.dump({
-            "test_set": str(args.test_set),
-            "embeddings_dir": str(embeddings_dir),
-            "summary": {
-                "total": len(embedding_files),
-                "working": len(working),
-                "partial": len(partial),
-                "broken": len(broken),
-                "errors": len(errors),
+        json.dump(
+            {
+                "test_set": str(args.test_set),
+                "embeddings_dir": str(embeddings_dir),
+                "summary": {
+                    "total": len(embedding_files),
+                    "working": len(working),
+                    "partial": len(partial),
+                    "broken": len(broken),
+                    "errors": len(errors),
+                },
+                "results": results,
             },
-            "results": results,
-        }, f, indent=2)
+            f,
+            indent=2,
+        )
 
     print(f"\nFull report saved to: {args.output}")
 

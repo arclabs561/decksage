@@ -547,7 +547,9 @@ class EvaluationRegistry:
                     ):
                         model["is_production"] = False
 
-            registry_data["metadata"]["updated_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            registry_data["metadata"]["updated_at"] = (
+                datetime.now(UTC).isoformat().replace("+00:00", "Z")
+            )
             self._write_with_lock(registry_path, registry_data)
             self.model_registry._registry = registry_data
             logger.info(f"Registered model: {model_type}_{model_version}")
