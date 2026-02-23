@@ -22,6 +22,7 @@ sys.path.insert(0, str(project_root))
 
 try:
     from ml.utils.path_setup import setup_project_paths
+
     setup_project_paths()
 except ImportError:
     src_path = project_root / "src"
@@ -72,6 +73,7 @@ def evaluate_with_visual_embeddings(
     except Exception as e:
         logger.error(f"  ✗ Evaluation failed: {e}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 
@@ -102,6 +104,7 @@ def evaluate_without_visual_embeddings(
         adj = {}
         if pairs_path and pairs_path.exists():
             from ml.similarity.similarity_methods import load_graph
+
             adj, _ = load_graph(csv_path=str(pairs_path), filter_lands=True)
 
         # Create fusion WITHOUT visual embeddings
@@ -134,6 +137,7 @@ def evaluate_without_visual_embeddings(
     except Exception as e:
         logger.error(f"  ✗ Evaluation failed: {e}")
         import traceback
+
         traceback.print_exc()
         return {"error": str(e)}
 

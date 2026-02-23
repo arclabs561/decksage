@@ -18,6 +18,7 @@ sys.path.insert(0, str(project_root))
 
 try:
     from ml.utils.path_setup import setup_project_paths
+
     setup_project_paths()
 except ImportError:
     src_path = project_root / "src"
@@ -39,6 +40,7 @@ def validate_imports() -> tuple[bool, str]:
         from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
         from ml.similarity.fusion import FusionWeights, WeightedLateFusion
         from ml.api.api import get_state, ApiState
+
         logger.info("  ✓ All imports successful")
         return True, "All imports successful"
     except ImportError as e:
@@ -123,6 +125,7 @@ def validate_fusion_integration() -> tuple[bool, str]:
     except Exception as e:
         logger.error(f"  ✗ Fusion integration failed: {e}")
         import traceback
+
         traceback.print_exc()
         return False, f"Fusion integration failed: {e}"
 
