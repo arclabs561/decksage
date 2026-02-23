@@ -277,8 +277,8 @@ def main() -> int:
     # Save report
     report = {
         "overall": overall_dist,
-        "by_source": {k: v for k, v in by_source.items()},
-        "by_game": {k: v for k, v in by_game.items()},
+        "by_source": dict(by_source),
+        "by_game": dict(by_game),
         "issues": issues,
         "total_annotations": len(annotations),
     }

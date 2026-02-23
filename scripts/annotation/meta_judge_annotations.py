@@ -84,9 +84,9 @@ async def main():
     game = args.game
     if not game:
         # Try to detect from annotations
-        games = set(ann.get("game") for ann in annotations if ann.get("game"))
+        games = {ann.get("game") for ann in annotations if ann.get("game")}
         if len(games) == 1:
-            game = list(games)[0]
+            game = next(iter(games))
         else:
             game = "unknown"
 
