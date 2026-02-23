@@ -115,8 +115,8 @@ Knowledge injection is integrated into:
 Run tests:
 
 ```bash
-pytest tests/test_game_knowledge_injection.py -v
-pytest tests/test_knowledge_integration.py -v
+pytest src/ml/tests/test_game_knowledge_injection.py -v
+pytest src/ml/tests/test_knowledge_integration.py -v
 ```
 
 ## Adding New Games
