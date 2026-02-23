@@ -243,7 +243,7 @@ See `model-cards/README.json` for the full index.
 4. **Consistency**: Consistent naming and structure across all assets
 
 ---
-*Last updated: {datetime.utcnow().isoformat()}Z*
+*Last updated: {datetime.now(UTC).isoformat().replace("+00:00", "Z")}*
 """
 
     s3_client.put_object(

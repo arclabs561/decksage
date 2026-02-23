@@ -255,7 +255,7 @@ def main() -> None:
     readme = {
         "title": "DeckSage Model Cards",
         "description": "Model cards for all ML artifacts in the DeckSage project",
-        "last_updated": datetime.utcnow().isoformat() + "Z",
+        "last_updated": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "structure": {
             "embeddings/": "Graph embedding models (Node2Vec, DeepWalk variants)",
             "signals/": "Similarity signals (sideboard, temporal, archetype, format)",
