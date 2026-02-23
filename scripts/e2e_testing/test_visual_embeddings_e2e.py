@@ -219,7 +219,7 @@ def test_pipeline_end_to_end() -> bool:
             logger.warning("  No cards with image URLs for pipeline test")
             return True
 
-        fusion = WeightedLateFusion(
+        _ = WeightedLateFusion(
             embeddings=mock_embeddings,
             adj=mock_adj,
             weights=FusionWeights(visual_embed=0.2),

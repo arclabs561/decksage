@@ -76,7 +76,7 @@ async def test_agentic_meta_judge():
 
     # Run multi-round moderation
     print("\n🔄 Running Multi-Round Moderation...")
-    final_round, all_rounds = await meta_judge.moderate_multi_round(initial_annotations)
+    _final_round, all_rounds = await meta_judge.moderate_multi_round(initial_annotations)
 
     # Display results
     print("\n" + "=" * 70)

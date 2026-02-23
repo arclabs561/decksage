@@ -11,7 +11,7 @@ import json
 import sys
 from collections import Counter, defaultdict
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 
 # Add project root to path
@@ -33,7 +33,7 @@ class ConflictResolver:
     """Resolve conflicts between multiple annotation sources."""
 
     # Source priority (higher = more trusted)
-    SOURCE_PRIORITY = {
+    SOURCE_PRIORITY: ClassVar[dict[str, int]] = {
         "hand_annotation": 10,  # Expert human annotations
         "user_feedback": 8,  # User feedback from UI
         "llm_judgment": 6,  # Multi-judge LLM
