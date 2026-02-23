@@ -45,14 +45,21 @@ class ModelRegistry:
                 logger.warning(f"Failed to load registry: {e}. Starting fresh.")
                 return {
                     "models": {},
-                    "metadata": {"created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")},
+                    "metadata": {
+                        "created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")
+                    },
                 }
         else:
-            return {"models": {}, "metadata": {"created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")}}
+            return {
+                "models": {},
+                "metadata": {"created_at": datetime.now(UTC).isoformat().replace("+00:00", "Z")},
+            }
 
     def _save_registry(self) -> None:
         """Save registry to disk."""
-        self._registry["metadata"]["updated_at"] = datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        self._registry["metadata"]["updated_at"] = (
+            datetime.now(UTC).isoformat().replace("+00:00", "Z")
+        )
         with open(self.registry_path, "w") as f:
             json.dump(self._registry, f, indent=2)
 
