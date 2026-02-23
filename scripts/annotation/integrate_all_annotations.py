@@ -69,7 +69,7 @@ except ImportError:
 def load_hand_annotations_from_file(file_path: Path) -> list[dict]:
     """Load hand annotations from YAML file."""
     try:
-        if PATHS and hasattr(load_hand_annotations, "__call__"):
+        if PATHS and callable(load_hand_annotations):
             return load_hand_annotations(file_path)
     except Exception:
         pass
@@ -296,7 +296,7 @@ def validate_annotation_quality(annotations: list[dict]) -> dict[str, Any]:
     # Check source diversity
     sources = Counter(ann.get("source", "unknown") for ann in annotations)
     if len(sources) == 1 and len(annotations) > 10:
-        warnings.append(f"All annotations from single source: {list(sources.keys())[0]}")
+        warnings.append(f"All annotations from single source: {next(iter(sources.keys()))}")
 
     # Compute quality score (0-1)
     quality_score = 1.0
