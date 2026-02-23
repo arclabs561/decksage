@@ -168,7 +168,7 @@ Extend `GAME_FILTERS` in `constants.py` for new games or additional filters.
 
 ## Testing
 
-See `tests/` directory for unit tests covering:
+See `src/ml/tests/` for unit tests covering:
 - Data loading consistency
 - Evaluation metric correctness
 - Path resolution
