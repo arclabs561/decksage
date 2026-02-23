@@ -24,7 +24,7 @@ def test_tool(tool_name: str, args: list[str], expected_exit: int = 0) -> tuple[
 
     try:
         result = subprocess.run(
-            [sys.executable, str(tool_path)] + args,
+            [sys.executable, str(tool_path), *args],
             capture_output=True,
             text=True,
             timeout=30,

@@ -156,8 +156,8 @@ def verify_data_corruption(log_dir: Path) -> dict[str, Any]:
             for row in rows:
                 # Check JSON fields can be parsed
                 try:
-                    metrics = json.loads(row[7]) if row[7] else {}
-                    config = json.loads(row[8]) if row[8] else {}
+                    _metrics = json.loads(row[7]) if row[7] else {}
+                    _config = json.loads(row[8]) if row[8] else {}
                 except (json.JSONDecodeError, IndexError) as e:
                     issues.append(f"Corrupted JSON in SQLite row: {e}")
 

@@ -705,7 +705,7 @@ class ComprehensiveBrowserTester:
             }
 
             passed = sum(checks.values())
-            total = len(checks)
+            _total = len(checks)
 
             for check, passed_check in checks.items():
                 if passed_check:

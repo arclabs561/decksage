@@ -85,7 +85,7 @@ def check_test_sets() -> dict[str, dict]:
                 with open(path) as f:
                     data = json.load(f)
                 queries = data.get("queries", data)
-                size = len(queries) if isinstance(queries, dict) else len(queries)
+                size = len(queries)
                 results[game] = {
                     "exists": True,
                     "size": size,
@@ -142,7 +142,7 @@ def monitor_once() -> None:
     emb_results = check_embeddings()
     for name, info in emb_results.items():
         if info["exists"]:
-            status = "✓" if info["status"] == "recent" else "✓"
+            status = "✓"
             size = info.get("size_mb", 0)
             age = info.get("age_min", 0)
             print(f"  {status} {name}: {size:.1f} MB ({age:.1f} min ago)")
@@ -155,7 +155,7 @@ def monitor_once() -> None:
     test_results = check_test_sets()
     for game, info in test_results.items():
         if info["exists"]:
-            status = "✓" if info["status"] == "recent" else "✓"
+            status = "✓"
             size = info.get("size", 0)
             age = info.get("age_min", 0)
             print(f"  {status} {game}: {size} queries ({age:.1f} min ago)")
