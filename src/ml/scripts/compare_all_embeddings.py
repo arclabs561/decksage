@@ -30,27 +30,31 @@ import json
 from pathlib import Path
 from typing import Any
 
+
 try:
-    import pandas as pd
     from gensim.models import KeyedVectors
+
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
 
 import sys
+
 from ml.utils.path_setup import setup_project_paths
 from ml.utils.paths import PATHS
+
 
 setup_project_paths()
 
 try:
     from ml.scripts.evaluate_all_embeddings import (
-        load_test_set,
         evaluate_embedding,
         evaluate_jaccard,
         load_graph_for_jaccard,
+        load_test_set,
     )
     from ml.utils.name_normalizer import NameMapper
+
     HAS_EVAL = True
 except ImportError:
     HAS_EVAL = False
@@ -61,6 +65,7 @@ EMBEDDINGS_TO_COMPARE = {
     "functional_improved": PATHS.embeddings / "trained_functional_improved.wv",
     "functional_text": PATHS.embeddings / "trained_functional_text.wv",
 }
+
 
 # ... existing code ...
 def compare_embeddings(
@@ -111,7 +116,9 @@ def compare_embeddings(
     print("=" * 70)
     jaccard_metrics = evaluate_jaccard(jaccard_adj, test_set, top_k=10, name_mapper=name_mapper)
     results["similarity"]["jaccard"] = jaccard_metrics
-    print(f" P@10: {jaccard_metrics['p@10']:.4f}, MRR: {jaccard_metrics['mrr']:.4f}, Queries: {jaccard_metrics['num_queries']}")
+    print(
+        f" P@10: {jaccard_metrics['p@10']:.4f}, MRR: {jaccard_metrics['mrr']:.4f}, Queries: {jaccard_metrics['num_queries']}"
+    )
 
     # Evaluate each embedding
     for name, embed_path in EMBEDDINGS_TO_COMPARE.items():
@@ -136,7 +143,9 @@ def compare_embeddings(
                 per_query=False,
             )
             results["similarity"][name] = metrics
-            print(f" P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}")
+            print(
+                f" P@10: {metrics['p@10']:.4f}, MRR: {metrics['mrr']:.4f}, Queries: {metrics['num_queries']}"
+            )
         except Exception as e:
             print(f" Error: {e}")
             continue
@@ -203,7 +212,9 @@ def compare_embeddings(
                     "total": len(sub_pairs),
                     "avg_rank": avg_rank,
                 }
-                print(f" {name}: P@10={p10:.4f}, Found={found}/{len(sub_pairs)}, AvgRank={avg_rank:.1f}")
+                print(
+                    f" {name}: P@10={p10:.4f}, Found={found}/{len(sub_pairs)}, AvgRank={avg_rank:.1f}"
+                )
             except Exception as e:
                 print(f" {name}: Error - {e}")
                 continue
@@ -262,4 +273,5 @@ def main() -> int:
 
 if __name__ == "__main__":
     import sys
+
     sys.exit(main())

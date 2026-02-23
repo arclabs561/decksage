@@ -21,6 +21,7 @@ Extends single-game search to support:
 from __future__ import annotations
 
 import argparse
+import importlib.util
 import json
 import logging
 from pathlib import Path
@@ -28,22 +29,14 @@ from typing import Any
 
 
 try:
-    import numpy as np
-    import pandas as pd
-    from gensim.models import KeyedVectors, Word2Vec
-    from pecanpy.pecanpy import SparseOTF
+    from gensim.models import KeyedVectors
 
     HAS_DEPS = True
 except ImportError as e:
     HAS_DEPS = False
     print(f"Missing dependencies: {e}")
 
-try:
-    import boto3
-
-    HAS_BOTO3 = True
-except ImportError:
-    HAS_BOTO3 = False
+HAS_BOTO3 = importlib.util.find_spec("boto3") is not None
 
 try:
     from ..utils.logging_config import setup_script_logging

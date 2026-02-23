@@ -51,7 +51,7 @@ def load_decks_as_sequences():
 
                 if deck:
                     deck_sequences.append(deck)
-        except:
+        except Exception:
             continue
 
     print(f"✓ Loaded {len(deck_sequences)} deck sequences")

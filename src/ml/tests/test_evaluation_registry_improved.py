@@ -25,9 +25,8 @@ from pathlib import Path
 
 import pytest
 
-# Import the main registry
-from ml.utils.evaluation_registry import EvaluationRegistry
 from ml.utils.evaluation_registry_improved import (
+    EvaluationRegistry,
     QueryCache,
     SQLiteBackend,
     validate_version_format,

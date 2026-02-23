@@ -31,7 +31,7 @@ def load_card_attributes(attrs_path: Path | None = None) -> dict[str, dict[str, 
     attrs = load_attrs_canonical(attrs_path=attrs_path)
 
     # Post-process for this script's specific needs (parse string fields)
-    for card_name, card_attrs in attrs.items():
+    for _card_name, card_attrs in attrs.items():
         # Parse color_identity if it's a string
         color_identity = card_attrs.get("colors") or card_attrs.get("color_identity", [])
         if isinstance(color_identity, str):
@@ -192,7 +192,7 @@ def integrate_attribute_relationships(
 
     # Create edges for shared colors
     logger.info("Creating edges for shared color identity...")
-    for color_tuple, cards in cards_by_color.items():
+    for _color_tuple, cards in cards_by_color.items():
         if len(cards) < 2:
             continue
         card_list = list(cards)
@@ -203,7 +203,7 @@ def integrate_attribute_relationships(
 
     # Create edges for shared types
     logger.info("Creating edges for shared card types...")
-    for card_type, cards in cards_by_type.items():
+    for _card_type, cards in cards_by_type.items():
         if len(cards) < 2:
             continue
         card_list = list(cards)
@@ -214,7 +214,7 @@ def integrate_attribute_relationships(
 
     # Create edges for shared keywords
     logger.info("Creating edges for shared keywords...")
-    for keyword, cards in cards_by_keyword.items():
+    for _keyword, cards in cards_by_keyword.items():
         if len(cards) < 2:
             continue
         card_list = list(cards)
@@ -225,7 +225,7 @@ def integrate_attribute_relationships(
 
     # Create edges for shared sets
     logger.info("Creating edges for shared sets...")
-    for set_code, cards in cards_by_set.items():
+    for _set_code, cards in cards_by_set.items():
         if len(cards) < 2:
             continue
         card_list = list(cards)
@@ -236,7 +236,7 @@ def integrate_attribute_relationships(
 
     # Create edges for shared rarity
     logger.info("Creating edges for shared rarity...")
-    for rarity, cards in cards_by_rarity.items():
+    for _rarity, cards in cards_by_rarity.items():
         if len(cards) < 2:
             continue
         card_list = list(cards)

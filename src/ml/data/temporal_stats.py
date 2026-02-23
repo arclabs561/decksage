@@ -229,26 +229,11 @@ def compute_recency_score(
             continue  # Skip invalid date formats
 
     if total_weight > 0 and valid_months > 0:
-        # Compute average recency weight (weighted by count)
-        # This represents how recent the activity is on average
-        # For single month: returns that month's weight
-        # For multiple months: returns count-weighted average of weights
-        weighted_avg = total_score / total_weight
-
-        # Normalize: compare to what it would be if all activity were in most recent month
-        # If all counts were recent (weight=1.0), weighted_avg would equal total_count
-        # So normalized = weighted_avg / total_count
-        # But this gives us the count-weighted average weight, which is what we want
+        # Count-weighted average recency weight:
+        # avg_weight = sum(count_i * weight_i) / sum(count_i) = total_score / total_count
         total_count = sum(monthly_counts.values())
         if total_count > 0:
-            # For single month: weighted_avg = count, so result = count / count = 1.0 (wrong!)
-            # We need average weight, not weighted average of counts
-            # Solution: compute average weight directly
-            avg_weight = total_weight / valid_months  # Simple average of weights
-            # But we want count-weighted average, so:
-            # avg_weight = sum(count_i * weight_i) / sum(count_i) = total_score / total_count
-            count_weighted_avg = total_score / total_count if total_count > 0 else 0.0
-            return float(count_weighted_avg)
+            return float(total_score / total_count)
 
     return 0.0
 

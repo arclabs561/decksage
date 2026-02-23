@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 
+from .spanish_card_translations import SPANISH_TO_ENGLISH
+
 
 # Language detection patterns
 JAPANESE_PATTERN = re.compile(r"[\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FAF]")
@@ -17,7 +19,7 @@ FRENCH_PATTERN = re.compile(r"[àâäéèêëïîôùûüÿçÀÂÄÉÈÊËÏÎ�
 GERMAN_PATTERN = re.compile(r"[äöüßÄÖÜ]")
 ITALIAN_PATTERN = re.compile(r"[àèéìíîòóùúÀÈÉÌÍÎÒÓÙÚ]")
 PORTUGUESE_PATTERN = re.compile(r"[àáâãéêíóôõúÀÁÂÃÉÊÍÓÔÕÚ]")
-RUSSIAN_PATTERN = re.compile(r"[А-Яа-яЁё]")
+RUSSIAN_PATTERN = re.compile("[\u0410-\u042f\u0430-\u044f\u0401\u0451]")
 SPANISH_PATTERN = re.compile(r"[áéíóúñüÁÉÍÓÚÑÜ]")
 
 # Scryfall language codes
@@ -37,8 +39,6 @@ SCRYFALL_LANG_CODES = {
 
 # Common translations (will be expanded via API research)
 # Spanish translations (from existing file)
-from .spanish_card_translations import SPANISH_TO_ENGLISH
-
 
 # French translations (common Magic cards)
 FRENCH_TO_ENGLISH: dict[str, str] = {
@@ -65,16 +65,7 @@ FRENCH_TO_ENGLISH: dict[str, str] = {
     "épées": "swords",
     "nacrée": "pearl",
     "céleste": "celestial",
-    # Additional French cards from data
-    "geyser cérébral": "brain geyser",
-    "vivacité": "vitality",
-    "rétroaction": "feedback",
-    "mur d'épées": "wall of swords",
-    "licorne nacrée": "pearl unicorn",
-    "prisme céleste": "celestial prism",
-    "pégase de mesa": "mesa pegasus",
     "géant de pierre": "stone giant",
-    "géant des collines": "hill giant",
     "convulsion cérébrale": "brainstorm",
     "araignée géante": "giant spider",
     "force de géant": "giant strength",
@@ -266,11 +257,10 @@ def translate_card_name(
         # Try case variations
         if not translation:
             for key, value in dictionary.items():
-                if key in name_lower or name_lower in key:
-                    # Check if it's a reasonable match (not too short)
-                    if len(key) >= 3 and len(value) >= 3:
-                        translation = value
-                        break
+                # Check if it's a reasonable match (not too short)
+                if (key in name_lower or name_lower in key) and len(key) >= 3 and len(value) >= 3:
+                    translation = value
+                    break
 
     # Japanese, Chinese, Korean, Russian require API lookup
     # (handled separately in fix_multilingual_cards_with_api.py)

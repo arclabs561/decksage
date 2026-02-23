@@ -55,8 +55,10 @@ def grid_search_weights(
             weights = FusionWeights(embed=w_e, jaccard=w_j, functional=w_f).normalized()
             fusion = fusion_builder(weights)
 
-            def sim_func(q: str, k: int) -> list[tuple[str, float]]:
-                return fusion.similar(q, k)
+            def sim_func(
+                q: str, k: int, *, _fusion: WeightedLateFusion = fusion
+            ) -> list[tuple[str, float]]:
+                return _fusion.similar(q, k)
 
             res = evaluate_similarity(test_set, sim_func, top_k=top_k, verbose=False)
             p_at_k = float(res.get(f"p@{top_k}", 0.0))

@@ -70,7 +70,7 @@ def main() -> int:
 
     # Step 1: Generate multi-task test sets
     if not args.skip_training:
-        success = run_step(
+        run_step(
             "Step 1: Generate Multi-Task Test Sets",
             [
                 sys.executable,
@@ -92,7 +92,7 @@ def main() -> int:
     if not args.skip_training:
         for weight in args.weights:
             output_name = f"multitask_sub{int(weight)}.wv"
-            success = run_step(
+            run_step(
                 f"Step 2.{int(weight)}: Train Multi-Task (weight={weight}x)",
                 [
                     sys.executable,
@@ -113,10 +113,9 @@ def main() -> int:
             )
 
     # Step 3: Evaluate all variants
-    evaluations = {}
     baseline_path = PATHS.embeddings / "node2vec_default.wv"
     if baseline_path.exists():
-        success = run_step(
+        run_step(
             "Step 3.0: Evaluate Baseline",
             [
                 sys.executable,
@@ -139,7 +138,7 @@ def main() -> int:
     for weight in args.weights:
         embedding_path = PATHS.embeddings / f"multitask_sub{int(weight)}.wv"
         if embedding_path.exists():
-            success = run_step(
+            run_step(
                 f"Step 3.{int(weight)}: Evaluate Multi-Task (weight={weight}x)",
                 [
                     sys.executable,

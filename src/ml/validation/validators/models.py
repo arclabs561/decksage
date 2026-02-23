@@ -127,6 +127,26 @@ class _DeckBase(BaseModel):
                 return p
         return None
 
+    def get_main_deck(self) -> Partition:
+        """Return the main deck partition (best-effort, never None)."""
+        return self.get_partition("main", "mainboard", "main deck") or self.partitions[0]
+
+    def get_sideboard(self) -> Partition | None:
+        """Return the sideboard/side deck partition, if present."""
+        return self.get_partition("sideboard", "side board", "side deck", "side")
+
+    def get_extra_deck(self) -> Partition | None:
+        """Return the extra deck partition, if present (Yu-Gi-Oh!)."""
+        return self.get_partition("extra deck", "extra")
+
+    def get_all_cards(self) -> list[str]:
+        """Return all cards (expanded by count) across all partitions."""
+        cards: list[str] = []
+        for p in self.partitions:
+            for cd in p.cards:
+                cards.extend([cd.name] * int(cd.count))
+        return cards
+
     def all_card_counts(self) -> Counter[str]:
         """Aggregate counts across all partitions."""
         c: Counter[str] = Counter()

@@ -7,10 +7,12 @@ from __future__ import annotations
 
 import pytest
 
+
 try:
-    from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
-    from PIL import Image
     import numpy as np
+    from PIL import Image
+
+    from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
 
     VISUAL_EMBEDDINGS_AVAILABLE = True
 except ImportError:

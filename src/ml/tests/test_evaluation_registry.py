@@ -340,8 +340,8 @@ class TestRecordEvaluation:
         )
 
         assert result_path.exists()
-        # Note: filename is {type}_evaluation_v{version}.json, so version "v2026-W01" becomes "vv2026-W01"
-        assert "hybrid_evaluation_vv2026-W01.json" in str(result_path)
+        # Filename uses a single leading "v" regardless of whether the version already includes it.
+        assert "hybrid_evaluation_v2026-W01.json" in str(result_path)
 
     def test_record_with_metadata(self, registry):
         """Test recording with metadata."""

@@ -54,7 +54,7 @@ def train_archetype_weighted(test_set, config):
                 for c2 in cards[i + 1 :]:
                     key = tuple(sorted([c1, c2]))
                     archetype_pairs[archetype][key] += 1
-        except:
+        except Exception:
             continue
 
     print(f"  Archetypes found: {len(archetype_pairs)}")

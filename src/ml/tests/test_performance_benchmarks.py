@@ -17,9 +17,13 @@ import time
 import pytest
 
 
+# These tests rely on the third-party `pytest-benchmark` plugin providing the
+# `benchmark` fixture. Skip cleanly if the plugin isn't installed.
+pytest.importorskip("pytest_benchmark", reason="pytest-benchmark not installed")
+
 try:
     from ml.data.card_database import get_card_database
-    from ml.utils.cache_invalidation import CacheInvalidationStrategy, get_prompt_version
+    from ml.utils.cache_invalidation import CacheInvalidationStrategy
 
     HAS_DEPENDENCIES = True
 except ImportError:

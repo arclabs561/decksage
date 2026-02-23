@@ -15,6 +15,7 @@ from typing import Any
 
 import numpy as np
 
+
 logger = logging.getLogger("decksage.text_embeddings")
 
 try:
@@ -85,6 +86,7 @@ class CardTextEmbedder:
             # During Python shutdown, builtins and modules may be unavailable
             # Check if we're in shutdown state
             import sys
+
             if sys.meta_path is None:
                 return  # Python is shutting down, skip cache save
 
@@ -95,6 +97,7 @@ class CardTextEmbedder:
             # Silently fail during shutdown - logger may also be unavailable
             try:
                 import sys
+
                 if sys.meta_path is not None:  # Only log if not shutting down
                     logger.warning(f"Failed to save cache: {e}")
             except Exception:

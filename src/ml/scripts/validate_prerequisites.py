@@ -55,10 +55,9 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
         "overall": "pass",
     }
 
-    # Required dependencies
+    # Required dependencies should be *minimal* so the validator degrades gracefully
+    # in lightweight/public environments. Heavy scientific stacks are optional.
     required_deps = {
-        "pandas": "pandas",
-        "numpy": "numpy",
         "json": "json",
     }
 
@@ -73,6 +72,8 @@ def validate_tier0_tier1_prerequisites() -> dict[str, Any]:
 
     # Optional dependencies
     optional_deps = {
+        "pandas": "pandas",
+        "numpy": "numpy",
         "pydantic_ai": "pydantic_ai",
         "sentence_transformers": "sentence_transformers",
         "gensim": "gensim",

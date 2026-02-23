@@ -40,6 +40,26 @@ from ml.utils.paths import PATHS
 
 
 try:
+    # Imported at module scope so tests can patch it.
+    from ml.deck_building.deck_completion import CompletionConfig, greedy_complete  # type: ignore
+except ImportError:
+    CompletionConfig = None  # type: ignore
+    greedy_complete = None  # type: ignore
+
+try:
+    # Imported at module scope so tests can patch it.
+    from ml.deck_building.deck_patch import DeckPatch  # type: ignore
+except ImportError:
+    DeckPatch = None  # type: ignore
+
+try:
+    # Imported at module scope so tests can patch it.
+    from ml.scripts.evaluate_downstream_complete import load_trained_assets
+except Exception:
+    load_trained_assets = None  # type: ignore
+
+
+try:
     from ml.enrichment.card_functional_tagger_unified import FunctionalTagger
 except ImportError:
     FunctionalTagger = None
@@ -199,22 +219,30 @@ def validate_deck_completion(
     cmc_fn: Any,
 ) -> dict[str, Any]:
     """Validate completion of a single deck."""
-    # Check if deck_patch is available
-    try:
-        from ml.deck_building.deck_patch import DeckPatch, apply_deck_patch
+    global CompletionConfig, DeckPatch, greedy_complete
 
-        has_deck_patch = True
-    except ImportError:
+    # Check if deck_patch is available (imported at module scope so tests can patch it).
+    if DeckPatch is None:
         logger.warning("deck_patch module not available - completion may be limited")
-        has_deck_patch = False
+        return {"success": False, "error": "deck_patch module not available"}
 
-    if not has_deck_patch:
-        return {
-            "success": False,
-            "error": "deck_patch module not available",
-        }
+    # Ensure completion machinery exists. (In normal runs these are imported at module scope,
+    # but keep this resilient when optional modules are missing.)
+    if CompletionConfig is None:
+        try:
+            from ml.deck_building.deck_completion import CompletionConfig as _CompletionConfig
 
-    from ml.deck_building.deck_completion import CompletionConfig, greedy_complete
+            CompletionConfig = _CompletionConfig
+        except ImportError:
+            return {"success": False, "error": "deck_completion module not available"}
+
+    if greedy_complete is None:
+        try:
+            from ml.deck_building.deck_completion import greedy_complete as _greedy_complete
+
+            greedy_complete = _greedy_complete
+        except ImportError:
+            return {"success": False, "error": "deck_completion module not available"}
 
     try:
         # Complete the deck using greedy completion
@@ -241,7 +269,7 @@ def validate_deck_completion(
                     deck_to_complete[key] = incomplete_deck[key]
 
         try:
-            completed, steps, quality_metrics = greedy_complete(
+            completed, steps, _quality_metrics = greedy_complete(
                 game=game,
                 deck=deck_to_complete,
                 candidate_fn=similarity_fn,
@@ -333,7 +361,8 @@ def validate_deck_quality_batch(
 
     # Load assets with error handling
     try:
-        from ml.scripts.evaluate_downstream_complete import load_trained_assets
+        if load_trained_assets is None:
+            raise ImportError("load_trained_assets not available")
 
         assets = load_trained_assets(
             game=game,
@@ -350,10 +379,18 @@ def validate_deck_quality_batch(
     # Load functional tagger with fallback
     try:
         tagger = FunctionalTagger()
-        tag_set_fn = lambda card: set(tagger.tag_card(card).keys())
+
+        def tag_set_fn(card: str) -> set[str]:
+            try:
+                return set(tagger.tag_card(card).keys())
+            except Exception:
+                return set()
+
     except Exception as e:
         logger.warning(f"Functional tagger not available: {e}, using empty tags")
-        tag_set_fn = lambda card: set()
+
+        def tag_set_fn(card: str) -> set[str]:
+            return set()
 
     # Load CMC function with error handling
     try:
@@ -372,7 +409,9 @@ def validate_deck_quality_batch(
                 return None
     except Exception as e:
         logger.warning(f"Card database not available: {e}, using None for CMC")
-        cmc_fn = lambda card: None
+
+        def cmc_fn(card: str) -> int | None:
+            return None
 
     # Create similarity function
     def similarity_fn(query: str, k: int = 10) -> list[tuple[str, float]]:

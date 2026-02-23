@@ -7,13 +7,15 @@ from __future__ import annotations
 
 import pytest
 
+
 try:
-    from ml.similarity.text_embeddings import CardTextEmbedder, get_text_embedder
     from ml.similarity.fusion_integration import (
-        normalize_weights,
         compute_fusion_with_text,
         get_default_weights_with_text,
+        normalize_weights,
     )
+    from ml.similarity.text_embeddings import CardTextEmbedder, get_text_embedder
+
     TEXT_EMBEDDINGS_AVAILABLE = True
 except ImportError:
     TEXT_EMBEDDINGS_AVAILABLE = False

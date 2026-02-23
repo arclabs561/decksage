@@ -95,7 +95,7 @@ class InterAnnotatorAgreement:
             }
 
         # Observed agreement
-        agreements = sum(1 for a1, a2 in zip(annotator1, annotator2) if a1 == a2)
+        agreements = sum(1 for a1, a2 in zip(annotator1, annotator2, strict=True) if a1 == a2)
         p_o = agreements / n
 
         # Expected agreement by chance
@@ -110,10 +110,7 @@ class InterAnnotatorAgreement:
             p_e += freq1 * freq2
 
         # Cohen's Kappa
-        if p_e >= 1.0:
-            kappa = 0.0
-        else:
-            kappa = (p_o - p_e) / (1.0 - p_e)
+        kappa = 0.0 if p_e >= 1.0 else (p_o - p_e) / (1.0 - p_e)
 
         # Interpretation
         if kappa < 0:
@@ -146,16 +143,16 @@ class InterAnnotatorAgreement:
 
         Handles missing data and different metric types (nominal, ordinal, interval, ratio).
 
-        α = 1 - (D_o / D_e)
+        alpha = 1 - (D_o / D_e)
         where:
         - D_o = observed disagreement
         - D_e = expected disagreement by chance
 
         Interpretation:
-        - α < 0: No agreement
-        - 0 ≤ α ≤ 0.67: Unreliable
-        - 0.67 < α ≤ 0.80: Tentative conclusions
-        - α > 0.80: Reliable
+        - alpha < 0: No agreement
+        - 0 <= alpha <= 0.67: Unreliable
+        - 0.67 < alpha <= 0.80: Tentative conclusions
+        - alpha > 0.80: Reliable
 
         Args:
             annotations: Dict mapping annotator_id -> list of ratings (can include None for missing)
@@ -246,10 +243,7 @@ class InterAnnotatorAgreement:
                     d_e += prob1 * prob2 * disagreement_func(r1, r2)
 
         # Krippendorff's Alpha
-        if d_e == 0:
-            alpha = 1.0 if d_o == 0 else 0.0
-        else:
-            alpha = 1.0 - (d_o / d_e)
+        alpha = (1.0 if d_o == 0 else 0.0) if d_e == 0 else 1.0 - (d_o / d_e)
 
         # Interpretation
         if alpha < 0:
@@ -368,10 +362,7 @@ class InterAnnotatorAgreement:
         p_e = sum(p_j[c] ** 2 for c in p_j)
 
         # Fleiss' Kappa
-        if p_e >= 1.0:
-            kappa = 0.0
-        else:
-            kappa = (p_bar - p_e) / (1.0 - p_e)
+        kappa = 0.0 if p_e >= 1.0 else (p_bar - p_e) / (1.0 - p_e)
 
         # Interpretation (same as Cohen's)
         if kappa < 0:
@@ -426,8 +417,12 @@ class InterAnnotatorAgreement:
         kappa_result = self.cohens_kappa(annotations1, annotations2)
 
         # Additional stability metrics
-        exact_agreement = sum(1 for a1, a2 in zip(annotations1, annotations2) if a1 == a2)
-        within_one = sum(1 for a1, a2 in zip(annotations1, annotations2) if abs(a1 - a2) <= 1)
+        exact_agreement = sum(
+            1 for a1, a2 in zip(annotations1, annotations2, strict=True) if a1 == a2
+        )
+        within_one = sum(
+            1 for a1, a2 in zip(annotations1, annotations2, strict=True) if abs(a1 - a2) <= 1
+        )
 
         result = {
             "annotator_id": annotator_id,

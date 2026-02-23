@@ -71,7 +71,7 @@ def validate_pack_data(
     else:
         cursor.execute("SELECT COUNT(DISTINCT card_name) FROM pack_cards")
 
-    unique_pack_cards = cursor.fetchone()[0]
+    cursor.fetchone()[0]
 
     # Get cards in graph (filtered by game)
     if game:

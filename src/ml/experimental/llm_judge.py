@@ -92,7 +92,7 @@ Given a query card and a list of similar cards with similarity scores, evaluate:
 
 Provide structured evaluation with clear reasoning."""
 
-        self.agent = make_agent(self.model, SimilarityEvaluation, system_prompt)
+        self.agent: Agent = make_agent(self.model, SimilarityEvaluation, system_prompt)
 
     def evaluate_similarity(
         self,

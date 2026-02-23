@@ -114,7 +114,7 @@ def test_fusion_mmr_diversifies_results():
 def test_fusion_handles_missing_modalities():
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
 
-    emb, adj, tagger = _make_dummy_env()
+    _, adj, _ = _make_dummy_env()
     fusion = WeightedLateFusion(embeddings=None, adj=adj, tagger=None, weights=FusionWeights())
     results = fusion.similar("A", k=2)
     assert len(results) >= 1

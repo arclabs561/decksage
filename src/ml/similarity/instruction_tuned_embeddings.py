@@ -10,12 +10,14 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 
+
 try:
     from sentence_transformers import SentenceTransformer
+
     HAS_SENTENCE_TRANSFORMERS = True
 except ImportError:
     HAS_SENTENCE_TRANSFORMERS = False
@@ -23,6 +25,7 @@ except ImportError:
 
 try:
     from ..utils.logging_config import get_logger
+
     logger = get_logger(__name__)
 except ImportError:
     logger = logging.getLogger(__name__)
@@ -39,7 +42,7 @@ class InstructionTunedCardEmbedder:
     - Archetype-specific recommendations
     """
 
-    DEFAULT_INSTRUCTIONS = {
+    DEFAULT_INSTRUCTIONS: ClassVar[dict[str, str]] = {
         "substitution": "query: Find functional substitute for",
         "budget": "query: Find budget alternative to",
         "format": "query: Find substitute legal in format for",
@@ -69,16 +72,16 @@ class InstructionTunedCardEmbedder:
             default_instruction: Default instruction type
         """
         if not HAS_SENTENCE_TRANSFORMERS:
-            raise ImportError(
-                "sentence-transformers required: pip install sentence-transformers"
-            )
+            raise ImportError("sentence-transformers required: pip install sentence-transformers")
 
         self.model_name = model_name
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.default_instruction = default_instruction
 
         logger.info(f"Loading instruction-tuned model: {model_name}")
-        self.model = SentenceTransformer(model_name, cache_folder=str(self.cache_dir) if self.cache_dir else None)
+        self.model = SentenceTransformer(
+            model_name, cache_folder=str(self.cache_dir) if self.cache_dir else None
+        )
         logger.info("✓ Model loaded")
 
         # Memory cache for embeddings
@@ -130,8 +133,7 @@ class InstructionTunedCardEmbedder:
         if instruction is None:
             if instruction_type:
                 instruction = self.DEFAULT_INSTRUCTIONS.get(
-                    instruction_type,
-                    self.DEFAULT_INSTRUCTIONS[self.default_instruction]
+                    instruction_type, self.DEFAULT_INSTRUCTIONS[self.default_instruction]
                 )
             else:
                 instruction = self.DEFAULT_INSTRUCTIONS[self.default_instruction]
@@ -212,11 +214,15 @@ class InstructionTunedCardEmbedder:
         Returns:
             List of (card, similarity_score) tuples
         """
-        query_emb = self.embed_card(query_card, instruction=instruction, instruction_type=instruction_type)
+        query_emb = self.embed_card(
+            query_card, instruction=instruction, instruction_type=instruction_type
+        )
 
         similarities = []
         for candidate in candidate_cards:
-            candidate_emb = self.embed_card(candidate, instruction=instruction, instruction_type=instruction_type)
+            candidate_emb = self.embed_card(
+                candidate, instruction=instruction, instruction_type=instruction_type
+            )
 
             # Cosine similarity
             dot_product = np.dot(query_emb, candidate_emb)

@@ -351,7 +351,7 @@ def load_similarity_annotations(
 
             decks = load_decks_for_temporal_filtering(game=game)
             if decks:
-                train_anns, filtered, temp_stats = filter_annotations_by_temporal_split(
+                train_anns, _, temp_stats = filter_annotations_by_temporal_split(
                     annotations, decks, train_frac=train_frac, val_frac=val_frac, game=game
                 )
                 if temp_stats.get("filtered_out", 0) > 0:
@@ -546,7 +546,7 @@ def convert_similarity_score_to_relevance(
     """Convert similarity score (0-1) to relevance score (0-4)."""
     if scale == "0-4":
         # Map 0.0-1.0 to 0-4
-        return int(round(similarity_score * 4.0))
+        return round(similarity_score * 4.0)
     else:
         # Default: assume already 0-4
         return int(similarity_score)
