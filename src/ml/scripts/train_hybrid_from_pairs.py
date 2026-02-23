@@ -89,9 +89,8 @@ def build_graph_from_pairs(
     try:
         from ml.data.card_database import get_card_database
 
-        card_db = get_card_database()
+        get_card_database()
     except ImportError:
-        card_db = None
         logger.warning("CardDatabase not available - game detection may be less accurate")
 
     use_sqlite = graph_path.suffix == ".db" if graph_path else False

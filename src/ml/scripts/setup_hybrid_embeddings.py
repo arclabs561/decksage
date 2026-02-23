@@ -13,14 +13,14 @@ Creates initial models and configuration.
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 
 from ..data.incremental_graph import IncrementalCardGraph
 from ..similarity.gnn_embeddings import CardGNNEmbedder
 from ..similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
-from ..utils.paths import PATHS
 from ..utils.logging_config import setup_script_logging
+from ..utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -85,9 +85,7 @@ def setup_gnn_embeddings(
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Setup hybrid embedding system"
-    )
+    parser = argparse.ArgumentParser(description="Setup hybrid embedding system")
     parser.add_argument(
         "--graph-path",
         type=Path,
@@ -114,12 +112,12 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Setting up Hybrid Embedding System")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # 1. Instruction-tuned embeddings (always setup - zero-shot)
-    instruction_embedder = setup_instruction_tuned_embeddings(
+    setup_instruction_tuned_embeddings(
         model_name=args.instruction_model,
     )
 
@@ -131,9 +129,9 @@ def main() -> int:
             gnn_model_path=args.gnn_model,
         )
 
-    logger.info("\n" + "="*60)
+    logger.info("\n" + "=" * 60)
     logger.info("Setup Complete")
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("✓ Instruction-tuned embeddings: Ready (zero-shot)")
     if gnn_embedder:
         logger.info("✓ GNN embeddings: Ready")

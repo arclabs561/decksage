@@ -122,12 +122,9 @@ def test_enhanced_graph():
     print(f"   MTG edges: {len(mtg_edges)}")
 
     # Test Parquet export
-    try:
-        import pyarrow.parquet as pq
+    import importlib.util
 
-        HAS_PARQUET = True
-    except ImportError:
-        HAS_PARQUET = False
+    HAS_PARQUET = importlib.util.find_spec("pyarrow.parquet") is not None
 
     if HAS_PARQUET:
         print("\n7. Testing Parquet export...")

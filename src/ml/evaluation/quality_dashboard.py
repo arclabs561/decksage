@@ -179,7 +179,7 @@ def compute_system_health(
                 embedding_performance = results[best_method]
             elif results:
                 # Use first method
-                embedding_performance = list(results.values())[0]
+                embedding_performance = next(iter(results.values()))
         elif "summary" in data:
             # Summary format
             summary = data["summary"]

@@ -7,6 +7,8 @@ validation and versioning.
 
 from __future__ import annotations
 
+from typing import ClassVar
+
 
 try:
     from pydantic import BaseModel, Field, field_validator
@@ -79,7 +81,7 @@ class DeckExport(BaseModel):
             return {}
         return super().model_json_schema()
 
-    model_config = {
+    model_config: ClassVar[dict[str, object]] = {
         # Allow backward compatibility aliases
         "populate_by_name": True,
         # Allow extra fields for forward compatibility

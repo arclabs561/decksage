@@ -369,6 +369,8 @@ class TestIntegrationBridges:
         try:
             from ml.utils.evaluation_registry import EvaluationRegistry
 
+            assert EvaluationRegistry is not None
+
             logger = EvaluationLogger(
                 log_dir=temp_dir / "logs",
                 bridge_to_registry=True,

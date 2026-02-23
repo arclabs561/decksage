@@ -164,7 +164,7 @@ class GraphQualityAgent:
             "min_edge_weight": edge_stats[3],
             "max_edge_weight": edge_stats[4],
             "suspicious_weights": edge_stats[5],
-            "game_distribution": {game: count for game, count in game_dist},
+            "game_distribution": dict(game_dist),
         }
 
         logger.info(

@@ -474,6 +474,8 @@ class EvaluationRegistry:
         # Extract key metrics
         metrics = self._extract_metrics(evaluation_results)
 
+        version_tag = model_version if model_version.startswith("v") else f"v{model_version}"
+
         # Prepare full evaluation record
         evaluation_record = {
             "timestamp": timestamp,
@@ -506,7 +508,7 @@ class EvaluationRegistry:
 
         # Save versioned results file (with locking and atomic writes)
         if save_versioned:
-            results_file = self.results_dir / f"{model_type}_evaluation_v{model_version}.json"
+            results_file = self.results_dir / f"{model_type}_evaluation_{version_tag}.json"
         else:
             results_file = self.results_dir / f"{model_type}_evaluation_latest.json"
 
@@ -557,7 +559,7 @@ class EvaluationRegistry:
             try:
                 self.structured_logger.log_event(
                     event_type="evaluation",
-                    message=f"Evaluation recorded: {model_type} v{model_version}",
+                    message=f"Evaluation recorded: {model_type} {version_tag}",
                     level="info",
                     model_type=model_type,
                     model_version=model_version,
@@ -580,8 +582,12 @@ class EvaluationRegistry:
         # Direct metrics (top-level)
         if "p_at_10" in results:
             metrics["p_at_10"] = float(results["p_at_10"])
+        elif "p@10" in results:
+            metrics["p_at_10"] = float(results["p@10"])
         if "p_at_5" in results:
             metrics["p_at_5"] = float(results["p_at_5"])
+        elif "p@5" in results:
+            metrics["p_at_5"] = float(results["p@5"])
         if "mrr" in results:
             metrics["mrr"] = float(results["mrr"])
         if "ndcg" in results:

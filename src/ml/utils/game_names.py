@@ -30,14 +30,10 @@ GAME_NAME_MAP = {
     "pkm": "PKM",
     "ygo": "YGO",
     "yugioh!": "YGO",
-    "yugioh": "YGO",
     "dig": "DIG",
-    "digimon": "DIG",
     "opc": "OPC",
     "opcg": "OPC",
-    "onepiece": "OPC",
     "one piece": "OPC",
-    "riftbound": "RFT",
     "rift": "RFT",
 }
 

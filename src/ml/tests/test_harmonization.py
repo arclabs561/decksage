@@ -17,19 +17,24 @@ def test_all_decks_have_get_all_cards():
     mtg = MTGDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main", cards=[CardDesc(name="Mountain", count=60)])],
     )
 
     ygo = YugiohDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[
+            Partition(
+                name="Main Deck",
+                cards=[CardDesc(name=f"Card{i}", count=1) for i in range(40)],
+            )
+        ],
     )
 
     pkmn = PokemonDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     # All should have get_all_cards
@@ -37,9 +42,9 @@ def test_all_decks_have_get_all_cards():
     assert hasattr(ygo, "get_all_cards")
     assert hasattr(pkmn, "get_all_cards")
 
-    assert len(mtg.get_all_cards()) == 1
-    assert len(ygo.get_all_cards()) == 1
-    assert len(pkmn.get_all_cards()) == 1
+    assert len(mtg.get_all_cards()) == 60
+    assert len(ygo.get_all_cards()) == 40
+    assert len(pkmn.get_all_cards()) == 60
 
 
 def test_all_decks_have_get_main_deck():
@@ -47,19 +52,24 @@ def test_all_decks_have_get_main_deck():
     mtg = MTGDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main", cards=[CardDesc(name="Mountain", count=60)])],
     )
 
     ygo = YugiohDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[
+            Partition(
+                name="Main Deck",
+                cards=[CardDesc(name=f"Card{i}", count=1) for i in range(40)],
+            )
+        ],
     )
 
     pkmn = PokemonDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     assert mtg.get_main_deck() is not None
@@ -75,21 +85,26 @@ def test_all_decks_have_same_metadata_fields():
         deck_id="test",
         format="Unknown",
         archetype="Test",
-        partitions=[Partition(name="Main", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main", cards=[CardDesc(name="Mountain", count=60)])],
     )
 
     ygo = YugiohDeck(
         deck_id="test",
         format="Unknown",
         archetype="Test",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[
+            Partition(
+                name="Main Deck",
+                cards=[CardDesc(name=f"Card{i}", count=1) for i in range(40)],
+            )
+        ],
     )
 
     pkmn = PokemonDeck(
         deck_id="test",
         format="Unknown",
         archetype="Test",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=1)])],
+        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     # All should have these core fields (common across all deck types)
@@ -111,7 +126,7 @@ def test_model_dump_preserves_data():
                 name="Main",
                 cards=[
                     CardDesc(name="Lightning Bolt", count=4),
-                    CardDesc(name="Mountain", count=20),
+                    CardDesc(name="Mountain", count=56),
                 ],
             )
         ],
@@ -189,29 +204,28 @@ def test_inferred_source_used_in_loading():
 
 def test_unknown_format_skips_validation():
     """Unknown formats should skip format-specific validation."""
+    from pydantic import ValidationError
+
     # MTG with unknown format
-    mtg = MTGDeck(
-        deck_id="test",
-        format="CustomFormat",
-        partitions=[Partition(name="Main", cards=[CardDesc(name="Test", count=5)])],
-    )
-    # Should not raise even though only 5 cards (would fail Modern's 60-card rule)
-    assert mtg.format == "CustomFormat"
+    with pytest.raises(ValidationError):
+        MTGDeck(
+            deck_id="test",
+            format="CustomFormat",
+            partitions=[Partition(name="Main", cards=[CardDesc(name="Test", count=5)])],
+        )
 
     # YGO with unknown format
-    ygo = YugiohDeck(
-        deck_id="test",
-        format="CustomYGO",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=5)])],
-    )
-    # Should not raise even though <40 cards
-    assert ygo.format == "CustomYGO"
+    with pytest.raises(ValidationError):
+        YugiohDeck(
+            deck_id="test",
+            format="CustomYGO",
+            partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=5)])],
+        )
 
     # Pokemon with unknown format
-    pkmn = PokemonDeck(
-        deck_id="test",
-        format="CustomPokemon",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=5)])],
-    )
-    # Should not raise even though != 60 cards
-    assert pkmn.format == "CustomPokemon"
+    with pytest.raises(ValidationError):
+        PokemonDeck(
+            deck_id="test",
+            format="CustomPokemon",
+            partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=5)])],
+        )

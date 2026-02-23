@@ -48,7 +48,7 @@ def extract_decks_by_archetype():
 
             if cards:
                 decks_by_archetype[archetype].append(cards)
-        except:
+        except Exception:
             continue
 
     print(f"✓ Found {len(decks_by_archetype)} archetypes")

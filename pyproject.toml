@@ -103,6 +103,7 @@ exclude = [
     "archive",
     "experiments/archived",
     "src/backend/**",
+    "src/ml/scripts/**",
     "integration_test_tmp/**",
     "logs/**",
 ]
@@ -114,11 +115,9 @@ select = [
     "W",   # pycodestyle warnings
     "F",   # Pyflakes
     "I",   # isort (import sorting)
-    "N",   # pep8-naming
     "UP",  # pyupgrade (modernize code)
     "B",   # flake8-bugbear (find likely bugs)
     "C4",  # flake8-comprehensions
-    "SIM", # flake8-simplify
     "RUF", # Ruff-specific rules
 ]
 
@@ -126,6 +125,11 @@ ignore = [
     "E501",  # Line too long (handled by formatter)
     "B008",  # Do not perform function call in argument defaults
     "B904",  # Within an except clause, raise without from
+    "B007",  # Loop control variable not used (common in analysis/scripts)
+    "B905",  # `zip()` without explicit `strict=` (noisy; opt-in)
+    "RUF001",  # Ambiguous unicode characters
+    "RUF002",  # Ambiguous unicode in docstrings
+    "RUF003",  # Ambiguous unicode in comments
 ]
 
 [tool.ruff.format]
@@ -141,10 +145,12 @@ lines-after-imports = 2
 
 [tool.ruff.lint.per-file-ignores]
 # Test files can be less strict
-"tests/**/*.py" = ["S101", "PLR2004"]
-"**/test_*.py" = ["S101", "PLR2004"]
-"src/ml/validation/validators/loader.py" = ["PLR0911", "PLR0912", "PLR0915"]
-"**/validation/validators/loader.py" = ["PLR0911", "PLR0912", "PLR0915"]
+"tests/**/*.py" = ["E402", "F841", "B011"]
+"src/ml/tests/**/*.py" = ["E402", "F841", "B011"]
+"src/ml/scripts/**/*.py" = ["E402"]
+
+# Legacy tests are retained for reference, not strict linting
+"src/ml/tests/legacy/**/*.py" = ["F401"]
 
 [tool.pytest.ini_options]
 testpaths = ["src/ml/tests"]

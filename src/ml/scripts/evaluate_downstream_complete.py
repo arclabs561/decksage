@@ -84,16 +84,16 @@ else:
     if src_dir.exists() and str(src_dir) not in sys.path:
         sys.path.insert(0, str(src_dir))
 
-from ml.deck_building.contextual_discovery import ContextualCardDiscovery  # noqa: E402
-from ml.deck_building.deck_completion import (  # noqa: E402
+from ml.deck_building.contextual_discovery import ContextualCardDiscovery
+from ml.deck_building.deck_completion import (
     CompletionConfig,
     greedy_complete,
 )
-from ml.deck_building.deck_quality import assess_deck_quality  # noqa: E402
-from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints  # noqa: E402
-from ml.similarity.fusion import FusionWeights, WeightedLateFusion  # noqa: E402
-from ml.utils.logging_config import setup_script_logging  # noqa: E402
-from ml.utils.paths import PATHS  # noqa: E402
+from ml.deck_building.deck_quality import assess_deck_quality
+from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
+from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+from ml.utils.logging_config import setup_script_logging
+from ml.utils.paths import PATHS
 
 
 logger = setup_script_logging()

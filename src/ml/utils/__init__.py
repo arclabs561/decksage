@@ -8,17 +8,20 @@ from .paths import PATHS
 
 # Annotation utilities (optional - may not be available in all contexts)
 try:
-    from .annotation_utils import (
-        convert_annotations_to_substitution_pairs,
-        extract_substitution_pairs_from_annotations,
-        load_hand_annotations,
-        load_similarity_annotations,
-        load_substitution_pairs_from_annotations,
-    )
-
-    HAS_ANNOTATION_UTILS = True
+    from . import annotation_utils as _annotation_utils
 except ImportError:
     HAS_ANNOTATION_UTILS = False
+    _annotation_utils = None  # type: ignore[assignment]
+else:
+    HAS_ANNOTATION_UTILS = True
+    convert_annotations_to_substitution_pairs = (
+        _annotation_utils.convert_annotations_to_substitution_pairs
+    )
+    extract_substitution_pairs_from_annotations = (
+        _annotation_utils.extract_substitution_pairs_from_annotations
+    )
+    load_hand_annotations = _annotation_utils.load_hand_annotations
+    load_similarity_annotations = _annotation_utils.load_similarity_annotations
 
 # AimStack helpers (optional)
 try:
@@ -55,7 +58,6 @@ try:
                 "extract_substitution_pairs_from_annotations",
                 "load_hand_annotations",
                 "load_similarity_annotations",
-                "load_substitution_pairs_from_annotations",
             ]
         )
 except ImportError:
@@ -79,6 +81,5 @@ except ImportError:
                 "extract_substitution_pairs_from_annotations",
                 "load_hand_annotations",
                 "load_similarity_annotations",
-                "load_substitution_pairs_from_annotations",
             ]
         )

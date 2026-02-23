@@ -23,7 +23,7 @@ def evaluate_ensemble(test_set, config):
         try:
             methods[name] = KeyedVectors.load(f"../../data/embeddings/{name}.wv")
             print(f"  Loaded {name}")
-        except:
+        except Exception:
             print(f"  Missing {name}")
 
     # Jaccard

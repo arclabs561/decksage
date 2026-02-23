@@ -201,7 +201,6 @@ def _check_meta_relevance_at_time(
     meta_state: dict[str, Any],
 ) -> bool:
     """Check if card was meta-relevant at recommendation time."""
-    top_decks = meta_state.get("top_decks", [])
     meta_share = meta_state.get("meta_share", {})
 
     # Check if card appears in top decks or has significant meta share

@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import pytest
 
+
 try:
     import fastapi  # noqa: F401
 
@@ -68,4 +69,3 @@ def test_feedback_requires_game_in_multi_game_mode(monkeypatch: pytest.MonkeyPat
         fb.submit_feedback(req)
     assert getattr(e.value, "status_code", None) == 400
     assert "game is required" in str(getattr(e.value, "detail", ""))
-

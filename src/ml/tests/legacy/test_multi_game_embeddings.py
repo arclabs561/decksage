@@ -11,17 +11,18 @@ Tests:
 
 from __future__ import annotations
 
-import json
 import tempfile
 from pathlib import Path
 
 import pytest
+
 
 pytestmark = pytest.mark.skip("Legacy tests - module functions not available")
 
 try:
     import pandas as pd
     from gensim.models import KeyedVectors
+
     HAS_DEPS = True
 except ImportError:
     HAS_DEPS = False
@@ -40,20 +41,24 @@ def test_load_multi_game_pairs():
         yugioh_pairs = tmp_path / "yugioh_pairs.csv"
 
         # MTG pairs
-        pd.DataFrame({
-            "NAME_1": ["Lightning Bolt", "Brainstorm", "Sol Ring"],
-            "NAME_2": ["Shock", "Ponder", "Mana Crypt"],
-            "COUNT_SET": [10, 8, 5],
-            "COUNT_MULTISET": [15, 12, 7],
-        }).to_csv(mtg_pairs, index=False)
+        pd.DataFrame(
+            {
+                "NAME_1": ["Lightning Bolt", "Brainstorm", "Sol Ring"],
+                "NAME_2": ["Shock", "Ponder", "Mana Crypt"],
+                "COUNT_SET": [10, 8, 5],
+                "COUNT_MULTISET": [15, 12, 7],
+            }
+        ).to_csv(mtg_pairs, index=False)
 
         # Yugioh pairs
-        pd.DataFrame({
-            "NAME_1": ["Dark Magician", "Blue-Eyes White Dragon"],
-            "NAME_2": ["Dark Magician Girl", "Blue-Eyes Alternative"],
-            "COUNT_SET": [5, 3],
-            "COUNT_MULTISET": [7, 4],
-        }).to_csv(yugioh_pairs, index=False)
+        pd.DataFrame(
+            {
+                "NAME_1": ["Dark Magician", "Blue-Eyes White Dragon"],
+                "NAME_2": ["Dark Magician Girl", "Blue-Eyes Alternative"],
+                "COUNT_SET": [5, 3],
+                "COUNT_MULTISET": [7, 4],
+            }
+        ).to_csv(yugioh_pairs, index=False)
 
         pairs_csvs = {
             "MTG": mtg_pairs,
@@ -101,12 +106,14 @@ def test_multi_game_embedding_training():
 
         # Create test pairs
         pairs_file = tmp_path / "test_pairs.csv"
-        pd.DataFrame({
-            "NAME_1": ["Card1", "Card2", "Card3"],
-            "NAME_2": ["Card2", "Card3", "Card1"],
-            "COUNT_SET": [2, 2, 2],
-            "COUNT_MULTISET": [3, 3, 3],
-        }).to_csv(pairs_file, index=False)
+        pd.DataFrame(
+            {
+                "NAME_1": ["Card1", "Card2", "Card3"],
+                "NAME_2": ["Card2", "Card3", "Card1"],
+                "COUNT_SET": [2, 2, 2],
+                "COUNT_MULTISET": [3, 3, 3],
+            }
+        ).to_csv(pairs_file, index=False)
 
         output_file = tmp_path / "test_embeddings.wv"
 

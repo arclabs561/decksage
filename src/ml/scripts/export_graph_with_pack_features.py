@@ -77,7 +77,7 @@ def export_graph_with_pack_features(
                     pack_info = {
                         "pack_count": len(pack_co_occs),
                         "pack_types": list(
-                            set(p.get("pack_type") for p in pack_co_occs if p.get("pack_type"))
+                            {p.get("pack_type") for p in pack_co_occs if p.get("pack_type")}
                         ),
                         "latest_release": max(
                             (p.get("release_date") for p in pack_co_occs if p.get("release_date")),

@@ -58,7 +58,7 @@ def extract_card_types():
                     "is_artifact": "Artifact" in type_line,
                     "is_enchantment": "Enchantment" in type_line,
                 }
-        except:
+        except Exception:
             continue
 
     print(f"✓ Extracted types for {len(card_types):,} cards")

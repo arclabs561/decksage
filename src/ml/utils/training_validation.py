@@ -58,7 +58,6 @@ def compute_ranking_metrics(
         try:
             # Get most similar items
             similar_items = embeddings.most_similar(query, topn=k * 2)  # Get more for recall
-            similar_items_dict = {item: score for item, score in similar_items}
 
             # MRR: Reciprocal rank of first relevant item
             rank = None

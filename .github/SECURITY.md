@@ -13,11 +13,7 @@ We currently support security updates for the latest version of DeckSage.
 
 If you discover a security vulnerability, please **do not** open a public issue.
 
-Instead, please report it via one of the following methods:
-
-1. **GitHub Security Advisory**: Use GitHub's private vulnerability reporting feature
-2. **Email**: [Add security contact email if available]
-3. **Private Issue**: Create a private issue (if you have access)
+Instead, please report it via **GitHub Security Advisories** (private vulnerability reporting).
 
 ### What to Include
 

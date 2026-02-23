@@ -20,7 +20,12 @@ try:
 except ImportError:
     HAS_PYDANTIC = False
     BaseModel = object  # type: ignore
-    Field = lambda **kwargs: lambda x: x  # type: ignore
+
+    def Field(**_kwargs: Any):  # type: ignore
+        def decorator(x: Any) -> Any:
+            return x
+
+        return decorator
 
 
 class GraphFeatures(BaseModel):

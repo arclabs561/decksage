@@ -165,7 +165,7 @@ def main() -> int:
     logger.info("Fix Multilingual Cards for ALL Games")
     logger.info("=" * 70)
 
-    results = fix_all_games_multilingual(
+    fix_all_games_multilingual(
         args.graph_db,
         args.min_decks,
         args.limit,

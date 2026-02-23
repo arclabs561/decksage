@@ -54,7 +54,7 @@ class ActiveAnnotationSelector:
                             method = exp.get("method", "")
                             if "archetype" in method.lower():
                                 self.failed_queries.add("archetype_based")
-                    except:
+                    except Exception:
                         pass
 
         print("Loaded:")

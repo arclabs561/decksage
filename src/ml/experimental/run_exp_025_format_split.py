@@ -54,7 +54,7 @@ def extract_and_train_per_format(test_set, config):
                 for c2 in cards[i + 1 :]:
                     key = tuple(sorted([c1, c2]))
                     format_pairs[fmt][key] += 1
-        except:
+        except Exception:
             continue
 
     print("\nFormat distribution:")

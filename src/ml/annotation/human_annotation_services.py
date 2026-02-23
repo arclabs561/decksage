@@ -607,7 +607,7 @@ IMPORTANT:
                     import json
 
                     annotation = json.loads(annotation)
-                except:
+                except json.JSONDecodeError:
                     # If it's a string, try to extract key-value pairs
                     annotation = {"raw_response": annotation}
 

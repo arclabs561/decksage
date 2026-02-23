@@ -1,5 +1,5 @@
 {
-  "timestamp": "2026-01-13T14:54:18.540262",
+  "timestamp": "2026-02-22T22:13:59.478384",
   "model_type": "test_model",
   "model_version": "v2026-W01",
   "model_path": "/path/to/model",
@@ -17,7 +17,7 @@
     }
   },
   "metadata": {
-    "run_id": "test_test_20260113_195418",
+    "run_id": "test_test_20260223_031359",
     "evaluation_type": "test",
     "method": "test"
   },

@@ -199,7 +199,7 @@ class MetaLearner:
                     # Handle both exp_001 and exp_008_revised
                     num_part = exp_id[4:].split("_")[0]
                     max_id = max(max_id, int(num_part))
-                except:
+                except ValueError:
                     pass
         next_id = max_id + 1
 

@@ -196,7 +196,7 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    results = run_post_update_fixes(
+    run_post_update_fixes(
         graph_db=args.graph_db,
         fix_unknown=not args.skip_unknown,
         fix_mismatches=not args.skip_mismatches,

@@ -57,7 +57,19 @@ def test_fusion_weight_effect():
             "top_k": 2,
             "use_case": "substitute",
             "mode": "fusion",
-            "weights": {"embed": 0.8, "jaccard": 0.2, "functional": 0.0},
+            # Explicitly zero out other modalities so only embed/jaccard affect ordering.
+            "weights": {
+                "embed": 0.8,
+                "jaccard": 0.2,
+                "functional": 0.0,
+                "text_embed": 0.0,
+                "visual_embed": 0.0,
+                "sideboard": 0.0,
+                "temporal": 0.0,
+                "gnn": 0.0,
+                "archetype": 0.0,
+                "format": 0.0,
+            },
         },
     )
     assert r.status_code == 200
@@ -73,7 +85,19 @@ def test_fusion_weight_effect():
             "top_k": 2,
             "use_case": "substitute",
             "mode": "fusion",
-            "weights": {"embed": 0.2, "jaccard": 0.8, "functional": 0.0},
+            # Explicitly zero out other modalities so only embed/jaccard affect ordering.
+            "weights": {
+                "embed": 0.2,
+                "jaccard": 0.8,
+                "functional": 0.0,
+                "text_embed": 0.0,
+                "visual_embed": 0.0,
+                "sideboard": 0.0,
+                "temporal": 0.0,
+                "gnn": 0.0,
+                "archetype": 0.0,
+                "format": 0.0,
+            },
         },
     )
     assert r.status_code == 200

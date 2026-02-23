@@ -182,12 +182,10 @@ def calculate_balance_impact(
     if archetype_norms:
         target_avg_cmc = archetype_norms.get("avg_cmc", 2.5)
         target_land_count = archetype_norms.get("land_count", 20)
-        target_land_percentage = archetype_norms.get("land_percentage", 0.33)
     else:
         # Default norms (Magic: The Gathering)
         target_avg_cmc = 2.5
         target_land_count = 20
-        target_land_percentage = 0.33
 
     # Calculate deviations from norms
     cmc_deviation_before = abs(deck_before.avg_cmc - target_avg_cmc)

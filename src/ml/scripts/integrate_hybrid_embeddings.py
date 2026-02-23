@@ -9,15 +9,15 @@ Updates fusion system with optimal weights.
 from __future__ import annotations
 
 import argparse
-import logging
 from pathlib import Path
 from typing import Any
 
 from ..similarity.fusion import FusionWeights, WeightedLateFusion
 from ..similarity.gnn_embeddings import CardGNNEmbedder
 from ..similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
-from ..utils.paths import PATHS
 from ..utils.logging_config import setup_script_logging
+from ..utils.paths import PATHS
+
 
 logger = setup_script_logging()
 
@@ -70,10 +70,9 @@ def load_hybrid_embeddings(
     if cooccurrence_embeddings_path and cooccurrence_embeddings_path.exists():
         try:
             from gensim.models import KeyedVectors
+
             logger.info("Loading co-occurrence embeddings...")
-            result["cooccurrence_embeddings"] = KeyedVectors.load(
-                str(cooccurrence_embeddings_path)
-            )
+            result["cooccurrence_embeddings"] = KeyedVectors.load(str(cooccurrence_embeddings_path))
             result["loaded"]["cooccurrence"] = True
             logger.info("✓ Co-occurrence embeddings loaded")
         except Exception as e:
@@ -104,18 +103,19 @@ def create_fusion_with_hybrid_embeddings(
     """
     # Recommended weights for hybrid system
     weights = FusionWeights(
-        embed=0.20,        # Co-occurrence embeddings
-        jaccard=0.15,      # Direct co-occurrence
-        functional=0.10,   # Functional tags
-        text_embed=0.25,   # Instruction-tuned (zero-shot, new cards)
-        visual_embed=0.20, # Visual embeddings (card images)
-        gnn=0.30,          # GraphSAGE (multi-hop, new cards)
+        embed=0.20,  # Co-occurrence embeddings
+        jaccard=0.15,  # Direct co-occurrence
+        functional=0.10,  # Functional tags
+        text_embed=0.25,  # Instruction-tuned (zero-shot, new cards)
+        visual_embed=0.20,  # Visual embeddings (card images)
+        gnn=0.30,  # GraphSAGE (multi-hop, new cards)
     )
 
     # Load visual embedder if available
     visual_embedder = None
     try:
         from ..similarity.visual_embeddings import get_visual_embedder
+
         visual_embedder = get_visual_embedder()
     except (ImportError, Exception):
         pass  # Visual embeddings optional
@@ -136,9 +136,7 @@ def create_fusion_with_hybrid_embeddings(
 
 def main() -> int:
     """Main entry point."""
-    parser = argparse.ArgumentParser(
-        description="Integrate hybrid embeddings into system"
-    )
+    parser = argparse.ArgumentParser(description="Integrate hybrid embeddings into system")
     parser.add_argument(
         "--gnn-model",
         type=Path,
@@ -164,9 +162,9 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    logger.info("="*60)
+    logger.info("=" * 60)
     logger.info("Integrating Hybrid Embeddings")
-    logger.info("="*60)
+    logger.info("=" * 60)
 
     # Load all embeddings
     embeddings_data = load_hybrid_embeddings(

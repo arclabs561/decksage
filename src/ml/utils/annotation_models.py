@@ -15,8 +15,15 @@ try:
 except ImportError:
     HAS_PYDANTIC = False
     BaseModel = object  # type: ignore
-    Field = lambda **kwargs: lambda x: x  # type: ignore
-    field_validator = lambda *args, **kwargs: lambda x: x  # type: ignore
+
+    def Field(*, default: Any = None, **_kwargs: Any) -> Any:  # type: ignore
+        return default
+
+    def field_validator(*_args: Any, **_kwargs: Any):  # type: ignore
+        def decorator(fn: Any) -> Any:
+            return fn
+
+        return decorator
 
 
 class UnifiedAnnotation(BaseModel):
@@ -87,7 +94,7 @@ class UnifiedAnnotation(BaseModel):
             # Warn but allow unknown sources
             import warnings
 
-            warnings.warn(f"Unknown annotation source: {v}")
+            warnings.warn(f"Unknown annotation source: {v}", stacklevel=2)
         return v
 
     @field_validator("similarity_type")
@@ -108,7 +115,7 @@ class UnifiedAnnotation(BaseModel):
         if v not in valid_types:
             import warnings
 
-            warnings.warn(f"Unknown similarity type: {v}")
+            warnings.warn(f"Unknown similarity type: {v}", stacklevel=2)
         return v
 
     def model_dump_for_storage(self) -> dict[str, Any]:

@@ -13,6 +13,8 @@ import logging
 from pathlib import Path
 from typing import Any
 
+from ..utils.paths import PATHS
+
 
 logger = logging.getLogger("decksage.api.signals")
 
@@ -47,23 +49,6 @@ try:
 except ImportError:
     HAS_VISUAL_EMBED = False
     CardVisualEmbedder = None
-
-from ..utils.paths import PATHS
-
-
-try:
-    from ..similarity.archetype_signal import (
-        compute_archetype_cooccurrence,
-        compute_archetype_staples,
-    )
-    from ..similarity.format_signal import (
-        compute_format_cooccurrence,
-        compute_format_transition_patterns,
-    )
-
-    HAS_ARCHETYPE_FORMAT = True
-except ImportError:
-    HAS_ARCHETYPE_FORMAT = False
 
 
 def load_signals_to_state(

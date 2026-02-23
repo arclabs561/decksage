@@ -153,7 +153,6 @@ def critique_similarity_prompt() -> dict[str, Any]:
         query = case["query"]
         candidate = case["candidate"]
         expected = case["expected"]
-        context = case.get("context", "")
         game = case.get("game", "magic")
         temporal = case.get("temporal")
 
