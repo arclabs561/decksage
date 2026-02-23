@@ -442,7 +442,7 @@ def main() -> int:
     parser.add_argument(
         "--embeddings-dir",
         type=str,
-        default="data/embeddings",
+        default=str(PATHS.embeddings),
         help="Embeddings directory",
     )
     parser.add_argument(
