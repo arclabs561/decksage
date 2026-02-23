@@ -17,6 +17,7 @@ import sys
 from pathlib import Path
 from typing import Any
 
+
 # Add src to path
 script_dir = Path(__file__).parent
 src_dir = script_dir.parent.parent / "src"
@@ -49,7 +50,7 @@ def validate_export_timestamps(deck_file: Path) -> dict[str, Any]:
                 # Check for any timestamp field
                 has_timestamp = False
                 for field in timestamp_fields:
-                    if field in deck and deck[field]:
+                    if deck.get(field):
                         found_fields.add(field)
                         has_timestamp = True
                         break
@@ -124,7 +125,7 @@ def main() -> int:
         result = validate_export_timestamps(deck_file)
 
         if result["valid"]:
-            print(f" ✓ All decks have timestamps")
+            print(" ✓ All decks have timestamps")
             print(f" ✓ Found fields: {', '.join(result['found_fields'])}")
         else:
             print(f" Error: {result['missing_timestamps']} decks missing timestamps")

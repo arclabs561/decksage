@@ -1,8 +1,7 @@
-from pathlib import Path
-import subprocess
 import json
-import time
+import subprocess
 from datetime import datetime
+from pathlib import Path
 
 
 def monitor():

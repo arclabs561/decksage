@@ -148,6 +148,8 @@ lines-after-imports = 2
 "tests/**/*.py" = ["E402", "F841", "B011"]
 "src/ml/tests/**/*.py" = ["E402", "F841", "B011"]
 "src/ml/scripts/**/*.py" = ["E402"]
+# Repo-root scripts add sys.path before importing ml
+"scripts/**/*.py" = ["E402"]
 
 # Legacy tests are retained for reference, not strict linting
 "src/ml/tests/legacy/**/*.py" = ["F401"]
