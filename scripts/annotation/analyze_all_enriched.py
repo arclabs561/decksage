@@ -43,13 +43,13 @@ def analyze_all_files(annotations_dir: Path) -> dict:
         }
 
     # Cross-file analysis
-    unique_pairs = set(
+    unique_pairs = {
         (a.get("card1"), a.get("card2"))
         for a in all_annotations
         if a.get("card1") and a.get("card2")
-    )
+    }
 
-    games = set(a.get("game") for a in all_annotations if a.get("game"))
+    games = {a.get("game") for a in all_annotations if a.get("game")}
     sources = Counter(a.get("source") for a in all_annotations if a.get("source"))
 
     # Similarity score distribution

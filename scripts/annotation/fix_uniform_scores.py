@@ -38,7 +38,7 @@ def detect_uniform_scores(file_path: Path) -> dict:
         "total": len(annotations),
         "unique_scores": len(unique_scores),
         "is_uniform": is_uniform,
-        "score_value": list(unique_scores)[0] if is_uniform else None,
+        "score_value": next(iter(unique_scores)) if is_uniform else None,
         "score_range": (min(scores), max(scores)) if scores else None,
     }
 

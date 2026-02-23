@@ -157,7 +157,7 @@ def find_data_format_inconsistencies() -> list[dict[str, Any]]:
                 queries = data
 
             if isinstance(queries, dict):
-                sample_query = list(queries.keys())[0] if queries else None
+                sample_query = next(iter(queries.keys())) if queries else None
                 if sample_query:
                     _ = queries[sample_query]
                     format_key = "has_queries_key" if has_queries_key else "direct_dict"

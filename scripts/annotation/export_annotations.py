@@ -115,11 +115,11 @@ def export_statistics(annotations: list[dict[str, Any]], output_path: Path) -> N
     stats = {
         "total_annotations": len(annotations),
         "unique_pairs": len(
-            set(
+            {
                 tuple(sorted([ann.get("card1", ""), ann.get("card2", "")]))
                 for ann in annotations
                 if ann.get("card1") and ann.get("card2")
-            )
+            }
         ),
         "sources": dict(sources),
         "games": dict(games),

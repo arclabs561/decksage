@@ -145,7 +145,7 @@ def analyze_user_feedback(file_path: Path) -> dict:
     # Check for issues
     issues = []
     if len(rating_dist) == 1:
-        issues.append(f"All feedback has same rating: {list(rating_dist.keys())[0]}")
+        issues.append(f"All feedback has same rating: {next(iter(rating_dist.keys()))}")
     if len(annotations) < 5:
         issues.append("Very few feedback entries (< 5)")
 
@@ -210,9 +210,9 @@ def analyze_llm_annotations(file_path: Path) -> dict:
     # Check for suspicious patterns
     issues = []
     if len(relevance_dist) == 1:
-        issues.append(f"All annotations have same relevance: {list(relevance_dist.keys())[0]}")
+        issues.append(f"All annotations have same relevance: {next(iter(relevance_dist.keys()))}")
     if len(similarity_dist) == 1:
-        issues.append(f"All annotations have same similarity: {list(similarity_dist.keys())[0]}")
+        issues.append(f"All annotations have same similarity: {next(iter(similarity_dist.keys()))}")
     if stats["avg_confidence"] and stats["avg_confidence"] == 0.7:
         issues.append("All confidence scores are 0.7 (suspicious default value)")
 
@@ -261,7 +261,7 @@ def analyze_judgment_file(file_path: Path) -> dict:
     # Check for issues
     issues = []
     if len(relevance_dist) == 1:
-        issues.append(f"All evaluations have same relevance: {list(relevance_dist.keys())[0]}")
+        issues.append(f"All evaluations have same relevance: {next(iter(relevance_dist.keys()))}")
     if stats["bias_flags"]["groupthink_candidates"] == len(evaluations):
         issues.append("All candidates flagged for groupthink (suspicious)")
     if stats["avg_confidence"] == 1.0:
