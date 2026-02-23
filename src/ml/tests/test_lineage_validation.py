@@ -12,7 +12,7 @@ import pytest
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from src.ml.utils.lineage import (
+from ml.utils.lineage import (
     check_dependencies,
     get_order_for_path,
     safe_write,
