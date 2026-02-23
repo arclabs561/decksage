@@ -79,7 +79,7 @@ def migrate_registry_record(record: dict[str, Any], dry_run: bool = False) -> di
     # Extract information (handle both old and new schema)
     model_type = record.get("model_type") or record.get("model_type", "unknown")
     model_version = record.get("model_version") or record.get("version", "unknown")
-    timestamp = record.get("timestamp") or record.get("created_at")
+    _timestamp = record.get("timestamp") or record.get("created_at")
 
     # Extract metrics
     metrics = record.get("metrics", {})

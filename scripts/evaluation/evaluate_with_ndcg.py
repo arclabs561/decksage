@@ -113,15 +113,15 @@ def evaluate_method(
             ]:
                 all_relevant.update(labels.get(level, []))
 
-            retrieved_relevant = set(
+            retrieved_relevant = {
                 card for card, _ in predictions[:top_k] if card in all_relevant
-            )
+            }
             recall_at_k = len(retrieved_relevant) / len(all_relevant) if all_relevant else 0.0
             recall_at_k_scores.append(recall_at_k)
 
             # Compute Diversity (intra-list diversity: average pairwise distance)
             # Use simple metric: unique cards / total cards (higher = more diverse)
-            unique_cards = len(set(card for card, _ in predictions[:top_k]))
+            unique_cards = len({card for card, _ in predictions[:top_k]})
             diversity = unique_cards / top_k if top_k > 0 else 0.0
             diversity_scores.append(diversity)
 
