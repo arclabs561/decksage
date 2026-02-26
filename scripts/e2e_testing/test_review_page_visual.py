@@ -27,7 +27,7 @@ REVIEW_URL = f"{UI_URL}/review.html"
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import Page, expect, sync_playwright
+    from playwright.sync_api import expect, sync_playwright
 
     HAS_PLAYWRIGHT = True
 except ImportError:
@@ -517,7 +517,7 @@ class ReviewPageVisualTester:
             try:
                 expect(rating_3_btn).to_have_class("selected", timeout=1000)
                 logger.info("  ✅ Keyboard shortcut (3) worked")
-            except:
+            except Exception:
                 # Check if any rating is selected (might have scrolled)
                 selected_btn = first_item.locator(".rating-btn.selected")
                 if selected_btn.count() > 0:

@@ -158,7 +158,7 @@ def main():
 
     args = parser.parse_args()
 
-    result = integrate_feedback(
+    integrate_feedback(
         Path(args.feedback),
         Path(args.training_data) if args.training_data else None,
         Path(args.output) if args.output else None,

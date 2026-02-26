@@ -21,6 +21,7 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import Any
 
 
 # Add project root to path
@@ -267,7 +268,7 @@ def main():
 
     # Train model
     print(f"\nTraining enhanced {args.method} model...")
-    model, weights = train_enhanced_model(df, args.method)
+    _, weights = train_enhanced_model(df, args.method)
 
     print("  Learned weights:")
     for signal, weight in weights.items():

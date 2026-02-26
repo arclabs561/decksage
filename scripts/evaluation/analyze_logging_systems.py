@@ -65,7 +65,7 @@ def analyze_systems():
                 "records": count,
                 "purpose": "Model versioning + evaluation tracking",
             }
-        except:
+        except Exception:
             pass
         conn.close()
 

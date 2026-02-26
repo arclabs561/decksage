@@ -29,12 +29,12 @@ import requests
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import sync_playwright
+    from playwright.sync_api import sync_playwright  # noqa: F401
 
     HAS_PLAYWRIGHT = True
 except ImportError:
     HAS_PLAYWRIGHT = False
-    logger.warning("⚠️  Playwright not installed. Install with: uv add playwright")
+    print("WARNING: Playwright not installed. Install with: uv add playwright")
 
 # Import shared utilities and constants
 from test_constants import TIMEOUTS
@@ -219,6 +219,11 @@ def test_visual_layout():
                         if os.getenv("OPENAI_API_KEY")
                         else "anthropic"
                     )
+                    vlm_key = (
+                        os.getenv("GEMINI_API_KEY")
+                        or os.getenv("OPENAI_API_KEY")
+                        or os.getenv("ANTHROPIC_API_KEY")
+                    )
                     with open(node_script2, "w") as f:
                         f.write(f"""
                         import {{ validateScreenshot, createConfig }} from '@arclabs561/ai-visual-test';
@@ -311,6 +316,11 @@ def test_visual_accessibility():
                 else "openai"
                 if os.getenv("OPENAI_API_KEY")
                 else "anthropic"
+            )
+            vlm_key = (
+                os.getenv("GEMINI_API_KEY")
+                or os.getenv("OPENAI_API_KEY")
+                or os.getenv("ANTHROPIC_API_KEY")
             )
             with open(node_script, "w") as f:
                 f.write(f"""
@@ -405,11 +415,10 @@ def test_visual_regression():
             # Compare with baseline if it exists
             if baseline_path.exists():
                 # Use AI to compare semantically (not pixel-perfect)
-                compare_prompt = """
-                Compare these two screenshots of the search interface.
-                Are they functionally equivalent? Ignore minor spacing/color changes.
-                Focus on: layout structure, element positions, functionality.
-                """
+                # AI comparison prompt (for future use):
+                # "Compare these two screenshots of the search interface.
+                #  Are they functionally equivalent? Ignore minor spacing/color changes.
+                #  Focus on: layout structure, element positions, functionality."
 
                 # For now, validate current screenshot and compare scores
                 # Full comparison would require both images, simplified here
@@ -420,6 +429,11 @@ def test_visual_regression():
                     else "openai"
                     if os.getenv("OPENAI_API_KEY")
                     else "anthropic"
+                )
+                vlm_key = (
+                    os.getenv("GEMINI_API_KEY")
+                    or os.getenv("OPENAI_API_KEY")
+                    or os.getenv("ANTHROPIC_API_KEY")
                 )
                 with open(node_script, "w") as f:
                     f.write(f"""
@@ -536,6 +550,11 @@ def test_responsive_design():
                     else "openai"
                     if os.getenv("OPENAI_API_KEY")
                     else "anthropic"
+                )
+                vlm_key = (
+                    os.getenv("GEMINI_API_KEY")
+                    or os.getenv("OPENAI_API_KEY")
+                    or os.getenv("ANTHROPIC_API_KEY")
                 )
                 with open(node_script, "w") as f:
                     f.write(f"""

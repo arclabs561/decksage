@@ -17,7 +17,7 @@ Tests accessibility features comprehensively:
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import Page, expect, sync_playwright
+    from playwright.sync_api import Page, expect, sync_playwright  # noqa: F401
 
     HAS_PLAYWRIGHT = True
 except ImportError:

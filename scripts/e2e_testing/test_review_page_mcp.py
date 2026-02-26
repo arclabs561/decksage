@@ -69,7 +69,7 @@ class ReviewPageMCPTester:
         # For now, we'll use a placeholder that indicates MCP tool usage
         return {"url": REVIEW_URL, "timestamp": time.time()}
 
-    def find_element_by_role(self, snapshot: dict, role: str, name: str = None):
+    def find_element_by_role(self, snapshot: dict, role: str, name: str | None = None):
         """Find element in snapshot by role and optional name."""
         # This would parse the YAML snapshot from MCP browser tools
         # For now, return a placeholder structure

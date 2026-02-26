@@ -33,7 +33,10 @@ def quick_test():
     print("1. Testing imports...")
     try:
         from ml.similarity.fusion import FusionWeights
-        from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
+        from ml.similarity.visual_embeddings import (  # noqa: F401
+            CardVisualEmbedder,
+            get_visual_embedder,
+        )
 
         print("   ✓ Imports successful")
     except ImportError as e:
