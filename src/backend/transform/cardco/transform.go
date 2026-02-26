@@ -2,6 +2,7 @@ package cardco
 
 import (
 	"context"
+	csvlib "encoding/csv"
 	"fmt"
 	"os"
 	"sync"
@@ -47,7 +48,7 @@ func NewTransform(
 	}, nil
 }
 
-func (t *Transform) close() error {
+func (t *Transform) Close() error {
 	if err := t.db.Close(); err != nil {
 		return err
 	}
@@ -55,6 +56,127 @@ func (t *Transform) close() error {
 		return err
 	}
 	return nil
+}
+
+// ExportCSV writes the co-occurrence pairs to a CSV file with columns:
+// NAME_1, NAME_2, COUNT_SET, COUNT_MULTISET.
+func (t *Transform) ExportCSV(ctx context.Context, path string) error {
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create csv file: %w", err)
+	}
+	defer f.Close()
+
+	w := csvlib.NewWriter(f)
+	defer w.Flush()
+
+	if err := w.Write([]string{"NAME_1", "NAME_2", "COUNT_SET", "COUNT_MULTISET"}); err != nil {
+		return fmt.Errorf("failed to write csv header: %w", err)
+	}
+
+	err = t.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			var k tkey
+			if err := msgpack.Unmarshal(item.Key(), &k); err != nil {
+				return err
+			}
+			vb, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			var v tval
+			if err := msgpack.Unmarshal(vb, &v); err != nil {
+				return err
+			}
+			if err := w.Write([]string{
+				k.Name1,
+				k.Name2,
+				fmt.Sprintf("%d", v.Set),
+				fmt.Sprintf("%d", v.Multiset),
+			}); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to iterate db: %w", err)
+	}
+
+	w.Flush()
+	return w.Error()
+}
+
+// ExportAttributesCSV writes per-card attribute summaries to a CSV file with columns:
+// NAME, TOTAL_SET, TOTAL_MULTISET (aggregated across all pairs containing that card).
+func (t *Transform) ExportAttributesCSV(ctx context.Context, path string) error {
+	type cardAttr struct {
+		totalSet      int
+		totalMultiset int
+	}
+	attrs := make(map[string]*cardAttr)
+
+	err := t.db.View(func(txn *badger.Txn) error {
+		it := txn.NewIterator(badger.DefaultIteratorOptions)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			item := it.Item()
+			var k tkey
+			if err := msgpack.Unmarshal(item.Key(), &k); err != nil {
+				return err
+			}
+			vb, err := item.ValueCopy(nil)
+			if err != nil {
+				return err
+			}
+			var v tval
+			if err := msgpack.Unmarshal(vb, &v); err != nil {
+				return err
+			}
+			for _, name := range []string{k.Name1, k.Name2} {
+				a, ok := attrs[name]
+				if !ok {
+					a = &cardAttr{}
+					attrs[name] = a
+				}
+				a.totalSet += v.Set
+				a.totalMultiset += v.Multiset
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("failed to iterate db: %w", err)
+	}
+
+	f, err := os.Create(path)
+	if err != nil {
+		return fmt.Errorf("failed to create csv file: %w", err)
+	}
+	defer f.Close()
+
+	w := csvlib.NewWriter(f)
+	defer w.Flush()
+
+	if err := w.Write([]string{"NAME", "TOTAL_SET", "TOTAL_MULTISET"}); err != nil {
+		return fmt.Errorf("failed to write csv header: %w", err)
+	}
+
+	for name, a := range attrs {
+		if err := w.Write([]string{
+			name,
+			fmt.Sprintf("%d", a.totalSet),
+			fmt.Sprintf("%d", a.totalMultiset),
+		}); err != nil {
+			return err
+		}
+	}
+
+	w.Flush()
+	return w.Error()
 }
 
 type tkey struct {
