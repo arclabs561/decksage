@@ -104,7 +104,7 @@ Examples:
     try:
         sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src" / "ml" / "scripts"))
         from evaluate_all_embeddings import evaluate_embedding, load_test_set
-        from evaluate_all_embeddings import main as eval_main
+        from evaluate_all_embeddings import main as eval_main  # noqa: F401
     except ImportError as e:
         print(f"Error: Could not import evaluation script: {e}")
         return 1

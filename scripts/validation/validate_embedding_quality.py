@@ -63,7 +63,7 @@ def validate_embedding(embedding_path: Path, test_set_path: Path | None = None) 
 
         # Test similarity function
         if stats["vocab_size"] > 0:
-            sample_key = list(embedding.key_to_index.keys())[0]
+            sample_key = next(iter(embedding.key_to_index.keys()))
             try:
                 similar = embedding.most_similar(sample_key, topn=5)
                 stats["similarity_works"] = True

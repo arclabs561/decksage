@@ -69,7 +69,7 @@ except ImportError:
 
 try:
     from sklearn.linear_model import Ridge
-    from sklearn.metrics import mean_squared_error
+    from sklearn.metrics import mean_squared_error  # noqa: F401
 
     HAS_SKLEARN = True
 except ImportError:
@@ -406,17 +406,17 @@ def main():
         if not HAS_XGBOOST:
             print("  Error: XGBoost not installed. Install with: pip install xgboost")
             return 1
-        model, weights = train_xgboost_model(df)
+        _, weights = train_xgboost_model(df)
     elif args.method == "lightgbm":
         if not HAS_LIGHTGBM:
             print("  Error: LightGBM not installed. Install with: pip install lightgbm")
             return 1
-        model, weights = train_lightgbm_model(df)
+        _, weights = train_lightgbm_model(df)
     else:  # linear
         if not HAS_SKLEARN:
             print("  Error: scikit-learn not installed. Install with: pip install scikit-learn")
             return 1
-        model, weights = train_linear_model(df)
+        _, weights = train_linear_model(df)
 
     print("  Learned weights:")
     for signal, weight in weights.items():

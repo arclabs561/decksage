@@ -147,7 +147,7 @@ def validate_test_sets(result: ValidationResult) -> None:
                 continue
 
             # Check query structure
-            sample_query = list(queries.keys())[0]
+            sample_query = next(iter(queries.keys()))
             sample_labels = queries[sample_query]
 
             if not isinstance(sample_labels, dict):
@@ -224,7 +224,7 @@ def validate_code_quality(result: ValidationResult) -> None:
     # Check critical modules can be imported (skip ones that require heavy dependencies)
     # Try to import paths, but handle gracefully if it fails
     try:
-        import ml.utils.paths
+        import ml.utils.paths  # noqa: F401
 
         result.add_pass("Module: ml.utils.paths", "Imports successfully")
     except ImportError:

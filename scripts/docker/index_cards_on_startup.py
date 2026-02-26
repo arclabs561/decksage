@@ -23,7 +23,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
 
 try:
-    from gensim.models import KeyedVectors
+    from gensim.models import KeyedVectors  # noqa: F401
 
     from ml.search.index_cards import index_from_embeddings
 except ImportError as e:

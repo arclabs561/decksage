@@ -173,7 +173,7 @@ def test_api_like_usage():
         visual_embedder = get_visual_embedder()
 
         # Create fusion (like _similar_fusion does)
-        fusion = WeightedLateFusion(
+        _fusion = WeightedLateFusion(
             embeddings=state.embeddings,
             adj=state.graph_data.get("adj", {}) if state.graph_data else {},
             tagger=None,

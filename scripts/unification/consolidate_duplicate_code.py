@@ -107,7 +107,7 @@ def main() -> int:
                         "total_duplicates": len(duplicates),
                     },
                     "duplicates": {
-                        sig: [{"file": str(f), "line": l} for f, l in locations]
+                        sig: [{"file": str(f), "line": ln} for f, ln in locations]
                         for sig, locations in duplicates.items()
                     },
                 },

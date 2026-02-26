@@ -106,7 +106,7 @@ def start_http_server(port=8765):
             _http_server = server
             _http_server_port = port
 
-            def run_server():
+            def run_server(server=server):
                 server.serve_forever()
 
             _http_server_thread = threading.Thread(target=run_server, daemon=True)
@@ -124,7 +124,7 @@ def start_http_server(port=8765):
                     if result == 0:
                         logger.info(f"Started HTTP server on port {port}")
                         return port
-                except:
+                except OSError:
                     pass
                 time.sleep(0.1)
 
@@ -209,7 +209,7 @@ def setup_playwright_routing(context, api_base=None):
                 route.continue_(
                     url=new_url, method=request.method, headers=headers, post_data=request.post_data
                 )
-            except:
+            except Exception:
                 route.continue_()
         elif url.startswith(api_base):
             route.continue_()
@@ -417,6 +417,8 @@ def safe_click(page, locator, timeout: int = 5000, retries: int = 3) -> bool:
     Returns:
         True if click succeeded, False otherwise
     """
+    from playwright.sync_api import expect
+
     for attempt in range(retries):
         try:
             # Wait for element to be visible and enabled
@@ -448,6 +450,8 @@ def safe_type(page, locator, text: str, timeout: int = 5000, clear_first: bool =
     Returns:
         True if typing succeeded, False otherwise
     """
+    from playwright.sync_api import expect
+
     try:
         expect(locator).to_be_visible(timeout=timeout)
         expect(locator).to_be_enabled(timeout=timeout)
@@ -486,11 +490,11 @@ def wait_for_similarities_loaded(page, timeout: int = 15000) -> bool:
         try:
             expect(similarity_items.first).to_be_visible(timeout=2000)
             return True
-        except:
+        except Exception:
             try:
                 expect(empty_state).to_be_visible(timeout=2000)
                 return True  # Empty state is also a valid result
-            except:
+            except Exception:
                 return False
     except Exception as e:
         logger.debug(f"Wait for similarities failed: {e}")

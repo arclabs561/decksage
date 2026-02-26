@@ -38,7 +38,7 @@ def check_dependencies() -> tuple[bool, list[str]]:
 
     # Check for pydantic-ai
     try:
-        import pydantic_ai
+        import pydantic_ai  # noqa: F401
     except ImportError:
         missing.append("pydantic-ai (install: pip install pydantic-ai or uv add pydantic-ai)")
 
@@ -409,12 +409,9 @@ def main() -> int:
     # Try to import PATHS, but don't fail if dependencies are missing
     try:
         from ml.utils.paths import PATHS
-
-        has_paths = True
     except (ImportError, ModuleNotFoundError) as e:
         logger.warning(f"Could not import PATHS utility: {e}")
         logger.warning("Using fallback paths")
-        has_paths = False
 
         # Create a simple PATHS-like object for fallback
         class FallbackPaths:
