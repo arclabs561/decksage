@@ -15,9 +15,11 @@ Research basis:
 
 from __future__ import annotations
 
+import hashlib
 import logging
 from collections import defaultdict
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Any
 
 
@@ -150,6 +152,8 @@ class MultiAnnotatorIAA:
         annotator_configs: list[AnnotatorConfig] | None = None,
         min_iaa_threshold: float = 0.6,
         use_consensus: bool = True,
+        game: str | None = None,
+        game_knowledge: dict[str, Any] | None = None,
     ):
         """Initialize multi-annotator system.
 
@@ -157,6 +161,9 @@ class MultiAnnotatorIAA:
             annotator_configs: List of annotator configurations (default: 3 diverse models)
             min_iaa_threshold: Minimum Krippendorff's Alpha for acceptable agreement (default: 0.6)
             use_consensus: If True, create consensus annotation when models agree
+            game: Game name for game-specific system prompt (magic, pokemon, yugioh)
+            game_knowledge: Optional dict from data/game_knowledge/{game}.json with
+                           formats, archetypes, ban_lists, temporal_context, etc.
         """
         if not HAS_PYDANTIC_AI:
             raise ImportError("pydantic-ai required. Install: pip install pydantic-ai")
@@ -175,9 +182,43 @@ class MultiAnnotatorIAA:
         self.annotator_configs = annotator_configs or DEFAULT_ANNOTATORS
         self.min_iaa_threshold = min_iaa_threshold
         self.use_consensus = use_consensus
+        self.game = game
+        self.game_knowledge = game_knowledge
 
-        # Lazy import LLM annotator
-        card_similarity_annotation_cls, similarity_prompt_str = _get_llm_annotator_imports()
+        # Use game-specific prompt if game is specified
+        if game:
+            try:
+                from .llm_annotator import get_similarity_prompt
+                similarity_prompt_str = get_similarity_prompt(game)
+            except ImportError:
+                pass  # Fall back to base prompt
+
+        # Append game knowledge context (ban lists, format meta, archetypes)
+        if game_knowledge:
+            knowledge_lines = ["\n\n**GAME KNOWLEDGE (dynamic context):**"]
+            # Ban lists by format
+            for fmt in game_knowledge.get("formats", []):
+                ban_list = fmt.get("ban_list", [])
+                if ban_list and isinstance(ban_list, list) and len(ban_list) > 0:
+                    knowledge_lines.append(
+                        f"- {fmt['name']} ban list: {', '.join(ban_list[:20])}"
+                        + (f" (+{len(ban_list)-20} more)" if len(ban_list) > 20 else "")
+                    )
+            # Temporal context (current meta)
+            temporal = game_knowledge.get("temporal_context", {})
+            if temporal.get("current_meta"):
+                knowledge_lines.append(f"- Current meta: {temporal['current_meta'][:200]}")
+            if temporal.get("recent_bans"):
+                knowledge_lines.append(f"- Recent bans: {temporal['recent_bans'][:200]}")
+            # Top archetypes
+            for arch in game_knowledge.get("archetypes", [])[:3]:
+                knowledge_lines.append(
+                    f"- Archetype: {arch['name']} ({arch.get('meta_position', 'unknown tier')}) - "
+                    f"{arch.get('strategy', '')[:100]}"
+                )
+            if len(knowledge_lines) > 1:
+                similarity_prompt_str += "\n".join(knowledge_lines)
+                logger.info(f"Injected {len(knowledge_lines)-1} game knowledge items into system prompt")
 
         # Create agents for each annotator with model-specific settings
         self.agents: dict[str, Agent] = {}
@@ -209,6 +250,7 @@ class MultiAnnotatorIAA:
         card1: str,
         card2: str,
         graph_context: str | None = None,
+        card_context: dict[str, dict[str, Any]] | None = None,
         message_history: dict[str, list] | None = None,
     ) -> MultiAnnotatorResult:
         """Annotate a pair with multiple annotators and compute IAA.
@@ -217,15 +259,44 @@ class MultiAnnotatorIAA:
             card1: First card name
             card2: Second card name
             graph_context: Optional graph context string
+            card_context: Optional dict mapping card name -> attribute dict
+                          (oracle_text, type_line, mana_cost, etc.)
 
         Returns:
             MultiAnnotatorResult with all annotations and IAA metrics
         """
-        # Build prompt with graph context if available
+        # Build prompt with card-level and graph context
         prompt_parts = [
             f"Card 1: {card1}",
             f"Card 2: {card2}",
         ]
+
+        # Inject dynamic card context (oracle text, attributes)
+        if card_context:
+            for card_name, label in [(card1, "Card 1"), (card2, "Card 2")]:
+                attrs = card_context.get(card_name, {})
+                if attrs:
+                    lines = [f"\n**{label} Details:**"]
+                    if attrs.get("type_line"):
+                        lines.append(f"  Type: {attrs['type_line']}")
+                    if attrs.get("mana_cost"):
+                        lines.append(f"  Mana Cost: {attrs['mana_cost']}")
+                    if attrs.get("oracle_text"):
+                        lines.append(f"  Text: {attrs['oracle_text']}")
+                    if attrs.get("keywords"):
+                        kw = attrs["keywords"]
+                        if isinstance(kw, list):
+                            kw = ", ".join(kw)
+                        lines.append(f"  Keywords: {kw}")
+                    if attrs.get("power") is not None and attrs.get("toughness") is not None:
+                        lines.append(f"  P/T: {attrs['power']}/{attrs['toughness']}")
+                    if attrs.get("color_identity"):
+                        ci = attrs["color_identity"]
+                        if isinstance(ci, list):
+                            ci = "".join(ci)
+                        lines.append(f"  Color Identity: {ci}")
+                    prompt_parts.append("\n".join(lines))
+
         if graph_context:
             prompt_parts.append(graph_context)
         prompt = "\n".join(prompt_parts)
@@ -288,8 +359,9 @@ class MultiAnnotatorIAA:
         card1: str,
         card2: str,
         message_history: list | None = None,
+        max_retries: int = 2,
     ) -> CardSimilarityAnnotation | None:
-        """Annotate with a single agent.
+        """Annotate with a single agent, retrying on validation failures.
 
         Args:
             agent: Pydantic AI agent
@@ -298,27 +370,40 @@ class MultiAnnotatorIAA:
             card1: First card name
             card2: Second card name
             message_history: Optional conversation history for multi-round feedback
+            max_retries: Max retry attempts on failure (default: 2)
         """
+        # Resolve prompt version (lazy import to avoid circular dep)
         try:
-            # Model settings are already configured at agent creation time
-            # Pass message_history if provided (for agentic meta-judge feedback)
-            if message_history:
-                result = await agent.run(prompt, message_history=message_history)
-            else:
-                result = await agent.run(prompt)
-            if result.output:
-                ann = result.output
-                # Set metadata
-                ann.annotator_id = config.name
-                ann.model_name = config.model
-                ann.model_params = {
-                    "temperature": config.temperature,
-                    "max_tokens": config.max_tokens,
-                }
-                return ann
-        except Exception as e:
-            logger.warning(f"Annotator {config.name} failed: {e}")
-            return None
+            from .llm_annotator import SIMILARITY_PROMPT_VERSION
+        except ImportError:
+            SIMILARITY_PROMPT_VERSION = None
+
+        for attempt in range(1, max_retries + 1):
+            try:
+                if message_history:
+                    result = await agent.run(prompt, message_history=message_history)
+                else:
+                    result = await agent.run(prompt)
+                if result.output:
+                    ann = result.output
+                    # Provenance fingerprint
+                    ann.annotator_id = config.name
+                    ann.model_name = config.model
+                    ann.model_params = {
+                        "temperature": config.temperature,
+                        "max_tokens": config.max_tokens,
+                    }
+                    ann.timestamp = datetime.utcnow().isoformat() + "Z"
+                    ann.prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
+                    if SIMILARITY_PROMPT_VERSION:
+                        ann.prompt_version = SIMILARITY_PROMPT_VERSION
+                    return ann
+            except Exception as e:
+                if attempt < max_retries:
+                    logger.debug(f"Annotator {config.name} attempt {attempt} failed: {e}, retrying...")
+                else:
+                    logger.warning(f"Annotator {config.name} failed after {max_retries} attempts: {e}")
+        return None
 
     def _compute_iaa(self, annotations: dict[str, CardSimilarityAnnotation]) -> dict[str, Any]:
         """Compute IAA metrics for annotations.
