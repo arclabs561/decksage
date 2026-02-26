@@ -20,13 +20,13 @@ from __future__ import annotations
 
 import random
 from collections import Counter, defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 import yaml
 from gensim.models import KeyedVectors
+
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -305,7 +305,7 @@ def generate_batch(game: str, cfg: dict) -> Path:
             "card_pool_size": len(card_pool),
             "embeddings_file": cfg["embeddings"].name,
             "pairs_file": cfg["pairs"].name,
-            "created": datetime.now(timezone.utc).isoformat(),
+            "created": datetime.now(UTC).isoformat(),
         },
         "instructions": {
             "relevance_scale": {
@@ -407,13 +407,13 @@ def main() -> int:
         for c in sorted(overlap)[:10]:
             print(f"    - {c}")
     else:
-        print(f"\n  OK: Zero overlap between Pokemon and YuGiOh card pools")
+        print("\n  OK: Zero overlap between Pokemon and YuGiOh card pools")
 
     if all_clean:
-        print(f"\n  All batches are clean. No cross-game contamination detected.")
+        print("\n  All batches are clean. No cross-game contamination detected.")
         return 0
     else:
-        print(f"\n  Some batches have contamination issues -- see above.")
+        print("\n  Some batches have contamination issues -- see above.")
         return 1
 
 
