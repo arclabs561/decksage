@@ -98,15 +98,37 @@ class CardSimilarityAnnotation(BaseModel):
     context_dependent: bool = Field(description="Only similar in specific decks?")
     example_decks: list[str] = Field(default_factory=list, description="Where they work together")
 
-    # Metadata tracking
+    # Multi-faceted similarity breakdown (richer than a single score)
+    functional_score: float | None = Field(
+        default=None, ge=0.0, le=1.0,
+        description="Functional replacement similarity (same role/effect). 0=different function, 1=identical function",
+    )
+    synergy_score: float | None = Field(
+        default=None, ge=0.0, le=1.0,
+        description="Synergy/combo potential (how well they work together). 0=no synergy, 1=key combo piece",
+    )
+    key_similarities: list[str] = Field(
+        default_factory=list,
+        description="Concrete shared traits (e.g., 'both 1-mana instant removal', 'both draw 2 cards')",
+    )
+    key_differences: list[str] = Field(
+        default_factory=list,
+        description="Concrete differentiators (e.g., 'Bolt hits face, Path only hits creatures')",
+    )
+
+    # Provenance fingerprint
     model_name: str | None = Field(
         default=None,
-        description="LLM model used (e.g., 'anthropic/claude-4.5-sonnet')",
+        description="Full model ID on provider (e.g., 'anthropic/claude-sonnet-4-6')",
     )
     model_params: dict[str, Any] | None = Field(
         default=None, description="Model parameters (temperature, max_tokens, etc.)"
     )
-    prompt_hash: str | None = Field(default=None, description="Hash of prompt template used")
+    prompt_version: str | None = Field(
+        default=None,
+        description="Semantic version of the prompt template (e.g., 'v3.1')",
+    )
+    prompt_hash: str | None = Field(default=None, description="SHA-256 prefix of full prompt text sent")
     annotator_id: str | None = Field(
         default=None, description="Annotator/judge ID for multi-judge systems"
     )
@@ -137,6 +159,9 @@ if HAS_PYDANTIC_AI:
     # Env-configurable models (bias toward higher quality defaults)
     # Latest model (January 2026): Gemini 3 Flash - best balance of speed/quality/cost
     SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
+
+    # Prompt version -- bump on any semantic change to scoring rules or output schema
+    SIMILARITY_PROMPT_VERSION = "v3.1"
 
     # Enhanced SIMILARITY_PROMPT with CoT and score diversity
     SIMILARITY_PROMPT_BASE = """You are an expert TCG judge creating similarity annotations.
@@ -199,6 +224,10 @@ You MUST use the FULL 0.0-1.0 range. Do NOT cluster scores around 0.5 or default
 - Provide `reasoning` field with summary explanation
 - Use the FULL score range (0.0-1.0)
 - Be specific about why this score was chosen
+- Provide `functional_score` (0-1): how interchangeable are they as functional replacements?
+- Provide `synergy_score` (0-1): how well do they work together in a deck?
+- Provide `key_similarities`: 2-4 concrete shared traits (e.g., "both 1-mana instant removal")
+- Provide `key_differences`: 1-3 concrete differentiators (e.g., "Bolt hits face, Path only hits creatures")
 
 Your task: Judge how similar two cards are and explain WHY.
 

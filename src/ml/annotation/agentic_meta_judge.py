@@ -132,7 +132,7 @@ class AgenticMetaJudge:
     def _create_feedback_agent(self, model: str | None) -> Agent:
         """Create agent for providing feedback on individual annotations."""
         if model is None:
-            model = "anthropic/claude-sonnet-4.5"  # Best for reasoning
+            model = "anthropic/claude-sonnet-4-6"
 
         system_prompt = """You are an expert annotation quality moderator for trading card game similarity annotations.
 
