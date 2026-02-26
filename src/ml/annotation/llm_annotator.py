@@ -242,20 +242,30 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 **GAME CONTEXT: Yu-Gi-Oh! Trading Card Game**
 - Use Yu-Gi-Oh! terminology: "Monster", "Spell", "Trap", "ATK", "DEF", "Level", "Attribute", "Type"
 - Consider: Monster Types (Dragon, Warrior, Spellcaster, etc.), Attributes (DARK, LIGHT, etc.), Levels/Ranks
-- Archetypes: Blue-Eyes, Dark Magician, HERO, etc.
+- Archetypes: Blue-Eyes, Dark Magician, HERO, Branded/Despia, Tearlaments, Kashtira, Snake-Eye, etc.
+- Extra Deck mechanics: Fusion, Synchro, Xyz, Link summoning
 - DO NOT use Magic: The Gathering terminology (mana, instant, sorcery, etc.)
 
 **YU-GI-OH-SPECIFIC: Use Archetype and Type to Raise Scores**
 - Same archetype (both Blue-Eyes, both HERO, etc.) → score >= 0.5-0.7
 - Same type (both Dragon, both Warrior, etc.) → score >= 0.4-0.6
 - Same function (both removal, both search, both draw) → score >= 0.4-0.6
+- Generic staples (hand traps, board breakers) are functionally similar across decks
 - Examples: Blue-Eyes White Dragon vs Blue-Eyes Alternative → 0.8 (same archetype), Dark Magician vs Blue-Eyes → 0.3 (different archetypes)
+
+**TIME PERIOD NUANCE**: Banlists fundamentally change card relationships.
+- A card's "substitutes" change when its usual partner gets banned
+- Power level context matters: cards from 2005 vs 2024 serve very different roles
+
+**IMPORTANT**: Yu-Gi-Oh! has NO mana system. Do not score manabase similarity highly.
 """
             elif game_lower in ["pokemon", "pkm"]:
                 game_context = """
 **GAME CONTEXT: Pokémon Trading Card Game**
 - Use Pokémon TCG terminology: "Pokémon", "Energy", "Trainer", "HP", "Type", "Weakness", "Resistance"
 - Consider: Pokémon Types (Fire, Water, Grass, etc.), Evolution lines, Abilities
+- Card types: Pokemon (Basic, Stage 1/2, EX, GX, V, VMAX, VSTAR, ex), Trainer (Supporter, Item, Stadium, Tool), Energy
+- Regulation marks and rotation periods affect card availability
 - DO NOT use Magic: The Gathering terminology
 
 **POKEMON-SPECIFIC: Use Type and Evolution to Raise Scores**
@@ -263,17 +273,35 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 - Same evolution line → score >= 0.5-0.7
 - Same function (both draw, both search, both damage) → score >= 0.4-0.6
 - Examples: Pikachu vs Raichu → 0.7 (evolution), Charizard vs Blastoise → 0.3 (different types)
+
+**TIME PERIOD NUANCE**: Pokemon TCG changes dramatically with each rotation.
+- SM era (2017-2022): GX, Tag Team era
+- SWSH era (2020-2023): V, VMAX, VSTAR
+- SV era (2023+): ex, Tera, ACE SPEC
+- A "draw supporter" is universal (Professor's Research), but "energy acceleration" is archetype-specific
 """
             elif game_lower in ["magic", "mtg"]:
                 game_context = """
 **GAME CONTEXT: Magic: The Gathering**
 - Use Magic terminology: "mana", "instant", "sorcery", "creature", "power", "toughness", "CMC"
 - Consider: Colors (WUBRG), card types, mana costs, keywords
+- Formats: Vintage, Legacy, Modern, Pioneer, Standard, Pauper, Commander/EDH
+- Deck archetypes: Burn, Delver, Tron, Control, Midrange, Combo (Storm, Dredge, etc.)
 
 **MAGIC-SPECIFIC: Use Function to Raise Scores**
 - Same function (removal, draw, counter, etc.) → score >= 0.4 (even with weak graph)
 - Same function + similar attributes → score >= 0.5-0.7
 - Examples: Lightning Bolt vs Shock → 0.7, Path vs Swords → 0.8, Counterspell vs Mana Leak → 0.5
+
+**TIME PERIOD NUANCE**: Cards can be similar in different ways across eras.
+- Pre-Modern (1993-2003): different power level expectations
+- Modern era (2003-2019): pushed creatures, efficient answers
+- Post-FIRE (2019+): higher power, more synergy-focused
+A card's role can shift as formats evolve.
+
+**FORMAT NUANCE**: Same pair can have different similarity in different formats.
+- Lightning Bolt + Chain Lightning: both Burn in Legacy, but Chain Lightning is Legacy-only
+- Counterspell + Mana Leak: similar in principle, but Counterspell banned in Modern until 2021
 """
 
         return SIMILARITY_PROMPT_BASE + (game_context if game_context else "")

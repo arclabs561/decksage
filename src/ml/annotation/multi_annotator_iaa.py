@@ -93,30 +93,39 @@ class AnnotatorConfig:
     description: str = ""
 
 
-# Default annotator configurations (latest models, January 2026)
-# Research-based: Diverse models for best consensus, balance cost/speed/quality
-# Note: Using models that are confirmed available on OpenRouter
+# Default annotator configurations (February 2026)
+# Research-based: Diverse model architectures for best consensus.
+# Key principle: different architectures at moderate temperature >> single model at high temperature.
+# If 3+ different architectures agree, the signal is much stronger than self-agreement.
+# Note: Using models confirmed available on OpenRouter
 DEFAULT_ANNOTATORS = [
     AnnotatorConfig(
-        name="gemini_3_flash",
-        model="google/gemini-3-flash-preview",
+        name="claude_sonnet_4_6",
+        model="anthropic/claude-sonnet-4-6",
         temperature=0.3,
         max_tokens=1500,
-        description="Latest Gemini Flash - Fast, high-quality, best for speed (primary)",
+        description="Claude Sonnet 4.6 - Frontier reasoning, strong structured output (Anthropic)",
     ),
     AnnotatorConfig(
-        name="claude_sonnet_4_5",
-        model="anthropic/claude-sonnet-4.5",  # Note: dot, not dash
+        name="gemini_3_1_pro",
+        model="google/gemini-3.1-pro",
         temperature=0.3,
         max_tokens=1500,
-        description="Claude Sonnet 4.5 - Best reasoning, detailed analysis (high quality, confirmed available)",
+        description="Gemini 3.1 Pro - Latest Google, 1M context, strong reasoning (Google)",
     ),
     AnnotatorConfig(
-        name="gemini_2_5_flash",
-        model="google/gemini-2.5-flash",
-        temperature=0.4,
+        name="gpt_5_2",
+        model="openai/gpt-5.2",
+        temperature=0.3,
         max_tokens=1500,
-        description="Gemini 2.5 Flash - Good context understanding, diverse perspective (confirmed available)",
+        description="GPT 5.2 - Adaptive reasoning, reduced hallucination (OpenAI)",
+    ),
+    AnnotatorConfig(
+        name="deepseek_v3_2",
+        model="deepseek/deepseek-chat-v3-0324",
+        temperature=0.3,
+        max_tokens=1500,
+        description="DeepSeek V3.2 - Frontier quality at low cost, diverse architecture (DeepSeek)",
     ),
 ]
 
