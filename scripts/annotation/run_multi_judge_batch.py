@@ -92,34 +92,18 @@ def select_diverse_pairs(
     return selected[:num_pairs]
 
 
-async def run_batch(
+async def annotate_one_pair(
+    iaa: MultiAnnotatorIAA,
+    card1: str,
+    card2: str,
     game: str,
-    edgelist_path: Path,
-    output_path: Path,
-    num_pairs: int,
-    seed: int,
-) -> dict:
-    """Run multi-judge annotation batch."""
-    # Load edges and select pairs
-    print(f"Loading edgelist: {edgelist_path}")
-    edges = load_edgelist(edgelist_path)
-    pairs = select_diverse_pairs(edges, num_pairs, seed=seed)
-    print(f"  {len(edges):,} edges, selected {len(pairs)} diverse pairs")
-
-    # Initialize multi-annotator system (uses DEFAULT_ANNOTATORS from multi_annotator_iaa.py)
-    print("Initializing multi-annotator IAA system...")
-    iaa = MultiAnnotatorIAA(
-        annotator_configs=None,  # uses defaults (3 diverse models)
-        min_iaa_threshold=0.6,
-        use_consensus=True,
-    )
-    print(f"  Judges: {list(iaa.agents.keys())}")
-
-    # Run annotations
-    results = []
-    t0 = time.monotonic()
-    for i, (card1, card2) in enumerate(pairs, 1):
-        print(f"  [{i}/{len(pairs)}] {card1} <-> {card2}", end="", flush=True)
+    idx: int,
+    total: int,
+    sem: asyncio.Semaphore,
+) -> dict | None:
+    """Annotate a single pair under a concurrency semaphore."""
+    async with sem:
+        print(f"  [{idx}/{total}] {card1} <-> {card2}", flush=True)
         try:
             result = await iaa.annotate_pair_multi(card1, card2)
             entry = {
@@ -145,20 +129,51 @@ async def run_batch(
                     for name, ann in result.annotations.items()
                 },
             }
-            results.append(entry)
-            print(f"  -> {result.agreement_level} ({result.iaa_metrics.get('krippendorff_alpha', 0):.2f})")
+            print(f"    [{idx}] -> {result.agreement_level} ({result.iaa_metrics.get('krippendorff_alpha', 0):.2f})")
+            return entry
         except Exception as e:
-            print(f"  -> FAILED: {e}")
+            print(f"    [{idx}] -> FAILED: {e}")
+            return None
 
-        # Checkpoint every 25 pairs
-        if i % 25 == 0:
-            _save(results, game, output_path.with_suffix(f".checkpoint_{i}.json"))
-            elapsed = time.monotonic() - t0
-            eta = (len(pairs) - i) / (i / elapsed)
-            print(f"    Checkpoint: {i}/{len(pairs)}, {elapsed:.0f}s elapsed, ~{eta:.0f}s remaining")
+
+async def run_batch(
+    game: str,
+    edgelist_path: Path,
+    output_path: Path,
+    num_pairs: int,
+    seed: int,
+    concurrency: int = 5,
+) -> dict:
+    """Run multi-judge annotation batch with parallel pair processing."""
+    # Load edges and select pairs
+    print(f"Loading edgelist: {edgelist_path}")
+    edges = load_edgelist(edgelist_path)
+    pairs = select_diverse_pairs(edges, num_pairs, seed=seed)
+    print(f"  {len(edges):,} edges, selected {len(pairs)} diverse pairs")
+
+    # Initialize multi-annotator system (uses DEFAULT_ANNOTATORS from multi_annotator_iaa.py)
+    print("Initializing multi-annotator IAA system...")
+    iaa = MultiAnnotatorIAA(
+        annotator_configs=None,  # uses defaults (4 diverse models)
+        min_iaa_threshold=0.6,
+        use_consensus=True,
+    )
+    print(f"  Judges: {list(iaa.agents.keys())}")
+    print(f"  Concurrency: {concurrency} pairs in parallel")
+
+    # Run annotations in parallel with semaphore-controlled concurrency
+    sem = asyncio.Semaphore(concurrency)
+    t0 = time.monotonic()
+
+    tasks = [
+        annotate_one_pair(iaa, c1, c2, game, i, len(pairs), sem)
+        for i, (c1, c2) in enumerate(pairs, 1)
+    ]
+    raw_results = await asyncio.gather(*tasks)
+    results = [r for r in raw_results if r is not None]
 
     elapsed = time.monotonic() - t0
-    print(f"\nCompleted {len(results)} pairs in {elapsed:.0f}s ({elapsed/max(len(results),1):.1f}s/pair)")
+    print(f"\nCompleted {len(results)}/{len(pairs)} pairs in {elapsed:.0f}s ({elapsed/max(len(results),1):.1f}s/pair)")
 
     _save(results, game, output_path)
     print(f"Saved: {output_path}")
@@ -185,6 +200,7 @@ def main() -> int:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--num-pairs", type=int, default=100)
     parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--concurrency", type=int, default=5, help="Max pairs to annotate in parallel")
     args = parser.parse_args()
 
     if not args.edgelist.exists():
@@ -197,6 +213,7 @@ def main() -> int:
         output_path=args.output,
         num_pairs=args.num_pairs,
         seed=args.seed,
+        concurrency=args.concurrency,
     ))
     return 0
 
