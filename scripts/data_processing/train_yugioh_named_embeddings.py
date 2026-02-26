@@ -22,6 +22,7 @@ import pandas as pd
 from gensim.models import Word2Vec
 from pecanpy.pecanpy import SparseOTF
 
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 PAIRS_CSV = REPO_ROOT / "data" / "processed" / "pairs_yugioh_ygoprodeck-tournament.csv"
 OUTPUT_WV = REPO_ROOT / "data" / "embeddings" / "yugioh_pecanpy_named.wv"
@@ -68,7 +69,7 @@ def train(weights: dict[tuple[str, str], int]) -> None:
             f.write(f"{c1}\t{c2}\t{w}\n")
 
     try:
-        print(f"Generating random walks (p=1.0, q=1.0) ...")
+        print("Generating random walks (p=1.0, q=1.0) ...")
         g = SparseOTF(p=1.0, q=1.0, workers=4, verbose=True, extend=True)
         g.read_edg(str(edgelist_path), weighted=True, directed=False)
         walks = g.simulate_walks(num_walks=NUM_WALKS, walk_length=WALK_LENGTH)

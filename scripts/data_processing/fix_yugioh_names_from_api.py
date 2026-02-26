@@ -119,7 +119,7 @@ def main() -> int:
 
     # Step 5: Summary
     pct = (mapped / total_ids * 100) if total_ids else 0
-    print(f"\n=== Summary ===")
+    print("\n=== Summary ===")
     print(f"  API cards fetched:   {len(cards):,}")
     print(f"  Mapping entries:     {len(mapping):,}")
     print(f"  Card_ID refs in CSV: {total_ids:,}")
@@ -127,7 +127,7 @@ def main() -> int:
     print(f"  Unmapped unique IDs: {unmapped}")
 
     # Show a sample of the fixed CSV
-    print(f"\n=== Sample rows after fix ===")
+    print("\n=== Sample rows after fix ===")
     df = pd.read_csv(PAIRS_CSV, nrows=10)
     print(df[["NAME_1", "NAME_2", "COUNT"]].to_string(index=False))
 

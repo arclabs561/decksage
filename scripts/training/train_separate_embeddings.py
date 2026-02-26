@@ -132,7 +132,7 @@ def compare_embedding_spaces(
 
     # Find overlapping vocabulary
     overlap = set.intersection(*vocabs.values()) if vocabs else set()
-    print(f"\n--- Cross-Space Comparison ---")
+    print("\n--- Cross-Space Comparison ---")
     for label, vocab in vocabs.items():
         print(f"  {label}: {len(vocab)} nodes")
     print(f"  Overlap: {len(overlap)} nodes")
@@ -145,7 +145,7 @@ def compare_embedding_spaces(
     if compare_cards:
         cards = [c for c in compare_cards if c in overlap]
         if not cards:
-            print(f"  Warning: none of the requested cards are in the overlap set.")
+            print("  Warning: none of the requested cards are in the overlap set.")
             return
     else:
         import random
