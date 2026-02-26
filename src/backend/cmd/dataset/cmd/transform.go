@@ -18,7 +18,6 @@ import (
 	"collections/logger"
 	"collections/transform"
 	"collections/transform/cardco"
-	"collections/transform/collections"
 )
 
 var transformCmd = &cobra.Command{
@@ -123,11 +122,6 @@ func runTransform(cmd *cobra.Command, args []string) error {
 	switch strings.ToLower(transformName) {
 	case "cardco":
 		t, err = cardco.NewTransform(ctx, log)
-		if err != nil {
-			return err
-		}
-	case "collections":
-		t, err = collections.NewTransform(ctx, log)
 		if err != nil {
 			return err
 		}
