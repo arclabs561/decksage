@@ -108,7 +108,7 @@ DEFAULT_ANNOTATORS = [
     ),
     AnnotatorConfig(
         name="gemini_3_1_pro",
-        model="google/gemini-3.1-pro",
+        model="google/gemini-3.1-pro-preview",
         temperature=0.3,
         max_tokens=1500,
         description="Gemini 3.1 Pro - Latest Google, 1M context, strong reasoning (Google)",
@@ -122,7 +122,7 @@ DEFAULT_ANNOTATORS = [
     ),
     AnnotatorConfig(
         name="deepseek_v3_2",
-        model="deepseek/deepseek-chat-v3-0324",
+        model="deepseek/deepseek-v3.2",
         temperature=0.3,
         max_tokens=1500,
         description="DeepSeek V3.2 - Frontier quality at low cost, diverse architecture (DeepSeek)",
