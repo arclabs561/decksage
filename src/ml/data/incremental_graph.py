@@ -762,6 +762,85 @@ class IncrementalCardGraph:
 
         return output_path
 
+    def compute_lift(
+        self,
+        game: str | None = None,
+        min_weight: int = 2,
+    ) -> dict[tuple[str, str], float]:
+        """
+        Compute Lift for all edges: Lift(A,B) = P(A,B) / [P(A) * P(B)].
+
+        Lift > 1 means the cards co-occur more than expected by chance.
+        This controls for card popularity (Sol Ring gets ~1.0 against everything).
+        Based on EDHREC's methodology.
+
+        Args:
+            game: Filter by game ("MTG", "PKM", "YGO")
+            min_weight: Minimum raw co-occurrence to include
+
+        Returns:
+            Dict mapping (card1, card2) -> lift value
+        """
+        total_decks = max(self.total_decks_processed, 1)
+
+        # P(card) = card.total_decks / total_decks
+        card_prob = {
+            name: node.total_decks / total_decks
+            for name, node in self.nodes.items()
+        }
+
+        lift_values: dict[tuple[str, str], float] = {}
+        for (card1, card2), edge in self.edges.items():
+            if edge.weight < min_weight:
+                continue
+            if game and edge.game != game:
+                continue
+
+            p_a = card_prob.get(card1, 0)
+            p_b = card_prob.get(card2, 0)
+            if p_a == 0 or p_b == 0:
+                continue
+
+            # P(A,B) approximated by co-occurrence count / total_decks
+            p_ab = edge.weight / total_decks
+            lift = p_ab / (p_a * p_b)
+            lift_values[(card1, card2)] = lift
+
+        return lift_values
+
+    def export_edgelist_lift(
+        self,
+        output_path: Path | str,
+        game: str | None = None,
+        min_weight: int = 2,
+        min_lift: float = 1.0,
+    ) -> Path:
+        """
+        Export edgelist weighted by Lift instead of raw co-occurrence count.
+
+        Lift-weighted edges control for card popularity: staples that appear
+        in many decks get normalized down, while cards that specifically
+        co-occur get amplified. Based on EDHREC's methodology.
+
+        Args:
+            output_path: Output file path
+            game: Filter by game
+            min_weight: Minimum raw co-occurrence to include
+            min_lift: Minimum Lift value to include (default 1.0 = above chance)
+
+        Returns:
+            Path to exported file
+        """
+        output_path = Path(output_path)
+        lift_values = self.compute_lift(game=game, min_weight=min_weight)
+
+        with open(output_path, "w") as f:
+            for (card1, card2), lift in sorted(lift_values.items()):
+                if lift >= min_lift:
+                    f.write(f"{card1}\t{card2}\t{lift:.4f}\n")
+
+        return output_path
+
     def edges_to_adj_dict(self, min_weight: int = 1) -> dict[str, set[str]]:
         """
         Convert graph edges to adjacency dictionary for Jaccard similarity.
