@@ -69,8 +69,9 @@ def scrape_yugioh_packs(
     cards = cards_data["data"]
 
     # Build pack information from card set data
+    # Key insight: YGOProDeck's "set_code" is a per-card collector number (e.g., "LOB-EN001"),
+    # NOT the set identifier. The actual set identity comes from "set_name".
     packs_dict: dict[str, dict[str, any]] = {}
-    seen_pack_codes: set[str] = set()  # Track unique pack codes
 
     for card in cards:
         card_name = card.get("name")
@@ -84,34 +85,26 @@ def scrape_yugioh_packs(
 
         for card_set in card_sets:
             set_name = card_set.get("set_name")
-            set_code = card_set.get("set_code")
+            set_code = card_set.get("set_code")  # Per-card collector number, NOT set id
             set_rarity = card_set.get("set_rarity")
             set_price = card_set.get("set_price")
 
             if not set_name:
                 continue
 
-            # Create pack ID (use set_code if available, otherwise sanitize set_name)
-            if set_code:
-                pack_id = f"YGO_{set_code}"
-            else:
-                # Sanitize set_name for pack_id
-                sanitized = set_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
-                sanitized = "".join(c for c in sanitized if c.isalnum() or c == "_")
-                pack_id = f"YGO_{sanitized}"
+            # Create pack ID from set_name (the actual set/product identity)
+            sanitized = set_name.replace(" ", "_").replace("/", "_").replace("\\", "_")
+            sanitized = "".join(c for c in sanitized if c.isalnum() or c == "_")
+            pack_id = f"YGO_{sanitized}"
 
-            # Deduplicate by pack_code if available
-            if set_code and set_code in seen_pack_codes:
-                # Find existing pack with this code
-                existing_pack_id = f"YGO_{set_code}"
-                if existing_pack_id in packs_dict:
-                    pack_id = existing_pack_id
-                else:
-                    # Shouldn't happen, but handle gracefully
-                    pass
-
+            # Extract set prefix from set_code for pack_code (e.g., "LOB-EN" from "LOB-EN001")
+            pack_code = None
             if set_code:
-                seen_pack_codes.add(set_code)
+                # Most codes look like "XXX-EN001" or "XXX-001"; strip trailing digits
+                import re
+                m = re.match(r"^([A-Za-z0-9]+-[A-Za-z]*)", set_code)
+                if m:
+                    pack_code = m.group(1)
 
             # Initialize pack if not seen
             if pack_id not in packs_dict:
@@ -128,7 +121,7 @@ def scrape_yugioh_packs(
                 packs_dict[pack_id] = {
                     "pack_id": pack_id,
                     "pack_name": set_name,
-                    "pack_code": set_code,
+                    "pack_code": pack_code,
                     "pack_type": pack_type,
                     "cards": [],
                 }
@@ -140,7 +133,7 @@ def scrape_yugioh_packs(
                     {
                         "card_name": card_name,
                         "rarity": set_rarity,
-                        "card_number": card_set.get("set_number"),
+                        "card_number": set_code,  # The full collector number
                         "metadata": {
                             "set_price": set_price,
                         },

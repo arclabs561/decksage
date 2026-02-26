@@ -93,7 +93,7 @@ def train_pecanpy(
     walks = g.simulate_walks(num_walks=num_walks, walk_length=walk_length)
 
     # Train Word2Vec
-    print("\n🧠 Training Word2Vec...")
+    print("\nTraining Word2Vec...")
     model = Word2Vec(
         walks,
         vector_size=dim,
@@ -101,12 +101,18 @@ def train_pecanpy(
         min_count=0,
         sg=1,  # Skip-gram
         workers=workers,
-        epochs=1,
+        epochs=5,
+        negative=20,
     )
+
+    # Mean-center embeddings to prevent positive-bias collapse.
+    # Without this, all pairwise cosine similarities skew positive
+    # because the vectors share a large common directional component.
+    model.wv.vectors -= model.wv.vectors.mean(axis=0)
 
     # Save
     model.wv.save(output_file)
-    print(f"✓ Saved embeddings to {output_file}")
+    print(f"Saved {len(model.wv)} embeddings to {output_file}")
 
     return model.wv
 
