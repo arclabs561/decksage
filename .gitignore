@@ -234,3 +234,15 @@ experiments/profile_results.txt
 experiments/model_registry.lock
 annotations/
 archive/
+
+# Derived data containing scraped card names/metadata (licensing risk)
+# All derived data lives on S3 (s3://games-collections/), not in git.
+data/processed/*.jsonl
+data/processed/*_image_urls.json
+data/metadata_cache.json
+data/yugioh_card_mapping.json
+data/test_set_*.json
+data/annotations/*.yaml
+data/annotations/*.json
+experiments/downstream_test_data/
+experiments/annotations/
