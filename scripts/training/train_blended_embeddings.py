@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
 def load_edgelist(path: str) -> dict[tuple[str, str], float]:
     """Load a tab-separated edgelist. Returns {(nodeA, nodeB): weight}."""
     edges: dict[tuple[str, str], float] = {}
-    with open(path, "r") as f:
+    with open(path) as f:
         for line_no, line in enumerate(f, 1):
             line = line.rstrip("\n")
             if not line:
@@ -145,7 +145,7 @@ def quality_metrics(wv_path: str, merged: dict[tuple[str, str], float], seed: in
     wv = KeyedVectors.load(wv_path)
     vocab = list(wv.key_to_index.keys())
     n = len(vocab)
-    print(f"\n--- Quality Metrics ---")
+    print("\n--- Quality Metrics ---")
     print(f"  Vocabulary size: {n}")
 
     # Random-pair similarity distribution
@@ -169,7 +169,7 @@ def quality_metrics(wv_path: str, merged: dict[tuple[str, str], float], seed: in
             top_sims.append(float(wv.similarity(a, b)))
     if top_sims:
         top_arr = np.array(top_sims)
-        print(f"  Top-100 weighted edges similarity:")
+        print("  Top-100 weighted edges similarity:")
         print(f"    mean={top_arr.mean():.4f}  std={top_arr.std():.4f}  "
               f"min={top_arr.min():.4f}  max={top_arr.max():.4f}")
 
@@ -198,7 +198,7 @@ def main() -> int:
     n_sources = len(args.edgelist)
     prov_stats = compute_provenance_stats(provenance, n_sources)
 
-    print(f"\n  Merged graph:")
+    print("\n  Merged graph:")
     print(f"    Nodes: {len(nodes)}")
     print(f"    Edges: {len(merged)}")
     for key, count in prov_stats.items():
