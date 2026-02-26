@@ -21,7 +21,7 @@ import requests
 
 # Use Playwright for browser automation (faster, auto-waiting, better debugging)
 try:
-    from playwright.sync_api import Page, expect, sync_playwright
+    from playwright.sync_api import sync_playwright
 
     HAS_PLAYWRIGHT = True
 except ImportError:

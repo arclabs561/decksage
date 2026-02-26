@@ -23,7 +23,7 @@ if str(src_dir) not in sys.path:
     sys.path.insert(0, str(src_dir))
 
 try:
-    from ml.annotation.llm_annotator import LLMAnnotator
+    from ml.annotation.llm_annotator import LLMAnnotator  # noqa: F401
     from ml.utils.paths import PATHS
 
     HAS_LLM_ANNOTATOR = True

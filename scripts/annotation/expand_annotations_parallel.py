@@ -26,7 +26,7 @@ sys.path.insert(0, str(project_root))
 try:
     from ml.annotation.llm_annotator import LLMAnnotator
     from ml.experimental.multi_perspective_judge import MultiPerspectiveJudge
-    from ml.scripts.parallel_multi_judge import generate_labels_parallel
+    from ml.scripts.parallel_multi_judge import generate_labels_parallel  # noqa: F401
 
     HAS_LLM = True
 except ImportError as e:

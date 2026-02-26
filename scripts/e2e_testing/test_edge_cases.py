@@ -54,7 +54,7 @@ def start_http_server(port=8765):
             _http_server = server
             _http_server_port = port
 
-            def run_server():
+            def run_server(server=server):
                 server.serve_forever()
 
             _http_server_thread = threading.Thread(target=run_server, daemon=True)
@@ -70,7 +70,7 @@ def start_http_server(port=8765):
                     sock.close()
                     if result == 0:
                         return port
-                except:
+                except OSError:
                     pass
                 time.sleep(0.1)
 
@@ -96,7 +96,7 @@ UI_URL = get_ui_url()
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import expect, sync_playwright
+    from playwright.sync_api import sync_playwright
 
     HAS_PLAYWRIGHT = True
 except ImportError:
@@ -461,7 +461,7 @@ class EdgeCaseTester:
                                 headers=headers,
                                 post_data=request.post_data,
                             )
-                        except:
+                        except Exception:
                             route.continue_()
                     elif url.startswith(API_BASE):
                         route.continue_()
@@ -517,7 +517,7 @@ class EdgeCaseTester:
             if self.browser:
                 try:
                     self.browser.close()
-                except:
+                except Exception:
                     pass
             return False
 

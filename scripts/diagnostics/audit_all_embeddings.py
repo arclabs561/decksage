@@ -18,7 +18,7 @@ from typing import Any
 
 
 try:
-    from gensim.models import KeyedVectors
+    from gensim.models import KeyedVectors  # noqa: F401
 
     HAS_GENSIM = True
 except ImportError:

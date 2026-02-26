@@ -38,9 +38,12 @@ def validate_imports() -> tuple[bool, str]:
     logger.info("Validating imports...")
 
     try:
-        from ml.api.api import ApiState, get_state
-        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-        from ml.similarity.visual_embeddings import CardVisualEmbedder, get_visual_embedder
+        from ml.api.api import ApiState, get_state  # noqa: F401
+        from ml.similarity.fusion import FusionWeights, WeightedLateFusion  # noqa: F401
+        from ml.similarity.visual_embeddings import (  # noqa: F401
+            CardVisualEmbedder,
+            get_visual_embedder,
+        )
 
         logger.info("  ✓ All imports successful")
         return True, "All imports successful"
