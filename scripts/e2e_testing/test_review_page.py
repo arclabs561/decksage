@@ -45,7 +45,7 @@ REVIEW_URL = get_review_url()
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import Page, expect, sync_playwright
+    from playwright.sync_api import expect, sync_playwright
 
     HAS_PLAYWRIGHT = True
 except ImportError:

@@ -54,7 +54,7 @@ def start_http_server(port=8765):
             _http_server = server
             _http_server_port = port
 
-            def run_server():
+            def run_server(server=server):
                 server.serve_forever()
 
             _http_server_thread = threading.Thread(target=run_server, daemon=True)
@@ -72,7 +72,7 @@ def start_http_server(port=8765):
                     if result == 0:
                         logger.info(f"Started HTTP server on port {port}")
                         return port
-                except:
+                except OSError:
                     pass
                 time.sleep(0.1)
 
@@ -94,7 +94,7 @@ def stop_http_server():
             _http_server_port = None
             _http_server_thread = None
             logger.info("Stopped HTTP server")
-        except:
+        except Exception:
             pass
 
 
@@ -138,17 +138,17 @@ def run_test_suite(script_path: Path, timeout: int = 300) -> TestResult:
             if "Features tested:" in line or "Tests run:" in line:
                 try:
                     tests_run = int(line.split(":")[1].strip())
-                except:
+                except (ValueError, IndexError):
                     pass
             if "Features passed:" in line or "Tests passed:" in line:
                 try:
                     tests_passed = int(line.split(":")[1].strip())
-                except:
+                except (ValueError, IndexError):
                     pass
             if "Features failed:" in line or "Tests failed:" in line:
                 try:
                     tests_failed = int(line.split(":")[1].strip())
-                except:
+                except (ValueError, IndexError):
                     pass
 
         passed = result.returncode == 0

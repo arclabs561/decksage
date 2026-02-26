@@ -29,9 +29,9 @@ project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
 try:
-    from ml.evaluation.leakage_analysis import LeakageAnalyzer
+    from ml.evaluation.leakage_analysis import LeakageAnalyzer  # noqa: F401
     from ml.utils.annotation_utils import (
-        filter_annotations_for_training,
+        filter_annotations_for_training,  # noqa: F401
         load_similarity_annotations,
         load_test_set_cards,
     )

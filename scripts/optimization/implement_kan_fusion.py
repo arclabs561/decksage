@@ -19,6 +19,7 @@ This script provides a framework for when KAN implementations become available.
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
 
 # Add project root to path
@@ -96,7 +97,7 @@ def main():
     parser.add_argument("--top-k", type=int, default=10, help="Top K for evaluation")
     parser.add_argument("--output", type=str, help="Output path for results")
 
-    args = parser.parse_args()
+    parser.parse_args()
 
     if not HAS_KAN:
         print("KAN library not available.")

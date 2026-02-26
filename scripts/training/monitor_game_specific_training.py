@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "src"))
 
 try:
-    from ml.utils.log_monitor import LocalLogMonitor, format_status
+    from ml.utils.log_monitor import LocalLogMonitor, format_status  # noqa: F401
 
     HAS_STRUCTURED = True
 except ImportError:

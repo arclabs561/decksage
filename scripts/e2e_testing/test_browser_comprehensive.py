@@ -65,7 +65,7 @@ def start_http_server(port=8765):
             _http_server = server
             _http_server_port = port
 
-            def run_server():
+            def run_server(server=server):
                 server.serve_forever()
 
             _http_server_thread = threading.Thread(target=run_server, daemon=True)
@@ -83,7 +83,7 @@ def start_http_server(port=8765):
                     if result == 0:
                         logger.info(f"Started HTTP server on port {port}")
                         return port
-                except:
+                except Exception:
                     pass
                 time.sleep(0.2)
 
@@ -125,7 +125,7 @@ REVIEW_URL = get_review_url()
 
 # Use Playwright for browser automation
 try:
-    from playwright.sync_api import Page, expect, sync_playwright
+    from playwright.sync_api import Page, expect, sync_playwright  # noqa: F401
 
     HAS_PLAYWRIGHT = True
 except ImportError:
@@ -213,7 +213,7 @@ class ComprehensiveBrowserTester:
                             try:
                                 error_text = error_msg.inner_text()
                                 logger.warning(f"  ⚠️  Search error: {error_text[:100]}")
-                            except:
+                            except Exception:
                                 pass
             except Exception as e:
                 if attempt < max_retries - 1:
@@ -258,7 +258,7 @@ class ComprehensiveBrowserTester:
             # Wait for dropdown with longer timeout (API call needed)
             try:
                 self.page.wait_for_selector("#autocompleteDropdown:visible", timeout=5000)
-            except:
+            except Exception:
                 # Try alternative selectors
                 dropdown = self.page.locator(
                     "#autocompleteDropdown, [id*='autocomplete'], [class*='autocomplete-dropdown']"
@@ -266,7 +266,7 @@ class ComprehensiveBrowserTester:
                 if dropdown.count() > 0:
                     try:
                         dropdown.first.wait_for(state="visible", timeout=2000)
-                    except:
+                    except Exception:
                         pass
 
             dropdown = self.page.locator(
@@ -306,7 +306,7 @@ class ComprehensiveBrowserTester:
             # Wait for dropdown
             try:
                 self.page.wait_for_selector("#autocompleteDropdown:visible", timeout=5000)
-            except:
+            except Exception:
                 pass
 
             dropdown = self.page.locator(
@@ -348,7 +348,7 @@ class ComprehensiveBrowserTester:
             # Clear any error messages
             try:
                 self.page.evaluate("document.getElementById('statusMessage')?.remove()")
-            except:
+            except Exception:
                 pass
 
             search_input = self.page.locator("#unifiedInput, #cardInput").first
@@ -555,7 +555,7 @@ class ComprehensiveBrowserTester:
                 toggle.scroll_into_view_if_needed()
                 try:
                     toggle.wait_for(state="visible", timeout=2000)
-                except:
+                except Exception:
                     pass
 
                 toggle.click()
@@ -563,7 +563,7 @@ class ComprehensiveBrowserTester:
                 # Wait for section to toggle
                 try:
                     self.page.wait_for_timeout(300)
-                except:
+                except Exception:
                     pass
 
                 # Check if section is now visible
@@ -615,7 +615,7 @@ class ComprehensiveBrowserTester:
                         self.page.wait_for_timeout(500)
                         # Wait for feedback controls to actually render
                         self.page.wait_for_selector(".feedback-controls", timeout=2000)
-                    except:
+                    except Exception:
                         pass
 
             first_result = results.first
@@ -817,7 +817,7 @@ class ComprehensiveBrowserTester:
                     # Wait for section to become visible
                     try:
                         self.page.wait_for_selector("#advancedOptions:visible", timeout=2000)
-                    except:
+                    except Exception:
                         pass
 
             # Check if LLM toggle exists
@@ -837,7 +837,7 @@ class ComprehensiveBrowserTester:
                 # Wait for toggle to register
                 try:
                     self.page.wait_for_timeout(300)
-                except:
+                except Exception:
                     pass
 
             # Test type-ahead with LLM enabled
@@ -848,7 +848,7 @@ class ComprehensiveBrowserTester:
             # Wait for dropdown to appear (longer timeout for LLM processing)
             try:
                 self.page.wait_for_selector("#autocompleteDropdown:visible", timeout=8000)
-            except:
+            except Exception:
                 pass
 
             dropdown = self.page.locator(
@@ -948,7 +948,7 @@ class ComprehensiveBrowserTester:
                 # Wait for feedback controls to appear
                 try:
                     self.page.wait_for_selector(".feedback-controls", timeout=2000)
-                except:
+                except Exception:
                     pass
 
             if results.count() == 0:
@@ -1111,7 +1111,7 @@ class ComprehensiveBrowserTester:
                     ".similarity-item, [class*='similarity']", timeout=15000
                 )
                 self.page.wait_for_load_state("networkidle", timeout=10000)
-            except:
+            except Exception:
                 pass
 
             # Check for similarity items
@@ -1291,7 +1291,7 @@ class ComprehensiveBrowserTester:
                                 }});
                             }}
                         """)
-                    except:
+                    except Exception:
                         pass
 
                 self.page.on("load", inject_api_base)

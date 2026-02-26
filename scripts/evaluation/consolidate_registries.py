@@ -53,13 +53,13 @@ def read_old_registry(db_path: Path) -> list[dict[str, Any]]:
                 if record.get("metrics"):
                     try:
                         record["metrics"] = json.loads(record["metrics"])
-                    except:
+                    except (json.JSONDecodeError, TypeError):
                         record["metrics"] = {}
 
                 if record.get("metadata"):
                     try:
                         record["metadata"] = json.loads(record["metadata"])
-                    except:
+                    except (json.JSONDecodeError, TypeError):
                         record["metadata"] = {}
 
                 records.append(record)
@@ -86,7 +86,7 @@ def migrate_registry_record(record: dict[str, Any], dry_run: bool = False) -> di
     if isinstance(metrics, str):
         try:
             metrics = json.loads(metrics)
-        except:
+        except (json.JSONDecodeError, TypeError):
             metrics = {}
 
     # Extract full_results if available (may contain metrics)
@@ -94,7 +94,7 @@ def migrate_registry_record(record: dict[str, Any], dry_run: bool = False) -> di
     if isinstance(full_results, str):
         try:
             full_results = json.loads(full_results)
-        except:
+        except (json.JSONDecodeError, TypeError):
             full_results = {}
 
     # Merge metrics from full_results if metrics is empty
@@ -108,7 +108,7 @@ def migrate_registry_record(record: dict[str, Any], dry_run: bool = False) -> di
     if isinstance(metadata, str):
         try:
             metadata = json.loads(metadata)
-        except:
+        except (json.JSONDecodeError, TypeError):
             metadata = {}
 
     # Build config

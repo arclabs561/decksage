@@ -39,7 +39,7 @@ if str(src_dir) not in sys.path:
 
 try:
     from ml.annotation.llm_annotator import LLMAnnotator
-    from ml.utils.paths import PATHS
+    from ml.utils.paths import PATHS  # noqa: F401
 
     HAS_LLM_ANNOTATOR = True
 except ImportError as e:
