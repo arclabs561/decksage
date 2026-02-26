@@ -12,6 +12,7 @@ Combines multiple similarity signals:
 4. Text embedding similarity (instruction-tuned embeddings)
 5. Visual embedding similarity (SigLIP/CLIP on card images)
 6. GNN embedding similarity (GraphSAGE learned representations)
+7. Pack embedding similarity (pack-level co-occurrence embeddings)
 
 Supports multiple aggregation methods:
 - rrf: Reciprocal Rank Fusion (default, recommended for heterogeneous signals)
@@ -79,6 +80,7 @@ class FusionWeights:
     sideboard: float = 0.0  # Sideboard co-occurrence signal (optional)
     temporal: float = 0.0  # Temporal trend signal (optional)
     gnn: float = 0.30  # GNN-learned embeddings (GraphSAGE, multi-hop)
+    pack_embed: float = 0.0  # Pack-level co-occurrence embeddings (optional)
     archetype: float = 0.0  # Archetype staples and co-occurrence (optional)
     format: float = 0.0  # Format-specific and cross-format patterns (optional)
 
@@ -93,6 +95,7 @@ class FusionWeights:
             + self.sideboard
             + self.temporal
             + self.gnn
+            + self.pack_embed
             + self.archetype
             + self.format
         )
@@ -106,6 +109,7 @@ class FusionWeights:
                 sideboard=0.10,
                 temporal=0.05,
                 gnn=0.10,
+                pack_embed=0.0,
                 archetype=0.10,
                 format=0.10,
             )
@@ -118,6 +122,7 @@ class FusionWeights:
             sideboard=self.sideboard / total,
             temporal=self.temporal / total,
             gnn=self.gnn / total,
+            pack_embed=self.pack_embed / total,
             archetype=self.archetype / total,
             format=self.format / total,
         )
@@ -147,6 +152,7 @@ class WeightedLateFusion:
         sideboard_cooccurrence: dict[str, dict[str, float]] | None = None,
         temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
         gnn_embedder: Any | None = None,
+        pack_embeddings: Any | None = None,
         archetype_staples: dict[str, dict[str, float]] | None = None,
         archetype_cooccurrence: dict[str, dict[str, float]] | None = None,
         format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
@@ -173,6 +179,7 @@ class WeightedLateFusion:
             sideboard_cooccurrence: Optional dict mapping card -> dict of co-occurring cards -> frequency
             temporal_cooccurrence: Optional dict mapping month -> card -> co-occurring card -> frequency
             gnn_embedder: Optional GNN embedder (CardGNNEmbedder) for learned graph representations
+            pack_embeddings: Optional pack-level embedding model with similarity(q, c) and most_similar(q, topn) methods
             archetype_staples: Optional dict mapping card -> archetype -> frequency
             archetype_cooccurrence: Optional dict mapping card -> co-occurring card -> frequency (within archetypes)
             format_cooccurrence: Optional dict mapping format -> card -> co-occurring card -> frequency
@@ -202,6 +209,7 @@ class WeightedLateFusion:
         self.sideboard_cooccurrence = sideboard_cooccurrence or {}
         self.temporal_cooccurrence = temporal_cooccurrence or {}
         self.gnn_embedder = gnn_embedder
+        self.pack_embeddings = pack_embeddings
         self.archetype_staples = archetype_staples or {}
         self.archetype_cooccurrence = archetype_cooccurrence or {}
         self.format_cooccurrence = format_cooccurrence or {}
@@ -531,6 +539,18 @@ class WeightedLateFusion:
         except Exception:
             return 0.0
 
+    def _get_pack_embed_similarity(self, query: str, candidate: str) -> float:
+        """Get pack-level embedding similarity."""
+        if not self.pack_embeddings:
+            return 0.0
+        if query not in self.pack_embeddings or candidate not in self.pack_embeddings:
+            return 0.0
+        try:
+            similarity = self.pack_embeddings.similarity(query, candidate)
+            return _cosine_to_unit(similarity)  # Map to [0, 1]
+        except Exception:
+            return 0.0
+
     def _get_archetype_similarity(self, query: str, candidate: str) -> float:
         """Get archetype-based similarity."""
         if not self.archetype_staples or not self.archetype_cooccurrence:
@@ -596,6 +616,16 @@ class WeightedLateFusion:
             except Exception:
                 pass
 
+        # From pack embeddings
+        if self.pack_embeddings and query in self.pack_embeddings:
+            try:
+                similar = self.pack_embeddings.most_similar(
+                    query, topn=min(self.candidate_topn, 50)
+                )
+                candidates.update(card for card, _ in similar)
+            except Exception:
+                pass
+
         # OPTIMIZATION: Skip text embeddings in candidate generation (too slow)
         # Text embeddings are only used for similarity scoring, not candidate generation
         # This avoids expensive LLM calls during candidate generation
@@ -626,6 +656,7 @@ class WeightedLateFusion:
         compute_sideboard = self.weights.sideboard > 0.0
         compute_temporal = self.weights.temporal > 0.0
         compute_gnn = self.weights.gnn > 0.0
+        compute_pack_embed = self.weights.pack_embed > 0.0
 
         for candidate in candidates_list:
             # OPTIMIZATION: Only compute modalities with non-zero weights
@@ -658,6 +689,10 @@ class WeightedLateFusion:
                 scores[candidate]["temporal"] = self._get_temporal_similarity(query, candidate)
             if compute_gnn:
                 scores[candidate]["gnn"] = self._get_gnn_similarity(query, candidate)
+            if compute_pack_embed:
+                scores[candidate]["pack_embed"] = self._get_pack_embed_similarity(
+                    query, candidate
+                )
 
         return scores
 
@@ -682,6 +717,8 @@ class WeightedLateFusion:
             weight_score_pairs.append((self.weights.temporal, scores["temporal"]))
         if self.weights.gnn > 0.0 and "gnn" in scores:
             weight_score_pairs.append((self.weights.gnn, scores["gnn"]))
+        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
+            weight_score_pairs.append((self.weights.pack_embed, scores["pack_embed"]))
         if self.weights.archetype > 0.0 and "archetype" in scores:
             weight_score_pairs.append((self.weights.archetype, scores["archetype"]))
         if self.weights.format > 0.0 and "format" in scores:
@@ -709,6 +746,8 @@ class WeightedLateFusion:
             total += self.weights.temporal / (self.rrf_k + ranks["temporal"])
         if self.weights.gnn > 0.0 and "gnn" in ranks:
             total += self.weights.gnn / (self.rrf_k + ranks["gnn"])
+        if self.weights.pack_embed > 0.0 and "pack_embed" in ranks:
+            total += self.weights.pack_embed / (self.rrf_k + ranks["pack_embed"])
         if self.weights.archetype > 0.0 and "archetype" in ranks:
             total += self.weights.archetype / (self.rrf_k + ranks["archetype"])
         if self.weights.format > 0.0 and "format" in ranks:
@@ -736,6 +775,8 @@ class WeightedLateFusion:
             total += self.weights.temporal / math.sqrt(self.rrf_k + ranks["temporal"])
         if self.weights.gnn > 0.0 and "gnn" in ranks:
             total += self.weights.gnn / math.sqrt(self.rrf_k + ranks["gnn"])
+        if self.weights.pack_embed > 0.0 and "pack_embed" in ranks:
+            total += self.weights.pack_embed / math.sqrt(self.rrf_k + ranks["pack_embed"])
         if self.weights.archetype > 0.0 and "archetype" in ranks:
             total += self.weights.archetype / math.sqrt(self.rrf_k + ranks["archetype"])
         if self.weights.format > 0.0 and "format" in ranks:
@@ -761,6 +802,8 @@ class WeightedLateFusion:
             total += self.weights.temporal * scores["temporal"]
         if self.weights.gnn > 0.0 and "gnn" in scores:
             total += self.weights.gnn * scores["gnn"]
+        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
+            total += self.weights.pack_embed * scores["pack_embed"]
         if self.weights.archetype > 0.0 and "archetype" in scores:
             total += self.weights.archetype * scores["archetype"]
         if self.weights.format > 0.0 and "format" in scores:
@@ -785,6 +828,7 @@ class WeightedLateFusion:
                 ("sideboard", self.weights.sideboard),
                 ("temporal", self.weights.temporal),
                 ("gnn", self.weights.gnn),
+                ("pack_embed", self.weights.pack_embed),
                 ("archetype", self.weights.archetype),
                 ("format", self.weights.format),
             ]
@@ -817,6 +861,8 @@ class WeightedLateFusion:
             enabled_scores.append(scores["temporal"])
         if self.weights.gnn > 0.0 and "gnn" in scores:
             enabled_scores.append(scores["gnn"])
+        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
+            enabled_scores.append(scores["pack_embed"])
         if self.weights.archetype > 0.0 and "archetype" in scores:
             enabled_scores.append(scores["archetype"])
         if self.weights.format > 0.0 and "format" in scores:
@@ -850,6 +896,9 @@ class WeightedLateFusion:
             found = True
         if self.weights.gnn > 0.0 and "gnn" in scores:
             min_score = min(min_score, scores["gnn"])
+            found = True
+        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
+            min_score = min(min_score, scores["pack_embed"])
             found = True
         if self.weights.archetype > 0.0 and "archetype" in scores:
             min_score = min(min_score, scores["archetype"])
@@ -954,6 +1003,7 @@ class WeightedLateFusion:
                 sideboard_ranked = []
                 temporal_ranked = []
                 gnn_ranked = []
+                pack_embed_ranked = []
                 archetype_ranked = []
                 format_ranked = []
 
@@ -982,6 +1032,10 @@ class WeightedLateFusion:
                         temporal_ranked.append((candidate, modality_scores[candidate]["temporal"]))
                     if "gnn" in modality_scores[candidate]:
                         gnn_ranked.append((candidate, modality_scores[candidate]["gnn"]))
+                    if "pack_embed" in modality_scores[candidate]:
+                        pack_embed_ranked.append(
+                            (candidate, modality_scores[candidate]["pack_embed"])
+                        )
                     if "archetype" in modality_scores[candidate]:
                         archetype_ranked.append(
                             (candidate, modality_scores[candidate]["archetype"])
@@ -997,6 +1051,7 @@ class WeightedLateFusion:
                 sideboard_ranked.sort(key=lambda x: x[1], reverse=True)
                 temporal_ranked.sort(key=lambda x: x[1], reverse=True)
                 gnn_ranked.sort(key=lambda x: x[1], reverse=True)
+                pack_embed_ranked.sort(key=lambda x: x[1], reverse=True)
                 archetype_ranked.sort(key=lambda x: x[1], reverse=True)
                 format_ranked.sort(key=lambda x: x[1], reverse=True)
 
@@ -1034,6 +1089,10 @@ class WeightedLateFusion:
                     if candidate not in ranks:
                         ranks[candidate] = {}
                     ranks[candidate]["gnn"] = rank
+                for rank, (candidate, _) in enumerate(pack_embed_ranked, start=1):
+                    if candidate not in ranks:
+                        ranks[candidate] = {}
+                    ranks[candidate]["pack_embed"] = rank
                 for rank, (candidate, _) in enumerate(archetype_ranked, start=1):
                     if candidate not in ranks:
                         ranks[candidate] = {}
