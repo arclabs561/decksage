@@ -29,7 +29,7 @@ from gensim.models import KeyedVectors
 class ActiveAnnotationSelector:
     """Intelligently selects next annotations based on model uncertainty"""
 
-    def __init__(self, game="magic"):
+    def __init__(self, game="yugioh"):
         self.game = game
 
         # Load current labels

@@ -161,7 +161,7 @@ if HAS_PYDANTIC_AI:
     SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
 
     # Prompt version -- bump on any semantic change to scoring rules or output schema
-    SIMILARITY_PROMPT_VERSION = "v3.1"
+    SIMILARITY_PROMPT_VERSION = "v4.0"
 
     # Enhanced SIMILARITY_PROMPT with CoT and score diversity
     SIMILARITY_PROMPT_BASE = """You are an expert TCG judge creating similarity annotations.
@@ -271,43 +271,84 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 **GAME CONTEXT: Yu-Gi-Oh! Trading Card Game**
 - Use Yu-Gi-Oh! terminology: "Monster", "Spell", "Trap", "ATK", "DEF", "Level", "Attribute", "Type"
 - Consider: Monster Types (Dragon, Warrior, Spellcaster, etc.), Attributes (DARK, LIGHT, etc.), Levels/Ranks
-- Archetypes: Blue-Eyes, Dark Magician, HERO, Branded/Despia, Tearlaments, Kashtira, Snake-Eye, etc.
 - Extra Deck mechanics: Fusion, Synchro, Xyz, Link summoning
 - DO NOT use Magic: The Gathering terminology (mana, instant, sorcery, etc.)
+- Yu-Gi-Oh! has NO mana system. Do not score manabase similarity.
 
-**YU-GI-OH-SPECIFIC: Use Archetype and Type to Raise Scores**
-- Same archetype (both Blue-Eyes, both HERO, etc.) → score >= 0.5-0.7
-- Same type (both Dragon, both Warrior, etc.) → score >= 0.4-0.6
-- Same function (both removal, both search, both draw) → score >= 0.4-0.6
-- Generic staples (hand traps, board breakers) are functionally similar across decks
-- Examples: Blue-Eyes White Dragon vs Blue-Eyes Alternative → 0.8 (same archetype), Dark Magician vs Blue-Eyes → 0.3 (different archetypes)
+**ARCHETYPE ISOLATION (Critical)**
+- Archetype membership is defined by name substrings (e.g., "Snake-Eye" cards reference "Snake-Eye" in their text)
+- An archetype-specific card (text says "target one Snake-Eye card") is NOT similar to a generic card with the same effect
+- Two searchers from different archetypes are NOT interchangeable even if both "add a monster from deck to hand"
+- Same archetype cards → score 0.5-0.8 depending on functional overlap
+- Cross-archetype cards with same effect → score 0.2-0.4 unless both are generic
 
-**TIME PERIOD NUANCE**: Banlists fundamentally change card relationships.
-- A card's "substitutes" change when its usual partner gets banned
-- Power level context matters: cards from 2005 vs 2024 serve very different roles
+**CARD CATEGORY TAXONOMY (Use This for Scoring)**
+1. **Standalone generics**: usable in ANY deck (Ash Blossom, Infinite Impermanence, staple spells) → compare freely across decks
+2. **Engine cards**: only function within their archetype package → only similar to cards in same engine
+3. **Splashable engines**: small self-contained packages added to unrelated decks → similar to other splashable engines of same function
+4. **Tech cards**: meta-dependent sideboard/flex slots → similar within their niche only
 
-**IMPORTANT**: Yu-Gi-Oh! has NO mana system. Do not score manabase similarity highly.
+**HAND TRAP TAXONOMY (Do NOT Treat All Hand Traps as Similar)**
+- Ash Blossom: stops searches/summons-from-deck/mill-to-GY (hits ~80% of combo openers)
+- Infinite Impermanence: negates on-field activated monster effects (broader target, different timing)
+- Nibiru: punishes 5+ summons by mass-tributing (combo chain punisher, dead vs short combos)
+- Ghost Ogre: destroys on-field cards when they activate (narrower than Ash, different function)
+- Maxx "C": draws per special summon (where legal -- format-dependent)
+- These are NOT substitutes for each other. Score hand traps within same sub-function 0.4-0.6, across sub-functions 0.2-0.4
+
+**GOING FIRST vs GOING SECOND (Critical Axis)**
+- Going-first cards (combo pieces, negates, floodgates) ≠ going-second cards (board breakers, hand traps)
+- Dark Ruler No More is a going-second board breaker; Ash Blossom works in both game states
+- Two board breakers are more similar to each other than a board breaker is to a hand trap
+
+**BANLIST STATUS**
+- Forbidden cards cannot substitute for anything in competitive play
+- When a card is Limited (1 copy), players run 1 of it + 2-3 of similar cards → the "what replaces it?" query is the core similarity use case
+- Always note if a card's status affects its substitutability
+
+**SCORING EXAMPLES:**
+- Blue-Eyes White Dragon vs Blue-Eyes Alternative → 0.85 (same archetype, similar function)
+- Ash Blossom vs Ghost Ogre → 0.45 (both hand traps but different functions, different meta calls)
+- Ash Blossom vs Dark Ruler No More → 0.25 (both disruption but different game-state categories)
+- Snake-Eye Ash vs Reinforcement of the Army → 0.30 (both search but one is archetype-locked)
+- Dark Magician vs Blue-Eyes → 0.30 (different archetypes, similar era/nostalgia only)
 """
             elif game_lower in ["pokemon", "pkm"]:
                 game_context = """
-**GAME CONTEXT: Pokémon Trading Card Game**
-- Use Pokémon TCG terminology: "Pokémon", "Energy", "Trainer", "HP", "Type", "Weakness", "Resistance"
-- Consider: Pokémon Types (Fire, Water, Grass, etc.), Evolution lines, Abilities
+**GAME CONTEXT: Pokemon Trading Card Game**
+- Use Pokemon TCG terminology: "Pokemon", "Energy", "Trainer", "HP", "Type", "Weakness", "Resistance"
 - Card types: Pokemon (Basic, Stage 1/2, EX, GX, V, VMAX, VSTAR, ex), Trainer (Supporter, Item, Stadium, Tool), Energy
-- Regulation marks and rotation periods affect card availability
+- Regulation marks and rotation affect card availability
 - DO NOT use Magic: The Gathering terminology
 
-**POKEMON-SPECIFIC: Use Type and Evolution to Raise Scores**
-- Same type (both Fire, both Water, etc.) → score >= 0.4 (even with weak graph)
-- Same evolution line → score >= 0.5-0.7
-- Same function (both draw, both search, both damage) → score >= 0.4-0.6
-- Examples: Pikachu vs Raichu → 0.7 (evolution), Charizard vs Blastoise → 0.3 (different types)
+**PRIZE TRADE SYSTEM (Critical -- Invisible in Card Text)**
+- Single-prize Pokemon (no rule box): gives up 1 prize when KO'd
+- Pokemon ex/V: gives up 2 prizes when KO'd
+- Pokemon VMAX: gives up 3 prizes when KO'd
+- Two cards with IDENTICAL attack text are fundamentally different if they have different prize costs
+- A single-prize attacker doing 160 damage is strategically superior to a 2-prize attacker doing 160
+- "Same attack, different prize cost" is a CRITICAL difference, not a footnote → reduce similarity by 0.2-0.3
 
-**TIME PERIOD NUANCE**: Pokemon TCG changes dramatically with each rotation.
-- SM era (2017-2022): GX, Tag Team era
-- SWSH era (2020-2023): V, VMAX, VSTAR
-- SV era (2023+): ex, Tera, ACE SPEC
-- A "draw supporter" is universal (Professor's Research), but "energy acceleration" is archetype-specific
+**SUPPORTER TAXONOMY (Do NOT Treat All Draw Supporters as Similar)**
+- Professor's Research: unconditional draw 7 but FORCES discard of current hand → best when hand is bad
+- Iono: mutual shuffle-draw scaled by prizes + disruption to opponent → tempo/disruption tool
+- Arven: searches 1 Item + 1 Tool → low draw, high consistency for specific setups
+- These serve different strategic purposes despite all being "draw Supporters" → score 0.4-0.6, not 0.8+
+
+**ITEM vs SUPPORTER DISTINCTION**
+- If an Item and a Supporter do the same thing, the Item is better (no once-per-turn restriction)
+- Search Items (Nest Ball, Ultra Ball) are more similar to each other than either is to a search Supporter
+
+**ROTATION LEGALITY**
+- Regulation marks (letters H/I/J for current Standard) gate legality
+- A rotated card is NOT a substitute for its Standard-legal replacement in competitive play
+- Always note if rotation status affects substitutability
+
+**SCORING:**
+- Same evolution line → 0.5-0.7
+- Same type + similar role → 0.4-0.6
+- Same function but different prize cost → reduce by 0.2-0.3
+- Charizard ex (2-prize) vs Radiant Charizard (1-prize) → 0.40 (thematically related but different prize economies)
 """
             elif game_lower in ["magic", "mtg"]:
                 game_context = """
@@ -315,22 +356,38 @@ Be precise and justify your score. Default to is_substitute=True when in doubt f
 - Use Magic terminology: "mana", "instant", "sorcery", "creature", "power", "toughness", "CMC"
 - Consider: Colors (WUBRG), card types, mana costs, keywords
 - Formats: Vintage, Legacy, Modern, Pioneer, Standard, Pauper, Commander/EDH
-- Deck archetypes: Burn, Delver, Tron, Control, Midrange, Combo (Storm, Dredge, etc.)
 
-**MAGIC-SPECIFIC: Use Function to Raise Scores**
-- Same function (removal, draw, counter, etc.) → score >= 0.4 (even with weak graph)
-- Same function + similar attributes → score >= 0.5-0.7
-- Examples: Lightning Bolt vs Shock → 0.7, Path vs Swords → 0.8, Counterspell vs Mana Leak → 0.5
+**STRICTLY BETTER / FUNCTIONAL REPRINT (Player Vocabulary)**
+- "Strictly better": card A is superior in at least one respect, inferior in zero. Lightning Bolt > Shock (same cost, 3 > 2 damage)
+- "Functional reprint": different name, identical/near-identical rules text → genuinely interchangeable in casual play
+- "Budget version of": approximates same function for lower $, with some sacrifice (lower power, higher mana cost)
+- "On a different axis": two cards that address same problem through different mechanisms (Thoughtseize vs Counterspell both stop spells, but operate differently) → score 0.3-0.4, NOT 0.7+
 
-**TIME PERIOD NUANCE**: Cards can be similar in different ways across eras.
-- Pre-Modern (1993-2003): different power level expectations
-- Modern era (2003-2019): pushed creatures, efficient answers
-- Post-FIRE (2019+): higher power, more synergy-focused
-A card's role can shift as formats evolve.
+**MANA COST PRECISION (Multi-Axis)**
+- CMC is not the only cost dimension. Color pip density matters independently:
+  - {R} vs {2}{R}: both red, but different splash-ability in multicolor decks
+  - {R}{R} vs {1}{R}: both 2-CMC, but double pip demands more color commitment
+- Instant vs Sorcery with same effect: meaningfully different (holding up mana at end of turn ≠ main phase cast) → reduce similarity by 0.1-0.2
 
-**FORMAT NUANCE**: Same pair can have different similarity in different formats.
-- Lightning Bolt + Chain Lightning: both Burn in Legacy, but Chain Lightning is Legacy-only
-- Counterspell + Mana Leak: similar in principle, but Counterspell banned in Modern until 2021
+**FORMAT LEGALITY (Hard Gate)**
+- A card not legal in a format cannot substitute for one that is, within that format
+- Same pair can have different similarity across formats:
+  - Counterspell vs Mana Leak: Mana Leak is the Modern option, but becomes dead late game; Counterspell is strictly better in Legacy → note format dependency
+  - Chain Lightning is Legacy-only; Lightning Bolt is Modern+Legacy
+
+**COMMANDER SPECIAL CASE**
+- 100-card singleton means you run BOTH the "strictly better" and "strictly worse" versions
+- Similarity in Commander is about "fills same role" not "substitutes for" → both can coexist
+
+**SIDEBOARD vs MAINDECK**
+- Hate cards (graveyard hate, artifact hate) are similar within hate category, not across categories
+- Rest in Peace vs Stony Silence: both sideboard staples, completely different targets → score 0.15
+
+**SCORING:**
+- Lightning Bolt vs Shock → 0.70 (same function, strictly better relationship)
+- Path vs Swords to Plowshares → 0.80 (functional reprint, minor difference in drawback)
+- Counterspell vs Mana Leak → 0.50 (same function, different efficiency and late-game)
+- Thoughtseize vs Counterspell → 0.30 (both stop spells but on different axes)
 """
 
         return SIMILARITY_PROMPT_BASE + (game_context if game_context else "")
