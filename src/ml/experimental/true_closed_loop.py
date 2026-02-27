@@ -20,7 +20,7 @@ from pathlib import Path
 class ClosedLoopExperiment:
     """Enforces true closed-loop learning"""
 
-    def __init__(self, game="magic"):
+    def __init__(self, game="yugioh"):
         self.game = game
         self.log_file = Path("../../experiments/EXPERIMENT_LOG.jsonl")
         self.best_file = Path(f"../../experiments/CURRENT_BEST_{game}.json")

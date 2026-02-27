@@ -36,7 +36,7 @@ except ImportError as e:
 
 async def generate_llm_annotations_parallel(
     num_annotations: int = 50,
-    game: str = "magic",
+    game: str = "yugioh",
     output_dir: Path | None = None,
 ) -> list[dict[str, Any]]:
     """Generate LLM annotations using parallel multi-judge system.
@@ -243,7 +243,7 @@ async def main() -> int:
     parser.add_argument(
         "--game",
         choices=["magic", "pokemon", "yugioh", "digimon", "onepiece", "riftbound", "all"],
-        default="magic",
+        default="yugioh",
         help="Game to generate annotations for",
     )
     parser.add_argument(

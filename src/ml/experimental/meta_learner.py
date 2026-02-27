@@ -20,7 +20,7 @@ from pathlib import Path
 class MetaLearner:
     """Learns from all experiments to guide future ones"""
 
-    def __init__(self, log_file="../../experiments/EXPERIMENT_LOG.jsonl", game="magic"):
+    def __init__(self, log_file="../../experiments/EXPERIMENT_LOG.jsonl", game="yugioh"):
         self.log_file = Path(log_file)
         self.game = game
         self.best_file = Path(f"../../experiments/CURRENT_BEST_{game}.json")

@@ -4,38 +4,87 @@
     "mana_system": "No mana system - cards have levels/ranks and summoning conditions",
     "color_system": "Attributes: DARK, LIGHT, EARTH, WATER, FIRE, WIND, DIVINE",
     "card_types": ["Monster", "Spell", "Trap"],
-    "keywords": ["Hand Trap", "Starter", "Extender", "Floodgate", "Board Breaker", "Negate"],
-    "special_rules": "Going first advantage (55-60% win rate). Hand traps (9-15 in modern decks). Starter vs Extender theory. One-card combos.",
+    "monster_subtypes": ["Normal", "Effect", "Fusion", "Synchro", "Xyz", "Pendulum", "Link", "Ritual"],
+    "keywords": ["Hand Trap", "Starter", "Extender", "Floodgate", "Board Breaker", "Negate", "Quick Effect", "Ignition Effect"],
+    "special_rules": "Going first advantage (55-60% win rate). Hand traps (9-15 in modern decks). Starter vs Extender theory. One-card combos. No mana means any card can be played immediately if summoning conditions are met.",
     "terminology": {
-      "Hand Trap": "Monster that can be activated from hand during opponent's turn",
-      "Starter": "Card that initiates combo (11-13 copies for 82-91% consistency)",
-      "Extender": "Card that provides resources during combo",
-      "Floodgate": "Continuous effect that restricts opponent",
-      "Board Breaker": "Card that breaks established boards"
+      "Hand Trap": "Monster activated from hand during opponent's turn to disrupt. NOT all hand traps are interchangeable -- each stops different things (searches vs effects vs summons)",
+      "Starter": "Card that initiates combo without needing other cards. 11-13 copies for 82-91% opening consistency",
+      "Extender": "Card that provides additional resources mid-combo. Useless without a starter",
+      "Floodgate": "Continuous effect restricting opponent (e.g., Skill Drain, Rivalry of Warlords). Often banned/limited",
+      "Board Breaker": "Card designed to break established boards when going second (Dark Ruler No More, Lightning Storm, Evenly Matched). Dead or weak going first",
+      "Engine": "Self-contained multi-card combo package. Can be archetype-native or splashed into other decks",
+      "Splashable Engine": "Small (6-8 card) engine package from one archetype that gets added into unrelated decks for value",
+      "Garnet": "A card you must run for an engine to work but never want to draw (named after Gem-Knight Garnet)",
+      "Generic Card": "Card usable in any deck regardless of archetype (hand traps, staple spells)",
+      "Archetype-Specific": "Card that only functions within its named archetype due to name-based support conditions",
+      "Going First Package": "Cards optimized for establishing a board (combo pieces, negates). Different from going-second package",
+      "Going Second Package": "Cards optimized for breaking opponent's board (board breakers, hand traps). Different from going-first package"
     }
+  },
+  "similarity_guidelines": {
+    "critical_distinctions": [
+      "Two cards with similar effects from DIFFERENT archetypes are NOT interchangeable if one is archetype-specific (references archetype name in text)",
+      "Hand traps are NOT all similar -- Ash Blossom stops searches, Nibiru punishes 5+ summons, Impermanence negates on-field effects. Different functions, different meta calls",
+      "Going-first cards and going-second cards serve different purposes even if both are 'disruption'",
+      "Engine cards only function with their supporting pieces -- a Snake-Eye searcher is not similar to a generic searcher like ROTA",
+      "Banlist status is a hard gate -- a Forbidden card and its closest legal alternative are the key 'similarity pair' for players"
+    ],
+    "card_categories_for_similarity": {
+      "standalone_generics": "Cards in any deck without support: Ash Blossom, Infinite Impermanence, Pot of Prosperity",
+      "engine_cards": "Cards requiring archetype support to function: archetype-specific searchers, extenders, payoffs",
+      "splashable_engines": "Small packages added to unrelated decks: Snake-Eye engine, Tenpai engine",
+      "tech_cards": "Meta-dependent slots targeting specific matchups or strategies"
+    },
+    "hand_trap_taxonomy": {
+      "search_negation": "Ash Blossom & Joyous Spring -- stops add-from-deck, summon-from-deck, send-from-deck-to-GY",
+      "effect_negation": "Infinite Impermanence -- negates activated monster effects on field",
+      "mass_disruption": "Nibiru, the Primal Being -- tributes all after 5th summon, punishes long combo chains",
+      "targeted_destruction": "Ghost Ogre & Snow Rabbit -- destroys card when it activates an effect on field",
+      "draw_punishment": "Maxx 'C' -- draws a card for each opponent special summon (where legal)",
+      "graveyard_disruption": "D.D. Crow, Called by the Grave -- removes GY resources"
+    },
+    "common_llm_mistakes": [
+      "Treating all hand traps as similar because they activate from hand -- they stop completely different things",
+      "Marking archetype-specific searchers as similar to generic searchers -- they are NOT interchangeable outside the archetype",
+      "Ignoring banlist status -- a Forbidden card cannot substitute for anything in competitive play",
+      "Conflating going-first and going-second cards as 'both disruption' -- different game states, different functions",
+      "Missing archetype name conditions in support card text (e.g., 'target one Snake-Eye card' is NOT generic recursion)"
+    ]
   },
   "archetypes": [
     {
       "name": "Combo",
-      "description": "Deck that assembles game-winning combos",
-      "strategy": "Establish unbreakable board turn 1, win through combo",
+      "description": "Deck assembling game-winning combos from minimal starters",
+      "strategy": "Establish unbreakable board turn 1, win through combo lines",
       "core_cards": ["Starter cards (11-13 copies)", "Extenders", "Hand traps"],
       "flex_slots": ["Tech cards", "Board breakers"],
-      "key_features": ["High consistency", "Going first focus", "Combo assembly"],
-      "typical_curve": "Low - focus on starters and extenders",
+      "key_features": ["High consistency", "Going first focus", "One-card combos"],
+      "typical_curve": "Low - starters and extenders dominate",
       "interaction_level": "Light (going first), Heavy (going second)",
-      "meta_position": "Tier 1 - Dracotail, Maliss, Ryzeal dominant"
+      "meta_position": "Tier 1 - dominant archetype class"
     },
     {
       "name": "Control",
-      "description": "Reactive deck that wins through resource advantage",
+      "description": "Reactive deck winning through resource advantage and disruption",
       "strategy": "Disrupt opponent, accumulate resources, win with finisher",
-      "core_cards": ["Hand traps", "Disruption", "Card advantage engines"],
+      "core_cards": ["Hand traps", "Disruption traps", "Card advantage engines"],
       "flex_slots": ["Tech cards", "Board breakers"],
       "key_features": ["Heavy disruption", "Going second capable", "Resource management"],
-      "typical_curve": "Medium - focus on disruption and value",
+      "typical_curve": "Medium - disruption and value cards",
       "interaction_level": "Heavy",
       "meta_position": "Tier 1-2"
+    },
+    {
+      "name": "Stun/Floodgate",
+      "description": "Deck that restricts opponent's actions through floodgate cards",
+      "strategy": "Establish floodgates that shut down opponent's strategy completely",
+      "core_cards": ["Floodgate cards", "Protective backrow", "Simple beaters"],
+      "flex_slots": ["Draw power", "Recovery"],
+      "key_features": ["Anti-meta", "Simple gameplan", "Polarized matchups"],
+      "typical_curve": "Low to medium",
+      "interaction_level": "Passive (floodgates do the work)",
+      "meta_position": "Tier 2-3 (floodgates often get banned)"
     }
   ],
   "formats": [
@@ -43,9 +92,23 @@
       "name": "Advanced",
       "legal_sets": ["All sets ever printed"],
       "rotation_schedule": "No rotation - only ban list changes",
-      "ban_list": ["Many cards - see official ban list"],
+      "ban_list": {
+        "note": "Updated quarterly. See official Konami list for current status",
+        "categories": ["Forbidden (0 copies)", "Limited (1 copy)", "Semi-Limited (2 copies)"],
+        "impact": "Ban list changes are the primary meta driver. When a key card is limited, players seek the closest legal alternative -- this is the most common real-world 'similarity' query"
+      },
       "restricted_list": [],
-      "meta_context": "Dracotail, Maliss, Ryzeal, Yummy are top decks. Going first advantage (55-60%). Hand trap density 9-15.",
+      "meta_context": "Going first advantage 55-60%. Hand trap density 9-15 per deck. One-card combos define viability.",
+      "last_updated": "2025-01-01"
+    },
+    {
+      "name": "Traditional",
+      "legal_sets": ["All sets ever printed"],
+      "rotation_schedule": "No rotation",
+      "ban_list": {
+        "note": "All Forbidden cards become Limited instead. Rarely played competitively."
+      },
+      "meta_context": "More powerful than Advanced due to access to Forbidden cards at 1 copy",
       "last_updated": "2025-01-01"
     }
   ],
@@ -55,22 +118,46 @@
       "card1": "Blue-Eyes White Dragon",
       "card2": "Blue-Eyes Alternative White Dragon",
       "score": 0.85,
-      "reasoning": "Both are Blue-Eyes monsters. Alternative is alternative summoning condition version. Similar function in Blue-Eyes decks.",
+      "reasoning": "Both are Blue-Eyes monsters. Alternative has alternative summoning condition. Similar function in Blue-Eyes decks. Archetype-specific -- neither is useful outside Blue-Eyes.",
+      "format": "Advanced"
+    },
+    {
+      "query": "Ash Blossom & Joyous Spring",
+      "card1": "Ash Blossom & Joyous Spring",
+      "card2": "Ghost Ogre & Snow Rabbit",
+      "score": 0.45,
+      "reasoning": "Both are Level 3 FIRE Spellcaster hand traps that discard to activate. But Ash stops searches/summons-from-deck (80% of combo openers), while Ghost Ogre destroys on-field activated effects (narrower). Different meta functions despite surface similarity. NOT substitutes in most contexts.",
       "format": "Advanced"
     },
     {
       "query": "Ash Blossom & Joyous Spring",
       "card1": "Ash Blossom & Joyous Spring",
       "card2": "Infinite Impermanence",
-      "score": 0.60,
-      "reasoning": "Both are hand traps. Ash Blossom negates searches/summons, Infinite Impermanence negates effects. Similar function, different targets.",
+      "score": 0.50,
+      "reasoning": "Both are staple hand traps in the generic disruption category. Ash negates deck-based effects; Impermanence negates on-field monster effects. Both are going-first and going-second viable. Similar role (generic disruption) but different targets.",
+      "format": "Advanced"
+    },
+    {
+      "query": "Dark Ruler No More",
+      "card1": "Dark Ruler No More",
+      "card2": "Ash Blossom & Joyous Spring",
+      "score": 0.25,
+      "reasoning": "Both are disruption, but Dark Ruler No More is a going-second board breaker (dead going first), while Ash Blossom is a hand trap usable in both game states. Different categories despite both being 'disruption'.",
+      "format": "Advanced"
+    },
+    {
+      "query": "Snake-Eye Ash",
+      "card1": "Snake-Eye Ash",
+      "card2": "Reinforcement of the Army",
+      "score": 0.30,
+      "reasoning": "Both search a monster from deck. But Snake-Eye Ash is archetype-specific (only functions in Snake-Eye engine), while ROTA is a generic Warrior searcher. Not interchangeable outside Snake-Eye decks despite similar effect text.",
       "format": "Advanced"
     }
   ],
   "temporal_context": {
-    "current_meta": "Dracotail, Maliss, Ryzeal, Yummy are top decks. Going first advantage 55-60%.",
-    "recent_bans": "October 2025: 7 cards banned (floodgates removed)",
-    "price_volatility": "Ban list updates cause price spikes. Meta shifts affect card values"
+    "current_meta": "Going first advantage 55-60%. Hand trap density 9-15 per deck. One-card combos define tier placement.",
+    "recent_bans": "Quarterly ban list updates are the primary meta driver",
+    "key_insight": "When a card is banned/limited, the most common player question is 'what replaces it?' -- this is the core similarity use case"
   },
-  "last_updated": "2025-01-01T00:00:00"
+  "last_updated": "2026-02-26T00:00:00"
 }
