@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["pydantic-ai", "pydantic", "python-dotenv", "gensim"]
+# dependencies = ["pydantic-ai", "pydantic", "python-dotenv", "gensim", "numpy"]
 # ///
 """
 Run multi-judge annotation batch with smart selection and meta-judge resolution.
@@ -116,17 +116,61 @@ except ImportError:
 
 
 def load_edgelist(path: Path) -> list[tuple[str, str, float]]:
-    """Load tab-separated edgelist."""
+    """Load edgelist from tab-separated (.edg) or CSV (.csv) format.
+
+    TSV format: card1<TAB>card2<TAB>weight
+    CSV format: NAME_1,NAME_2,...,COUNT,... (auto-detected by header or .csv extension)
+    """
     edges = []
+    is_csv = path.suffix == ".csv"
     with open(path) as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#"):
-                continue
-            parts = line.split("\t")
-            if len(parts) < 2:
-                continue
-            edges.append((parts[0], parts[1], float(parts[2]) if len(parts) > 2 else 1.0))
+        first_line = f.readline().strip()
+        if not first_line:
+            return edges
+
+        # Detect CSV by header row containing NAME_1 or comma-separated with known columns
+        if is_csv or "NAME_1" in first_line or (
+            "," in first_line and "\t" not in first_line and first_line.count(",") >= 2
+        ):
+            # CSV mode -- find column indices from header
+            import csv
+            f.seek(0)
+            reader = csv.DictReader(f)
+            name1_col = "NAME_1" if "NAME_1" in (reader.fieldnames or []) else None
+            name2_col = "NAME_2" if "NAME_2" in (reader.fieldnames or []) else None
+            count_col = "COUNT" if "COUNT" in (reader.fieldnames or []) else None
+            if not name1_col or not name2_col:
+                # Fall back: assume first two columns are card names
+                f.seek(0)
+                next(f)  # skip header
+                for line in f:
+                    parts = line.strip().split(",")
+                    if len(parts) >= 2:
+                        weight = float(parts[2]) if len(parts) > 2 else 1.0
+                        edges.append((parts[0], parts[1], weight))
+            else:
+                for row in reader:
+                    c1, c2 = row[name1_col], row[name2_col]
+                    if c1 == c2:
+                        continue  # skip self-loops
+                    # Skip unresolved passcode IDs (e.g., Card_81439174)
+                    if c1.startswith("Card_") or c2.startswith("Card_"):
+                        continue
+                    weight = float(row[count_col]) if count_col and row.get(count_col) else 1.0
+                    edges.append((c1, c2, weight))
+        else:
+            # TSV mode
+            parts = first_line.split("\t")
+            if len(parts) >= 2:
+                edges.append((parts[0], parts[1], float(parts[2]) if len(parts) > 2 else 1.0))
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split("\t")
+                if len(parts) < 2:
+                    continue
+                edges.append((parts[0], parts[1], float(parts[2]) if len(parts) > 2 else 1.0))
     return edges
 
 
@@ -746,7 +790,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Run multi-judge annotation batch with smart selection and meta-judge resolution"
     )
-    parser.add_argument("--game", required=True, choices=["magic", "pokemon", "yugioh"])
+    parser.add_argument("--game", default="yugioh", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--edgelist", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--num-pairs", type=int, default=100)
