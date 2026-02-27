@@ -26,7 +26,7 @@ from true_closed_loop import ClosedLoopExperiment
 class SelfSustainingLoop:
     """Autonomous experimental loop"""
 
-    def __init__(self, game="magic"):
+    def __init__(self, game="yugioh"):
         self.game = game
         self.iteration = 0
 

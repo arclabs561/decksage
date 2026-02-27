@@ -31,7 +31,7 @@ from src.ml.annotation.llm_annotator import LLMAnnotator
 
 
 async def generate_large_scale_comparison(
-    game: str = "magic",
+    game: str = "yugioh",
     num_pairs: int = 50,
 ) -> dict:
     """Generate large-scale comparison across methods.
@@ -204,7 +204,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--game",
         choices=["magic", "pokemon", "yugioh"],
-        default="magic",
+        default="yugioh",
         help="Game to validate",
     )
     parser.add_argument(

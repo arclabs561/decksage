@@ -116,7 +116,7 @@ def analyze_annotation_quality(annotations: list) -> dict:
 
 
 async def generate_and_improve(
-    game: str = "magic",
+    game: str = "yugioh",
     num_pairs: int = 10,
     iterations: int = 3,
     use_multi_annotator: bool = True,
@@ -287,7 +287,7 @@ async def main():
     parser.add_argument(
         "--game",
         choices=["magic", "pokemon", "yugioh"],
-        default="magic",
+        default="yugioh",
         help="Game to improve",
     )
     parser.add_argument(

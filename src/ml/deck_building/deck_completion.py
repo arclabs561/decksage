@@ -71,7 +71,7 @@ CMCFn = Callable[[str], int | None]
 
 @dataclass
 class CompletionConfig:
-    game: Literal["magic", "yugioh", "pokemon"] = "magic"
+    game: Literal["magic", "yugioh", "pokemon"] = "yugioh"
     target_main_size: int | None = None  # If None, rely on validator rules
     top_k_per_gap: int = 10
     max_steps: int = 60

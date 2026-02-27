@@ -195,7 +195,7 @@ Examples:
     parser.add_argument(
         "--game",
         choices=["magic", "pokemon", "yugioh", "digimon", "onepiece", "riftbound", "all"],
-        default="magic",
+        default="yugioh",
         help="Game to generate annotations for",
     )
     parser.add_argument(

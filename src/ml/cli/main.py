@@ -184,8 +184,8 @@ Examples:
     )
     parser.add_argument(
         "--game",
-        default=os.getenv("DECKSAGE_DEFAULT_GAME", "magic"),
-        help="Game name (magic|pokemon|yugioh) (default: DECKSAGE_DEFAULT_GAME or magic)",
+        default=os.getenv("DECKSAGE_DEFAULT_GAME", "yugioh"),
+        help="Game name (magic|pokemon|yugioh) (default: DECKSAGE_DEFAULT_GAME or yugioh)",
     )
     parser.add_argument(
         "--direct",

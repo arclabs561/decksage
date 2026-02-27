@@ -41,7 +41,7 @@ from src.ml.annotation.llm_annotator import LLMAnnotator
 async def queue_from_llm_annotations(
     queue: HumanAnnotationQueue,
     num_pairs: int = 20,
-    game: str = "magic",
+    game: str = "yugioh",
     use_multi_annotator: bool = True,
     use_uncertainty_selection: bool = True,
     min_iaa_threshold: float = 0.4,
@@ -171,7 +171,7 @@ async def main():
     parser.add_argument(
         "--game",
         choices=["magic", "pokemon", "yugioh", "all"],
-        default="magic",
+        default="yugioh",
         help="Game to generate annotations for",
     )
     parser.add_argument(
