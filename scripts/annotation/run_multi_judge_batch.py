@@ -630,6 +630,19 @@ async def run_batch(
         pairs = select_pairs_smart(edges, num_pairs, seed=seed, prior_annotations_path=prior_annotations)
     elif strategy == "focused":
         pairs = select_pairs_focused(edges, num_pairs, seed=seed)
+    elif strategy == "curriculum":
+        from curriculum_sampler import CurriculumSampler
+        # Pre-load card attrs for difficulty classification
+        _card_attrs = _load_card_attrs_for_game(game)
+        sampler = CurriculumSampler(edges, card_attrs=_card_attrs, seed=seed)
+        stats = sampler.stats()
+        print(f"  Difficulty distribution: easy={stats['easy_pct']}, medium={stats['medium_pct']}, hard={stats['hard_pct']}")
+        classified = sampler.sample(num_pairs, phase="auto")
+        pairs = [(p.card1, p.card2) for p in classified]
+        # Log difficulty breakdown of selected pairs
+        from collections import Counter as _C
+        diff_counts = _C(p.difficulty for p in classified)
+        print(f"  Selected: easy={diff_counts['easy']}, medium={diff_counts['medium']}, hard={diff_counts['hard']}")
     else:
         pairs = select_pairs_random(edges, num_pairs, seed=seed)
     print(f"  Selected {len(pairs)} pairs")
@@ -797,8 +810,8 @@ def main() -> int:
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--concurrency", type=int, default=5, help="Max pairs in parallel")
     parser.add_argument(
-        "--strategy", choices=["random", "smart", "focused"], default="random",
-        help="Pair selection strategy (default: random)",
+        "--strategy", choices=["random", "smart", "focused", "curriculum"], default="random",
+        help="Pair selection strategy: random, smart (Lift+embedding), focused (single archetype), curriculum (progressive difficulty)",
     )
     parser.add_argument(
         "--resolve", action="store_true",
