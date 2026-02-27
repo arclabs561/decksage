@@ -107,6 +107,10 @@ class CardSimilarityAnnotation(BaseModel):
         default=None, ge=0.0, le=1.0,
         description="Synergy/combo potential (how well they work together). 0=no synergy, 1=key combo piece",
     )
+    meta_relevance: float | None = Field(
+        default=None, ge=0.0, le=1.0,
+        description="Competitive meta relevance (co-occurrence in tournament play). 0=never paired, 1=always paired in meta decks",
+    )
     key_similarities: list[str] = Field(
         default_factory=list,
         description="Concrete shared traits (e.g., 'both 1-mana instant removal', 'both draw 2 cards')",
@@ -161,7 +165,7 @@ if HAS_PYDANTIC_AI:
     SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
 
     # Prompt version -- bump on any semantic change to scoring rules or output schema
-    SIMILARITY_PROMPT_VERSION = "v4.0"
+    SIMILARITY_PROMPT_VERSION = "v4.1"
 
     # Enhanced SIMILARITY_PROMPT with CoT and score diversity
     SIMILARITY_PROMPT_BASE = """You are an expert TCG judge creating similarity annotations.
@@ -226,6 +230,7 @@ You MUST use the FULL 0.0-1.0 range. Do NOT cluster scores around 0.5 or default
 - Be specific about why this score was chosen
 - Provide `functional_score` (0-1): how interchangeable are they as functional replacements?
 - Provide `synergy_score` (0-1): how well do they work together in a deck?
+- Provide `meta_relevance` (0-1): how often do they co-occur in competitive/tournament decks? 0=never paired, 1=always paired
 - Provide `key_similarities`: 2-4 concrete shared traits (e.g., "both 1-mana instant removal")
 - Provide `key_differences`: 1-3 concrete differentiators (e.g., "Bolt hits face, Path only hits creatures")
 
