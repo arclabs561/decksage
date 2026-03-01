@@ -598,7 +598,8 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
-        # Best-effort cleanup
+        # Best-effort cleanup: null fields then delete entire dicts so
+        # hot-reload starts fresh (half-loaded state must not survive).
         by_game = getattr(app.state, "api_by_game", None) or {}
         for _g, state in by_game.items():
             state.embeddings = None
@@ -612,6 +613,14 @@ async def lifespan(app: FastAPI):
             state.cross_format_patterns = None
             state.signal_status = None
             state.reranker = None
+        # Remove entire api_by_game dict so next lifespan creates fresh ApiState objects
+        with suppress(Exception):
+            delattr(app.state, "api_by_game")
+        # Reset legacy module globals so hot-reload doesn't carry stale test data
+        global embeddings, graph_data, model_info  # noqa: PLW0603
+        embeddings = None
+        graph_data = None
+        model_info = {}
         # Clear optional app-scoped helpers if they were created
         with suppress(Exception):
             delattr(app.state, "price_manager")
@@ -1333,12 +1342,13 @@ def _get_search_client(game: str) -> HybridSearch | None:
         app.state.search_by_game = by_game
     cached = by_game.get(game)
     if cached is not None:
-        # If embeddings were loaded after caching, rebuild so vector search can activate.
+        # Rebuild if embeddings object changed (new .wv file loaded, hot-reload, etc.)
+        # Use identity check, not truthiness, to detect stale embedding references.
         try:
-            cached_has_emb = getattr(cached, "embeddings", None) is not None
+            cached_emb = getattr(cached, "embeddings", None)
         except AttributeError:
-            cached_has_emb = False
-        if cached_has_emb == (state.embeddings is not None):
+            cached_emb = None
+        if cached_emb is state.embeddings:
             return cached
         by_game.pop(game, None)
 
