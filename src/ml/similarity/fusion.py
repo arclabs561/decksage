@@ -285,7 +285,7 @@ class WeightedLateFusion:
             candidate_tag_set = extract_tag_set(candidate_tags, exclude_fields={"card_name"})
 
             return _jaccard_sets(query_tag_set, candidate_tag_set)
-        except (ImportError, AttributeError, TypeError, RuntimeError):
+        except Exception:
             return 0.0
 
     def _get_text_embedding_similarity(self, query: str, candidate: str) -> float:

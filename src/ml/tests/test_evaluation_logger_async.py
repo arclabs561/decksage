@@ -9,7 +9,6 @@ Tests:
 - Performance characteristics
 """
 
-import asyncio
 import json
 
 # Add project root to path
@@ -17,6 +16,7 @@ import sys
 import tempfile
 from pathlib import Path
 
+import anyio
 import pytest
 
 
@@ -126,18 +126,20 @@ class TestAsyncLogging:
 
     async def test_concurrent_writes(self, async_logger):
         """Test concurrent async writes."""
-        # Create multiple concurrent writes
-        tasks = []
-        for i in range(5):
-            task = async_logger.log_evaluation(
-                evaluation_type="test",
-                method="test",
-                metrics={"p_at_k": 0.1 + i * 0.01},
-            )
-            tasks.append(task)
+        run_ids: list[str] = []
 
-        # Wait for all
-        run_ids = await asyncio.gather(*tasks)
+        async with anyio.create_task_group() as tg:
+            for i in range(5):
+
+                async def _log(idx: int = i) -> None:
+                    rid = await async_logger.log_evaluation(
+                        evaluation_type="test",
+                        method="test",
+                        metrics={"p_at_k": 0.1 + idx * 0.01},
+                    )
+                    run_ids.append(rid)
+
+                tg.start_soon(_log)
 
         # Flush
         await async_logger.flush()
