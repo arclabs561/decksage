@@ -143,6 +143,11 @@ class HybridSearch:
                 index.update_displayed_attributes(["id", "name", "image_url", "ref_url"])
             else:
                 logger.error(f"Failed to initialize Meilisearch: {e}")
+        except Exception as e:
+            # Catches MeilisearchCommunicationError and other connection failures.
+            # Degrade gracefully: disable Meilisearch so search falls back to vector-only.
+            logger.warning(f"Meilisearch unavailable, disabling text search: {e}")
+            self.meilisearch = None
 
     def _init_qdrant(self) -> None:
         """Initialize Qdrant collection."""
@@ -156,7 +161,9 @@ class HybridSearch:
                 logger.info(f"Qdrant collection '{self.collection_name}' already exists")
                 return
         except Exception as e:
-            logger.warning(f"Failed to check Qdrant collections: {e}")
+            logger.warning(f"Qdrant unavailable, disabling vector search: {e}")
+            self.qdrant = None
+            return
 
         # We cannot safely create a collection without knowing the embedding dimensionality.
         # If embeddings are not provided, vector search is disabled anyway.
