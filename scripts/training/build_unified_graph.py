@@ -36,6 +36,7 @@ import json
 import math
 import sys
 from collections import defaultdict
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -163,6 +164,84 @@ def collect_card_metadata(
     return dict(card_formats), dict(card_archetypes)
 
 
+# ── Temporal decay for co-occurrence ──
+
+# Default halflife per format family (days). Rotating formats decay faster.
+FORMAT_HALFLIFE: dict[str, float] = {
+    "Standard": 90,
+    "Pioneer": 180,
+    "Modern": 365,
+    "Legacy": 730,
+    "Vintage": 730,
+    "Commander": 365,
+    "Pauper": 365,
+}
+
+
+def compute_temporally_weighted_cooccurrence(
+    decks: list[dict],
+    halflife_days: float,
+    reference_date: datetime | None = None,
+) -> list[tuple[str, str, float]]:
+    """Compute co-occurrence edges with exponential temporal decay.
+
+    Each deck's co-occurrence contribution is weighted by
+    exp(-ln(2) / halflife * age_days), so edges from older decks
+    contribute less. Decks without timestamps get weight 1.0 (no penalty).
+
+    Args:
+        decks: Deck records with optional 'created_at' and 'format' fields.
+        halflife_days: Base halflife in days. Per-format overrides are applied
+            when the deck has a recognized format.
+        reference_date: "Now" for age computation (default: actual now).
+
+    Returns:
+        List of (card1, card2, weight) tuples.
+    """
+    if reference_date is None:
+        reference_date = datetime.now()
+
+    ln2 = math.log(2)
+    edge_weights: dict[tuple[str, str], float] = defaultdict(float)
+
+    for deck in decks:
+        # Determine decay weight
+        decay_w = 1.0
+        ts_str = (deck.get("created_at") or "").strip()
+        if ts_str:
+            try:
+                # Accept both ISO datetime and date-only
+                ts = datetime.fromisoformat(ts_str.replace("Z", "+00:00"))
+                ts = ts.replace(tzinfo=None)  # naive comparison
+                age_days = max(0.0, (reference_date - ts).total_seconds() / 86400)
+                # Use format-specific halflife if available
+                fmt = (deck.get("format") or "").strip()
+                hl = FORMAT_HALFLIFE.get(fmt, halflife_days)
+                if hl > 0:
+                    decay_w = math.exp(-ln2 / hl * age_days)
+            except (ValueError, TypeError):
+                pass  # unparseable timestamp -> weight 1.0
+
+        # Extract card names
+        cards: list[str] = []
+        for card in deck.get("cards", []):
+            name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
+            if name:
+                cards.append(name)
+        for partition in deck.get("partitions", []):
+            for card in partition.get("cards", []):
+                name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
+                if name:
+                    cards.append(name)
+
+        # Pairwise co-occurrence (deduplicated names within deck)
+        unique = sorted(set(cards))
+        for i in range(len(unique)):
+            for j in range(i + 1, len(unique)):
+                key = (unique[i], unique[j])  # already sorted
+                edge_weights[key] += decay_w
+
+    return [(c1, c2, w) for (c1, c2), w in edge_weights.items() if w > 0]
 
 
 # ── PPMI computation (from ppmi_sparsify.py logic) ──
@@ -421,7 +500,13 @@ def enrich_nodes(
 # ── Main build logic ──
 
 
-def build_game(game: str, config: dict, output_db: Path, dry_run: bool = False) -> None:
+def build_game(
+    game: str,
+    config: dict,
+    output_db: Path,
+    dry_run: bool = False,
+    halflife_days: float = 0,
+) -> None:
     """Build the unified SQLite graph for one game."""
     game_code = GAME_CODE[game]
     base_edgelist = PROJECT_ROOT / config["base_edgelist"]
@@ -443,6 +528,8 @@ def build_game(game: str, config: dict, output_db: Path, dry_run: bool = False) 
         print(f"  Annotations: {[str(p) for p in annotation_paths]}")
         print(f"  Card attributes: {csv_path}")
         print(f"  Image URLs: {image_urls_path}")
+        if halflife_days > 0:
+            print(f"  Temporal decay: halflife={halflife_days} days")
         return
 
     # Initialize graph
@@ -471,6 +558,32 @@ def build_game(game: str, config: dict, output_db: Path, dry_run: bool = False) 
               f"{has_format:,} with format, {has_archetype:,} with archetype)")
         print(f"  {len(card_formats):,} cards with format tags, "
               f"{len(card_archetypes):,} with archetype tags")
+
+        # Temporal decay: recompute co-occurrence with exponential decay
+        if halflife_days > 0:
+            has_timestamps = sum(1 for d in decks if d.get("created_at"))
+            print(f"\n  [temporal decay] halflife={halflife_days} days, "
+                  f"{has_timestamps:,}/{len(decks):,} decks with timestamps")
+            if has_timestamps > 0:
+                temporal_edges = compute_temporally_weighted_cooccurrence(
+                    decks, halflife_days=halflife_days,
+                )
+                print(f"  [temporal decay] {len(temporal_edges):,} temporally-weighted edges "
+                      f"(replacing base co-occurrence)")
+                # Replace base edges with temporally-weighted ones
+                raw_edges = temporal_edges
+                # Re-add to graph (clear old co_occurrence edges first)
+                graph_edges_to_remove = [
+                    k for k, e in graph.edges.items()
+                    if e.source_type == "co_occurrence"
+                ]
+                for k in graph_edges_to_remove:
+                    del graph.edges[k]
+                for c1, c2, w in raw_edges:
+                    graph.add_edge(c1, c2, w, source_type="co_occurrence", game=game_code)
+            else:
+                print("  [temporal decay] No timestamped decks, keeping base co-occurrence")
+
         del decks
 
     # 2. PPMI edges
@@ -599,6 +712,14 @@ def main() -> int:
         action="store_true",
         help="Show what would be done without executing",
     )
+    parser.add_argument(
+        "--halflife-days",
+        type=float,
+        default=0,
+        help="Enable temporal decay on co-occurrence edges. Weight decays by "
+             "half every N days. 0 = disabled (default). Suggested: 180 for "
+             "mixed formats, 90 for Standard-heavy data.",
+    )
     args = parser.parse_args()
 
     games = [args.game] if args.game else list(GAME_CONFIGS.keys())
@@ -606,7 +727,7 @@ def main() -> int:
     for game in games:
         config = GAME_CONFIGS[game]
         output_db = args.output_dir / f"{game}_unified.db"
-        build_game(game, config, output_db, args.dry_run)
+        build_game(game, config, output_db, args.dry_run, args.halflife_days)
 
     print(f"\n{'='*60}")
     print("  Unified graph build complete.")

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["nodevectors", "gensim>=4.3.0", "numpy<2.0.0"]
+# dependencies = ["nodevectors", "gensim>=4.3.0", "numpy<2.0.0", "sentence-transformers>=2.2.0"]
 # ///
 """
 Train ProNE embeddings as a fast structural baseline.
@@ -40,6 +40,12 @@ def main():
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--max-edges", type=int, default=0,
                         help="Subsample to top-K weighted edges (0=no limit)")
+    parser.add_argument("--card-attributes", type=Path, default=None,
+                        help="Card attributes CSV for cold-start text embeddings. "
+                             "Cards with zero/few graph edges get initialized from "
+                             "oracle text embeddings (all-MiniLM-L6-v2).")
+    parser.add_argument("--cold-start-threshold", type=int, default=3,
+                        help="Nodes with <= this many edges get text-based init (default: 3)")
     args = parser.parse_args()
 
     print(f"Loading edgelist from {args.edgelist}...")
@@ -84,6 +90,59 @@ def main():
     # Extract embeddings: model.model is a dict {node_idx: embedding_array}
     actual_dim = len(model.model[0])
     embeddings = np.array([model.model[i] for i in range(len(node_list))], dtype=np.float32)
+
+    # Cold-start: replace embeddings for low-degree nodes with text-based init
+    if args.card_attributes and args.card_attributes.exists():
+        import csv
+
+        from sklearn.decomposition import PCA
+
+        print(f"\nCold-start init from {args.card_attributes.name}...")
+
+        # Load oracle text
+        card_texts: dict[str, str] = {}
+        with open(args.card_attributes, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                name = row.get("name", "").strip()
+                text = row.get("oracle_text", "").strip()
+                if name and text and text != "nan":
+                    card_texts[name] = f"{name}. {row.get('type', '')}. {text}"
+
+        # Find low-degree nodes
+        node_degree = np.zeros(len(node_list))
+        for n1, n2, _ in edges:
+            node_degree[node_to_idx[n1]] += 1
+            node_degree[node_to_idx[n2]] += 1
+
+        cold_indices = []
+        cold_texts = []
+        for idx, name in enumerate(node_list):
+            if node_degree[idx] <= args.cold_start_threshold and name in card_texts:
+                cold_indices.append(idx)
+                cold_texts.append(card_texts[name])
+
+        if cold_texts:
+            from sentence_transformers import SentenceTransformer
+
+            st_model = SentenceTransformer("all-MiniLM-L6-v2")
+            text_embs = st_model.encode(
+                cold_texts, batch_size=256, show_progress_bar=False,
+                convert_to_numpy=True, normalize_embeddings=True,
+            )
+            # Project 384-dim -> target dim via PCA
+            if text_embs.shape[1] != actual_dim:
+                pca = PCA(n_components=actual_dim)
+                text_embs = pca.fit_transform(text_embs)
+
+            # Replace cold-start node embeddings
+            for i, idx in enumerate(cold_indices):
+                embeddings[idx] = text_embs[i].astype(np.float32)
+
+            print(f"  {len(cold_indices)} cold-start nodes initialized from text "
+                  f"(degree <= {args.cold_start_threshold})")
+        else:
+            print("  No cold-start candidates found (all nodes have sufficient edges or no text)")
 
     # Save as KeyedVectors
     kv = KeyedVectors(vector_size=actual_dim)
