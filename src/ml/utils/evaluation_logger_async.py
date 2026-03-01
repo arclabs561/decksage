@@ -19,13 +19,22 @@ from typing import Any
 from .paths import PATHS
 
 
-# Optional async file I/O
+# Optional async file I/O -- aiofiles only works under asyncio, not trio
 try:
     import aiofiles
 
     HAS_AIOFILES = True
 except ImportError:
     HAS_AIOFILES = False
+
+
+def _is_asyncio_loop() -> bool:
+    """Check if we're running under an asyncio event loop (not trio/curio)."""
+    try:
+        asyncio.get_running_loop()
+        return True
+    except RuntimeError:
+        return False
 
 # Optional Pydantic validation
 try:
@@ -38,7 +47,7 @@ except ImportError:
     Field = None
     field_validator = None
 
-from .evaluation_logger import SCHEMA_VERSION, EvaluationRunRecord
+from .evaluation_logger import SCHEMA_VERSION, EvaluationRunRecord  # noqa: E402
 
 
 class AsyncEvaluationLogger:
@@ -220,7 +229,7 @@ class AsyncEvaluationLogger:
 
         # JSONL write (async if aiofiles available)
         if self.use_jsonl:
-            if flush or not HAS_AIOFILES:
+            if flush or not HAS_AIOFILES or not _is_asyncio_loop():
                 # Immediate write (sync fallback)
                 with open(self.jsonl_path, "a") as f:
                     f.write(json.dumps(record) + "\n")
@@ -234,7 +243,7 @@ class AsyncEvaluationLogger:
         # JSON write (async if aiofiles available)
         if self.use_json:
             json_path = self.log_dir / f"{run_id}.json"
-            if HAS_AIOFILES:
+            if HAS_AIOFILES and _is_asyncio_loop():
                 async with aiofiles.open(json_path, "w") as f:
                     await f.write(json.dumps(record, indent=2))
             else:
@@ -249,7 +258,7 @@ class AsyncEvaluationLogger:
         if not self._batch_buffer:
             return
 
-        if HAS_AIOFILES:
+        if HAS_AIOFILES and _is_asyncio_loop():
             async with aiofiles.open(self.jsonl_path, "a") as f:
                 for record in self._batch_buffer:
                     await f.write(json.dumps(record) + "\n")
