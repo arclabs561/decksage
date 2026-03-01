@@ -103,6 +103,13 @@ class CardTextEmbedder:
             except Exception:
                 pass  # Logger unavailable during shutdown
 
+    def clear_cache(self) -> None:
+        """Clear both memory and disk caches. Call after enrichment data changes."""
+        self._memory_cache = {}
+        if self.cache_file.exists():
+            self.cache_file.unlink()
+            logger.info(f"Cleared text embedding cache: {self.cache_file}")
+
     def _card_to_text(self, card: dict[str, Any]) -> str:
         """
         Convert card dict to text string for embedding.
