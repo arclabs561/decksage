@@ -52,12 +52,13 @@ class OTCompletionConfig:
     target_main_size: int = 60
 
     # Cost matrix weights (must sum to 1.0 for interpretability, but not enforced)
-    embedding_weight: float = 0.5
-    role_weight: float = 0.3
-    curve_weight: float = 0.2
+    # Tuned via parameter sweep (2026-03-01): reg=0.01, emb=0.3 gave lowest OT distance
+    embedding_weight: float = 0.3
+    role_weight: float = 0.1
+    curve_weight: float = 0.6
 
     # Sinkhorn parameters
-    sinkhorn_reg: float = 0.05  # Entropic regularization (lower = sparser plan)
+    sinkhorn_reg: float = 0.01  # Entropic regularization (lower = sparser plan)
     sinkhorn_max_iter: int = 1000
     sinkhorn_tol: float = 1e-9
 
