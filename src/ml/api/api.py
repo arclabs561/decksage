@@ -977,6 +977,48 @@ def _similar_jaccard_faceted(
     return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
 
 
+def _apply_mmr_postprocess(
+    state: ApiState, results: list[SimilarCard], mmr_lambda: float, k: int
+) -> list[SimilarCard]:
+    """Apply MMR diversification as a post-processing step using embedding cosine similarity."""
+    if state.embeddings is None or len(results) <= 1:
+        return results
+
+    import numpy as np
+
+    # Build embedding matrix for result cards (skip cards not in embeddings)
+    valid = [(i, r) for i, r in enumerate(results) if r.card in state.embeddings]
+    if len(valid) <= 1:
+        return results
+
+    vecs = np.array([state.embeddings[r.card] for _, r in valid])
+    # Normalize for cosine similarity
+    norms = np.linalg.norm(vecs, axis=1, keepdims=True)
+    norms[norms == 0] = 1.0
+    vecs = vecs / norms
+
+    selected: list[int] = [0]  # Always keep the top result
+    candidates = list(range(1, len(valid)))
+
+    while len(selected) < min(k, len(valid)) and candidates:
+        best_idx = -1
+        best_score = -float("inf")
+        for c in candidates:
+            relevance = valid[c][1].similarity
+            # Max similarity to any already-selected item
+            max_sim = max(float(vecs[c] @ vecs[s]) for s in selected)
+            mmr_score = mmr_lambda * relevance - (1 - mmr_lambda) * max_sim
+            if mmr_score > best_score:
+                best_score = mmr_score
+                best_idx = c
+        if best_idx < 0:
+            break
+        selected.append(best_idx)
+        candidates.remove(best_idx)
+
+    return [valid[i][1] for i in selected]
+
+
 def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     """Find similar cards based on resolved method and return normalized response."""
     game = _require_game(request.game)
@@ -995,6 +1037,11 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         results = _similar_fusion(state, request, query, k, game=game)
     else:  # pragma: no cover - shouldn't happen
         raise HTTPException(status_code=400, detail=f"Unknown similarity method: {method}")
+
+    # Apply MMR post-processing for non-fusion modes (fusion handles MMR internally)
+    if method != "fusion" and request.mmr_lambda and request.mmr_lambda > 0.0:
+        results = _apply_mmr_postprocess(state, results, request.mmr_lambda, k)
+
     return SimilarityResponse(
         query=query,
         results=results,
@@ -1036,6 +1083,7 @@ def get_similar_v1(
     mode: UseCaseEnum = UseCaseEnum.substitute,
     k: int = Query(10, ge=1, le=100),
     game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
+    mmr_lambda: float | None = Query(None, ge=0.0, le=1.0, description="MMR diversification strength"),
 ):
     # Log query for analytics
     try:
@@ -1054,7 +1102,7 @@ def get_similar_v1(
         )
     except Exception:
         pass  # Non-fatal - don't break API if logging fails
-    req = SimilarityRequest(game=game, query=name, top_k=k, use_case=mode)
+    req = SimilarityRequest(game=game, query=name, top_k=k, use_case=mode, mmr_lambda=mmr_lambda)
     return _similar_impl(req)
 
 
@@ -1325,7 +1373,9 @@ def _get_search_client(game: str) -> HybridSearch | None:
             )
         by_game[game] = client
         return client
-    except (OSError, ConnectionError, RuntimeError) as e:
+    except Exception as e:
+        # Broad catch: MeilisearchCommunicationError extends Exception directly,
+        # not OSError/ConnectionError. Degrade to no-search rather than crash.
         logger.error(f"Failed to create search client: {e}")
         return None
 
@@ -1758,6 +1808,24 @@ def complete_deck(req: CompleteRequest):
 
     game = _require_game(req.game)
     state = get_state(game)
+
+    # Normalize legacy deck format {"Main": [...], "Sideboard": [...]}
+    # to partitions format {"partitions": [{"name": "Main", "cards": [...]}]}
+    deck = req.deck
+    if "partitions" not in deck and isinstance(deck, dict):
+        partitions = []
+        for part_name, cards in deck.items():
+            if isinstance(cards, list):
+                card_entries = []
+                for c in cards:
+                    if isinstance(c, str):
+                        card_entries.append({"name": c, "count": 1})
+                    elif isinstance(c, dict):
+                        card_entries.append(c)
+                partitions.append({"name": part_name, "cards": card_entries})
+        if partitions:
+            deck = {"partitions": partitions}
+    req.deck = deck
 
     # Deck completion uses "completion" task type
     cand_fn = _make_candidate_fn(game, req.mode, task_type="completion")

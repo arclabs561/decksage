@@ -1158,6 +1158,18 @@ integrate-all game='':
     uv run python -m ml.scripts.integrate_all_data_sources $GAME_FLAG
 
 # ============================================================================
+# QA Dependencies (Docker)
+# ============================================================================
+
+# Start MeiliSearch and Qdrant for QA testing
+qa-deps-up:
+    docker compose up -d meilisearch qdrant
+
+# Stop MeiliSearch and Qdrant
+qa-deps-down:
+    docker compose down meilisearch qdrant
+
+# ============================================================================
 # TypeScript Client & CLI (ARCHIVED - Use Python CLI Instead)
 # ============================================================================
 #
