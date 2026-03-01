@@ -60,6 +60,7 @@ GAME_CONFIGS = {
         "base_edgelist": "data/graphs/pairs_large.edg",
         "deck_jsonl": [
             "data/decks/decks_magic_goldfish.jsonl",
+            "data/decks/decks_magic_commander.jsonl",
         ],
         "annotations": [
             "data/annotations/magic_500_v3.json",
@@ -73,6 +74,7 @@ GAME_CONFIGS = {
         "base_edgelist": "data/graphs/pokemon_blended.edg",
         "deck_jsonl": [
             "data/decks/decks_pokemon.jsonl",
+            "data/decks/decks_pokemon_limitless.jsonl",
         ],
         "annotations": [
             "data/annotations/pokemon_500_v3.json",
@@ -86,6 +88,7 @@ GAME_CONFIGS = {
         "deck_jsonl": [
             "data/decks/decks_yugioh_resolved.jsonl",
             "data/decks/decks_yugioh_ygoprodeck-tournament.jsonl",
+            "data/decks/decks_yugioh_masterduelmeta.jsonl",
         ],
         "annotations": [
             "data/annotations/yugioh_500_v3.json",
