@@ -60,7 +60,8 @@ GAME_CONFIGS = {
         "base_edgelist": "data/graphs/pairs_large.edg",
         "deck_jsonl": [
             "data/decks/decks_magic_goldfish.jsonl",
-            "data/decks/decks_magic_commander.jsonl",
+            "data/decks/decks_magic_commander_combined.jsonl",
+            "data/decks/decks_magic_mtgtop8.jsonl",
         ],
         "annotations": [
             "data/annotations/magic_500_v3.json",
