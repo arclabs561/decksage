@@ -332,10 +332,20 @@ repos:
         pass_filenames: true  # Only check changed files
         verbose: false  # Reduce noise
 
-  # Pre-push: Fast tests (unit tests only, no slow/integration)
+  # Pre-push: Type checking with ty + fast tests
   # Only run if Python files changed (optimization)
   - repo: local
     hooks:
+      - id: ty-typecheck
+        name: ty (type check core graph module)
+        entry: bash -c 'uvx ty check --config-file ty.toml src/ml/data/incremental_graph.py'
+        language: system
+        pass_filenames: false
+        always_run: false
+        stages: [push]
+        types: [python]
+        verbose: false
+
       - id: pytest-fast
         name: pytest (fast tests only)
         entry: bash -c 'cd src/ml && uv run pytest tests/ -v -m "not slow and not integration" --maxfail=1 || true'

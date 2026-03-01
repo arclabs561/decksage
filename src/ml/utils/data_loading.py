@@ -1,5 +1,6 @@
 """Shared data loading utilities for multi-game experiments."""
 
+import csv
 import json
 import logging
 from collections import defaultdict
@@ -484,3 +485,107 @@ def load_card_attributes(
         logger = logging.getLogger(__name__)
         logger.warning(f"Could not load card attributes: {e}")
         return {}
+
+
+# ── Edgelist / Graph loading (consolidated from 17+ script-local copies) ──
+
+
+def load_edgelist(
+    path: Path | str,
+    *,
+    collect_nodes: bool = False,
+) -> list[tuple[str, str, float]] | tuple[list[tuple[str, str, float]], set[str]]:
+    """
+    Load edgelist from TSV (.edg) or CSV file.
+
+    Handles both tab-separated (card1\\tcard2\\tweight) and comma-separated
+    (NAME_1,NAME_2,COUNT) formats. Skips comments (lines starting with #)
+    and blank lines.
+
+    Args:
+        path: Path to edgelist file (.edg TSV or .csv)
+        collect_nodes: If True, also return the set of unique node names
+
+    Returns:
+        List of (card1, card2, weight) tuples.
+        If collect_nodes=True, returns (edges, nodes) tuple.
+    """
+    path = Path(path)
+    if not path.exists():
+        if collect_nodes:
+            return [], set()
+        return []
+
+    edges: list[tuple[str, str, float]] = []
+    nodes: set[str] = set()
+
+    with open(path) as f:
+        # Peek at first non-empty line to detect format
+        first_line = ""
+        for first_line in f:
+            first_line = first_line.strip()
+            if first_line and not first_line.startswith("#"):
+                break
+        f.seek(0)
+
+        # CSV with header row (has NAME_1 or similar column names)
+        if first_line and ("NAME_1" in first_line or "name_1" in first_line):
+            reader = csv.DictReader(f)
+            fields = reader.fieldnames or []
+            name1_col = next((c for c in ("NAME_1", "name_1") if c in fields), None)
+            name2_col = next((c for c in ("NAME_2", "name_2") if c in fields), None)
+            weight_col = next(
+                (c for c in ("COUNT_MULTISET", "COUNT_SET", "COUNT", "count", "weight") if c in fields),
+                None,
+            )
+            if not name1_col or not name2_col:
+                logger.warning(f"CSV {path} missing NAME_1/NAME_2 columns; found: {fields}")
+                if collect_nodes:
+                    return [], set()
+                return []
+            for row in reader:
+                c1, c2 = row[name1_col].strip(), row[name2_col].strip()
+                w = float(row[weight_col]) if weight_col and row.get(weight_col) else 1.0
+                edges.append((c1, c2, w))
+                if collect_nodes:
+                    nodes.add(c1)
+                    nodes.add(c2)
+        else:
+            # TSV / space-separated edgelist
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split("\t") if "\t" in line else line.split()
+                if len(parts) < 2:
+                    continue
+                c1, c2 = parts[0].strip(), parts[1].strip()
+                w = float(parts[2].strip()) if len(parts) > 2 else 1.0
+                edges.append((c1, c2, w))
+                if collect_nodes:
+                    nodes.add(c1)
+                    nodes.add(c2)
+
+    if collect_nodes:
+        return edges, nodes
+    return edges
+
+
+def load_graph_adjacency(
+    path: Path | str,
+) -> dict[str, dict[str, float]]:
+    """
+    Load edgelist into an adjacency dict (symmetric).
+
+    Args:
+        path: Path to edgelist file (.edg TSV or .csv)
+
+    Returns:
+        Dict mapping card -> {neighbor: weight}. Edges are symmetric (both directions).
+    """
+    adj: dict[str, dict[str, float]] = defaultdict(dict)
+    edges = load_edgelist(path)
+    for c1, c2, w in edges:
+        adj[c1][c2] = w
+        adj[c2][c1] = w
+    return dict(adj)

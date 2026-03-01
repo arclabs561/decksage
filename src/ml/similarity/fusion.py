@@ -234,7 +234,7 @@ class WeightedLateFusion:
                     )
                     weights = adjust_weights_for_coverage(weights, coverage["coverage_rate"])
                     logger.info(f"Adjusted visual_embed weight: {weights.visual_embed:.3f}")
-            except Exception as e:
+            except (ImportError, AttributeError, KeyError, ValueError) as e:
                 logger.debug(f"Failed to adjust weights for coverage: {e}")
         self.rrf_k = rrf_k
         self.mmr_lambda = mmr_lambda
@@ -256,7 +256,7 @@ class WeightedLateFusion:
         try:
             sim = self.embeddings.similarity(query, candidate)
             return _cosine_to_unit(sim)
-        except Exception:
+        except (KeyError, RuntimeError, ValueError):
             return 0.0
 
     def _get_jaccard_similarity(self, query: str, candidate: str) -> float:
@@ -285,7 +285,7 @@ class WeightedLateFusion:
             candidate_tag_set = extract_tag_set(candidate_tags, exclude_fields={"card_name"})
 
             return _jaccard_sets(query_tag_set, candidate_tag_set)
-        except Exception:
+        except (ImportError, AttributeError, TypeError, RuntimeError):
             return 0.0
 
     def _get_text_embedding_similarity(self, query: str, candidate: str) -> float:
@@ -315,7 +315,7 @@ class WeightedLateFusion:
                 similarity = self.text_embedder.similarity(query_input, candidate_input)
 
             return float(similarity)
-        except Exception:
+        except (AttributeError, RuntimeError, TypeError, ValueError):
             return 0.0
 
     def _get_visual_embedding_similarity(self, query: str, candidate: str) -> float:
@@ -343,7 +343,7 @@ class WeightedLateFusion:
             # Visual embedder handles card dicts, name strings, or PIL Images
             similarity = self.visual_embedder.similarity(query_input, candidate_input)
             return float(similarity)
-        except Exception:
+        except (AttributeError, RuntimeError, OSError, ValueError):
             # Gracefully handle errors (missing images, download failures, etc.)
             return 0.0
 
@@ -354,7 +354,7 @@ class WeightedLateFusion:
         try:
             query_sb = self.sideboard_cooccurrence.get(query, {})
             return float(query_sb.get(candidate, 0.0))
-        except Exception:
+        except (KeyError, TypeError):
             return 0.0
 
     def _get_temporal_similarity(
@@ -419,7 +419,7 @@ class WeightedLateFusion:
                 total_weight += weight
 
             return float(total_score / total_weight) if total_weight > 0 else 0.0
-        except Exception:
+        except (KeyError, TypeError):
             return 0.0
 
     def _get_temporal_similarity_from_edge(
@@ -497,7 +497,7 @@ class WeightedLateFusion:
                         format_weight = (
                             current_period_count * 2.0 + historical_period_count * 0.3
                         ) / total_count
-                except Exception:
+                except (ImportError, KeyError, ValueError, AttributeError):
                     # If format events lookup fails, use default weight
                     pass
 
@@ -536,7 +536,7 @@ class WeightedLateFusion:
         try:
             similarity = self.gnn_embedder.similarity(query, candidate)
             return _cosine_to_unit(similarity)  # Map to [0, 1]
-        except Exception:
+        except (AttributeError, KeyError, RuntimeError, ValueError):
             return 0.0
 
     def _get_pack_embed_similarity(self, query: str, candidate: str) -> float:
@@ -548,7 +548,7 @@ class WeightedLateFusion:
         try:
             similarity = self.pack_embeddings.similarity(query, candidate)
             return _cosine_to_unit(similarity)  # Map to [0, 1]
-        except Exception:
+        except (AttributeError, KeyError, RuntimeError, ValueError):
             return 0.0
 
     def _get_archetype_similarity(self, query: str, candidate: str) -> float:
@@ -564,7 +564,7 @@ class WeightedLateFusion:
                 self.archetype_staples,
                 self.archetype_cooccurrence,
             )
-        except Exception:
+        except (ImportError, KeyError, TypeError):
             return 0.0
 
     def _get_format_similarity(self, query: str, candidate: str) -> float:
@@ -580,7 +580,7 @@ class WeightedLateFusion:
                 self.format_cooccurrence,
                 self.cross_format_patterns,
             )
-        except Exception:
+        except (ImportError, KeyError, TypeError):
             return 0.0
 
     def _get_candidates(self, query: str) -> set[str]:
@@ -605,7 +605,7 @@ class WeightedLateFusion:
                     query, topn=min(self.candidate_topn, 50)
                 )  # Limit to 50
                 candidates.update(card for card, _ in similar)
-            except Exception:
+            except (KeyError, RuntimeError, ValueError):
                 pass
 
         # From GNN embeddings (skip if not available - expensive)
@@ -613,7 +613,7 @@ class WeightedLateFusion:
             try:
                 similar = self.gnn_embedder.most_similar(query, topn=min(self.candidate_topn, 50))
                 candidates.update(card for card, _ in similar)
-            except Exception:
+            except (AttributeError, KeyError, RuntimeError):
                 pass
 
         # From pack embeddings
@@ -623,7 +623,7 @@ class WeightedLateFusion:
                     query, topn=min(self.candidate_topn, 50)
                 )
                 candidates.update(card for card, _ in similar)
-            except Exception:
+            except (AttributeError, KeyError, RuntimeError):
                 pass
 
         # OPTIMIZATION: Skip text embeddings in candidate generation (too slow)
@@ -1146,11 +1146,6 @@ class WeightedLateFusion:
                 self.task_type = original_task_type
 
             return results
-        except Exception:
-            # Restore task_type on exception
-            if task_type is not None:
-                self.task_type = original_task_type
-            raise
         finally:
             # Ensure task_type is restored even on exception
             if task_type is not None:

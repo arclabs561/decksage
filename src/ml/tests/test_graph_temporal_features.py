@@ -105,7 +105,7 @@ def test_graph_temporal_tracking(temp_graph):
     graph.add_deck(deck1, timestamp=timestamp2, deck_id="deck1")
 
     # Check edge temporal distribution
-    edge_key = tuple(sorted(["Lightning Bolt", "Shock"]))
+    edge_key = (min("Lightning Bolt", "Shock"), max("Lightning Bolt", "Shock"), "co_occurrence")
     assert edge_key in graph.edges, "Edge should exist"
 
     edge = graph.edges[edge_key]
@@ -157,7 +157,7 @@ def test_graph_metadata_extraction(temp_graph):
     graph.add_deck(deck, timestamp=datetime(2025, 8, 1), deck_id="deck1")
 
     # Check that metadata was stored
-    edge_key = tuple(sorted(["Lightning Bolt", "Shock"]))
+    edge_key = (min("Lightning Bolt", "Shock"), max("Lightning Bolt", "Shock"), "co_occurrence")
     assert edge_key in graph.edges, "Edge should exist"
 
     edge = graph.edges[edge_key]

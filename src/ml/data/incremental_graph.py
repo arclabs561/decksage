@@ -49,10 +49,12 @@ class CardNode:
 
     name: str
     game: str | None = None  # "MTG", "PKM", "YGO", or None
-    first_seen: datetime = None
-    last_seen: datetime = None
+    first_seen: datetime | None = None
+    last_seen: datetime | None = None
     total_decks: int = 0
     attributes: dict[str, Any] | None = None
+    oracle_text: str | None = None
+    image_url: str | None = None
 
     def __post_init__(self):
         if self.first_seen is None:
@@ -74,6 +76,10 @@ class CardNode:
             result["game"] = self.game
         if self.attributes:
             result["attributes"] = self.attributes
+        if self.oracle_text:
+            result["oracle_text"] = self.oracle_text
+        if self.image_url:
+            result["image_url"] = self.image_url
         return result
 
     @classmethod
@@ -86,6 +92,8 @@ class CardNode:
             last_seen=datetime.fromisoformat(data["last_seen"]),
             total_decks=data.get("total_decks", 0),
             attributes=data.get("attributes"),
+            oracle_text=data.get("oracle_text"),
+            image_url=data.get("image_url"),
         )
 
 
@@ -96,17 +104,18 @@ class Edge:
     card1: str
     card2: str
     game: str | None = None  # "MTG", "PKM", "YGO", or None
-    weight: int = 1
-    first_seen: datetime = None
-    last_seen: datetime = None
-    deck_sources: list[str] = None  # Optional: track which decks contributed
+    weight: float = 1.0
+    first_seen: datetime | None = None
+    last_seen: datetime | None = None
+    deck_sources: list[str] | None = None  # Optional: track which decks contributed
     metadata: dict[str, Any] | None = (
         None  # Format, placement, event_date, archetype, partition, similarity scores
     )
+    source_type: str = "co_occurrence"  # co_occurrence, ppmi, oracle_text, annotation, propagated, card_set
 
     # Enhanced temporal distribution (new)
-    monthly_counts: dict[str, int] = None  # "2024-01" -> 12 (month -> count)
-    format_periods: dict[str, dict[str, int]] = None  # "Standard_2024-2025" -> {"2024-01": 10, ...}
+    monthly_counts: dict[str, int] | None = None  # "2024-01" -> 12 (month -> count)
+    format_periods: dict[str, dict[str, int]] | None = None  # "Standard_2024-2025" -> {"2024-01": 10, ...}
     temporal_stats: dict[str, Any] | None = None  # Cached temporal statistics
 
     def __post_init__(self):
@@ -201,6 +210,7 @@ class Edge:
             "first_seen": self.first_seen.isoformat(),
             "last_seen": self.last_seen.isoformat(),
             "deck_sources": self.deck_sources,
+            "source_type": self.source_type,
         }
         if self.game:
             result["game"] = self.game
@@ -253,6 +263,7 @@ class Edge:
             last_seen=last_seen,
             deck_sources=data.get("deck_sources", []),
             metadata=data.get("metadata") or {},
+            source_type=data.get("source_type", "co_occurrence"),
             monthly_counts=cls._validate_monthly_counts(data.get("monthly_counts") or {}),
             format_periods=cls._validate_format_periods(data.get("format_periods") or {}),
             temporal_stats=data.get("temporal_stats"),
@@ -321,6 +332,78 @@ class Edge:
         return {}
 
 
+@dataclass
+class CardSet:
+    """Hyperedge: a set of 3+ cards that frequently co-occur in decks.
+
+    Represents card packages, combos, engine cores, and archetype staples
+    that go beyond pairwise co-occurrence.
+    """
+
+    cards: frozenset[str]
+    game: str | None = None
+    support: int = 0  # Number of decks containing all cards
+    total_decks: int = 0  # Total deck count at extraction time
+    lift: float = 0.0  # Lift = P(all) / prod(P(each))
+    archetype: str | None = None
+    metadata: dict[str, Any] | None = None
+
+    def __post_init__(self):
+        if self.metadata is None:
+            self.metadata = {}
+
+    @property
+    def size(self) -> int:
+        return len(self.cards)
+
+    @property
+    def support_pct(self) -> float:
+        if self.total_decks == 0:
+            return 0.0
+        return self.support / self.total_decks * 100
+
+    def to_dict(self) -> dict[str, Any]:
+        result = {
+            "cards": sorted(self.cards),
+            "size": self.size,
+            "support": self.support,
+            "total_decks": self.total_decks,
+            "lift": round(self.lift, 3),
+            "support_pct": round(self.support_pct, 1),
+        }
+        if self.game:
+            result["game"] = self.game
+        if self.archetype:
+            result["archetype"] = self.archetype
+        if self.metadata:
+            result["metadata"] = self.metadata
+        return result
+
+    @classmethod
+    def from_dict(cls, data: dict[str, Any]) -> CardSet:
+        return cls(
+            cards=frozenset(data["cards"]),
+            game=data.get("game"),
+            support=data.get("support", 0),
+            total_decks=data.get("total_decks", 0),
+            lift=data.get("lift", 0.0),
+            archetype=data.get("archetype"),
+            metadata=data.get("metadata"),
+        )
+
+    @classmethod
+    def load_from_jsonl(cls, path: str | Path) -> list[CardSet]:
+        """Load card sets from extract_card_sets.py output."""
+        results = []
+        with open(path) as f:
+            for line in f:
+                data = json.loads(line)
+                if data.get("_meta"):
+                    continue
+                results.append(cls.from_dict(data))
+        return results
+
+
 class IncrementalCardGraph:
     """
     Continuously updated graph database for card co-occurrence.
@@ -373,7 +456,7 @@ class IncrementalCardGraph:
         self.graph_path = Path(graph_path) if graph_path else None
         self.use_sqlite = use_sqlite
         self.nodes: dict[str, CardNode] = {}
-        self.edges: dict[tuple[str, str], Edge] = {}
+        self.edges: dict[tuple[str, str, str], Edge] = {}
         self.last_update: datetime | None = None
         self.total_decks_processed: int = 0
         self._card_attributes: dict[str, dict[str, Any]] = card_attributes or {}
@@ -456,7 +539,8 @@ class IncrementalCardGraph:
         for i, (card1, count1, partition1, game1) in enumerate(cards_with_counts):
             for card2, count2, partition2, game2 in cards_with_counts[i + 1 :]:
                 # Use sorted tuple for undirected edges
-                edge_key = tuple(sorted([card1, card2]))
+                sorted_pair = sorted([card1, card2])
+                edge_key = (sorted_pair[0], sorted_pair[1], "co_occurrence")
 
                 # Determine edge game (should be same for both cards)
                 edge_game = game1 or game2
@@ -654,15 +738,15 @@ class IncrementalCardGraph:
             List of neighbor card names
         """
         neighbors = []
-        for (card1, card2), edge in self.edges.items():
+        for key, edge in self.edges.items():
             if edge.weight < min_weight:
                 continue
             if game and edge.game != game:
                 continue
-            if card1 == card:
-                neighbors.append(card2)
-            elif card2 == card:
-                neighbors.append(card1)
+            if edge.card1 == card:
+                neighbors.append(edge.card2)
+            elif edge.card2 == card:
+                neighbors.append(edge.card1)
         return neighbors
 
     def get_new_cards_since(self, since: datetime) -> list[str]:
@@ -754,11 +838,11 @@ class IncrementalCardGraph:
                 f.write("card1\tcard2\tweight\n")
 
             # Write edges
-            for (card1, card2), edge in sorted(self.edges.items()):
+            for key, edge in sorted(self.edges.items()):
                 if edge.weight >= min_weight:
                     if game and edge.game != game:
                         continue
-                    f.write(f"{card1}{sep}{card2}{sep}{edge.weight}\n")
+                    f.write(f"{edge.card1}{sep}{edge.card2}{sep}{edge.weight}\n")
 
         return output_path
 
@@ -790,21 +874,21 @@ class IncrementalCardGraph:
         }
 
         lift_values: dict[tuple[str, str], float] = {}
-        for (card1, card2), edge in self.edges.items():
+        for key, edge in self.edges.items():
             if edge.weight < min_weight:
                 continue
             if game and edge.game != game:
                 continue
 
-            p_a = card_prob.get(card1, 0)
-            p_b = card_prob.get(card2, 0)
+            p_a = card_prob.get(edge.card1, 0)
+            p_b = card_prob.get(edge.card2, 0)
             if p_a == 0 or p_b == 0:
                 continue
 
             # P(A,B) approximated by co-occurrence count / total_decks
             p_ab = edge.weight / total_decks
             lift = p_ab / (p_a * p_b)
-            lift_values[(card1, card2)] = lift
+            lift_values[(edge.card1, edge.card2)] = lift
 
         return lift_values
 
@@ -841,6 +925,118 @@ class IncrementalCardGraph:
 
         return output_path
 
+    def add_edge(
+        self,
+        card1: str,
+        card2: str,
+        weight: float,
+        source_type: str,
+        game: str | None = None,
+    ) -> None:
+        """
+        Add or update a single edge with a specific source type.
+
+        Used by build_unified_graph to ingest edges from various sources
+        (PPMI, oracle text, annotations, propagated labels).
+
+        Args:
+            card1: First card name
+            card2: Second card name
+            weight: Edge weight
+            source_type: Edge source (ppmi, oracle_text, annotation, propagated, etc.)
+            game: Game identifier (MTG, PKM, YGO)
+        """
+        c1, c2 = sorted([card1, card2])
+        key = (c1, c2, source_type)
+        now = datetime.now()
+
+        if key in self.edges:
+            self.edges[key].weight = max(self.edges[key].weight, weight)
+            self.edges[key].last_seen = now
+        else:
+            self.edges[key] = Edge(
+                card1=c1,
+                card2=c2,
+                game=game,
+                weight=weight,
+                first_seen=now,
+                last_seen=now,
+                source_type=source_type,
+            )
+
+        # Ensure nodes exist
+        for name in (c1, c2):
+            if name not in self.nodes:
+                self.nodes[name] = CardNode(name=name, game=game, first_seen=now, last_seen=now)
+
+    def export_edgelist_filtered(
+        self,
+        output_path: Path | str,
+        game: str | None = None,
+        source_types: list[str] | None = None,
+        weights: dict[str, float] | None = None,
+        min_weight: float = 0.0,
+    ) -> Path:
+        """
+        Export a merged edgelist filtered by source_type with per-source weight multipliers.
+
+        Replaces the manual multi-file merge step. For each card pair, sums
+        weight * multiplier across all matching source types.
+
+        Args:
+            output_path: Output .edg file path
+            game: Filter edges by game (MTG, PKM, YGO)
+            source_types: Which source types to include (default: all)
+            weights: Per-source-type weight multipliers (default: 1.0 for all)
+            min_weight: Minimum merged weight to include in output
+
+        Returns:
+            Path to exported file
+        """
+        output_path = Path(output_path)
+        weights = weights or {}
+
+        # Accumulate merged weights per card pair
+        merged: dict[tuple[str, str], float] = {}
+        source_counts: dict[str, int] = {}
+
+        for key, edge in self.edges.items():
+            if game and edge.game != game:
+                continue
+            if source_types and edge.source_type not in source_types:
+                continue
+
+            multiplier = weights.get(edge.source_type, 1.0)
+            pair = (edge.card1, edge.card2)
+            merged[pair] = merged.get(pair, 0.0) + edge.weight * multiplier
+            source_counts[edge.source_type] = source_counts.get(edge.source_type, 0) + 1
+
+        # Filter by min_weight and write
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        count = 0
+        with open(output_path, "w") as f:
+            for (c1, c2), w in sorted(merged.items()):
+                if w >= min_weight:
+                    f.write(f"{c1}\t{c2}\t{w:.4f}\n")
+                    count += 1
+
+        print(f"Exported {count:,} edges to {output_path}")
+        for st, n in sorted(source_counts.items()):
+            mult = weights.get(st, 1.0)
+            print(f"  {st}: {n:,} edges (x{mult})")
+
+        return output_path
+
+    def get_node_image_urls(self, game: str | None = None) -> dict[str, str]:
+        """Return card name -> image_url mapping for nodes that have image URLs."""
+        result = {}
+        for node in self.nodes.values():
+            if game and node.game != game:
+                continue
+            if node.image_url:
+                result[node.name] = node.image_url
+        return result
+
     def edges_to_adj_dict(self, min_weight: int = 1) -> dict[str, set[str]]:
         """
         Convert graph edges to adjacency dictionary for Jaccard similarity.
@@ -853,17 +1049,17 @@ class IncrementalCardGraph:
         """
         adj: dict[str, set[str]] = {}
 
-        for (card1, card2), edge in self.edges.items():
+        for key, edge in self.edges.items():
             if edge.weight < min_weight:
                 continue
 
-            if card1 not in adj:
-                adj[card1] = set()
-            if card2 not in adj:
-                adj[card2] = set()
+            if edge.card1 not in adj:
+                adj[edge.card1] = set()
+            if edge.card2 not in adj:
+                adj[edge.card2] = set()
 
-            adj[card1].add(card2)
-            adj[card2].add(card1)
+            adj[edge.card1].add(edge.card2)
+            adj[edge.card2].add(edge.card1)
 
         return adj
 
@@ -902,9 +1098,9 @@ class IncrementalCardGraph:
     def get_statistics(self) -> dict[str, Any]:
         """Get graph statistics."""
         node_degrees = {}
-        for (card1, card2), _edge in self.edges.items():
-            node_degrees[card1] = node_degrees.get(card1, 0) + 1
-            node_degrees[card2] = node_degrees.get(card2, 0) + 1
+        for key, edge in self.edges.items():
+            node_degrees[edge.card1] = node_degrees.get(edge.card1, 0) + 1
+            node_degrees[edge.card2] = node_degrees.get(edge.card2, 0) + 1
 
         degrees = list(node_degrees.values()) if node_degrees else [0]
         edge_weights = [edge.weight for edge in self.edges.values()]
@@ -958,7 +1154,9 @@ class IncrementalCardGraph:
                     first_seen TEXT,
                     last_seen TEXT,
                     total_decks INTEGER,
-                    attributes TEXT
+                    attributes TEXT,
+                    oracle_text TEXT,
+                    image_url TEXT
                 )
             """)
 
@@ -967,23 +1165,33 @@ class IncrementalCardGraph:
                     card1 TEXT,
                     card2 TEXT,
                     game TEXT,
-                    weight INTEGER,
+                    weight REAL,
                     first_seen TEXT,
                     last_seen TEXT,
                     deck_sources TEXT,
                     metadata TEXT,
                     monthly_counts TEXT,
                     format_periods TEXT,
-                    PRIMARY KEY (card1, card2)
+                    source_type TEXT DEFAULT 'co_occurrence',
+                    PRIMARY KEY (card1, card2, source_type)
                 )
             """)
 
-            # Migrate existing databases: add temporal columns if they don't exist
+            # Migrate existing databases: add columns if they don't exist
             with suppress(sqlite3.OperationalError):
                 self._db_conn.execute("ALTER TABLE edges ADD COLUMN monthly_counts TEXT")
 
             with suppress(sqlite3.OperationalError):
                 self._db_conn.execute("ALTER TABLE edges ADD COLUMN format_periods TEXT")
+
+            with suppress(sqlite3.OperationalError):
+                self._db_conn.execute("ALTER TABLE edges ADD COLUMN source_type TEXT DEFAULT 'co_occurrence'")
+
+            with suppress(sqlite3.OperationalError):
+                self._db_conn.execute("ALTER TABLE nodes ADD COLUMN oracle_text TEXT")
+
+            with suppress(sqlite3.OperationalError):
+                self._db_conn.execute("ALTER TABLE nodes ADD COLUMN image_url TEXT")
 
             # Indexes for common queries
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_nodes_game ON nodes(game)")
@@ -991,6 +1199,7 @@ class IncrementalCardGraph:
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_card2 ON edges(card2)")
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_game ON edges(game)")
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_weight ON edges(weight)")
+            self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_source_type ON edges(source_type)")
 
             self._db_conn.commit()
 
@@ -1037,13 +1246,15 @@ class IncrementalCardGraph:
                     node.last_seen.isoformat(),
                     node.total_decks,
                     json.dumps(node.attributes) if node.attributes else None,
+                    node.oracle_text,
+                    node.image_url,
                 )
                 for node in self.nodes.values()
             ]
             self._db_conn.executemany(
                 """
-                INSERT INTO nodes (name, game, first_seen, last_seen, total_decks, attributes)
-                VALUES (?, ?, ?, ?, ?, ?)
+                INSERT INTO nodes (name, game, first_seen, last_seen, total_decks, attributes, oracle_text, image_url)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 nodes_data,
             )
@@ -1061,13 +1272,14 @@ class IncrementalCardGraph:
                     json.dumps(edge.metadata),
                     json.dumps(edge.monthly_counts) if edge.monthly_counts else None,
                     json.dumps(edge.format_periods) if edge.format_periods else None,
+                    edge.source_type,
                 )
                 for edge in self.edges.values()
             ]
             self._db_conn.executemany(
                 """
-                INSERT INTO edges (card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata, monthly_counts, format_periods)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                INSERT INTO edges (card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata, monthly_counts, format_periods, source_type)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 edges_data,
             )
@@ -1103,9 +1315,19 @@ class IncrementalCardGraph:
         try:
             self._db_conn = sqlite3.connect(str(path), timeout=30.0, check_same_thread=False)
 
-            # Load nodes
-            for row in self._db_conn.execute("SELECT * FROM nodes"):
-                name, game, first_seen, last_seen, total_decks, attributes = row
+            # Load nodes (handle old schema without oracle_text/image_url)
+            try:
+                node_cursor = self._db_conn.execute(
+                    "SELECT name, game, first_seen, last_seen, total_decks, attributes, oracle_text, image_url FROM nodes"
+                )
+            except sqlite3.OperationalError:
+                node_cursor = self._db_conn.execute(
+                    "SELECT name, game, first_seen, last_seen, total_decks, attributes FROM nodes"
+                )
+            for row in node_cursor:
+                name, game, first_seen, last_seen, total_decks, attributes = row[:6]
+                oracle_text = row[6] if len(row) > 6 else None
+                image_url = row[7] if len(row) > 7 else None
                 self.nodes[name] = CardNode(
                     name=name,
                     game=game,
@@ -1113,66 +1335,54 @@ class IncrementalCardGraph:
                     last_seen=datetime.fromisoformat(last_seen),
                     total_decks=total_decks,
                     attributes=json.loads(attributes) if attributes else None,
+                    oracle_text=oracle_text,
+                    image_url=image_url,
                 )
 
             # OPTIMIZATION: Load edges in batches with fetchall() for better performance
-            # Use fetchall() instead of row-by-row iteration (2-3x faster)
             # Handle missing columns for backward compatibility
             try:
                 cursor = self._db_conn.execute(
-                    "SELECT card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata, monthly_counts, format_periods FROM edges"
+                    "SELECT card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata, monthly_counts, format_periods, source_type FROM edges"
                 )
             except sqlite3.OperationalError:
-                # Fallback for old schema without temporal columns
-                cursor = self._db_conn.execute(
-                    "SELECT card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata FROM edges"
-                )
+                try:
+                    cursor = self._db_conn.execute(
+                        "SELECT card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata, monthly_counts, format_periods FROM edges"
+                    )
+                except sqlite3.OperationalError:
+                    # Fallback for old schema without temporal columns
+                    cursor = self._db_conn.execute(
+                        "SELECT card1, card2, game, weight, first_seen, last_seen, deck_sources, metadata FROM edges"
+                    )
 
             rows = cursor.fetchall()
 
-            # OPTIMIZATION: Pre-allocate edges dict and batch process
             # Process in chunks to reduce memory pressure for very large graphs
             chunk_size = 100000
             for i in range(0, len(rows), chunk_size):
                 chunk = rows[i : i + chunk_size]
                 for row in chunk:
-                    if len(row) >= 10:
-                        # New schema with temporal data
-                        (
-                            card1,
-                            card2,
-                            game,
-                            weight,
-                            first_seen,
-                            last_seen,
-                            deck_sources,
-                            metadata,
-                            monthly_counts,
-                            format_periods,
-                        ) = row
-                    else:
-                        # Old schema without temporal data
-                        (
-                            card1,
-                            card2,
-                            game,
-                            weight,
-                            first_seen,
-                            last_seen,
-                            deck_sources,
-                            metadata,
-                        ) = row
-                        monthly_counts = None
-                        format_periods = None
+                    card1, card2 = row[0], row[1]
+                    game = row[2]
+                    weight = row[3]
+                    first_seen = row[4]
+                    last_seen = row[5]
+                    deck_sources = row[6]
+                    metadata = row[7]
+                    monthly_counts = row[8] if len(row) > 8 else None
+                    format_periods = row[9] if len(row) > 9 else None
+                    source_type = row[10] if len(row) > 10 else "co_occurrence"
 
-                    edge_key = tuple(sorted([card1, card2]))
+                    # Edge key includes source_type to allow multiple edge types per pair
+                    edge_key = (min(card1, card2), max(card1, card2), source_type)
                     self.edges[edge_key] = Edge(
                         card1=card1,
                         card2=card2,
                         game=game,
-                        weight=int(weight)
+                        weight=float(weight)
                         if isinstance(weight, (int, float))
-                        else weight,  # Ensure weight is numeric
+                        else weight,
                         first_seen=datetime.fromisoformat(first_seen)
                         if isinstance(first_seen, str)
                         else first_seen,
@@ -1181,6 +1391,7 @@ class IncrementalCardGraph:
                         else last_seen,
                         deck_sources=self._safe_json_load(deck_sources, default=[]),
                         metadata=self._safe_json_load(metadata, default={}),
+                        source_type=source_type or "co_occurrence",
                         monthly_counts=Edge._validate_monthly_counts(
                             IncrementalCardGraph._safe_json_load(monthly_counts, default={})
                         ),
@@ -1225,7 +1436,8 @@ class IncrementalCardGraph:
         data = {
             "nodes": {name: node.to_dict() for name, node in self.nodes.items()},
             "edges": {
-                f"{card1}|||{card2}": edge.to_dict() for (card1, card2), edge in self.edges.items()
+                f"{edge.card1}|||{edge.card2}|||{edge.source_type}": edge.to_dict()
+                for edge in self.edges.values()
             },
             "last_update": self.last_update.isoformat() if self.last_update else None,
             "total_decks_processed": self.total_decks_processed,
@@ -1248,12 +1460,14 @@ class IncrementalCardGraph:
             name: CardNode.from_dict(node_data) for name, node_data in data.get("nodes", {}).items()
         }
 
-        # Load edges
+        # Load edges (handle old 2-part keys and new 3-part keys)
         self.edges = {}
         for edge_key, edge_data in data.get("edges", {}).items():
-            card1, card2 = edge_key.split("|||")
+            parts = edge_key.split("|||")
+            card1, card2 = parts[0], parts[1]
+            source_type = parts[2] if len(parts) > 2 else edge_data.get("source_type", "co_occurrence")
             edge = Edge.from_dict(edge_data)
-            self.edges[(card1, card2)] = edge
+            self.edges[(card1, card2, source_type)] = edge
 
         self.last_update = (
             datetime.fromisoformat(data["last_update"]) if data.get("last_update") else None
