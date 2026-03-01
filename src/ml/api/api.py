@@ -1784,10 +1784,10 @@ class CompleteRequest(BaseModel):
     method: str = "greedy"  # "greedy", "beam", or "ot"
     beam_width: int = 5  # For beam search
     # OT-specific parameters
-    sinkhorn_reg: float = 0.05  # Entropic regularization for OT
-    embedding_weight: float = 0.5  # Cost weight for embedding distance
-    role_weight: float = 0.3  # Cost weight for role gap filling
-    curve_weight: float = 0.2  # Cost weight for mana curve fit
+    sinkhorn_reg: float = 0.01  # Entropic regularization for OT
+    embedding_weight: float = 0.3  # Cost weight for embedding distance
+    role_weight: float = 0.1  # Cost weight for role gap filling
+    curve_weight: float = 0.6  # Cost weight for mana curve fit
 
 
 class CompleteResponse(BaseModel):
@@ -1954,6 +1954,8 @@ def complete_deck(req: CompleteRequest):
             {"op": "add_card", "partition": _main_partition_name(game), "card": a["card"], "count": a["count"]}
             for a in ot_result.additions
         ]
+        # Store OT-specific metrics for later inclusion in response
+        _ot_metrics = ot_result.metrics
         quality_metrics = None
 
     elif req.method == "beam":
@@ -2057,9 +2059,10 @@ def complete_deck(req: CompleteRequest):
         except (ImportError, AttributeError, ValueError, TypeError) as e:
             logger.debug("Failed to assess deck quality: %s", e, exc_info=True)
 
-    metrics = {
+    metrics: dict[str, Any] = {
         "steps": len(steps),
         "elapsed_ms": elapsed_ms,
+        "method": req.method,
         "budget_max": req.budget_max,
         "coverage_weight": req.coverage_weight,
         "strict_size": bool(req.strict_size),
@@ -2068,6 +2071,12 @@ def complete_deck(req: CompleteRequest):
     }
     if quality_metrics:
         metrics["quality"] = quality_metrics
+    # Include OT-specific metrics when method=ot
+    if req.method == "ot":
+        try:
+            metrics["ot"] = _ot_metrics  # type: ignore[possibly-undefined]
+        except NameError:
+            pass
 
     return CompleteResponse(
         deck=deck_out, steps=steps, metrics=metrics, feedback_url="/v1/feedback"
