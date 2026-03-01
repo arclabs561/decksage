@@ -21,7 +21,11 @@ For development:
 uv sync --extra dev --extra embeddings
 ```
 
-## Running the API
+## Artifacts
+
+The API requires pre-built embedding files (`.wv`) and optional CSV files for card pairs/attributes. Generate them with `just train` or see `docs/quick-reference.md` for details on the data pipeline.
+
+## Running the API (development)
 
 You can run DeckSage in single-game or multi-game mode.
 
@@ -81,7 +85,7 @@ Base URL: `http://localhost:8000`
 - `GET /v1/health?game=magic`: Game-specific health check
 - `POST /v1/similar`: Card similarity search
 - `GET /v1/cards?game=magic&prefix=Light`: Card lookup and auto-complete
-- `POST /v1/search`: Faceted semantic search
+- `POST /v1/search`: Faceted semantic search (requires Meilisearch + Qdrant; see `src/ml/search/README.md`)
 - `POST /v1/deck/*`: Deck operations (apply patch, complete, suggest actions)
 - `POST /v1/feedback`: Submit user feedback
 
@@ -94,6 +98,14 @@ just test-quick
 just test
 just lint
 just format
+```
+
+## Docker
+
+A `docker-compose.yml` is provided for running the optional search backends (Meilisearch, Qdrant):
+
+```bash
+docker compose up -d
 ```
 
 ## Documentation
