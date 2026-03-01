@@ -1777,6 +1777,12 @@
                 sideCount = data.deck.Sideboard ? data.deck.Sideboard.length : 0;
             }
 
+            const metrics = data.metrics || {};
+            const quality = metrics.quality || {};
+            const otMetrics = metrics.ot || {};
+            const method = metrics.method || 'greedy';
+            const elapsedMs = metrics.elapsed_ms;
+
             let html = `
                 <div class="deck-stats">
                     <div class="deck-stat">
@@ -1791,7 +1797,35 @@
                         <div class="deck-stat-label">Steps</div>
                         <div class="deck-stat-value">${data.steps.length}</div>
                     </div>
-                </div>
+                    <div class="deck-stat">
+                        <div class="deck-stat-label">Method</div>
+                        <div class="deck-stat-value" style="font-size: 14px; text-transform: uppercase;">${escapeHtml(method)}</div>
+                    </div>
+                    ${elapsedMs ? `<div class="deck-stat"><div class="deck-stat-label">Time</div><div class="deck-stat-value">${elapsedMs}ms</div></div>` : ''}
+                </div>`;
+
+            // Quality metrics panel
+            if (quality.overall_score !== undefined) {
+                html += `
+                <div style="margin-top: 16px; padding: 12px; background: rgba(107, 142, 255, 0.08); border-radius: 8px; border: 1px solid rgba(107, 142, 255, 0.2);">
+                    <h4 style="margin: 0 0 8px 0; color: #6b8eff; font-size: 13px;">Deck Quality</h4>
+                    <div style="display: flex; gap: 16px; flex-wrap: wrap;">
+                        <span style="font-size: 12px;">Overall: <b>${quality.overall_score.toFixed(1)}/10</b></span>
+                        <span style="font-size: 12px;">Curve: ${(quality.mana_curve_score * 100).toFixed(0)}%</span>
+                        <span style="font-size: 12px;">Tags: ${(quality.tag_balance_score * 100).toFixed(0)}%</span>
+                        <span style="font-size: 12px;">Synergy: ${(quality.synergy_score * 100).toFixed(0)}%</span>
+                        ${quality.num_unique_tags ? `<span style="font-size: 12px;">Unique tags: ${quality.num_unique_tags}</span>` : ''}
+                    </div>
+                </div>`;
+            }
+
+            // OT-specific metrics
+            if (method === 'ot' && otMetrics.pool_size) {
+                html += `
+                <div style="margin-top: 8px; padding: 8px 12px; background: rgba(255, 180, 50, 0.08); border-radius: 6px; border: 1px solid rgba(255, 180, 50, 0.2); font-size: 12px; color: #aaa;">
+                    OT: pool=${otMetrics.pool_size} cards, distance=${otMetrics.ot_distance !== undefined ? otMetrics.ot_distance.toFixed(4) : 'n/a'}, reg=${otMetrics.sinkhorn_reg || 'default'}
+                </div>`;
+            }
                 <div style="margin-top: 24px;">
                     <h3 style="margin-bottom: 12px; color: #6b8eff;">Completed Deck (JSON)</h3>
                     <textarea class="deck-input" readonly style="min-height: 300px;">${JSON.stringify(data.deck, null, 2)}</textarea>
