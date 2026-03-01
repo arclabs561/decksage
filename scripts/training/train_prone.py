@@ -132,8 +132,13 @@ def main():
             )
             # Project 384-dim -> target dim via PCA
             if text_embs.shape[1] != actual_dim:
-                pca = PCA(n_components=actual_dim)
+                n_comp = min(actual_dim, text_embs.shape[0], text_embs.shape[1])
+                pca = PCA(n_components=n_comp)
                 text_embs = pca.fit_transform(text_embs)
+                # Pad with zeros if n_comp < actual_dim
+                if n_comp < actual_dim:
+                    pad = np.zeros((text_embs.shape[0], actual_dim - n_comp), dtype=text_embs.dtype)
+                    text_embs = np.hstack([text_embs, pad])
 
             # Replace cold-start node embeddings
             for i, idx in enumerate(cold_indices):

@@ -53,7 +53,7 @@ MOXFIELD_DELAY = 1.0  # seconds between requests
 # from the server-rendered search page and fetch each via /api/decks/{id}/.
 ARCHIDEKT_SEARCH_URL = "https://archidekt.com/search/decks"
 ARCHIDEKT_DECK = "https://archidekt.com/api/decks"  # /{id}/
-ARCHIDEKT_DELAY = 0.5
+ARCHIDEKT_DELAY = 1.5  # must be >= 1.5 to avoid 429s on search pages
 
 MAX_RETRIES = 3
 INITIAL_BACKOFF = 2.0  # seconds
@@ -136,43 +136,60 @@ def _scrape_archidekt_deck_ids(
     The listing API (/api/decks/v3/) was removed. The search page at
     /search/decks still renders deck links server-side, so we extract
     IDs from href="/decks/{id}" patterns.
+
+    Uses multiple sort orderings and format IDs to maximize coverage.
     """
     seen: set[int] = set()
-    page = 1
-    consecutive_empty = 0
 
-    while len(seen) < limit:
-        params = {"formats": "3", "orderBy": "-viewCount", "page": str(page)}
-        resp = _request_with_retry(
-            client, "GET", ARCHIDEKT_SEARCH_URL, params=params, timeout=30.0
-        )
-        if resp is None or resp.status_code != 200:
-            status = resp.status_code if resp else "no response"
-            print(f"  Search page {page} failed (status={status}), stopping ID scan.")
+    # Multiple orderings to discover different decks
+    orderings = ["-viewCount", "-createdAt", "-updatedAt", "-points"]
+    # Format IDs: 3=Commander, 12=cEDH, 17=Oathbreaker, 22=Brawl, 24=Duel Commander
+    format_ids = ["3", "12", "17", "22", "24"]
+
+    for fmt_id in format_ids:
+        if len(seen) >= limit:
             break
-
-        tree = HTMLParser(resp.text)
-        ids_on_page: list[int] = []
-        for node in tree.css("a[href]"):
-            href = node.attributes.get("href", "")
-            m = re.match(r"/decks/(\d+)", href)
-            if m:
-                deck_id = int(m.group(1))
-                if deck_id not in seen:
-                    ids_on_page.append(deck_id)
-                    seen.add(deck_id)
-
-        if not ids_on_page:
-            consecutive_empty += 1
-            if consecutive_empty >= 2:
+        for ordering in orderings:
+            if len(seen) >= limit:
                 break
-            page += 1
-            continue
+            page = 1
+            consecutive_empty = 0
+            label = f"fmt={fmt_id},order={ordering}"
 
-        consecutive_empty = 0
-        print(f"  Page {page}: found {len(ids_on_page)} new deck IDs (total: {len(seen)})")
-        page += 1
-        time.sleep(ARCHIDEKT_DELAY)
+            while len(seen) < limit:
+                params = {"formats": fmt_id, "orderBy": ordering, "page": str(page)}
+                resp = _request_with_retry(
+                    client, "GET", ARCHIDEKT_SEARCH_URL, params=params, timeout=30.0
+                )
+                if resp is None or resp.status_code != 200:
+                    status = resp.status_code if resp else "no response"
+                    print(f"  [{label}] page {page} failed (status={status}), cooling down 30s...")
+                    time.sleep(30)  # cooldown after rate limit before next ordering
+                    break
+
+                tree = HTMLParser(resp.text)
+                ids_on_page: list[int] = []
+                for node in tree.css("a[href]"):
+                    href = node.attributes.get("href", "")
+                    m = re.match(r"/decks/(\d+)", href)
+                    if m:
+                        deck_id = int(m.group(1))
+                        if deck_id not in seen:
+                            ids_on_page.append(deck_id)
+                            seen.add(deck_id)
+
+                if not ids_on_page:
+                    consecutive_empty += 1
+                    if consecutive_empty >= 3:
+                        print(f"  [{label}] no new IDs for 3 pages, next ordering.")
+                        break
+                    page += 1
+                    continue
+
+                consecutive_empty = 0
+                print(f"  [{label}] page {page}: +{len(ids_on_page)} new IDs (total: {len(seen)})")
+                page += 1
+                time.sleep(ARCHIDEKT_DELAY)
 
     return list(seen)[:limit]
 

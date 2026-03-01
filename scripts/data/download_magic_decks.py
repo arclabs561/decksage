@@ -108,11 +108,12 @@ def _extract_timestamp(data: dict, path: Path) -> str:
 
     Returns ISO date string (YYYY-MM-DD) or empty string if not found.
     """
-    # 1. Check for explicit event_date or date field
-    for key in ("event_date", "date", "created_at"):
+    # 1. Check for explicit date fields
+    for key in ("event_date", "date", "created_at", "release_date"):
         val = (data.get(key) or "").strip()
         if val:
-            return val
+            # Normalize ISO datetime to date-only (e.g. "2020-10-22T00:00:00Z" -> "2020-10-22")
+            return val[:10]
 
     # 2. Parse date from URL (e.g. goldfish URLs contain tournament dates)
     url = data.get("url", "")
