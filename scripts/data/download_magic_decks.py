@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import os
+import re
 import shutil
 import subprocess
 import sys
@@ -98,6 +98,36 @@ def download_batch_awscli(s3_urls: list[str], dest_dir: Path) -> int:
     return downloaded
 
 
+# Date patterns in MTGGoldfish URLs and filenames
+# e.g. "modern-league-2025-01-02", "standard-challenge-2024-12-15"
+_DATE_PATTERN = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
+
+
+def _extract_timestamp(data: dict, path: Path) -> str:
+    """Extract a deck timestamp from URL, event date, or filename.
+
+    Returns ISO date string (YYYY-MM-DD) or empty string if not found.
+    """
+    # 1. Check for explicit event_date or date field
+    for key in ("event_date", "date", "created_at"):
+        val = (data.get(key) or "").strip()
+        if val:
+            return val
+
+    # 2. Parse date from URL (e.g. goldfish URLs contain tournament dates)
+    url = data.get("url", "")
+    m = _DATE_PATTERN.search(url)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+
+    # 3. Parse date from filename (some .zst files encode dates)
+    m = _DATE_PATTERN.search(path.stem)
+    if m:
+        return f"{m.group(1)}-{m.group(2)}-{m.group(3)}"
+
+    return ""
+
+
 def process_deck_file(path: Path, source: str) -> dict | None:
     """Read a .zst deck file and convert to standard JSONL format."""
     try:
@@ -122,6 +152,9 @@ def process_deck_file(path: Path, source: str) -> dict | None:
     archetype = inner.get("name", "")
     fmt = inner.get("format", "")
 
+    # Extract timestamp
+    created_at = _extract_timestamp(data, path)
+
     # Extract cards from main partition only (skip sideboard)
     cards = []
     for partition in data.get("partitions", []):
@@ -136,7 +169,7 @@ def process_deck_file(path: Path, source: str) -> dict | None:
     if not cards:
         return None
 
-    return {
+    result = {
         "deck_id": deck_id,
         "archetype": archetype,
         "format": fmt,
@@ -147,6 +180,9 @@ def process_deck_file(path: Path, source: str) -> dict | None:
         "placement": "",
         "cards": cards,
     }
+    if created_at:
+        result["created_at"] = created_at
+    return result
 
 
 def main() -> int:
