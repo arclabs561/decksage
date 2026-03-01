@@ -99,35 +99,62 @@ class AnnotatorConfig:
 # Research-based: Diverse model architectures for best consensus.
 # Key principle: different architectures at moderate temperature >> single model at high temperature.
 # If 3+ different architectures agree, the signal is much stronger than self-agreement.
-# Note: Using models confirmed available on OpenRouter
+#
+# Selection rationale (v3, 6 judges):
+#   - 6 architectures from 5 providers for diversity
+#   - Removed Haiku 4.5 (30% validation failure rate), Gemini 3 Flash (+0.08 score inflation)
+#   - Removed DeepSeek V3.x (73% timeout rate -- OpenRouter routing unreliable)
+#   - Prompt v5.0: tighter calibration anchors to reduce inter-judge scale mismatch
+#   - Per-pair co-occurrence stats injected as factual context (not scoring guidance)
+#
+# Note: Using models confirmed available on OpenRouter with [S] structured_outputs
 DEFAULT_ANNOTATORS = [
+    # -- Tier 1: Frontier reasoning (anchor judges) --
     AnnotatorConfig(
         name="claude_sonnet_4_6",
         model="anthropic/claude-sonnet-4-6",
         temperature=0.3,
-        max_tokens=1500,
-        description="Claude Sonnet 4.6 - Frontier reasoning, strong structured output (Anthropic)",
-    ),
-    AnnotatorConfig(
-        name="gemini_3_1_pro",
-        model="google/gemini-3.1-pro-preview",
-        temperature=0.3,
-        max_tokens=1500,
-        description="Gemini 3.1 Pro - Latest Google, 1M context, strong reasoning (Google)",
+        max_tokens=2500,
+        description="Claude Sonnet 4.6 - Frontier reasoning, strong structured output (Anthropic) $3.00/$15.00",
     ),
     AnnotatorConfig(
         name="gpt_5_2",
         model="openai/gpt-5.2",
         temperature=0.3,
-        max_tokens=1500,
-        description="GPT 5.2 - Adaptive reasoning, reduced hallucination (OpenAI)",
+        max_tokens=2500,
+        description="GPT 5.2 - Adaptive reasoning, reduced hallucination (OpenAI) $1.75/$14.00",
     ),
     AnnotatorConfig(
-        name="deepseek_v3_2",
-        model="deepseek/deepseek-v3.2",
+        name="gemini_2_5_flash",
+        model="google/gemini-2.5-flash",
         temperature=0.3,
-        max_tokens=1500,
-        description="DeepSeek V3.2 - Frontier quality at low cost, diverse architecture (DeepSeek)",
+        max_tokens=2500,
+        description="Gemini 2.5 Flash - Fast, thinking, 1M context, reliable struct output (Google) $0.30/$2.50",
+    ),
+    # -- Tier 2: Strong mid-range (diverse architectures) --
+    # DeepSeek V3.x removed: 73% timeout rate at 45s (V3.2) and V3.1 also times out.
+    # OpenRouter routing to DeepSeek endpoints is unreliable for structured output.
+    AnnotatorConfig(
+        name="mistral_large_3",
+        model="mistralai/mistral-large-2512",
+        temperature=0.3,
+        max_tokens=2500,
+        description="Mistral Large 3 - 675B MoE, strong structured output (Mistral) $0.50/$1.50",
+    ),
+    AnnotatorConfig(
+        name="qwen3_235b",
+        model="qwen/qwen3-235b-a22b-2507",
+        temperature=0.3,
+        max_tokens=2500,
+        description="Qwen3 235B A22B (Jul 2025) - MoE, confirmed tool_choice support (Alibaba) $0.071/$0.10",
+    ),
+    # -- Tier 3: Fast/cheap tiebreaker --
+    AnnotatorConfig(
+        name="grok_4_1_fast",
+        model="x-ai/grok-4.1-fast",
+        temperature=0.3,
+        max_tokens=2500,
+        description="Grok 4.1 Fast - 2M context, very cheap, fast (xAI) $0.20/$0.50",
     ),
 ]
 
@@ -142,6 +169,7 @@ class MultiAnnotatorResult:
     consensus_annotation: CardSimilarityAnnotation | None
     iaa_metrics: dict[str, Any]
     agreement_level: str  # "high", "medium", "low", "disagreement"
+    usage_by_judge: dict[str, dict] | None = None  # judge_name -> {input_tokens, output_tokens, requests}
 
 
 class MultiAnnotatorIAA:
@@ -237,6 +265,7 @@ class MultiAnnotatorIAA:
                     temperature=config.temperature,
                     max_tokens=config.max_tokens,
                 ),
+                retries=0,  # No pydantic-ai validation retries -- skip judge on failure instead of re-prompting (halves latency)
             )
             self.agents[config.name] = agent
             # Initialize with equal weights (will be updated based on performance)
@@ -301,24 +330,52 @@ class MultiAnnotatorIAA:
             prompt_parts.append(graph_context)
         prompt = "\n".join(prompt_parts)
 
-        # Annotate with all models in parallel
-        tasks = []
-        for config in self.annotator_configs:
-            agent = self.agents[config.name]
-            # Get message history for this annotator if available (for multi-round feedback)
-            annotator_history = message_history.get(config.name, []) if message_history else None
-            task = self._annotate_with_agent(agent, config, prompt, card1, card2, annotator_history)
-            tasks.append((config.name, task))
+        # Run all judges in parallel with per-judge hard timeout.
+        # Each judge is wrapped in asyncio.wait_for so TimeoutError completes
+        # the coroutine from the caller's perspective. The underlying httpx
+        # connection may linger as a zombie, but os._exit(0) at batch end
+        # cleans those up.
+        import asyncio as _aio
 
-        # Wait for all annotations
-        annotations: dict[str, CardSimilarityAnnotation] = {}
-        for name, task in tasks:
+        JUDGE_TIMEOUT = 45.0  # per-judge hard timeout (most complete in <15s)
+
+        async def _run_judge(config):
+            agent = self.agents[config.name]
+            annotator_history = message_history.get(config.name, []) if message_history else None
             try:
-                result = await task
-                if result:
-                    annotations[name] = result
+                result = await _aio.wait_for(
+                    self._annotate_with_agent(
+                        agent, config, prompt, card1, card2, annotator_history,
+                    ),
+                    timeout=JUDGE_TIMEOUT,
+                )
+                return config.name, result
+            except TimeoutError:
+                logger.warning(f"Judge {config.name} timed out after {JUDGE_TIMEOUT}s")
+                return config.name, (None, None)
+            except _aio.CancelledError:
+                logger.warning(f"Judge {config.name} cancelled")
+                return config.name, (None, None)
             except Exception as e:
-                logger.warning(f"Annotator {name} failed: {e}")
+                logger.warning(f"Judge {config.name} error: {e}")
+                return config.name, (None, None)
+
+        judge_results = await _aio.gather(
+            *[_run_judge(c) for c in self.annotator_configs],
+            return_exceptions=True,
+        )
+
+        annotations: dict[str, CardSimilarityAnnotation] = {}
+        usage_by_judge: dict[str, dict] = {}
+        for item in judge_results:
+            if isinstance(item, Exception):
+                logger.warning(f"Judge failed: {item}")
+                continue
+            name, (result, usage) = item
+            if result:
+                annotations[name] = result
+            if usage:
+                usage_by_judge[name] = usage
 
         if not annotations:
             raise ValueError("All annotators failed")
@@ -349,6 +406,7 @@ class MultiAnnotatorIAA:
             consensus_annotation=consensus,
             iaa_metrics=iaa_metrics,
             agreement_level=agreement_level,
+            usage_by_judge=usage_by_judge if usage_by_judge else None,
         )
 
     async def _annotate_with_agent(
@@ -359,18 +417,14 @@ class MultiAnnotatorIAA:
         card1: str,
         card2: str,
         message_history: list | None = None,
-        max_retries: int = 2,
-    ) -> CardSimilarityAnnotation | None:
-        """Annotate with a single agent, retrying on validation failures.
+    ) -> tuple[CardSimilarityAnnotation | None, dict | None]:
+        """Annotate with a single agent, with usage tracking.
 
-        Args:
-            agent: Pydantic AI agent
-            config: Annotator configuration
-            prompt: Annotation prompt
-            card1: First card name
-            card2: Second card name
-            message_history: Optional conversation history for multi-round feedback
-            max_retries: Max retry attempts on failure (default: 2)
+        Timeout is handled by the caller via anyio cancel scope.
+
+        Returns:
+            (annotation, usage_dict) where usage_dict has input_tokens, output_tokens, requests.
+            Returns (None, None) on failure.
         """
         # Resolve prompt version (lazy import to avoid circular dep)
         try:
@@ -378,32 +432,42 @@ class MultiAnnotatorIAA:
         except ImportError:
             SIMILARITY_PROMPT_VERSION = None
 
-        for attempt in range(1, max_retries + 1):
-            try:
-                if message_history:
-                    result = await agent.run(prompt, message_history=message_history)
-                else:
-                    result = await agent.run(prompt)
-                if result.output:
-                    ann = result.output
-                    # Provenance fingerprint
-                    ann.annotator_id = config.name
-                    ann.model_name = config.model
-                    ann.model_params = {
-                        "temperature": config.temperature,
-                        "max_tokens": config.max_tokens,
+        try:
+            result = (
+                await agent.run(prompt, message_history=message_history)
+                if message_history
+                else await agent.run(prompt)
+            )
+            if result.output:
+                ann = result.output
+                # Provenance fingerprint
+                ann.annotator_id = config.name
+                ann.model_name = config.model
+                ann.model_params = {
+                    "temperature": config.temperature,
+                    "max_tokens": config.max_tokens,
+                }
+                ann.timestamp = datetime.utcnow().isoformat() + "Z"
+                ann.prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
+                if SIMILARITY_PROMPT_VERSION:
+                    ann.prompt_version = SIMILARITY_PROMPT_VERSION
+                # Extract usage -- result.usage() is a method in pydantic-ai >= 1.x
+                usage = None
+                try:
+                    u = result.usage()
+                    usage = {
+                        "input_tokens": getattr(u, "input_tokens", 0),
+                        "output_tokens": getattr(u, "output_tokens", 0),
+                        "cache_write_tokens": getattr(u, "cache_write_tokens", 0),
+                        "cache_read_tokens": getattr(u, "cache_read_tokens", 0),
+                        "requests": getattr(u, "requests", 0),
                     }
-                    ann.timestamp = datetime.utcnow().isoformat() + "Z"
-                    ann.prompt_hash = hashlib.sha256(prompt.encode()).hexdigest()[:16]
-                    if SIMILARITY_PROMPT_VERSION:
-                        ann.prompt_version = SIMILARITY_PROMPT_VERSION
-                    return ann
-            except Exception as e:
-                if attempt < max_retries:
-                    logger.debug(f"Annotator {config.name} attempt {attempt} failed: {e}, retrying...")
-                else:
-                    logger.warning(f"Annotator {config.name} failed after {max_retries} attempts: {e}")
-        return None
+                except Exception:
+                    pass
+                return ann, usage
+        except Exception as e:
+            logger.warning(f"Annotator {config.name} failed: {e}")
+        return None, None
 
     def _compute_iaa(self, annotations: dict[str, CardSimilarityAnnotation]) -> dict[str, Any]:
         """Compute IAA metrics for annotations.
@@ -425,20 +489,19 @@ class MultiAnnotatorIAA:
         types = [ann.similarity_type for ann in annotations.values()]
         substitutes = [ann.is_substitute for ann in annotations.values()]
 
-        # Discretize scores into bins (0-0.2, 0.2-0.4, 0.4-0.6, 0.6-0.8, 0.8-1.0)
-        # Format: list of lists, where each inner list is one annotator's rating for this pair
+        # Discretize scores into 3 wide bins that match the prompt's calibration scale:
+        #   low (<0.35): unrelated to weak connections
+        #   mid (0.35-0.65): moderate similarity (same function or co-occurrence)
+        #   high (>0.65): strong similarity to substitutes
+        # Wider bins tolerate ~0.15 inter-judge spread without crossing boundaries.
         score_bins = []
         for score in scores:
-            if score < 0.2:
-                score_bins.append("very_low")
-            elif score < 0.4:
+            if score < 0.35:
                 score_bins.append("low")
-            elif score < 0.6:
-                score_bins.append("medium")
-            elif score < 0.8:
-                score_bins.append("high")
+            elif score < 0.65:
+                score_bins.append("mid")
             else:
-                score_bins.append("very_high")
+                score_bins.append("high")
 
         # Compute Krippendorff's Alpha for each dimension
         # Format: [[annotator1_rating], [annotator2_rating], ...] for one pair

@@ -156,8 +156,12 @@ def main():
     logger.info(f"Test set: {args.test_set}")
     logger.info(f"Output: {args.output}")
 
-    # TODO: Import actual similarity function
-    # For now, need predictions file or similarity function
+    # To run without a saved predictions file, pass similarity_fn to analyze_failures().
+    # Available options:
+    #   - jaccard: similarity_methods.jaccard_similarity(query, adj, top_k=N)
+    #   - embedding: card_similarity_pecan.find_similar_cards(wv, query, top_k=N)
+    #   - fusion: fusion.WeightedLateFusion(...).query(query, top_k=N)
+    # Wrap the chosen function as: lambda q: fn(q, ...)
 
     if args.predictions and args.predictions.exists():
         results = analyze_failures(

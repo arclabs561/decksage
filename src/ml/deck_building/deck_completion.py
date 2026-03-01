@@ -14,16 +14,8 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any, Literal
 
-
-# from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
-# TODO: deck_patch module not found, commenting out for now
-try:
-    from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
-except ImportError:
-    DeckPatch = None
-    DeckPatchResult = None
-    apply_deck_patch = None
 from ..data.card_resolver import CardResolver
+from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
 
 
 # Align with current validator models; generic Deck/DeckCard types removed

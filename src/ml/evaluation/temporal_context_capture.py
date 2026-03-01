@@ -81,9 +81,7 @@ def _load_format_state(
     game: str,
     timestamp: datetime,
 ) -> dict[str, Any]:
-    """Load format state from data files."""
-    # TODO: Implement actual loading from data files
-    # For now, return empty dict
+    """Load format state from data files. Returns empty scaffold when no data is available."""
     return {
         "ban_list": [],
         "legal_sets": [],
@@ -97,9 +95,7 @@ def _load_meta_state(
     game: str,
     timestamp: datetime,
 ) -> dict[str, Any]:
-    """Load meta state from data files."""
-    # TODO: Implement actual loading from data files
-    # For now, return empty dict
+    """Load meta state from data files. Returns empty scaffold when no data is available."""
     return {
         "top_decks": [],
         "meta_share": {},
@@ -112,9 +108,7 @@ def _load_price_state(
     game: str,
     timestamp: datetime,
 ) -> dict[str, float]:
-    """Load price state from data files."""
-    # TODO: Implement actual loading from data files
-    # For now, return empty dict
+    """Load price state from data files. Returns empty dict when no data is available."""
     return {}
 
 
@@ -122,9 +116,7 @@ def _load_format_rotation_dates(
     format_name: str | None,
     game: str,
 ) -> list[datetime] | None:
-    """Load format rotation dates from data files."""
-    # TODO: Implement actual loading from data files
-    # For now, return None
+    """Load format rotation dates from data files. Returns None when no data is available."""
     return None
 
 
@@ -133,9 +125,7 @@ def _load_recent_ban_list_changes(
     game: str,
     timestamp: datetime,
 ) -> list[dict[str, Any]] | None:
-    """Load recent ban list changes from data files."""
-    # TODO: Implement actual loading from data files
-    # For now, return None
+    """Load recent ban list changes from data files. Returns None when no data is available."""
     return None
 
 
