@@ -98,7 +98,7 @@ except ImportError:
 # Optional dependencies with graceful degradation
 try:
     import uvicorn  # type: ignore[import-not-found]
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     uvicorn = None  # type: ignore[assignment]
 
 try:
@@ -113,7 +113,7 @@ try:
     from ..enrichment.card_functional_tagger import (
         FunctionalTagger,  # type: ignore[import-not-found]
     )
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     FunctionalTagger = None  # type: ignore[assignment]
 
 try:
@@ -123,7 +123,7 @@ try:
     from ..similarity.similarity_methods import (
         load_card_attributes_csv as sm_load_attrs,
     )
-except Exception:  # pragma: no cover
+except ImportError:  # pragma: no cover
     sm_load_attrs = None  # type: ignore
     sm_jaccard_faceted = None  # type: ignore
 
@@ -161,7 +161,7 @@ def _configured_games() -> list[str]:
         games = getattr(app.state, "games", None)
         if isinstance(games, list) and games:
             return [str(g).strip().lower() for g in games if str(g).strip()]
-    except Exception:
+    except AttributeError:
         pass
     # Fallback to a single default game
     return [_default_game()]
@@ -172,7 +172,7 @@ def _default_game() -> str:
         g = getattr(app.state, "default_game", None)
         if isinstance(g, str) and g.strip():
             return g.strip().lower()
-    except Exception:
+    except AttributeError:
         pass
     return os.getenv("DECKSAGE_DEFAULT_GAME", "magic").strip().lower() or "magic"
 
@@ -427,7 +427,7 @@ def load_embeddings_to_state(
                 fw.text_embed,
                 fw.gnn,
             )
-    except Exception:
+    except (OSError, json.JSONDecodeError, KeyError, ValueError):
         logger.debug("No tuned fusion weights loaded", exc_info=True)
 
 
@@ -539,7 +539,7 @@ async def lifespan(app: FastAPI):
                         pairs_path,
                         tuned_weights_path=tuned_weights_path,
                     )
-                except Exception:
+                except (OSError, ValueError, RuntimeError):
                     logger.exception(
                         "Failed to load embeddings/graph during startup for game=%s", game
                     )
@@ -561,7 +561,7 @@ async def lifespan(app: FastAPI):
                     attrs_path,
                     len(state.card_attrs),
                 )
-            except Exception:
+            except (OSError, ValueError, KeyError):
                 logger.exception("Failed to load attributes CSV for game=%s: %s", game, attrs_path)
 
         # Additional signals (per game)
@@ -591,7 +591,7 @@ async def lifespan(app: FastAPI):
                 (", ".join(loaded_signals) if loaded_signals else "none"),
                 (", ".join(missing_signals) if missing_signals else "none"),
             )
-        except Exception:
+        except (ImportError, OSError, ValueError, KeyError):
             logger.debug(
                 "Failed to load additional signals for game=%s (optional)", game, exc_info=True
             )
@@ -859,7 +859,7 @@ def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]
     try:
         similar = state.embeddings.most_similar(query, topn=k)
         return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
-    except Exception as e:  # pragma: no cover - defensive
+    except (KeyError, RuntimeError, ValueError) as e:  # pragma: no cover - defensive
         raise HTTPException(status_code=500, detail=str(e)) from e
 
 
@@ -1288,7 +1288,7 @@ def _get_search_client(game: str) -> HybridSearch | None:
         # If embeddings were loaded after caching, rebuild so vector search can activate.
         try:
             cached_has_emb = getattr(cached, "embeddings", None) is not None
-        except Exception:
+        except AttributeError:
             cached_has_emb = False
         if cached_has_emb == (state.embeddings is not None):
             return cached
@@ -1325,7 +1325,7 @@ def _get_search_client(game: str) -> HybridSearch | None:
             )
         by_game[game] = client
         return client
-    except Exception as e:
+    except (OSError, ConnectionError, RuntimeError) as e:
         logger.error(f"Failed to create search client: {e}")
         return None
 
@@ -1558,7 +1558,7 @@ def suggest_actions(req: SuggestActionsRequest):
             return None
         try:
             return int(data.get("cmc"))
-        except Exception:
+        except (ValueError, TypeError):
             return None
 
     # Get archetype from request or infer from deck
@@ -1821,7 +1821,7 @@ def complete_deck(req: CompleteRequest):
                 return None
             try:
                 return int(data.get("cmc", 0))
-            except Exception:
+            except (ValueError, TypeError):
                 return None
 
         # Convert candidate_fn to beam search format
@@ -1877,7 +1877,7 @@ def complete_deck(req: CompleteRequest):
             )
             if not _strict.is_valid:
                 strict_errors = _strict.errors
-        except Exception:
+        except (ValueError, KeyError, AttributeError, TypeError):
             # Do not fail response; record as error
             strict_errors = ["strict_validation_exception"]
 
@@ -1899,7 +1899,7 @@ def complete_deck(req: CompleteRequest):
                     return None
                 try:
                     return int(data.get("cmc", 0))
-                except Exception:
+                except (ValueError, TypeError):
                     return None
 
             # Assess quality (reference decks optional for now)
@@ -1919,7 +1919,7 @@ def complete_deck(req: CompleteRequest):
                 "num_unique_tags": quality.num_unique_tags,
                 "avg_tags_per_card": quality.avg_tags_per_card,
             }
-        except Exception as e:
+        except (ImportError, AttributeError, ValueError, TypeError) as e:
             logger.debug("Failed to assess deck quality: %s", e, exc_info=True)
 
     metrics = {
@@ -1956,7 +1956,7 @@ _static_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "static"
 if _static_dir.exists():
     try:
         app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
-    except Exception as e:
+    except (OSError, RuntimeError) as e:
         logger.debug("Could not mount static files: %s", e)
 
 # Serve main search interface at /search.html

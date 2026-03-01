@@ -165,63 +165,45 @@ if HAS_PYDANTIC_AI:
     SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
 
     # Prompt version -- bump on any semantic change to scoring rules or output schema
-    SIMILARITY_PROMPT_VERSION = "v4.1"
+    SIMILARITY_PROMPT_VERSION = "v5.0"
 
     # Enhanced SIMILARITY_PROMPT with CoT and score diversity
     SIMILARITY_PROMPT_BASE = """You are an expert TCG judge creating similarity annotations.
 
-**CRITICAL: Score Diversity**
-You MUST use the FULL 0.0-1.0 range. Do NOT cluster scores around 0.5 or default to low values.
-- Use 0.0-0.19 for truly unrelated cards
-- Use 0.2-0.39 for weak connections
-- Use 0.4-0.59 for moderate similarity (most cards will be here)
-- Use 0.6-0.79 for strong similarity
-- Use 0.8-1.0 for near-identical substitutes
+**SCORING SCALE (0.0 to 1.0):**
+- 0.0-0.10: Unrelated. Different functions, different archetypes, no strategic connection. Sharing a card type (both are spells, both are traps) is NOT enough for >0.10.
+- 0.11-0.20: Tangential. Same broad category (both are removal) but different targets, timing, cost tier, or game-state role. No competitive player would consider one when building around the other.
+- 0.21-0.35: Weak connection. Same function but different efficiency tier, OR same archetype but different roles within it. A player building a deck might consider both but for different slots.
+- 0.36-0.55: Moderate similarity. Same function AND similar cost/efficiency, OR strong co-occurrence in competitive decks. Would appear on the same shortlist during deckbuilding.
+- 0.56-0.75: Strong similarity. Same function, similar attributes, competitive alternatives. A player choosing between them would weigh specific meta tradeoffs.
+- 0.76-0.90: Near-substitute. Functionally interchangeable in most contexts, minor differences (cost, drawback, format legality).
+- 0.91-1.0: Functional reprint or strictly-better/worse pair.
 
-**Let's think step by step:**
+**CALIBRATION ANCHOR: Most random card pairs score 0.05-0.15.** Two cards sharing only a card type or broad mechanic category without specific functional overlap should score below 0.15. Reserve 0.20+ for pairs where a deckbuilder would plausibly consider both cards for a related purpose.
 
-1. **Function Analysis**: What does each card do? Same function = higher score
-2. **Attribute Comparison**: Compare mana cost, type, power/toughness, keywords
-3. **Graph Evidence**: Consider Jaccard similarity and co-occurrence patterns
-4. **Archetype Context**: Do they fit the same archetypes?
-5. **Score Calibration**: Map your analysis to the 0.0-1.0 scale
-6. **Self-Validation**: Does the score match the reasoning?
-7. **Final Check**: Is this score diverse from recent annotations?
+**Step-by-step analysis:**
+1. **Function**: What does each card do? Same specific function = higher score.
+2. **Attributes**: Compare cost, type, stats, keywords.
+3. **Graph Evidence**: Use the co-occurrence data provided (if any). High deck overlap confirms competitive relevance.
+4. **Archetype**: Same archetype? Different archetypes with overlapping function?
+5. **Score**: Map analysis to the scale above. Anchor to the calibration examples below.
 
-**CORE SCORING RULES (3 SIMPLE RULES):**
+**SCORING RULES:**
+1. **Graph evidence sets a floor** (when co-occurrence data is provided):
+   - Jaccard > 0.3 → floor 0.60
+   - Jaccard > 0.1 → floor 0.30
+   - Co-occurrence > 10 decks → floor 0.40
+   - Low/no co-occurrence → floor 0.0
+2. **Function raises above floor**: Same function → +0.25-0.40 above floor
+3. **Shared type alone is NOT similarity**: "Both are trap cards" or "both are monsters" → 0.05-0.10
 
-1. **Graph Evidence Sets Minimum (FLOOR):**
-   - Jaccard > 0.3 → score MUST be >= 0.6
-   - Jaccard > 0.1 → score MUST be >= 0.3
-   - Co-occurrence > 10 → score MUST be >= 0.4
-   - No graph evidence → floor is 0.0 (but see rule 2)
-
-2. **Function/Attributes Raise Score (ABOVE FLOOR):**
-   - Same function (both removal, both draw, etc.) → add +0.3-0.5 to floor
-   - Same function + similar attributes → add +0.4-0.6 to floor
-   - Example: Jaccard 0.05 (floor 0.1) + same function → score 0.4-0.6
-   - Example: No graph (floor 0.0) + same function → score 0.3-0.5
-
-3. **Use Full Range (0.0-1.0):**
-   - Don't cluster at 0.5 or default to low values
-   - Match score to actual relationship strength
-   - High similarity (0.7-1.0) for near-identical functions
-   - Medium (0.4-0.6) for similar functions
-   - Low (0.1-0.3) for weak connections
-   - Very low (0.0-0.1) only for unrelated cards
-
-**SCORE CALIBRATION (Use Full Range):**
-- 0.9-1.0: Near-identical (same function, same attributes, minor differences)
-- 0.7-0.8: Strong similarity (same function, similar attributes)
-- 0.4-0.6: Moderate similarity (same function OR similar attributes)
-- 0.2-0.3: Weak similarity (shared archetype, different function)
-- 0.0-0.1: Unrelated (no meaningful connection)
-
-**Examples:**
-- Lightning Bolt vs Shock: 0.7 (same function: burn)
-- Path to Exile vs Swords to Plowshares: 0.8 (same function: exile removal)
-- Counterspell vs Mana Leak: 0.5 (same function: counter, different efficiency)
-- Lightning Bolt vs Counterspell: 0.1 (different functions)
+**CALIBRATION EXAMPLES (use these as anchors):**
+- Lightning Bolt vs Shock: 0.70 (same function, same cost, 3 vs 2 damage)
+- Path to Exile vs Swords to Plowshares: 0.80 (same function, near-identical effect)
+- Counterspell vs Mana Leak: 0.50 (same function, different late-game)
+- Lightning Bolt vs Counterspell: 0.10 (both instants, completely different functions)
+- Sol Ring vs Wrath of God: 0.05 (unrelated -- different function, type, role)
+- Dark Magician vs Blue-Eyes White Dragon: 0.15 (both vanilla beaters, different archetypes)
 
 **Output Requirements:**
 - Provide `thinking` field with step-by-step reasoning

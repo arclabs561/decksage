@@ -22,6 +22,7 @@ import numpy as np
 import pandas as pd
 from scipy.spatial.distance import cityblock, euclidean
 
+
 try:
     from gensim.models import KeyedVectors
 

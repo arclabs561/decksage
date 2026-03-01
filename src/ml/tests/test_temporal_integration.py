@@ -106,7 +106,7 @@ class TestDeckMetadataToTemporalTracking:
         temp_graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
 
         # Verify edge has temporal data
-        edge_key = tuple(sorted(["Lightning Bolt", "Lava Spike"]))
+        edge_key = (min("Lightning Bolt", "Lava Spike"), max("Lightning Bolt", "Lava Spike"), "co_occurrence")
         assert edge_key in temp_graph.edges
 
         edge = temp_graph.edges[edge_key]
@@ -138,7 +138,7 @@ class TestDeckMetadataToTemporalTracking:
         }
         temp_graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
 
-        edge_key = tuple(sorted(["Lightning Bolt", "Lava Spike"]))
+        edge_key = (min("Lightning Bolt", "Lava Spike"), max("Lightning Bolt", "Lava Spike"), "co_occurrence")
         original_edge = temp_graph.edges[edge_key]
 
         # Save and reload
@@ -178,7 +178,7 @@ class TestMultipleFormats:
             temp_graph.add_deck(deck, timestamp=timestamp, deck_id=deck_id)
 
         # Check for an edge that exists in the deck (Lightning Bolt and Rift Bolt)
-        edge_key = tuple(sorted(["Lightning Bolt", "Rift Bolt"]))
+        edge_key = (min("Lightning Bolt", "Rift Bolt"), max("Lightning Bolt", "Rift Bolt"), "co_occurrence")
         assert edge_key in temp_graph.edges, (
             f"Edge {edge_key} not found. Available edges: {list(temp_graph.edges.keys())[:5]}"
         )
@@ -214,7 +214,7 @@ class TestTemporalAccumulation:
             temp_graph.add_deck(sample_deck, timestamp=timestamp, deck_id=deck_id)
 
         # Check for an edge that exists in sample_deck (e.g., Lightning Bolt and Rift Bolt)
-        edge_key = tuple(sorted(["Lightning Bolt", "Rift Bolt"]))
+        edge_key = (min("Lightning Bolt", "Rift Bolt"), max("Lightning Bolt", "Rift Bolt"), "co_occurrence")
         assert edge_key in temp_graph.edges, (
             f"Edge {edge_key} not found. Available edges: {list(temp_graph.edges.keys())[:5]}"
         )
@@ -243,7 +243,7 @@ class TestEdgeCases:
 
         temp_graph.add_deck(deck, timestamp=datetime(2024, 1, 15), deck_id="no_format_deck")
 
-        edge_key = tuple(sorted(["Card X", "Card Y"]))
+        edge_key = (min("Card X", "Card Y"), max("Card X", "Card Y"), "co_occurrence")
         assert edge_key in temp_graph.edges
 
         edge = temp_graph.edges[edge_key]
@@ -298,7 +298,7 @@ class TestEdgeCases:
         temp_graph.add_deck(nested_deck, timestamp=timestamp, deck_id=deck_id)
 
         # Check for an edge that exists in nested_deck (Lightning Bolt and Lava Spike)
-        edge_key = tuple(sorted(["Lightning Bolt", "Lava Spike"]))
+        edge_key = (min("Lightning Bolt", "Lava Spike"), max("Lightning Bolt", "Lava Spike"), "co_occurrence")
         assert edge_key in temp_graph.edges, (
             f"Edge {edge_key} not found. Available edges: {list(temp_graph.edges.keys())[:5]}"
         )
