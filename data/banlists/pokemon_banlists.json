@@ -1,0 +1,41 @@
+{
+  "game": "pokemon",
+  "scraped_at": "2026-02-27T21:28:29.966647+00:00",
+  "source": "pokemoncard.io (pokemontcg.io API was down; data cross-referenced with pokemon.com)",
+  "note": "Standard format has no banned cards; legality is determined by regulation marks (G, H, I, J currently legal). Pokemon TCG API (pokemontcg.io) returned 504 at scrape time.",
+  "formats": {
+    "standard": {
+      "banned": [],
+      "note": "No cards are banned in Standard. Legality is controlled by regulation marks (currently G, H, I, J)."
+    },
+    "expanded": {
+      "banned": [
+        "Archeops",
+        "Dodrio",
+        "Dusclops",
+        "Duskull",
+        "Flabebe",
+        "Forest of Giant Plants",
+        "Gengar & Mimikyu-GX",
+        "Ghetsis",
+        "Hex Maniac",
+        "Honedge",
+        "Island Challenge Amulet",
+        "Jessie & James",
+        "Kabutops",
+        "Marshadow",
+        "Maxie's Hidden Ball Trick",
+        "Milotic",
+        "Morgan",
+        "Oranguru",
+        "Red Card",
+        "Reset Stamp",
+        "Scoop Up Net",
+        "Shaymin-EX",
+        "Togepi",
+        "Unown",
+        "Vibrava"
+      ]
+    }
+  }
+}
