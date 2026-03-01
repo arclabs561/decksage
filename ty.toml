@@ -1,0 +1,18 @@
+# ty type checker configuration
+# https://docs.astral.sh/ty/
+
+[environment]
+python-version = "3.11"
+
+[rules]
+# Downgrade to warnings for patterns caused by:
+# 1. Dataclass __post_init__ idiom: fields typed as `X | None = None` but
+#    guaranteed non-None after construction (__post_init__ sets defaults).
+# 2. Tuple dict key resolution: ty can't resolve `dict.get(tuple_key, default)`
+#    overloads correctly for tuple[str, str] keys.
+unresolved-attribute = "warn"
+not-subscriptable = "warn"
+invalid-assignment = "warn"
+unsupported-operator = "warn"
+no-matching-overload = "warn"
+invalid-argument-type = "warn"
