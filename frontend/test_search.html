@@ -911,7 +911,7 @@
                         <div class="advanced-options" style="display: grid; margin-top: 16px;">
                             <div class="option-group">
                                 <label for="targetSize">Target Main Size:</label>
-                                <input type="number" id="targetSize" min="1" max="200" aria-label="Target deck size">
+                                <input type="number" id="targetSize" value="60" min="1" max="200" placeholder="60" aria-label="Target deck size">
                             </div>
                             <div class="option-group">
                                 <label for="maxSteps">Max Steps:</label>
@@ -1540,21 +1540,35 @@
                 });
 
                 if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.detail || 'Search failed');
+                    const status = response.status;
+                    let errorDetail = 'Search failed';
+                    try {
+                        const error = await response.json();
+                        errorDetail = error.detail || errorDetail;
+                    } catch { /* response may not be JSON */ }
+
+                    // On 500/503, fall back to similarity search with the query as card name
+                    if ((status === 500 || status === 503) && currentTab === 'unified-search') {
+                        const indicator = document.getElementById('searchModeIndicator');
+                        if (indicator) indicator.textContent = 'Hybrid search unavailable, falling back to similarity search...';
+                        await searchCards(query);
+                        return;
+                    }
+                    throw new Error(errorDetail);
                 }
 
                 const data = await response.json();
                 if (data.results && data.results.length > 0) {
-                    showStatus(`Found ${data.results.length} results`, 'success', true, 'hybridStatusMessage');
+                    showStatus(`Found ${data.results.length} results`, 'success', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
                     displayHybridResults(data);
                 } else {
-                    showStatus('No results found', 'info', true, 'hybridStatusMessage');
+                    showStatus('No results found', 'info', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
                     resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No cards found</div></div>';
                 }
             } catch (error) {
                 const friendlyError = getUserFriendlyError(error.message);
-                showStatus(`Error: ${friendlyError}`, 'error', true, 'hybridStatusMessage');
+                const statusContainer = currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage';
+                showStatus(`Error: ${friendlyError}`, 'error', true, statusContainer);
                 resultsContainer.innerHTML = `<div class="status error">${escapeHtml(friendlyError)}</div>`;
             }
         }
@@ -1605,9 +1619,17 @@
                 }
 
                 const data = await response.json();
-                if (data.categories && Object.keys(data.categories).length > 0) {
+                // API returns flat {synergies, alternatives, upgrades, downgrades},
+                // not nested {categories: {...}}. Build categories from the flat shape.
+                const categories = {};
+                for (const key of ['synergies', 'alternatives', 'upgrades', 'downgrades']) {
+                    if (data[key] && data[key].length > 0) {
+                        categories[key] = data[key];
+                    }
+                }
+                if (Object.keys(categories).length > 0) {
                     showStatus('Contextual suggestions loaded', 'success', true, 'contextualStatusMessage');
-                    displayContextualResults(data);
+                    displayContextualResults(categories);
                 } else {
                     showStatus('No contextual suggestions available', 'info', true, 'contextualStatusMessage');
                     resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No suggestions found</div></div>';
@@ -1619,19 +1641,24 @@
             }
         }
 
-        function displayContextualResults(data) {
+        function displayContextualResults(categories) {
             const container = document.getElementById('contextualResultsContainer');
             let html = '';
-            for (const [category, cards] of Object.entries(data.categories)) {
+            for (const [category, cards] of Object.entries(categories)) {
                 html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: #6b8eff; font-size: 16px;">${escapeHtml(category)}</h3>`;
-                html += cards.map(card => `
+                html += cards.map(card => {
+                    const score = card.score !== undefined ? card.score : (card.similarity || 0);
+                    const reasoning = card.reasoning ? `<div class="result-meta" style="margin-top: 4px;">${escapeHtml(card.reasoning)}</div>` : '';
+                    return `
                     <div class="result-item">
                         <div class="result-info">
                             <div class="result-name">${escapeHtml(card.card)}</div>
-                            <div class="result-meta">Similarity: ${(card.similarity * 100).toFixed(1)}%</div>
+                            <div class="result-meta">Score: ${(score * 100).toFixed(1)}%</div>
+                            ${reasoning}
                         </div>
                     </div>
-                `).join('');
+                    `;
+                }).join('');
             }
             container.innerHTML = html;
         }
@@ -1661,7 +1688,8 @@
         async function completeDeck() {
             const game = document.getElementById('deckGame').value;
             const deckText = document.getElementById('deckInput').value.trim();
-            const targetSize = document.getElementById('targetSize').value ? parseInt(document.getElementById('targetSize').value) : null;
+            const gameDefaults = { magic: 60, pokemon: 60, yugioh: 40 };
+            const targetSize = document.getElementById('targetSize').value ? parseInt(document.getElementById('targetSize').value) : (gameDefaults[game] || 60);
             const maxSteps = parseInt(document.getElementById('maxSteps').value);
             const method = document.getElementById('completionMethod').value;
 
@@ -1734,8 +1762,19 @@
 
         function displayDeckResults(data) {
             const container = document.getElementById('deckResultsContainer');
-            const mainCount = data.deck.Main ? data.deck.Main.length : 0;
-            const sideCount = data.deck.Sideboard ? data.deck.Sideboard.length : 0;
+            // Handle both legacy {"Main": [...]} and partitions {"partitions": [...]} formats
+            let mainCount = 0;
+            let sideCount = 0;
+            if (data.deck.partitions) {
+                for (const p of data.deck.partitions) {
+                    const total = (p.cards || []).reduce((sum, c) => sum + (c.count || 1), 0);
+                    if (p.name === 'Main' || p.name === 'Main Deck') mainCount = total;
+                    if (p.name === 'Sideboard' || p.name === 'Side Deck') sideCount = total;
+                }
+            } else {
+                mainCount = data.deck.Main ? data.deck.Main.length : 0;
+                sideCount = data.deck.Sideboard ? data.deck.Sideboard.length : 0;
+            }
 
             let html = `
                 <div class="deck-stats">
@@ -2313,6 +2352,18 @@
             e.preventDefault();
             completeDeck();
         });
+
+        // Update target size default when game changes
+        const deckGameSelect = document.getElementById('deckGame');
+        if (deckGameSelect) {
+            deckGameSelect.addEventListener('change', () => {
+                const targetInput = document.getElementById('targetSize');
+                const defaults = { magic: 60, pokemon: 60, yugioh: 40 };
+                const game = deckGameSelect.value;
+                targetInput.value = defaults[game] || 60;
+                targetInput.placeholder = String(defaults[game] || 60);
+            });
+        }
 
         // Keyboard shortcuts help (shown on focus)
         document.addEventListener('keydown', (e) => {
