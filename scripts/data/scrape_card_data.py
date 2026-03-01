@@ -31,12 +31,12 @@ import asyncio
 import json
 import re
 import sys
-import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
+
 
 USER_AGENT = "DeckSage/1.0 (research project)"
 RAW_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "raw"
@@ -150,7 +150,7 @@ async def _scryfall_bulk_oracle_cards(
     if download_url is None:
         raise RuntimeError("Could not find oracle_cards in Scryfall bulk-data manifest")
 
-    print(f"  [scryfall] Downloading oracle_cards bulk file...")
+    print("  [scryfall] Downloading oracle_cards bulk file...")
     resp = await _request_with_retry(client, "GET", download_url)
     resp.raise_for_status()
     cards: list[dict[str, Any]] = resp.json()
@@ -209,7 +209,7 @@ async def scrape_magic_rulings(
     result = {
         "game": "magic",
         "data_type": "rulings",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "scryfall",
         "count": len(rulings_out),
         "cards": rulings_out,
@@ -255,7 +255,7 @@ async def scrape_yugioh_rulings(
     result = {
         "game": "yugioh",
         "data_type": "rulings",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "count": len(rulings_out),
         "cards": rulings_out,
@@ -300,7 +300,7 @@ async def scrape_magic_prices(
     result = {
         "game": "magic",
         "data_type": "prices",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "scryfall",
         "count": len(prices_out),
         "cards": prices_out,
@@ -345,7 +345,7 @@ async def scrape_yugioh_prices(
     result = {
         "game": "yugioh",
         "data_type": "prices",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "count": len(prices_out),
         "cards": prices_out,
@@ -413,7 +413,7 @@ async def scrape_pokemon_prices(
     result = {
         "game": "pokemon",
         "data_type": "prices",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "pokemontcg.io",
         "count": len(prices_out),
         "cards": prices_out,
@@ -496,7 +496,7 @@ async def scrape_magic_images(
     result = {
         "game": "magic",
         "data_type": "images",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "scryfall",
         "downloaded": downloaded,
         "skipped_existing": skipped,
@@ -566,7 +566,7 @@ async def scrape_yugioh_images(
     result = {
         "game": "yugioh",
         "data_type": "images",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "downloaded": downloaded,
         "skipped_existing": skipped,
@@ -659,7 +659,7 @@ async def scrape_pokemon_images(
     result = {
         "game": "pokemon",
         "data_type": "images",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "pokemontcg.io",
         "downloaded": downloaded,
         "skipped_existing": skipped,
@@ -745,7 +745,7 @@ async def scrape_magic_meta(
     result = {
         "game": "magic",
         "data_type": "meta",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "edhrec",
         "top_commanders_count": len(top_commanders),
         "top_commanders": top_commanders,
@@ -792,7 +792,7 @@ async def scrape_yugioh_meta(
     result = {
         "game": "yugioh",
         "data_type": "meta",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "count": len(staples),
         "staple_cards": staples,
@@ -841,7 +841,7 @@ async def scrape_magic_sets(
     result = {
         "game": "magic",
         "data_type": "sets",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "scryfall",
         "count": len(sets_out),
         "sets": sets_out,
@@ -886,7 +886,7 @@ async def scrape_yugioh_sets(
     result = {
         "game": "yugioh",
         "data_type": "sets",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "count": len(sets_out),
         "sets": sets_out,
@@ -930,12 +930,99 @@ async def scrape_pokemon_sets(
     result = {
         "game": "pokemon",
         "data_type": "sets",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "pokemontcg.io",
         "count": len(sets_out),
         "sets": sets_out,
     }
     print(f"[pokemon/sets] Done. {len(sets_out)} sets.")
+    return result
+
+
+# ===================================================================
+# BULK DATA MODE
+# ===================================================================
+
+
+async def scrape_magic_bulk(
+    client: httpx.AsyncClient,
+    *,
+    dry_run: bool = False,
+    limit: int | None = None,
+    output_format: str = "json",
+    output_path: Path | None = None,
+) -> dict[str, Any]:
+    """Download Scryfall oracle_cards bulk file and optionally export as CSV.
+
+    The bulk endpoint downloads all oracle cards in a single HTTP call (~235MB
+    uncompressed JSON) instead of paginating per-card.  With --output-format csv
+    this produces a card_attributes CSV directly, consolidating the multi-step
+    workflow of downloading bulk data then separately building the CSV.
+    """
+    print("[magic/bulk] Starting...")
+    cards = await _scryfall_bulk_oracle_cards(client, limit=limit)
+
+    if dry_run:
+        print(f"  [dry-run] Downloaded {len(cards)} oracle cards from bulk endpoint")
+        return {"game": "magic", "data_type": "bulk", "dry_run": True, "card_count": len(cards)}
+
+    if output_format == "csv":
+        import csv as csv_mod
+
+        out = output_path or (RAW_DIR.parent / "processed" / "card_attributes_magic_bulk.csv")
+        out.parent.mkdir(parents=True, exist_ok=True)
+
+        fieldnames = [
+            "name", "type", "colors", "cmc", "rarity", "power", "toughness",
+            "keywords", "oracle_text", "image_url",
+        ]
+
+        seen_names: set[str] = set()
+        rows_written = 0
+        with open(out, "w", newline="", encoding="utf-8") as f:
+            writer = csv_mod.DictWriter(f, fieldnames=fieldnames)
+            writer.writeheader()
+            for card in cards:
+                name = card.get("name", "").strip()
+                if not name or name in seen_names:
+                    continue
+                seen_names.add(name)
+
+                colors = "".join(card.get("colors", []))
+                keywords = ", ".join(card.get("keywords", []))
+                image_uris = card.get("image_uris", {})
+                image_url = image_uris.get("normal", "")
+
+                writer.writerow({
+                    "name": name,
+                    "type": card.get("type_line", ""),
+                    "colors": colors,
+                    "cmc": card.get("cmc", ""),
+                    "rarity": card.get("rarity", ""),
+                    "power": card.get("power", ""),
+                    "toughness": card.get("toughness", ""),
+                    "keywords": keywords,
+                    "oracle_text": card.get("oracle_text", ""),
+                    "image_url": image_url,
+                })
+                rows_written += 1
+
+        print(f"[magic/bulk] Wrote {rows_written} cards to {out}")
+        return {
+            "game": "magic", "data_type": "bulk", "format": "csv",
+            "count": rows_written, "output": str(out),
+        }
+
+    # Default: save full JSON
+    result = {
+        "game": "magic",
+        "data_type": "bulk",
+        "scraped_at": datetime.now(UTC).isoformat(),
+        "source": "scryfall-bulk",
+        "count": len(cards),
+        "cards": cards,
+    }
+    print(f"[magic/bulk] Done. {len(cards)} oracle cards.")
     return result
 
 
@@ -964,10 +1051,12 @@ SCRAPERS: dict[tuple[str, str], Any] = {
     ("magic", "sets"): scrape_magic_sets,
     ("yugioh", "sets"): scrape_yugioh_sets,
     ("pokemon", "sets"): scrape_pokemon_sets,
+    # Bulk
+    ("magic", "bulk"): scrape_magic_bulk,
 }
 
 ALL_GAMES = ["magic", "yugioh", "pokemon"]
-ALL_DATA_TYPES = ["rulings", "prices", "images", "meta", "sets"]
+ALL_DATA_TYPES = ["rulings", "prices", "images", "meta", "sets", "bulk"]
 
 
 def _output_path(game: str, data_type: str) -> Path:
@@ -983,6 +1072,8 @@ async def run_scraper(
     *,
     dry_run: bool = False,
     limit: int | None = None,
+    output_format: str = "json",
+    output_path: Path | None = None,
 ) -> None:
     key = (game, data_type)
     scraper = SCRAPERS.get(key)
@@ -995,7 +1086,12 @@ async def run_scraper(
         headers=headers, timeout=120.0, follow_redirects=True
     ) as client:
         try:
-            result = await scraper(client, dry_run=dry_run, limit=limit)
+            # Pass extra kwargs for bulk scraper
+            kwargs: dict[str, Any] = {"dry_run": dry_run, "limit": limit}
+            if data_type == "bulk":
+                kwargs["output_format"] = output_format
+                kwargs["output_path"] = output_path
+            result = await scraper(client, **kwargs)
         except httpx.HTTPStatusError as exc:
             print(
                 f"[{game}/{data_type}] HTTP error: {exc.response.status_code} "
@@ -1023,13 +1119,13 @@ def main() -> None:
     )
     parser.add_argument(
         "--game",
-        choices=ALL_GAMES + ["all"],
+        choices=[*ALL_GAMES, "all"],
         default="all",
         help="Which game(s) to scrape (default: all)",
     )
     parser.add_argument(
         "--data-type",
-        choices=ALL_DATA_TYPES + ["all"],
+        choices=[*ALL_DATA_TYPES, "all"],
         default="all",
         help="Which data type(s) to scrape (default: all)",
     )
@@ -1044,6 +1140,18 @@ def main() -> None:
         default=None,
         help="Cap the number of items to process (useful for testing)",
     )
+    parser.add_argument(
+        "--output-format",
+        choices=["json", "csv"],
+        default="json",
+        help="Output format for bulk data (default: json). CSV outputs card attributes directly.",
+    )
+    parser.add_argument(
+        "--output-path",
+        type=Path,
+        default=None,
+        help="Override output path (used with --data-type bulk --output-format csv)",
+    )
     args = parser.parse_args()
 
     games = ALL_GAMES if args.game == "all" else [args.game]
@@ -1051,7 +1159,7 @@ def main() -> None:
 
     RAW_DIR.mkdir(parents=True, exist_ok=True)
 
-    print(f"DeckSage card data scraper")
+    print("DeckSage card data scraper")
     print(f"  Games:      {', '.join(games)}")
     print(f"  Data types: {', '.join(data_types)}")
     print(f"  Dry run:    {args.dry_run}")
@@ -1067,6 +1175,8 @@ def main() -> None:
                     data_type,
                     dry_run=args.dry_run,
                     limit=args.limit,
+                    output_format=args.output_format,
+                    output_path=args.output_path,
                 )
             )
             print()
