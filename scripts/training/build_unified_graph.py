@@ -50,7 +50,7 @@ from ml.utils.data_loading import load_edgelist
 
 
 # Game name -> internal game code mapping
-GAME_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
+GAME_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO", "digimon": "DGM", "riftbound": "RFB"}
 
 # ── Game configurations ──
 # Mirrors GAME_CONFIGS from train_all_embeddings.py but adds all source paths.
@@ -61,6 +61,8 @@ GAME_CONFIGS = {
         "deck_jsonl": [
             "data/decks/decks_magic_goldfish.jsonl",
             "data/decks/decks_magic_commander_combined.jsonl",
+            "data/decks/decks_magic_commander_extended.jsonl",
+            "data/decks/decks_magic_commander_seq.jsonl",
             "data/decks/decks_magic_mtgtop8.jsonl",
         ],
         "annotations": [
@@ -76,12 +78,15 @@ GAME_CONFIGS = {
         "deck_jsonl": [
             "data/decks/decks_pokemon.jsonl",
             "data/decks/decks_pokemon_limitless.jsonl",
+            "data/decks/decks_pokemon_limitless_expanded.jsonl",
+            "data/decks/decks_pokemon_limitless-web.jsonl",
+            "data/decks/decks_pokemon_limitless-web-expanded.jsonl",
         ],
         "annotations": [
             "data/annotations/pokemon_500_v3.json",
         ],
         "enriched_edgelist": "data/graphs/pairs_enriched_pokemon_v3b.edg",
-        "card_attributes": "data/processed/card_attributes_pokemon.csv",
+        "card_attributes": "data/processed/card_attributes_pokemon_enriched.csv",
         "image_urls": "data/processed/pokemon_image_urls.json",
     },
     "yugioh": {
@@ -95,8 +100,29 @@ GAME_CONFIGS = {
             "data/annotations/yugioh_500_v3.json",
         ],
         "enriched_edgelist": "data/graphs/pairs_enriched_yugioh_v4.edg",
-        "card_attributes": "data/processed/card_attributes_yugioh.csv",
+        "card_attributes": "data/processed/card_attributes_yugioh_enriched.csv",
         "image_urls": "data/processed/yugioh_image_urls.json",
+    },
+    "digimon": {
+        "base_edgelist": None,
+        "deck_jsonl": [
+            "data/decks/decks_digimon.jsonl",
+            "data/decks/decks_digimon_limitless.jsonl",
+        ],
+        "annotations": [],
+        "enriched_edgelist": None,
+        "card_attributes": "data/processed/card_attributes_digimon.csv",
+        "image_urls": None,
+    },
+    "riftbound": {
+        "base_edgelist": None,
+        "deck_jsonl": [
+            "data/decks/decks_riftbound.jsonl",
+        ],
+        "annotations": [],
+        "enriched_edgelist": None,
+        "card_attributes": "data/processed/card_attributes_riftbound.csv",
+        "image_urls": None,
     },
 }
 
@@ -471,7 +497,7 @@ def enrich_nodes(
 ) -> None:
     """Enrich graph nodes with oracle_text and image_url from CSV and JSON."""
     # Load oracle text from card attributes CSV
-    if csv_path.exists():
+    if csv_path and csv_path.exists():
         with open(csv_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
@@ -513,10 +539,12 @@ def build_game(
 ) -> None:
     """Build the unified SQLite graph for one game."""
     game_code = GAME_CODE[game]
-    base_edgelist = PROJECT_ROOT / config["base_edgelist"]
-    csv_path = PROJECT_ROOT / config["card_attributes"]
+    base_edgelist = PROJECT_ROOT / config["base_edgelist"] if config["base_edgelist"] else None
+    csv_path = PROJECT_ROOT / config["card_attributes"] if config["card_attributes"] else None
     annotation_paths = [PROJECT_ROOT / p for p in config["annotations"]]
-    image_urls_path = PROJECT_ROOT / config.get("image_urls", "")
+    image_urls_path = (
+        PROJECT_ROOT / config["image_urls"] if config.get("image_urls") else None
+    )
 
     print(f"\n{'='*60}")
     print(f"  Building unified graph: {game.upper()}")
@@ -540,11 +568,15 @@ def build_game(
     graph = IncrementalCardGraph(graph_path=output_db, use_sqlite=True)
 
     # 1. Co-occurrence edges from base edgelist
-    print(f"\n[1/8] Loading co-occurrence edges from {base_edgelist.name}...")
-    raw_edges = load_edgelist(base_edgelist)
-    print(f"  {len(raw_edges):,} co-occurrence edges")
-    for c1, c2, w in raw_edges:
-        graph.add_edge(c1, c2, w, source_type="co_occurrence", game=game_code)
+    raw_edges: list[tuple[str, str, float]] = []
+    if base_edgelist and base_edgelist.exists():
+        print(f"\n[1/8] Loading co-occurrence edges from {base_edgelist.name}...")
+        raw_edges = load_edgelist(base_edgelist)
+        print(f"  {len(raw_edges):,} co-occurrence edges")
+        for c1, c2, w in raw_edges:
+            graph.add_edge(c1, c2, w, source_type="co_occurrence", game=game_code)
+    else:
+        print("\n[1/8] No base edgelist, will build co-occurrence from deck JSONL")
 
     # 1b. Load deck JSONL for node metadata (format/archetype tags)
     # Placement-weighted edge merging was tested but caused nDCG regression
@@ -555,6 +587,16 @@ def build_game(
     if existing_jsonl:
         decks = load_decks_with_metadata(existing_jsonl)
         card_formats, card_archetypes = collect_card_metadata(decks)
+
+        # Build co-occurrence from deck JSONL when no base edgelist exists
+        if not base_edgelist or not base_edgelist.exists():
+            deck_cooccurrence = compute_temporally_weighted_cooccurrence(
+                decks, halflife_days=999999,  # effectively no decay
+            )
+            raw_edges = deck_cooccurrence
+            print(f"  {len(raw_edges):,} co-occurrence edges from deck JSONL")
+            for c1, c2, w in raw_edges:
+                graph.add_edge(c1, c2, w, source_type="co_occurrence", game=game_code)
         has_placement = sum(1 for d in decks if d.get("placement"))
         has_format = sum(1 for d in decks if d.get("format"))
         has_archetype = sum(1 for d in decks if d.get("archetype"))
@@ -599,7 +641,7 @@ def build_game(
 
     # 3. Oracle text edges
     print("\n[3/8] Computing oracle text similarity edges...")
-    if csv_path.exists():
+    if csv_path and csv_path.exists():
         oracle_edges = compute_oracle_text_edges(
             csv_path, threshold=0.85, top_k=15, weight_scale=3.0
         )
@@ -610,9 +652,11 @@ def build_game(
         print(f"  SKIPPED (no card attributes CSV at {csv_path})")
 
     # 4. Enriched edgelist (pre-combined annotations + card sets)
-    enriched_path = PROJECT_ROOT / config.get("enriched_edgelist", "")
+    enriched_path = (
+        PROJECT_ROOT / config["enriched_edgelist"] if config.get("enriched_edgelist") else None
+    )
     print("\n[4/8] Loading enriched edgelist...")
-    if enriched_path.name and enriched_path.exists():
+    if enriched_path and enriched_path.exists():
         enriched_edges = load_edgelist(enriched_path)
         print(f"  {len(enriched_edges):,} enriched edges from {enriched_path.name}")
         for c1, c2, w in enriched_edges:
@@ -658,7 +702,7 @@ def build_game(
 
     # 7. Node enrichment (oracle text, image URLs)
     print("\n[7/8] Enriching nodes with oracle text and image URLs...")
-    enrich_nodes(graph, csv_path, image_urls_path if image_urls_path.name else None, game_code)
+    enrich_nodes(graph, csv_path, image_urls_path, game_code)
     nodes_with_text = sum(1 for n in graph.nodes.values() if n.oracle_text)
     nodes_with_img = sum(1 for n in graph.nodes.values() if n.image_url)
     print(f"  {nodes_with_text:,} nodes with oracle text, {nodes_with_img:,} with image URLs")
