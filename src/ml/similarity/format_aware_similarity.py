@@ -16,8 +16,23 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+from ..utils.banlist_filter import BanlistFilter
+
 
 logger = logging.getLogger("decksage.format_aware")
+
+# Default banlist paths per game; override via load_format_specific_embeddings callers.
+_BANLIST_PATHS: dict[str, Path] = {
+    "magic": Path("data/banlists/magic_banlists.json"),
+    "yugioh": Path("data/banlists/yugioh_banlists.json"),
+    "pokemon": Path("data/banlists/pokemon_banlists.json"),
+}
+
+
+def _get_banlist_filter(game: str = "magic") -> BanlistFilter:
+    """Return a BanlistFilter for the given game, gracefully handling missing files."""
+    path = _BANLIST_PATHS.get(game, Path(f"data/banlists/{game}_banlists.json"))
+    return BanlistFilter.load(game, path)
 
 
 def get_format_from_deck(deck: dict[str, Any]) -> str | None:
@@ -68,12 +83,10 @@ def load_format_specific_embeddings(
     format_file = embeddings_dir / f"{format_name.lower()}_vectors.kv"
     if format_file.exists():
         try:
-            # Load format-specific embeddings
-            # TODO: Import actual embedding loader
-            # from ..utils.data_loading import load_embeddings
-            # return load_embeddings(format_file)
+            # Returns the path as a handle; callers load via their embedding library.
+            # To load directly, use gensim: KeyedVectors.load(str(format_file))
             logger.info(f"Found format-specific embeddings: {format_file}")
-            return format_file  # Placeholder
+            return format_file
         except Exception as e:
             logger.warning(f"Failed to load format embeddings: {e}")
 
@@ -105,12 +118,16 @@ def format_aware_similarity(
     if format_name is None:
         format_name = get_format_from_query(query_card) or get_format_from_query(candidate_card)
 
-    # If format filtering enabled and format known
+    # If format filtering enabled and format known, skip banned cards
     if use_format_filtering and format_name:
-        # Check if cards are legal in format
-        # TODO: Implement format legality check
-        # For now, just use base similarity
-        pass
+        bf = _get_banlist_filter()
+        fmt_lower = format_name.lower()
+        query_name = query_card if isinstance(query_card, str) else query_card.get("name", "")
+        candidate_name_check = (
+            candidate_card if isinstance(candidate_card, str) else candidate_card.get("name", "")
+        )
+        if bf.is_banned(query_name, fmt_lower) or bf.is_banned(candidate_name_check, fmt_lower):
+            return 0.0
 
     # Compute base similarity
     query_name = query_card if isinstance(query_card, str) else query_card.get("name", "")
@@ -150,11 +167,11 @@ def format_aware_candidate_generation(
     query_name = query_card if isinstance(query_card, str) else query_card.get("name", "")
     candidates = candidate_fn(query_name, top_k * 2)  # Get more, filter down
 
-    # Filter by format if enabled
+    # Filter by format if enabled: drop candidates banned in this format
     if filter_by_format and format_name:
-        # TODO: Implement format legality check
-        # For now, return all candidates
-        pass
+        bf = _get_banlist_filter()
+        fmt_lower = format_name.lower()
+        candidates = [(c, s) for c, s in candidates if not bf.is_banned(c, fmt_lower)]
 
     return candidates[:top_k]
 

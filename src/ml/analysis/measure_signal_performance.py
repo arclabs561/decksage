@@ -124,21 +124,27 @@ def main():
 
     args = parser.parse_args()
 
-    # TODO: Import actual similarity functions
-    # For now, this is a template
-    # Need to:
-    # 1. Import embed similarity function
-    # 2. Import jaccard similarity function
-    # 3. Import functional similarity function
-    # 4. Call measure_signal_performance for each
+    # Wire similarity functions before running. Example:
+    #
+    #   from ..similarity.similarity_methods import load_graph, jaccard_similarity
+    #   from ..similarity.card_similarity_pecan import find_similar_cards
+    #   from ..similarity.fusion import WeightedLateFusion
+    #
+    #   adj = load_graph(csv_path="data/cooccurrence.csv")
+    #   signals = [
+    #       ("jaccard", lambda q: jaccard_similarity(q, adj, top_k=args.top_k)),
+    #       ("embedding", lambda q: find_similar_cards(wv, q, top_k=args.top_k)),
+    #   ]
+    #   results["signals"] = [
+    #       measure_signal_performance(args.test_set, name, fn, args.top_k)
+    #       for name, fn in signals
+    #   ]
 
     logger.info("Signal performance measurement")
     logger.info(f"Test set: {args.test_set}")
     logger.info(f"Output: {args.output}")
     logger.info(f"Top K: {args.top_k}")
-
-    # Placeholder: Actual implementation needs similarity functions
-    logger.warning("This is a template. Need to implement similarity function imports.")
+    logger.warning("No similarity functions wired. Add signal functions in main() to measure.")
 
     results = {
         "test_set": str(args.test_set),

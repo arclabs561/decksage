@@ -38,7 +38,7 @@ class CardDatabase:
                 from ..utils.paths import PATHS
 
                 data_dir = PATHS.backend / "data-full"
-            except Exception:
+            except ImportError:
                 # Last-resort fallback for unusual execution contexts.
                 data_dir = Path("src/backend/data-full")
 
@@ -105,7 +105,7 @@ class CardDatabase:
                                 for card in data["data"]:
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                except Exception:
+                except (OSError, json.JSONDecodeError, KeyError):
                     continue
 
         # Try zst files (compressed) - these are the actual data files
@@ -137,7 +137,7 @@ class CardDatabase:
                                 for card in data["data"]:
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                except Exception:
+                except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired):
                     continue
 
         logger.info(f"Loaded {len(cards)} Magic cards")
@@ -176,7 +176,7 @@ class CardDatabase:
                             for item in data:
                                 if isinstance(item, dict) and "name" in item:
                                     cards.add(item["name"])
-                except Exception:
+                except (OSError, json.JSONDecodeError, KeyError):
                     continue
 
         # Try limitless-web (decks with card names)
@@ -210,7 +210,7 @@ class CardDatabase:
                                 for card in part.get("cards", []):
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                    except Exception:
+                    except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired):
                         continue
                 break  # Only process first matching directory
 
@@ -261,7 +261,7 @@ class CardDatabase:
                         data = json.load(f)
                         if "name" in data:
                             cards.add(data["name"])
-                except Exception:
+                except (OSError, json.JSONDecodeError, KeyError):
                     continue
 
         # Try zst files
@@ -280,7 +280,7 @@ class CardDatabase:
                         data = json.loads(result.stdout)
                         if "name" in data:
                             cards.add(data["name"])
-                except Exception:
+                except (OSError, json.JSONDecodeError, subprocess.TimeoutExpired):
                     continue
 
         logger.info(f"Loaded {len(cards)} Yu-Gi-Oh! cards")
@@ -315,7 +315,7 @@ class CardDatabase:
                                 for card in part.get("cards", []):
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                    except Exception:
+                    except (OSError, json.JSONDecodeError, KeyError):
                         continue
                 break
 
@@ -351,7 +351,7 @@ class CardDatabase:
                                 for card in part.get("cards", []):
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                    except Exception:
+                    except (OSError, json.JSONDecodeError, KeyError):
                         continue
                 break
 
@@ -387,7 +387,7 @@ class CardDatabase:
                                 for card in part.get("cards", []):
                                     if isinstance(card, dict) and "name" in card:
                                         cards.add(card["name"])
-                    except Exception:
+                    except (OSError, json.JSONDecodeError, KeyError):
                         continue
                 break
 

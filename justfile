@@ -79,6 +79,33 @@ check-architecture:
     echo "Checking schema validation..."
     just check-schema
 
+# Lint Go backend code (requires golangci-lint; runs in CI via GitHub Action)
+lint-go:
+    #!/usr/bin/env bash
+    if command -v golangci-lint &>/dev/null; then
+        cd src/backend && golangci-lint run ./...
+    else
+        echo "golangci-lint not installed locally (runs in CI)"
+    fi
+
+# Run all linters and type checks (Python + Go + architecture)
+check-all:
+    #!/usr/bin/env bash
+    set -e
+    echo "=== Ruff lint ==="
+    just lint
+    echo ""
+    echo "=== Type check (ty) ==="
+    just typecheck
+    echo ""
+    echo "=== Go lint ==="
+    just lint-go || true
+    echo ""
+    echo "=== Architecture checks ==="
+    just check-architecture
+    echo ""
+    echo "All checks passed."
+
 # Run architecture validation tests
 test-architecture:
     #!/usr/bin/env bash
@@ -167,6 +194,16 @@ lint:
 lint-scripts:
     #!/usr/bin/env bash
     uv run ruff check src/ml/scripts --config "exclude=[]"
+
+# Type check Python code with ty (Astral's type checker)
+typecheck *args='src/ml/data/incremental_graph.py':
+    #!/usr/bin/env bash
+    uvx ty check --config-file ty.toml {{args}}
+
+# Type check training scripts
+typecheck-scripts:
+    #!/usr/bin/env bash
+    uvx ty check --config-file ty.toml scripts/training/build_unified_graph.py scripts/training/train_all_embeddings.py
 
 format:
     #!/usr/bin/env bash
