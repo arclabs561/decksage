@@ -74,6 +74,9 @@ gnn = [
 stats = [
     "scipy>=1.12.0",  # Optional: for statistical functions (IAA, etc)
 ]
+ot = [
+    "pot>=0.9.0",  # Python Optimal Transport (Sinkhorn, etc.)
+]
 
 [tool.hatch.build]
 # Only include Python ML code, exclude Go backend and massive data files

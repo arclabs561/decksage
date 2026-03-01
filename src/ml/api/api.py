@@ -1771,8 +1771,13 @@ class CompleteRequest(BaseModel):
     coverage_weight: float | None = None
     strict_size: bool | None = None
     check_legality: bool | None = None
-    method: str = "greedy"  # "greedy" or "beam"
+    method: str = "greedy"  # "greedy", "beam", or "ot"
     beam_width: int = 5  # For beam search
+    # OT-specific parameters
+    sinkhorn_reg: float = 0.05  # Entropic regularization for OT
+    embedding_weight: float = 0.5  # Cost weight for embedding distance
+    role_weight: float = 0.3  # Cost weight for role gap filling
+    curve_weight: float = 0.2  # Cost weight for mana curve fit
 
 
 class CompleteResponse(BaseModel):
@@ -1875,22 +1880,74 @@ def complete_deck(req: CompleteRequest):
 
     t0 = time.time()
 
-    # Choose completion method
-    if req.method == "beam":
-        from ..deck_building.beam_search import beam_search_completion
+    # Build CMC function (shared across methods)
+    def cmc_fn(card: str) -> int | None:
+        attrs = state.card_attrs
+        if not attrs:
+            return None
+        data = attrs.get(card) or attrs.get(card.lower())
+        if not data:
+            return None
+        try:
+            return int(data.get("cmc", 0))
+        except (ValueError, TypeError):
+            return None
 
-        # Build CMC function for beam search
-        def cmc_fn(card: str) -> int | None:
-            attrs = state.card_attrs
-            if not attrs:
-                return None
-            data = attrs.get(card) or attrs.get(card.lower())
-            if not data:
-                return None
-            try:
-                return int(data.get("cmc", 0))
-            except (ValueError, TypeError):
-                return None
+    # Choose completion method
+    if req.method == "ot":
+        from ..deck_building.deck_completion import _main_partition_name
+        from ..deck_building.ot_completion import OTCompletionConfig, ot_complete_deck
+
+        ot_cfg = OTCompletionConfig(
+            game=game,
+            target_main_size=req.target_main_size or (40 if game == "yugioh" else 60),
+            embedding_weight=req.embedding_weight,
+            role_weight=req.role_weight,
+            curve_weight=req.curve_weight,
+            sinkhorn_reg=req.sinkhorn_reg,
+        )
+
+        # Detect role gaps for role-aware OT cost
+        role_gaps: dict[str, int] | None = None
+        if tag_set_fn:
+            part = _main_partition_name(game)
+            role_counts: dict[str, int] = {}
+            for p in req.deck.get("partitions", []) or []:
+                if p.get("name") != part:
+                    continue
+                for card in p.get("cards", []) or []:
+                    tags = tag_set_fn(str(card.get("name", "")))
+                    count = int(card.get("count", 1))
+                    for role in ["removal", "threat", "card_draw", "ramp", "counter", "tutor"]:
+                        if role in tags:
+                            role_counts[role] = role_counts.get(role, 0) + count
+            role_targets = {"removal": 10, "threat": 14, "card_draw": 6, "ramp": 4}
+            role_gaps = {
+                r: t - role_counts.get(r, 0)
+                for r, t in role_targets.items()
+                if role_counts.get(r, 0) < t
+            }
+
+        ot_result = ot_complete_deck(
+            game=game,
+            deck=req.deck,
+            embeddings=state.embeddings,
+            cfg=ot_cfg,
+            candidate_fn=cand_fn,
+            tag_set_fn=tag_set_fn,
+            cmc_fn=cmc_fn,
+            role_gaps=role_gaps,
+        )
+
+        deck_out = ot_result.deck
+        steps = [
+            {"op": "add_card", "partition": _main_partition_name(game), "card": a["card"], "count": a["count"]}
+            for a in ot_result.additions
+        ]
+        quality_metrics = None
+
+    elif req.method == "beam":
+        from ..deck_building.beam_search import beam_search_completion
 
         # Convert candidate_fn to beam search format
         def beam_candidate_fn(deck: dict, top_k: int) -> list[tuple[str, float]]:
