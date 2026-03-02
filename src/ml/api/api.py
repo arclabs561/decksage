@@ -46,6 +46,7 @@ Multi-game serving (single process, multiple games):
 """
 
 import argparse
+import dataclasses
 import json
 import logging
 import os
@@ -203,6 +204,7 @@ def _require_game(game: str | None) -> str:
 class SimilarCard(BaseModel):
     card: str = Field(..., description="Card name")
     similarity: float = Field(..., description="Similarity score (0-1)")
+    metadata: dict[str, Any] | None = Field(None, description="Card metadata (image_url, type, mana_cost, etc.)")
 
 
 class UseCaseEnum(str, Enum):
@@ -254,6 +256,7 @@ class SimilarityRequest(BaseModel):
 
 class SimilarityResponse(BaseModel):
     query: str
+    query_metadata: dict[str, Any] | None = Field(None, description="Metadata for the query card (image_url, type, etc.)")
     results: list[SimilarCard]
     model_info: dict
     feedback_url: str | None = Field(None, description="URL for submitting feedback on results")
@@ -300,6 +303,7 @@ class ApiState:
         self.cross_format_patterns: dict[str, dict[str, float]] | None = None
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
         self.reranker: object | None = None  # Learned reranker (optional)
+        self.card_metadata: dict[str, dict[str, Any]] | None = None  # Full card attrs w/ image_url
 
 
 def get_state(game: str | None = None) -> ApiState:
@@ -564,6 +568,23 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError):
                 logger.exception("Failed to load attributes CSV for game=%s: %s", game, attrs_path)
 
+        # Load enriched card metadata (with image URLs) for API responses.
+        # Uses the enriched CSV which preserves all columns including image_url.
+        enriched_path = Path(f"data/processed/card_attributes_{game}_enriched.csv")
+        if enriched_path.exists():
+            try:
+                from ..utils.data_loading import load_card_attributes
+
+                state = get_state(game)
+                state.card_metadata = load_card_attributes(attrs_path=enriched_path, game=game)
+                logger.info(
+                    "Loaded enriched card metadata for %s: %d cards (with image URLs)",
+                    game,
+                    len(state.card_metadata),
+                )
+            except (OSError, ValueError, KeyError, ImportError):
+                logger.debug("Failed to load enriched card metadata for game=%s", game, exc_info=True)
+
         # Additional signals (per game)
         try:
             from .load_signals import load_signals_to_state
@@ -613,6 +634,7 @@ async def lifespan(app: FastAPI):
             state.cross_format_patterns = None
             state.signal_status = None
             state.reranker = None
+            state.card_metadata = None
         # Remove entire api_by_game dict so next lifespan creates fresh ApiState objects
         with suppress(Exception):
             delattr(app.state, "api_by_game")
@@ -851,9 +873,43 @@ def _resolve_method(request: SimilarityRequest) -> str:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
         return "embedding"
-    if request.use_case in (UseCaseEnum.synergy, UseCaseEnum.meta):
+    if request.use_case is UseCaseEnum.synergy:
         return "jaccard"
+    if request.use_case is UseCaseEnum.meta:
+        return "fusion"
     return "embedding"
+
+
+def _enrich_similar_card(card_name: str, similarity: float, state: ApiState) -> SimilarCard:
+    """Build a SimilarCard with metadata from enriched card data (image_url, type, etc.)."""
+    meta = None
+    if state.card_metadata:
+        raw = state.card_metadata.get(card_name)
+        if raw:
+            meta = {}
+            # Fields to expose; skip None/NaN values
+            for key in ("image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
+                         "colors", "power", "toughness", "attribute", "race", "hp"):
+                val = raw.get(key)
+                if val is None:
+                    continue
+                # pandas NaN check
+                try:
+                    if val != val:  # NaN
+                        continue
+                except (TypeError, ValueError):
+                    pass
+                if key == "oracle_text" and isinstance(val, str) and len(val) > 200:
+                    val = val[:200] + "..."
+                meta[key] = val
+            # Use type_line as fallback for "type"
+            if "type" not in meta:
+                tl = raw.get("type_line")
+                if tl and tl == tl:
+                    meta["type"] = tl
+            if not meta:
+                meta = None
+    return SimilarCard(card=card_name, similarity=float(similarity), metadata=meta)
 
 
 def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]:
@@ -867,7 +923,7 @@ def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]
         )
     try:
         similar = state.embeddings.most_similar(query, topn=k)
-        return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
+        return [_enrich_similar_card(card, sim, state) for card, sim in similar]
     except (KeyError, RuntimeError, ValueError) as e:  # pragma: no cover - defensive
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -879,7 +935,7 @@ def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[
     if query not in adj:
         raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
     similarities = sm_jaccard(query, adj, top_k=k, filter_lands=(game == "magic"))
-    return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similarities]
+    return [_enrich_similar_card(card, sim, state) for card, sim in similarities]
 
 
 def _similar_fusion(
@@ -891,9 +947,14 @@ def _similar_fusion(
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     tagger = FunctionalTagger() if (FunctionalTagger is not None and game == "magic") else None
     w = request.weights or {}
-    base_fw = (
-        state.fusion_default_weights or FusionWeights()
-    )  # Uses recommended defaults (30% GNN, 25% Instruction, 20% Co-occurrence, 15% Jaccard, 10% Functional)
+    base_fw = state.fusion_default_weights or FusionWeights()
+    # Zero out weights for modalities not loaded on this state
+    if state.text_embedder is None:
+        base_fw = dataclasses.replace(base_fw, text_embed=0.0)
+    if state.visual_embedder is None:
+        base_fw = dataclasses.replace(base_fw, visual_embed=0.0)
+    if getattr(state, "gnn_embedder", None) is None:
+        base_fw = dataclasses.replace(base_fw, gnn=0.0)
     fw = FusionWeights(
         embed=float(w.get("embed", base_fw.embed)),
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
@@ -966,7 +1027,7 @@ def _similar_fusion(
         else:
             similar = fusion.similar(query, k, task_type=task_type)
 
-    return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
+    return [_enrich_similar_card(card, sim, state) for card, sim in similar]
 
 
 def _similar_jaccard_faceted(
@@ -983,7 +1044,7 @@ def _similar_jaccard_faceted(
         raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
     facet = (request.facet or "type").lower().strip()
     similar = sm_jaccard_faceted(query, adj, state.card_attrs, facet=facet, top_k=k)
-    return [SimilarCard(card=card, similarity=float(sim)) for card, sim in similar]
+    return [_enrich_similar_card(card, sim, state) for card, sim in similar]
 
 
 def _apply_mmr_postprocess(
@@ -1048,11 +1109,36 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         raise HTTPException(status_code=400, detail=f"Unknown similarity method: {method}")
 
     # Apply MMR post-processing for non-fusion modes (fusion handles MMR internally)
-    if method != "fusion" and request.mmr_lambda and request.mmr_lambda > 0.0:
+    if method != "fusion" and request.mmr_lambda is not None:
         results = _apply_mmr_postprocess(state, results, request.mmr_lambda, k)
+
+    # Look up query card metadata (image, type, etc.)
+    query_meta = None
+    if state.card_metadata:
+        raw = state.card_metadata.get(query)
+        if raw:
+            query_meta = {}
+            for key in ("image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
+                         "colors", "power", "toughness", "attribute", "race", "hp"):
+                val = raw.get(key)
+                if val is None:
+                    continue
+                try:
+                    if val != val:
+                        continue
+                except (TypeError, ValueError):
+                    pass
+                query_meta[key] = val
+            if "type" not in query_meta:
+                tl = raw.get("type_line")
+                if tl and tl == tl:
+                    query_meta["type"] = tl
+            if not query_meta:
+                query_meta = None
 
     return SimilarityResponse(
         query=query,
+        query_metadata=query_meta,
         results=results,
         model_info={**state.model_info, "method_used": method, "game": game},
         feedback_url="/v1/feedback",  # Endpoint for submitting feedback
@@ -1157,13 +1243,21 @@ def get_contextual_suggestions(
 
     # Contextual discovery uses different task types per category
     # We'll use "synergy" as default, but each method can override
+    # Fast-only weights: skip per-candidate neural inference (text_embed, visual_embed, gnn)
+    # to keep contextual discovery <5s. Pre-computed signals suffice here.
+    fast_weights = FusionWeights(
+        embed=0.5,
+        jaccard=0.4,
+        functional=0.1,
+        text_embed=0.0,
+        visual_embed=0.0,
+        gnn=0.0,
+    )
     fusion = WeightedLateFusion(
         embeddings=state.embeddings,
         adj=state.graph_data.get("adj", {}) if state.graph_data else {},
-        weights=FusionWeights(),  # Use defaults
+        weights=fast_weights,
         task_type="synergy",  # Default for contextual discovery
-        text_embedder=state.text_embedder,
-        visual_embedder=state.visual_embedder,
         card_data=state.card_attrs,
     )
 
@@ -1456,6 +1550,29 @@ def search_cards_get_v1(
 # ---------------------------------------------------------------------------
 
 
+def _normalize_deck_format(deck: dict, game: str) -> dict:
+    """Normalize legacy deck format {"Main": [...]} to partitions format.
+
+    Legacy: {"Main": ["card1", "card2"]}
+    Partitions: {"partitions": [{"name": "Main", "cards": [{"name": "card1", "count": 1}]}]}
+    """
+    if "partitions" in deck or not isinstance(deck, dict):
+        return deck
+    partitions = []
+    for part_name, cards in deck.items():
+        if isinstance(cards, list):
+            card_entries = []
+            for c in cards:
+                if isinstance(c, str):
+                    card_entries.append({"name": c, "count": 1})
+                elif isinstance(c, dict):
+                    card_entries.append(c)
+            partitions.append({"name": part_name, "cards": card_entries})
+    if partitions:
+        return {"partitions": partitions}
+    return deck
+
+
 class PatchRequest(BaseModel):
     game: str = Field(..., description="magic|yugioh|pokemon")
     deck: dict = Field(..., description="Deck object matching validators schema")
@@ -1467,6 +1584,7 @@ class PatchRequest(BaseModel):
 @router.post("/deck/apply_patch", response_model=DeckPatchResult)
 def deck_apply_patch(req: PatchRequest):
     game = _require_game(req.game)
+    req.deck = _normalize_deck_format(req.deck, game)
     return apply_deck_patch(
         game,
         req.deck,
@@ -1562,6 +1680,7 @@ def suggest_actions(req: SuggestActionsRequest):
 
     game = _require_game(req.game)
     state = get_state(game)
+    req.deck = _normalize_deck_format(req.deck, game)
     cand_fn = _make_candidate_fn(game, req.mode)
 
     # Optional price and tag hooks
@@ -1823,24 +1942,7 @@ def complete_deck(req: CompleteRequest):
 
     game = _require_game(req.game)
     state = get_state(game)
-
-    # Normalize legacy deck format {"Main": [...], "Sideboard": [...]}
-    # to partitions format {"partitions": [{"name": "Main", "cards": [...]}]}
-    deck = req.deck
-    if "partitions" not in deck and isinstance(deck, dict):
-        partitions = []
-        for part_name, cards in deck.items():
-            if isinstance(cards, list):
-                card_entries = []
-                for c in cards:
-                    if isinstance(c, str):
-                        card_entries.append({"name": c, "count": 1})
-                    elif isinstance(c, dict):
-                        card_entries.append(c)
-                partitions.append({"name": part_name, "cards": card_entries})
-        if partitions:
-            deck = {"partitions": partitions}
-    req.deck = deck
+    req.deck = _normalize_deck_format(req.deck, game)
 
     # Deck completion uses "completion" task type
     cand_fn = _make_candidate_fn(game, req.mode, task_type="completion")
@@ -2093,6 +2195,14 @@ try:
     app.include_router(feedback_router)
 except ImportError:
     logger.debug("Feedback router not available (optional)")
+
+# Include chat router (LLM assistant with tool calling)
+try:
+    from .chat import chat_router
+
+    app.include_router(chat_router)
+except ImportError:
+    logger.debug("Chat router not available (pydantic-ai required)")
 
 # Serve static HTML files for frontend interface
 # Mount static directory if it exists

@@ -6,25 +6,272 @@
     <title>DeckSage - Card Similarity Search</title>
     <meta name="description" content="Search Magic: The Gathering, Pokemon, and Yu-Gi-Oh cards by name or text">
     <link rel="stylesheet" href="/static/common.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&family=Nunito:wght@400;600;700;800&family=Rajdhani:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
+        /* === Theme system: CSS custom properties === */
+        /* Base: Encarta/scholastic -- warm parchment, olive accents, serif typography */
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #1a1a1a;
-            color: #e0e0e0;
+            --color-bg-primary:      #f5f0e8;
+            --color-bg-secondary:    #ebe5d8;
+            --color-bg-tertiary:     #e0d8c8;
+            --color-bg-elevated:     #fff;
+            --color-border-default:  #c8bfa8;
+            --color-border-focus:    #5c7a3e;
+            --color-text-primary:    #2c2418;
+            --color-text-secondary:  #5a4e3a;
+            --color-text-muted:      #8a7e68;
+            --color-text-link:       #5c7a3e;
+            --color-accent-primary:  #5c7a3e;
+            --color-accent-secondary:#8a6a2e;
+            --btn-bg:                #5c7a3e;
+            --btn-bg-hover:          #6e8e4e;
+            --btn-text:              #fff;
+            --search-bg:             #fff;
+            --search-border:         #c8bfa8;
+            --search-focus-shadow:   0 0 0 2px rgba(92, 122, 62, 0.2);
+            --card-bg:               #fff;
+            --card-border-accent:    #8a6a2e;
+            --card-hover-bg:         #faf7f0;
+            --card-hover-border:     #5c7a3e;
+            --card-hover-shadow:     0 2px 12px rgba(92, 122, 62, 0.12);
+            --tab-active-color:      #5c7a3e;
+            --tab-active-border:     #5c7a3e;
+            --skeleton-bg:           #e0d8c8;
+            --match-color:           #5c7a3e;
+            --similarity-fill:       #5c7a3e;
+            --section-gradient:      linear-gradient(90deg, #5c7a3e, #8a6a2e);
+
+            font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+            background: var(--color-bg-primary);
+            color: var(--color-text-primary);
             padding: 20px;
-            line-height: 1.5;
+            line-height: 1.6;
+            transition: background 0.4s ease, color 0.2s ease;
         }
+        /* Encarta signature: top navigation bar gradient */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #5c7a3e, #8a6a2e, #5c7a3e);
+            z-index: 1000;
+        }
+
+        /* === MAGIC: THE GATHERING === */
+        body.game-magic {
+            --color-bg-primary:      #1e1a2e;
+            --color-bg-secondary:    #252035;
+            --color-bg-tertiary:     #2d2844;
+            --color-bg-elevated:     #332e4a;
+            --color-border-default:  #3d3660;
+            --color-border-focus:    #c8a84b;
+            --color-text-primary:    #f0ede8;
+            --color-text-secondary:  #a89ec0;
+            --color-text-muted:      #6b6088;
+            --color-text-link:       #c8a84b;
+            --color-accent-primary:  #9b72cf;
+            --color-accent-secondary:#c8a84b;
+            --btn-bg:                #9b72cf;
+            --btn-bg-hover:          #b08adf;
+            --btn-text:              #fff;
+            --search-bg:             #252035;
+            --search-border:         #3d3660;
+            --search-focus-shadow:   0 0 0 3px rgba(200, 168, 75, 0.25);
+            --card-bg:               #252035;
+            --card-border-accent:    #c8a84b;
+            --card-hover-bg:         #2d2844;
+            --card-hover-border:     #c8a84b;
+            --card-hover-shadow:     0 4px 20px rgba(200, 168, 75, 0.2);
+            --tab-active-color:      #c8a84b;
+            --tab-active-border:     #c8a84b;
+            --skeleton-bg:           #252035;
+            --match-color:           #c8a84b;
+            --similarity-fill:       #9b72cf;
+            --section-gradient:      linear-gradient(90deg, #9b72cf, #c8a84b);
+
+            font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+            background: radial-gradient(ellipse at 50% 0%, #2d2548 0%, #1e1a2e 60%, #0f0c1a 100%);
+            background-attachment: fixed;
+        }
+        body.game-magic::before {
+            background: linear-gradient(90deg, #9b72cf, #c8a84b, #9b72cf);
+        }
+        body.game-magic .result-name,
+        body.game-magic h1 {
+            font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
+            letter-spacing: 0.04em;
+            font-weight: 600;
+        }
+        body.game-magic .result-item {
+            border-left: 3px solid #c8a84b;
+            background: linear-gradient(135deg, #252035 0%, #2a2240 100%);
+        }
+        body.game-magic .search-button,
+        body.game-magic .nav-tab.active {
+            text-shadow: 0 0 12px rgba(200, 168, 75, 0.4);
+        }
+
+        /* === POKEMON TCG === */
+        /* Light theme authentic to Pokemon TCG's bright, playful feel */
+        body.game-pokemon {
+            --color-bg-primary:      #faf6f0;
+            --color-bg-secondary:    #fff;
+            --color-bg-tertiary:     #f0ebe0;
+            --color-bg-elevated:     #fff;
+            --color-border-default:  #e0c878;
+            --color-border-focus:    #cc0000;
+            --color-text-primary:    #1a1a2e;
+            --color-text-secondary:  #4a4a5a;
+            --color-text-muted:      #8a8a98;
+            --color-text-link:       #cc0000;
+            --color-accent-primary:  #cc0000;
+            --color-accent-secondary:#2a75bb;
+            --btn-bg:                #cc0000;
+            --btn-bg-hover:          #e00000;
+            --btn-text:              #fff;
+            --search-bg:             #fff;
+            --search-border:         #e0c878;
+            --search-focus-shadow:   0 0 0 3px rgba(204, 0, 0, 0.15);
+            --card-bg:               #fff;
+            --card-border-accent:    #e0c878;
+            --card-hover-bg:         #faf6f0;
+            --card-hover-border:     #cc0000;
+            --card-hover-shadow:     0 4px 16px rgba(204, 0, 0, 0.1);
+            --tab-active-color:      #cc0000;
+            --tab-active-border:     #cc0000;
+            --skeleton-bg:           #f0ebe0;
+            --match-color:           #cc0000;
+            --similarity-fill:       #cc0000;
+            --section-gradient:      linear-gradient(90deg, #cc0000 0%, #cc0000 50%, #e0c878 50%, #e0c878 100%);
+
+            font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #faf6f0;
+        }
+        body.game-pokemon::before {
+            background: linear-gradient(90deg, #cc0000, #e0c878, #2a75bb);
+        }
+        body.game-pokemon .result-name,
+        body.game-pokemon h1 {
+            font-family: 'Nunito', 'Helvetica Neue', Arial, sans-serif;
+            font-weight: 800;
+            letter-spacing: -0.01em;
+        }
+        body.game-pokemon .result-item {
+            border-left: 3px solid #e0c878;
+            border-radius: 12px;
+        }
+        body.game-pokemon .result-image-wrapper {
+            border-radius: 12px;
+            border: 2px solid #e0c878;
+        }
+        body.game-pokemon .search-button {
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+        }
+        body.game-pokemon .search-form {
+            border-radius: 12px;
+        }
+
+        /* === YU-GI-OH! === */
+        body.game-yugioh {
+            --color-bg-primary:      #0a0a18;
+            --color-bg-secondary:    #12121e;
+            --color-bg-tertiary:     #1a1a2e;
+            --color-bg-elevated:     #1a1a2e;
+            --color-border-default:  #2a2a40;
+            --color-border-focus:    #c9a84c;
+            --color-text-primary:    #e8e0cc;
+            --color-text-secondary:  #998f78;
+            --color-text-muted:      #5c5444;
+            --color-text-link:       #c9a84c;
+            --color-accent-primary:  #c9a84c;
+            --color-accent-secondary:#177e89;
+            --btn-bg:                #c9a84c;
+            --btn-bg-hover:          #e8c96b;
+            --btn-text:              #0a0a18;
+            --search-bg:             #12121e;
+            --search-border:         #2a2a40;
+            --search-focus-shadow:   0 0 0 3px rgba(201, 168, 76, 0.2);
+            --card-bg:               #12121e;
+            --card-border-accent:    #c9a84c;
+            --card-hover-bg:         #1a1a2e;
+            --card-hover-border:     #c9a84c;
+            --card-hover-shadow:     0 4px 20px rgba(201, 168, 76, 0.2);
+            --tab-active-color:      #c9a84c;
+            --tab-active-border:     #c9a84c;
+            --skeleton-bg:           #12121e;
+            --match-color:           #e8c96b;
+            --similarity-fill:       #c9a84c;
+            --section-gradient:      linear-gradient(90deg, #7d3e12 0%, #c9a84c 40%, #e8c96b 60%, #c9a84c 100%);
+
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(ellipse at 50% 0%, #141428 0%, #0a0a18 50%, #050510 100%);
+            background-attachment: fixed;
+        }
+        body.game-yugioh::before {
+            background: linear-gradient(90deg, #c9a84c, #7d3e12, #c9a84c);
+        }
+        body.game-yugioh::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image: repeating-linear-gradient(
+                45deg,
+                rgba(201, 168, 76, 0.015) 0px,
+                rgba(201, 168, 76, 0.015) 1px,
+                transparent 1px,
+                transparent 20px
+            );
+            pointer-events: none;
+            z-index: 0;
+        }
+        body.game-yugioh > .container { position: relative; z-index: 1; }
+        body.game-yugioh h1 {
+            font-family: 'Rajdhani', system-ui, sans-serif;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: var(--color-accent-primary);
+        }
+        body.game-yugioh .result-name {
+            font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: var(--color-accent-primary);
+        }
+        body.game-yugioh .search-button {
+            font-family: 'Rajdhani', sans-serif;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+        }
+        body.game-yugioh .result-item {
+            border-left: 3px solid #c9a84c;
+        }
+        body.game-yugioh .result-image-wrapper {
+            border: 2px solid #c9a84c;
+            border-radius: 4px;
+        }
+        body.game-yugioh .nav-tab.active {
+            text-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
+        }
+
         /* Skip link for accessibility */
         .skip-link {
             position: absolute;
             top: -40px;
             left: 0;
-            background: #6b8eff;
+            background: var(--color-accent-primary);
             color: #fff;
             padding: 8px;
             text-decoration: none;
@@ -33,65 +280,49 @@
         .skip-link:focus {
             top: 0;
         }
-        /* Game-specific typography */
-        body.game-magic {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Georgia', serif;
-        }
-        body.game-magic .result-name {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            letter-spacing: 0.02em;
-        }
-        body.game-yugioh {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Times New Roman', serif;
-        }
-        body.game-yugioh .result-name {
-            font-family: 'Times New Roman', 'Georgia', serif;
-            letter-spacing: 0.015em;
-            font-weight: 600;
-        }
-        body.game-pokemon {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
-        }
-        body.game-pokemon .result-name {
-            font-family: 'Helvetica Neue', 'Arial', sans-serif;
-            letter-spacing: 0.01em;
-        }
         .container {
             max-width: 900px;
             margin: 0 auto;
             padding-top: 40px;
         }
         h1 {
-            color: #fff;
+            color: var(--color-text-primary);
+            font-family: 'Playfair Display', Georgia, serif;
             font-size: 32px;
-            font-weight: 600;
+            font-weight: 700;
             margin-bottom: 24px;
             text-align: center;
-            letter-spacing: -0.5px;
+            letter-spacing: 0.01em;
         }
-        /* Navigation tabs */
+        /* Navigation tabs -- Encarta-style flat with ruled underlines */
         .nav-tabs {
             display: flex;
-            gap: 8px;
+            gap: 0;
             margin-bottom: 24px;
-            border-bottom: 1px solid #333;
-            padding-bottom: 8px;
+            border-bottom: 2px solid var(--color-border-default);
+            padding-bottom: 0;
         }
         .nav-tab {
-            padding: 8px 16px;
+            padding: 10px 20px;
             background: transparent;
             border: none;
-            color: #888;
+            color: var(--color-text-muted);
             cursor: pointer;
             font-size: 14px;
-            border-bottom: 2px solid transparent;
+            font-family: inherit;
+            font-weight: 400;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: color 0.2s, border-color 0.2s;
+            letter-spacing: 0.02em;
         }
         .nav-tab:hover {
-            color: #aaa;
+            color: var(--color-text-secondary);
         }
         .nav-tab.active {
-            color: #6b8eff;
-            border-bottom-color: #6b8eff;
+            color: var(--tab-active-color);
+            border-bottom-color: var(--tab-active-border);
+            font-weight: 700;
         }
         .tab-content {
             display: none;
@@ -99,6 +330,165 @@
         .tab-content.active {
             display: block;
         }
+
+        /* ── Chat tab ─────────────────────────────────── */
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: calc(100vh - 200px);
+            min-height: 400px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .chat-welcome {
+            text-align: center;
+            padding: 48px 16px;
+        }
+        .chat-suggestions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .chat-suggestion-btn {
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .chat-suggestion-btn:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-accent-primary);
+            color: var(--color-accent-primary);
+        }
+        .chat-bubble {
+            max-width: 85%;
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+        }
+        .chat-bubble.user {
+            align-self: flex-end;
+            background: var(--color-accent-primary);
+            color: #fff;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-bubble.assistant {
+            align-self: flex-start;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            border-bottom-left-radius: 4px;
+        }
+        .chat-bubble.assistant .tool-call-card {
+            background: var(--color-bg-tertiary);
+            border: 1px solid var(--color-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            margin: 8px 0;
+            font-size: 12px;
+        }
+        .chat-bubble.assistant .tool-call-card summary {
+            cursor: pointer;
+            color: var(--color-accent-primary);
+            font-weight: 600;
+            font-size: 12px;
+        }
+        .chat-bubble.assistant .tool-call-card pre {
+            margin: 6px 0 0;
+            white-space: pre-wrap;
+            font-size: 11px;
+            color: var(--color-text-muted);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .chat-typing {
+            align-self: flex-start;
+            padding: 10px 14px;
+            color: var(--color-text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
+        .chat-typing .dots::after {
+            content: '';
+            animation: dots 1.4s steps(4, end) infinite;
+        }
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+        }
+        .chat-input-area {
+            border-top: 1px solid var(--color-border);
+            padding: 12px 16px;
+            background: var(--color-bg-primary);
+        }
+        .chat-input-wrapper {
+            display: flex;
+            gap: 8px;
+            align-items: flex-end;
+        }
+        .chat-input-wrapper textarea {
+            flex: 1;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            border-radius: 12px;
+            padding: 10px 14px;
+            color: var(--color-text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            line-height: 1.4;
+        }
+        .chat-input-wrapper textarea:focus {
+            outline: none;
+            border-color: var(--color-accent-primary);
+        }
+        .chat-send-btn {
+            background: var(--color-accent-primary);
+            border: none;
+            border-radius: 10px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: #fff;
+            flex-shrink: 0;
+            transition: opacity 0.15s;
+        }
+        .chat-send-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+        .chat-send-btn:hover:not(:disabled) {
+            opacity: 0.85;
+        }
+        .chat-error {
+            color: #ef4444;
+            font-size: 13px;
+            padding: 6px 12px;
+            background: rgba(239, 68, 68, 0.1);
+            border-radius: 8px;
+        }
+
         .feedback-toggle {
             display: flex;
             align-items: center;
@@ -111,7 +501,7 @@
         }
         .feedback-toggle label {
             font-size: 13px;
-            color: #888;
+            color: var(--color-text-muted);
             cursor: pointer;
         }
         .help-icon {
@@ -121,14 +511,14 @@
             line-height: 18px;
             text-align: center;
             border-radius: 50%;
-            background: #555;
-            color: #fff;
+            background: var(--color-border-default);
+            color: var(--color-text-primary);
             font-size: 12px;
             cursor: help;
             margin-left: 6px;
         }
         .help-icon:hover {
-            background: #777;
+            background: var(--color-text-muted);
         }
         .search-section {
             margin-bottom: 24px;
@@ -138,14 +528,16 @@
             gap: 0;
             max-width: 600px;
             margin: 0 auto;
-            background: #2a2a2a;
-            border: 1px solid #444;
-            border-radius: 8px;
+            background: var(--search-bg);
+            border: 1px solid var(--search-border);
+            border-radius: 4px;
             padding: 0;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
         }
         .search-form:focus-within {
-            border-color: #6b8eff;
-            box-shadow: 0 0 0 2px rgba(107, 142, 255, 0.2);
+            border-color: var(--color-border-focus);
+            box-shadow: var(--search-focus-shadow);
         }
         .search-input-wrapper {
             flex: 1;
@@ -159,104 +551,154 @@
             padding: 14px 0;
             background: transparent;
             border: none;
-            color: #e0e0e0;
+            color: var(--color-text-primary);
             font-size: 16px;
+            font-family: inherit;
             outline: none;
             width: 100%;
         }
         input[type="text"]:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 2px;
         }
         input[type="text"]::placeholder {
-            color: #666;
+            color: var(--color-text-muted);
         }
         .autocomplete-dropdown {
             position: absolute;
             top: 100%;
             left: 0;
             right: 0;
-            background: #2a2a2a;
-            border: 1px solid #444;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-default);
             border-radius: 8px;
             margin-top: 4px;
-            max-height: 300px;
+            max-height: 400px;
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
             display: none;
+            transform-origin: top;
         }
         .autocomplete-dropdown.visible {
             display: block;
+            animation: dropdown-open 120ms ease-out;
+        }
+        @keyframes dropdown-open {
+            from { opacity: 0; transform: scaleY(0.96); }
+            to   { opacity: 1; transform: scaleY(1); }
         }
         .autocomplete-section {
-            padding: 8px 0;
+            padding: 4px 0;
+        }
+        .autocomplete-section + .autocomplete-section {
+            border-top: 1px solid var(--color-border-default);
         }
         .autocomplete-section-title {
-            padding: 8px 20px;
-            font-size: 11px;
+            padding: 8px 16px 4px;
+            font-size: 10px;
             text-transform: uppercase;
-            color: #666;
+            color: var(--color-text-muted);
             font-weight: 600;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.06em;
         }
         .autocomplete-item {
-            padding: 12px 20px;
+            padding: 10px 16px;
             cursor: pointer;
-            color: #e0e0e0;
+            color: var(--color-text-primary);
             font-size: 14px;
-            border-bottom: 1px solid #333;
             display: flex;
             align-items: center;
-        }
-        .autocomplete-item:last-child {
-            border-bottom: none;
+            gap: 10px;
+            min-height: 40px;
+            border-radius: 4px;
+            margin: 0 4px;
+            transition: background 80ms ease;
         }
         .autocomplete-item:hover,
         .autocomplete-item:focus {
-            background: #3a3a3a;
+            background: var(--color-bg-tertiary);
             outline: none;
         }
         .autocomplete-item.selected {
-            background: #3a3a3a;
-            color: #6b8eff;
+            background: var(--color-bg-tertiary);
+            color: var(--color-accent-primary);
             font-weight: 500;
         }
         .autocomplete-item .match {
-            font-weight: 600;
-            color: #6b8eff;
+            font-weight: 700;
+            color: inherit;
         }
         .autocomplete-item.selected .match {
-            color: #8ba3ff;
+            color: inherit;
         }
         .autocomplete-item.history-item {
-            color: #999;
+            color: var(--color-text-secondary);
         }
-        .autocomplete-item.history-item::before {
-            content: "🕐 ";
-            margin-right: 8px;
-            opacity: 0.6;
+        .autocomplete-item .ac-icon {
+            flex-shrink: 0;
+            width: 16px;
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 12px;
+        }
+        .autocomplete-item .ac-text {
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .autocomplete-item .ac-hint {
+            flex-shrink: 0;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+        .autocomplete-no-results {
+            padding: 16px;
+            text-align: center;
+            color: var(--color-text-muted);
+            font-size: 13px;
+            font-style: italic;
+        }
+        /* Loading spinner inside search input */
+        .search-input-wrapper.loading::after {
+            content: '';
+            position: absolute;
+            right: 8px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--color-text-muted);
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 0.6s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: translateY(-50%) rotate(360deg); }
         }
         .search-button {
             padding: 12px 20px;
             background: transparent;
             border: none;
-            border-left: 1px solid #444;
-            color: #6b8eff;
+            border-left: 1px solid var(--color-border-default);
+            color: var(--color-accent-primary);
             cursor: pointer;
             font-size: 15px;
             font-weight: 500;
-            border-radius: 0 8px 8px 0;
+            border-radius: 0 4px 4px 0;
+            transition: background 0.15s, color 0.15s;
         }
         .search-button:hover {
-            background: rgba(107, 142, 255, 0.1);
+            background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
         }
         .search-button:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: -2px;
         }
         .search-button:active {
-            background: rgba(107, 142, 255, 0.2);
+            background: color-mix(in srgb, var(--color-accent-primary) 20%, transparent);
         }
         .advanced-options {
             display: grid;
@@ -264,9 +706,9 @@
             gap: 12px;
             margin-top: 16px;
             padding: 16px;
-            background: #1a1a1a;
+            background: var(--color-bg-primary);
             border-radius: 8px;
-            border: 1px solid #333;
+            border: 1px solid var(--color-border-default);
         }
         .advanced-toggle {
             text-align: center;
@@ -275,17 +717,17 @@
         .advanced-toggle button {
             background: none;
             border: none;
-            color: #888;
+            color: var(--color-text-muted);
             font-size: 13px;
             cursor: pointer;
             padding: 4px 8px;
             text-decoration: underline;
         }
         .advanced-toggle button:hover {
-            color: #aaa;
+            color: var(--color-text-secondary);
         }
         .advanced-toggle button:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 2px;
             border-radius: 2px;
         }
@@ -301,39 +743,64 @@
         }
         .option-group label {
             font-size: 13px;
-            color: #aaa;
+            color: var(--color-text-secondary);
             white-space: nowrap;
         }
         select, input[type="number"] {
             flex: 1;
             padding: 8px 12px;
-            background: #2a2a2a;
-            border: 1px solid #444;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-default);
             border-radius: 6px;
-            color: #e0e0e0;
+            color: var(--color-text-primary);
             font-size: 14px;
         }
         select:focus, input[type="number"]:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 1px;
         }
-        /* Skeleton loading screens */
+        /* Skeleton loading with shimmer/glimmer effect */
         .skeleton {
-            background: #2a2a2a;
+            background: linear-gradient(
+                90deg,
+                var(--skeleton-bg) 0%,
+                color-mix(in srgb, var(--skeleton-bg) 70%, var(--color-bg-elevated)) 40%,
+                var(--skeleton-bg) 80%
+            );
             background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+            animation: shimmer 1.8s ease-in-out infinite;
             border-radius: 4px;
         }
         @keyframes shimmer {
             0% { background-position: 200% 0; }
             100% { background-position: -200% 0; }
         }
+        /* Card image loading placeholder -- prevents CLS */
+        .card-image-placeholder {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(
+                110deg,
+                var(--skeleton-bg) 25%,
+                color-mix(in srgb, var(--card-border-accent) 15%, var(--skeleton-bg)) 37%,
+                var(--skeleton-bg) 63%
+            );
+            background-size: 200% 100%;
+            animation: shimmer 1.8s ease-in-out infinite;
+        }
+        .card-image {
+            animation: fadeIn 0.3s ease-in;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
         .skeleton-result {
-            background: #1f1f1f;
+            background: var(--card-bg);
             padding: 16px;
             margin-bottom: 8px;
             border-radius: 6px;
-            border-left: 2px solid #444;
+            border-left: 2px solid var(--color-border-default);
         }
         .skeleton-title {
             height: 20px;
@@ -357,20 +824,23 @@
             margin-top: 32px;
         }
         .result-item {
-            background: #1f1f1f;
+            background: var(--card-bg);
             padding: 16px;
             margin-bottom: 8px;
             border-radius: 6px;
-            border-left: 2px solid #6b8eff;
+            border-left: 2px solid var(--card-border-accent);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
         }
         .result-item:hover {
-            background: #252525;
+            background: var(--card-hover-bg);
+            border-left-color: var(--card-hover-border);
+            box-shadow: var(--card-hover-shadow);
         }
         .result-item:focus-within {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 2px;
         }
         .result-info {
@@ -385,12 +855,18 @@
         }
         .result-image-wrapper {
             flex-shrink: 0;
-            width: 80px;
-            height: 112px;
+            width: 140px;
+            height: 196px;
             border-radius: 8px;
             overflow: hidden;
-            background: #2a2a2a;
-            border: 1px solid #444;
+            background: var(--color-bg-secondary);
+            border: 2px solid var(--card-border-accent);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+        .result-item:hover .result-image-wrapper {
+            transform: scale(1.03);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
         }
         .card-image {
             width: 100%;
@@ -404,58 +880,58 @@
         }
         .result-name {
             font-weight: 500;
-            color: #fff;
+            color: var(--color-text-primary);
             font-size: 16px;
             margin-bottom: 8px;
         }
         .result-meta {
             font-size: 12px;
-            color: #999;
+            color: var(--color-text-secondary);
             margin-top: 4px;
         }
         .result-tags {
             font-size: 13px;
-            color: #6b8eff;
+            color: var(--color-accent-primary);
             margin-top: 8px;
             font-weight: 500;
             line-height: 1.5;
         }
         .result-format {
             font-size: 12px;
-            color: #4a9eff;
+            color: var(--color-text-link);
             margin-top: 6px;
         }
         .result-archetype {
             font-size: 12px;
-            color: #9d4edd;
+            color: var(--color-accent-primary);
             margin-top: 6px;
             font-weight: 500;
         }
         .result-cooccur {
             font-size: 12px;
-            color: #06b6d4;
+            color: var(--color-text-secondary);
             margin-top: 6px;
             font-weight: 500;
         }
         .result-archetype-cooccur {
             font-size: 11px;
-            color: #a78bfa;
+            color: var(--color-text-secondary);
             margin-top: 4px;
         }
         .result-format-cooccur {
             font-size: 11px;
-            color: #60a5fa;
+            color: var(--color-text-secondary);
             margin-top: 4px;
         }
         .tag-label {
-            color: #999;
+            color: var(--color-text-secondary);
             font-weight: 400;
             margin-right: 6px;
         }
         .empty-state {
             text-align: center;
             padding: 60px 20px;
-            color: #888;
+            color: var(--color-text-muted);
         }
         .empty-state-icon {
             font-size: 48px;
@@ -465,21 +941,21 @@
         .empty-state-title {
             font-size: 20px;
             font-weight: 500;
-            color: #ccc;
+            color: var(--color-text-primary);
             margin-bottom: 8px;
         }
         .empty-state-message {
             font-size: 14px;
-            color: #999;
+            color: var(--color-text-secondary);
             margin-bottom: 24px;
         }
         .empty-state-suggestions {
             text-align: left;
             display: inline-block;
-            background: #1f1f1f;
+            background: var(--card-bg);
             padding: 16px 24px;
             border-radius: 8px;
-            border: 1px solid #333;
+            border: 1px solid var(--color-border-default);
         }
         .empty-state-suggestions .suggestion {
             font-size: 13px;
@@ -507,23 +983,30 @@
             letter-spacing: 0.3px;
         }
         .result-substitutability.can-substitute {
-            background: rgba(74, 222, 128, 0.15);
-            color: #4ade80;
-            border: 1px solid rgba(74, 222, 128, 0.3);
+            background: rgba(22, 163, 74, 0.12);
+            color: #15803d;
+            border: 1px solid rgba(22, 163, 74, 0.25);
         }
         .result-substitutability.partial-substitute {
-            background: rgba(251, 191, 36, 0.15);
-            color: #fbbf24;
-            border: 1px solid rgba(251, 191, 36, 0.3);
+            background: rgba(180, 130, 20, 0.12);
+            color: #92660a;
+            border: 1px solid rgba(180, 130, 20, 0.25);
         }
         .result-substitutability.not-substitutable {
-            background: rgba(239, 68, 68, 0.15);
-            color: #ef4444;
-            border: 1px solid rgba(239, 68, 68, 0.3);
+            background: rgba(185, 28, 28, 0.1);
+            color: #b91c1c;
+            border: 1px solid rgba(185, 28, 28, 0.2);
         }
+        /* Dark theme overrides for badge readability */
+        body.game-magic .result-substitutability.can-substitute,
+        body.game-yugioh .result-substitutability.can-substitute { color: #4ade80; }
+        body.game-magic .result-substitutability.partial-substitute,
+        body.game-yugioh .result-substitutability.partial-substitute { color: #fbbf24; }
+        body.game-magic .result-substitutability.not-substitutable,
+        body.game-yugioh .result-substitutability.not-substitutable { color: #ef4444; }
         .result-oracle {
             font-size: 12px;
-            color: #aaa;
+            color: var(--color-text-secondary);
             margin-top: 8px;
             line-height: 1.4;
             font-style: italic;
@@ -541,11 +1024,11 @@
         .similarity-percent {
             font-size: 16px;
             font-weight: 600;
-            color: #fff;
+            color: var(--color-text-primary);
         }
         .similarity-label {
             font-size: 12px;
-            color: #aaa;
+            color: var(--color-text-secondary);
             font-style: italic;
         }
         .feedback-controls {
@@ -561,22 +1044,22 @@
         .rating-btn {
             padding: 6px 12px;
             font-size: 13px;
-            background: #2a2a2a;
-            border: 1px solid #3a3a3a;
-            color: #ccc;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-default);
+            color: var(--color-text-secondary);
             cursor: pointer;
         }
         .rating-btn:hover {
-            background: #333;
+            background: var(--color-bg-tertiary);
         }
         .rating-btn:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 1px;
         }
         .rating-btn.active {
-            background: #6b8eff;
-            border-color: #6b8eff;
-            color: #fff;
+            background: var(--color-accent-primary);
+            border-color: var(--color-accent-primary);
+            color: var(--btn-text);
         }
         .substitute-toggle {
             display: flex;
@@ -630,15 +1113,15 @@
         }
         .model-info {
             font-size: 12px;
-            color: #666;
+            color: var(--color-text-muted);
             margin-top: 24px;
             padding-top: 16px;
-            border-top: 1px solid #2a2a2a;
+            border-top: 1px solid var(--color-bg-secondary);
         }
         .loading {
             text-align: center;
             padding: 32px;
-            color: #666;
+            color: var(--color-text-muted);
             font-size: 14px;
         }
         .hidden {
@@ -647,39 +1130,39 @@
         .method-badge {
             display: inline-block;
             padding: 2px 8px;
-            background: #444;
+            background: var(--color-border-default);
             border-radius: 3px;
             font-size: 11px;
             margin-left: 10px;
-            color: #aaa;
+            color: var(--color-text-secondary);
         }
         .similarity-bar {
             width: 80px;
             height: 3px;
-            background: #2a2a2a;
+            background: var(--color-bg-secondary);
             border-radius: 2px;
             margin-top: 6px;
             overflow: hidden;
         }
         .similarity-fill {
             height: 100%;
-            background: #6b8eff;
+            background: var(--similarity-fill);
         }
         /* Deck completion UI */
         .deck-input {
             width: 100%;
             min-height: 200px;
             padding: 12px;
-            background: #2a2a2a;
-            border: 1px solid #444;
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border-default);
             border-radius: 6px;
-            color: #e0e0e0;
+            color: var(--color-text-primary);
             font-family: monospace;
             font-size: 14px;
             resize: vertical;
         }
         .deck-input:focus {
-            outline: 2px solid #6b8eff;
+            outline: 2px solid var(--color-border-focus);
             outline-offset: 1px;
         }
         .deck-stats {
@@ -689,21 +1172,134 @@
             margin-top: 16px;
         }
         .deck-stat {
-            background: #1f1f1f;
+            background: var(--card-bg);
             padding: 12px;
             border-radius: 6px;
-            border: 1px solid #333;
+            border: 1px solid var(--color-border-default);
         }
         .deck-stat-label {
             font-size: 12px;
-            color: #999;
+            color: var(--color-text-secondary);
             margin-bottom: 4px;
         }
         .deck-stat-value {
             font-size: 20px;
             font-weight: 600;
-            color: #fff;
+            color: var(--color-text-primary);
         }
+        /* Game selector pill buttons */
+        .game-selector {
+            display: flex;
+            gap: 4px;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+        .game-btn {
+            padding: 7px 20px;
+            border-radius: 4px 4px 0 0;
+            border: 1px solid var(--color-border-default);
+            border-bottom: none;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
+            color: var(--color-text-muted);
+            letter-spacing: 0.02em;
+        }
+        .game-btn:hover {
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+        }
+        .game-btn.active {
+            background: var(--search-bg);
+            border-color: var(--search-border);
+            color: var(--color-accent-primary);
+            font-weight: 700;
+            box-shadow: none;
+        }
+        /* Section accent bar (gradient strip above results) */
+        .section-accent-bar {
+            height: 3px;
+            background: var(--section-gradient);
+            border-radius: 3px;
+            margin-bottom: 16px;
+        }
+        /* Query card banner -- shows the searched card */
+        .query-card-banner {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--color-bg-elevated);
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            margin-bottom: 16px;
+        }
+        .query-card-banner .query-image-wrapper {
+            flex-shrink: 0;
+            width: 80px;
+            height: 112px;
+            border-radius: 6px;
+            overflow: hidden;
+            border: 2px solid var(--card-border-accent);
+        }
+        .query-card-banner .query-image-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .query-card-info {
+            flex: 1;
+            min-width: 0;
+        }
+        .query-card-info .query-card-name {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 4px;
+        }
+        .query-card-info .query-card-meta {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            line-height: 1.5;
+        }
+        .query-card-info .query-card-stats {
+            display: flex;
+            gap: 12px;
+            margin-top: 8px;
+            font-size: 12px;
+            color: var(--color-text-muted);
+        }
+        .query-card-stats .stat {
+            padding: 2px 8px;
+            background: var(--color-bg-tertiary);
+            border-radius: 3px;
+        }
+        body.game-magic .query-card-info .query-card-name {
+            font-family: 'Cinzel', Georgia, serif;
+        }
+        body.game-pokemon .query-card-info .query-card-name {
+            font-family: 'Nunito', sans-serif;
+        }
+        body.game-yugioh .query-card-info .query-card-name {
+            font-family: 'Crimson Pro', Georgia, serif;
+            color: var(--color-accent-primary);
+        }
+        /* Scrollbar theming */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--color-bg-primary); }
+        ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--color-accent-primary); }
+
+        /* Magic-specific image frame */
+        body.game-magic .result-image-wrapper {
+            border: 2px solid #c8a84b;
+            border-radius: 6px;
+            box-shadow: 0 0 8px rgba(155, 114, 207, 0.15);
+        }
+
         /* Mobile responsive */
         @media (max-width: 768px) {
             body {
@@ -721,6 +1317,15 @@
             }
             .options {
                 grid-template-columns: 1fr;
+            }
+            .result-header {
+                flex-direction: column;
+                align-items: center;
+            }
+            .result-image-wrapper {
+                width: 180px;
+                height: 252px;
+                margin-bottom: 12px;
             }
             .result-item {
                 flex-direction: column;
@@ -745,22 +1350,33 @@
             <button class="nav-tab active" role="tab" aria-selected="true" aria-controls="unified-search-tab" id="unified-search-tab-btn" onclick="switchTab('unified-search')">Search</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="contextual-tab" id="contextual-tab-btn" onclick="switchTab('contextual')">Contextual</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Completion</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="chat-tab" id="chat-tab-btn" onclick="switchTab('chat')">Chat</button>
         </nav>
 
         <main id="main-content">
             <!-- Unified Search Tab -->
             <div id="unified-search-tab" class="tab-content active" role="tabpanel" aria-labelledby="unified-search-tab-btn">
                 <div class="search-section">
-                    <p style="text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <p style="text-align: center; color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
                         Search by card name or description. Enter a card name to find similar cards, or describe what you're looking for.
                     </p>
+                    <div class="game-selector" role="radiogroup" aria-label="Game selection">
+                        <button type="button" class="game-btn" data-game="magic" role="radio" aria-checked="false">Magic</button>
+                        <button type="button" class="game-btn" data-game="pokemon" role="radio" aria-checked="false">Pokemon</button>
+                        <button type="button" class="game-btn active" data-game="yugioh" role="radio" aria-checked="true">Yu-Gi-Oh!</button>
+                    </div>
                     <form class="search-form" id="unifiedSearchForm" onsubmit="unifiedSearch(event)">
                         <div class="search-input-wrapper">
-                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required autofocus aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown">
+                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required autofocus aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
                             <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
                         </div>
                         <button type="submit" class="search-button" aria-label="Search">Search</button>
                     </form>
+                    <select id="searchGame" aria-label="Game selection" style="display:none;">
+                        <option value="magic">Magic: The Gathering</option>
+                        <option value="yugioh">Yu-Gi-Oh!</option>
+                        <option value="pokemon">Pokemon</option>
+                    </select>
                     <div class="advanced-toggle">
                         <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Advanced options</button>
                     </div>
@@ -769,8 +1385,8 @@
                             <div class="option-group">
                                 <label for="methodSelect">Method:</label>
                                 <select id="methodSelect" aria-label="Similarity search method">
-                                    <option value="fusion" selected>Fusion</option>
-                                    <option value="embedding">Embedding</option>
+                                    <option value="fusion">Fusion</option>
+                                    <option value="embedding" selected>Embedding</option>
                                     <option value="jaccard">Jaccard</option>
                                 </select>
                             </div>
@@ -805,9 +1421,10 @@
                 </div>
 
                 <div id="statusMessage" class="status hidden" role="status" aria-live="polite"></div>
-                <div id="searchModeIndicator" style="text-align: center; color: #888; font-size: 12px; margin-top: 8px; min-height: 16px;"></div>
+                <div id="searchModeIndicator" style="text-align: center; color: var(--color-text-muted); font-size: 12px; margin-top: 8px; min-height: 16px;"></div>
 
                 <div class="results-section" id="resultsSection" style="display: none;">
+                    <div class="section-accent-bar"></div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
                         <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Results</h2>
                         <div class="feedback-toggle">
@@ -824,7 +1441,7 @@
             <!-- Hybrid Search Tab -->
             <div id="hybrid-tab" class="tab-content" role="tabpanel" aria-labelledby="hybrid-tab-btn">
                 <div class="search-section">
-                    <p style="text-align: center; color: #888; font-size: 14px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                    <p style="text-align: center; color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
                         Search by description: find cards matching text or meaning. Combines keyword search (Meilisearch) and semantic search (Qdrant).
                     </p>
                     <form class="search-form" id="hybridSearchForm">
@@ -906,7 +1523,7 @@
                                 <option value="pokemon">Pokemon</option>
                             </select>
                         </div>
-                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: #aaa; font-size: 13px;">Deck (JSON format):</label>
+                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 13px;">Deck (JSON format):</label>
                         <textarea id="deckInput" class="deck-input" placeholder='{"Main": ["Card Name 1", "Card Name 2", ...], "Sideboard": [...]}' required aria-label="Deck in JSON format"></textarea>
                         <div class="advanced-options" style="display: grid; margin-top: 16px;">
                             <div class="option-group">
@@ -935,24 +1552,43 @@
                     <div id="deckResultsContainer"></div>
                 </div>
             </div>
+
+            <!-- Chat Tab -->
+            <div id="chat-tab" class="tab-content" role="tabpanel" aria-labelledby="chat-tab-btn">
+                <div class="chat-container">
+                    <div class="chat-messages" id="chatMessages" aria-live="polite" aria-label="Chat messages">
+                        <div class="chat-welcome">
+                            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px; color: var(--color-text-primary);">DeckSage Assistant</div>
+                            <p style="color: var(--color-text-muted); max-width: 500px; margin: 0 auto 16px; font-size: 14px;">
+                                Ask about cards, get deck advice, find synergies. I can search your card pool and analyze decks.
+                            </p>
+                            <div class="chat-suggestions">
+                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">Find cards similar to Lightning Bolt</button>
+                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">What are good burn spells?</button>
+                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">Suggest cards for an aggro deck</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="chat-input-area">
+                        <form id="chatForm" onsubmit="sendChatMessage(event)">
+                            <div class="chat-input-wrapper">
+                                <textarea id="chatInput" placeholder="Ask about cards, decks, or strategy..." rows="1"
+                                    aria-label="Chat message" maxlength="4000"></textarea>
+                                <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
+                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <line x1="22" y1="2" x2="11" y2="13"></line>
+                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                                    </svg>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </main>
     </div>
 
     <script>
-        // Register service worker for offline support
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('/sw.js')
-                    .then((registration) => {
-                        console.log('Service Worker registered:', registration.scope);
-                        trackEvent('sw_registered', { scope: registration.scope });
-                    })
-                    .catch((error) => {
-                        console.warn('Service Worker registration failed:', error);
-                    });
-            });
-        }
-
         // Check online/offline status
         window.addEventListener('online', () => {
             showStatus('Connection restored', 'success');
@@ -1213,11 +1849,14 @@
             if (!container) return;
 
             container.innerHTML = Array(count).fill(0).map(() => `
-                <div class="skeleton-result skeleton">
-                    <div class="skeleton-title skeleton"></div>
-                    <div class="skeleton-text skeleton"></div>
-                    <div class="skeleton-text skeleton short"></div>
-                    <div class="skeleton-bar skeleton"></div>
+                <div class="skeleton-result" style="display:flex;gap:16px;align-items:flex-start">
+                    <div style="flex-shrink:0;width:140px;height:196px;border-radius:8px;overflow:hidden" class="skeleton"></div>
+                    <div style="flex:1">
+                        <div class="skeleton-title skeleton"></div>
+                        <div class="skeleton-text skeleton"></div>
+                        <div class="skeleton-text skeleton short"></div>
+                        <div class="skeleton-bar skeleton"></div>
+                    </div>
                 </div>
             `).join('');
         }
@@ -1289,7 +1928,8 @@
 
             try {
                 // Quick check: fetch autocomplete to see if it's a card name
-                const autocompleteResponse = await fetch(`${API_BASE}/v1/cards?prefix=${encodeURIComponent(query)}&limit=5`);
+                const searchGame = document.getElementById('searchGame')?.value || 'magic';
+                const autocompleteResponse = await fetch(`${API_BASE}/v1/cards?game=${searchGame}&prefix=${encodeURIComponent(query)}&limit=5`);
                 let isCardName = false;
 
                 if (autocompleteResponse.ok) {
@@ -1334,7 +1974,7 @@
 
         async function searchCards(cardNameOverride = null) {
             const cardName = cardNameOverride || document.getElementById('cardInput')?.value.trim() || document.getElementById('unifiedInput')?.value.trim();
-            const method = document.getElementById('methodSelect')?.value || 'fusion';
+            const method = document.getElementById('methodSelect')?.value || 'embedding';
             const k = parseInt(document.getElementById('kInput')?.value || 10);
             const useCase = document.getElementById('useCaseSelect')?.value || 'substitute';
 
@@ -1401,6 +2041,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        game: document.getElementById('searchGame')?.value || 'magic',
                         query: cardName,
                         top_k: k,
                         mode: method,
@@ -1533,6 +2174,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        game: document.getElementById('searchGame')?.value || 'magic',
                         query: query,
                         limit: limit,
                         text_weight: textWeight,
@@ -1646,7 +2288,7 @@
             const container = document.getElementById('contextualResultsContainer');
             let html = '';
             for (const [category, cards] of Object.entries(categories)) {
-                html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: #6b8eff; font-size: 16px;">${escapeHtml(category)}</h3>`;
+                html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--color-accent-primary); font-size: 16px;">${escapeHtml(category)}</h3>`;
                 html += cards.map(card => {
                     const score = card.score !== undefined ? card.score : (card.similarity || 0);
                     const reasoning = card.reasoning ? `<div class="result-meta" style="margin-top: 4px;">${escapeHtml(card.reasoning)}</div>` : '';
@@ -1808,7 +2450,7 @@
             if (quality.overall_score !== undefined) {
                 html += `
                 <div style="margin-top: 16px; padding: 12px; background: rgba(107, 142, 255, 0.08); border-radius: 8px; border: 1px solid rgba(107, 142, 255, 0.2);">
-                    <h4 style="margin: 0 0 8px 0; color: #6b8eff; font-size: 13px;">Deck Quality</h4>
+                    <h4 style="margin: 0 0 8px 0; color: var(--color-accent-primary); font-size: 13px;">Deck Quality</h4>
                     <div style="display: flex; gap: 16px; flex-wrap: wrap;">
                         <span style="font-size: 12px;">Overall: <b>${quality.overall_score.toFixed(1)}/10</b></span>
                         <span style="font-size: 12px;">Curve: ${(quality.mana_curve_score * 100).toFixed(0)}%</span>
@@ -1826,14 +2468,15 @@
                     OT: pool=${otMetrics.pool_size} cards, distance=${otMetrics.ot_distance !== undefined ? otMetrics.ot_distance.toFixed(4) : 'n/a'}, reg=${otMetrics.sinkhorn_reg || 'default'}
                 </div>`;
             }
+            html += `
                 <div style="margin-top: 24px;">
-                    <h3 style="margin-bottom: 12px; color: #6b8eff;">Completed Deck (JSON)</h3>
+                    <h3 style="margin-bottom: 12px; color: var(--color-accent-primary);">Completed Deck (JSON)</h3>
                     <textarea class="deck-input" readonly style="min-height: 300px;">${JSON.stringify(data.deck, null, 2)}</textarea>
                 </div>
             `;
 
             if (data.steps && data.steps.length > 0) {
-                html += '<div style="margin-top: 24px;"><h3 style="margin-bottom: 12px; color: #6b8eff;">Completion Steps</h3>';
+                html += '<div style="margin-top: 24px;"><h3 style="margin-bottom: 12px; color: var(--color-accent-primary);">Completion Steps</h3>';
                 html += data.steps.map((step, idx) => `
                     <div class="result-item" style="margin-bottom: 8px;">
                         <div class="result-info">
@@ -1877,6 +2520,32 @@
             const resultsSection = document.getElementById('resultsSection');
 
             resultsContainer.innerHTML = '';
+
+            // Query card banner
+            const qm = data?.query_metadata;
+            if (qm && data.query) {
+                const qName = escapeHtml(data.query);
+                const qImg = qm.image_url ? `<div class="query-image-wrapper"><img src="${escapeHtml(qm.image_url)}" alt="${qName}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : '';
+                const qParts = [];
+                if (qm.type) qParts.push(escapeHtml(qm.type));
+                if (qm.colors) qParts.push(escapeHtml(String(qm.colors)));
+                if (qm.rarity) qParts.push(escapeHtml(qm.rarity));
+                const qStats = [];
+                if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">CMC ${qm.cmc}</span>`);
+                if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
+                if (qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
+                const banner = document.createElement('div');
+                banner.className = 'query-card-banner';
+                banner.innerHTML = `
+                    ${qImg}
+                    <div class="query-card-info">
+                        <div class="query-card-name">${qName}</div>
+                        ${qParts.length ? `<div class="query-card-meta">${qParts.join(' · ')}</div>` : ''}
+                        ${qStats.length ? `<div class="query-card-stats">${qStats.join('')}</div>` : ''}
+                    </div>
+                `;
+                resultsContainer.appendChild(banner);
+            }
             currentResults.forEach((result, index) => {
                 const item = document.createElement('div');
                 item.className = 'result-item';
@@ -1941,7 +2610,7 @@
 
                 // Escape all user data to prevent XSS
                 const cardNameEscaped = escapeHtml(result.card);
-                const cardImage = meta.image_url ? `<img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onerror="this.style.display='none'">` : '';
+                const cardImage = meta.image_url ? `<div class="card-image-placeholder"></div><img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onload="this.previousElementSibling.style.display='none'" onerror="this.style.display='none';this.previousElementSibling.style.display='none'">` : '';
 
                 item.innerHTML = `
                     <div class="result-info">
@@ -1958,17 +2627,17 @@
                                         <div class="similarity-fill" style="width: ${result.similarity * 100}%"></div>
                                     </div>
                                 </div>
+                                ${metaText ? `<div class="result-meta">${escapeHtml(metaText)}</div>` : ''}
+                                ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${escapeHtml(functionalTags)}</div>` : ''}
+                                ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${escapeHtml(formatLegal)}</div>` : ''}
+                                ${archetypeStaples ? `<div class="result-archetype"><span class="tag-label">Archetype:</span> ${escapeHtml(archetypeStaples)}</div>` : ''}
+                                ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${escapeHtml(cooccurNote)}</div>` : ''}
+                                ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
+                                ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
+                                <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
+                                ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
                             </div>
                         </div>
-                        ${metaText ? `<div class="result-meta">${escapeHtml(metaText)}</div>` : ''}
-                        ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${escapeHtml(functionalTags)}</div>` : ''}
-                        ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${escapeHtml(formatLegal)}</div>` : ''}
-                        ${archetypeStaples ? `<div class="result-archetype"><span class="tag-label">Archetype:</span> ${escapeHtml(archetypeStaples)}</div>` : ''}
-                        ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${escapeHtml(cooccurNote)}</div>` : ''}
-                        ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
-                        ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
-                        <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
-                        ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
                     </div>
                     ${feedbackControlsHtml}
                 `;
@@ -2047,6 +2716,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({
+                        game: document.getElementById('searchGame')?.value || 'yugioh',
                         query_card: currentQuery,
                         suggested_card: result.card,
                         task_type: 'similarity',
@@ -2087,10 +2757,11 @@
             }
         }
 
+        let autocompleteController = null;
+        let autocompleteRequestId = 0;
+
         async function fetchAutocomplete(query) {
-            // Changed: 1 character minimum instead of 2
             if (!query || query.length < 1) {
-                // Show search history if query is empty
                 const history = getSearchHistory();
                 if (history.length > 0) {
                     showAutocomplete([], query, history);
@@ -2100,14 +2771,30 @@
                 return;
             }
 
+            // Cancel previous in-flight request
+            if (autocompleteController) autocompleteController.abort();
+            autocompleteController = new AbortController();
+            const myId = ++autocompleteRequestId;
+
+            // Show loading spinner in search input
+            const wrapper = document.querySelector('.search-input-wrapper');
+            wrapper?.classList.add('loading');
+
             try {
                 const useLLM = localStorage.getItem('decksage_use_llm') === 'true';
-                const url = `${API_BASE}/v1/cards?prefix=${encodeURIComponent(query)}&limit=8${useLLM ? '&use_llm=true' : ''}`;
-                const response = await fetch(url);
+                const game = document.getElementById('searchGame')?.value || 'magic';
+                const url = `${API_BASE}/v1/cards?game=${game}&prefix=${encodeURIComponent(query)}&limit=8${useLLM ? '&use_llm=true' : ''}`;
+                const response = await fetch(url, { signal: autocompleteController.signal });
+
+                // Stale response guard: discard if a newer request was fired
+                if (myId !== autocompleteRequestId) return;
+
+                wrapper?.classList.remove('loading');
+
                 if (!response.ok) {
                     if (response.status === 503) {
                         const dropdown = document.getElementById('autocompleteDropdown');
-                        dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; font-style: italic; cursor: default;">Autocomplete requires embeddings to be loaded</div>';
+                        dropdown.innerHTML = '<div class="autocomplete-no-results">Autocomplete requires embeddings to be loaded</div>';
                         dropdown.classList.add('visible');
                         return;
                     }
@@ -2125,14 +2812,15 @@
                 } else if (history.length > 0) {
                     showAutocomplete([], query, history);
                 } else {
-                    // Show empty state
                     const dropdown = document.getElementById('autocompleteDropdown');
-                    dropdown.innerHTML = '<div class="autocomplete-item" style="color: #999; font-style: italic; cursor: default;">No suggestions found</div>';
+                    dropdown.innerHTML = `<div class="autocomplete-no-results">No results for "${escapeHtml(query)}"</div>`;
                     dropdown.classList.add('visible');
                 }
             } catch (error) {
+                if (error.name === 'AbortError') return; // Expected cancellation
+                wrapper?.classList.remove('loading');
                 const dropdown = document.getElementById('autocompleteDropdown');
-                dropdown.innerHTML = `<div class="autocomplete-item" style="color: #ef4444; font-style: italic; cursor: default;">Connection error</div>`;
+                dropdown.innerHTML = '<div class="autocomplete-no-results" style="color: var(--color-error, #ef4444);">Connection error</div>';
                 dropdown.classList.add('visible');
                 setTimeout(() => hideAutocomplete(), 2000);
             }
@@ -2144,40 +2832,55 @@
             const queryLower = query.toLowerCase();
 
             let html = '';
+            let globalIndex = 0;
 
-            // Show history first if available
-            if (history.length > 0 && query.length === 0) {
-                html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Recent Searches</div>';
-                history.slice(0, 5).forEach((item, index) => {
-                    html += `<div class="autocomplete-item history-item" data-index="${index}" data-value="${item}" role="option" aria-label="Recent search: ${item}" tabindex="0">${escapeHtml(item)}</div>`;
+            // Show history section
+            if (history.length > 0) {
+                html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Recent</div>';
+                history.slice(0, 5).forEach((item) => {
+                    const id = `ac-item-${globalIndex}`;
+                    let display = escapeHtml(item);
+                    if (queryLower && item.toLowerCase().includes(queryLower)) {
+                        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
+                        display = display.replace(regex, '<strong class="match">$1</strong>');
+                    }
+                    html += `<div class="autocomplete-item history-item" id="${id}" data-index="${globalIndex}" data-value="${item}" role="option" aria-selected="false"><span class="ac-icon">&#8986;</span><span class="ac-text">${display}</span></div>`;
+                    globalIndex++;
                 });
                 html += '</div>';
             }
 
-            // Show API suggestions
+            // Show card suggestions
             if (items.length > 0) {
-                if (history.length > 0) html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Suggestions</div>';
-                items.forEach((item, index) => {
-                    const itemLower = item.toLowerCase();
+                html += '<div class="autocomplete-section">';
+                if (history.length > 0) html += '<div class="autocomplete-section-title">Cards</div>';
+                items.forEach((item) => {
+                    const id = `ac-item-${globalIndex}`;
                     let highlighted = escapeHtml(item);
 
-                    // Improved highlighting: highlight all matches, not just first
-                    if (itemLower.includes(queryLower)) {
+                    // Bold the typed portion (research consensus: bold what user typed)
+                    if (queryLower && item.toLowerCase().includes(queryLower)) {
                         const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-                        highlighted = escapeHtml(item).replace(regex, '<strong class="match">$1</strong>');
+                        highlighted = highlighted.replace(regex, '<strong class="match">$1</strong>');
                     }
 
-                    html += `<div class="autocomplete-item" data-index="${history.length + index}" data-value="${item}" role="option" aria-label="Card: ${item}" tabindex="0">${highlighted}</div>`;
+                    html += `<div class="autocomplete-item" id="${id}" data-index="${globalIndex}" data-value="${item}" role="option" aria-selected="false"><span class="ac-icon">&#9830;</span><span class="ac-text">${highlighted}</span><span class="ac-hint">&#8629;</span></div>`;
+                    globalIndex++;
                 });
-                if (history.length > 0) html += '</div>';
+                html += '</div>';
             }
+
+            // Live region for screen reader announcement
+            const count = items.length + Math.min(history.length, 5);
+            html += `<div class="sr-only" aria-live="polite">${count} suggestion${count !== 1 ? 's' : ''} available</div>`;
 
             dropdown.innerHTML = html;
             dropdown.setAttribute('role', 'listbox');
-            dropdown.setAttribute('aria-label', `${items.length + history.length} suggestions`);
+            dropdown.setAttribute('aria-label', 'Search suggestions');
             dropdown.classList.add('visible');
             cardInput.setAttribute('aria-expanded', 'true');
-            autocompleteItems = [...history, ...items];
+            cardInput.removeAttribute('aria-activedescendant');
+            autocompleteItems = [...history.slice(0, 5), ...items];
             selectedAutocompleteIndex = -1;
         }
 
@@ -2264,18 +2967,13 @@
                     selectedAutocompleteIndex = Math.max(selectedAutocompleteIndex - 1, -1);
                     updateAutocompleteSelection();
                 } else if (e.key === 'Enter') {
-                    e.preventDefault();
                     if (selectedAutocompleteIndex >= 0 && selectedAutocompleteIndex < autocompleteItems.length) {
+                        // Arrow-key selected an item: pick it and search
+                        e.preventDefault();
                         selectAutocompleteItem(selectedAutocompleteIndex);
-                    } else if (autocompleteItems.length > 0) {
-                        inputElement.value = autocompleteItems[0];
+                    } else {
+                        // No item selected: just close dropdown, let the form submit naturally
                         hideAutocomplete();
-                        const currentTab = document.querySelector('.nav-tab.active')?.id?.replace('-tab-btn', '').replace('unified-search', 'unified-search');
-                        if (currentTab === 'unified-search') {
-                            unifiedSearch(new Event('submit'));
-                        } else if (currentTab === 'similarity') {
-                            searchCards();
-                        }
                     }
                 } else if (e.key === 'Escape') {
                     e.preventDefault();
@@ -2298,56 +2996,55 @@
 
         function updateAutocompleteSelection() {
             const items = document.querySelectorAll('.autocomplete-item');
+            const cardInput = document.getElementById('cardInput') || document.getElementById('unifiedInput');
             items.forEach((item, index) => {
                 if (index === selectedAutocompleteIndex) {
                     item.classList.add('selected');
                     item.setAttribute('aria-selected', 'true');
-                    item.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+                    item.scrollIntoView({ block: 'nearest' });
+                    // Set aria-activedescendant so screen readers announce the focused item
+                    if (cardInput && item.id) {
+                        cardInput.setAttribute('aria-activedescendant', item.id);
+                    }
                 } else {
                     item.classList.remove('selected');
-                    item.removeAttribute('aria-selected');
+                    item.setAttribute('aria-selected', 'false');
                 }
             });
+            // Clear activedescendant when deselected
+            if (selectedAutocompleteIndex < 0 && cardInput) {
+                cardInput.removeAttribute('aria-activedescendant');
+            }
         }
 
+        // Single click handler: item selection takes priority over outside-click dismiss
         document.addEventListener('click', (e) => {
+            const item = e.target.closest('.autocomplete-item');
+            if (item) {
+                e.stopPropagation();
+                const value = item.dataset.value;
+                if (value) {
+                    const input = document.getElementById('unifiedInput') || document.getElementById('cardInput');
+                    if (input) {
+                        input.value = value;
+                        hideAutocomplete();
+                        input.focus();
+                        // Auto-trigger search
+                        if (currentTab === 'unified-search') {
+                            unifiedSearch(new Event('submit'));
+                        } else if (currentTab === 'similarity') {
+                            searchCards();
+                        }
+                    }
+                }
+                return;
+            }
+            // Outside-click: dismiss dropdown
             const wrapper = document.querySelector('.search-input-wrapper');
             if (!wrapper || !wrapper.contains(e.target)) {
                 hideAutocomplete();
             }
         });
-
-        document.addEventListener('click', (e) => {
-            const item = e.target.closest('.autocomplete-item');
-            if (item) {
-                const value = item.dataset.value;
-                if (value) {
-                    const cardInput = document.getElementById('cardInput');
-                    if (cardInput) {
-                        cardInput.value = value;
-                        hideAutocomplete();
-                        cardInput.focus();
-                        if (currentTab === 'similarity') {
-                            searchCards();
-                        }
-                    }
-                }
-            }
-        });
-
-        function detectAndApplyGameStyle(cardName) {
-            const body = document.body;
-            body.classList.remove('game-magic', 'game-pokemon', 'game-yugioh');
-
-            const nameLower = cardName.toLowerCase();
-            if (nameLower.includes('-ex') || nameLower.includes('-gx') || nameLower.includes('-v') || nameLower.includes('pikachu') || nameLower.includes('charizard')) {
-                body.classList.add('game-pokemon');
-            } else if (nameLower.includes('blue-eyes') || nameLower.includes('dark magician') || nameLower.includes('exodia')) {
-                body.classList.add('game-yugioh');
-            } else {
-                body.classList.add('game-magic');
-            }
-        }
 
         // Form submissions
         // Unified search form (primary)
@@ -2388,17 +3085,210 @@
             completeDeck();
         });
 
-        // Update target size default when game changes
-        const deckGameSelect = document.getElementById('deckGame');
-        if (deckGameSelect) {
-            deckGameSelect.addEventListener('change', () => {
-                const targetInput = document.getElementById('targetSize');
+        // ── Chat assistant ───────────────────────────────────────────────
+        let chatSessionId = null;
+        let chatStreaming = false;
+
+        function getActiveGame() {
+            const btn = document.querySelector('.game-btn.active');
+            return btn ? btn.dataset.game : 'yugioh';
+        }
+
+        function sendChatSuggestion(btn) {
+            const input = document.getElementById('chatInput');
+            input.value = btn.textContent;
+            sendChatMessage(new Event('submit'));
+        }
+
+        function appendChatBubble(role, content) {
+            const container = document.getElementById('chatMessages');
+            // Hide welcome on first message
+            const welcome = container.querySelector('.chat-welcome');
+            if (welcome) welcome.style.display = 'none';
+
+            const bubble = document.createElement('div');
+            bubble.className = `chat-bubble ${role}`;
+            bubble.textContent = content;
+            container.appendChild(bubble);
+            container.scrollTop = container.scrollHeight;
+            return bubble;
+        }
+
+        function appendTypingIndicator() {
+            const container = document.getElementById('chatMessages');
+            const ind = document.createElement('div');
+            ind.className = 'chat-typing';
+            ind.id = 'chatTyping';
+            ind.innerHTML = 'Thinking<span class="dots"></span>';
+            container.appendChild(ind);
+            container.scrollTop = container.scrollHeight;
+            return ind;
+        }
+
+        function removeTypingIndicator() {
+            const el = document.getElementById('chatTyping');
+            if (el) el.remove();
+        }
+
+        // Auto-resize textarea
+        const chatInput = document.getElementById('chatInput');
+        chatInput.addEventListener('input', () => {
+            chatInput.style.height = 'auto';
+            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
+        });
+        chatInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                if (!chatStreaming) sendChatMessage(e);
+            }
+        });
+
+        async function sendChatMessage(e) {
+            e.preventDefault();
+            const input = document.getElementById('chatInput');
+            const msg = input.value.trim();
+            if (!msg || chatStreaming) return;
+
+            // Disable input
+            chatStreaming = true;
+            const sendBtn = document.getElementById('chatSendBtn');
+            sendBtn.disabled = true;
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show user message
+            appendChatBubble('user', msg);
+
+            // Show typing indicator
+            appendTypingIndicator();
+
+            // Build request body
+            const game = getActiveGame();
+            const body = { message: msg, game };
+            if (chatSessionId) body.session_id = chatSessionId;
+
+            // Optionally include deck from deck tab
+            const deckInput = document.getElementById('deckInput');
+            if (deckInput && deckInput.value.trim()) {
+                try { body.deck = JSON.parse(deckInput.value); } catch(_) {}
+            }
+
+            try {
+                const resp = await fetch(`${API_BASE}/v1/chat`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
+                    throw new Error(err.detail || `HTTP ${resp.status}`);
+                }
+
+                removeTypingIndicator();
+
+                // Create assistant bubble for streaming
+                const container = document.getElementById('chatMessages');
+                const bubble = document.createElement('div');
+                bubble.className = 'chat-bubble assistant';
+                container.appendChild(bubble);
+
+                // Read SSE stream
+                const reader = resp.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                let fullText = '';
+
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop(); // keep incomplete line
+
+                    for (const line of lines) {
+                        if (!line.startsWith('data: ')) continue;
+                        try {
+                            const evt = JSON.parse(line.slice(6));
+                            if (evt.type === 'session') {
+                                chatSessionId = evt.session_id;
+                            } else if (evt.type === 'token') {
+                                fullText = evt.content;
+                                bubble.textContent = fullText;
+                                container.scrollTop = container.scrollHeight;
+                            } else if (evt.type === 'error') {
+                                const errDiv = document.createElement('div');
+                                errDiv.className = 'chat-error';
+                                errDiv.textContent = evt.content;
+                                container.appendChild(errDiv);
+                            } else if (evt.type === 'done') {
+                                chatSessionId = evt.session_id;
+                            }
+                        } catch(_) {}
+                    }
+                }
+
+                // If bubble is empty (no tokens received), remove it
+                if (!fullText) bubble.remove();
+
+                container.scrollTop = container.scrollHeight;
+
+            } catch (err) {
+                removeTypingIndicator();
+                const container = document.getElementById('chatMessages');
+                const errDiv = document.createElement('div');
+                errDiv.className = 'chat-error';
+                errDiv.textContent = `Error: ${err.message}`;
+                container.appendChild(errDiv);
+                container.scrollTop = container.scrollHeight;
+            } finally {
+                chatStreaming = false;
+                sendBtn.disabled = false;
+                input.focus();
+            }
+        }
+
+        // Sync game selectors across all tabs + update pill buttons
+        function syncGameSelectors(game) {
+            // Sync hidden selects
+            for (const id of ['searchGame', 'contextualGame', 'deckGame']) {
+                const el = document.getElementById(id);
+                if (el) el.value = game;
+            }
+            // Sync pill buttons
+            document.querySelectorAll('.game-btn').forEach(btn => {
+                const isActive = btn.dataset.game === game;
+                btn.classList.toggle('active', isActive);
+                btn.setAttribute('aria-checked', isActive ? 'true' : 'false');
+            });
+            // Apply game body class for theming
+            document.body.classList.remove('game-magic', 'game-pokemon', 'game-yugioh');
+            document.body.classList.add(`game-${game}`);
+            // Update deck target size default
+            const targetInput = document.getElementById('targetSize');
+            if (targetInput) {
                 const defaults = { magic: 60, pokemon: 60, yugioh: 40 };
-                const game = deckGameSelect.value;
                 targetInput.value = defaults[game] || 60;
                 targetInput.placeholder = String(defaults[game] || 60);
-            });
+            }
+            // Persist selection
+            localStorage.setItem('decksage_game', game);
         }
+
+        // Pill button click handlers
+        document.querySelectorAll('.game-btn').forEach(btn => {
+            btn.addEventListener('click', () => syncGameSelectors(btn.dataset.game));
+        });
+
+        // Sync from other tab selects (contextual, deck)
+        for (const id of ['contextualGame', 'deckGame']) {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('change', () => syncGameSelectors(el.value));
+        }
+
+        // Restore persisted game or default to yugioh
+        syncGameSelectors(localStorage.getItem('decksage_game') || 'yugioh');
 
         // Keyboard shortcuts help (shown on focus)
         document.addEventListener('keydown', (e) => {
