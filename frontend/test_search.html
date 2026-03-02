@@ -115,10 +115,30 @@
         body.game-magic .result-item {
             border-left: 3px solid #c8a84b;
             background: linear-gradient(135deg, #252035 0%, #2a2240 100%);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(200,168,75,0.05);
+        }
+        body.game-magic .result-image-wrapper {
+            border: 2px solid #c8a84b;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.4), 0 0 6px rgba(200,168,75,0.15);
+        }
+        body.game-magic .result-name {
+            font-family: 'Cinzel', Georgia, serif;
+            color: #e8dcc8;
+            font-size: 17px;
+        }
+        body.game-magic h1 {
+            color: #c8a84b;
+            text-shadow: 0 0 20px rgba(200, 168, 75, 0.3);
         }
         body.game-magic .search-button,
         body.game-magic .nav-tab.active {
             text-shadow: 0 0 12px rgba(200, 168, 75, 0.4);
+        }
+        body.game-magic .result-item:hover {
+            box-shadow: 0 4px 20px rgba(200, 168, 75, 0.2), inset 0 1px 0 rgba(200,168,75,0.08);
+        }
+        body.game-magic .similarity-percent {
+            color: #c8a84b;
         }
 
         /* === POKEMON TCG === */
@@ -169,10 +189,19 @@
         body.game-pokemon .result-item {
             border-left: 3px solid #e0c878;
             border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
         }
         body.game-pokemon .result-image-wrapper {
             border-radius: 12px;
             border: 2px solid #e0c878;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        body.game-pokemon .result-name {
+            font-size: 18px;
+            color: #1a1a2e;
+        }
+        body.game-pokemon .similarity-percent {
+            color: #cc0000;
         }
         body.game-pokemon .search-button {
             font-family: 'Nunito', sans-serif;
@@ -257,13 +286,24 @@
         }
         body.game-yugioh .result-item {
             border-left: 3px solid #c9a84c;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.05);
         }
         body.game-yugioh .result-image-wrapper {
             border: 2px solid #c9a84c;
             border-radius: 4px;
+            box-shadow: 0 3px 14px rgba(0,0,0,0.5), 0 0 4px rgba(201,168,76,0.1);
+        }
+        body.game-yugioh h1 {
+            text-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
         }
         body.game-yugioh .nav-tab.active {
             text-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
+        }
+        body.game-yugioh .result-item:hover {
+            box-shadow: 0 4px 20px rgba(201, 168, 76, 0.2), inset 0 1px 0 rgba(201,168,76,0.06);
+        }
+        body.game-yugioh .similarity-percent {
+            color: #e8c96b;
         }
 
         /* Skip link for accessibility */
@@ -788,6 +828,16 @@
             background-size: 200% 100%;
             animation: shimmer 1.8s ease-in-out infinite;
         }
+        .card-image-fallback {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-muted);
+            opacity: 0.5;
+        }
         .card-image {
             animation: fadeIn 0.3s ease-in;
         }
@@ -825,19 +875,21 @@
         }
         .result-item {
             background: var(--card-bg);
-            padding: 16px;
-            margin-bottom: 8px;
-            border-radius: 6px;
-            border-left: 2px solid var(--card-border-accent);
+            padding: 20px;
+            margin-bottom: 14px;
+            border-radius: 8px;
+            border-left: 3px solid var(--card-border-accent);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.15s, border-color 0.15s, box-shadow 0.15s;
+            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
         }
         .result-item:hover {
             background: var(--card-hover-bg);
             border-left-color: var(--card-hover-border);
             box-shadow: var(--card-hover-shadow);
+            transform: translateY(-1px);
         }
         .result-item:focus-within {
             outline: 2px solid var(--color-border-focus);
@@ -855,18 +907,18 @@
         }
         .result-image-wrapper {
             flex-shrink: 0;
-            width: 140px;
-            height: 196px;
+            width: 150px;
+            height: 210px;
             border-radius: 8px;
             overflow: hidden;
             background: var(--color-bg-secondary);
             border: 2px solid var(--card-border-accent);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
         .result-item:hover .result-image-wrapper {
-            transform: scale(1.03);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+            transform: scale(1.04);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.22);
         }
         .card-image {
             width: 100%;
@@ -879,15 +931,17 @@
             min-width: 0;
         }
         .result-name {
-            font-weight: 500;
+            font-weight: 600;
             color: var(--color-text-primary);
-            font-size: 16px;
-            margin-bottom: 8px;
+            font-size: 18px;
+            margin-bottom: 10px;
+            line-height: 1.3;
         }
         .result-meta {
-            font-size: 12px;
+            font-size: 13px;
             color: var(--color-text-secondary);
-            margin-top: 4px;
+            margin-top: 6px;
+            line-height: 1.5;
         }
         .result-tags {
             font-size: 13px;
@@ -999,17 +1053,30 @@
         }
         /* Dark theme overrides for badge readability */
         body.game-magic .result-substitutability.can-substitute,
-        body.game-yugioh .result-substitutability.can-substitute { color: #4ade80; }
+        body.game-yugioh .result-substitutability.can-substitute {
+            color: #4ade80; background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.2);
+        }
         body.game-magic .result-substitutability.partial-substitute,
-        body.game-yugioh .result-substitutability.partial-substitute { color: #fbbf24; }
+        body.game-yugioh .result-substitutability.partial-substitute {
+            color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.2);
+        }
         body.game-magic .result-substitutability.not-substitutable,
-        body.game-yugioh .result-substitutability.not-substitutable { color: #ef4444; }
+        body.game-yugioh .result-substitutability.not-substitutable {
+            color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);
+        }
+        /* Dark theme metadata readability */
+        body.game-magic .result-meta,
+        body.game-yugioh .result-meta { font-size: 13px; }
+        body.game-magic .result-oracle,
+        body.game-yugioh .result-oracle { color: var(--color-text-secondary); }
         .result-oracle {
-            font-size: 12px;
-            color: var(--color-text-secondary);
-            margin-top: 8px;
-            line-height: 1.4;
+            font-size: 13px;
+            color: var(--color-text-muted);
+            margin-top: 10px;
+            line-height: 1.5;
             font-style: italic;
+            padding-top: 8px;
+            border-top: 1px solid var(--color-border-default);
         }
         .result-similarity {
             flex: 1;
@@ -1022,9 +1089,10 @@
             margin-bottom: 4px;
         }
         .similarity-percent {
-            font-size: 16px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             color: var(--color-text-primary);
+            letter-spacing: -0.02em;
         }
         .similarity-label {
             font-size: 12px;
@@ -1292,13 +1360,6 @@
         ::-webkit-scrollbar-track { background: var(--color-bg-primary); }
         ::-webkit-scrollbar-thumb { background: var(--color-border-default); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: var(--color-accent-primary); }
-
-        /* Magic-specific image frame */
-        body.game-magic .result-image-wrapper {
-            border: 2px solid #c8a84b;
-            border-radius: 6px;
-            box-shadow: 0 0 8px rgba(155, 114, 207, 0.15);
-        }
 
         /* Mobile responsive */
         @media (max-width: 768px) {
@@ -2610,12 +2671,15 @@
 
                 // Escape all user data to prevent XSS
                 const cardNameEscaped = escapeHtml(result.card);
-                const cardImage = meta.image_url ? `<div class="card-image-placeholder"></div><img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onload="this.previousElementSibling.style.display='none'" onerror="this.style.display='none';this.previousElementSibling.style.display='none'">` : '';
+                const noImageFallback = `<div class="card-image-fallback"><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg></div>`;
+                const cardImage = meta.image_url
+                    ? `<div class="card-image-placeholder"></div><img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onload="this.previousElementSibling.style.display='none'" onerror="this.style.display='none';this.previousElementSibling.style.display='none'">`
+                    : noImageFallback;
 
                 item.innerHTML = `
                     <div class="result-info">
                         <div class="result-header">
-                            ${cardImage ? `<div class="result-image-wrapper">${cardImage}</div>` : ''}
+                            <div class="result-image-wrapper">${cardImage}</div>
                             <div class="result-content">
                                 <div class="result-name">${cardNameEscaped}</div>
                                 <div class="result-similarity">
