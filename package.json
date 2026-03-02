@@ -6,6 +6,6 @@
     "vlm-critique:clear": "node scripts/vlm_critique.mjs --clear"
   },
   "devDependencies": {
-    "@arclabs561/ai-visual-test": "^0.6.0"
+    "@arclabs561/ai-visual-test": "file:../ai-visual-test"
   }
 }
