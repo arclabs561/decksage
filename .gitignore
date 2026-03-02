@@ -250,3 +250,7 @@ data/annotations/*.yaml
 data/annotations/*.json
 experiments/downstream_test_data/
 experiments/annotations/
+
+# Node.js (VLM critique scripts)
+node_modules/
+package-lock.json
