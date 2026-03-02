@@ -99,8 +99,12 @@ venv/
 megalinter-reports/
 report/
 
-# Snyk Security Extension - AI Rules (auto-generated)
-.cursor/rules/snyk_rules.mdc
+# IDE / assistant tooling
+.cursor/
+.claude/
+
+# QA artifacts (generated; do not track)
+qa/
 # Additional large files to ignore
 /data/decks/*.jsonl
 /data/processed/decks_pokemon.jsonl
