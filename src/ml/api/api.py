@@ -880,39 +880,73 @@ def _resolve_method(request: SimilarityRequest) -> str:
     return "embedding"
 
 
-def _enrich_similar_card(card_name: str, similarity: float, state: ApiState) -> SimilarCard:
+def _is_valid(val: object) -> bool:
+    """Return True if *val* is a non-None, non-NaN value worth exposing."""
+    if val is None:
+        return False
+    try:
+        if val != val:  # NaN
+            return False
+    except (TypeError, ValueError):
+        pass
+    return True
+
+
+# Per-game extra metadata fields (on top of the shared base set).
+_GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
+    "magic": (
+        "keywords", "keyword_abilities", "creature_types", "color_identity_str",
+    ),
+    "pokemon": (
+        "supertype", "subtypes", "hp", "retreat_cost",
+        "weakness_type", "resistance_type", "regulation_mark",
+        "set_name", "attacks_detail", "abilities_detail",
+    ),
+    "yugioh": (
+        "atk", "def_stat", "level_rank_link", "attribute", "race", "archetype",
+        "monster_type", "attribute_enriched", "race_enriched", "archetype_enriched",
+        "pendulum_scale", "link_markers", "card_category",
+    ),
+}
+
+# Shared base fields returned for every game.
+_BASE_FIELDS: tuple[str, ...] = (
+    "image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
+    "colors", "power", "toughness", "attribute", "race", "hp", "keywords",
+)
+
+
+def _enrich_similar_card(
+    card_name: str, similarity: float, state: ApiState, *, game: str = "magic",
+) -> SimilarCard:
     """Build a SimilarCard with metadata from enriched card data (image_url, type, etc.)."""
     meta = None
     if state.card_metadata:
         raw = state.card_metadata.get(card_name)
         if raw:
             meta = {}
-            # Fields to expose; skip None/NaN values
-            for key in ("image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
-                         "colors", "power", "toughness", "attribute", "race", "hp"):
+            # Combine base + per-game fields
+            extra = _GAME_EXTRA_FIELDS.get(game, ())
+            for key in _BASE_FIELDS + extra:
                 val = raw.get(key)
-                if val is None:
+                if not _is_valid(val):
                     continue
-                # pandas NaN check
-                try:
-                    if val != val:  # NaN
-                        continue
-                except (TypeError, ValueError):
-                    pass
-                if key == "oracle_text" and isinstance(val, str) and len(val) > 200:
-                    val = val[:200] + "..."
+                # Truncate oracle_text for the summary view (full text available in detail)
+                if key == "oracle_text" and isinstance(val, str) and len(val) > 300:
+                    meta["oracle_text_full"] = val
+                    val = val[:300] + "..."
                 meta[key] = val
             # Use type_line as fallback for "type"
             if "type" not in meta:
                 tl = raw.get("type_line")
-                if tl and tl == tl:
+                if _is_valid(tl):
                     meta["type"] = tl
             if not meta:
                 meta = None
     return SimilarCard(card=card_name, similarity=float(similarity), metadata=meta)
 
 
-def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]:
+def _similar_embedding(state: ApiState, query: str, k: int, *, game: str = "magic") -> list[SimilarCard]:
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     if query not in state.embeddings:
@@ -923,7 +957,7 @@ def _similar_embedding(state: ApiState, query: str, k: int) -> list[SimilarCard]
         )
     try:
         similar = state.embeddings.most_similar(query, topn=k)
-        return [_enrich_similar_card(card, sim, state) for card, sim in similar]
+        return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
     except (KeyError, RuntimeError, ValueError) as e:  # pragma: no cover - defensive
         raise HTTPException(status_code=500, detail=str(e)) from e
 
@@ -935,7 +969,7 @@ def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[
     if query not in adj:
         raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
     similarities = sm_jaccard(query, adj, top_k=k, filter_lands=(game == "magic"))
-    return [_enrich_similar_card(card, sim, state) for card, sim in similarities]
+    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similarities]
 
 
 def _similar_fusion(
@@ -1027,7 +1061,7 @@ def _similar_fusion(
         else:
             similar = fusion.similar(query, k, task_type=task_type)
 
-    return [_enrich_similar_card(card, sim, state) for card, sim in similar]
+    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
 
 
 def _similar_jaccard_faceted(
@@ -1044,7 +1078,7 @@ def _similar_jaccard_faceted(
         raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
     facet = (request.facet or "type").lower().strip()
     similar = sm_jaccard_faceted(query, adj, state.card_attrs, facet=facet, top_k=k)
-    return [_enrich_similar_card(card, sim, state) for card, sim in similar]
+    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
 
 
 def _apply_mmr_postprocess(
@@ -1098,7 +1132,7 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     k = request.top_k
     method = _resolve_method(request)
     if method == "embedding":
-        results = _similar_embedding(state, query, k)
+        results = _similar_embedding(state, query, k, game=game)
     elif method == "jaccard":
         results = _similar_jaccard(state, query, k, game=game)
     elif method == "jaccard_faceted":
@@ -1112,29 +1146,9 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     if method != "fusion" and request.mmr_lambda is not None:
         results = _apply_mmr_postprocess(state, results, request.mmr_lambda, k)
 
-    # Look up query card metadata (image, type, etc.)
-    query_meta = None
-    if state.card_metadata:
-        raw = state.card_metadata.get(query)
-        if raw:
-            query_meta = {}
-            for key in ("image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
-                         "colors", "power", "toughness", "attribute", "race", "hp"):
-                val = raw.get(key)
-                if val is None:
-                    continue
-                try:
-                    if val != val:
-                        continue
-                except (TypeError, ValueError):
-                    pass
-                query_meta[key] = val
-            if "type" not in query_meta:
-                tl = raw.get("type_line")
-                if tl and tl == tl:
-                    query_meta["type"] = tl
-            if not query_meta:
-                query_meta = None
+    # Look up query card metadata (image, type, etc.) -- reuse enrichment logic
+    query_enriched = _enrich_similar_card(query, 1.0, state, game=game)
+    query_meta = query_enriched.metadata
 
     return SimilarityResponse(
         query=query,
@@ -1672,6 +1686,54 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
     return fn
 
 
+def _extract_deck_colors(deck: dict, game: str, card_metadata: dict | None) -> set[str] | None:
+    """Extract the color identity of a deck from its cards.
+
+    Returns a set of single-letter color codes (e.g. {"W", "U", "B"})
+    or None if color identity data is unavailable or game is not Magic.
+    """
+    if game != "magic" or not card_metadata:
+        return None
+
+    from ..deck_building.deck_completion import _main_partition_name
+
+    part = _main_partition_name(game)
+    colors: set[str] = set()
+    for p in deck.get("partitions", []) or []:
+        if p.get("name") != part:
+            continue
+        for card in p.get("cards", []) or []:
+            name = str(card.get("name", ""))
+            meta = card_metadata.get(name)
+            if meta:
+                ci = meta.get("color_identity_str", "")
+                if isinstance(ci, str) and ci:
+                    colors.update(ci)
+    return colors if colors else None
+
+
+def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: dict):
+    """Wrap a candidate function to filter out cards outside the deck's color identity."""
+
+    def filtered(card: str, k: int) -> list[tuple[str, float]]:
+        results = cand_fn(card, k * 2)  # over-fetch to compensate for filtering
+        filtered_results = []
+        for cand, score in results:
+            meta = card_metadata.get(cand)
+            if meta:
+                ci = meta.get("color_identity_str", "")
+                if isinstance(ci, str) and ci:
+                    cand_colors = set(ci)
+                    if not cand_colors.issubset(deck_colors):
+                        continue
+            filtered_results.append((cand, score))
+            if len(filtered_results) >= k:
+                break
+        return filtered_results
+
+    return filtered
+
+
 @router.post("/deck/suggest_actions", response_model=SuggestActionsResponse)
 def suggest_actions(req: SuggestActionsRequest):
     # Log query for analytics
@@ -1694,6 +1756,11 @@ def suggest_actions(req: SuggestActionsRequest):
     state = get_state(game)
     req.deck = _normalize_deck_format(req.deck, game)
     cand_fn = _make_candidate_fn(game, req.mode)
+
+    # Color identity filtering (Magic only)
+    deck_colors = _extract_deck_colors(req.deck, game, state.card_metadata)
+    if deck_colors and state.card_metadata:
+        cand_fn = _wrap_cand_fn_color_filter(cand_fn, deck_colors, state.card_metadata)
 
     # Optional price and tag hooks
     price_fn = None
@@ -1958,6 +2025,11 @@ def complete_deck(req: CompleteRequest):
 
     # Deck completion uses "completion" task type
     cand_fn = _make_candidate_fn(game, req.mode, task_type="completion")
+
+    # Color identity filtering (Magic only)
+    deck_colors = _extract_deck_colors(req.deck, game, state.card_metadata)
+    if deck_colors and state.card_metadata:
+        cand_fn = _wrap_cand_fn_color_filter(cand_fn, deck_colors, state.card_metadata)
     cfg = CompletionConfig(
         game=game,
         target_main_size=req.target_main_size,
