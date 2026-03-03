@@ -136,9 +136,14 @@
             text-shadow: 0 0 12px rgba(200, 168, 75, 0.4);
         }
         body.game-magic .result-item:hover {
-            box-shadow: 0 6px 24px rgba(200, 168, 75, 0.25), inset 0 1px 0 rgba(200,168,75,0.1);
+            background: linear-gradient(135deg, #2a2540 0%, #302850 100%);
+            box-shadow: 0 8px 28px rgba(200, 168, 75, 0.3), 0 0 12px rgba(200,168,75,0.08), inset 0 1px 0 rgba(200,168,75,0.12);
             border-left-color: #e0c060;
-            transform: translateY(-2px);
+            border-left-width: 4px;
+            transform: translateY(-3px);
+        }
+        body.game-magic .result-item:hover .result-image-wrapper {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 10px rgba(200,168,75,0.25);
         }
         body.game-magic .similarity-percent {
             color: #c8a84b;
@@ -203,6 +208,10 @@
             transform: translateY(-3px);
             box-shadow: 0 8px 24px rgba(204, 0, 0, 0.14), 0 4px 12px rgba(0,0,0,0.06);
             border-color: #cc0000;
+            background: #fffdf8;
+        }
+        body.game-pokemon .result-item:hover .result-image-wrapper {
+            box-shadow: 0 6px 18px rgba(224, 200, 120, 0.4), 0 0 8px rgba(204,0,0,0.1);
         }
         body.game-pokemon .result-image-wrapper {
             border-radius: 12px;
@@ -373,9 +382,14 @@
             text-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
         }
         body.game-yugioh .result-item:hover {
-            box-shadow: 0 6px 24px rgba(201, 168, 76, 0.25), inset 0 1px 0 rgba(201,168,76,0.08);
+            background: linear-gradient(135deg, #0e0e22 0%, #141430 100%);
+            box-shadow: 0 8px 28px rgba(201, 168, 76, 0.3), 0 0 12px rgba(201,168,76,0.1), inset 0 1px 0 rgba(201,168,76,0.1);
             border-left-color: #e0c060;
-            transform: translateY(-2px);
+            border-left-width: 4px;
+            transform: translateY(-3px);
+        }
+        body.game-yugioh .result-item:hover .result-image-wrapper {
+            box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 8px rgba(201,168,76,0.2);
         }
         body.game-yugioh .similarity-percent {
             color: #e8c96b;
@@ -1142,15 +1156,15 @@
         }
         /* Dark theme metadata readability */
         body.game-magic .result-meta,
-        body.game-yugioh .result-meta { font-size: 13px; }
+        body.game-yugioh .result-meta { font-size: 14px; }
         body.game-magic .result-oracle { color: var(--color-text-secondary); }
-        body.game-yugioh .result-oracle { color: #b8b0c8; }
+        body.game-yugioh .result-oracle { color: #c8c0d8; }
         body.game-yugioh .result-item { margin-bottom: 22px; }
         .result-oracle {
-            font-size: 13px;
-            color: var(--color-text-muted);
+            font-size: 14px;
+            color: var(--color-text-secondary);
             margin-top: 10px;
-            line-height: 1.5;
+            line-height: 1.55;
             font-style: italic;
             padding-top: 8px;
             border-top: 1px solid var(--color-border-default);
