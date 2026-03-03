@@ -140,6 +140,123 @@ class TestZeroScoreSynergyFiltering:
 # ---------------------------------------------------------------------------
 
 
+# ---------------------------------------------------------------------------
+# 5. Color identity filtering
+# ---------------------------------------------------------------------------
+
+
+class TestColorIdentityFiltering:
+    def test_extract_deck_colors_magic(self):
+        from ml.api.api import _extract_deck_colors
+
+        deck = {"partitions": [{"name": "Main", "cards": [
+            {"name": "Lightning Bolt", "count": 4},
+            {"name": "Goblin Guide", "count": 4},
+        ]}]}
+        metadata = {
+            "Lightning Bolt": {"color_identity_str": "R"},
+            "Goblin Guide": {"color_identity_str": "R"},
+        }
+        colors = _extract_deck_colors(deck, "magic", metadata)
+        assert colors == {"R"}
+
+    def test_extract_deck_colors_multicolor(self):
+        from ml.api.api import _extract_deck_colors
+
+        deck = {"partitions": [{"name": "Main", "cards": [
+            {"name": "Lightning Bolt", "count": 4},
+            {"name": "Counterspell", "count": 4},
+        ]}]}
+        metadata = {
+            "Lightning Bolt": {"color_identity_str": "R"},
+            "Counterspell": {"color_identity_str": "U"},
+        }
+        colors = _extract_deck_colors(deck, "magic", metadata)
+        assert colors == {"R", "U"}
+
+    def test_extract_deck_colors_non_magic(self):
+        from ml.api.api import _extract_deck_colors
+
+        deck = {"partitions": [{"name": "Main Deck", "cards": [{"name": "X", "count": 1}]}]}
+        assert _extract_deck_colors(deck, "yugioh", {}) is None
+
+    def test_wrap_cand_fn_filters_offcolor(self):
+        from ml.api.api import _wrap_cand_fn_color_filter
+
+        def cand_fn(card, k):
+            return [("Red Card", 0.9), ("Green Card", 0.8), ("Red Card 2", 0.7)]
+
+        metadata = {
+            "Red Card": {"color_identity_str": "R"},
+            "Green Card": {"color_identity_str": "G"},
+            "Red Card 2": {"color_identity_str": "R"},
+        }
+        filtered = _wrap_cand_fn_color_filter(cand_fn, {"R"}, metadata)
+        results = filtered("test", 5)
+        cards = [c for c, _ in results]
+        assert "Green Card" not in cards
+        assert "Red Card" in cards
+        assert "Red Card 2" in cards
+
+    def test_wrap_cand_fn_allows_colorless(self):
+        from ml.api.api import _wrap_cand_fn_color_filter
+
+        def cand_fn(card, k):
+            return [("Sol Ring", 0.9), ("Green Card", 0.8)]
+
+        metadata = {
+            "Sol Ring": {"color_identity_str": ""},
+            "Green Card": {"color_identity_str": "G"},
+        }
+        filtered = _wrap_cand_fn_color_filter(cand_fn, {"R"}, metadata)
+        results = filtered("test", 5)
+        cards = [c for c, _ in results]
+        # Colorless cards (empty identity) should pass - empty set is subset of any set
+        assert "Sol Ring" in cards
+        assert "Green Card" not in cards
+
+    def test_wrap_cand_fn_allows_unknown_cards(self):
+        from ml.api.api import _wrap_cand_fn_color_filter
+
+        def cand_fn(card, k):
+            return [("Unknown Card", 0.9)]
+
+        filtered = _wrap_cand_fn_color_filter(cand_fn, {"R"}, {})
+        results = filtered("test", 5)
+        # Cards not in metadata should pass through (no data to filter on)
+        assert len(results) == 1
+
+
+# ---------------------------------------------------------------------------
+# 6. Score normalization (frontend logic, tested via pure function extraction)
+# ---------------------------------------------------------------------------
+
+
+class TestScoreNormalization:
+    """Test the normalization logic used in the frontend."""
+
+    def _normalize(self, scores):
+        """Mirror the frontend normalization logic."""
+        max_score = max(scores) if scores else 1
+        needs_norm = max_score > 0 and max_score < 0.1
+        if needs_norm:
+            return [(s / max_score) * 0.95 for s in scores]
+        return scores
+
+    def test_fusion_scores_normalized(self):
+        """Fusion scores (0.007-0.009) should be normalized to readable range."""
+        raw = [0.009, 0.008, 0.007, 0.006]
+        normed = self._normalize(raw)
+        assert normed[0] == pytest.approx(0.95, abs=0.01)
+        assert all(n > 0.5 for n in normed)
+
+    def test_normal_scores_unchanged(self):
+        """Normal scores (0.3-0.9) should not be modified."""
+        raw = [0.9, 0.7, 0.5, 0.3]
+        normed = self._normalize(raw)
+        assert normed == raw
+
+
 class TestSearch503OnBackendError:
     def test_search_raises_503_on_client_error(self):
         """When client.search() raises, the API should return 503, not 500."""
