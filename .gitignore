@@ -104,7 +104,8 @@ report/
 .claude/
 
 # QA artifacts (generated; do not track)
-qa/
+qa/*
+!qa/reference/
 # Additional large files to ignore
 /data/decks/*.jsonl
 /data/processed/decks_pokemon.jsonl
