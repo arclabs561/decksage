@@ -300,7 +300,7 @@ async function main() {
       if (result.responseTime) console.log(`  Response: ${result.responseTime}ms`);
 
       // Structured output: dimensions, issues, recommendations, reasoning
-      const semantic = result.semantic || {};
+      // Uses top-level richIssues/recommendations/strengths (v0.7.4+)
 
       if (result.dimensionScores) {
         console.log(`\nDIMENSIONS:`);
@@ -310,8 +310,8 @@ async function main() {
         }
       }
 
-      // Rich issues with importance + evidence
-      const issues = semantic.issues || result.issues || [];
+      // Rich issues with importance + evidence (top-level since v0.7.4)
+      const issues = result.richIssues || result.issues || [];
       if (issues.length) {
         console.log(`\nISSUES (${issues.length}):`);
         for (const issue of issues) {
@@ -327,7 +327,7 @@ async function main() {
       }
 
       // Actionable recommendations with priority + expected impact
-      const recs = semantic.recommendations || [];
+      const recs = result.recommendations || [];
       if (recs.length) {
         console.log(`\nRECOMMENDATIONS:`);
         for (const rec of recs) {
@@ -342,7 +342,7 @@ async function main() {
       }
 
       // Strengths (what's already working well)
-      const strengths = semantic.strengths || [];
+      const strengths = result.strengths || [];
       if (strengths.length) {
         console.log(`\nSTRENGTHS:`);
         strengths.forEach(s => console.log(`  + ${s}`));
