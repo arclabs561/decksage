@@ -876,7 +876,7 @@ def _resolve_method(request: SimilarityRequest) -> str:
     if request.use_case is UseCaseEnum.synergy:
         return "jaccard"
     if request.use_case is UseCaseEnum.meta:
-        return "fusion"
+        return "jaccard"
     return "embedding"
 
 
@@ -1508,12 +1508,18 @@ def search_cards_v1(request: SearchRequest):
             ),
         )
 
-    results = client.search(
-        query=request.query,
-        limit=request.limit,
-        text_weight=request.text_weight,
-        vector_weight=request.vector_weight,
-    )
+    try:
+        results = client.search(
+            query=request.query,
+            limit=request.limit,
+            text_weight=request.text_weight,
+            vector_weight=request.vector_weight,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Search backend error: {exc}",
+        )
 
     return SearchResponse(
         query=request.query,
@@ -1559,6 +1565,8 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
     if "partitions" in deck or not isinstance(deck, dict):
         return deck
     partitions = []
+    from ..deck_building.deck_completion import _main_partition_name
+
     for part_name, cards in deck.items():
         if isinstance(cards, list):
             card_entries = []
@@ -1567,7 +1575,11 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
                     card_entries.append({"name": c, "count": 1})
                 elif isinstance(c, dict):
                     card_entries.append(c)
-            partitions.append({"name": part_name, "cards": card_entries})
+            # Remap legacy "Main" to game-specific partition name (e.g. "Main Deck" for YGO/Pokemon)
+            actual_name = part_name
+            if part_name.lower() == "main":
+                actual_name = _main_partition_name(game)
+            partitions.append({"name": actual_name, "cards": card_entries})
     if partitions:
         return {"partitions": partitions}
     return deck
