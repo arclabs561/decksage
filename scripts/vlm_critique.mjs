@@ -13,8 +13,23 @@
  *   node scripts/vlm_critique.mjs            # evaluate all 3 themes
  *   node scripts/vlm_critique.mjs --clear    # clear cache first
  */
+import { readFileSync, existsSync } from 'fs';
 import { validateScreenshot, createConfig, clearCache, getCacheStats } from '@arclabs561/ai-visual-test';
-import { existsSync } from 'fs';
+
+// Load .env (lightweight, no dependency needed)
+try {
+  const envPath = new URL('../.env', import.meta.url).pathname;
+  for (const line of readFileSync(envPath, 'utf8').split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const eqIdx = trimmed.indexOf('=');
+    if (eqIdx > 0) {
+      const key = trimmed.slice(0, eqIdx).trim();
+      const val = trimmed.slice(eqIdx + 1).trim();
+      if (!process.env[key]) process.env[key] = val;
+    }
+  }
+} catch { /* .env optional */ }
 
 const PASS_THRESHOLD = 7;
 
@@ -118,14 +133,32 @@ const CARD_GAME_RUBRIC = {
 };
 
 // ---------------------------------------------------------------------------
-// Config with domain-level visual anchors (v0.7.0)
+// Reference image paths (relative to decksage repo root)
+// Art style refs: canonical original art that defines each game's aesthetic
+// UI refs: gold-standard card database interfaces
+// ---------------------------------------------------------------------------
+const REF = new URL('../qa/reference/', import.meta.url).pathname;
+
+const ART_REF = {
+  magic:   `${REF}mtg-serra-angel-card.jpg`,        // Douglas Shuler oil painting + card frame
+  pokemon: `${REF}pokemon-sugimori-watercolor.png`,  // Ken Sugimori 1996 watercolor
+  yugioh:  `${REF}yugioh-dark-magician-takahashi.png`, // Kazuki Takahashi manga (Duel Art)
+};
+
+const UI_REF = {
+  magic:   `${REF}ui-scryfall-search.png`,           // Scryfall card grid
+  pokemon: `${REF}ui-pkmncards-search.png`,           // pkmncards.com search
+  yugioh:  `${REF}ui-yugioh-official-db.png`,         // Konami official card DB
+};
+
+// ---------------------------------------------------------------------------
+// Config with domain-level visual anchors (v0.7.2)
 //
-// These anchors are injected into every VLM prompt automatically.
-// Text anchors ground the VLM on what "good" and "bad" look like for
-// card-game UIs; image anchors (when present) provide few-shot visual
-// calibration alongside the text cues.
+// Shared text anchors apply to all games. Game-specific image anchors are
+// passed per-screenshot via context.anchors (merged at call time).
 // ---------------------------------------------------------------------------
 const config = createConfig({
+  provider: 'gemini',  // Vision-capable provider required for image anchors
   anchors: {
     domain: 'Trading card game search & similarity tool (Magic, Pokemon, Yu-Gi-Oh)',
     positive: [
@@ -149,9 +182,6 @@ const config = createConfig({
       'Card stats or metadata missing entirely',
       'No hover or interaction feedback',
     ],
-    // Image anchors: uncomment when reference screenshots are available
-    // positiveExamples: ['./qa/reference/good-magic-theme.png'],
-    // negativeExamples: ['./qa/reference/bad-generic-layout.png'],
   },
 });
 
@@ -162,16 +192,19 @@ const screenshots = [
   {
     path: '/tmp/vlm_magic.png',
     game: 'Magic: The Gathering',
+    gameKey: 'magic',
     desc: 'Dark purple-slate (#1e1a2e) background, gold (#c8a84b) accents, Cinzel serif card names, radial gradient, gold card borders with purple glow. Power/toughness stat badges, keyword ability tags (Flying, Haste), creature type labels, expand chevron.',
   },
   {
     path: '/tmp/vlm_pokemon.png',
     game: 'Pokemon TCG',
+    gameKey: 'pokemon',
     desc: 'Light cream (#faf6f0) background, red (#cc0000) accent, yellow (#e0c878) card borders, Outfit geometric sans-serif (rounded/bold), 10px rounded corners, uppercase headers, hover lift. HP/retreat stat badges, energy type color-coded left borders, set name + regulation mark, subtype labels.',
   },
   {
     path: '/tmp/vlm_yugioh.png',
     game: 'Yu-Gi-Oh!',
+    gameKey: 'yugioh',
     desc: 'Dark navy (#0a0a18) background, millennium gold (#c9a84c) accents, Rajdhani uppercase headers, Crimson Pro card names, angular borders, diagonal gold line overlay. ATK/DEF stat badges, level indicators, attribute color coding (DARK=purple, FIRE=red), archetype badges in gold border, expand chevron.',
   },
 ];
@@ -218,12 +251,12 @@ async function main() {
   }
 
   const stats = getCacheStats();
-  console.log(`Cache: ${stats.size} entries, ${(stats.hitRate * 100).toFixed(0)}% hit rate`);
+  console.log(`Cache: ${stats.size} entries`);
   console.log(`Config: provider=${config.provider}, anchors=${config.anchors ? 'yes' : 'no'}`);
 
   let allPassed = true;
 
-  for (const { path, game, desc } of screenshots) {
+  for (const { path, game, gameKey, desc } of screenshots) {
     if (!existsSync(path)) {
       console.log(`\nSKIP: ${path} not found`);
       continue;
@@ -233,6 +266,23 @@ async function main() {
     console.log('='.repeat(60));
 
     try {
+      // Per-game image anchors: art style + UI reference, dimension-scoped.
+      // These merge with the shared text anchors from config.
+      const gameAnchors = {
+        positive: [
+          {
+            text: `Original ${game} art style -- the UI should evoke this aesthetic`,
+            image: ART_REF[gameKey],
+            dimension: 'game_authenticity',
+          },
+          {
+            text: `Gold-standard ${game} card database UI for layout/hierarchy reference`,
+            image: UI_REF[gameKey],
+            dimension: 'visual_hierarchy',
+          },
+        ],
+      };
+
       const result = await validateScreenshot(path, makePrompt(game, desc), {
         useCache: false,
         modelTier: 'balanced',
@@ -240,9 +290,7 @@ async function main() {
         includeDimensions: true,
         description: `DeckSage ${game} theme visual quality`,
         testType: 'visual-quality',
-        // Config-level anchors are injected automatically via createConfig.
-        // Per-screenshot anchors can be added here if needed, e.g.:
-        // anchors: { positive: ['This theme uses dark purple-slate background'] },
+        anchors: gameAnchors,
       });
 
       const score = result.score ?? 0;
@@ -251,7 +299,9 @@ async function main() {
       if (result.cached) console.log('  (served from cache)');
       if (result.responseTime) console.log(`  Response: ${result.responseTime}ms`);
 
-      // Display dimension scores (from structured JSON extraction)
+      // Structured output: dimensions, issues, recommendations, reasoning
+      const semantic = result.semantic || {};
+
       if (result.dimensionScores) {
         console.log(`\nDIMENSIONS:`);
         for (const [dim, val] of Object.entries(result.dimensionScores)) {
@@ -260,32 +310,46 @@ async function main() {
         }
       }
 
-      // Also try to parse dimensionScores from reasoning text as fallback
-      if (!result.dimensionScores && result.reasoning) {
-        const dimPattern = /"dimensionScores"\s*:\s*\{([^}]+)\}/;
-        const match = result.reasoning.match(dimPattern);
-        if (match) {
-          try {
-            const dims = JSON.parse(`{${match[1]}}`);
-            console.log(`\nDIMENSIONS (parsed from reasoning):`);
-            for (const [dim, val] of Object.entries(dims)) {
-              const bar = val >= PASS_THRESHOLD ? '+' : '-';
-              console.log(`  ${bar} ${dim}: ${val}/10`);
-            }
-          } catch { /* ignore parse errors */ }
+      // Rich issues with importance + evidence
+      const issues = semantic.issues || result.issues || [];
+      if (issues.length) {
+        console.log(`\nISSUES (${issues.length}):`);
+        for (const issue of issues) {
+          if (typeof issue === 'object') {
+            const imp = issue.importance ? ` [${issue.importance}]` : '';
+            const ev = issue.evidence ? `\n       Evidence: ${issue.evidence}` : '';
+            const fix = issue.suggestion ? `\n       Fix: ${issue.suggestion}` : '';
+            console.log(`  - ${issue.description}${imp}${ev}${fix}`);
+          } else {
+            console.log(`  - ${issue}`);
+          }
         }
       }
 
-      if (result.issues?.length) {
-        console.log(`\nISSUES (${result.issues.length}):`);
-        result.issues.forEach((issue, i) => console.log(`  ${i + 1}. ${issue}`));
+      // Actionable recommendations with priority + expected impact
+      const recs = semantic.recommendations || [];
+      if (recs.length) {
+        console.log(`\nRECOMMENDATIONS:`);
+        for (const rec of recs) {
+          if (typeof rec === 'object') {
+            const pri = rec.priority ? `[${rec.priority}]` : '';
+            const impact = rec.expectedImpact ? ` -> ${rec.expectedImpact}` : '';
+            console.log(`  ${pri} ${rec.suggestion}${impact}`);
+          } else {
+            console.log(`  - ${rec}`);
+          }
+        }
+      }
+
+      // Strengths (what's already working well)
+      const strengths = semantic.strengths || [];
+      if (strengths.length) {
+        console.log(`\nSTRENGTHS:`);
+        strengths.forEach(s => console.log(`  + ${s}`));
       }
 
       if (result.reasoning) {
-        const short = result.reasoning.length > 500
-          ? result.reasoning.slice(0, 500) + '...'
-          : result.reasoning;
-        console.log(`\nREASONING:\n${short}`);
+        console.log(`\nREASONING:\n${result.reasoning}`);
       }
 
       if (score < PASS_THRESHOLD) allPassed = false;
