@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeckSage - Card Similarity Search</title>
     <meta name="description" content="Search Magic: The Gathering, Pokemon, and Yu-Gi-Oh cards by name or text">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%23282840'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='%23c8a84b'>DS</text></svg>">
     <link rel="stylesheet" href="/static/common.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -124,7 +125,7 @@
         body.game-magic .result-name {
             font-family: 'Cinzel', Georgia, serif;
             color: #e8dcc8;
-            font-size: 17px;
+            font-size: 18px;
         }
         body.game-magic h1 {
             color: #c8a84b;
@@ -135,7 +136,9 @@
             text-shadow: 0 0 12px rgba(200, 168, 75, 0.4);
         }
         body.game-magic .result-item:hover {
-            box-shadow: 0 4px 20px rgba(200, 168, 75, 0.2), inset 0 1px 0 rgba(200,168,75,0.08);
+            box-shadow: 0 6px 24px rgba(200, 168, 75, 0.25), inset 0 1px 0 rgba(200,168,75,0.1);
+            border-left-color: #e0c060;
+            transform: translateY(-2px);
         }
         body.game-magic .similarity-percent {
             color: #c8a84b;
@@ -190,7 +193,7 @@
             text-transform: uppercase;
         }
         body.game-pokemon .result-item {
-            border-radius: 16px;
+            border-radius: 10px;
             border: 2px solid #e0c878;
             box-shadow: 0 3px 12px rgba(0,0,0,0.08);
             background: #fff;
@@ -344,6 +347,7 @@
         body.game-yugioh .result-name {
             font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
             font-weight: 600;
+            font-size: 19px;
             letter-spacing: 0.02em;
             color: var(--color-accent-primary);
         }
@@ -369,7 +373,9 @@
             text-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
         }
         body.game-yugioh .result-item:hover {
-            box-shadow: 0 4px 20px rgba(201, 168, 76, 0.2), inset 0 1px 0 rgba(201,168,76,0.06);
+            box-shadow: 0 6px 24px rgba(201, 168, 76, 0.25), inset 0 1px 0 rgba(201,168,76,0.08);
+            border-left-color: #e0c060;
+            transform: translateY(-2px);
         }
         body.game-yugioh .similarity-percent {
             color: #e8c96b;
@@ -946,7 +952,7 @@
         .result-item {
             background: var(--card-bg);
             padding: 20px;
-            margin-bottom: 14px;
+            margin-bottom: 18px;
             border-radius: 8px;
             border-left: 3px solid var(--card-border-accent);
             display: flex;
@@ -977,8 +983,8 @@
         }
         .result-image-wrapper {
             flex-shrink: 0;
-            width: 150px;
-            height: 210px;
+            width: 160px;
+            height: 224px;
             border-radius: 8px;
             overflow: hidden;
             background: var(--color-bg-secondary);
@@ -987,8 +993,8 @@
             transition: transform 0.25s ease, box-shadow 0.25s ease;
         }
         .result-item:hover .result-image-wrapper {
-            transform: scale(1.04);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.22);
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.28);
         }
         .card-image {
             width: 100%;
@@ -1137,8 +1143,9 @@
         /* Dark theme metadata readability */
         body.game-magic .result-meta,
         body.game-yugioh .result-meta { font-size: 13px; }
-        body.game-magic .result-oracle,
-        body.game-yugioh .result-oracle { color: var(--color-text-secondary); }
+        body.game-magic .result-oracle { color: var(--color-text-secondary); }
+        body.game-yugioh .result-oracle { color: #b8b0c8; }
+        body.game-yugioh .result-item { margin-bottom: 22px; }
         .result-oracle {
             font-size: 13px;
             color: var(--color-text-muted);
@@ -1148,6 +1155,464 @@
             padding-top: 8px;
             border-top: 1px solid var(--color-border-default);
         }
+
+        /* === STAT BADGES (Power/Toughness, ATK/DEF, HP) === */
+        .stat-badges {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .stat-badge {
+            font-size: 13px;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 4px;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border-default);
+            white-space: nowrap;
+        }
+        .stat-badge.stat-combat {
+            background: rgba(220, 38, 38, 0.1);
+            border-color: rgba(220, 38, 38, 0.25);
+            color: #dc2626;
+        }
+        body.game-magic .stat-badge.stat-combat,
+        body.game-yugioh .stat-badge.stat-combat {
+            color: #f87171;
+            background: rgba(248, 113, 113, 0.1);
+            border-color: rgba(248, 113, 113, 0.2);
+        }
+        .stat-badge.stat-defense {
+            background: rgba(37, 99, 235, 0.1);
+            border-color: rgba(37, 99, 235, 0.25);
+            color: #2563eb;
+        }
+        body.game-magic .stat-badge.stat-defense,
+        body.game-yugioh .stat-badge.stat-defense {
+            color: #60a5fa;
+            background: rgba(96, 165, 250, 0.1);
+            border-color: rgba(96, 165, 250, 0.2);
+        }
+
+        /* === FUNCTIONAL TAG PILLS === */
+        .tag-pills {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 6px;
+        }
+        .tag-pill {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: var(--color-bg-tertiary);
+            color: var(--color-accent-primary);
+            border: 1px solid var(--color-border-default);
+            white-space: nowrap;
+        }
+        body.game-pokemon .tag-pill {
+            background: rgba(204, 0, 0, 0.06);
+            border-color: rgba(204, 0, 0, 0.15);
+            color: #cc0000;
+        }
+
+        /* === KEYWORD TAGS (Magic abilities, YGO archetype) === */
+        .keyword-tags {
+            display: flex;
+            gap: 4px;
+            flex-wrap: wrap;
+            margin-top: 4px;
+        }
+        .keyword-tag {
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 7px;
+            border-radius: 3px;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-secondary);
+            border: 1px solid var(--color-border-default);
+        }
+
+        /* === ARCHETYPE BADGE (YGO) === */
+        .archetype-badge {
+            display: inline-block;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 4px;
+            margin-top: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        body.game-yugioh .archetype-badge {
+            background: rgba(201, 168, 76, 0.12);
+            border: 1px solid rgba(201, 168, 76, 0.3);
+            color: #c9a84c;
+        }
+        body.game-magic .archetype-badge {
+            background: rgba(155, 114, 207, 0.12);
+            border: 1px solid rgba(155, 114, 207, 0.25);
+            color: #b08adf;
+        }
+        body.game-pokemon .archetype-badge {
+            background: rgba(42, 117, 187, 0.1);
+            border: 1px solid rgba(42, 117, 187, 0.2);
+            color: #2a75bb;
+        }
+
+        /* === YGO ATTRIBUTE COLORS === */
+        .attr-dark { color: #a78bfa; }
+        .attr-light { color: #fbbf24; }
+        .attr-fire { color: #f87171; }
+        .attr-water { color: #60a5fa; }
+        .attr-earth { color: #a3e635; }
+        .attr-wind { color: #34d399; }
+        .attr-divine { color: #f59e0b; }
+
+        /* === POKEMON ENERGY TYPE BARS === */
+        body.game-pokemon .result-item[data-energy-type="Fire"] { border-left: 3px solid #f87171; }
+        body.game-pokemon .result-item[data-energy-type="Water"] { border-left: 3px solid #60a5fa; }
+        body.game-pokemon .result-item[data-energy-type="Grass"] { border-left: 3px solid #4ade80; }
+        body.game-pokemon .result-item[data-energy-type="Lightning"] { border-left: 3px solid #fbbf24; }
+        body.game-pokemon .result-item[data-energy-type="Psychic"] { border-left: 3px solid #c084fc; }
+        body.game-pokemon .result-item[data-energy-type="Fighting"] { border-left: 3px solid #f97316; }
+        body.game-pokemon .result-item[data-energy-type="Darkness"] { border-left: 3px solid #6366f1; }
+        body.game-pokemon .result-item[data-energy-type="Metal"] { border-left: 3px solid #94a3b8; }
+        body.game-pokemon .result-item[data-energy-type="Dragon"] { border-left: 3px solid #c9a84c; }
+        body.game-pokemon .result-item[data-energy-type="Fairy"] { border-left: 3px solid #f0abfc; }
+        body.game-pokemon .result-item[data-energy-type="Colorless"] { border-left: 3px solid #d1d5db; }
+
+        /* === YGO LEVEL STARS === */
+        .level-stars {
+            display: inline-flex;
+            gap: 1px;
+            margin-left: 4px;
+            vertical-align: middle;
+        }
+        .level-star {
+            width: 10px;
+            height: 10px;
+            background: #c9a84c;
+            border-radius: 50%;
+            display: inline-block;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+
+        /* === CLICK-TO-EXPAND / ACCORDION === */
+        .result-item {
+            cursor: pointer;
+        }
+        .result-expand-panel {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease-out, padding 0.2s ease-out;
+            border-top: none;
+        }
+        .result-item.expanded .result-expand-panel {
+            max-height: 800px;
+            padding-top: 16px;
+            border-top: 1px solid var(--color-border-default);
+            margin-top: 12px;
+        }
+        .expand-full-text {
+            font-size: 13px;
+            line-height: 1.6;
+            color: var(--color-text-secondary);
+            margin-bottom: 12px;
+            white-space: pre-wrap;
+        }
+        body.game-yugioh .expand-full-text { color: #c0b8d0; }
+        body.game-magic .expand-full-text { color: #bbb0cc; }
+        .expand-stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .expand-stat-item {
+            font-size: 12px;
+            padding: 6px 10px;
+            background: var(--color-bg-secondary);
+            border-radius: 4px;
+            border: 1px solid var(--color-border-default);
+        }
+        .expand-stat-item .stat-key {
+            color: var(--color-text-muted);
+            font-weight: 400;
+        }
+        .expand-stat-item .stat-val {
+            color: var(--color-text-primary);
+            font-weight: 600;
+        }
+        .expand-actions {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 8px;
+        }
+        .expand-action-btn {
+            font-size: 12px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: 1px solid var(--color-border-default);
+            background: var(--color-bg-secondary);
+            color: var(--color-text-primary);
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+        .expand-action-btn:hover {
+            background: var(--color-bg-tertiary);
+            border-color: var(--color-accent-primary);
+        }
+        .expand-action-btn.primary {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+            border-color: transparent;
+        }
+        .expand-action-btn.primary:hover {
+            background: var(--btn-bg-hover);
+        }
+        .expand-chevron {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            margin-left: 8px;
+            transition: transform 0.2s;
+            color: var(--color-text-muted);
+            flex-shrink: 0;
+        }
+        .result-item.expanded .expand-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* === CARD DETAIL DRAWER === */
+        .card-drawer-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+            pointer-events: none;
+        }
+        .card-drawer-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .card-drawer {
+            position: fixed;
+            top: 0;
+            right: -420px;
+            width: 400px;
+            height: 100vh;
+            background: var(--color-bg-primary);
+            border-left: 1px solid var(--color-border-default);
+            z-index: 1001;
+            transition: right 0.25s ease;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+        }
+        .card-drawer.open {
+            right: 0;
+        }
+        .drawer-close {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 32px;
+            height: 32px;
+            border: none;
+            background: var(--color-bg-secondary);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--color-text-secondary);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .drawer-close:hover {
+            background: var(--color-bg-tertiary);
+        }
+        .drawer-card-image {
+            width: 100%;
+            max-width: 300px;
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            display: block;
+            border: 2px solid var(--card-border-accent);
+        }
+        .drawer-card-name {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--color-text-primary);
+            margin-bottom: 8px;
+        }
+        .drawer-meta-table {
+            width: 100%;
+            font-size: 13px;
+            border-collapse: collapse;
+            margin: 12px 0;
+        }
+        .drawer-meta-table td {
+            padding: 6px 8px;
+            border-bottom: 1px solid var(--color-border-default);
+        }
+        .drawer-meta-table td:first-child {
+            color: var(--color-text-muted);
+            font-weight: 500;
+            width: 120px;
+        }
+        .drawer-meta-table td:last-child {
+            color: var(--color-text-primary);
+        }
+
+        /* === TOAST NOTIFICATIONS === */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .toast {
+            padding: 10px 20px;
+            border-radius: 8px;
+            background: var(--color-bg-elevated);
+            color: var(--color-text-primary);
+            border: 1px solid var(--color-border-default);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            font-size: 13px;
+            font-weight: 500;
+            animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
+        }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        /* === SAVED DECKS PANEL === */
+        .saved-decks-panel {
+            margin-top: 16px;
+            border: 1px solid var(--color-border-default);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .saved-decks-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 14px;
+            background: var(--color-bg-secondary);
+            border-bottom: 1px solid var(--color-border-default);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--color-text-primary);
+            cursor: pointer;
+        }
+        .saved-deck-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            border-bottom: 1px solid var(--color-border-default);
+            font-size: 13px;
+            transition: background 0.15s;
+        }
+        .saved-deck-item:last-child { border-bottom: none; }
+        .saved-deck-item:hover { background: var(--color-bg-tertiary); }
+        .saved-deck-info {
+            flex: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        .saved-deck-name {
+            font-weight: 600;
+            color: var(--color-text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .saved-deck-meta {
+            font-size: 11px;
+            color: var(--color-text-muted);
+            margin-top: 2px;
+        }
+        .saved-deck-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+        .saved-deck-actions button {
+            font-size: 11px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border-default);
+            background: var(--color-bg-secondary);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+        }
+        .saved-deck-actions button:hover {
+            background: var(--color-bg-tertiary);
+        }
+        .saved-deck-actions button.deck-delete:hover {
+            color: #ef4444;
+            border-color: rgba(239, 68, 68, 0.3);
+        }
+
+        /* === DECK FORMAT TOGGLE === */
+        .deck-format-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 8px;
+            border: 1px solid var(--color-border-default);
+            border-radius: 6px;
+            overflow: hidden;
+        }
+        .deck-format-btn {
+            flex: 1;
+            padding: 6px 12px;
+            border: none;
+            background: var(--color-bg-secondary);
+            color: var(--color-text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+        }
+        .deck-format-btn.active {
+            background: var(--btn-bg);
+            color: var(--btn-text);
+        }
+        .deck-export-actions {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .deck-export-btn {
+            font-size: 11px;
+            padding: 4px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--color-border-default);
+            background: var(--color-bg-secondary);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+        }
+        .deck-export-btn:hover {
+            background: var(--color-bg-tertiary);
+        }
+
         .result-similarity {
             flex: 1;
             margin-left: 20px;
@@ -1159,7 +1624,7 @@
             margin-bottom: 4px;
         }
         .similarity-percent {
-            font-size: 20px;
+            font-size: 22px;
             font-weight: 700;
             color: var(--color-text-primary);
             letter-spacing: -0.02em;
@@ -1656,8 +2121,22 @@
                                 <option value="pokemon">Pokemon</option>
                             </select>
                         </div>
-                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 13px;">Deck (JSON format):</label>
-                        <textarea id="deckInput" class="deck-input" placeholder='{"Main": ["Card Name 1", "Card Name 2", ...], "Sideboard": [...]}' required aria-label="Deck in JSON format"></textarea>
+                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 13px;">Deck list:</label>
+                        <div class="deck-format-toggle">
+                            <button type="button" class="deck-format-btn active" data-format="text" onclick="setDeckFormat('text')">Text</button>
+                            <button type="button" class="deck-format-btn" data-format="json" onclick="setDeckFormat('json')">JSON</button>
+                        </div>
+                        <textarea id="deckInput" class="deck-input" placeholder="4 Lightning Bolt
+4 Mountain
+2 Goblin Guide
+
+// Sideboard
+2 Pyroblast" required aria-label="Deck list"></textarea>
+                        <div class="deck-export-actions" id="deckExportActions" style="display: none;">
+                            <button type="button" class="deck-export-btn" onclick="exportDeckText()">Copy as Text</button>
+                            <button type="button" class="deck-export-btn" onclick="exportDeckJSON()">Copy as JSON</button>
+                            <button type="button" class="deck-export-btn" onclick="downloadDeckFile()">Download .txt</button>
+                        </div>
                         <div class="advanced-options" style="display: grid; margin-top: 16px;">
                             <div class="option-group">
                                 <label for="targetSize">Target Main Size:</label>
@@ -1681,8 +2160,18 @@
                 </div>
                 <div id="deckStatusMessage" class="status hidden" role="status" aria-live="polite"></div>
                 <div class="results-section" id="deckResultsSection" style="display: none;">
-                    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600;">Completed Deck</h2>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Completed Deck</h2>
+                        <button type="button" class="expand-action-btn primary" onclick="saveDeckPrompt()">Save Deck</button>
+                    </div>
                     <div id="deckResultsContainer"></div>
+                </div>
+                <div class="saved-decks-panel" id="savedDecksPanel">
+                    <div class="saved-decks-header" onclick="toggleSavedDecks()">
+                        <span>Saved Decks (<span id="savedDeckCount">0</span>)</span>
+                        <span class="expand-chevron" id="savedDecksChevron">&#9662;</span>
+                    </div>
+                    <div id="savedDecksList" style="display: none;"></div>
                 </div>
             </div>
 
@@ -1720,6 +2209,16 @@
             </div>
         </main>
     </div>
+
+    <!-- Card detail drawer -->
+    <div class="card-drawer-overlay" id="cardDrawerOverlay" onclick="closeCardDrawer()"></div>
+    <div class="card-drawer" id="cardDrawer">
+        <button class="drawer-close" onclick="closeCardDrawer()" aria-label="Close card details">&times;</button>
+        <div id="drawerContent"></div>
+    </div>
+
+    <!-- Toast notification container -->
+    <div class="toast-container" id="toastContainer"></div>
 
     <script>
         // Check online/offline status
@@ -2487,9 +2986,14 @@
 
             let deck;
             try {
-                deck = JSON.parse(deckText);
+                // Try JSON first, then fall back to text format
+                if (deckText.trim().startsWith('{') || deckText.trim().startsWith('[')) {
+                    deck = JSON.parse(deckText);
+                } else {
+                    deck = parseDeckList(deckText, game);
+                }
             } catch (e) {
-                showStatus(`Invalid JSON format: ${e.message}`, 'error', true, 'deckStatusMessage');
+                showStatus(`Invalid deck format: ${e.message}`, 'error', true, 'deckStatusMessage');
                 return;
             }
 
@@ -2667,6 +3171,9 @@
                 if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">CMC ${qm.cmc}</span>`);
                 if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
                 if (qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
+                if (qm.atk !== undefined && qm.atk !== null) qStats.push(`<span class="stat">ATK ${qm.atk}</span>`);
+                if (qm.def_stat !== undefined && qm.def_stat !== null) qStats.push(`<span class="stat">DEF ${qm.def_stat}</span>`);
+                if (qm.level_rank_link) qStats.push(`<span class="stat">Lv.${qm.level_rank_link}</span>`);
                 const banner = document.createElement('div');
                 banner.className = 'query-card-banner';
                 banner.innerHTML = `
@@ -2679,6 +3186,13 @@
                 `;
                 resultsContainer.appendChild(banner);
             }
+            // Normalize scores when raw values are very small (e.g. fusion mode ~0.007)
+            const maxScore = currentResults.length > 0
+                ? Math.max(...currentResults.map(r => r.similarity))
+                : 1;
+            const needsNormalization = maxScore > 0 && maxScore < 0.1;
+            const normalizeScore = (s) => needsNormalization ? (s / maxScore) * 0.95 : s;
+
             currentResults.forEach((result, index) => {
                 const item = document.createElement('div');
                 item.className = 'result-item';
@@ -2708,29 +3222,89 @@
                         <button class="rating-btn" onclick="submitFeedback(${index})" aria-label="Submit feedback">Submit</button>
                     </div>
                 ` : '';
-                const similarityPercent = (result.similarity * 100).toFixed(0);
-                const similarityLabel = result.similarity >= 0.9 ? 'Near substitute' :
-                                       result.similarity >= 0.7 ? 'Very similar' :
-                                       result.similarity >= 0.4 ? 'Somewhat similar' :
-                                       result.similarity >= 0.2 ? 'Marginally similar' : 'Weak connection';
+                const displayScore = normalizeScore(result.similarity);
+                const similarityPercent = (displayScore * 100).toFixed(0);
+                const similarityLabel = displayScore >= 0.9 ? 'Near substitute' :
+                                       displayScore >= 0.7 ? 'Very similar' :
+                                       displayScore >= 0.4 ? 'Somewhat similar' :
+                                       displayScore >= 0.2 ? 'Marginally similar' : 'Weak connection';
 
                 const meta = result.metadata || {};
+                const game = (data?.model_info?.game || 'magic').toLowerCase();
                 const metaParts = [];
                 if (meta.type) metaParts.push(meta.type);
                 if (meta.mana_cost) metaParts.push(meta.mana_cost);
                 if (meta.cmc !== undefined && meta.cmc !== null) metaParts.push(`CMC ${meta.cmc}`);
                 const metaText = metaParts.length > 0 ? metaParts.join(' · ') : '';
 
+                // Stat badges (game-specific)
+                const statBadges = [];
+                if (game === 'magic') {
+                    if (meta.power && meta.toughness) statBadges.push({label: `${meta.power}/${meta.toughness}`, cls: 'stat-combat'});
+                } else if (game === 'pokemon') {
+                    if (meta.hp) statBadges.push({label: `HP ${meta.hp}`, cls: 'stat-combat'});
+                    if (meta.retreat_cost !== undefined && meta.retreat_cost !== null) statBadges.push({label: `Retreat ${meta.retreat_cost}`, cls: 'stat-defense'});
+                } else if (game === 'yugioh') {
+                    if (meta.atk !== undefined && meta.atk !== null) statBadges.push({label: `ATK ${meta.atk}`, cls: 'stat-combat'});
+                    if (meta.def_stat !== undefined && meta.def_stat !== null) statBadges.push({label: `DEF ${meta.def_stat}`, cls: 'stat-defense'});
+                    if (meta.level_rank_link) statBadges.push({label: `Lv.${meta.level_rank_link}`, cls: ''});
+                }
+                const statBadgesHtml = statBadges.length > 0
+                    ? `<div class="stat-badges">${statBadges.map(s => `<span class="stat-badge ${s.cls}">${escapeHtml(String(s.label))}</span>`).join('')}</div>`
+                    : '';
+
+                // Keyword tags
+                const keywords = meta.keywords || meta.keyword_abilities || '';
+                const keywordList = keywords ? String(keywords).split(',').map(k => k.trim()).filter(Boolean).slice(0, 5) : [];
+                const keywordHtml = keywordList.length > 0
+                    ? `<div class="keyword-tags">${keywordList.map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join('')}</div>`
+                    : '';
+
+                // Archetype badge (YGO primarily, but also usable for Magic color identity)
+                let archetypeBadgeHtml = '';
+                if (game === 'yugioh' && (meta.archetype || meta.archetype_enriched)) {
+                    const arch = meta.archetype_enriched || meta.archetype;
+                    archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(arch))}</span>`;
+                } else if (game === 'magic' && meta.creature_types) {
+                    archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(meta.creature_types))}</span>`;
+                } else if (game === 'pokemon' && meta.subtypes) {
+                    archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(meta.subtypes))}</span>`;
+                }
+
+                // YGO attribute color class
+                let attrClass = '';
+                if (game === 'yugioh' && (meta.attribute_enriched || meta.attribute)) {
+                    const attr = String(meta.attribute_enriched || meta.attribute).toLowerCase();
+                    attrClass = `attr-${attr}`;
+                }
+
+                // Pokemon energy type for left-border color
+                let energyType = '';
+                if (game === 'pokemon' && meta.type) {
+                    const t = String(meta.type);
+                    const match = t.match(/\b(Fire|Water|Grass|Lightning|Psychic|Fighting|Darkness|Metal|Dragon|Fairy|Colorless)\b/i);
+                    if (match) energyType = match[1].charAt(0).toUpperCase() + match[1].slice(1).toLowerCase();
+                }
+
+                // Set info (Pokemon)
+                let setInfoHtml = '';
+                if (game === 'pokemon') {
+                    const parts = [];
+                    if (meta.set_name) parts.push(escapeHtml(String(meta.set_name)));
+                    if (meta.regulation_mark) parts.push(escapeHtml(String(meta.regulation_mark)));
+                    if (parts.length) setInfoHtml = `<div class="result-format"><span class="tag-label">Set:</span> ${parts.join(' · ')}</div>`;
+                }
+
                 const functionalTags = meta.functional_tags ? meta.functional_tags.split(',').slice(0, 3).join(', ') : '';
                 const formatLegal = meta.format_legal ? meta.format_legal.split(',').slice(0, 3).join(', ') : '';
                 const cooccurNote = meta.cooccurrence_note || '';
-                const archetypeStaples = meta.archetype_staples || '';
                 const archetypeCooccur = meta.archetype_cooccurrence || '';
                 const formatCooccur = meta.format_cooccurrence || '';
-                const oraclePreview = meta.oracle_text ? (meta.oracle_text.length > 100 ? meta.oracle_text.substring(0, 100) + '...' : meta.oracle_text) : '';
+                const oraclePreview = meta.oracle_text ? (meta.oracle_text.length > 120 ? meta.oracle_text.substring(0, 120) + '...' : meta.oracle_text) : '';
+                const oracleFull = meta.oracle_text_full || meta.oracle_text || '';
 
-                const isSubstitutable = result.similarity >= 0.7;
-                const isPartial = result.similarity >= 0.4 && result.similarity < 0.7;
+                const isSubstitutable = displayScore >= 0.7;
+                const isPartial = displayScore >= 0.4 && displayScore < 0.7;
                 let substitutabilityClass = 'not-substitutable';
                 let substitutabilityText = '✗ Not substitutable';
                 if (isSubstitutable) {
@@ -2748,12 +3322,31 @@
                     ? `<div class="card-image-placeholder"></div><img src="${escapeHtml(meta.image_url)}" alt="${cardNameEscaped}" class="card-image" loading="lazy" onload="this.previousElementSibling.style.display='none'" onerror="this.style.display='none';this.previousElementSibling.style.display='none'">`
                     : noImageFallback;
 
+                // Build expanded panel stats grid
+                const expandStats = [];
+                for (const [k, v] of Object.entries(meta)) {
+                    if (['image_url','oracle_text','oracle_text_full','type'].includes(k)) continue;
+                    if (v === null || v === undefined) continue;
+                    expandStats.push({key: k.replace(/_/g, ' '), val: String(v)});
+                }
+                const expandStatsHtml = expandStats.length > 0
+                    ? `<div class="expand-stats-grid">${expandStats.slice(0, 12).map(s =>
+                        `<div class="expand-stat-item"><span class="stat-key">${escapeHtml(s.key)}</span> <span class="stat-val">${escapeHtml(s.val.length > 60 ? s.val.substring(0, 60) + '...' : s.val)}</span></div>`
+                    ).join('')}</div>` : '';
+
+                if (energyType) item.setAttribute('data-energy-type', energyType);
+                item.dataset.cardName = result.card;
+                item.dataset.cardIndex = index;
+
                 item.innerHTML = `
-                    <div class="result-info">
+                    <div class="result-info" onclick="toggleExpandCard(this.parentElement)">
                         <div class="result-header">
-                            <div class="result-image-wrapper">${cardImage}</div>
+                            <div class="result-image-wrapper" ondblclick="event.stopPropagation();openCardDrawer(${index})">${cardImage}</div>
                             <div class="result-content">
-                                <div class="result-name">${cardNameEscaped}</div>
+                                <div style="display:flex;align-items:center;justify-content:space-between;">
+                                    <div class="result-name ${attrClass}">${cardNameEscaped}</div>
+                                    <svg class="expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+                                </div>
                                 <div class="result-similarity">
                                     <div class="similarity-header">
                                         <span class="similarity-percent">${similarityPercent}%</span>
@@ -2764,14 +3357,28 @@
                                     </div>
                                 </div>
                                 ${metaText ? `<div class="result-meta">${escapeHtml(metaText)}</div>` : ''}
+                                ${statBadgesHtml}
+                                ${keywordHtml}
+                                ${archetypeBadgeHtml}
+                                ${setInfoHtml}
                                 ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${escapeHtml(functionalTags)}</div>` : ''}
                                 ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${escapeHtml(formatLegal)}</div>` : ''}
-                                ${archetypeStaples ? `<div class="result-archetype"><span class="tag-label">Archetype:</span> ${escapeHtml(archetypeStaples)}</div>` : ''}
                                 ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${escapeHtml(cooccurNote)}</div>` : ''}
                                 ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
                                 ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
                                 <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
                                 ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
+                            </div>
+                        </div>
+                        <!-- Expandable detail panel -->
+                        <div class="result-expand-panel">
+                            ${oracleFull ? `<div class="expand-full-text">${escapeHtml(oracleFull)}</div>` : ''}
+                            ${expandStatsHtml}
+                            <div class="expand-actions">
+                                <button class="expand-action-btn primary" onclick="event.stopPropagation();findSimilarFromCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Find Similar</button>
+                                <button class="expand-action-btn" onclick="event.stopPropagation();viewContextualForCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">View Contextual</button>
+                                <button class="expand-action-btn" onclick="event.stopPropagation();addCardToDeck('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Add to Deck</button>
+                                <button class="expand-action-btn" onclick="event.stopPropagation();openCardDrawer(${index})">Details</button>
                             </div>
                         </div>
                     </div>
@@ -3510,6 +4117,437 @@
 
         // Initialize cache metadata
         updateCacheMetadata();
+
+        // ============================================================
+        // CARD INTERACTIVITY: Expand, Drawer, Cross-tab Navigation
+        // ============================================================
+
+        function toggleExpandCard(item) {
+            // Don't expand if clicking on buttons/inputs within the card
+            if (event && (event.target.closest('button') || event.target.closest('input') || event.target.closest('.feedback-controls'))) {
+                return;
+            }
+            const wasExpanded = item.classList.contains('expanded');
+            // Accordion: collapse all others
+            document.querySelectorAll('.result-item.expanded').forEach(el => el.classList.remove('expanded'));
+            if (!wasExpanded) {
+                item.classList.add('expanded');
+            }
+        }
+
+        function openCardDrawer(index) {
+            const result = currentResults[index];
+            if (!result) return;
+            const meta = result.metadata || {};
+            const drawerContent = document.getElementById('drawerContent');
+
+            const imgHtml = meta.image_url
+                ? `<img class="drawer-card-image" src="${escapeHtml(meta.image_url)}" alt="${escapeHtml(result.card)}" onerror="this.style.display='none'">`
+                : '';
+
+            const rows = [];
+            for (const [k, v] of Object.entries(meta)) {
+                if (k === 'image_url' || k === 'oracle_text_full') continue;
+                if (v === null || v === undefined) continue;
+                const val = String(v);
+                if (val.length > 200) {
+                    rows.push(`<tr><td>${escapeHtml(k.replace(/_/g, ' '))}</td><td style="white-space:pre-wrap;">${escapeHtml(val)}</td></tr>`);
+                } else {
+                    rows.push(`<tr><td>${escapeHtml(k.replace(/_/g, ' '))}</td><td>${escapeHtml(val)}</td></tr>`);
+                }
+            }
+
+            drawerContent.innerHTML = `
+                ${imgHtml}
+                <div class="drawer-card-name">${escapeHtml(result.card)}</div>
+                <table class="drawer-meta-table"><tbody>${rows.join('')}</tbody></table>
+                <div class="expand-actions" style="margin-top: 16px;">
+                    <button class="expand-action-btn primary" onclick="findSimilarFromCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Find Similar</button>
+                    <button class="expand-action-btn" onclick="viewContextualForCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">View Contextual</button>
+                    <button class="expand-action-btn" onclick="addCardToDeck('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Add to Deck</button>
+                </div>
+            `;
+
+            document.getElementById('cardDrawerOverlay').classList.add('open');
+            document.getElementById('cardDrawer').classList.add('open');
+        }
+
+        function closeCardDrawer() {
+            document.getElementById('cardDrawerOverlay').classList.remove('open');
+            document.getElementById('cardDrawer').classList.remove('open');
+        }
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                closeCardDrawer();
+                // Also collapse expanded cards
+                document.querySelectorAll('.result-item.expanded').forEach(el => el.classList.remove('expanded'));
+            }
+        });
+
+        // Cross-tab navigation
+        function findSimilarFromCard(cardName) {
+            closeCardDrawer();
+            switchTab('unified-search');
+            const input = document.getElementById('unifiedInput');
+            if (input) {
+                input.value = cardName;
+                // Trigger search
+                document.getElementById('unifiedSearchForm')?.dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function viewContextualForCard(cardName) {
+            closeCardDrawer();
+            switchTab('contextual');
+            const input = document.getElementById('contextualCardInput');
+            if (input) {
+                input.value = cardName;
+                document.getElementById('contextualForm')?.dispatchEvent(new Event('submit'));
+            }
+        }
+
+        function addCardToDeck(cardName) {
+            closeCardDrawer();
+            const deckInput = document.getElementById('deckInput');
+            const currentText = deckInput.value.trim();
+            const isJSON = currentText.startsWith('{') || currentText.startsWith('[');
+
+            if (isJSON || !currentText) {
+                // If empty or JSON mode, switch to text mode and add
+                if (!currentText) {
+                    deckInput.value = `1 ${cardName}`;
+                } else {
+                    // Try to parse and add
+                    try {
+                        const deck = JSON.parse(currentText);
+                        // Convert to text format and append
+                        deckInput.value = formatDeckList(deck) + `\n1 ${cardName}`;
+                        setDeckFormat('text');
+                    } catch {
+                        deckInput.value = currentText + `\n1 ${cardName}`;
+                    }
+                }
+            } else {
+                // Text mode: append
+                deckInput.value = currentText + `\n1 ${cardName}`;
+            }
+
+            showToast(`Added ${cardName} to deck`);
+        }
+
+        // ============================================================
+        // TOAST NOTIFICATIONS
+        // ============================================================
+
+        function showToast(message, duration = 2750) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), duration);
+        }
+
+        // ============================================================
+        // DECK TEXT FORMAT PARSING / FORMATTING
+        // ============================================================
+
+        let currentDeckFormat = 'text';
+
+        function setDeckFormat(format) {
+            currentDeckFormat = format;
+            document.querySelectorAll('.deck-format-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.format === format);
+            });
+            const deckInput = document.getElementById('deckInput');
+            if (format === 'text') {
+                deckInput.placeholder = '4 Lightning Bolt\n4 Mountain\n2 Goblin Guide\n\n// Sideboard\n2 Pyroblast';
+                deckInput.setAttribute('aria-label', 'Deck list in text format');
+            } else {
+                deckInput.placeholder = '{"Main": ["Card Name 1", "Card Name 2", ...], "Sideboard": [...]}';
+                deckInput.setAttribute('aria-label', 'Deck in JSON format');
+            }
+        }
+
+        function parseDeckList(text, game) {
+            const lines = text.split('\n');
+            const mainName = (game === 'yugioh' || game === 'pokemon') ? 'Main Deck' : 'Main';
+            const partitions = [];
+            let currentPartition = { name: mainName, cards: [] };
+
+            for (const raw of lines) {
+                const line = raw.trim();
+                if (!line) continue;
+
+                // Section header: "// Sideboard", "# Extra Deck", "Sideboard", etc.
+                if (line.startsWith('//') || line.startsWith('#')) {
+                    const headerName = line.replace(/^[/#]+\s*/, '').trim();
+                    if (headerName) {
+                        if (currentPartition.cards.length > 0) {
+                            partitions.push(currentPartition);
+                        }
+                        currentPartition = { name: headerName, cards: [] };
+                        continue;
+                    }
+                }
+
+                // Card line: "4 Lightning Bolt", "4x Lightning Bolt", "Lightning Bolt"
+                const match = line.match(/^(\d+)\s*x?\s+(.+)$/i);
+                if (match) {
+                    const count = parseInt(match[1]);
+                    const name = match[2].trim();
+                    currentPartition.cards.push({ name, count });
+                } else {
+                    // No count prefix -- treat as 1 copy
+                    currentPartition.cards.push({ name: line, count: 1 });
+                }
+            }
+
+            if (currentPartition.cards.length > 0) {
+                partitions.push(currentPartition);
+            }
+
+            if (partitions.length === 0) {
+                throw new Error('No cards found in deck list');
+            }
+
+            return { partitions };
+        }
+
+        function formatDeckList(deckObj) {
+            const lines = [];
+            // Handle both partitions format and legacy dict format
+            if (deckObj.partitions) {
+                for (const p of deckObj.partitions) {
+                    if (lines.length > 0) lines.push('');
+                    lines.push(`// ${p.name}`);
+                    for (const card of p.cards) {
+                        lines.push(`${card.count} ${card.name}`);
+                    }
+                }
+            } else {
+                // Legacy dict format: {"Main": ["card1", ...]}
+                for (const [section, cards] of Object.entries(deckObj)) {
+                    if (lines.length > 0) lines.push('');
+                    lines.push(`// ${section}`);
+                    if (Array.isArray(cards)) {
+                        // Count occurrences
+                        const counts = {};
+                        for (const c of cards) {
+                            counts[c] = (counts[c] || 0) + 1;
+                        }
+                        for (const [name, count] of Object.entries(counts)) {
+                            lines.push(`${count} ${name}`);
+                        }
+                    }
+                }
+            }
+            return lines.join('\n');
+        }
+
+        function exportDeckText() {
+            const deckInput = document.getElementById('deckInput');
+            const text = deckInput.value.trim();
+            let deckObj;
+            try {
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    deckObj = JSON.parse(text);
+                } else {
+                    // Already text format
+                    navigator.clipboard.writeText(text);
+                    showToast('Deck list copied to clipboard');
+                    return;
+                }
+            } catch { navigator.clipboard.writeText(text); showToast('Copied to clipboard'); return; }
+            const formatted = formatDeckList(deckObj);
+            navigator.clipboard.writeText(formatted);
+            showToast('Deck list copied to clipboard');
+        }
+
+        function exportDeckJSON() {
+            const deckInput = document.getElementById('deckInput');
+            const text = deckInput.value.trim();
+            let deckObj;
+            try {
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    deckObj = JSON.parse(text);
+                } else {
+                    const game = document.getElementById('deckGame').value;
+                    deckObj = parseDeckList(text, game);
+                }
+            } catch { navigator.clipboard.writeText(text); showToast('Copied to clipboard'); return; }
+            navigator.clipboard.writeText(JSON.stringify(deckObj, null, 2));
+            showToast('JSON copied to clipboard');
+        }
+
+        function downloadDeckFile() {
+            const deckInput = document.getElementById('deckInput');
+            const text = deckInput.value.trim();
+            let formatted = text;
+            try {
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    formatted = formatDeckList(JSON.parse(text));
+                }
+            } catch { /* use raw text */ }
+            const blob = new Blob([formatted], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'deck.txt';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('Deck downloaded');
+        }
+
+        // Show export buttons after deck completion
+        const origCompleteDeck = completeDeck;
+        // Note: export actions shown when deck results appear
+
+        // ============================================================
+        // LOCALSTORAGE DECK PERSISTENCE
+        // ============================================================
+
+        const SAVED_DECKS_KEY = 'decksage_decks';
+        const MAX_SAVED_DECKS = 50;
+
+        function getSavedDecks() {
+            try {
+                return JSON.parse(localStorage.getItem(SAVED_DECKS_KEY) || '[]');
+            } catch { return []; }
+        }
+
+        function setSavedDecks(decks) {
+            localStorage.setItem(SAVED_DECKS_KEY, JSON.stringify(decks.slice(0, MAX_SAVED_DECKS)));
+            renderSavedDecks();
+        }
+
+        function saveDeckPrompt() {
+            const name = prompt('Deck name:');
+            if (!name) return;
+            const deckInput = document.getElementById('deckInput');
+            const text = deckInput.value.trim();
+            const game = document.getElementById('deckGame').value;
+            const method = document.getElementById('completionMethod').value;
+            let deck;
+            try {
+                if (text.startsWith('{') || text.startsWith('[')) {
+                    deck = JSON.parse(text);
+                } else {
+                    deck = parseDeckList(text, game);
+                }
+            } catch { deck = { raw: text }; }
+
+            const decks = getSavedDecks();
+            decks.unshift({
+                id: crypto.randomUUID(),
+                name,
+                game,
+                deck,
+                method,
+                created_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            });
+            setSavedDecks(decks);
+            showToast(`Saved "${name}"`);
+        }
+
+        function loadSavedDeck(id) {
+            const decks = getSavedDecks();
+            const deck = decks.find(d => d.id === id);
+            if (!deck) return;
+            const deckInput = document.getElementById('deckInput');
+            document.getElementById('deckGame').value = deck.game || 'magic';
+            if (currentDeckFormat === 'text') {
+                deckInput.value = formatDeckList(deck.deck);
+            } else {
+                deckInput.value = JSON.stringify(deck.deck, null, 2);
+            }
+            showToast(`Loaded "${deck.name}"`);
+        }
+
+        function deleteSavedDeck(id) {
+            if (!confirm('Delete this saved deck?')) return;
+            const decks = getSavedDecks().filter(d => d.id !== id);
+            setSavedDecks(decks);
+            showToast('Deck deleted');
+        }
+
+        function renameSavedDeck(id) {
+            const decks = getSavedDecks();
+            const deck = decks.find(d => d.id === id);
+            if (!deck) return;
+            const newName = prompt('New name:', deck.name);
+            if (!newName) return;
+            deck.name = newName;
+            deck.updated_at = new Date().toISOString();
+            setSavedDecks(decks);
+        }
+
+        function countDeckCards(deck) {
+            if (!deck) return 0;
+            if (deck.partitions) {
+                return deck.partitions.reduce((sum, p) => sum + p.cards.reduce((s, c) => s + (c.count || 1), 0), 0);
+            }
+            if (typeof deck === 'object') {
+                return Object.values(deck).reduce((sum, cards) => {
+                    if (Array.isArray(cards)) return sum + cards.length;
+                    return sum;
+                }, 0);
+            }
+            return 0;
+        }
+
+        function renderSavedDecks() {
+            const decks = getSavedDecks();
+            document.getElementById('savedDeckCount').textContent = decks.length;
+            const list = document.getElementById('savedDecksList');
+            if (decks.length === 0) {
+                list.innerHTML = '<div style="padding: 12px 14px; font-size: 13px; color: var(--color-text-muted);">No saved decks</div>';
+                return;
+            }
+            list.innerHTML = decks.map(d => {
+                const cardCount = countDeckCards(d.deck);
+                const date = new Date(d.updated_at || d.created_at).toLocaleDateString();
+                return `
+                    <div class="saved-deck-item">
+                        <div class="saved-deck-info" onclick="loadSavedDeck('${d.id}')">
+                            <div class="saved-deck-name">${escapeHtml(d.name)}</div>
+                            <div class="saved-deck-meta">${escapeHtml(d.game)} · ${cardCount} cards · ${date}</div>
+                        </div>
+                        <div class="saved-deck-actions">
+                            <button onclick="renameSavedDeck('${d.id}')">Rename</button>
+                            <button class="deck-delete" onclick="deleteSavedDeck('${d.id}')">Delete</button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function toggleSavedDecks() {
+            const list = document.getElementById('savedDecksList');
+            const chevron = document.getElementById('savedDecksChevron');
+            const visible = list.style.display !== 'none';
+            list.style.display = visible ? 'none' : 'block';
+            chevron.style.transform = visible ? '' : 'rotate(180deg)';
+        }
+
+        // Initialize saved decks on load
+        renderSavedDecks();
+
+        // Show export actions when deck results are visible
+        const deckResultsObserver = new MutationObserver(() => {
+            const section = document.getElementById('deckResultsSection');
+            const actions = document.getElementById('deckExportActions');
+            if (section && actions) {
+                actions.style.display = section.style.display === 'none' ? 'none' : 'flex';
+            }
+        });
+        const deckResultsSection = document.getElementById('deckResultsSection');
+        if (deckResultsSection) {
+            deckResultsObserver.observe(deckResultsSection, { attributes: true, attributeFilter: ['style'] });
+        }
+
     </script>
 </body>
 </html>

@@ -13,7 +13,7 @@
  *   node scripts/vlm_critique.mjs            # evaluate all 3 themes
  *   node scripts/vlm_critique.mjs --clear    # clear cache first
  */
-import { validateScreenshot, clearCache, getCacheStats } from '@arclabs561/ai-visual-test';
+import { validateScreenshot, createConfig, clearCache, getCacheStats } from '@arclabs561/ai-visual-test';
 import { existsSync } from 'fs';
 
 const PASS_THRESHOLD = 7;
@@ -57,7 +57,8 @@ const CARD_GAME_RUBRIC = {
         'Card images are the most prominent element',
         'Similarity scores are instantly readable',
         'Card name stands out from metadata',
-        'Substitutability badges are scannable',
+        'Stat badges (ATK/DEF, P/T, HP) are prominent and game-authentic',
+        'Keyword tags and archetype badges are visible but secondary to card name',
         'Oracle text is readable but secondary',
       ],
     },
@@ -74,11 +75,11 @@ const CARD_GAME_RUBRIC = {
     spacing_layout: {
       description: 'Whitespace balance and card density',
       criteria: [
-        'Cards have breathing room between them',
+        'Cards have generous breathing room between them (18px+ gap)',
         'Image and text columns are well-proportioned',
-        'No content feels cramped or overflowing',
+        'Stat badges, tags, and archetype labels flow naturally without cramping',
         'Consistent padding/margins across elements',
-        'Results list doesn\'t feel too dense or too sparse',
+        'Results list density is comfortable for cards with rich metadata',
       ],
     },
     color_harmony: {
@@ -92,13 +93,15 @@ const CARD_GAME_RUBRIC = {
       ],
     },
     card_presentation: {
-      description: 'Card image framing and visual treatment',
+      description: 'Card image framing and data richness',
       criteria: [
         'Images are large enough to see card art details',
         'Border/frame treatment references actual card borders',
         'Image has depth (shadow, subtle glow, or border accent)',
-        'Fallback state for missing images looks intentional',
-        'Card aspect ratio matches real TCG cards (~2.5:3.5)',
+        'Stat badges visible: ATK/DEF for YGO, P/T for Magic, HP for Pokemon',
+        'Archetype/subtype labels present for game-specific classification',
+        'Keyword ability tags shown as small colored pills',
+        'Click-to-expand chevron hints at more detail',
       ],
     },
     modern_polish: {
@@ -115,31 +118,71 @@ const CARD_GAME_RUBRIC = {
 };
 
 // ---------------------------------------------------------------------------
+// Config with domain-level visual anchors (v0.7.0)
+//
+// These anchors are injected into every VLM prompt automatically.
+// Text anchors ground the VLM on what "good" and "bad" look like for
+// card-game UIs; image anchors (when present) provide few-shot visual
+// calibration alongside the text cues.
+// ---------------------------------------------------------------------------
+const config = createConfig({
+  anchors: {
+    domain: 'Trading card game search & similarity tool (Magic, Pokemon, Yu-Gi-Oh)',
+    positive: [
+      'Card images large enough to see art details (120px+ width)',
+      'Game-appropriate color palette matching official brand',
+      'Typography hierarchy: header > card name > stats > metadata > oracle text',
+      'Card aspect ratio close to real TCG cards (~2.5:3.5)',
+      'Generous whitespace between card results (18px+ gap)',
+      'Stat badges (ATK/DEF, P/T, HP) prominently displayed in game-authentic style',
+      'Keyword ability tags as small colored pills',
+      'Similarity percentage large and high-contrast',
+      'Smooth hover transitions and depth via shadows',
+    ],
+    negative: [
+      'Generic unthemed styling with no game identity',
+      'Cramped layout with overlapping or truncated text',
+      'Missing card images with no fallback or broken placeholder',
+      'Insufficient text contrast against colored backgrounds',
+      'Jarring color clashes between accent and background',
+      'All text same size/weight (no visual hierarchy)',
+      'Card stats or metadata missing entirely',
+      'No hover or interaction feedback',
+    ],
+    // Image anchors: uncomment when reference screenshots are available
+    // positiveExamples: ['./qa/reference/good-magic-theme.png'],
+    // negativeExamples: ['./qa/reference/bad-generic-layout.png'],
+  },
+});
+
+// ---------------------------------------------------------------------------
 // Per-game screenshot config
 // ---------------------------------------------------------------------------
 const screenshots = [
   {
     path: '/tmp/vlm_magic.png',
     game: 'Magic: The Gathering',
-    desc: 'Dark purple-slate (#1e1a2e) background, gold (#c8a84b) accents, Cinzel serif card names, radial gradient, gold card borders with purple glow.',
+    desc: 'Dark purple-slate (#1e1a2e) background, gold (#c8a84b) accents, Cinzel serif card names, radial gradient, gold card borders with purple glow. Power/toughness stat badges, keyword ability tags (Flying, Haste), creature type labels, expand chevron.',
   },
   {
     path: '/tmp/vlm_pokemon.png',
     game: 'Pokemon TCG',
-    desc: 'Light cream (#faf6f0) background, red (#cc0000) accent, yellow (#e0c878) card borders, Outfit geometric sans-serif (rounded/bold), 16px rounded corners, uppercase headers, hover lift.',
+    desc: 'Light cream (#faf6f0) background, red (#cc0000) accent, yellow (#e0c878) card borders, Outfit geometric sans-serif (rounded/bold), 10px rounded corners, uppercase headers, hover lift. HP/retreat stat badges, energy type color-coded left borders, set name + regulation mark, subtype labels.',
   },
   {
     path: '/tmp/vlm_yugioh.png',
     game: 'Yu-Gi-Oh!',
-    desc: 'Dark navy (#0a0a18) background, millennium gold (#c9a84c) accents, Rajdhani uppercase headers, Crimson Pro card names, angular borders, diagonal gold line overlay.',
+    desc: 'Dark navy (#0a0a18) background, millennium gold (#c9a84c) accents, Rajdhani uppercase headers, Crimson Pro card names, angular borders, diagonal gold line overlay. ATK/DEF stat badges, level indicators, attribute color coding (DARK=purple, FIRE=red), archetype badges in gold border, expand chevron.',
   },
 ];
 
 // ---------------------------------------------------------------------------
-// Prompt builder -- combines game context with rubric dimensions
+// Prompt builder -- per-screenshot context + rubric dimensions
+//
+// Domain-level anchors are now in config (injected automatically).
+// This function only needs the game-specific context and rubric structure.
 // ---------------------------------------------------------------------------
 function makePrompt(game, desc) {
-  // Build the dimension section from the rubric
   const dimSection = Object.entries(CARD_GAME_RUBRIC.dimensions)
     .map(([key, dim], i) => {
       const name = key.replace(/_/g, ' ').toUpperCase();
@@ -176,6 +219,7 @@ async function main() {
 
   const stats = getCacheStats();
   console.log(`Cache: ${stats.size} entries, ${(stats.hitRate * 100).toFixed(0)}% hit rate`);
+  console.log(`Config: provider=${config.provider}, anchors=${config.anchors ? 'yes' : 'no'}`);
 
   let allPassed = true;
 
@@ -196,6 +240,9 @@ async function main() {
         includeDimensions: true,
         description: `DeckSage ${game} theme visual quality`,
         testType: 'visual-quality',
+        // Config-level anchors are injected automatically via createConfig.
+        // Per-screenshot anchors can be added here if needed, e.g.:
+        // anchors: { positive: ['This theme uses dark purple-slate background'] },
       });
 
       const score = result.score ?? 0;
