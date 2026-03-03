@@ -142,6 +142,9 @@ class ContextualCardDiscovery:
                                 f"high format co-occurrence ({format_cooccur_rate:.0%})"
                             )
 
+                    if score <= 0.0:
+                        continue
+
                     if not reasoning_parts:
                         reasoning_parts.append("commonly played together")
 
