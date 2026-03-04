@@ -42,13 +42,13 @@ const CARD_GAME_RUBRIC = {
   score: {
     description: 'Overall visual quality score 0-10',
     criteria: {
-      10: 'Perfect -- indistinguishable from an official card game app',
-      9:  'Excellent -- polished, brand-appropriate, minor cosmetic nit',
-      8:  'Very good -- clearly themed, readable, small spacing issues',
-      7:  'Good -- recognizable game aesthetic, functional layout',
-      6:  'Acceptable -- generic look, missing game identity cues',
-      5:  'Needs work -- poor contrast, wrong font feel, cramped',
-      4:  'Poor -- broken layout, illegible text, no game theming',
+      10: 'Perfect -- Apple-level polish with clear game identity through accent color and typography',
+      9:  'Excellent -- clean, minimal, game identity unmistakable via accents',
+      8:  'Very good -- white/light background, readable, clear information hierarchy',
+      7:  'Good -- mostly clean with minor density or contrast issues',
+      6:  'Acceptable -- too busy, too much visual noise, or game identity unclear',
+      5:  'Needs work -- poor contrast, heavy borders, cramped layout',
+      4:  'Poor -- broken layout, illegible text, cluttered',
       3:  'Very poor -- mostly unusable',
       2:  'Bad -- severely broken',
       1:  'Very bad -- barely renders',
@@ -56,14 +56,14 @@ const CARD_GAME_RUBRIC = {
     },
   },
   dimensions: {
-    game_authenticity: {
-      description: 'How well the UI matches the official card game brand',
+    game_identity: {
+      description: 'Game recognition through restrained accent colors and typography (not heavy theming)',
       criteria: [
-        'Color palette matches official game websites/apps',
-        'Typography feels appropriate for this game\'s identity',
-        'Card frame/border treatment references real card designs',
-        'Overall mood matches the game (dark/mystical for MTG, playful for Pokemon, angular/gold for YGO)',
-        'Would a fan of this game recognize the theme immediately?',
+        'Game identity expressed through accent color (purple for MTG, red for Pokemon, gold for YGO)',
+        'Typography conveys game feel (serif for MTG, geometric sans for Pokemon, angular for YGO)',
+        'White/light background with game-colored accents -- NOT dark themed',
+        'A fan recognizes the game from color + type, not from heavy decoration',
+        'Restraint: game theming through 1-2 accent colors, not saturated backgrounds',
       ],
     },
     visual_hierarchy: {
@@ -78,55 +78,59 @@ const CARD_GAME_RUBRIC = {
       ],
     },
     typography: {
-      description: 'Font choice, sizing, weight, and readability',
+      description: 'Apple-level type hierarchy: antialiased system fonts, negative letter-spacing on headings, clear weight ramp',
       criteria: [
-        'Header font suits the game aesthetic',
-        'Card name font is bold and legible',
-        'Metadata font is clearly smaller/lighter than card name',
-        'Similarity percentage is large and contrasty',
-        'Font sizes create clear hierarchy (H1 > card name > meta > oracle)',
+        'Body text uses system fonts (-apple-system / SF Pro) with -webkit-font-smoothing: antialiased',
+        'Card name is the identity signal: game-specific font (Cinzel serif for MTG, Outfit geometric for Pokemon, Crimson Pro for YGO)',
+        'Clear weight ramp: 700 for titles, 600 for card names, 400 for body, never 300 or 800 for body',
+        'Similarity percentage is the largest numeric element on each card (22px+, bold, accent-colored)',
+        'Metadata is visibly smaller and lighter than card name (14px regular vs 18-20px semibold)',
+        'Letter-spacing: slight negative (-0.01em to -0.02em) on large text, neutral on body, slight positive (0.02em+) on small caps/labels',
+        'No font-size collision: each level of the hierarchy is distinguishable at a glance',
       ],
     },
-    spacing_layout: {
-      description: 'Whitespace balance and card density',
+    whitespace_layout: {
+      description: 'Generous whitespace, Apple-style card density',
       criteria: [
-        'Cards have generous breathing room between them (18px+ gap)',
-        'Image and text columns are well-proportioned',
-        'Stat badges, tags, and archetype labels flow naturally without cramping',
+        'Generous breathing room between cards (20px+ gap)',
+        'Cards feel like they float on the white background',
+        'Stat badges, tags, and labels flow naturally without cramping',
         'Consistent padding/margins across elements',
-        'Results list density is comfortable for cards with rich metadata',
+        'Overall feel is spacious and unhurried, not dense or cramped',
       ],
     },
     color_harmony: {
-      description: 'Palette cohesion, contrast ratios, text legibility',
+      description: 'Minimal palette: white + 1-2 accent colors per game',
       criteria: [
-        'Accent colors complement the background',
-        'Text has sufficient contrast for readability',
-        'Card borders/shadows use game-appropriate tones',
-        'Hover/active states use accent colors consistently',
-        'No jarring color clashes',
+        'Background is white or near-white (#fafafa range)',
+        'Accent color used sparingly: borders, links, similarity %, active states',
+        'Text is dark (#1d1d1f range) on light background with clear contrast',
+        'Shadows are subtle and neutral (not colored)',
+        'No heavy borders, glows, or saturated backgrounds',
       ],
     },
     card_presentation: {
-      description: 'Card image framing and data richness',
+      description: 'Card image framing, data richness, and relevance explanation',
       criteria: [
-        'Images are large enough to see card art details',
-        'Border/frame treatment references actual card borders',
-        'Image has depth (shadow, subtle glow, or border accent)',
-        'Stat badges visible: ATK/DEF for YGO, P/T for Magic, HP for Pokemon',
+        'Images are large enough to see card art details (120px+ width)',
+        'Image framing is clean: 1px border + layered shadow, not heavy frame decoration',
+        'Stat badges visible and game-authentic: ATK/DEF for YGO, P/T for Magic, HP for Pokemon',
         'Archetype/subtype labels present for game-specific classification',
-        'Keyword ability tags shown as small colored pills',
-        'Click-to-expand chevron hints at more detail',
+        'Keyword ability tags shown as small pills (11px, rounded)',
+        '"Why similar" snippet visible on results explaining the match reason with signal chips',
+        'Expand chevron hints at more detail; substitutability badge shows practical value',
       ],
     },
     modern_polish: {
-      description: 'Production quality and interaction design',
+      description: 'Apple-level production quality and attention to detail',
       criteria: [
-        'Hover effects feel responsive',
-        'Shadows give appropriate depth',
-        'Transitions are smooth, not jarring',
-        'Overall feel is professional, not amateur',
-        'Consistent border-radius and spacing system',
+        'Layered shadows (2+ layers, opacity 0.04-0.08) create realistic depth, not flat single-shadow',
+        'Border-radius is consistent: 12px for cards and search, 8px for badges/tags, 4px for inner elements',
+        'Hover states are subtle: translateY(-2px) lift + shadow increase, not dramatic color changes',
+        'Transitions are property-specific (background 0.15s, shadow 0.3s) not "all 0.3s"',
+        'No visual clutter: every element earns its space -- if removing it loses no information, it should go',
+        'Focus states use ring pattern (0 0 0 4px rgba(accent, 0.12)) not thick outlines',
+        'Status messages, badges, and alerts use light tinted backgrounds (rgba 0.08) not solid dark backgrounds',
       ],
     },
   },
@@ -160,27 +164,40 @@ const UI_REF = {
 const config = createConfig({
   provider: 'gemini',  // Vision-capable provider required for image anchors
   anchors: {
-    domain: 'Trading card game search & similarity tool (Magic, Pokemon, Yu-Gi-Oh)',
+    domain: 'Card similarity search tool -- Apple-minimal design (white bg, 12px radius cards, layered shadows, system fonts, game-specific accent color)',
     positive: [
-      'Card images large enough to see art details (120px+ width)',
-      'Game-appropriate color palette matching official brand',
-      'Typography hierarchy: header > card name > stats > metadata > oracle text',
-      'Card aspect ratio close to real TCG cards (~2.5:3.5)',
-      'Generous whitespace between card results (18px+ gap)',
-      'Stat badges (ATK/DEF, P/T, HP) prominently displayed in game-authentic style',
-      'Keyword ability tags as small colored pills',
-      'Similarity percentage large and high-contrast',
-      'Smooth hover transitions and depth via shadows',
+      // Layout & spacing (Apple 8px grid)
+      'White or near-white background (#f5f5f7 / #fafafa range)',
+      'Cards have 12px border-radius, 1px borders, layered box-shadow (0.04-0.06 opacity)',
+      'Generous padding inside cards (20px+) and 12px+ gap between cards',
+      'Cards float on the background -- no heavy decoration, breathing room everywhere',
+      // Typography
+      'System font stack (-apple-system / SF Pro) for body; game-specific font for card names only',
+      '5-level type hierarchy: page title > card name (17-20px semibold) > stats (13px bold) > metadata (14px) > oracle/muted (13px)',
+      'Similarity percentage is the largest number on the card (22px+, bold, accent-colored)',
+      // Data richness per card
+      'Each result card shows: card image, name, similarity %, stat badges (ATK/DEF or P/T or HP), keyword tags, "Why similar" snippet with signal chips',
+      'Query card banner at top with image + metadata -- user knows what they searched for',
+      '"Why similar" snippet below each result explains the match (e.g. "Both have Flying", "Same archetype")',
+      // Interaction cues
+      'Expand chevron on each card hints at more detail',
+      'Hover lifts card (translateY -2px) with subtle shadow increase',
+      'Search form has 12px radius, focus ring (4px accent-colored outline)',
+      // Color discipline
+      'Game accent color used only for: links, similarity %, active borders, accent bar, button CTA',
+      'Text is dark (#1d1d1f) on light bg; secondary text is #6e6e73; muted is #86868b',
     ],
     negative: [
-      'Generic unthemed styling with no game identity',
-      'Cramped layout with overlapping or truncated text',
-      'Missing card images with no fallback or broken placeholder',
-      'Insufficient text contrast against colored backgrounds',
-      'Jarring color clashes between accent and background',
-      'All text same size/weight (no visual hierarchy)',
-      'Card stats or metadata missing entirely',
-      'No hover or interaction feedback',
+      'Dark themed backgrounds (dark purple, dark navy, black) -- these are explicitly wrong',
+      'Heavy borders (>1px), colored glows, text-shadows, drop-shadows with opacity > 0.15',
+      'Cramped layout: cards touching, text truncated, no padding between elements',
+      'Missing card images with no fallback or broken image placeholder',
+      'Flat hierarchy: all text same size/weight, nothing stands out',
+      'Saturated colored backgrounds on cards or result containers',
+      'Decorative noise: diagonal patterns, radial gradients, animated backgrounds',
+      'Generic result cards with no game-specific data (no stats, no keywords, no type info)',
+      '"Why similar" snippet saying only "Shared type: creature" for every card (too generic)',
+      'Search results that give no hint WHY they matched -- user must guess relevance',
     ],
   },
 });
@@ -193,19 +210,19 @@ const screenshots = [
     path: '/tmp/vlm_magic.png',
     game: 'Magic: The Gathering',
     gameKey: 'magic',
-    desc: 'Dark purple-slate (#1e1a2e) background, gold (#c8a84b) accents, Cinzel serif card names, radial gradient, gold card borders with purple glow. Power/toughness stat badges, keyword ability tags (Flying, Haste), creature type labels, expand chevron.',
+    desc: 'White (#fafafc) background, purple (#7c5cbf) accents, Cinzel serif card names, system font body text, subtle shadows, thin borders. Power/toughness stat badges, keyword ability tags, creature type labels, expand chevron. Apple-inspired minimal layout.',
   },
   {
     path: '/tmp/vlm_pokemon.png',
     game: 'Pokemon TCG',
     gameKey: 'pokemon',
-    desc: 'Light cream (#faf6f0) background, red (#cc0000) accent, yellow (#e0c878) card borders, Outfit geometric sans-serif (rounded/bold), 10px rounded corners, uppercase headers, hover lift. HP/retreat stat badges, energy type color-coded left borders, set name + regulation mark, subtype labels.',
+    desc: 'White (#ffffff) background, red (#cc0000) accent, Outfit geometric sans-serif, 12px rounded cards, system font fallbacks, subtle shadows. HP/retreat stat badges, energy type color-coded, set name + regulation mark, subtype labels. Clean Apple-style cards.',
   },
   {
     path: '/tmp/vlm_yugioh.png',
     game: 'Yu-Gi-Oh!',
     gameKey: 'yugioh',
-    desc: 'Dark navy (#0a0a18) background, millennium gold (#c9a84c) accents, Rajdhani uppercase headers, Crimson Pro card names, angular borders, diagonal gold line overlay. ATK/DEF stat badges, level indicators, attribute color coding (DARK=purple, FIRE=red), archetype badges in gold border, expand chevron.',
+    desc: 'Warm white (#fafaf8) background, gold (#b8993e) accents, Rajdhani uppercase headers, Crimson Pro serif card names, system font body. ATK/DEF stat badges, level indicators, attribute color coding, archetype badges, expand chevron. Minimal Apple-hybrid layout.',
   },
 ];
 
@@ -235,7 +252,7 @@ IMPORTANT: Look at what IS shown in the screenshot, not what you imagine.
 
 Respond with a JSON object containing:
 - "score": overall 0-10 integer
-- "dimensionScores": {"game_authenticity": N, "visual_hierarchy": N, "typography": N, "spacing_layout": N, "color_harmony": N, "card_presentation": N, "modern_polish": N}
+- "dimensionScores": {"game_identity": N, "visual_hierarchy": N, "typography": N, "whitespace_layout": N, "color_harmony": N, "card_presentation": N, "modern_polish": N}
 - "issues": array of strings (top issues)
 - "reasoning": brief text explaining the score
 - "recommendations": array of {priority, suggestion, expectedImpact} objects (top 3 CSS changes)`;
@@ -271,9 +288,9 @@ async function main() {
       const gameAnchors = {
         positive: [
           {
-            text: `Original ${game} art style -- the UI should evoke this aesthetic`,
+            text: `Original ${game} art style -- accent colors should reference this palette`,
             image: ART_REF[gameKey],
-            dimension: 'game_authenticity',
+            dimension: 'game_identity',
           },
           {
             text: `Gold-standard ${game} card database UI for layout/hierarchy reference`,
