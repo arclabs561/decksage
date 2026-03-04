@@ -17,177 +17,174 @@
             box-sizing: border-box;
         }
         /* === Theme system: CSS custom properties === */
-        /* Base: Encarta/scholastic -- warm parchment, olive accents, serif typography */
+        /* Base: Clean/modern -- white background, system fonts, Apple-inspired minimalism */
         body {
-            --color-bg-primary:      #f5f0e8;
-            --color-bg-secondary:    #ebe5d8;
-            --color-bg-tertiary:     #e0d8c8;
-            --color-bg-elevated:     #fff;
-            --color-border-default:  #c8bfa8;
-            --color-border-focus:    #5c7a3e;
-            --color-text-primary:    #2c2418;
-            --color-text-secondary:  #5a4e3a;
-            --color-text-muted:      #8a7e68;
-            --color-text-link:       #5c7a3e;
-            --color-accent-primary:  #5c7a3e;
-            --color-accent-secondary:#8a6a2e;
-            --btn-bg:                #5c7a3e;
-            --btn-bg-hover:          #6e8e4e;
+            --color-bg-primary:      #ffffff;
+            --color-bg-secondary:    #f5f5f7;
+            --color-bg-tertiary:     #e8e8ed;
+            --color-bg-elevated:     #ffffff;
+            --color-border-default:  #d2d2d7;
+            --color-border-focus:    #0071e3;
+            --color-text-primary:    #1d1d1f;
+            --color-text-secondary:  #6e6e73;
+            --color-text-muted:      #86868b;
+            --color-text-link:       #0071e3;
+            --color-accent-primary:  #0071e3;
+            --color-accent-secondary:#1d1d1f;
+            --btn-bg:                #0071e3;
+            --btn-bg-hover:          #0077ed;
             --btn-text:              #fff;
-            --search-bg:             #fff;
-            --search-border:         #c8bfa8;
-            --search-focus-shadow:   0 0 0 2px rgba(92, 122, 62, 0.2);
-            --card-bg:               #fff;
-            --card-border-accent:    #8a6a2e;
-            --card-hover-bg:         #faf7f0;
-            --card-hover-border:     #5c7a3e;
-            --card-hover-shadow:     0 2px 12px rgba(92, 122, 62, 0.12);
-            --tab-active-color:      #5c7a3e;
-            --tab-active-border:     #5c7a3e;
-            --skeleton-bg:           #e0d8c8;
-            --match-color:           #5c7a3e;
-            --similarity-fill:       #5c7a3e;
-            --section-gradient:      linear-gradient(90deg, #5c7a3e, #8a6a2e);
+            --search-bg:             #f5f5f7;
+            --search-border:         #d2d2d7;
+            --search-focus-shadow:   0 0 0 4px rgba(0, 113, 227, 0.15);
+            --card-bg:               #ffffff;
+            --card-border-accent:    #d2d2d7;
+            --card-hover-bg:         #f5f5f7;
+            --card-hover-border:     #0071e3;
+            --card-hover-shadow:     0 4px 16px rgba(0, 0, 0, 0.08);
+            --tab-active-color:      #1d1d1f;
+            --tab-active-border:     #1d1d1f;
+            --skeleton-bg:           #e8e8ed;
+            --match-color:           #1d1d1f;
+            --similarity-fill:       #0071e3;
+            --section-gradient:      linear-gradient(90deg, #0071e3, #1d1d1f);
 
-            font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: var(--color-bg-primary);
             color: var(--color-text-primary);
             padding: 20px;
-            line-height: 1.6;
-            transition: background 0.4s ease, color 0.2s ease;
+            line-height: 1.5;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            transition: background 0.3s ease, color 0.2s ease;
         }
-        /* Encarta signature: top navigation bar gradient */
+        /* Top accent bar -- thin, subtle */
         body::before {
             content: '';
             position: fixed;
             top: 0;
             left: 0;
             right: 0;
-            height: 4px;
-            background: linear-gradient(90deg, #5c7a3e, #8a6a2e, #5c7a3e);
+            height: 3px;
+            background: linear-gradient(90deg, #0071e3, #5856d6);
             z-index: 1000;
         }
 
         /* === MAGIC: THE GATHERING === */
+        /* Light hybrid: white canvas, purple + gold accents, serif card names */
         body.game-magic {
-            --color-bg-primary:      #1e1a2e;
-            --color-bg-secondary:    #252035;
-            --color-bg-tertiary:     #2d2844;
-            --color-bg-elevated:     #332e4a;
-            --color-border-default:  #3d3660;
-            --color-border-focus:    #c8a84b;
-            --color-text-primary:    #f0ede8;
-            --color-text-secondary:  #a89ec0;
-            --color-text-muted:      #6b6088;
-            --color-text-link:       #c8a84b;
-            --color-accent-primary:  #9b72cf;
-            --color-accent-secondary:#c8a84b;
-            --btn-bg:                #9b72cf;
-            --btn-bg-hover:          #b08adf;
+            --color-bg-primary:      #fafafc;
+            --color-bg-secondary:    #f3f1f8;
+            --color-bg-tertiary:     #eae6f2;
+            --color-bg-elevated:     #ffffff;
+            --color-border-default:  #e0dce8;
+            --color-border-focus:    #7c5cbf;
+            --color-text-primary:    #1d1d1f;
+            --color-text-secondary:  #6e6e73;
+            --color-text-muted:      #86868b;
+            --color-text-link:       #7c5cbf;
+            --color-accent-primary:  #7c5cbf;
+            --color-accent-secondary:#b8993e;
+            --btn-bg:                #7c5cbf;
+            --btn-bg-hover:          #8d6dd0;
             --btn-text:              #fff;
-            --search-bg:             #252035;
-            --search-border:         #3d3660;
-            --search-focus-shadow:   0 0 0 3px rgba(200, 168, 75, 0.25);
-            --card-bg:               #252035;
-            --card-border-accent:    #c8a84b;
-            --card-hover-bg:         #2d2844;
-            --card-hover-border:     #c8a84b;
-            --card-hover-shadow:     0 4px 20px rgba(200, 168, 75, 0.2);
-            --tab-active-color:      #c8a84b;
-            --tab-active-border:     #c8a84b;
-            --skeleton-bg:           #252035;
-            --match-color:           #c8a84b;
-            --similarity-fill:       #9b72cf;
-            --section-gradient:      linear-gradient(90deg, #9b72cf, #c8a84b);
+            --search-bg:             #f3f1f8;
+            --search-border:         #e0dce8;
+            --search-focus-shadow:   0 0 0 4px rgba(124, 92, 191, 0.12);
+            --card-bg:               #ffffff;
+            --card-border-accent:    #e0dce8;
+            --card-hover-bg:         #f8f6fc;
+            --card-hover-border:     #7c5cbf;
+            --card-hover-shadow:     0 4px 20px rgba(124, 92, 191, 0.12);
+            --tab-active-color:      #7c5cbf;
+            --tab-active-border:     #7c5cbf;
+            --skeleton-bg:           #eae6f2;
+            --match-color:           #7c5cbf;
+            --similarity-fill:       #7c5cbf;
+            --section-gradient:      linear-gradient(90deg, #7c5cbf, #b8993e);
 
-            font-family: 'Libre Baskerville', Georgia, 'Times New Roman', serif;
-            background: radial-gradient(ellipse at 50% 0%, #2d2548 0%, #1e1a2e 60%, #0f0c1a 100%);
-            background-attachment: fixed;
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: #fafafc;
         }
         body.game-magic::before {
-            background: linear-gradient(90deg, #9b72cf, #c8a84b, #9b72cf);
+            background: linear-gradient(90deg, #7c5cbf, #b8993e);
         }
         body.game-magic .result-name,
         body.game-magic h1 {
-            font-family: 'Cinzel', Georgia, 'Times New Roman', serif;
-            letter-spacing: 0.04em;
+            font-family: 'Cinzel', Georgia, serif;
+            letter-spacing: 0.02em;
             font-weight: 600;
         }
         body.game-magic .result-item {
-            border-left: 3px solid #c8a84b;
-            background: linear-gradient(135deg, #252035 0%, #2a2240 100%);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(200,168,75,0.05);
+            border: 1px solid #e0dce8;
+            background: #ffffff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
         }
         body.game-magic .result-image-wrapper {
-            border: 2px solid #c8a84b;
-            box-shadow: 0 3px 14px rgba(0,0,0,0.4), 0 0 6px rgba(200,168,75,0.15);
+            border: 1px solid #e0dce8;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border-radius: 8px;
         }
         body.game-magic .result-name {
             font-family: 'Cinzel', Georgia, serif;
-            color: #e8dcc8;
+            color: #2c2440;
             font-size: 18px;
         }
         body.game-magic h1 {
-            color: #c8a84b;
-            text-shadow: 0 0 20px rgba(200, 168, 75, 0.3);
-        }
-        body.game-magic .search-button,
-        body.game-magic .nav-tab.active {
-            text-shadow: 0 0 12px rgba(200, 168, 75, 0.4);
+            color: #7c5cbf;
         }
         body.game-magic .result-item:hover {
-            background: linear-gradient(135deg, #2a2540 0%, #302850 100%);
-            box-shadow: 0 8px 28px rgba(200, 168, 75, 0.3), 0 0 12px rgba(200,168,75,0.08), inset 0 1px 0 rgba(200,168,75,0.12);
-            border-left-color: #e0c060;
-            border-left-width: 4px;
-            transform: translateY(-3px);
+            background: #f8f6fc;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 20px rgba(124, 92, 191, 0.1);
+            border-color: #7c5cbf;
+            transform: translateY(-2px);
         }
         body.game-magic .result-item:hover .result-image-wrapper {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.5), 0 0 10px rgba(200,168,75,0.25);
+            box-shadow: 0 4px 16px rgba(124, 92, 191, 0.15);
         }
         body.game-magic .similarity-percent {
-            color: #c8a84b;
+            color: #7c5cbf;
         }
 
         /* === POKEMON TCG === */
-        /* Light theme authentic to Pokemon TCG's bright, playful feel */
+        /* Light hybrid: white canvas, red accent, clean modern feel */
         body.game-pokemon {
-            --color-bg-primary:      #faf6f0;
-            --color-bg-secondary:    #fff;
-            --color-bg-tertiary:     #f0ebe0;
-            --color-bg-elevated:     #fff;
-            --color-border-default:  #e0c878;
+            --color-bg-primary:      #ffffff;
+            --color-bg-secondary:    #f5f5f7;
+            --color-bg-tertiary:     #efefef;
+            --color-bg-elevated:     #ffffff;
+            --color-border-default:  #d2d2d7;
             --color-border-focus:    #cc0000;
-            --color-text-primary:    #1a1a2e;
-            --color-text-secondary:  #4a4a5a;
-            --color-text-muted:      #8a8a98;
+            --color-text-primary:    #1d1d1f;
+            --color-text-secondary:  #6e6e73;
+            --color-text-muted:      #86868b;
             --color-text-link:       #cc0000;
             --color-accent-primary:  #cc0000;
             --color-accent-secondary:#2a75bb;
             --btn-bg:                #cc0000;
             --btn-bg-hover:          #e00000;
             --btn-text:              #fff;
-            --search-bg:             #fff;
-            --search-border:         #e0c878;
-            --search-focus-shadow:   0 0 0 3px rgba(204, 0, 0, 0.15);
-            --card-bg:               #fff;
-            --card-border-accent:    #e0c878;
-            --card-hover-bg:         #faf6f0;
+            --search-bg:             #f5f5f7;
+            --search-border:         #d2d2d7;
+            --search-focus-shadow:   0 0 0 4px rgba(204, 0, 0, 0.1);
+            --card-bg:               #ffffff;
+            --card-border-accent:    #d2d2d7;
+            --card-hover-bg:         #f5f5f7;
             --card-hover-border:     #cc0000;
-            --card-hover-shadow:     0 4px 16px rgba(204, 0, 0, 0.1);
+            --card-hover-shadow:     0 4px 16px rgba(0, 0, 0, 0.08);
             --tab-active-color:      #cc0000;
             --tab-active-border:     #cc0000;
-            --skeleton-bg:           #f0ebe0;
+            --skeleton-bg:           #efefef;
             --match-color:           #cc0000;
             --similarity-fill:       #cc0000;
-            --section-gradient:      linear-gradient(90deg, #cc0000 0%, #cc0000 50%, #e0c878 50%, #e0c878 100%);
+            --section-gradient:      linear-gradient(90deg, #cc0000, #2a75bb);
 
-            font-family: 'Outfit', 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #faf6f0;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: #ffffff;
         }
         body.game-pokemon::before {
-            background: linear-gradient(90deg, #cc0000, #e0c878, #2a75bb);
-            height: 4px;
+            background: linear-gradient(90deg, #cc0000, #2a75bb);
+            height: 3px;
         }
         body.game-pokemon h1 {
             font-family: 'Outfit', 'Nunito', sans-serif;
@@ -198,31 +195,31 @@
             text-transform: uppercase;
         }
         body.game-pokemon .result-item {
-            border-radius: 10px;
-            border: 2px solid #e0c878;
-            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+            border-radius: 12px;
+            border: 1px solid #d2d2d7;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.06);
             background: #fff;
             transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
         }
         body.game-pokemon .result-item:hover {
-            transform: translateY(-3px);
-            box-shadow: 0 8px 24px rgba(204, 0, 0, 0.14), 0 4px 12px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             border-color: #cc0000;
-            background: #fffdf8;
+            background: #f9f9fb;
         }
         body.game-pokemon .result-item:hover .result-image-wrapper {
-            box-shadow: 0 6px 18px rgba(224, 200, 120, 0.4), 0 0 8px rgba(204,0,0,0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
         }
         body.game-pokemon .result-image-wrapper {
-            border-radius: 12px;
-            border: 3px solid #e0c878;
-            box-shadow: 0 3px 12px rgba(224, 200, 120, 0.3);
-            background: linear-gradient(135deg, #faf6f0 0%, #f0ebe0 100%);
+            border-radius: 10px;
+            border: 1px solid #d2d2d7;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            background: #f5f5f7;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         body.game-pokemon .result-image-wrapper:hover {
-            transform: scale(1.03);
-            box-shadow: 0 4px 16px rgba(224, 200, 120, 0.4);
+            transform: scale(1.02);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
         }
         body.game-pokemon .result-name {
             font-family: 'Outfit', 'Nunito', sans-serif;
@@ -244,155 +241,134 @@
             font-weight: 500;
         }
         body.game-pokemon .search-button {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 800;
-            border-radius: 14px;
-            font-size: 15px;
-            letter-spacing: 0.02em;
+            font-family: 'Outfit', -apple-system, sans-serif;
+            font-weight: 700;
+            border-radius: 10px;
+            font-size: 14px;
+            letter-spacing: 0.01em;
             text-transform: uppercase;
         }
         body.game-pokemon .search-form {
-            border-radius: 16px;
+            border-radius: 12px;
         }
         body.game-pokemon .search-input {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 600;
-            border-radius: 14px;
+            font-family: 'Outfit', -apple-system, sans-serif;
+            font-weight: 500;
+            border-radius: 10px;
             font-size: 15px;
         }
         body.game-pokemon .nav-tab {
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            border-radius: 10px;
+            font-family: 'Outfit', -apple-system, sans-serif;
+            font-weight: 600;
+            border-radius: 8px;
             text-transform: uppercase;
             font-size: 13px;
-            letter-spacing: 0.03em;
+            letter-spacing: 0.02em;
         }
         body.game-pokemon .similarity-bar {
             border-radius: 4px;
-            background: rgba(204, 0, 0, 0.1);
-            height: 6px;
+            background: rgba(204, 0, 0, 0.08);
+            height: 4px;
         }
         body.game-pokemon .similarity-fill {
             border-radius: 4px;
         }
         body.game-pokemon .result-oracle {
             font-size: 13px;
-            color: #4a4a5a;
-            border-top: 1px solid rgba(224, 200, 120, 0.3);
-            font-family: 'Outfit', sans-serif;
+            color: #6e6e73;
+            border-top: 1px solid #e8e8ed;
+            font-family: 'Outfit', -apple-system, sans-serif;
         }
         body.game-pokemon .query-card-banner {
-            border-radius: 16px;
-            border: 2px solid #e0c878;
+            border-radius: 12px;
+            border: 1px solid #d2d2d7;
         }
         body.game-pokemon .badge {
-            border-radius: 10px;
-            font-family: 'Outfit', sans-serif;
+            border-radius: 8px;
+            font-family: 'Outfit', -apple-system, sans-serif;
             font-weight: 600;
         }
 
         /* === YU-GI-OH! === */
+        /* Light hybrid: white canvas, gold accent, angular typography */
         body.game-yugioh {
-            --color-bg-primary:      #0a0a18;
-            --color-bg-secondary:    #12121e;
-            --color-bg-tertiary:     #1a1a2e;
-            --color-bg-elevated:     #1a1a2e;
-            --color-border-default:  #2a2a40;
-            --color-border-focus:    #c9a84c;
-            --color-text-primary:    #e8e0cc;
-            --color-text-secondary:  #998f78;
-            --color-text-muted:      #5c5444;
-            --color-text-link:       #c9a84c;
-            --color-accent-primary:  #c9a84c;
+            --color-bg-primary:      #fafaf8;
+            --color-bg-secondary:    #f5f4f0;
+            --color-bg-tertiary:     #eae8e2;
+            --color-bg-elevated:     #ffffff;
+            --color-border-default:  #d8d5cc;
+            --color-border-focus:    #b8993e;
+            --color-text-primary:    #1d1d1f;
+            --color-text-secondary:  #6e6e73;
+            --color-text-muted:      #86868b;
+            --color-text-link:       #b8993e;
+            --color-accent-primary:  #b8993e;
             --color-accent-secondary:#177e89;
-            --btn-bg:                #c9a84c;
-            --btn-bg-hover:          #e8c96b;
-            --btn-text:              #0a0a18;
-            --search-bg:             #12121e;
-            --search-border:         #2a2a40;
-            --search-focus-shadow:   0 0 0 3px rgba(201, 168, 76, 0.2);
-            --card-bg:               #12121e;
-            --card-border-accent:    #c9a84c;
-            --card-hover-bg:         #1a1a2e;
-            --card-hover-border:     #c9a84c;
-            --card-hover-shadow:     0 4px 20px rgba(201, 168, 76, 0.2);
-            --tab-active-color:      #c9a84c;
-            --tab-active-border:     #c9a84c;
-            --skeleton-bg:           #12121e;
-            --match-color:           #e8c96b;
-            --similarity-fill:       #c9a84c;
-            --section-gradient:      linear-gradient(90deg, #7d3e12 0%, #c9a84c 40%, #e8c96b 60%, #c9a84c 100%);
+            --btn-bg:                #b8993e;
+            --btn-bg-hover:          #c8a94e;
+            --btn-text:              #ffffff;
+            --search-bg:             #f5f4f0;
+            --search-border:         #d8d5cc;
+            --search-focus-shadow:   0 0 0 4px rgba(184, 153, 62, 0.12);
+            --card-bg:               #ffffff;
+            --card-border-accent:    #d8d5cc;
+            --card-hover-bg:         #f8f7f4;
+            --card-hover-border:     #b8993e;
+            --card-hover-shadow:     0 4px 20px rgba(184, 153, 62, 0.1);
+            --tab-active-color:      #b8993e;
+            --tab-active-border:     #b8993e;
+            --skeleton-bg:           #eae8e2;
+            --match-color:           #b8993e;
+            --similarity-fill:       #b8993e;
+            --section-gradient:      linear-gradient(90deg, #b8993e, #177e89);
 
-            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: radial-gradient(ellipse at 50% 0%, #141428 0%, #0a0a18 50%, #050510 100%);
-            background-attachment: fixed;
+            font-family: 'Rajdhani', -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', sans-serif;
+            background: #fafaf8;
         }
         body.game-yugioh::before {
-            background: linear-gradient(90deg, #c9a84c, #7d3e12, #c9a84c);
-        }
-        body.game-yugioh::after {
-            content: '';
-            position: fixed;
-            inset: 0;
-            background-image: repeating-linear-gradient(
-                45deg,
-                rgba(201, 168, 76, 0.015) 0px,
-                rgba(201, 168, 76, 0.015) 1px,
-                transparent 1px,
-                transparent 20px
-            );
-            pointer-events: none;
-            z-index: 0;
+            background: linear-gradient(90deg, #b8993e, #177e89);
         }
         body.game-yugioh > .container { position: relative; z-index: 1; }
         body.game-yugioh h1 {
             font-family: 'Rajdhani', system-ui, sans-serif;
             font-weight: 700;
-            letter-spacing: 0.05em;
+            letter-spacing: 0.04em;
             text-transform: uppercase;
-            color: var(--color-accent-primary);
+            color: #b8993e;
         }
         body.game-yugioh .result-name {
-            font-family: 'Crimson Pro', Georgia, 'Times New Roman', serif;
+            font-family: 'Crimson Pro', Georgia, serif;
             font-weight: 600;
             font-size: 19px;
-            letter-spacing: 0.02em;
-            color: var(--color-accent-primary);
+            letter-spacing: 0.01em;
+            color: #3a3428;
         }
         body.game-yugioh .search-button {
-            font-family: 'Rajdhani', sans-serif;
+            font-family: 'Rajdhani', -apple-system, sans-serif;
             font-weight: 600;
-            letter-spacing: 0.08em;
+            letter-spacing: 0.06em;
             text-transform: uppercase;
         }
         body.game-yugioh .result-item {
-            border-left: 3px solid #c9a84c;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.4), inset 0 1px 0 rgba(201,168,76,0.05);
+            border: 1px solid #d8d5cc;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
         }
         body.game-yugioh .result-image-wrapper {
-            border: 2px solid #c9a84c;
-            border-radius: 4px;
-            box-shadow: 0 3px 14px rgba(0,0,0,0.5), 0 0 4px rgba(201,168,76,0.1);
-        }
-        body.game-yugioh h1 {
-            text-shadow: 0 0 20px rgba(201, 168, 76, 0.3);
-        }
-        body.game-yugioh .nav-tab.active {
-            text-shadow: 0 0 10px rgba(201, 168, 76, 0.4);
+            border: 1px solid #d8d5cc;
+            border-radius: 6px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
         }
         body.game-yugioh .result-item:hover {
-            background: linear-gradient(135deg, #0e0e22 0%, #141430 100%);
-            box-shadow: 0 8px 28px rgba(201, 168, 76, 0.3), 0 0 12px rgba(201,168,76,0.1), inset 0 1px 0 rgba(201,168,76,0.1);
-            border-left-color: #e0c060;
-            border-left-width: 4px;
-            transform: translateY(-3px);
+            background: #f8f7f4;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 20px rgba(184, 153, 62, 0.08);
+            border-color: #b8993e;
+            transform: translateY(-2px);
         }
         body.game-yugioh .result-item:hover .result-image-wrapper {
-            box-shadow: 0 6px 20px rgba(0,0,0,0.6), 0 0 8px rgba(201,168,76,0.2);
+            box-shadow: 0 4px 16px rgba(184, 153, 62, 0.12);
         }
         body.game-yugioh .similarity-percent {
-            color: #e8c96b;
+            color: #b8993e;
         }
 
         /* Skip link for accessibility */
@@ -421,7 +397,8 @@
             font-weight: 700;
             margin-bottom: 24px;
             text-align: center;
-            letter-spacing: 0.01em;
+            letter-spacing: -0.01em;
+            line-height: 1.14;
         }
         /* Navigation tabs -- Encarta-style flat with ruled underlines */
         .nav-tabs {
@@ -659,10 +636,9 @@
             margin: 0 auto;
             background: var(--search-bg);
             border: 1px solid var(--search-border);
-            border-radius: 4px;
+            border-radius: 12px;
             padding: 0;
-            box-shadow: inset 0 1px 3px rgba(0,0,0,0.06);
-            transition: border-color 0.2s, box-shadow 0.2s, background 0.3s;
+            transition: border-color 0.2s ease, box-shadow 0.3s ease, background 0.3s ease;
         }
         .search-form:focus-within {
             border-color: var(--color-border-focus);
@@ -687,8 +663,7 @@
             width: 100%;
         }
         input[type="text"]:focus {
-            outline: 2px solid var(--color-border-focus);
-            outline-offset: 2px;
+            outline: none; /* Form wrapper handles focus via :focus-within */
         }
         input[type="text"]::placeholder {
             color: var(--color-text-muted);
@@ -705,7 +680,7 @@
             max-height: 400px;
             overflow-y: auto;
             z-index: 1000;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 20px 40px rgba(0, 0, 0, 0.12);
             display: none;
             transform-origin: top;
         }
@@ -816,8 +791,8 @@
             cursor: pointer;
             font-size: 15px;
             font-weight: 500;
-            border-radius: 0 4px 4px 0;
-            transition: background 0.15s, color 0.15s;
+            border-radius: 0 12px 12px 0;
+            transition: background 0.15s ease, color 0.15s ease;
         }
         .search-button:hover {
             background: color-mix(in srgb, var(--color-accent-primary) 12%, transparent);
@@ -939,8 +914,8 @@
             background: var(--card-bg);
             padding: 16px;
             margin-bottom: 8px;
-            border-radius: 6px;
-            border-left: 2px solid var(--color-border-default);
+            border-radius: 12px;
+            border: 1px solid var(--color-border-default);
         }
         .skeleton-title {
             height: 20px;
@@ -966,20 +941,20 @@
         .result-item {
             background: var(--card-bg);
             padding: 20px;
-            margin-bottom: 18px;
-            border-radius: 8px;
-            border-left: 3px solid var(--card-border-accent);
+            margin-bottom: 12px;
+            border-radius: 12px;
+            border: 1px solid var(--card-border-accent);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+            transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.3s ease, transform 0.3s ease;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06);
         }
         .result-item:hover {
             background: var(--card-hover-bg);
-            border-left-color: var(--card-hover-border);
-            box-shadow: var(--card-hover-shadow);
-            transform: translateY(-1px);
+            border-color: var(--card-hover-border);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 20px rgba(0,0,0,0.06);
+            transform: translateY(-2px);
         }
         .result-item:focus-within {
             outline: 2px solid var(--color-border-focus);
@@ -1002,13 +977,13 @@
             border-radius: 8px;
             overflow: hidden;
             background: var(--color-bg-secondary);
-            border: 2px solid var(--card-border-accent);
-            box-shadow: 0 3px 12px rgba(0,0,0,0.15);
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            border: 1px solid var(--card-border-accent);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 4px 12px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
         }
         .result-item:hover .result-image-wrapper {
-            transform: scale(1.05);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.28);
+            transform: scale(1.03);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.06), 0 10px 24px rgba(0,0,0,0.12);
         }
         .card-image {
             width: 100%;
@@ -1025,13 +1000,15 @@
             color: var(--color-text-primary);
             font-size: 18px;
             margin-bottom: 10px;
-            line-height: 1.3;
+            line-height: 1.19;
+            letter-spacing: -0.01em;
         }
         .result-meta {
             font-size: 14px;
             color: var(--color-text-secondary);
             margin-top: 6px;
-            line-height: 1.5;
+            line-height: 1.43;
+            letter-spacing: -0.01em;
         }
         .result-tags {
             font-size: 14px;
@@ -1141,24 +1118,12 @@
             color: #b91c1c;
             border: 1px solid rgba(185, 28, 28, 0.2);
         }
-        /* Dark theme overrides for badge readability */
-        body.game-magic .result-substitutability.can-substitute,
-        body.game-yugioh .result-substitutability.can-substitute {
-            color: #4ade80; background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.2);
-        }
-        body.game-magic .result-substitutability.partial-substitute,
-        body.game-yugioh .result-substitutability.partial-substitute {
-            color: #fbbf24; background: rgba(251, 191, 36, 0.1); border-color: rgba(251, 191, 36, 0.2);
-        }
-        body.game-magic .result-substitutability.not-substitutable,
-        body.game-yugioh .result-substitutability.not-substitutable {
-            color: #ef4444; background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.2);
-        }
-        /* Dark theme metadata readability */
+        /* Substitutability badge colors (light theme) -- no per-game overrides needed */
+        /* Theme metadata readability */
         body.game-magic .result-meta,
         body.game-yugioh .result-meta { font-size: 14px; }
         body.game-magic .result-oracle { color: var(--color-text-secondary); }
-        body.game-yugioh .result-oracle { color: #c8c0d8; }
+        body.game-yugioh .result-oracle { color: var(--color-text-secondary); }
         body.game-yugioh .result-item { margin-bottom: 22px; }
         .result-oracle {
             font-size: 14px;
@@ -1170,6 +1135,92 @@
             border-top: 1px solid var(--color-border-default);
         }
 
+        /* === INLINE RELEVANCE SNIPPET (metadata-derived, instant) === */
+        .result-relevance-snippet {
+            margin-top: 8px;
+            padding: 8px 12px;
+            background: var(--color-bg-secondary);
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            border-left: 2px solid var(--color-accent-primary);
+        }
+        .result-relevance-snippet .snippet-label {
+            font-weight: 600;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: var(--color-accent-primary);
+            margin-bottom: 2px;
+        }
+        .result-relevance-snippet .snippet-text {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+        }
+        .result-relevance-snippet .snippet-signals {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .result-relevance-snippet .signal-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            padding: 1px 7px;
+            border-radius: 12px;
+            font-size: 11px;
+            font-weight: 500;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-secondary);
+            border: 1px solid transparent;
+        }
+        .result-relevance-snippet .signal-chip.high {
+            background: rgba(22, 163, 74, 0.08);
+            color: #15803d;
+            border-color: rgba(22, 163, 74, 0.15);
+        }
+
+        /* === SIMILARITY EXPLANATIONS === */
+        .result-explanation {
+            margin-top: 10px;
+            padding: 10px 12px;
+            background: var(--color-bg-secondary);
+            border-radius: 8px;
+            font-size: 13px;
+            line-height: 1.5;
+            color: var(--color-text-secondary);
+            animation: fadeIn 0.3s ease;
+        }
+        .result-explanation .explanation-reason {
+            margin-bottom: 6px;
+        }
+        .result-explanation .explanation-traits {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 6px;
+        }
+        .result-explanation .explanation-trait {
+            display: inline-block;
+            padding: 2px 8px;
+            background: var(--color-bg-tertiary);
+            border-radius: 4px;
+            font-size: 11px;
+            color: var(--color-text-secondary);
+        }
+        .result-explanation .explanation-diff {
+            margin-top: 6px;
+            font-size: 12px;
+            color: var(--color-text-muted);
+            font-style: italic;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
         /* === STAT BADGES (Power/Toughness, ATK/DEF, HP) === */
         .stat-badges {
             display: flex;
@@ -1178,37 +1229,29 @@
             margin-top: 6px;
         }
         .stat-badge {
-            font-size: 13px;
-            font-weight: 700;
-            padding: 3px 9px;
-            border-radius: 4px;
+            font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+            font-size: 12px;
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
             background: var(--color-bg-tertiary);
             color: var(--color-text-primary);
             border: 1px solid var(--color-border-default);
             white-space: nowrap;
+            letter-spacing: 0;
         }
         .stat-badge.stat-combat {
             background: rgba(220, 38, 38, 0.1);
             border-color: rgba(220, 38, 38, 0.25);
             color: #dc2626;
         }
-        body.game-magic .stat-badge.stat-combat,
-        body.game-yugioh .stat-badge.stat-combat {
-            color: #f87171;
-            background: rgba(248, 113, 113, 0.1);
-            border-color: rgba(248, 113, 113, 0.2);
-        }
+        /* Stat badge per-game overrides removed -- light theme base colors work */
         .stat-badge.stat-defense {
             background: rgba(37, 99, 235, 0.1);
             border-color: rgba(37, 99, 235, 0.25);
             color: #2563eb;
         }
-        body.game-magic .stat-badge.stat-defense,
-        body.game-yugioh .stat-badge.stat-defense {
-            color: #60a5fa;
-            background: rgba(96, 165, 250, 0.1);
-            border-color: rgba(96, 165, 250, 0.2);
-        }
+        /* Defense badge per-game overrides removed -- light theme base colors work */
 
         /* === FUNCTIONAL TAG PILLS === */
         .tag-pills {
@@ -1220,8 +1263,8 @@
         .tag-pill {
             font-size: 11px;
             font-weight: 600;
-            padding: 2px 8px;
-            border-radius: 10px;
+            padding: 1px 7px;
+            border-radius: 12px;
             background: var(--color-bg-tertiary);
             color: var(--color-accent-primary);
             border: 1px solid var(--color-border-default);
@@ -1243,10 +1286,11 @@
         .keyword-tag {
             font-size: 11px;
             font-weight: 500;
-            padding: 2px 7px;
+            padding: 1px 6px;
             border-radius: 3px;
             background: var(--color-bg-secondary);
             color: var(--color-text-secondary);
+            letter-spacing: 0.01em;
             border: 1px solid var(--color-border-default);
         }
 
@@ -1262,29 +1306,29 @@
             letter-spacing: 0.04em;
         }
         body.game-yugioh .archetype-badge {
-            background: rgba(201, 168, 76, 0.12);
-            border: 1px solid rgba(201, 168, 76, 0.3);
-            color: #c9a84c;
+            background: rgba(184, 153, 62, 0.1);
+            border: 1px solid rgba(184, 153, 62, 0.25);
+            color: #8a7230;
         }
         body.game-magic .archetype-badge {
-            background: rgba(155, 114, 207, 0.12);
-            border: 1px solid rgba(155, 114, 207, 0.25);
-            color: #b08adf;
+            background: rgba(124, 92, 191, 0.1);
+            border: 1px solid rgba(124, 92, 191, 0.2);
+            color: #6b4fa8;
         }
         body.game-pokemon .archetype-badge {
-            background: rgba(42, 117, 187, 0.1);
+            background: rgba(42, 117, 187, 0.08);
             border: 1px solid rgba(42, 117, 187, 0.2);
-            color: #2a75bb;
+            color: #1d6aa5;
         }
 
-        /* === YGO ATTRIBUTE COLORS === */
-        .attr-dark { color: #a78bfa; }
-        .attr-light { color: #fbbf24; }
-        .attr-fire { color: #f87171; }
-        .attr-water { color: #60a5fa; }
-        .attr-earth { color: #a3e635; }
-        .attr-wind { color: #34d399; }
-        .attr-divine { color: #f59e0b; }
+        /* === YGO ATTRIBUTE COLORS (light bg) === */
+        .attr-dark { color: #7c3aed; }
+        .attr-light { color: #b8993e; }
+        .attr-fire { color: #dc2626; }
+        .attr-water { color: #2563eb; }
+        .attr-earth { color: #65a30d; }
+        .attr-wind { color: #059669; }
+        .attr-divine { color: #d97706; }
 
         /* === POKEMON ENERGY TYPE BARS === */
         body.game-pokemon .result-item[data-energy-type="Fire"] { border-left: 3px solid #f87171; }
@@ -1338,8 +1382,8 @@
             margin-bottom: 12px;
             white-space: pre-wrap;
         }
-        body.game-yugioh .expand-full-text { color: #c0b8d0; }
-        body.game-magic .expand-full-text { color: #bbb0cc; }
+        body.game-yugioh .expand-full-text { color: var(--color-text-secondary); }
+        body.game-magic .expand-full-text { color: var(--color-text-secondary); }
         .expand-stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
@@ -1429,7 +1473,7 @@
             transition: right 0.25s ease;
             overflow-y: auto;
             padding: 24px;
-            box-shadow: -4px 0 20px rgba(0,0,0,0.3);
+            box-shadow: -4px 0 12px rgba(0,0,0,0.08), -16px 0 40px rgba(0,0,0,0.12);
         }
         .card-drawer.open {
             right: 0;
@@ -1502,7 +1546,7 @@
             background: var(--color-bg-elevated);
             color: var(--color-text-primary);
             border: 1px solid var(--color-border-default);
-            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08), 0 20px 40px rgba(0,0,0,0.12);
             font-size: 13px;
             font-weight: 500;
             animation: toastIn 0.25s ease, toastOut 0.25s ease 2.5s forwards;
@@ -1638,15 +1682,17 @@
             margin-bottom: 4px;
         }
         .similarity-percent {
-            font-size: 22px;
+            font-size: 24px;
             font-weight: 700;
-            color: var(--color-text-primary);
+            color: var(--match-color);
             letter-spacing: -0.02em;
+            line-height: 1;
+            font-variant-numeric: tabular-nums;
         }
         .similarity-label {
             font-size: 12px;
-            color: var(--color-text-secondary);
-            font-style: italic;
+            color: var(--color-text-muted);
+            font-weight: 400;
         }
         .feedback-controls {
             display: flex;
@@ -1714,19 +1760,19 @@
             opacity: 1;
         }
         .status.error {
-            background: #4a1a1a;
-            border: 1px solid #8a2a2a;
-            color: #ff8888;
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: #dc2626;
         }
         .status.success {
-            background: #1a4a1a;
-            border: 1px solid #2a8a2a;
-            color: #88ff88;
+            background: rgba(22, 163, 74, 0.08);
+            border: 1px solid rgba(22, 163, 74, 0.2);
+            color: #15803d;
         }
         .status.info {
-            background: #1a1a4a;
-            border: 1px solid #2a2a8a;
-            color: #8888ff;
+            background: rgba(59, 130, 246, 0.08);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: #2563eb;
         }
         .model-info {
             font-size: 12px;
@@ -1814,16 +1860,15 @@
             margin-bottom: 10px;
         }
         .game-btn {
-            padding: 7px 20px;
-            border-radius: 4px 4px 0 0;
+            padding: 8px 20px;
+            border-radius: 8px;
             border: 1px solid var(--color-border-default);
-            border-bottom: none;
             font-size: 13px;
             font-weight: 600;
             font-family: inherit;
             cursor: pointer;
-            transition: all 0.2s;
-            background: color-mix(in srgb, var(--color-bg-secondary) 50%, transparent);
+            transition: all 0.2s ease;
+            background: transparent;
             color: var(--color-text-muted);
             letter-spacing: 0.02em;
         }
@@ -1853,7 +1898,7 @@
             padding: 16px;
             background: var(--color-bg-elevated);
             border: 1px solid var(--color-border-default);
-            border-radius: 6px;
+            border-radius: 12px;
             margin-bottom: 16px;
         }
         .query-card-banner .query-image-wrapper {
@@ -2039,10 +2084,13 @@
                     <div class="section-accent-bar"></div>
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
                         <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Results</h2>
-                        <div class="feedback-toggle">
-                            <input type="checkbox" id="enableFeedback" onchange="toggleFeedbackMode()" aria-label="Enable feedback mode">
-                            <label for="enableFeedback">Feedback</label>
-                            <span class="help-icon" title="Rating scale: 4=Extremely similar (substitutes), 3=Very similar (similar role), 2=Somewhat similar (related function), 1=Marginally similar (loose connection), 0=Irrelevant">?</span>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <button id="explainBtn" onclick="explainAllResults()" style="display:none; padding: 6px 14px; font-size: 13px; border-radius: 8px; border: 1px solid var(--color-border-default); background: var(--color-bg-secondary); color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--color-accent-primary)';this.style.color='var(--color-accent-primary)'" onmouseout="this.style.borderColor='var(--color-border-default)';this.style.color='var(--color-text-secondary)'">Why similar?</button>
+                            <div class="feedback-toggle">
+                                <input type="checkbox" id="enableFeedback" onchange="toggleFeedbackMode()" aria-label="Enable feedback mode">
+                                <label for="enableFeedback">Feedback</label>
+                                <span class="help-icon" title="Rating scale: 4=Extremely similar (substitutes), 3=Very similar (similar role), 2=Somewhat similar (related function), 1=Marginally similar (loose connection), 0=Irrelevant">?</span>
+                            </div>
                         </div>
                     </div>
                     <div id="resultsContainer"></div>
@@ -2724,6 +2772,7 @@
                 performanceMetrics.avgResponseTime = performanceMetrics.totalResponseTime / performanceMetrics.searchCount;
 
                 currentResults = data.results || [];
+                currentResults._queryMetadata = data.query_metadata || null;
                 currentModelInfo = data.model_info || null;
 
                 // Cache the result
@@ -3165,6 +3214,111 @@
             }
         }
 
+        /**
+         * Build inline relevance snippet from metadata -- shows WHY a card matched.
+         * No LLM call needed; derived from shared metadata between query and result.
+         * Prioritizes specific signals (abilities, archetype, role) over generic ones (type).
+         */
+        function buildRelevanceSnippet(result, queryMeta, game) {
+            const meta = result.metadata || {};
+            const signals = [];  // {label, high}
+            const reasons = [];  // text reasons, ordered by specificity (most specific first)
+
+            if (!queryMeta) return '';
+
+            // 1. MOST SPECIFIC: Shared keyword abilities (Flying, Trample, Reach, etc.)
+            const qKw = String(queryMeta.keywords || queryMeta.keyword_abilities || '').split(',').map(s => s.trim()).filter(Boolean);
+            const rKw = String(meta.keywords || meta.keyword_abilities || '').split(',').map(s => s.trim()).filter(Boolean);
+            const sharedKw = qKw.filter(k => rKw.includes(k));
+            if (sharedKw.length) {
+                reasons.push(`Both have ${sharedKw.slice(0, 3).join(', ')}`);
+                sharedKw.slice(0, 2).forEach(k => signals.push({label: k, high: true}));
+            }
+
+            // 2. Shared archetype (YGO) or creature type (Magic/Pokemon)
+            if (game === 'yugioh' && meta.archetype && queryMeta.archetype && meta.archetype === queryMeta.archetype) {
+                reasons.push(`Same archetype: ${meta.archetype}`);
+                signals.push({label: meta.archetype, high: true});
+            }
+            const qCreatures = String(queryMeta.creature_types || queryMeta.subtypes || '').split(',').map(s => s.trim()).filter(Boolean);
+            const rCreatures = String(meta.creature_types || meta.subtypes || '').split(',').map(s => s.trim()).filter(Boolean);
+            const sharedCreatures = qCreatures.filter(c => rCreatures.includes(c));
+            if (sharedCreatures.length) {
+                const typeLabel = game === 'pokemon' ? 'subtype' : 'creature type';
+                reasons.push(`Shared ${typeLabel}: ${sharedCreatures.join(', ')}`);
+                signals.push({label: sharedCreatures[0], high: true});
+            }
+
+            // 3. Functional role overlap
+            if (meta.functional_tags && queryMeta.functional_tags) {
+                const qTags = String(queryMeta.functional_tags).split(',').map(s => s.trim());
+                const rTags = String(meta.functional_tags).split(',').map(s => s.trim());
+                const shared = qTags.filter(t => rTags.includes(t));
+                if (shared.length) {
+                    reasons.push(`Similar role: ${shared.slice(0, 2).join(', ')}`);
+                    signals.push({label: 'Role', high: true});
+                }
+            }
+
+            // 4. Co-occurrence (played together in real decks)
+            if (meta.cooccurrence_note) {
+                reasons.push(meta.cooccurrence_note);
+                signals.push({label: 'Co-played', high: false});
+            }
+
+            // 5. Same color identity (Magic)
+            if (game === 'magic' && meta.colors && queryMeta.colors) {
+                if (String(queryMeta.colors) === String(meta.colors)) {
+                    signals.push({label: `${meta.colors} mana`, high: false});
+                }
+            }
+
+            // 6. Similar stat range (low-priority context chip)
+            if (meta.cmc !== undefined && queryMeta.cmc !== undefined && Math.abs(meta.cmc - queryMeta.cmc) <= 1) {
+                signals.push({label: `CMC ${meta.cmc}`, high: false});
+            }
+            if (meta.hp && queryMeta.hp && Math.abs(parseInt(meta.hp) - parseInt(queryMeta.hp)) <= 30) {
+                signals.push({label: `HP ${meta.hp}`, high: false});
+            }
+            if (game === 'yugioh' && meta.atk !== undefined && queryMeta.atk !== undefined) {
+                if (Math.abs(Number(meta.atk) - Number(queryMeta.atk)) <= 500) {
+                    signals.push({label: `ATK ${meta.atk}`, high: false});
+                }
+            }
+            if (meta.power && meta.toughness && queryMeta.power && queryMeta.toughness) {
+                if (meta.power === queryMeta.power && meta.toughness === queryMeta.toughness) {
+                    signals.push({label: `${meta.power}/${meta.toughness}`, high: false});
+                }
+            }
+
+            // 7. LEAST SPECIFIC: Shared supertype (creature, enchantment, etc.)
+            // Only add if we have NO other reasons -- "both are creatures" is noise for most searches
+            if (reasons.length === 0 && meta.type && queryMeta.type) {
+                const qSuper = String(queryMeta.type).toLowerCase().split(/[\s\u2014—]+/);
+                const rSuper = String(meta.type).toLowerCase().split(/[\s\u2014—]+/);
+                // Filter out generic words
+                const skip = new Set(['creature', 'basic', 'legendary', 'snow', 'token', 'world']);
+                const shared = qSuper.filter(t => rSuper.includes(t) && t.length > 2 && !skip.has(t));
+                if (shared.length) {
+                    reasons.push(`Both are ${shared.join(' ')}`);
+                    signals.push({label: shared[0], high: false});
+                }
+            }
+
+            if (reasons.length === 0 && signals.length === 0) return '';
+
+            const reasonText = reasons[0] || 'Similar card profile';
+            const signalChips = signals.slice(0, 4).map(s =>
+                `<span class="signal-chip ${s.high ? 'high' : ''}">${escapeHtml(s.label)}</span>`
+            ).join('');
+
+            return `<div class="result-relevance-snippet">
+                <div class="snippet-label">Why similar</div>
+                <div class="snippet-text">${escapeHtml(reasonText)}</div>
+                ${signalChips ? `<div class="snippet-signals">${signalChips}</div>` : ''}
+            </div>`;
+        }
+
         function displayResults(data) {
             const resultsContainer = document.getElementById('resultsContainer');
             const modelInfo = document.getElementById('modelInfo');
@@ -3348,6 +3502,10 @@
                         `<div class="expand-stat-item"><span class="stat-key">${escapeHtml(s.key)}</span> <span class="stat-val">${escapeHtml(s.val.length > 60 ? s.val.substring(0, 60) + '...' : s.val)}</span></div>`
                     ).join('')}</div>` : '';
 
+                // Build relevance snippet (instant, from metadata)
+                const queryMeta = data?.query_metadata || currentResults._queryMetadata || null;
+                const relevanceSnippetHtml = buildRelevanceSnippet(result, queryMeta, game);
+
                 if (energyType) item.setAttribute('data-energy-type', energyType);
                 item.dataset.cardName = result.card;
                 item.dataset.cardIndex = index;
@@ -3381,7 +3539,9 @@
                                 ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
                                 ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
                                 <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
+                                ${relevanceSnippetHtml}
                                 ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
+                                <div class="result-explanation" data-card="${escapeHtml(result.card)}" style="display:none;"></div>
                             </div>
                         </div>
                         <!-- Expandable detail panel -->
@@ -3425,6 +3585,95 @@
             }
 
             resultsSection.style.display = 'block';
+
+            // Show "Why similar?" button when results are available
+            const explainBtn = document.getElementById('explainBtn');
+            if (explainBtn) explainBtn.style.display = 'inline-block';
+        }
+
+        // Explain all results via LLM
+        let explainCache = {};
+
+        async function explainAllResults() {
+            const btn = document.getElementById('explainBtn');
+            if (!btn || !currentResults.length) return;
+
+            const query = document.getElementById('searchInput')?.value?.trim();
+            const game = document.querySelector('input[name="game"]:checked')?.value;
+            if (!query || !game) return;
+
+            // Check local cache
+            const cacheKey = `${game}:${query}`;
+            if (explainCache[cacheKey]) {
+                renderExplanations(explainCache[cacheKey]);
+                return;
+            }
+
+            // Update button state
+            btn.textContent = 'Thinking...';
+            btn.disabled = true;
+            btn.style.opacity = '0.6';
+
+            // Build request with metadata for richer explanations
+            const resultNames = currentResults.map(r => r.card);
+            const resultsMeta = {};
+            currentResults.forEach(r => {
+                if (r.metadata) resultsMeta[r.card] = r.metadata;
+            });
+
+            // Get query metadata from the banner if available
+            const queryMeta = currentResults._queryMetadata || null;
+
+            try {
+                const resp = await fetch('/v1/explain', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        game,
+                        query,
+                        results: resultNames,
+                        query_metadata: queryMeta,
+                        results_metadata: Object.keys(resultsMeta).length ? resultsMeta : null,
+                    }),
+                });
+
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({}));
+                    throw new Error(err.detail || `HTTP ${resp.status}`);
+                }
+
+                const data = await resp.json();
+                explainCache[cacheKey] = data.explanations;
+                renderExplanations(data.explanations);
+
+                btn.textContent = data.cached ? 'Why similar? (cached)' : `Why similar? (${data.latency_ms}ms)`;
+            } catch (err) {
+                console.error('Explain failed:', err);
+                btn.textContent = 'Explain failed';
+                setTimeout(() => { btn.textContent = 'Why similar?'; }, 2000);
+            } finally {
+                btn.disabled = false;
+                btn.style.opacity = '1';
+            }
+        }
+
+        function renderExplanations(explanations) {
+            document.querySelectorAll('.result-explanation').forEach(el => {
+                const card = el.dataset.card;
+                const exp = explanations[card];
+                if (!exp) return;
+
+                const traitsHtml = (exp.shared_traits || [])
+                    .map(t => `<span class="explanation-trait">${escapeHtml(t)}</span>`)
+                    .join('');
+
+                el.innerHTML = `
+                    <div class="explanation-reason">${escapeHtml(exp.reason)}</div>
+                    ${traitsHtml ? `<div class="explanation-traits">${traitsHtml}</div>` : ''}
+                    ${exp.key_difference ? `<div class="explanation-diff">${escapeHtml(exp.key_difference)}</div>` : ''}
+                `;
+                el.style.display = 'block';
+            });
         }
 
         function setRating(index, rating) {
