@@ -2288,6 +2288,14 @@ try:
 except ImportError:
     logger.debug("Chat router not available (pydantic-ai required)")
 
+# Include explain router (LLM similarity explanations)
+try:
+    from .explain import explain_router
+
+    app.include_router(explain_router)
+except ImportError:
+    logger.debug("Explain router not available (openai package required)")
+
 # Serve static HTML files for frontend interface
 # Mount static directory if it exists
 _static_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "static"
