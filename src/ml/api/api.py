@@ -2293,8 +2293,11 @@ try:
     from .explain import explain_router
 
     app.include_router(explain_router)
+    logger.info("Explain router loaded")
 except ImportError:
     logger.debug("Explain router not available (openai package required)")
+except Exception as e:
+    logger.warning("Explain router failed to load: %s", e)
 
 # Serve static HTML files for frontend interface
 # Mount static directory if it exists
