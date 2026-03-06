@@ -2,10 +2,18 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "test:e2e": "npx playwright test tests/e2e/api-health.spec.mjs tests/e2e/search.spec.mjs tests/e2e/card-details.spec.mjs tests/e2e/deck.spec.mjs",
+    "test:e2e:api": "npx playwright test tests/e2e/api-health.spec.mjs",
+    "test:e2e:search": "npx playwright test tests/e2e/search.spec.mjs",
+    "test:e2e:cards": "npx playwright test tests/e2e/card-details.spec.mjs",
+    "test:e2e:deck": "npx playwright test tests/e2e/deck.spec.mjs",
+    "test:e2e:visual": "npx playwright test tests/e2e/visual.spec.mjs",
+    "test:e2e:all": "npx playwright test",
     "vlm-critique": "node scripts/vlm_critique.mjs",
     "vlm-critique:clear": "node scripts/vlm_critique.mjs --clear"
   },
   "devDependencies": {
-    "@arclabs561/ai-visual-test": "file:../ai-visual-test"
+    "@arclabs561/ai-visual-test": "file:../ai-visual-test",
+    "@playwright/test": "^1.58.2"
   }
 }
