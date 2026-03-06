@@ -1207,6 +1207,19 @@
         body.game-magic .result-oracle { color: var(--color-text-secondary); }
         body.game-yugioh .result-oracle { color: var(--color-text-secondary); }
         body.game-yugioh .result-item { margin-bottom: 22px; }
+        .result-summon-req {
+            font-size: 13px;
+            color: var(--color-text-secondary);
+            margin-top: 6px;
+            padding: 3px 8px;
+            background: var(--color-bg-secondary);
+            border-left: 3px solid var(--color-accent, #6366f1);
+            border-radius: 0 4px 4px 0;
+            font-style: italic;
+        }
+        body.game-yugioh .result-summon-req {
+            border-left-color: #b8860b;
+        }
         .result-oracle {
             font-size: 14px;
             color: var(--color-text-secondary);
@@ -3674,11 +3687,19 @@
                     ? `<div class="stat-badges">${statBadges.map(s => `<span class="stat-badge ${s.cls}">${escapeHtml(String(s.label))}</span>`).join('')}</div>`
                     : '';
 
-                // Keyword tags
+                // Keyword tags (Magic abilities + YGO effect types)
                 const keywords = meta.keywords || meta.keyword_abilities || '';
-                const keywordList = keywords ? String(keywords).split(',').map(k => k.trim()).filter(Boolean).slice(0, 5) : [];
+                const effectTypes = (game === 'yugioh' && meta.effect_types) ? meta.effect_types : '';
+                const combinedKeywords = [keywords, effectTypes].filter(Boolean).join(', ');
+                const keywordList = combinedKeywords ? String(combinedKeywords).split(',').map(k => k.trim()).filter(Boolean).slice(0, 6) : [];
                 const keywordHtml = keywordList.length > 0
                     ? `<div class="keyword-tags">${keywordList.map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join('')}</div>`
+                    : '';
+
+                // Summoning requirements (YGO Extra Deck / Ritual monsters)
+                const summonReq = (game === 'yugioh' && meta.summoning_requirements) ? meta.summoning_requirements : '';
+                const summonReqHtml = summonReq
+                    ? `<div class="result-summon-req">${escapeHtml(summonReq)}</div>`
                     : '';
 
                 // Archetype badge(s) — prefer archetype_names (multi-archetype) from enrichment
@@ -3789,7 +3810,7 @@
                 // Build expanded panel stats grid
                 const expandStats = [];
                 for (const [k, v] of Object.entries(meta)) {
-                    if (['image_url','oracle_text','oracle_text_full','type'].includes(k)) continue;
+                    if (['image_url','oracle_text','oracle_text_full','type','summoning_requirements','effect_types'].includes(k)) continue;
                     if (v === null || v === undefined) continue;
                     const val = Array.isArray(v) ? v.join(', ')
                         : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) =>
@@ -3843,6 +3864,7 @@
                                 ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
                                 <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
                                 ${relevanceSnippetHtml}
+                                ${summonReqHtml}
                                 ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
                                 <div class="result-explanation" data-card="${escapeHtml(result.card)}" style="display:none;"></div>
                             </div>

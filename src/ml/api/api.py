@@ -998,6 +998,7 @@ _GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
         "atk", "def_stat", "level_rank_link", "attribute", "race", "archetype",
         "monster_type", "attribute_enriched", "race_enriched", "archetype_enriched",
         "pendulum_scale", "link_markers", "card_category",
+        "summoning_requirements", "effect_types",
     ),
 }
 
