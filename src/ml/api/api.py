@@ -1753,6 +1753,11 @@ def search_cards_v1(request: SearchRequest):
     then combines results based on weights.
     """
     game = _require_game(request.game)
+
+    # Reject empty/whitespace-only queries
+    if not request.query or not request.query.strip():
+        return SearchResponse(query=request.query, results=[], total=0)
+
     client = _get_search_client(game)
 
     if client is None:
