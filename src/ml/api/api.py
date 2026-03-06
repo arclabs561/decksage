@@ -1863,7 +1863,7 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
 
         # Over-fetch by 2x so we can filter non-English names and still return k results
         req = SimilarityRequest(
-            game=game, query=card, top_k=k * 2, use_case=use_case, mode=effective_mode
+            game=game, query=card, top_k=min(k * 2, 100), use_case=use_case, mode=effective_mode
         )
         try:
             resp = _similar_impl(req)
@@ -1927,7 +1927,7 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
     """Wrap a candidate function to filter out cards outside the deck's color identity."""
 
     def filtered(card: str, k: int) -> list[tuple[str, float]]:
-        results = cand_fn(card, k * 3)  # over-fetch to compensate for filtering
+        results = cand_fn(card, min(k * 3, 100))  # over-fetch, capped at API max
         filtered_results = []
         for cand, score in results:
             meta = card_metadata.get(cand)
