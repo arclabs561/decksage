@@ -3059,9 +3059,11 @@
 
         function displayContextualResults(categories) {
             const container = document.getElementById('contextualResultsContainer');
+            const categoryLabels = { synergies: 'Synergies', alternatives: 'Alternatives', upgrades: 'More Popular', downgrades: 'Less Popular' };
             let html = '';
             for (const [category, cards] of Object.entries(categories)) {
-                html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--color-accent-primary); font-size: 16px;">${escapeHtml(category)}</h3>`;
+                const label = categoryLabels[category] || category.charAt(0).toUpperCase() + category.slice(1);
+                html += `<h3 style="margin-top: 24px; margin-bottom: 12px; color: var(--color-accent-primary); font-size: 16px;">${escapeHtml(label)} (${cards.length})</h3>`;
                 html += cards.map(card => {
                     const score = card.score !== undefined ? card.score : (card.similarity || 0);
                     const reasoning = card.reasoning ? `<div class="result-meta" style="margin-top: 4px;">${escapeHtml(card.reasoning)}</div>` : '';

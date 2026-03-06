@@ -66,6 +66,7 @@ class ContextualCardDiscovery:
         archetype_staples: dict[str, dict[str, float]] | None = None,
         archetype_cooccurrence: dict[str, dict[str, float]] | None = None,
         format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
+        price_label: str = "price",
     ):
         self.fusion = fusion
         self.price_fn = price_fn
@@ -73,6 +74,7 @@ class ContextualCardDiscovery:
         self.archetype_staples = archetype_staples or {}
         self.archetype_cooccurrence = archetype_cooccurrence or {}
         self.format_cooccurrence = format_cooccurrence or {}
+        self.price_label = price_label
 
     def find_synergies(
         self,
@@ -286,6 +288,12 @@ class ContextualCardDiscovery:
                 1.0 + min(price_delta / 10.0, 0.3)
             )  # Up to 30% boost for expensive upgrades
 
+            # Build reasoning text
+            if self.price_label == "popularity":
+                base_reason = f"more popular ({int(current_price)} → {int(alt_price)} decks)"
+            else:
+                base_reason = f"upgrade (${current_price:.2f} → ${alt_price:.2f})"
+
             # Boost if archetype staple
             if self.archetype_staples:
                 alt_staples = self.archetype_staples.get(alt.card, {})
@@ -293,13 +301,13 @@ class ContextualCardDiscovery:
                     max_inclusion = max(alt_staples.values())
                     if max_inclusion > 0.7:
                         score *= 1.2
-                        reasoning = f"upgrade (${current_price:.2f} → ${alt_price:.2f}), archetype staple ({max_inclusion:.0%})"
+                        reasoning = f"{base_reason}, archetype staple ({max_inclusion:.0%})"
                     else:
-                        reasoning = f"upgrade (${current_price:.2f} → ${alt_price:.2f})"
+                        reasoning = base_reason
                 else:
-                    reasoning = f"upgrade (${current_price:.2f} → ${alt_price:.2f})"
+                    reasoning = base_reason
             else:
-                reasoning = f"upgrade (${current_price:.2f} → ${alt_price:.2f})"
+                reasoning = base_reason
 
             upgrades.append(
                 CardUpgrade(
@@ -376,7 +384,10 @@ class ContextualCardDiscovery:
                 1.0 + min(savings_pct * 0.5, 0.4)
             )  # Up to 40% boost for big savings
 
-            reasoning = f"budget alternative (${current_price:.2f} → ${alt_price:.2f}, save ${abs(price_delta):.2f})"
+            if self.price_label == "popularity":
+                reasoning = f"less popular ({int(current_price)} → {int(alt_price)} decks)"
+            else:
+                reasoning = f"budget alternative (${current_price:.2f} → ${alt_price:.2f}, save ${abs(price_delta):.2f})"
 
             downgrades.append(
                 CardDowngrade(
