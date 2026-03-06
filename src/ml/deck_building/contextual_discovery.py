@@ -267,7 +267,7 @@ class ContextualCardDiscovery:
             if alt_price is None or alt_price <= current_price:
                 continue
 
-            # Must fill similar role
+            # Must fill similar role (skip check when tagger unavailable)
             alt_role: set[str] = set()
             if self.tag_set_fn:
                 alt_role = self.tag_set_fn(alt.card)
@@ -275,7 +275,7 @@ class ContextualCardDiscovery:
             role_overlap = (
                 len(current_role & alt_role) / len(current_role | alt_role)
                 if (current_role | alt_role)
-                else 0.0
+                else 1.0  # No tagger = assume compatible
             )
             if role_overlap < 0.3:
                 continue  # Not similar enough
@@ -354,7 +354,7 @@ class ContextualCardDiscovery:
             if alt_price is None or alt_price >= current_price:
                 continue
 
-            # Must fill similar role
+            # Must fill similar role (skip check when tagger unavailable)
             alt_role: set[str] = set()
             if self.tag_set_fn:
                 alt_role = self.tag_set_fn(alt.card)
@@ -362,7 +362,7 @@ class ContextualCardDiscovery:
             role_overlap = (
                 len(current_role & alt_role) / len(current_role | alt_role)
                 if (current_role | alt_role)
-                else 0.0
+                else 1.0  # No tagger = assume compatible
             )
             if role_overlap < 0.3:
                 continue  # Not similar enough

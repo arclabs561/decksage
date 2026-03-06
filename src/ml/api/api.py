@@ -2055,6 +2055,10 @@ def suggest_actions(req: SuggestActionsRequest):
     task_type = action_to_task.get(action_type, "substitution")
     cand_fn = _make_candidate_fn(game, req.mode, task_type=task_type)
 
+    # Re-apply color identity filtering to the task-specific candidate fn
+    if deck_colors and state.card_metadata:
+        cand_fn = _wrap_cand_fn_color_filter(cand_fn, deck_colors, state.card_metadata)
+
     # Handle different action types
     if action_type in ("add", "suggest"):
         from ..deck_building.deck_completion import suggest_additions
