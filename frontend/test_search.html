@@ -438,163 +438,6 @@
         }
 
         /* ── Chat tab ─────────────────────────────────── */
-        .chat-container {
-            display: flex;
-            flex-direction: column;
-            height: calc(100vh - 200px);
-            min-height: 400px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-        .chat-messages {
-            flex: 1;
-            overflow-y: auto;
-            padding: 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-        .chat-welcome {
-            text-align: center;
-            padding: 48px 16px;
-        }
-        .chat-suggestions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-top: 12px;
-        }
-        .chat-suggestion-btn {
-            background: var(--color-bg-secondary);
-            border: 1px solid var(--color-border);
-            color: var(--color-text-secondary);
-            padding: 8px 14px;
-            border-radius: 20px;
-            font-size: 13px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .chat-suggestion-btn:hover {
-            background: var(--color-bg-tertiary);
-            border-color: var(--color-accent-primary);
-            color: var(--color-accent-primary);
-        }
-        .chat-bubble {
-            max-width: 85%;
-            padding: 10px 14px;
-            border-radius: 14px;
-            font-size: 14px;
-            line-height: 1.5;
-            word-wrap: break-word;
-        }
-        .chat-bubble.user {
-            align-self: flex-end;
-            background: var(--color-accent-primary);
-            color: #fff;
-            border-bottom-right-radius: 4px;
-        }
-        .chat-bubble.assistant {
-            align-self: flex-start;
-            background: var(--color-bg-secondary);
-            color: var(--color-text-primary);
-            border-bottom-left-radius: 4px;
-        }
-        .chat-bubble.assistant .tool-call-card {
-            background: var(--color-bg-tertiary);
-            border: 1px solid var(--color-border);
-            border-radius: 8px;
-            padding: 8px 12px;
-            margin: 8px 0;
-            font-size: 12px;
-        }
-        .chat-bubble.assistant .tool-call-card summary {
-            cursor: pointer;
-            color: var(--color-accent-primary);
-            font-weight: 600;
-            font-size: 12px;
-        }
-        .chat-bubble.assistant .tool-call-card pre {
-            margin: 6px 0 0;
-            white-space: pre-wrap;
-            font-size: 11px;
-            color: var(--color-text-muted);
-            max-height: 200px;
-            overflow-y: auto;
-        }
-        .chat-typing {
-            align-self: flex-start;
-            padding: 10px 14px;
-            color: var(--color-text-muted);
-            font-size: 13px;
-            font-style: italic;
-        }
-        .chat-typing .dots::after {
-            content: '';
-            animation: dots 1.4s steps(4, end) infinite;
-        }
-        @keyframes dots {
-            0% { content: ''; }
-            25% { content: '.'; }
-            50% { content: '..'; }
-            75% { content: '...'; }
-        }
-        .chat-input-area {
-            border-top: 1px solid var(--color-border);
-            padding: 12px 16px;
-            background: var(--color-bg-primary);
-        }
-        .chat-input-wrapper {
-            display: flex;
-            gap: 8px;
-            align-items: flex-end;
-        }
-        .chat-input-wrapper textarea {
-            flex: 1;
-            background: var(--color-bg-secondary);
-            border: 1px solid var(--color-border);
-            border-radius: 12px;
-            padding: 10px 14px;
-            color: var(--color-text-primary);
-            font-size: 14px;
-            font-family: inherit;
-            resize: none;
-            max-height: 120px;
-            line-height: 1.4;
-        }
-        .chat-input-wrapper textarea:focus {
-            outline: none;
-            border-color: var(--color-accent-primary);
-        }
-        .chat-send-btn {
-            background: var(--color-accent-primary);
-            border: none;
-            border-radius: 10px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            color: #fff;
-            flex-shrink: 0;
-            transition: opacity 0.15s;
-        }
-        .chat-send-btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-        }
-        .chat-send-btn:hover:not(:disabled) {
-            opacity: 0.85;
-        }
-        .chat-error {
-            color: #ef4444;
-            font-size: 13px;
-            padding: 6px 12px;
-            background: rgba(239, 68, 68, 0.1);
-            border-radius: 8px;
-        }
-
         .feedback-toggle {
             display: flex;
             align-items: center;
@@ -2189,7 +2032,6 @@
             <button class="nav-tab active" role="tab" aria-selected="true" aria-controls="unified-search-tab" id="unified-search-tab-btn" onclick="switchTab('unified-search')">Search</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="contextual-tab" id="contextual-tab-btn" onclick="switchTab('contextual')">Contextual</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Completion</button>
-            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="chat-tab" id="chat-tab-btn" onclick="switchTab('chat')">Chat</button>
         </nav>
 
         <main id="main-content">
@@ -2224,7 +2066,6 @@
                             <div class="option-group">
                                 <label for="methodSelect">Method:</label>
                                 <select id="methodSelect" aria-label="Similarity search method">
-                                    <option value="fusion">Fusion</option>
                                     <option value="embedding" selected>Embedding</option>
                                     <option value="jaccard">Jaccard</option>
                                 </select>
@@ -2419,38 +2260,6 @@
                 </div>
             </div>
 
-            <!-- Chat Tab -->
-            <div id="chat-tab" class="tab-content" role="tabpanel" aria-labelledby="chat-tab-btn">
-                <div class="chat-container">
-                    <div class="chat-messages" id="chatMessages" aria-live="polite" aria-label="Chat messages">
-                        <div class="chat-welcome">
-                            <div style="font-size: 24px; font-weight: 700; margin-bottom: 8px; color: var(--color-text-primary);">DeckSage Assistant</div>
-                            <p style="color: var(--color-text-muted); max-width: 500px; margin: 0 auto 16px; font-size: 14px;">
-                                Ask about cards, get deck advice, find synergies. I can search your card pool and analyze decks.
-                            </p>
-                            <div class="chat-suggestions">
-                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">Find cards similar to Lightning Bolt</button>
-                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">What are good burn spells?</button>
-                                <button class="chat-suggestion-btn" onclick="sendChatSuggestion(this)">Suggest cards for an aggro deck</button>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="chat-input-area">
-                        <form id="chatForm" onsubmit="sendChatMessage(event)">
-                            <div class="chat-input-wrapper">
-                                <textarea id="chatInput" placeholder="Ask about cards, decks, or strategy..." rows="1"
-                                    aria-label="Chat message" maxlength="4000"></textarea>
-                                <button type="submit" class="chat-send-btn" id="chatSendBtn" aria-label="Send message">
-                                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                        <line x1="22" y1="2" x2="11" y2="13"></line>
-                                        <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
-                                    </svg>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
         </main>
     </div>
 
@@ -2527,7 +2336,7 @@
         }
 
         // Map internal tab IDs to shorter URL-friendly names and back
-        const TAB_TO_URL = { 'unified-search': 'search', 'contextual': 'contextual', 'deck': 'deck', 'chat': 'chat', 'hybrid-search': 'hybrid' };
+        const TAB_TO_URL = { 'unified-search': 'search', 'contextual': 'contextual', 'deck': 'deck', 'hybrid-search': 'hybrid' };
         const URL_TO_TAB = Object.fromEntries(Object.entries(TAB_TO_URL).map(([k, v]) => [v, k]));
 
         function getCurrentURLState() {
@@ -3543,8 +3352,8 @@
             }
 
             // 6. Similar stat range (low-priority context chip)
-            if (meta.cmc !== undefined && queryMeta.cmc !== undefined && Math.abs(meta.cmc - queryMeta.cmc) <= 1) {
-                signals.push({label: `CMC ${meta.cmc}`, high: false});
+            if (game === 'magic' && meta.cmc !== undefined && queryMeta.cmc !== undefined && Math.abs(meta.cmc - queryMeta.cmc) <= 1) {
+                signals.push({label: `Mana ${meta.cmc}`, high: false});
             }
             if (meta.hp && queryMeta.hp && Math.abs(parseInt(meta.hp) - parseInt(queryMeta.hp)) <= 30) {
                 signals.push({label: `HP ${meta.hp}`, high: false});
@@ -3605,12 +3414,18 @@
                 if (qm.colors) qParts.push(escapeHtml(String(qm.colors)));
                 if (qm.rarity) qParts.push(escapeHtml(qm.rarity));
                 const qStats = [];
-                if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">CMC ${qm.cmc}</span>`);
-                if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
-                if (qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
-                if (qm.atk !== undefined && qm.atk !== null) qStats.push(`<span class="stat">ATK ${qm.atk}</span>`);
-                if (qm.def_stat !== undefined && qm.def_stat !== null) qStats.push(`<span class="stat">DEF ${qm.def_stat}</span>`);
-                if (qm.level_rank_link) qStats.push(`<span class="stat">Lv.${qm.level_rank_link}</span>`);
+                const qGame = (data?.model_info?.game || 'magic').toLowerCase();
+                if (qGame === 'magic') {
+                    if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">Mana ${qm.cmc}</span>`);
+                    if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
+                } else if (qGame === 'pokemon') {
+                    if (qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
+                    if (qm.retreat_cost !== undefined && qm.retreat_cost !== null) qStats.push(`<span class="stat">Retreat ${qm.retreat_cost}</span>`);
+                } else if (qGame === 'yugioh') {
+                    if (qm.atk !== undefined && qm.atk !== null) qStats.push(`<span class="stat">ATK ${qm.atk}</span>`);
+                    if (qm.def_stat !== undefined && qm.def_stat !== null) qStats.push(`<span class="stat">DEF ${qm.def_stat}</span>`);
+                    if (qm.level_rank_link) qStats.push(`<span class="stat">Lv.${qm.level_rank_link}</span>`);
+                }
                 const banner = document.createElement('div');
                 banner.className = 'query-card-banner';
                 banner.innerHTML = `
@@ -3661,17 +3476,17 @@
                 ` : '';
                 const displayScore = normalizeScore(result.similarity);
                 const similarityPercent = (displayScore * 100).toFixed(0);
-                const similarityLabel = displayScore >= 0.9 ? 'Near substitute' :
-                                       displayScore >= 0.7 ? 'Very similar' :
-                                       displayScore >= 0.4 ? 'Somewhat similar' :
-                                       displayScore >= 0.2 ? 'Marginally similar' : 'Weak connection';
+                const similarityLabel = displayScore >= 0.8 ? 'Highly related' :
+                                       displayScore >= 0.6 ? 'Related' :
+                                       displayScore >= 0.4 ? 'Loosely related' :
+                                       displayScore >= 0.2 ? 'Weak connection' : 'Tangential';
 
                 const meta = result.metadata || {};
                 const game = (data?.model_info?.game || 'magic').toLowerCase();
                 const metaParts = [];
                 if (meta.type) metaParts.push(meta.type);
-                if (meta.mana_cost) metaParts.push(meta.mana_cost);
-                if (meta.cmc !== undefined && meta.cmc !== null) metaParts.push(`CMC ${meta.cmc}`);
+                if (game === 'magic' && meta.mana_cost) metaParts.push(meta.mana_cost);
+                if (game === 'magic' && meta.cmc !== undefined && meta.cmc !== null) metaParts.push(`Mana ${meta.cmc}`);
                 const metaText = metaParts.length > 0 ? metaParts.join(' · ') : '';
 
                 // Stat badges (game-specific)
@@ -3728,13 +3543,18 @@
                     if (pills.length) formatLegalityHtml = `<div class="format-legality-row">${pills.join('')}</div>`;
                 }
 
-                // Deck popularity
+                // Deck popularity — show top format(s) instead of raw count
                 let deckPopularityHtml = '';
-                if (meta.deck_popularity && meta.deck_popularity.total_decks) {
-                    const total = meta.deck_popularity.total_decks;
-                    const maxDecks = 80000;
-                    const barW = Math.min(50, Math.max(4, (total / maxDecks) * 50));
-                    deckPopularityHtml = `<div class="deck-popularity"><span class="pop-bar" style="width:${barW}px"></span>In ${total.toLocaleString()} decks</div>`;
+                if (meta.deck_popularity && meta.deck_popularity.by_format) {
+                    const byFormat = meta.deck_popularity.by_format;
+                    const formats = Object.entries(byFormat)
+                        .filter(([f, _]) => f !== 'unknown')
+                        .sort((a, b) => b[1] - a[1])
+                        .slice(0, 2);
+                    if (formats.length > 0) {
+                        const labels = formats.map(([f, n]) => `${f} (${n.toLocaleString()})`).join(', ');
+                        deckPopularityHtml = `<div class="deck-popularity">Played in ${labels}</div>`;
+                    }
                 }
 
                 // Co-occurrence chips (clickable to search)
@@ -3791,10 +3611,10 @@
                 const oraclePreview = meta.oracle_text ? (meta.oracle_text.length > 120 ? meta.oracle_text.substring(0, 120) + '...' : meta.oracle_text) : '';
                 const oracleFull = meta.oracle_text_full || meta.oracle_text || '';
 
-                const isSubstitutable = displayScore >= 0.7;
-                const isPartial = displayScore >= 0.4 && displayScore < 0.7;
+                const isSubstitutable = displayScore >= 0.85;
+                const isPartial = displayScore >= 0.65 && displayScore < 0.85;
                 let substitutabilityClass = 'not-substitutable';
-                let substitutabilityText = '✗ Not substitutable';
+                let substitutabilityText = '';
                 if (isSubstitutable) {
                     substitutabilityClass = 'can-substitute';
                     substitutabilityText = '✓ Can substitute';
@@ -3865,7 +3685,7 @@
                                 ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${escapeHtml(cooccurNote)}</div>` : ''}
                                 ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
                                 ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
-                                <div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>
+                                ${substitutabilityText ? `<div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>` : ''}
                                 ${relevanceSnippetHtml}
                                 ${summonReqHtml}
                                 ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
@@ -4460,169 +4280,7 @@
             completeDeck();
         });
 
-        // ── Chat assistant ───────────────────────────────────────────────
-        let chatSessionId = null;
-        let chatStreaming = false;
 
-        function getActiveGame() {
-            const btn = document.querySelector('.game-btn.active');
-            return btn ? btn.dataset.game : 'yugioh';
-        }
-
-        function sendChatSuggestion(btn) {
-            const input = document.getElementById('chatInput');
-            input.value = btn.textContent;
-            sendChatMessage(new Event('submit'));
-        }
-
-        function appendChatBubble(role, content) {
-            const container = document.getElementById('chatMessages');
-            // Hide welcome on first message
-            const welcome = container.querySelector('.chat-welcome');
-            if (welcome) welcome.style.display = 'none';
-
-            const bubble = document.createElement('div');
-            bubble.className = `chat-bubble ${role}`;
-            bubble.textContent = content;
-            container.appendChild(bubble);
-            container.scrollTop = container.scrollHeight;
-            return bubble;
-        }
-
-        function appendTypingIndicator() {
-            const container = document.getElementById('chatMessages');
-            const ind = document.createElement('div');
-            ind.className = 'chat-typing';
-            ind.id = 'chatTyping';
-            ind.innerHTML = 'Thinking<span class="dots"></span>';
-            container.appendChild(ind);
-            container.scrollTop = container.scrollHeight;
-            return ind;
-        }
-
-        function removeTypingIndicator() {
-            const el = document.getElementById('chatTyping');
-            if (el) el.remove();
-        }
-
-        // Auto-resize textarea
-        const chatInput = document.getElementById('chatInput');
-        chatInput.addEventListener('input', () => {
-            chatInput.style.height = 'auto';
-            chatInput.style.height = Math.min(chatInput.scrollHeight, 120) + 'px';
-        });
-        chatInput.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (!chatStreaming) sendChatMessage(e);
-            }
-        });
-
-        async function sendChatMessage(e) {
-            e.preventDefault();
-            const input = document.getElementById('chatInput');
-            const msg = input.value.trim();
-            if (!msg || chatStreaming) return;
-
-            // Disable input
-            chatStreaming = true;
-            const sendBtn = document.getElementById('chatSendBtn');
-            sendBtn.disabled = true;
-            input.value = '';
-            input.style.height = 'auto';
-
-            // Show user message
-            appendChatBubble('user', msg);
-
-            // Show typing indicator
-            appendTypingIndicator();
-
-            // Build request body
-            const game = getActiveGame();
-            const body = { message: msg, game };
-            if (chatSessionId) body.session_id = chatSessionId;
-
-            // Optionally include deck from deck tab
-            const deckInput = document.getElementById('deckInput');
-            if (deckInput && deckInput.value.trim()) {
-                try { body.deck = JSON.parse(deckInput.value); } catch(_) {}
-            }
-
-            try {
-                const resp = await fetch(`${API_BASE}/v1/chat`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                });
-
-                if (!resp.ok) {
-                    const err = await resp.json().catch(() => ({ detail: resp.statusText }));
-                    throw new Error(err.detail || `HTTP ${resp.status}`);
-                }
-
-                removeTypingIndicator();
-
-                // Create assistant bubble for streaming
-                const container = document.getElementById('chatMessages');
-                const bubble = document.createElement('div');
-                bubble.className = 'chat-bubble assistant';
-                container.appendChild(bubble);
-
-                // Read SSE stream
-                const reader = resp.body.getReader();
-                const decoder = new TextDecoder();
-                let buffer = '';
-                let fullText = '';
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    buffer += decoder.decode(value, { stream: true });
-                    const lines = buffer.split('\n');
-                    buffer = lines.pop(); // keep incomplete line
-
-                    for (const line of lines) {
-                        if (!line.startsWith('data: ')) continue;
-                        try {
-                            const evt = JSON.parse(line.slice(6));
-                            if (evt.type === 'session') {
-                                chatSessionId = evt.session_id;
-                            } else if (evt.type === 'token') {
-                                fullText = evt.content;
-                                bubble.textContent = fullText;
-                                container.scrollTop = container.scrollHeight;
-                            } else if (evt.type === 'error') {
-                                const errDiv = document.createElement('div');
-                                errDiv.className = 'chat-error';
-                                errDiv.textContent = evt.content;
-                                container.appendChild(errDiv);
-                            } else if (evt.type === 'done') {
-                                chatSessionId = evt.session_id;
-                            }
-                        } catch(_) {}
-                    }
-                }
-
-                // If bubble is empty (no tokens received), remove it
-                if (!fullText) bubble.remove();
-
-                container.scrollTop = container.scrollHeight;
-
-            } catch (err) {
-                removeTypingIndicator();
-                const container = document.getElementById('chatMessages');
-                const errDiv = document.createElement('div');
-                errDiv.className = 'chat-error';
-                errDiv.textContent = `Error: ${err.message}`;
-                container.appendChild(errDiv);
-                container.scrollTop = container.scrollHeight;
-            } finally {
-                chatStreaming = false;
-                sendBtn.disabled = false;
-                input.focus();
-            }
-        }
 
         // Sync game selectors across all tabs + update pill buttons
         function syncGameSelectors(game, pushHistory = true) {
