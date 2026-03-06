@@ -97,9 +97,11 @@ class HybridSearch:
             meilisearch_url = meilisearch_url or os.getenv(
                 "MEILISEARCH_URL", "http://localhost:7700"
             )
+            # Normalize empty string to None so MeiliSearch skips auth
+            resolved_key = meilisearch_key or os.getenv("MEILISEARCH_KEY") or None
             self.meilisearch = MeilisearchClient(
                 url=meilisearch_url,
-                api_key=meilisearch_key or os.getenv("MEILISEARCH_KEY"),
+                api_key=resolved_key,
             )
 
         # Initialize Qdrant

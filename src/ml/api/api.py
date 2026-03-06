@@ -269,8 +269,19 @@ class HealthResponse(BaseModel):
     embedding_dim: int
 
 
+class CardSuggestion(BaseModel):
+    name: str
+    image_url: str | None = None
+    type_line: str | None = None
+    mana_cost: str | None = None
+    rarity: str | None = None
+    colors: str | None = None
+    total_decks: int | None = None
+    ban_status: dict[str, str] | None = None  # {format: "banned"|"restricted"|...}
+
+
 class CardsResponse(BaseModel):
-    items: list[str]
+    items: list[CardSuggestion]
     total: int
     next_offset: int | None = None
 
@@ -304,6 +315,10 @@ class ApiState:
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
         self.reranker: object | None = None  # Learned reranker (optional)
         self.card_metadata: dict[str, dict[str, Any]] | None = None  # Full card attrs w/ image_url
+        # Enrichment data (loaded from data/ assets)
+        self.banlist: dict[str, dict[str, list[str]]] | None = None  # {format: {status: [cards]}}
+        self.archetypes: dict[str, list[str]] | None = None  # {card_name: [archetype_names]}
+        self.deck_frequency: dict[str, dict] | None = None  # {card_name: {total_decks, by_format}}
 
 
 def get_state(game: str | None = None) -> ApiState:
@@ -348,6 +363,7 @@ def load_embeddings_to_state(
         "num_cards": len(emb),
         "embedding_dim": emb.vector_size,
         "model_path": emb_path,
+        "embedding_source": Path(emb_path).stem,
         "game": game,
         "methods": ["embedding"],
     }
@@ -585,6 +601,79 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError, ImportError):
                 logger.debug("Failed to load enriched card metadata for game=%s", game, exc_info=True)
 
+        # ------------------------------------------------------------------
+        # Enrichment data: banlists, archetypes, deck frequency
+        # ------------------------------------------------------------------
+        state = get_state(game)
+
+        # Banlists
+        banlist_path = Path(f"data/banlists/{game}_banlists.json")
+        if banlist_path.exists():
+            try:
+                with open(banlist_path, encoding="utf-8") as f:
+                    bl = json.load(f)
+                state.banlist = bl.get("formats", {})
+                logger.info(
+                    "Loaded banlists for %s: %d formats", game, len(state.banlist)
+                )
+            except (OSError, ValueError, KeyError):
+                logger.debug("Failed to load banlists for game=%s", game, exc_info=True)
+
+        # Archetypes: build reverse index (card_name -> [archetype_names])
+        archetypes_index: dict[str, list[str]] = {}
+
+        # From game_knowledge (core_cards + flex_slots -> archetype name)
+        gk_path = Path(f"data/game_knowledge/{game}.json")
+        if gk_path.exists():
+            try:
+                with open(gk_path, encoding="utf-8") as f:
+                    gk = json.load(f)
+                for arch in gk.get("archetypes", []):
+                    arch_name = arch.get("name", "")
+                    if not arch_name:
+                        continue
+                    for card in arch.get("core_cards", []) + arch.get("flex_slots", []):
+                        if isinstance(card, str) and not card.startswith(("Starter", "Extender", "Tech", "Board")):
+                            archetypes_index.setdefault(card, [])
+                            if arch_name not in archetypes_index[card]:
+                                archetypes_index[card].append(arch_name)
+            except (OSError, ValueError, KeyError):
+                logger.debug("Failed to load game_knowledge for game=%s", game, exc_info=True)
+
+        # YGO: merge yugioh_archetype_mapping.json (card -> single archetype)
+        if game == "yugioh":
+            ygo_map_path = Path("data/yugioh_archetype_mapping.json")
+            if ygo_map_path.exists():
+                try:
+                    with open(ygo_map_path, encoding="utf-8") as f:
+                        ygo_map = json.load(f)
+                    for card_name, arch_name in ygo_map.items():
+                        if arch_name:
+                            archetypes_index.setdefault(card_name, [])
+                            if arch_name not in archetypes_index[card_name]:
+                                archetypes_index[card_name].append(arch_name)
+                    logger.info("Merged YGO archetype mapping: %d cards", len(ygo_map))
+                except (OSError, ValueError, KeyError):
+                    logger.debug("Failed to load YGO archetype mapping", exc_info=True)
+
+        if archetypes_index:
+            state.archetypes = archetypes_index
+            logger.info(
+                "Built archetype index for %s: %d cards", game, len(archetypes_index)
+            )
+
+        # Deck frequency
+        freq_path = Path(f"data/processed/deck_frequency_{game}.json")
+        if freq_path.exists():
+            try:
+                with open(freq_path, encoding="utf-8") as f:
+                    state.deck_frequency = json.load(f)
+                logger.info(
+                    "Loaded deck frequency for %s: %d cards", game, len(state.deck_frequency)
+                )
+            except (OSError, ValueError, KeyError):
+                logger.debug("Failed to load deck frequency for game=%s", game, exc_info=True)
+
         # Additional signals (per game)
         try:
             from .load_signals import load_signals_to_state
@@ -635,6 +724,9 @@ async def lifespan(app: FastAPI):
             state.signal_status = None
             state.reranker = None
             state.card_metadata = None
+            state.banlist = None
+            state.archetypes = None
+            state.deck_frequency = None
         # Remove entire api_by_game dict so next lifespan creates fresh ApiState objects
         with suppress(Exception):
             delattr(app.state, "api_by_game")
@@ -869,14 +961,14 @@ def ready():
 
 def _resolve_method(request: SimilarityRequest) -> str:
     forced_mode = (request.mode or "").lower().strip()
-    if forced_mode in {"embedding", "jaccard", "jaccard_faceted", "fusion"}:
+    if forced_mode in {"embedding", "jaccard", "jaccard_faceted", "fusion", "meta"}:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
         return "embedding"
     if request.use_case is UseCaseEnum.synergy:
         return "jaccard"
     if request.use_case is UseCaseEnum.meta:
-        return "jaccard"
+        return "meta"
     return "embedding"
 
 
@@ -916,6 +1008,18 @@ _BASE_FIELDS: tuple[str, ...] = (
 )
 
 
+def _lookup_ban_status(card_name: str, banlist: dict | None) -> dict[str, str] | None:
+    """Look up ban/restriction status for a card across all formats. Returns {format: status} or None."""
+    if not banlist:
+        return None
+    ban = {}
+    for fmt, statuses in banlist.items():
+        for status_name, cards_list in statuses.items():
+            if isinstance(cards_list, list) and card_name in cards_list:
+                ban[fmt] = status_name
+    return ban or None
+
+
 def _enrich_similar_card(
     card_name: str, similarity: float, state: ApiState, *, game: str = "magic",
 ) -> SimilarCard:
@@ -943,6 +1047,41 @@ def _enrich_similar_card(
                     meta["type"] = tl
             if not meta:
                 meta = None
+
+    # Inject enrichment data (ban status, archetypes, deck popularity, co-occurrence)
+    if meta is None:
+        meta = {}
+
+    # Ban status
+    ban = _lookup_ban_status(card_name, state.banlist)
+    if ban:
+        meta["ban_status"] = ban
+
+    # Archetype names
+    if state.archetypes:
+        arch_names = state.archetypes.get(card_name)
+        if arch_names:
+            meta["archetype_names"] = arch_names
+
+    # Deck popularity
+    if state.deck_frequency:
+        freq = state.deck_frequency.get(card_name)
+        if freq:
+            meta["deck_popularity"] = freq
+
+    # Top co-occurrence (from graph adjacency + weights, top 3 by weight)
+    if state.graph_data and "adj" in state.graph_data:
+        adj = state.graph_data["adj"]
+        neighbors = adj.get(card_name)
+        if neighbors:
+            weights = state.graph_data.get("weights", {})
+            scored = [(n, weights.get((card_name, n), 1)) for n in neighbors]
+            scored.sort(key=lambda x: x[1], reverse=True)
+            meta["top_cooccurrence"] = [n for n, _w in scored[:3]]
+
+    if not meta:
+        meta = None
+
     return SimilarCard(card=card_name, similarity=float(similarity), metadata=meta)
 
 
@@ -1139,6 +1278,20 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         results = _similar_jaccard_faceted(state, request, query, k, game=game)
     elif method == "fusion":
         results = _similar_fusion(state, request, query, k, game=game)
+    elif method == "meta":
+        # Meta mode: jaccard co-occurrence re-scored by competitive popularity
+        results = _similar_jaccard(state, query, k * 2, game=game)
+        if state.deck_frequency and results:
+            max_freq = max(
+                (state.deck_frequency.get(r.card, {}).get("total_decks", 0) for r in results),
+                default=1,
+            ) or 1
+            for r in results:
+                freq = state.deck_frequency.get(r.card, {}).get("total_decks", 0)
+                pop_ratio = freq / max_freq
+                r.similarity = round(0.5 * r.similarity + 0.5 * pop_ratio, 4)
+            results.sort(key=lambda r: r.similarity, reverse=True)
+        results = results[:k]
     else:  # pragma: no cover - shouldn't happen
         raise HTTPException(status_code=400, detail=f"Unknown similarity method: {method}")
 
@@ -1275,7 +1428,7 @@ def get_contextual_suggestions(
         card_data=state.card_attrs,
     )
 
-    # Get price function
+    # Get price function (real prices preferred, deck popularity as fallback)
     price_fn = None
     try:
         from ..enrichment.card_market_data import (
@@ -1289,7 +1442,15 @@ def get_contextual_suggestions(
             p = _pm.get_price(card_name)
             return float(p.usd) if p and p.usd else None
     except Exception:
-        price_fn = None
+        # Fallback: use deck frequency as a popularity proxy for upgrades/downgrades
+        if state.deck_frequency:
+            _freq = state.deck_frequency
+
+            def price_fn(card_name: str) -> float | None:
+                entry = _freq.get(card_name)
+                if entry:
+                    return float(entry.get("total_decks", 0))
+                return None
 
     # Get tag function
     tag_set_fn = None
@@ -1404,8 +1565,34 @@ def list_cards_v1(
     total = len(all_cards)
     start = max(0, offset)
     end = max(0, min(start + limit, total))
-    items = all_cards[start:end]
+    page = all_cards[start:end]
     next_offset = end if end < total else None
+
+    # Build rich suggestions
+    items: list[CardSuggestion] = []
+    for card_name in page:
+        suggestion = CardSuggestion(name=card_name)
+
+        # Card metadata (image, type, mana, rarity, colors)
+        if state.card_metadata:
+            raw = state.card_metadata.get(card_name)
+            if raw:
+                suggestion.image_url = raw.get("image_url") or None
+                suggestion.type_line = raw.get("type") or raw.get("type_line") or None
+                suggestion.mana_cost = raw.get("mana_cost") or None
+                suggestion.rarity = raw.get("rarity") or None
+                suggestion.colors = raw.get("colors") or None
+
+        # Deck frequency
+        if state.deck_frequency:
+            freq = state.deck_frequency.get(card_name)
+            if freq:
+                suggestion.total_decks = freq.get("total_decks")
+
+        # Ban status
+        suggestion.ban_status = _lookup_ban_status(card_name, state.banlist)
+
+        items.append(suggestion)
 
     return CardsResponse(items=items, total=total, next_offset=next_offset)
 
@@ -1674,16 +1861,41 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
         elif task_type == "substitution":
             use_case = UseCaseEnum.substitute
 
+        # Over-fetch by 2x so we can filter non-English names and still return k results
         req = SimilarityRequest(
-            game=game, query=card, top_k=k, use_case=use_case, mode=effective_mode
+            game=game, query=card, top_k=k * 2, use_case=use_case, mode=effective_mode
         )
         try:
             resp = _similar_impl(req)
-            return [(r.card, r.similarity) for r in resp.results]
+            # Filter to cards with English metadata (removes Japanese/Spanish names in pool)
+            known = state.card_metadata
+            pairs = [(r.card, r.similarity) for r in resp.results]
+            if known:
+                pairs = [(c, s) for c, s in pairs if c in known]
+            return pairs[:k]
         except HTTPException:
             return []  # Query not found or method unavailable
 
     return fn
+
+
+# Basic lands have color_identity_str="C" in the enriched CSV but produce colored mana.
+_BASIC_LAND_COLORS: dict[str, str] = {
+    "Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G",
+    # Snow-covered basics
+    "Snow-Covered Plains": "W", "Snow-Covered Island": "U", "Snow-Covered Swamp": "B",
+    "Snow-Covered Mountain": "R", "Snow-Covered Forest": "G",
+}
+
+
+def _effective_color_identity(card_name: str, ci_str: str) -> set[str]:
+    """Return the effective color identity for a card, fixing basic lands."""
+    override = _BASIC_LAND_COLORS.get(card_name)
+    if override:
+        return {override}
+    colors = set(ci_str) if isinstance(ci_str, str) else set()
+    colors.discard("C")  # colorless is not a color identity constraint
+    return colors
 
 
 def _extract_deck_colors(deck: dict, game: str, card_metadata: dict | None) -> set[str] | None:
@@ -1707,8 +1919,7 @@ def _extract_deck_colors(deck: dict, game: str, card_metadata: dict | None) -> s
             meta = card_metadata.get(name)
             if meta:
                 ci = meta.get("color_identity_str", "")
-                if isinstance(ci, str) and ci:
-                    colors.update(ci)
+                colors.update(_effective_color_identity(name, ci))
     return colors if colors else None
 
 
@@ -1716,16 +1927,15 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
     """Wrap a candidate function to filter out cards outside the deck's color identity."""
 
     def filtered(card: str, k: int) -> list[tuple[str, float]]:
-        results = cand_fn(card, k * 2)  # over-fetch to compensate for filtering
+        results = cand_fn(card, k * 3)  # over-fetch to compensate for filtering
         filtered_results = []
         for cand, score in results:
             meta = card_metadata.get(cand)
             if meta:
                 ci = meta.get("color_identity_str", "")
-                if isinstance(ci, str) and ci:
-                    cand_colors = set(ci)
-                    if not cand_colors.issubset(deck_colors):
-                        continue
+                cand_colors = _effective_color_identity(cand, ci)
+                if cand_colors and not cand_colors.issubset(deck_colors):
+                    continue
             filtered_results.append((cand, score))
             if len(filtered_results) >= k:
                 break
@@ -1777,7 +1987,15 @@ def suggest_actions(req: SuggestActionsRequest):
             return float(p.usd) if p and p.usd else None
 
     except Exception:
-        price_fn = None
+        # Fallback: deck frequency as popularity proxy
+        if state.deck_frequency:
+            _freq_sa = state.deck_frequency
+
+            def price_fn(card: str) -> float | None:
+                entry = _freq_sa.get(card)
+                if entry:
+                    return float(entry.get("total_decks", 0))
+                return None
 
     tag_set_fn = None
     if FunctionalTagger is not None and game == "magic":
