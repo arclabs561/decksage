@@ -21,7 +21,9 @@ const PASS_THRESHOLD = 7;
 const hasVLMKey = !!(
   process.env.GEMINI_API_KEY ||
   process.env.OPENAI_API_KEY ||
-  process.env.ANTHROPIC_API_KEY
+  process.env.ANTHROPIC_API_KEY ||
+  process.env.OPENROUTER_API_KEY ||
+  process.env.GROQ_API_KEY
 );
 const skipVLM = process.env.SKIP_VLM === '1' || !hasVLMKey;
 
