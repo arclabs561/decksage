@@ -17,6 +17,9 @@ then enriches the existing card_attributes_yugioh.csv with:
   - pendulum_scale (for Pendulum monsters)
   - link_markers (for Link monsters)
   - oracle_text_enriched (effect text, with pend/monster split for Pendulums)
+  - frame_type (effect/spell/trap/xyz/fusion/synchro/link/normal/ritual/...)
+  - creature_types (structured typeline: Beast, Effect, Tuner, ...)
+  - banlist_tcg, banlist_ocg, banlist_goat (Forbidden/Limited/Semi-Limited)
 
 Reads:
   - data/processed/card_attributes_yugioh.csv
@@ -150,6 +153,22 @@ def classify_effect_types(desc: str) -> str:
     ):
         types.append("Continuous")
 
+    # Once Per Turn — explicit game rule marker
+    if re.search(r"\bOnce per turn\b", desc, re.IGNORECASE):
+        types.append("Once Per Turn")
+
+    # Optional — "You can" without Quick Effect marker (ignition-type effects)
+    if "(Quick Effect)" not in desc and re.search(r"\bYou can\b", desc):
+        types.append("Optional")
+
+    # Conditional — mandatory summoning/activation conditions
+    if re.search(r"\b(?:must be|can only be)\b", desc, re.IGNORECASE):
+        types.append("Conditional")
+
+    # Protective — immunity effects
+    if re.search(r"\bUnaffected by\b", desc, re.IGNORECASE):
+        types.append("Protective")
+
     return ", ".join(types)
 
 
@@ -267,6 +286,11 @@ def main():
         "oracle_text_enriched",
         "summoning_requirements",
         "effect_types",
+        "frame_type",
+        "creature_types",
+        "banlist_tcg",
+        "banlist_ocg",
+        "banlist_goat",
     ]
     output_fields = input_fields + new_cols
 
@@ -305,6 +329,19 @@ def main():
             desc = api_card.get("desc", "")
             row["summoning_requirements"] = extract_summoning_requirements(desc, card_type)
             row["effect_types"] = classify_effect_types(desc)
+
+            # Frame type (precise structural classification)
+            row["frame_type"] = api_card.get("frameType", "")
+
+            # Creature types from typeline array (monsters only)
+            typeline = api_card.get("typeline", [])
+            row["creature_types"] = ", ".join(typeline) if typeline else ""
+
+            # Banlist status
+            banlist_info = api_card.get("banlist_info", {}) or {}
+            row["banlist_tcg"] = banlist_info.get("ban_tcg", "")
+            row["banlist_ocg"] = banlist_info.get("ban_ocg", "")
+            row["banlist_goat"] = banlist_info.get("ban_goat", "")
         else:
             unmatched_names.append(name)
             # Fill with empty

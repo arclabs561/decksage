@@ -190,6 +190,39 @@ class TestClassifyEffectTypes:
         result = classify_effect_types(desc)
         assert "Continuous" in result
 
+    def test_once_per_turn(self):
+        desc = "Once per turn, you can flip this card into face-down Defense Position."
+        result = classify_effect_types(desc)
+        assert "Once Per Turn" in result
+
+    def test_optional_you_can(self):
+        desc = "Once per turn: You can target 1 LIGHT monster in your GY; add it to your hand."
+        result = classify_effect_types(desc)
+        assert "Optional" in result
+        assert "Quick Effect" not in result
+
+    def test_conditional_must_be(self):
+        desc = "Must be Special Summoned (from your Extra Deck) by sending the above cards..."
+        result = classify_effect_types(desc)
+        assert "Conditional" in result
+
+    def test_conditional_can_only_be(self):
+        desc = "Can only be Special Summoned by Tributing 3 monsters."
+        result = classify_effect_types(desc)
+        assert "Conditional" in result
+
+    def test_protective_unaffected(self):
+        desc = "Unaffected by other cards' effects."
+        result = classify_effect_types(desc)
+        assert "Protective" in result
+
+    def test_quick_effect_not_optional(self):
+        """Quick Effect cards should not also get the Optional tag."""
+        desc = "During the Main Phase (Quick Effect): You can discard 1 card; draw 1 card."
+        result = classify_effect_types(desc)
+        assert "Quick Effect" in result
+        assert "Optional" not in result
+
 
 # --- build_oracle_text_enriched ---
 
