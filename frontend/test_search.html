@@ -2469,8 +2469,76 @@
         let autocompleteTimeout = null;
         let autocompleteItems = [];
         let selectedAutocompleteIndex = -1;
-        let currentTab = 'similarity';
+        let currentTab = 'unified-search';
         let currentSearchController = null; // For canceling in-flight searches
+
+        // ============================================================
+        // URL STATE MANAGEMENT (History API)
+        // ============================================================
+
+        function getURLState() {
+            const params = new URLSearchParams(window.location.search);
+            return {
+                tab: params.get('tab') || null,
+                game: params.get('game') || null,
+                q: params.get('q') || null,
+                mode: params.get('mode') || null,
+                card: params.get('card') || null,
+            };
+        }
+
+        function buildURLSearch(state) {
+            const params = new URLSearchParams();
+            for (const [k, v] of Object.entries(state)) {
+                if (v != null && v !== '') params.set(k, v);
+            }
+            const qs = params.toString();
+            return qs ? `?${qs}` : window.location.pathname;
+        }
+
+        function pushURL(state) {
+            const url = buildURLSearch(state);
+            const current = window.location.pathname + window.location.search;
+            if (url !== current) {
+                history.pushState(state, '', url);
+                updateDocTitle(state);
+            }
+        }
+
+        function replaceURL(state) {
+            history.replaceState(state, '', buildURLSearch(state));
+            updateDocTitle(state);
+        }
+
+        // Map internal tab IDs to shorter URL-friendly names and back
+        const TAB_TO_URL = { 'unified-search': 'search', 'contextual': 'contextual', 'deck': 'deck', 'chat': 'chat', 'hybrid-search': 'hybrid' };
+        const URL_TO_TAB = Object.fromEntries(Object.entries(TAB_TO_URL).map(([k, v]) => [v, k]));
+
+        function getCurrentURLState() {
+            const state = { tab: TAB_TO_URL[currentTab] || currentTab };
+            const game = document.getElementById('searchGame')?.value;
+            if (game) state.game = game;
+
+            if (currentTab === 'unified-search') {
+                const q = document.getElementById('unifiedInput')?.value.trim()
+                    || document.getElementById('cardInput')?.value.trim();
+                if (q) state.q = q;
+                const mode = document.getElementById('useCaseSelect')?.value;
+                if (mode && mode !== 'substitute') state.mode = mode;
+            } else if (currentTab === 'contextual') {
+                const card = document.getElementById('contextualCardInput')?.value.trim();
+                if (card) state.card = card;
+            }
+            return state;
+        }
+
+        function updateDocTitle(state) {
+            const parts = ['DeckSage'];
+            if (state.q) parts.push(state.q);
+            else if (state.card) parts.push(state.card);
+            if (state.game) parts.push(state.game.charAt(0).toUpperCase() + state.game.slice(1));
+            document.title = parts.join(' \u2014 ');
+        }
 
         // Cache configuration
         const CACHE_CONFIG = {
@@ -2757,7 +2825,7 @@
             return errorMsg;
         }
 
-        function switchTab(tabName) {
+        function switchTab(tabName, pushHistory = true) {
             currentTab = tabName;
             // Update tab buttons
             document.querySelectorAll('.nav-tab').forEach(btn => {
@@ -2772,6 +2840,8 @@
                 content.classList.remove('active');
             });
             document.getElementById(`${tabName}-tab`).classList.add('active');
+
+            if (pushHistory) pushURL(getCurrentURLState());
         }
 
         function toggleAdvanced() {
@@ -2879,6 +2949,7 @@
                 currentResults = cached.results || [];
                 currentModelInfo = cached.model_info || null;
                 displayResults(cached);
+                pushURL(getCurrentURLState());
                 trackEvent('search', {
                     query: cardName,
                     method: method,
@@ -2976,6 +3047,7 @@
                 }
 
                 displayResults(data);
+                pushURL(getCurrentURLState());
                 trackEvent('search_complete', {
                     query: cardName,
                     method: method,
@@ -3078,6 +3150,7 @@
                 if (data.results && data.results.length > 0) {
                     showStatus(`Found ${data.results.length} results`, 'success', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
                     displayHybridResults(data);
+                    pushURL({ tab: currentTab, game: document.getElementById('searchGame')?.value, q: query });
                 } else {
                     showStatus('No results found', 'info', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
                     resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No cards found</div></div>';
@@ -3147,6 +3220,7 @@
                 if (Object.keys(categories).length > 0) {
                     showStatus('Contextual suggestions loaded', 'success', true, 'contextualStatusMessage');
                     displayContextualResults(categories);
+                    pushURL({ tab: 'contextual', game: game, card: card });
                 } else {
                     showStatus('No contextual suggestions available', 'info', true, 'contextualStatusMessage');
                     resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No suggestions found</div></div>';
@@ -4526,7 +4600,7 @@
         }
 
         // Sync game selectors across all tabs + update pill buttons
-        function syncGameSelectors(game) {
+        function syncGameSelectors(game, pushHistory = true) {
             // Sync hidden selects
             for (const id of ['searchGame', 'contextualGame', 'deckGame']) {
                 const el = document.getElementById(id);
@@ -4550,6 +4624,8 @@
             }
             // Persist selection
             localStorage.setItem('decksage_game', game);
+
+            if (pushHistory) pushURL(getCurrentURLState());
         }
 
         // Pill button click handlers
@@ -4563,8 +4639,8 @@
             if (el) el.addEventListener('change', () => syncGameSelectors(el.value));
         }
 
-        // Restore persisted game or default to yugioh
-        syncGameSelectors(localStorage.getItem('decksage_game') || 'yugioh');
+        // Restore persisted game or default to yugioh (no history push on init)
+        syncGameSelectors(localStorage.getItem('decksage_game') || 'yugioh', false);
 
         // Keyboard shortcuts help (shown on focus)
         document.addEventListener('keydown', (e) => {
@@ -4724,7 +4800,7 @@
         // Cross-tab navigation
         function findSimilarFromCard(cardName) {
             closeCardDrawer();
-            switchTab('unified-search');
+            switchTab('unified-search', false);
             const input = document.getElementById('unifiedInput');
             if (input) {
                 input.value = cardName;
@@ -4735,7 +4811,7 @@
 
         function viewContextualForCard(cardName) {
             closeCardDrawer();
-            switchTab('contextual');
+            switchTab('contextual', false);
             const input = document.getElementById('contextualCardInput');
             if (input) {
                 input.value = cardName;
@@ -5083,6 +5159,44 @@
         if (deckResultsSection) {
             deckResultsObserver.observe(deckResultsSection, { attributes: true, attributeFilter: ['style'] });
         }
+
+        // ============================================================
+        // URL RESTORATION (popstate + initial load)
+        // ============================================================
+
+        function restoreUIFromState(state, triggerSearch) {
+            if (state.game) syncGameSelectors(state.game, false);
+            const tab = URL_TO_TAB[state.tab] || state.tab;
+            if (tab) switchTab(tab, false);
+
+            if (state.q && (tab === 'unified-search' || !tab)) {
+                const input = document.getElementById('unifiedInput') || document.getElementById('cardInput');
+                if (input) input.value = state.q;
+                if (state.mode) {
+                    const modeEl = document.getElementById('useCaseSelect');
+                    if (modeEl) modeEl.value = state.mode;
+                }
+                if (triggerSearch) searchCards(state.q);
+            } else if (state.card && tab === 'contextual') {
+                const input = document.getElementById('contextualCardInput');
+                if (input) input.value = state.card;
+                if (triggerSearch) contextualSearch();
+            }
+        }
+
+        window.addEventListener('popstate', (e) => {
+            const state = e.state || getURLState();
+            restoreUIFromState(state, true);
+        });
+
+        // On initial load, restore from URL params if present
+        (function restoreFromURL() {
+            const state = getURLState();
+            if (state.tab || state.q || state.card || state.game) {
+                restoreUIFromState(state, !!(state.q || state.card));
+                replaceURL(getCurrentURLState());
+            }
+        })();
 
     </script>
 </body>
