@@ -1049,6 +1049,8 @@ _GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
         "monster_type", "attribute_enriched", "race_enriched", "archetype_enriched",
         "pendulum_scale", "link_markers", "card_category",
         "summoning_requirements", "effect_types",
+        "frame_type", "creature_types",
+        "banlist_tcg", "banlist_ocg", "banlist_goat",
     ),
 }
 
@@ -1481,6 +1483,7 @@ def get_contextual_suggestions(
 
     # Get price function (real prices preferred, deck popularity as fallback)
     price_fn = None
+    price_label = "price"
     try:
         from ..enrichment.card_market_data import (
             MarketDataManager,  # type: ignore[import-not-found]
@@ -1496,6 +1499,7 @@ def get_contextual_suggestions(
         # Fallback: use deck frequency as a popularity proxy for upgrades/downgrades
         if state.deck_frequency:
             _freq = state.deck_frequency
+            price_label = "popularity"
 
             def price_fn(card_name: str) -> float | None:
                 entry = _freq.get(card_name)
@@ -1539,6 +1543,7 @@ def get_contextual_suggestions(
         archetype_staples=archetype_staples,
         archetype_cooccurrence=archetype_cooccurrence,
         format_cooccurrence=format_cooccurrence,
+        price_label=price_label,
     )
 
     # Find all contextual relationships
@@ -1773,18 +1778,42 @@ def search_cards_v1(request: SearchRequest):
             detail=f"Search backend error: {exc}",
         )
 
-    return SearchResponse(
-        query=request.query,
-        results=[
+    # Enrich search results with full card metadata (image_url, type, stats, etc.)
+    state = get_state(game)
+    enriched = []
+    for r in results:
+        merged = dict(r.metadata) if r.metadata else {}
+        if state.card_metadata:
+            raw = state.card_metadata.get(r.card_name)
+            if raw:
+                extra = _GAME_EXTRA_FIELDS.get(game, ())
+                for key in _BASE_FIELDS + extra:
+                    if key in merged and _is_valid(merged[key]):
+                        continue  # don't overwrite valid search-provided fields
+                    val = raw.get(key)
+                    if not _is_valid(val):
+                        continue
+                    if key == "oracle_text" and isinstance(val, str) and len(val) > 300:
+                        merged["oracle_text_full"] = val
+                        val = val[:300] + "..."
+                    merged[key] = val
+                if "type" not in merged:
+                    tl = raw.get("type_line")
+                    if _is_valid(tl):
+                        merged["type"] = tl
+        enriched.append(
             SearchResultItem(
                 card_name=r.card_name,
                 score=r.score,
                 source=r.source,
-                metadata=r.metadata,
+                metadata=merged or None,
             )
-            for r in results
-        ],
-        total=len(results),
+        )
+
+    return SearchResponse(
+        query=request.query,
+        results=enriched,
+        total=len(enriched),
     )
 
 
