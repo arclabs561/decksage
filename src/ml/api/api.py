@@ -602,6 +602,56 @@ async def lifespan(app: FastAPI):
                 logger.debug("Failed to load enriched card metadata for game=%s", game, exc_info=True)
 
         # ------------------------------------------------------------------
+        # Auto-populate MeiliSearch if index is empty
+        # ------------------------------------------------------------------
+        state = get_state(game)
+        if state.card_metadata and HAS_SEARCH and HybridSearch is not None:
+            try:
+                idx_name = f"cards_{game}"
+                _hs = HybridSearch(
+                    embeddings=state.embeddings,
+                    index_name=idx_name,
+                    collection_name=idx_name,
+                )
+                if _hs.meilisearch:
+                    _idx = _hs.meilisearch.index(idx_name)
+                    _stats = _idx.get_stats()
+                    if _stats.number_of_documents == 0:
+                        _docs = []
+                        for _i_card, (_name, _meta) in enumerate(
+                            state.card_metadata.items()
+                        ):
+                            _docs.append({
+                                "id": str(_i_card),
+                                "name": _name,
+                                "text": str(
+                                    _meta.get("oracle_text")
+                                    or _meta.get("text")
+                                    or ""
+                                )[:2000],
+                                "type_line": str(
+                                    _meta.get("type_line") or _meta.get("type") or ""
+                                ),
+                            })
+                        for _i in range(0, len(_docs), 500):
+                            _idx.add_documents(_docs[_i : _i + 500])
+                        logger.info(
+                            "Auto-indexed %d cards into MeiliSearch index '%s'",
+                            len(_docs),
+                            idx_name,
+                        )
+                    else:
+                        logger.info(
+                            "MeiliSearch index '%s' already has %d documents, skipping auto-index",
+                            idx_name,
+                            _stats.number_of_documents,
+                        )
+            except Exception:
+                logger.warning(
+                    "MeiliSearch auto-index failed for %s (non-fatal)", game, exc_info=True
+                )
+
+        # ------------------------------------------------------------------
         # Enrichment data: banlists, archetypes, deck frequency
         # ------------------------------------------------------------------
         state = get_state(game)
@@ -1862,9 +1912,12 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
         elif task_type == "substitution":
             use_case = UseCaseEnum.substitute
 
-        # Over-fetch by 2x so we can filter non-English names and still return k results
+        # Over-fetch by 10x so candidates survive both English-name filtering AND
+        # deck-membership filtering in suggest_additions (which removes already-in-deck
+        # cards *after* this function returns).  Without enough headroom the greedy
+        # completer exhausts the candidate pool around 40-50 cards.
         req = SimilarityRequest(
-            game=game, query=card, top_k=min(k * 2, 100), use_case=use_case, mode=effective_mode
+            game=game, query=card, top_k=min(k * 10, 100), use_case=use_case, mode=effective_mode
         )
         try:
             resp = _similar_impl(req)
@@ -1873,7 +1926,12 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
             pairs = [(r.card, r.similarity) for r in resp.results]
             if known:
                 pairs = [(c, s) for c, s in pairs if c in known]
-            return pairs[:k]
+            # Return the full over-fetched pool (up to 100 after English
+            # filtering).  suggest_additions removes already-in-deck cards
+            # *after* this function returns, so truncating to k here would
+            # starve the greedy completer once ~k neighbors are already in
+            # the deck.
+            return pairs
         except HTTPException:
             return []  # Query not found or method unavailable
 
@@ -1928,7 +1986,8 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
     """Wrap a candidate function to filter out cards outside the deck's color identity."""
 
     def filtered(card: str, k: int) -> list[tuple[str, float]]:
-        results = cand_fn(card, min(k * 3, 100))  # over-fetch, capped at API max
+        # Pass k through; the inner cand_fn already over-fetches 10x
+        results = cand_fn(card, k)
         filtered_results = []
         for cand, score in results:
             meta = card_metadata.get(cand)
@@ -1938,8 +1997,6 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
                 if cand_colors and not cand_colors.issubset(deck_colors):
                     continue
             filtered_results.append((cand, score))
-            if len(filtered_results) >= k:
-                break
         return filtered_results
 
     return filtered
