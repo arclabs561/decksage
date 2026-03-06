@@ -255,3 +255,7 @@ experiments/annotations/
 # Node.js (VLM critique scripts)
 node_modules/
 package-lock.json
+
+# Playwright test artifacts
+test-results/
+playwright-report/
