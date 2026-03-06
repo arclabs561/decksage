@@ -51,13 +51,14 @@ def convert_jsonl_to_collections(
     partition_filter: str | None = None,
     deduplicate: bool = True,
     name_mapping: dict[str, str] | None = None,
+    canonical_names: set[str] | None = None,
 ) -> dict[str, int]:
     """Convert deck JSONL files to collections CSV.
 
     Returns stats dict with deck_count, card_count, unique_cards, skipped.
     """
     seen_ids: set[str] = set()
-    stats = {"deck_count": 0, "card_count": 0, "unique_cards": set(), "skipped": 0, "remapped": 0}
+    stats = {"deck_count": 0, "card_count": 0, "unique_cards": set(), "skipped": 0, "remapped": 0, "filtered": 0}
 
     with open(output_path, "w", newline="") as out_f:
         writer = csv.writer(out_f)
@@ -94,6 +95,10 @@ def convert_jsonl_to_collections(
                             stats["remapped"] += 1
                         # Optional partition filter (e.g., "Deck" to exclude sideboard)
                         if partition_filter and card.get("partition", "") != partition_filter:
+                            continue
+                        # Filter to canonical names only (drops non-English variants)
+                        if canonical_names and name not in canonical_names:
+                            stats["filtered"] += 1
                             continue
                         count = card.get("count", 1)
                         cards_list.extend([name] * count)
@@ -137,6 +142,10 @@ def main() -> int:
         "--name-mapping", type=Path, default=None,
         help="JSON file mapping Card_IDs to real names (e.g., data/yugioh_card_mapping.json)",
     )
+    parser.add_argument(
+        "--canonical-names", type=Path, default=None,
+        help="CSV with 'name' column; only names in this file are kept (drops non-English variants)",
+    )
     args = parser.parse_args()
 
     # Validate inputs
@@ -156,6 +165,21 @@ def main() -> int:
         mapping = load_name_mapping(args.name_mapping)
         print(f"Loaded {len(mapping):,} name mappings from {args.name_mapping.name}")
 
+    # Load canonical names if provided
+    canonical = None
+    if args.canonical_names:
+        if not args.canonical_names.exists():
+            print(f"Error: canonical names file {args.canonical_names} not found", file=sys.stderr)
+            return 1
+        canonical = set()
+        import csv as csv_mod
+        with open(args.canonical_names, newline="", encoding="utf-8") as cf:
+            for row in csv_mod.DictReader(cf):
+                name = row.get("name", "").strip()
+                if name:
+                    canonical.add(name)
+        print(f"Loaded {len(canonical):,} canonical names from {args.canonical_names.name}")
+
     print(f"Converting {len(args.input)} file(s) to collections CSV...")
     stats = convert_jsonl_to_collections(
         args.input,
@@ -163,6 +187,7 @@ def main() -> int:
         partition_filter=args.partition,
         deduplicate=not args.no_dedup,
         name_mapping=mapping,
+        canonical_names=canonical,
     )
 
     print(f"  Decks:        {stats['deck_count']:,}")
@@ -171,6 +196,8 @@ def main() -> int:
     print(f"  Skipped:      {stats['skipped']:,}")
     if stats.get("remapped"):
         print(f"  Remapped:     {stats['remapped']:,} card name references")
+    if stats.get("filtered"):
+        print(f"  Filtered:     {stats['filtered']:,} non-canonical name occurrences")
     print(f"  Output:       {args.output}")
 
     return 0
