@@ -35,6 +35,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -82,6 +83,74 @@ def classify_card_category(card_type: str) -> str:
     elif "Token" in card_type:
         return "Token"
     return card_type
+
+
+def extract_summoning_requirements(desc: str, card_type: str) -> str:
+    """Extract summoning material requirements from card description.
+
+    For Extra Deck monsters (Fusion/Synchro/Xyz/Link), the first line
+    of the description typically lists the required materials. For Ritual
+    monsters, look for "Ritual Summon this card with" patterns.
+
+    Returns the requirement text, or empty string if not applicable.
+    """
+    if not desc:
+        return ""
+
+    is_extra = any(
+        t in card_type for t in ("Fusion", "Synchro", "XYZ", "Xyz", "Link")
+    )
+    is_ritual = "Ritual" in card_type and "Monster" in card_type
+
+    if is_extra:
+        # Material requirements are the first line, before the effect text
+        first_line = desc.split("\n")[0].split("\r")[0].strip()
+        # Validate: material lines contain "+" or "monster" or specific names in quotes
+        if "+" in first_line or "monster" in first_line.lower() or '"' in first_line:
+            return first_line
+        return ""
+
+    if is_ritual:
+        # Look for "You can Ritual Summon this card with <spell name>"
+        m = re.search(
+            r'(?:You can )?Ritual Summon this card with "([^"]+)"', desc
+        )
+        if m:
+            return f'Ritual Spell: "{m.group(1)}"'
+        return ""
+
+    return ""
+
+
+def classify_effect_types(desc: str) -> str:
+    """Classify effect types from card description text.
+
+    Returns comma-separated effect types found in the description.
+    Reliable patterns only — avoids guessing ambiguous cases.
+    """
+    if not desc:
+        return ""
+
+    types: list[str] = []
+
+    if "(Quick Effect)" in desc:
+        types.append("Quick Effect")
+    if desc.lstrip().startswith("FLIP:") or "\nFLIP:" in desc or "\rFLIP:" in desc:
+        types.append("Flip")
+    if "you can Ritual Summon" in desc or "Ritual Summon this card" in desc:
+        types.append("Ritual")
+
+    # Trigger-like patterns: "If/When <something> is/are"
+    if re.search(r"\b(?:If|When)\b.*?\b(?:is|are)\b.*?:", desc):
+        types.append("Trigger")
+
+    # Continuous-like patterns
+    if re.search(
+        r"\b(?:While|As long as|gains? \d+.*for each|loses? \d+.*for each)\b", desc
+    ):
+        types.append("Continuous")
+
+    return ", ".join(types)
 
 
 def build_oracle_text_enriched(card: dict) -> str:
@@ -196,6 +265,8 @@ def main():
         "pendulum_scale",
         "link_markers",
         "oracle_text_enriched",
+        "summoning_requirements",
+        "effect_types",
     ]
     output_fields = input_fields + new_cols
 
@@ -231,6 +302,9 @@ def main():
             markers = api_card.get("linkmarkers", [])
             row["link_markers"] = ", ".join(markers) if markers else ""
             row["oracle_text_enriched"] = build_oracle_text_enriched(api_card)
+            desc = api_card.get("desc", "")
+            row["summoning_requirements"] = extract_summoning_requirements(desc, card_type)
+            row["effect_types"] = classify_effect_types(desc)
         else:
             unmatched_names.append(name)
             # Fill with empty
