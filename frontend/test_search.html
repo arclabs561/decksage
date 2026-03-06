@@ -758,6 +758,88 @@
             font-size: 11px;
             color: var(--color-text-muted);
         }
+        /* Rich autocomplete card items */
+        .autocomplete-item.rich-card {
+            align-items: flex-start;
+            padding: 8px 12px;
+            gap: 10px;
+        }
+        .ac-thumb {
+            flex-shrink: 0;
+            width: 32px;
+            height: 45px;
+            border-radius: 3px;
+            object-fit: cover;
+            background: var(--color-bg-tertiary);
+        }
+        .ac-thumb-placeholder {
+            flex-shrink: 0;
+            width: 32px;
+            height: 45px;
+            border-radius: 3px;
+            background: var(--color-bg-tertiary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--color-text-muted);
+            font-size: 10px;
+        }
+        .ac-card-info {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .ac-card-name {
+            font-size: 14px;
+            font-weight: 500;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ac-card-meta {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .ac-card-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--color-text-muted);
+        }
+        .ac-popularity-bar {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+        .ac-popularity-bar .bar {
+            display: inline-block;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-accent-primary);
+            opacity: 0.5;
+        }
+        .ac-ban-pill {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 5px;
+            border-radius: 3px;
+            letter-spacing: 0.02em;
+        }
+        .ac-ban-pill.banned, .ac-ban-pill.forbidden {
+            background: rgba(239, 68, 68, 0.15);
+            color: #ef4444;
+        }
+        .ac-ban-pill.restricted, .ac-ban-pill.limited, .ac-ban-pill.semi-limited {
+            background: rgba(245, 158, 11, 0.15);
+            color: #f59e0b;
+        }
         .autocomplete-no-results {
             padding: 16px;
             text-align: center;
@@ -1320,6 +1402,89 @@
             border: 1px solid rgba(42, 117, 187, 0.2);
             color: #1d6aa5;
         }
+
+        /* Format legality pills row */
+        .format-legality-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .legality-pill {
+            display: inline-block;
+            font-size: 10px;
+            font-weight: 600;
+            padding: 1px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.02em;
+        }
+        .legality-pill.banned, .legality-pill.forbidden {
+            background: rgba(239, 68, 68, 0.12);
+            color: #ef4444;
+        }
+        .legality-pill.restricted, .legality-pill.limited {
+            background: rgba(245, 158, 11, 0.12);
+            color: #f59e0b;
+        }
+        .legality-pill.semi-limited {
+            background: rgba(251, 191, 36, 0.12);
+            color: #d97706;
+        }
+        .legality-pill.legal {
+            background: rgba(34, 197, 94, 0.10);
+            color: #16a34a;
+        }
+        /* Deck popularity display */
+        .deck-popularity {
+            font-size: 11px;
+            color: var(--color-text-secondary);
+            margin-top: 3px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .deck-popularity .pop-bar {
+            display: inline-block;
+            height: 6px;
+            border-radius: 3px;
+            background: var(--color-accent-primary);
+            opacity: 0.4;
+        }
+        /* Co-occurrence chips */
+        .cooccurrence-chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px;
+            margin-top: 4px;
+        }
+        .cooccur-chip {
+            display: inline-block;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            background: var(--color-bg-tertiary);
+            color: var(--color-text-secondary);
+            cursor: pointer;
+            transition: background 80ms;
+        }
+        .cooccur-chip:hover {
+            background: var(--color-accent-primary);
+            color: #fff;
+        }
+        /* Rarity dot in result name area */
+        .rarity-dot {
+            display: inline-block;
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+        .rarity-dot.common { background: #6b7280; }
+        .rarity-dot.uncommon { background: #9ca3af; }
+        .rarity-dot.rare { background: #ca8a04; }
+        .rarity-dot.mythic { background: #ea580c; }
+        .rarity-dot.special, .rarity-dot.bonus, .rarity-dot.secret { background: #a78bfa; }
 
         /* === YGO ATTRIBUTE COLORS (light bg) === */
         .attr-dark { color: #7c3aed; }
@@ -1889,6 +2054,8 @@
             background: var(--section-gradient);
             border-radius: 3px;
             margin-bottom: 16px;
+            position: relative;
+            z-index: 0;
         }
         /* Query card banner -- shows the searched card */
         .query-card-banner {
@@ -1931,6 +2098,7 @@
         }
         .query-card-info .query-card-stats {
             display: flex;
+            flex-wrap: wrap;
             gap: 12px;
             margin-top: 8px;
             font-size: 12px;
@@ -2308,11 +2476,23 @@
 
         // Cache configuration
         const CACHE_CONFIG = {
+            CACHE_VERSION: 2,
             RESULTS_TTL: 3600000, // 1 hour in milliseconds
             MAX_CACHE_SIZE: 50, // Maximum number of cached results
-            CACHE_KEY_PREFIX: 'decksage_cache_',
-            CACHE_META_KEY: 'decksage_cache_meta',
+            CACHE_KEY_PREFIX: 'decksage_cache_v2_',
+            CACHE_META_KEY: 'decksage_cache_meta_v2',
         };
+
+        // Purge old-version cache entries on load
+        (function purgeOldCache() {
+            try {
+                const keys = Object.keys(localStorage);
+                keys.filter(k => k.startsWith('decksage_cache_') && !k.startsWith('decksage_cache_v2_'))
+                    .forEach(k => localStorage.removeItem(k));
+                // Also remove old meta key
+                localStorage.removeItem('decksage_cache_meta');
+            } catch (e) { /* localStorage unavailable */ }
+        })();
 
         // Analytics configuration (privacy-respecting)
         const ANALYTICS_CONFIG = {
@@ -2629,8 +2809,9 @@
                 if (autocompleteResponse.ok) {
                     const autocompleteData = await autocompleteResponse.json();
                     // Check if query exactly matches any card name (case-insensitive)
+                    // Items may be strings or {name: ...} objects (CardSuggestion)
                     const exactMatch = autocompleteData.items?.some(
-                        item => item.toLowerCase() === query.toLowerCase()
+                        item => (typeof item === 'string' ? item : item.name).toLowerCase() === query.toLowerCase()
                     );
 
                     // Also check if query is short and looks like a card name (not a description)
@@ -3428,15 +3609,58 @@
                     ? `<div class="keyword-tags">${keywordList.map(k => `<span class="keyword-tag">${escapeHtml(k)}</span>`).join('')}</div>`
                     : '';
 
-                // Archetype badge (YGO primarily, but also usable for Magic color identity)
+                // Archetype badge(s) — prefer archetype_names (multi-archetype) from enrichment
                 let archetypeBadgeHtml = '';
-                if (game === 'yugioh' && (meta.archetype || meta.archetype_enriched)) {
+                if (meta.archetype_names && Array.isArray(meta.archetype_names) && meta.archetype_names.length > 0) {
+                    archetypeBadgeHtml = meta.archetype_names.map(a => `<span class="archetype-badge">${escapeHtml(String(a))}</span>`).join(' ');
+                } else if (game === 'yugioh' && (meta.archetype || meta.archetype_enriched)) {
                     const arch = meta.archetype_enriched || meta.archetype;
                     archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(arch))}</span>`;
                 } else if (game === 'magic' && meta.creature_types) {
                     archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(meta.creature_types))}</span>`;
                 } else if (game === 'pokemon' && meta.subtypes) {
                     archetypeBadgeHtml = `<span class="archetype-badge">${escapeHtml(String(meta.subtypes))}</span>`;
+                }
+
+                // Format legality pills (from ban_status)
+                let formatLegalityHtml = '';
+                if (meta.ban_status && typeof meta.ban_status === 'object') {
+                    const pills = Object.entries(meta.ban_status).map(([fmt, status]) => {
+                        const cls = String(status).toLowerCase().replace(/[^a-z-]/g, '');
+                        return `<span class="legality-pill ${cls}">${escapeHtml(String(status))}: ${escapeHtml(fmt)}</span>`;
+                    });
+                    if (pills.length) formatLegalityHtml = `<div class="format-legality-row">${pills.join('')}</div>`;
+                }
+
+                // Deck popularity
+                let deckPopularityHtml = '';
+                if (meta.deck_popularity && meta.deck_popularity.total_decks) {
+                    const total = meta.deck_popularity.total_decks;
+                    const maxDecks = 80000;
+                    const barW = Math.min(50, Math.max(4, (total / maxDecks) * 50));
+                    deckPopularityHtml = `<div class="deck-popularity"><span class="pop-bar" style="width:${barW}px"></span>In ${total.toLocaleString()} decks</div>`;
+                }
+
+                // Co-occurrence chips (clickable to search)
+                let cooccurrenceChipsHtml = '';
+                if (meta.top_cooccurrence && Array.isArray(meta.top_cooccurrence) && meta.top_cooccurrence.length > 0) {
+                    const chips = meta.top_cooccurrence.map(c =>
+                        `<span class="cooccur-chip" onclick="event.stopPropagation();findSimilarFromCard('${escapeHtml(String(c)).replace(/'/g, "\\'")}')" title="Find similar to ${escapeHtml(String(c))}">${escapeHtml(String(c))}</span>`
+                    ).join('');
+                    cooccurrenceChipsHtml = `<div class="cooccurrence-chips"><span style="font-size:11px;color:var(--color-text-muted);margin-right:2px">Often with:</span>${chips}</div>`;
+                }
+
+                // Rarity dot
+                let rarityDotHtml = '';
+                if (meta.rarity) {
+                    const r = String(meta.rarity).toLowerCase();
+                    let dotClass = '';
+                    if (r.includes('mythic')) dotClass = 'mythic';
+                    else if (r.includes('rare')) dotClass = 'rare';
+                    else if (r.includes('uncommon')) dotClass = 'uncommon';
+                    else if (r.includes('common')) dotClass = 'common';
+                    else if (r.includes('special') || r.includes('bonus') || r.includes('secret')) dotClass = 'special';
+                    if (dotClass) rarityDotHtml = `<span class="rarity-dot ${dotClass}" title="${escapeHtml(String(meta.rarity))}"></span>`;
                 }
 
                 // YGO attribute color class
@@ -3516,7 +3740,7 @@
                             <div class="result-image-wrapper" ondblclick="event.stopPropagation();openCardDrawer(${index})">${cardImage}</div>
                             <div class="result-content">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
-                                    <div class="result-name ${attrClass}">${cardNameEscaped}</div>
+                                    <div class="result-name ${attrClass}">${rarityDotHtml}${cardNameEscaped}</div>
                                     <svg class="expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                                 </div>
                                 <div class="result-similarity">
@@ -3532,6 +3756,9 @@
                                 ${statBadgesHtml}
                                 ${keywordHtml}
                                 ${archetypeBadgeHtml}
+                                ${formatLegalityHtml}
+                                ${deckPopularityHtml}
+                                ${cooccurrenceChipsHtml}
                                 ${setInfoHtml}
                                 ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${escapeHtml(functionalTags)}</div>` : ''}
                                 ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${escapeHtml(formatLegal)}</div>` : ''}
@@ -3573,7 +3800,7 @@
 
             if (data && data.model_info) {
                 const method = data.model_info.method_used || 'unknown';
-                const source = data.model_info.embedding_source || 'unknown';
+                const source = data.model_info.embedding_source || data.model_info.game || currentGame || 'unknown';
                 const numCards = data.model_info.num_cards?.toLocaleString() || 'N/A';
                 modelInfo.innerHTML = `
                     ${escapeHtml(source)} ·
@@ -3836,41 +4063,82 @@
             const dropdown = document.getElementById('autocompleteDropdown');
             const cardInput = document.getElementById('cardInput') || document.getElementById('unifiedInput');
             const queryLower = query.toLowerCase();
+            const highlightRegex = queryLower ? new RegExp(`(${escapeRegex(query)})`, 'gi') : null;
+
+            function highlightMatch(text) {
+                let display = escapeHtml(text);
+                if (highlightRegex && text.toLowerCase().includes(queryLower)) {
+                    display = display.replace(highlightRegex, '<strong class="match">$1</strong>');
+                }
+                return display;
+            }
 
             let html = '';
             let globalIndex = 0;
+            const nameList = []; // flat list of names for keyboard selection
 
             // Show history section
             if (history.length > 0) {
                 html += '<div class="autocomplete-section"><div class="autocomplete-section-title">Recent</div>';
                 history.slice(0, 5).forEach((item) => {
                     const id = `ac-item-${globalIndex}`;
-                    let display = escapeHtml(item);
-                    if (queryLower && item.toLowerCase().includes(queryLower)) {
-                        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-                        display = display.replace(regex, '<strong class="match">$1</strong>');
-                    }
-                    html += `<div class="autocomplete-item history-item" id="${id}" data-index="${globalIndex}" data-value="${item}" role="option" aria-selected="false"><span class="ac-icon">&#8986;</span><span class="ac-text">${display}</span></div>`;
+                    html += `<div class="autocomplete-item history-item" id="${id}" data-index="${globalIndex}" data-value="${escapeHtml(item)}" role="option" aria-selected="false"><span class="ac-icon">&#8986;</span><span class="ac-text">${highlightMatch(item)}</span></div>`;
+                    nameList.push(item);
                     globalIndex++;
                 });
                 html += '</div>';
             }
 
-            // Show card suggestions
+            // Show card suggestions (supports both string items and CardSuggestion objects)
             if (items.length > 0) {
                 html += '<div class="autocomplete-section">';
                 if (history.length > 0) html += '<div class="autocomplete-section-title">Cards</div>';
                 items.forEach((item) => {
                     const id = `ac-item-${globalIndex}`;
-                    let highlighted = escapeHtml(item);
+                    const isRich = typeof item === 'object' && item.name;
+                    const cardName = isRich ? item.name : item;
 
-                    // Bold the typed portion (research consensus: bold what user typed)
-                    if (queryLower && item.toLowerCase().includes(queryLower)) {
-                        const regex = new RegExp(`(${escapeRegex(query)})`, 'gi');
-                        highlighted = highlighted.replace(regex, '<strong class="match">$1</strong>');
+                    if (isRich) {
+                        // Rich card suggestion with thumbnail, type, popularity, ban pills
+                        const thumbHtml = item.image_url
+                            ? `<img class="ac-thumb" src="${escapeHtml(item.image_url)}" alt="" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'"><div class="ac-thumb-placeholder" style="display:none">?</div>`
+                            : `<div class="ac-thumb-placeholder">?</div>`;
+
+                        const metaParts = [];
+                        if (item.type_line) metaParts.push(escapeHtml(item.type_line));
+                        if (item.mana_cost) metaParts.push(escapeHtml(item.mana_cost));
+                        if (item.rarity) metaParts.push(escapeHtml(item.rarity));
+                        const metaLine = metaParts.length ? `<div class="ac-card-meta">${metaParts.join(' \u00b7 ')}</div>` : '';
+
+                        let statsHtml = '';
+                        const statParts = [];
+                        if (item.total_decks) {
+                            const maxDecks = 80000; // rough max for bar scaling
+                            const barW = Math.min(40, Math.max(4, (item.total_decks / maxDecks) * 40));
+                            statParts.push(`<span class="ac-popularity-bar"><span class="bar" style="width:${barW}px"></span>${item.total_decks.toLocaleString()} decks</span>`);
+                        }
+                        if (item.ban_status) {
+                            for (const [fmt, status] of Object.entries(item.ban_status)) {
+                                const cls = status.toLowerCase().replace(/[^a-z-]/g, '');
+                                statParts.push(`<span class="ac-ban-pill ${cls}">${escapeHtml(status)}: ${escapeHtml(fmt)}</span>`);
+                            }
+                        }
+                        if (statParts.length) statsHtml = `<div class="ac-card-stats">${statParts.join('')}</div>`;
+
+                        html += `<div class="autocomplete-item rich-card" id="${id}" data-index="${globalIndex}" data-value="${escapeHtml(cardName)}" role="option" aria-selected="false">
+                            ${thumbHtml}
+                            <div class="ac-card-info">
+                                <div class="ac-card-name">${highlightMatch(cardName)}</div>
+                                ${metaLine}
+                                ${statsHtml}
+                            </div>
+                        </div>`;
+                    } else {
+                        // Plain string fallback
+                        html += `<div class="autocomplete-item" id="${id}" data-index="${globalIndex}" data-value="${escapeHtml(cardName)}" role="option" aria-selected="false"><span class="ac-icon">&#9830;</span><span class="ac-text">${highlightMatch(cardName)}</span><span class="ac-hint">&#8629;</span></div>`;
                     }
 
-                    html += `<div class="autocomplete-item" id="${id}" data-index="${globalIndex}" data-value="${item}" role="option" aria-selected="false"><span class="ac-icon">&#9830;</span><span class="ac-text">${highlighted}</span><span class="ac-hint">&#8629;</span></div>`;
+                    nameList.push(cardName);
                     globalIndex++;
                 });
                 html += '</div>';
@@ -3886,7 +4154,7 @@
             dropdown.classList.add('visible');
             cardInput.setAttribute('aria-expanded', 'true');
             cardInput.removeAttribute('aria-activedescendant');
-            autocompleteItems = [...history.slice(0, 5), ...items];
+            autocompleteItems = nameList;
             selectedAutocompleteIndex = -1;
         }
 
@@ -4412,7 +4680,9 @@
             for (const [k, v] of Object.entries(meta)) {
                 if (k === 'image_url' || k === 'oracle_text_full') continue;
                 if (v === null || v === undefined) continue;
-                const val = String(v);
+                const val = Array.isArray(v) ? v.join(', ')
+                    : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) => `${pk}: ${pv}`).join(', ')
+                    : String(v);
                 if (val.length > 200) {
                     rows.push(`<tr><td>${escapeHtml(k.replace(/_/g, ' '))}</td><td style="white-space:pre-wrap;">${escapeHtml(val)}</td></tr>`);
                 } else {
