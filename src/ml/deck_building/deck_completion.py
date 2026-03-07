@@ -187,8 +187,14 @@ def suggest_additions(
             if current < target:
                 role_gaps[role] = target - current
 
-    # Pick a seed representative: use the most frequent/current first card if present
-    seeds = list(have)[:5] or []
+    # Use diverse seeds: mix original cards with recently-added ones.
+    # dict preserves insertion order, so recent adds are at the end.
+    have_list = list(have)
+    if len(have_list) <= 5:
+        seeds = have_list
+    else:
+        # First 3 original + last 2 recently-added for frontier expansion
+        seeds = have_list[:3] + have_list[-2:]
     scores: dict[str, float] = {}
     score_reasons: dict[str, str] = {}  # Track why each card scored well
 
