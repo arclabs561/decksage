@@ -149,7 +149,19 @@ def test_synergy_returns_404_when_query_missing(client):
     # embeddings not required for jaccard path
     r = client.get("/v1/cards/Unknown/similar", params={"mode": "synergy", "k": 5})
     assert r.status_code == 404
-    assert "not in graph" in r.json().get("detail", "")
+    assert "not found" in r.json().get("detail", "")
+
+
+def test_synergy_returns_empty_when_card_in_embeddings_but_not_graph(client):
+    from ..api import api as api_mod
+
+    state = api_mod.get_state()
+    state.graph_data = {"adj": {"Bolt": {"A"}, "A": {"Bolt"}}}
+    state.embeddings = _DummyEmb(["Bolt", "A", "Orphan"])
+    r = client.get("/v1/cards/Orphan/similar", params={"mode": "synergy", "k": 5})
+    assert r.status_code == 200
+    data = r.json()
+    assert data["results"] == []
 
 
 def test_ready_adopts_legacy_globals(client):

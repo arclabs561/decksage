@@ -204,7 +204,9 @@ def _require_game(game: str | None) -> str:
 class SimilarCard(BaseModel):
     card: str = Field(..., description="Card name")
     similarity: float = Field(..., description="Similarity score (0-1)")
-    metadata: dict[str, Any] | None = Field(None, description="Card metadata (image_url, type, mana_cost, etc.)")
+    metadata: dict[str, Any] | None = Field(
+        None, description="Card metadata (image_url, type, mana_cost, etc.)"
+    )
 
 
 class UseCaseEnum(str, Enum):
@@ -256,7 +258,9 @@ class SimilarityRequest(BaseModel):
 
 class SimilarityResponse(BaseModel):
     query: str
-    query_metadata: dict[str, Any] | None = Field(None, description="Metadata for the query card (image_url, type, etc.)")
+    query_metadata: dict[str, Any] | None = Field(
+        None, description="Metadata for the query card (image_url, type, etc.)"
+    )
     results: list[SimilarCard]
     model_info: dict
     feedback_url: str | None = Field(None, description="URL for submitting feedback on results")
@@ -539,6 +543,17 @@ async def lifespan(app: FastAPI):
 
         emb_path = os.getenv(emb_key)
         pairs_path = os.getenv(pairs_key)
+        if not pairs_path:
+            # Auto-discover pairs file: prefer largest available
+            pairs_dir = Path("data/processed")
+            candidates = sorted(
+                pairs_dir.glob(f"pairs_{game}_*.csv"),
+                key=lambda p: p.stat().st_size,
+                reverse=True,
+            )
+            if candidates:
+                pairs_path = str(candidates[0])
+                logger.info("Auto-discovered pairs for %s: %s", game, pairs_path)
         attrs_path = os.getenv(attrs_key)
         tuned_weights_path = os.getenv(weights_key)
         signals_dir = os.getenv(signals_key) or None
@@ -599,7 +614,9 @@ async def lifespan(app: FastAPI):
                     len(state.card_metadata),
                 )
             except (OSError, ValueError, KeyError, ImportError):
-                logger.debug("Failed to load enriched card metadata for game=%s", game, exc_info=True)
+                logger.debug(
+                    "Failed to load enriched card metadata for game=%s", game, exc_info=True
+                )
 
         # ------------------------------------------------------------------
         # Auto-populate MeiliSearch if index is empty
@@ -618,21 +635,19 @@ async def lifespan(app: FastAPI):
                     _stats = _idx.get_stats()
                     if _stats.number_of_documents == 0:
                         _docs = []
-                        for _i_card, (_name, _meta) in enumerate(
-                            state.card_metadata.items()
-                        ):
-                            _docs.append({
-                                "id": str(_i_card),
-                                "name": _name,
-                                "text": str(
-                                    _meta.get("oracle_text")
-                                    or _meta.get("text")
-                                    or ""
-                                )[:2000],
-                                "type_line": str(
-                                    _meta.get("type_line") or _meta.get("type") or ""
-                                ),
-                            })
+                        for _i_card, (_name, _meta) in enumerate(state.card_metadata.items()):
+                            _docs.append(
+                                {
+                                    "id": str(_i_card),
+                                    "name": _name,
+                                    "text": str(
+                                        _meta.get("oracle_text") or _meta.get("text") or ""
+                                    )[:2000],
+                                    "type_line": str(
+                                        _meta.get("type_line") or _meta.get("type") or ""
+                                    ),
+                                }
+                            )
                         for _i in range(0, len(_docs), 500):
                             _idx.add_documents(_docs[_i : _i + 500])
                         logger.info(
@@ -663,9 +678,7 @@ async def lifespan(app: FastAPI):
                 with open(banlist_path, encoding="utf-8") as f:
                     bl = json.load(f)
                 state.banlist = bl.get("formats", {})
-                logger.info(
-                    "Loaded banlists for %s: %d formats", game, len(state.banlist)
-                )
+                logger.info("Loaded banlists for %s: %d formats", game, len(state.banlist))
             except (OSError, ValueError, KeyError):
                 logger.debug("Failed to load banlists for game=%s", game, exc_info=True)
 
@@ -683,7 +696,9 @@ async def lifespan(app: FastAPI):
                     if not arch_name:
                         continue
                     for card in arch.get("core_cards", []) + arch.get("flex_slots", []):
-                        if isinstance(card, str) and not card.startswith(("Starter", "Extender", "Tech", "Board")):
+                        if isinstance(card, str) and not card.startswith(
+                            ("Starter", "Extender", "Tech", "Board")
+                        ):
                             archetypes_index.setdefault(card, [])
                             if arch_name not in archetypes_index[card]:
                                 archetypes_index[card].append(arch_name)
@@ -708,9 +723,7 @@ async def lifespan(app: FastAPI):
 
         if archetypes_index:
             state.archetypes = archetypes_index
-            logger.info(
-                "Built archetype index for %s: %d cards", game, len(archetypes_index)
-            )
+            logger.info("Built archetype index for %s: %d cards", game, len(archetypes_index))
 
         # Deck frequency
         freq_path = Path(f"data/processed/deck_frequency_{game}.json")
@@ -1037,27 +1050,62 @@ def _is_valid(val: object) -> bool:
 # Per-game extra metadata fields (on top of the shared base set).
 _GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
     "magic": (
-        "keywords", "keyword_abilities", "creature_types", "color_identity_str",
+        "keywords",
+        "keyword_abilities",
+        "creature_types",
+        "color_identity_str",
     ),
     "pokemon": (
-        "supertype", "subtypes", "hp", "retreat_cost",
-        "weakness_type", "resistance_type", "regulation_mark",
-        "set_name", "attacks_detail", "abilities_detail",
+        "supertype",
+        "subtypes",
+        "hp",
+        "retreat_cost",
+        "weakness_type",
+        "resistance_type",
+        "regulation_mark",
+        "set_name",
+        "attacks_detail",
+        "abilities_detail",
     ),
     "yugioh": (
-        "atk", "def_stat", "level_rank_link", "attribute", "race", "archetype",
-        "monster_type", "attribute_enriched", "race_enriched", "archetype_enriched",
-        "pendulum_scale", "link_markers", "card_category",
-        "summoning_requirements", "effect_types",
-        "frame_type", "creature_types",
-        "banlist_tcg", "banlist_ocg", "banlist_goat",
+        "atk",
+        "def_stat",
+        "level_rank_link",
+        "attribute",
+        "race",
+        "archetype",
+        "monster_type",
+        "attribute_enriched",
+        "race_enriched",
+        "archetype_enriched",
+        "pendulum_scale",
+        "link_markers",
+        "card_category",
+        "summoning_requirements",
+        "effect_types",
+        "frame_type",
+        "creature_types",
+        "banlist_tcg",
+        "banlist_ocg",
+        "banlist_goat",
     ),
 }
 
 # Shared base fields returned for every game.
 _BASE_FIELDS: tuple[str, ...] = (
-    "image_url", "type", "mana_cost", "cmc", "oracle_text", "rarity",
-    "colors", "power", "toughness", "attribute", "race", "hp", "keywords",
+    "image_url",
+    "type",
+    "mana_cost",
+    "cmc",
+    "oracle_text",
+    "rarity",
+    "colors",
+    "power",
+    "toughness",
+    "attribute",
+    "race",
+    "hp",
+    "keywords",
 )
 
 
@@ -1074,7 +1122,11 @@ def _lookup_ban_status(card_name: str, banlist: dict | None) -> dict[str, str] |
 
 
 def _enrich_similar_card(
-    card_name: str, similarity: float, state: ApiState, *, game: str = "magic",
+    card_name: str,
+    similarity: float,
+    state: ApiState,
+    *,
+    game: str = "magic",
 ) -> SimilarCard:
     """Build a SimilarCard with metadata from enriched card data (image_url, type, etc.)."""
     meta = None
@@ -1138,7 +1190,9 @@ def _enrich_similar_card(
     return SimilarCard(card=card_name, similarity=float(similarity), metadata=meta)
 
 
-def _similar_embedding(state: ApiState, query: str, k: int, *, game: str = "magic") -> list[SimilarCard]:
+def _similar_embedding(
+    state: ApiState, query: str, k: int, *, game: str = "magic"
+) -> list[SimilarCard]:
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     if query not in state.embeddings:
@@ -1159,7 +1213,11 @@ def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[
         raise HTTPException(status_code=503, detail="Graph data not loaded")
     adj = state.graph_data["adj"]
     if query not in adj:
-        raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
+        # Card exists in embeddings but not in co-occurrence graph -- return
+        # empty results instead of 404 (data gap, not a missing card).
+        if query in (state.embeddings or {}):
+            return []
+        raise HTTPException(status_code=404, detail=f"Card '{query}' not found")
     similarities = sm_jaccard(query, adj, top_k=k, filter_lands=(game == "magic"))
     return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similarities]
 
@@ -1267,7 +1325,9 @@ def _similar_jaccard_faceted(
         raise HTTPException(status_code=503, detail="Attributes not loaded")
     adj = state.graph_data["adj"]
     if query not in adj:
-        raise HTTPException(status_code=404, detail=f"Card '{query}' not in graph")
+        if query in (state.embeddings or {}):
+            return []
+        raise HTTPException(status_code=404, detail=f"Card '{query}' not found")
     facet = (request.facet or "type").lower().strip()
     similar = sm_jaccard_faceted(query, adj, state.card_attrs, facet=facet, top_k=k)
     return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
@@ -1335,10 +1395,13 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         # Meta mode: jaccard co-occurrence re-scored by competitive popularity
         results = _similar_jaccard(state, query, k * 2, game=game)
         if state.deck_frequency and results:
-            max_freq = max(
-                (state.deck_frequency.get(r.card, {}).get("total_decks", 0) for r in results),
-                default=1,
-            ) or 1
+            max_freq = (
+                max(
+                    (state.deck_frequency.get(r.card, {}).get("total_decks", 0) for r in results),
+                    default=1,
+                )
+                or 1
+            )
             for r in results:
                 freq = state.deck_frequency.get(r.card, {}).get("total_decks", 0)
                 pop_ratio = freq / max_freq
@@ -1398,7 +1461,9 @@ def get_similar_v1(
     mode: UseCaseEnum = UseCaseEnum.substitute,
     k: int = Query(10, ge=1, le=100),
     game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
-    mmr_lambda: float | None = Query(None, ge=0.0, le=1.0, description="MMR diversification strength"),
+    mmr_lambda: float | None = Query(
+        None, ge=0.0, le=1.0, description="MMR diversification strength"
+    ),
 ):
     # Log query for analytics
     try:
@@ -1806,6 +1871,34 @@ def search_cards_v1(request: SearchRequest):
                     tl = raw.get("type_line")
                     if _is_valid(tl):
                         merged["type"] = tl
+
+        # Ban status
+        ban = _lookup_ban_status(r.card_name, state.banlist)
+        if ban:
+            merged["ban_status"] = ban
+
+        # Archetype names
+        if state.archetypes:
+            arch_names = state.archetypes.get(r.card_name)
+            if arch_names:
+                merged["archetype_names"] = arch_names
+
+        # Deck popularity
+        if state.deck_frequency:
+            freq = state.deck_frequency.get(r.card_name)
+            if freq:
+                merged["deck_popularity"] = freq
+
+        # Top co-occurrence
+        if state.graph_data and "adj" in state.graph_data:
+            adj = state.graph_data["adj"]
+            neighbors = adj.get(r.card_name)
+            if neighbors:
+                weights_data = state.graph_data.get("weights", {})
+                scored = [(n, weights_data.get((r.card_name, n), 1)) for n in neighbors]
+                scored.sort(key=lambda x: x[1], reverse=True)
+                merged["top_cooccurrence"] = [n for n, _w in scored[:3]]
+
         enriched.append(
             SearchResultItem(
                 card_name=r.card_name,
@@ -1974,10 +2067,17 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
 
 # Basic lands have color_identity_str="C" in the enriched CSV but produce colored mana.
 _BASIC_LAND_COLORS: dict[str, str] = {
-    "Plains": "W", "Island": "U", "Swamp": "B", "Mountain": "R", "Forest": "G",
+    "Plains": "W",
+    "Island": "U",
+    "Swamp": "B",
+    "Mountain": "R",
+    "Forest": "G",
     # Snow-covered basics
-    "Snow-Covered Plains": "W", "Snow-Covered Island": "U", "Snow-Covered Swamp": "B",
-    "Snow-Covered Mountain": "R", "Snow-Covered Forest": "G",
+    "Snow-Covered Plains": "W",
+    "Snow-Covered Island": "U",
+    "Snow-Covered Swamp": "B",
+    "Snow-Covered Mountain": "R",
+    "Snow-Covered Forest": "G",
 }
 
 
@@ -2451,7 +2551,12 @@ def complete_deck(req: CompleteRequest):
 
         deck_out = ot_result.deck
         steps = [
-            {"op": "add_card", "partition": _main_partition_name(game), "card": a["card"], "count": a["count"]}
+            {
+                "op": "add_card",
+                "partition": _main_partition_name(game),
+                "card": a["card"],
+                "count": a["count"],
+            }
             for a in ot_result.additions
         ]
         # Store OT-specific metrics for later inclusion in response
