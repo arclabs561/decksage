@@ -28,7 +28,9 @@ def test_pagination_monotone(client):
         assert j1["next_offset"] is None or j1["next_offset"] >= j0["next_offset"]
 
     # Stable union size: combined unique equals min(total, fetched)
-    union = set(j0["items"]) | set(j1["items"])
+    names0 = {item["name"] for item in j0["items"]}
+    names1 = {item["name"] for item in j1["items"]}
+    union = names0 | names1
     assert len(union) <= total
 
 

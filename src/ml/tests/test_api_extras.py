@@ -105,7 +105,7 @@ def test_cards_v1_pagination_invariants(client):
     assert r4.status_code == 200
     j4 = r4.json()
     assert j4["total"] == 1
-    assert j4["items"] == ["A"]
+    assert [item["name"] for item in j4["items"]] == ["A"]
 
     # Property-like checks across a few offsets
     for off in (0, 1, 2, 3, 4, 5, 10):

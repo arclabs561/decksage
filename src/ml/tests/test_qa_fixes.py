@@ -73,9 +73,9 @@ class TestNormalizeDeckFormat:
 
 
 class TestResolveMethod:
-    def test_meta_uses_jaccard(self):
+    def test_meta_uses_meta(self):
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.meta)
-        assert _resolve_method(req) == "jaccard"
+        assert _resolve_method(req) == "meta"
 
     def test_substitute_uses_embedding(self):
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.substitute)
@@ -118,9 +118,7 @@ class TestZeroScoreSynergyFiltering:
         synergies = discovery.find_synergies("A", top_k=10)
         synergy_cards = {s.card for s in synergies}
         # C should be filtered out (score 0.0 because C has no neighbors)
-        assert "C" not in synergy_cards or all(
-            s.score > 0.0 for s in synergies if s.card == "C"
-        )
+        assert "C" not in synergy_cards or all(s.score > 0.0 for s in synergies if s.card == "C")
 
     def test_keeps_nonzero_scores(self):
         # A and B share neighbor C -> nonzero Jaccard
@@ -149,10 +147,17 @@ class TestColorIdentityFiltering:
     def test_extract_deck_colors_magic(self):
         from ml.api.api import _extract_deck_colors
 
-        deck = {"partitions": [{"name": "Main", "cards": [
-            {"name": "Lightning Bolt", "count": 4},
-            {"name": "Goblin Guide", "count": 4},
-        ]}]}
+        deck = {
+            "partitions": [
+                {
+                    "name": "Main",
+                    "cards": [
+                        {"name": "Lightning Bolt", "count": 4},
+                        {"name": "Goblin Guide", "count": 4},
+                    ],
+                }
+            ]
+        }
         metadata = {
             "Lightning Bolt": {"color_identity_str": "R"},
             "Goblin Guide": {"color_identity_str": "R"},
@@ -163,10 +168,17 @@ class TestColorIdentityFiltering:
     def test_extract_deck_colors_multicolor(self):
         from ml.api.api import _extract_deck_colors
 
-        deck = {"partitions": [{"name": "Main", "cards": [
-            {"name": "Lightning Bolt", "count": 4},
-            {"name": "Counterspell", "count": 4},
-        ]}]}
+        deck = {
+            "partitions": [
+                {
+                    "name": "Main",
+                    "cards": [
+                        {"name": "Lightning Bolt", "count": 4},
+                        {"name": "Counterspell", "count": 4},
+                    ],
+                }
+            ]
+        }
         metadata = {
             "Lightning Bolt": {"color_identity_str": "R"},
             "Counterspell": {"color_identity_str": "U"},
