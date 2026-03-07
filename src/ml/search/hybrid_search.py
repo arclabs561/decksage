@@ -315,7 +315,9 @@ class HybridSearch:
         if self.meilisearch and text_weight > 0:
             try:
                 index = self.meilisearch.index(self.index_name)
-                meilisearch_results = index.search(query, {"limit": limit * 2})
+                meilisearch_results = index.search(
+                    query, {"limit": limit * 2, "showRankingScore": True}
+                )
                 hits = meilisearch_results.get("hits", [])
                 for hit in hits:
                     card_name = hit.get("name", "")
