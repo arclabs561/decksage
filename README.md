@@ -1,5 +1,7 @@
 # DeckSage
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 Card similarity and deck operations for trading card games.
 
 - **Games Supported**: `magic`, `pokemon`, `yugioh`
