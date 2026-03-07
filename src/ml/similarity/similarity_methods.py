@@ -121,7 +121,7 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
     weights = {}
 
     for _, row in df.iterrows():
-        c1, c2 = row["NAME_1"], row["NAME_2"]
+        c1, c2 = str(row["NAME_1"]).strip(), str(row["NAME_2"]).strip()
 
         if filter_lands and (c1 in LANDS or c2 in LANDS):
             continue
