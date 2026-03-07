@@ -1088,6 +1088,11 @@ _GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
         "banlist_tcg",
         "banlist_ocg",
         "banlist_goat",
+        "name_jp",
+        "fandom_categories",
+        "fusion_material",
+        "synchro_material",
+        "fandom_statuses",
     ),
 }
 

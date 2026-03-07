@@ -1,1 +1,97 @@
-#!/bin/bash # Sync all important data to S3 for backup set -euo pipefail BUCKET="s3://games-collections" SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)" cd "$PROJECT_ROOT" echo " Syncing data to S3 for backup..." echo "" # Function to sync with progress sync_file() { local local_path="$1" local s3_path="$2" local description="$3" if [ ! -f "$local_path" ]; then echo "Warning: Skipping $description: $local_path not found" return fi echo "📤 Syncing $description..." echo " Local: $local_path" echo " S3: $s3_path" aws s3 cp "$local_path" "$s3_path" --no-progress 2>&1 | tail -1 echo " Done" echo "" } # Function to sync directory sync_dir() { local local_dir="$1" local s3_prefix="$2" local description="$3" if [ ! -d "$local_dir" ]; then echo "Warning: Skipping $description: $local_dir not found" return fi echo "📤 Syncing $description..." echo " Local: $local_dir" echo " S3: $s3_prefix" aws s3 sync "$local_dir" "$s3_prefix" --no-progress --exclude "*.pyc" --exclude "__pycache__/*" 2>&1 | tail -3 echo " Done" echo "" } # 1. Processed data files echo "=== Processed Data ===" sync_file "data/processed/pairs_multi_game.csv" "$BUCKET/processed/pairs_multi_game.csv" "Multi-game pairs" sync_file "data/processed/pairs_large.csv" "$BUCKET/processed/pairs_large.csv" "Large pairs" 2>/dev/null || echo "Warning: pairs_large.csv not found locally (may be S3-only)" sync_file "data/processed/card_attributes_enriched.csv" "$BUCKET/processed/card_attributes_enriched.csv" "Card attributes (enriched)" sync_file "data/processed/card_attributes_minimal.csv" "$BUCKET/processed/card_attributes_minimal.csv" "Card attributes (minimal)" sync_file "data/processed/decks_all_final.jsonl" "$BUCKET/processed/decks_all_final.jsonl" "All decks (enhanced, final)" 2>/dev/null || echo "Warning: decks_all_final.jsonl not found" sync_file "data/processed/decks_pokemon.jsonl" "$BUCKET/processed/decks_pokemon.jsonl" "Pokemon decks" 2>/dev/null || echo "Warning: decks_pokemon.jsonl not found" # 2. Graph data echo "=== Graph Data ===" sync_dir "data/graphs" "$BUCKET/graphs/" "Graph files" # 3. Embeddings echo "=== Embeddings ===" sync_dir "data/embeddings" "$BUCKET/embeddings/" "Embedding files" # 4. Experiments echo "=== Experiments ===" sync_dir "experiments" "$BUCKET/experiments/" "Experiment results and test sets" # 5. Annotations if [ -d "annotations" ]; then echo "=== Annotations ===" sync_dir "annotations" "$BUCKET/annotations/" "Annotation files" fi echo " Sync complete!" echo "" echo " Summary:" echo " Check: aws s3 ls $BUCKET/ --recursive | wc -l" echo " Size: aws s3 ls $BUCKET/ --recursive --summarize | tail -1"
+#!/bin/bash
+# Sync all important data to S3 for backup (using s5cmd for speed)
+set -euo pipefail
+
+BUCKET="s3://games-collections"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+
+cd "$PROJECT_ROOT"
+
+echo "Syncing data to S3 via s5cmd..."
+echo ""
+
+# Build s5cmd batch file for parallel uploads
+BATCH=$(mktemp)
+trap 'rm -f "$BATCH"' EXIT
+
+add() {
+    local src="$1" dst="$2"
+    if [ -f "$src" ]; then
+        echo "cp $src $dst" >> "$BATCH"
+    else
+        echo "  SKIP: $src (not found)" >&2
+    fi
+}
+
+# 1. Per-game processed data
+echo "=== Per-Game Processed Data ==="
+for game in magic pokemon yugioh; do
+    for f in data/processed/*_${game}*; do
+        [ -f "$f" ] && add "$f" "$BUCKET/processed/$(basename "$f")"
+    done
+done
+
+# 2. Per-game deck files
+echo "=== Per-Game Deck Files ==="
+for game in magic pokemon yugioh; do
+    for f in data/decks/decks_${game}_*.jsonl; do
+        [ -f "$f" ] && add "$f" "$BUCKET/processed/$(basename "$f")"
+    done
+done
+
+# 3. Per-game deck frequency
+echo "=== Deck Frequency ==="
+for game in magic pokemon yugioh; do
+    add "data/processed/deck_frequency_${game}.json" \
+        "$BUCKET/processed/deck_frequency_${game}.json"
+done
+
+# 4. Fandom scrape
+echo "=== Fandom Scrape ==="
+add "data/processed/yugioh_fandom_cards.json" "$BUCKET/processed/yugioh_fandom_cards.json"
+
+# 5. Multi-game processed data
+echo "=== Multi-Game Processed Data ==="
+add "data/processed/pairs_multi_game.csv" "$BUCKET/processed/pairs_multi_game.csv"
+add "data/processed/pairs_large.csv" "$BUCKET/processed/pairs_large.csv"
+add "data/processed/card_attributes_enriched.csv" "$BUCKET/processed/card_attributes_enriched.csv"
+add "data/processed/card_attributes_minimal.csv" "$BUCKET/processed/card_attributes_minimal.csv"
+add "data/processed/decks_all_final.jsonl" "$BUCKET/processed/decks_all_final.jsonl"
+
+# 6. Embeddings (v4)
+echo "=== Embeddings (v4) ==="
+for game in magic pokemon yugioh; do
+    add "data/embeddings/${game}_cleaned_v4.wv" "$BUCKET/embeddings/${game}_cleaned_v4.wv"
+done
+
+# 7. Graph data (sync dir via individual files)
+echo "=== Graph Data ==="
+if [ -d "data/graphs" ]; then
+    for f in data/graphs/*; do
+        [ -f "$f" ] && add "$f" "$BUCKET/graphs/$(basename "$f")"
+    done
+fi
+
+# 8. Experiments
+echo "=== Experiments ==="
+if [ -d "experiments" ]; then
+    for f in experiments/*; do
+        [ -f "$f" ] && add "$f" "$BUCKET/experiments/$(basename "$f")"
+    done
+fi
+
+# Show batch stats and run
+TOTAL=$(wc -l < "$BATCH" | tr -d ' ')
+echo ""
+echo "Uploading $TOTAL files via s5cmd (parallel)..."
+echo ""
+
+s5cmd --stat run "$BATCH"
+
+echo ""
+echo "Sync complete!"
+echo ""
+echo "Verify:"
+echo "  s5cmd ls '$BUCKET/*' | wc -l"
+echo "  s5cmd du '$BUCKET/*'"
