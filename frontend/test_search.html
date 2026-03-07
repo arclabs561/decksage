@@ -3421,8 +3421,9 @@
                     if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">Mana ${qm.cmc}</span>`);
                     if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
                 } else if (qGame === 'pokemon') {
-                    if (qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
-                    if (qm.retreat_cost !== undefined && qm.retreat_cost !== null) qStats.push(`<span class="stat">Retreat ${qm.retreat_cost}</span>`);
+                    const isPokemon = !qm.type || /pok[eé]mon/i.test(qm.type);
+                    if (isPokemon && qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
+                    if (isPokemon && qm.retreat_cost) qStats.push(`<span class="stat">Retreat ${qm.retreat_cost}</span>`);
                 } else if (qGame === 'yugioh') {
                     if (qm.atk !== undefined && qm.atk !== null) qStats.push(`<span class="stat">ATK ${qm.atk}</span>`);
                     if (qm.def_stat !== undefined && qm.def_stat !== null) qStats.push(`<span class="stat">DEF ${qm.def_stat}</span>`);
@@ -3496,8 +3497,9 @@
                 if (game === 'magic') {
                     if (meta.power && meta.toughness) statBadges.push({label: `${meta.power}/${meta.toughness}`, cls: 'stat-combat'});
                 } else if (game === 'pokemon') {
-                    if (meta.hp) statBadges.push({label: `HP ${meta.hp}`, cls: 'stat-combat'});
-                    if (meta.retreat_cost !== undefined && meta.retreat_cost !== null) statBadges.push({label: `Retreat ${meta.retreat_cost}`, cls: 'stat-defense'});
+                    const isPokeCard = !meta.type || /pok[eé]mon/i.test(meta.type);
+                    if (isPokeCard && meta.hp) statBadges.push({label: `HP ${meta.hp}`, cls: 'stat-combat'});
+                    if (isPokeCard && meta.retreat_cost) statBadges.push({label: `Retreat ${meta.retreat_cost}`, cls: 'stat-defense'});
                 } else if (game === 'yugioh') {
                     if (meta.atk !== undefined && meta.atk !== null) statBadges.push({label: `ATK ${meta.atk}`, cls: 'stat-combat'});
                     if (meta.def_stat !== undefined && meta.def_stat !== null) statBadges.push({label: `DEF ${meta.def_stat}`, cls: 'stat-defense'});
@@ -3634,9 +3636,19 @@
 
                 // Build expanded panel stats grid
                 const expandStats = [];
+                // Game-specific fields to hide (irrelevant cross-game stats)
+                const hideByGame = {
+                    pokemon: ['cmc','power','toughness','mana_cost','color_identity_str','colors'],
+                    yugioh: ['cmc','power','toughness','hp','retreat_cost','mana_cost','color_identity_str','weakness_type','resistance_type','regulation_mark'],
+                    magic: ['hp','retreat_cost','atk','def_stat','level_rank_link','attribute','race','weakness_type','resistance_type','regulation_mark']
+                };
+                const hideFields = new Set([
+                    'image_url','oracle_text','oracle_text_full','type','summoning_requirements','effect_types',
+                    ...(hideByGame[game] || [])
+                ]);
                 for (const [k, v] of Object.entries(meta)) {
-                    if (['image_url','oracle_text','oracle_text_full','type','summoning_requirements','effect_types'].includes(k)) continue;
-                    if (v === null || v === undefined) continue;
+                    if (hideFields.has(k)) continue;
+                    if (v === null || v === undefined || v === 0 || v === '0' || v === '') continue;
                     const val = Array.isArray(v) ? v.join(', ')
                         : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) =>
                             `${pk}: ${typeof pv === 'object' && pv !== null ? JSON.stringify(pv) : pv}`).join(', ')
@@ -4440,9 +4452,16 @@
                 : '';
 
             const rows = [];
+            const drawerHideByGame = {
+                pokemon: ['cmc','power','toughness','mana_cost','color_identity_str','colors'],
+                yugioh: ['cmc','power','toughness','hp','retreat_cost','mana_cost','color_identity_str','weakness_type','resistance_type','regulation_mark'],
+                magic: ['hp','retreat_cost','atk','def_stat','level_rank_link','attribute','race','weakness_type','resistance_type','regulation_mark']
+            };
+            const game = document.querySelector('input[name="game"]:checked')?.value || 'magic';
+            const drawerHide = new Set(['image_url', 'oracle_text_full', ...(drawerHideByGame[game] || [])]);
             for (const [k, v] of Object.entries(meta)) {
-                if (k === 'image_url' || k === 'oracle_text_full') continue;
-                if (v === null || v === undefined) continue;
+                if (drawerHide.has(k)) continue;
+                if (v === null || v === undefined || v === 0 || v === '0' || v === '') continue;
                 const val = Array.isArray(v) ? v.join(', ')
                     : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) =>
                         `${pk}: ${typeof pv === 'object' && pv !== null ? JSON.stringify(pv) : pv}`).join(', ')
