@@ -1,122 +1,114 @@
 # DeckSage
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 
-Card similarity and deck operations for trading card games.
+Card similarity search and deck operations for **Magic: The Gathering**, **Pokemon TCG**, and **Yu-Gi-Oh!**.
 
-- **Games Supported**: `magic`, `pokemon`, `yugioh`
-- **Interfaces**: HTTP API (`/docs`), CLI (`decksage`)
+Given a card name, DeckSage returns the most similar cards by combining tournament co-occurrence embeddings (Word2Vec / Node2Vec on deck lists), text embeddings, visual embeddings, and graph neural network signals via late fusion. It also provides deck completion (greedy fill, suggestion, patching) and faceted semantic search.
 
-## Quick Start
+## Install
 
-Requirements: Python 3.11+. Recommended: [uv](https://github.com/astral-sh/uv). Optional: [just](https://github.com/casey/just).
-
-### Installation
+Requires Python 3.11+. Recommended: [uv](https://github.com/astral-sh/uv).
 
 ```bash
 uv sync --extra embeddings
 ```
 
-For development:
+For development (adds ruff, pytest, hypothesis):
 
 ```bash
 uv sync --extra dev --extra embeddings
 ```
 
-## Artifacts
+## Usage
 
-The API requires pre-built embedding files (`.wv`) and optional CSV files for card pairs/attributes. Generate them with `just train` or see `docs/quick-reference.md` for details on the data pipeline.
+### Start the API
 
-## Running the API (development)
-
-You can run DeckSage in single-game or multi-game mode.
-
-### Single-game Mode (Default)
-
-Configure the necessary artifacts and start the server:
+DeckSage requires pre-built embedding files (`.wv`). Generate them with `just train` or see `docs/quick-reference.md`.
 
 ```bash
+# Single game
 export DECKSAGE_DEFAULT_GAME=magic
 export EMBEDDINGS_PATH=/path/to/magic.wv
-# Optional:
-export PAIRS_PATH=/path/to/magic_pairs.csv
-export ATTRIBUTES_PATH=/path/to/magic_attrs.csv
-
 uv run uvicorn ml.api.api:app --reload --port 8000
 ```
 
-### Multi-game Mode
-
-Run multiple games in a single process by configuring them explicitly:
-
 ```bash
+# Multiple games in one process
 export DECKSAGE_GAMES=magic,pokemon,yugioh
 export DECKSAGE_DEFAULT_GAME=magic
-
-# Magic config
 export EMBEDDINGS_PATH_MAGIC=/path/to/magic.wv
-export PAIRS_PATH_MAGIC=/path/to/magic_pairs.csv
-
-# Pokemon config
 export EMBEDDINGS_PATH_POKEMON=/path/to/pokemon.wv
-
-# Yugioh config
 export EMBEDDINGS_PATH_YUGIOH=/path/to/yugioh.wv
-
 uv run uvicorn ml.api.api:app --reload --port 8000
 ```
 
-*Note: In multi-game mode, API requests must specify the `game` (as a query param or in the JSON body).*
+In multi-game mode, requests must include the `game` parameter (query param or JSON body).
 
-## CLI Usage
-
-The DeckSage CLI targets a specific game via `--game`:
+### CLI
 
 ```bash
-decksage --url http://localhost:8000 --game magic ready
 decksage --url http://localhost:8000 --game magic similar "Lightning Bolt" --k 5
 decksage --url http://localhost:8000 --game magic search "lightning" --output json
+decksage --url http://localhost:8000 --game magic ready
 ```
 
-## API Overview
+## API Endpoints
 
-Base URL: `http://localhost:8000`
+| Endpoint | Method | Description |
+|---|---|---|
+| `/ready`, `/live` | GET | Readiness / liveness probes |
+| `/v1/games` | GET | List loaded games |
+| `/v1/health?game=magic` | GET | Per-game health (card count, embedding dim) |
+| `/v1/similar` | POST | Card similarity search (returns ranked list) |
+| `/v1/cards?game=magic&prefix=Light` | GET | Card name lookup / autocomplete |
+| `/v1/search` | POST | Faceted semantic search (requires Meilisearch + Qdrant) |
+| `/v1/deck/*` | POST | Deck operations: apply patch, complete, suggest |
+| `/v1/feedback` | POST | Submit user feedback |
 
-- `GET /ready`, `GET /live`: Readiness and liveness checks
-- `GET /v1/games`: List supported games
-- `GET /v1/health?game=magic`: Game-specific health check
-- `POST /v1/similar`: Card similarity search
-- `GET /v1/cards?game=magic&prefix=Light`: Card lookup and auto-complete
-- `POST /v1/search`: Faceted semantic search (requires Meilisearch + Qdrant; see `src/ml/search/README.md`)
-- `POST /v1/deck/*`: Deck operations (apply patch, complete, suggest actions)
-- `POST /v1/feedback`: Submit user feedback
+Interactive docs at `/docs` when the server is running.
+
+## Similarity Signals
+
+DeckSage fuses multiple similarity signals per query. Each signal is optional; the system uses whichever artifacts are available.
+
+| Signal | Source | Method |
+|---|---|---|
+| Co-occurrence embedding | Tournament deck lists | Word2Vec / Node2Vec (cosine) |
+| Text embedding | Card text | Sentence transformers (cosine) |
+| Visual embedding | Card images | SigLIP / CLIP (cosine) |
+| GNN embedding | Co-occurrence graph | GraphSAGE (cosine) |
+| Functional tags | Card attributes | Jaccard similarity |
+| Jaccard co-occurrence | Deck pair overlap | Jaccard index |
+
+Aggregation methods: reciprocal rank fusion (default), inverse square root, weighted linear, CombSUM, CombMNZ, CombMAX, CombMIN. MMR diversification is available.
+
+## Project Layout
+
+```
+src/ml/           Python ML code (similarity, deck building, search, training, API, CLI)
+src/backend/      Go backend (scraper, data extraction, transforms)
+frontend/         Web frontend
+scripts/          Data pipeline and training scripts
+tests/            Test suite
+```
 
 ## Development
 
-Use `just` to run development tasks:
-
 ```bash
-just test-quick
-just test
-just lint
-just format
+just test-quick   # fast subset
+just test         # full suite
+just lint         # ruff check
+just format       # ruff format
 ```
 
-## Docker
-
-A `docker-compose.yml` is provided for running the optional search backends (Meilisearch, Qdrant):
+Optional search backends (Meilisearch, Qdrant) via Docker:
 
 ```bash
 docker compose up -d
 ```
 
-## Documentation
-
-For more detailed information, see:
-- `docs/quick-reference.md`
-- `docs/priority-matrix.md`
-- `src/ml/search/README.md`
-
 ## License
 
-MIT; see `LICENSE`.
+MIT; see [LICENSE](LICENSE).
