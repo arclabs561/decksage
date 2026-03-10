@@ -101,7 +101,8 @@ report/
 
 # IDE / assistant tooling
 .cursor/
-.claude/
+.claude/*
+!.claude/commands/
 
 # QA artifacts (generated; do not track)
 qa/*
