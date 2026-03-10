@@ -16,7 +16,6 @@ from typing import Any, Literal
 
 from ..data.card_resolver import CardResolver
 from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
-
 from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
 
 

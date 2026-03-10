@@ -16,6 +16,7 @@ import pytest
 
 from ml.utils.path_setup import setup_project_paths
 
+
 setup_project_paths()
 
 from ml.api.api import SimilarityRequest, UseCaseEnum, _normalize_deck_format, _resolve_method
