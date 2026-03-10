@@ -17,6 +17,8 @@ from typing import Any, Literal
 from ..data.card_resolver import CardResolver
 from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
 
+from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+
 
 # Align with current validator models; generic Deck/DeckCard types removed
 try:
@@ -26,32 +28,6 @@ except ImportError:
     Partition = None
 
 logger = logging.getLogger("decksage.completion")
-
-POKEMON_BASIC_ENERGY: set[str] = {
-    "Grass Energy",
-    "Fire Energy",
-    "Water Energy",
-    "Lightning Energy",
-    "Psychic Energy",
-    "Fighting Energy",
-    "Darkness Energy",
-    "Metal Energy",
-    "Fairy Energy",
-}
-
-MAGIC_BASIC_LANDS: set[str] = {
-    "Plains",
-    "Island",
-    "Swamp",
-    "Mountain",
-    "Forest",
-    "Wastes",
-    "Snow-Covered Plains",
-    "Snow-Covered Island",
-    "Snow-Covered Swamp",
-    "Snow-Covered Mountain",
-    "Snow-Covered Forest",
-}
 
 
 CandidateFn = Callable[[str, int], list[tuple[str, float]]]

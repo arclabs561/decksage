@@ -9,6 +9,8 @@ DATA LINEAGE: Order 1 (depends on Order 1: Exported Decks)
 
 from pydantic import BaseModel, Field
 
+from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+
 
 class DeckPatchOp(BaseModel):
     """A single deck patch operation."""
@@ -185,22 +187,9 @@ def apply_deck_patch(
     # Check copy limits (4-of rule in Magic, etc.)
     if game == "magic":
         # Check 4-of rule (except basic lands)
-        BASIC_LANDS = {
-            "Forest",
-            "Island",
-            "Mountain",
-            "Plains",
-            "Swamp",
-            "Wastes",
-            "Snow-Covered Forest",
-            "Snow-Covered Island",
-            "Snow-Covered Mountain",
-            "Snow-Covered Plains",
-            "Snow-Covered Swamp",
-        }
         for p in modified_deck["partitions"]:
             for card in p["cards"]:
-                if card["name"] not in BASIC_LANDS and card["count"] > 4:
+                if card["name"] not in MAGIC_BASIC_LANDS and card["count"] > 4:
                     errors.append(
                         f"Card '{card['name']}' exceeds 4-copy limit (has {card['count']})"
                     )
@@ -216,20 +205,9 @@ def apply_deck_patch(
 
     elif game == "pokemon":
         # Check 4-of rule (except basic Energy)
-        BASIC_ENERGY = {
-            "Grass Energy",
-            "Fire Energy",
-            "Water Energy",
-            "Lightning Energy",
-            "Psychic Energy",
-            "Fighting Energy",
-            "Darkness Energy",
-            "Metal Energy",
-            "Fairy Energy",
-        }
         for p in modified_deck["partitions"]:
             for card in p["cards"]:
-                if card["name"] not in BASIC_ENERGY and card["count"] > 4:
+                if card["name"] not in POKEMON_BASIC_ENERGY and card["count"] > 4:
                     errors.append(
                         f"Card '{card['name']}' exceeds 4-copy limit (has {card['count']})"
                     )
