@@ -196,7 +196,7 @@ def _require_game(game: str | None) -> str:
 # Models
 class SimilarCard(BaseModel):
     card: str = Field(..., description="Card name")
-    similarity: float = Field(..., description="Similarity score (0-1)")
+    similarity: float = Field(..., description="Similarity score, clamped to [0, 1]")
     metadata: dict[str, Any] | None = Field(
         None, description="Card metadata (image_url, type, mana_cost, etc.)"
     )
@@ -1152,7 +1152,9 @@ def _enrich_similar_card(
     if not meta:
         meta = None
 
-    return SimilarCard(card=card_name, similarity=float(similarity), metadata=meta)
+    return SimilarCard(
+        card=card_name, similarity=min(1.0, max(0.0, float(similarity))), metadata=meta,
+    )
 
 
 def _similar_embedding(
@@ -1509,33 +1511,8 @@ def get_contextual_suggestions(
         card_data=state.card_attrs,
     )
 
-    # Get price function (real prices preferred, deck popularity as fallback)
-    price_fn = None
-    price_label = "price"
-    try:
-        from ..enrichment.card_market_data import (
-            MarketDataManager,  # type: ignore[import-not-found]
-        )
-
-        _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
-        app.state.price_manager = _pm
-
-        def price_fn(card_name: str) -> float | None:
-            p = _pm.get_price(card_name)
-            return float(p.usd) if p and p.usd else None
-    except Exception:
-        # Fallback: use deck frequency as a popularity proxy for upgrades/downgrades
-        if state.deck_frequency:
-            _freq = state.deck_frequency
-            price_label = "popularity"
-
-            def price_fn(card_name: str) -> float | None:
-                entry = _freq.get(card_name)
-                if entry:
-                    return float(entry.get("total_decks", 0))
-                return None
-
-    tag_set_fn = None  # FunctionalTagger not loaded
+    price_fn, tag_set_fn, _ = _build_deck_hooks(state)
+    price_label = "popularity" if (price_fn and state.deck_frequency) else "price"
 
     # Get archetype data
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
@@ -1883,13 +1860,33 @@ def search_cards_get_v1(
 # ---------------------------------------------------------------------------
 
 
+_MAX_PARTITIONS = 10
+_MAX_CARDS_PER_PARTITION = 500
+
+
 def _normalize_deck_format(deck: dict, game: str) -> dict:
     """Normalize legacy deck format {"Main": [...]} to partitions format.
 
     Legacy: {"Main": ["card1", "card2"]}
     Partitions: {"partitions": [{"name": "Main", "cards": [{"name": "card1", "count": 1}]}]}
     """
-    if "partitions" in deck or not isinstance(deck, dict):
+    if "partitions" in deck:
+        # Validate size limits on existing partitions format
+        parts = deck.get("partitions")
+        if isinstance(parts, list):
+            if len(parts) > _MAX_PARTITIONS:
+                raise HTTPException(
+                    status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})"
+                )
+            for p in parts:
+                cards = p.get("cards") if isinstance(p, dict) else None
+                if isinstance(cards, list) and len(cards) > _MAX_CARDS_PER_PARTITION:
+                    raise HTTPException(
+                        status_code=422,
+                        detail=f"Too many cards in partition (max {_MAX_CARDS_PER_PARTITION})",
+                    )
+        return deck
+    if not isinstance(deck, dict):
         return deck
     partitions = []
     from ..deck_building.deck_completion import _main_partition_name
@@ -2084,6 +2081,60 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
     return filtered
 
 
+def _build_deck_hooks(
+    state: ApiState,
+) -> tuple[
+    "Callable[[str], float | None] | None",
+    None,
+    "Callable[[str], int | None] | None",
+]:
+    """Build shared price_fn, tag_set_fn, cmc_fn from ApiState.
+
+    Returns (price_fn, tag_set_fn, cmc_fn). tag_set_fn is always None
+    (FunctionalTagger not loaded).
+    """
+    # Price: try MarketDataManager, fall back to deck frequency
+    price_fn = None
+    try:
+        from ..enrichment.card_market_data import (
+            MarketDataManager,  # type: ignore[import-not-found]
+        )
+
+        _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
+        app.state.price_manager = _pm
+
+        def price_fn(card: str) -> float | None:
+            p = _pm.get_price(card)
+            return float(p.usd) if p and p.usd else None
+
+    except Exception:
+        if state.deck_frequency:
+            _freq = state.deck_frequency
+
+            def price_fn(card: str) -> float | None:
+                entry = _freq.get(card)
+                if entry:
+                    return float(entry.get("total_decks", 0))
+                return None
+
+    tag_set_fn = None  # FunctionalTagger not loaded
+
+    # CMC from card attributes
+    def cmc_fn(card: str) -> int | None:
+        attrs = state.card_attrs
+        if not attrs:
+            return None
+        data = attrs.get(card) or attrs.get(card.lower())
+        if not data:
+            return None
+        try:
+            return int(data.get("cmc", 0))
+        except (ValueError, TypeError):
+            return None
+
+    return price_fn, tag_set_fn, cmc_fn if state.card_attrs else None
+
+
 @router.post("/deck/suggest_actions", response_model=SuggestActionsResponse)
 def suggest_actions(req: SuggestActionsRequest):
     # Log query for analytics
@@ -2112,34 +2163,8 @@ def suggest_actions(req: SuggestActionsRequest):
     if deck_colors and state.card_metadata:
         cand_fn = _wrap_cand_fn_color_filter(cand_fn, deck_colors, state.card_metadata)
 
-    # Optional price and tag hooks
-    price_fn = None
-    try:
-        from ..enrichment.card_market_data import (
-            MarketDataManager,  # type: ignore[import-not-found]
-        )
+    price_fn, tag_set_fn, cmc_fn = _build_deck_hooks(state)
 
-        _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
-        app.state.price_manager = _pm
-
-        def price_fn(card: str) -> float | None:
-            p = _pm.get_price(card)
-            return float(p.usd) if p and p.usd else None
-
-    except Exception:
-        # Fallback: deck frequency as popularity proxy
-        if state.deck_frequency:
-            _freq_sa = state.deck_frequency
-
-            def price_fn(card: str) -> float | None:
-                entry = _freq_sa.get(card)
-                if entry:
-                    return float(entry.get("total_decks", 0))
-                return None
-
-    tag_set_fn = None  # FunctionalTagger not loaded
-
-    # Use greedy candidate generation (top additions) without applying
     import time
 
     t0 = time.time()
@@ -2148,19 +2173,6 @@ def suggest_actions(req: SuggestActionsRequest):
 
     def tag_weight_fn(tag: str) -> float:
         return float(tw.get(tag, 1.0))
-
-    # Build cmc fn from attributes if present
-    def cmc_fn(card: str) -> int | None:
-        attrs = state.card_attrs
-        if not attrs:
-            return None
-        data = attrs.get(card) or attrs.get(card.lower())
-        if not data:
-            return None
-        try:
-            return int(data.get("cmc"))
-        except (ValueError, TypeError):
-            return None
 
     # Get archetype from request or infer from deck
     archetype = getattr(req, "archetype", None)
@@ -2321,7 +2333,7 @@ class CompleteRequest(BaseModel):
     deck: dict
     target_main_size: int | None = None
     mode: str | None = None
-    max_steps: int = 60
+    max_steps: int = Field(60, le=200)
     budget_max: float | None = None
     coverage_weight: float | None = None
     strict_size: bool | None = None
@@ -2385,41 +2397,11 @@ def complete_deck(req: CompleteRequest):
         coverage_weight=(req.coverage_weight or 0.0),
     )
 
-    # Optional price and tag hooks
-    price_fn = None
-    try:
-        from ..enrichment.card_market_data import (
-            MarketDataManager,  # type: ignore[import-not-found]
-        )
-
-        _pm = getattr(app.state, "price_manager", None) or MarketDataManager()
-        app.state.price_manager = _pm
-
-        def price_fn(card: str) -> float | None:
-            p = _pm.get_price(card)
-            return float(p.usd) if p and p.usd else None
-
-    except Exception:
-        price_fn = None
-
-    tag_set_fn = None  # FunctionalTagger not loaded
+    price_fn, tag_set_fn, cmc_fn = _build_deck_hooks(state)
 
     import time
 
     t0 = time.time()
-
-    # Build CMC function (shared across methods)
-    def cmc_fn(card: str) -> int | None:
-        attrs = state.card_attrs
-        if not attrs:
-            return None
-        data = attrs.get(card) or attrs.get(card.lower())
-        if not data:
-            return None
-        try:
-            return int(data.get("cmc", 0))
-        except (ValueError, TypeError):
-            return None
 
     # Choose completion method
     if req.method == "ot":
