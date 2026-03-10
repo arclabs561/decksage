@@ -17,12 +17,19 @@ Requires: pip install pot  (or uv add pot)
 from __future__ import annotations
 
 import logging
-import math
-from collections import Counter
 from dataclasses import dataclass, field
 from typing import Any, Literal
 
 import numpy as np
+
+from .deck_completion import (
+    CandidateFn,
+    CMCFn,
+    TagSetFn,
+    _legal_add,
+    _main_partition_name,
+)
+
 
 logger = logging.getLogger("decksage.ot_completion")
 
@@ -31,16 +38,6 @@ try:
 except ImportError:
     pot = None
     logger.warning("POT not installed. Install with: uv add pot")
-
-# Re-use existing type aliases from deck_completion
-from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
-from .deck_completion import (
-    CandidateFn,
-    CMCFn,
-    TagSetFn,
-    _legal_add,
-    _main_partition_name,
-)
 
 
 @dataclass

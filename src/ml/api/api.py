@@ -757,7 +757,7 @@ async def lifespan(app: FastAPI):
         with suppress(Exception):
             delattr(app.state, "api_by_game")
         # Reset legacy module globals so hot-reload doesn't carry stale test data
-        global embeddings, graph_data, model_info  # noqa: PLW0603
+        global embeddings, graph_data, model_info
         embeddings = None
         graph_data = None
         model_info = {}
@@ -2083,11 +2083,7 @@ def _wrap_cand_fn_color_filter(cand_fn, deck_colors: set[str], card_metadata: di
 
 def _build_deck_hooks(
     state: ApiState,
-) -> tuple[
-    "Callable[[str], float | None] | None",
-    None,
-    "Callable[[str], int | None] | None",
-]:
+) -> tuple:
     """Build shared price_fn, tag_set_fn, cmc_fn from ApiState.
 
     Returns (price_fn, tag_set_fn, cmc_fn). tag_set_fn is always None
