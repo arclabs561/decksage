@@ -974,7 +974,7 @@ requires-dist = [
     { name = "matplotlib", marker = "extra == 'viz'", specifier = ">=3.7.0" },
     { name = "meilisearch", specifier = ">=0.32.0" },
     { name = "numba", marker = "extra == 'fast'", specifier = ">=0.57.0" },
-    { name = "numpy", specifier = "<2.0.0" },
+    { name = "numpy", specifier = ">=1.26.0" },
     { name = "openai", marker = "extra == 'enrichment'", specifier = ">=1.0.0" },
     { name = "pandas", specifier = ">=2.0.0" },
     { name = "pecanpy", specifier = ">=2.0.0" },
