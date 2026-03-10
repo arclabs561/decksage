@@ -33,9 +33,8 @@ except ImportError:
     logger.warning("POT not installed. Install with: uv add pot")
 
 # Re-use existing type aliases from deck_completion
+from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
 from .deck_completion import (
-    MAGIC_BASIC_LANDS,
-    POKEMON_BASIC_ENERGY,
     CandidateFn,
     CMCFn,
     TagSetFn,
