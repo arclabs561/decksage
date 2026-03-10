@@ -34,14 +34,11 @@ class DummyEmb:
 
 
 def setup_state_for_fusion():
-    api.embeddings = DummyEmb()
-    api.model_info = {"methods": ["embedding", "jaccard", "fusion"]}
-    # Jaccard prefers C over B: N(A)={B,C}, N(C)={A,B}, N(B)={}
-    api.graph_data = {"adj": {"A": {"B", "C"}, "C": {"A", "B"}, "B": set()}}
-    # Force update into FastAPI state
     st = api.get_state()
-    st.embeddings = api.embeddings
-    st.graph_data = api.graph_data
+    st.embeddings = DummyEmb()
+    st.model_info = {"methods": ["embedding", "jaccard", "fusion"]}
+    # Jaccard prefers C over B: N(A)={B,C}, N(C)={A,B}, N(B)={}
+    st.graph_data = {"adj": {"A": {"B", "C"}, "C": {"A", "B"}, "B": set()}}
 
 
 @pytest.mark.skipif("fastapi" not in sys.modules, reason="fastapi not installed")
