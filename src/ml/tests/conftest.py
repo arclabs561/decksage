@@ -39,15 +39,9 @@ def reset_api_state() -> None:
         "games",
         "default_game",
         "price_manager",
-        "mtg_tagger",
     ):
         with suppress(Exception):
             delattr(api_mod.app.state, attr)
-
-    # Clear legacy module-level globals used by _adopt_legacy_globals().
-    api_mod.embeddings = None
-    api_mod.graph_data = None
-    api_mod.model_info = {}
 
 
 @pytest.fixture

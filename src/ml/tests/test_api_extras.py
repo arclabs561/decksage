@@ -164,13 +164,13 @@ def test_synergy_returns_empty_when_card_in_embeddings_but_not_graph(client):
     assert data["results"] == []
 
 
-def test_ready_adopts_legacy_globals(client):
-    # Set legacy globals after client creation to exercise adoption path
+def test_ready_with_state(client):
+    # Set state directly via get_state (legacy globals were removed)
     from ..api import api as api_mod
 
-    api_mod.embeddings = _DummyEmb(["A", "B"])  # legacy global
-    api_mod.graph_data = None
-    api_mod.model_info = {"methods": ["embedding"]}
+    state = api_mod.get_state()
+    state.embeddings = _DummyEmb(["A", "B"])
+    state.model_info = {"methods": ["embedding"]}
 
     r = client.get("/ready")
     assert r.status_code == 200

@@ -111,13 +111,6 @@ except ImportError:  # pragma: no cover
     HAS_GENSIM = False
 
 try:
-    from ..enrichment.card_functional_tagger import (
-        FunctionalTagger,  # type: ignore[import-not-found]
-    )
-except ImportError:  # pragma: no cover
-    FunctionalTagger = None  # type: ignore[assignment]
-
-try:
     from ..similarity.similarity_methods import (
         jaccard_similarity_faceted as sm_jaccard_faceted,
     )
@@ -300,18 +293,17 @@ class ContextualResponse(BaseModel):
 
 class ApiState:
     def __init__(self) -> None:
-        self.embeddings: object | None = None
+        self.embeddings: KeyedVectors | None = None  # type: ignore[assignment]
         self.graph_data: dict | None = None
         self.model_info: dict = {}
         self.fusion_default_weights: FusionWeights | None = None
         self.card_attrs: dict | None = None
-        # New signals
+        # Optional signal providers (loaded by load_signals_to_state)
         self.sideboard_cooccurrence: dict[str, dict[str, float]] | None = None
         self.temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
         self.text_embedder: object | None = None
         self.visual_embedder: object | None = None
         self.gnn_embedder: object | None = None
-        # New signals
         self.archetype_staples: dict[str, dict[str, float]] | None = None
         self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
         self.format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
@@ -453,35 +445,6 @@ def load_embeddings_to_state(
             )
     except (OSError, json.JSONDecodeError, KeyError, ValueError):
         logger.debug("No tuned fusion weights loaded", exc_info=True)
-
-
-# Legacy globals for backward compatibility in tests
-embeddings = None
-graph_data = None
-model_info = {}
-
-
-def _adopt_legacy_globals(game: str | None = None) -> None:
-    """
-    If legacy module-level globals are set (by tests), copy them into ApiState.
-
-    In multi-game mode, callers should pass the resolved `game` so adoption targets
-    the correct per-game state.
-    """
-    state = get_state(game)
-    global embeddings, graph_data, model_info
-    if state.embeddings is None and embeddings is not None:
-        state.embeddings = embeddings
-        if not state.model_info:
-            state.model_info = {
-                "methods": ["embedding"],
-                "num_cards": len(embeddings),
-                "embedding_dim": getattr(embeddings, "vector_size", 0),
-            }  # type: ignore[arg-type]
-    if state.graph_data is None and graph_data is not None:
-        state.graph_data = graph_data
-        if "methods" in state.model_info and "jaccard" not in state.model_info["methods"]:
-            state.model_info["methods"].append("jaccard")
 
 
 # API app with lifespan
@@ -801,8 +764,6 @@ async def lifespan(app: FastAPI):
         # Clear optional app-scoped helpers if they were created
         with suppress(Exception):
             delattr(app.state, "price_manager")
-        with suppress(Exception):
-            delattr(app.state, "mtg_tagger")
         # Clear cached search clients
         with suppress(Exception):
             delattr(app.state, "search_by_game")
@@ -944,7 +905,6 @@ def live():
 
 @app.get("/ready")
 def ready():
-    _adopt_legacy_globals()
     games = _configured_games()
     default_game = _default_game()
     multi = len(games) > 1
@@ -1234,7 +1194,6 @@ def _similar_fusion(
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
     if state.graph_data is None:
         raise HTTPException(status_code=503, detail="Graph data not loaded")
-    tagger = FunctionalTagger() if (FunctionalTagger is not None and game == "magic") else None
     w = request.weights or {}
     base_fw = state.fusion_default_weights or FusionWeights()
     # Zero out weights for modalities not loaded on this state
@@ -1268,7 +1227,7 @@ def _similar_fusion(
     fusion = WeightedLateFusion(
         state.embeddings,
         state.graph_data["adj"],
-        tagger,
+        None,  # tagger (not loaded)
         fw,
         aggregator=(
             request.aggregator or "rrf"
@@ -1383,7 +1342,6 @@ def _apply_mmr_postprocess(
 def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     """Find similar cards based on resolved method and return normalized response."""
     game = _require_game(request.game)
-    _adopt_legacy_globals(game)
     state = get_state(game)
     query = request.query
     k = request.top_k
@@ -1577,22 +1535,7 @@ def get_contextual_suggestions(
                     return float(entry.get("total_decks", 0))
                 return None
 
-    # Get tag function
-    tag_set_fn = None
-    if FunctionalTagger is not None and game_lower == "magic":
-        try:
-            _tagger = getattr(app.state, "mtg_tagger", None) or FunctionalTagger()
-            app.state.mtg_tagger = _tagger
-
-            def tag_set_fn(card_name: str) -> set[str]:
-                dc = _tagger.tag_card(card_name)
-                return {
-                    k
-                    for k, v in dc.__dict__.items()
-                    if k != "card_name" and isinstance(v, bool) and v
-                }
-        except Exception:
-            tag_set_fn = None
+    tag_set_fn = None  # FunctionalTagger not loaded
 
     # Get archetype data
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
@@ -2194,22 +2137,7 @@ def suggest_actions(req: SuggestActionsRequest):
                     return float(entry.get("total_decks", 0))
                 return None
 
-    tag_set_fn = None
-    if FunctionalTagger is not None and game == "magic":
-        try:
-            _tagger = getattr(app.state, "mtg_tagger", None) or FunctionalTagger()
-            app.state.mtg_tagger = _tagger
-
-            def tag_set_fn(card_name: str) -> set[str]:
-                dc = _tagger.tag_card(card_name)
-                return {
-                    k
-                    for k, v in dc.__dict__.items()
-                    if k != "card_name" and isinstance(v, bool) and v
-                }
-
-        except Exception:
-            tag_set_fn = None
+    tag_set_fn = None  # FunctionalTagger not loaded
 
     # Use greedy candidate generation (top additions) without applying
     import time
@@ -2474,22 +2402,7 @@ def complete_deck(req: CompleteRequest):
     except Exception:
         price_fn = None
 
-    tag_set_fn = None
-    if FunctionalTagger is not None and game == "magic":
-        try:
-            _tagger = getattr(app.state, "mtg_tagger", None) or FunctionalTagger()
-            app.state.mtg_tagger = _tagger
-
-            def tag_set_fn(card_name: str) -> set[str]:
-                dc = _tagger.tag_card(card_name)
-                return {
-                    k
-                    for k, v in dc.__dict__.items()
-                    if k != "card_name" and isinstance(v, bool) and v
-                }
-
-        except Exception:
-            tag_set_fn = None
+    tag_set_fn = None  # FunctionalTagger not loaded
 
     import time
 
