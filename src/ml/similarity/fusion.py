@@ -288,7 +288,9 @@ class WeightedLateFusion:
         except Exception:
             return 0.0
 
-    def _get_text_embedding_similarity(self, query: str, candidate: str) -> float:
+    def _get_text_embedding_similarity(
+        self, query: str, candidate: str, task_type: str | None = None,
+    ) -> float:
         """Get text embedding similarity from card Oracle text."""
         if not self.text_embedder:
             return 0.0
@@ -304,7 +306,7 @@ class WeightedLateFusion:
             # Check if it's instruction-tuned embedder (has instruction support)
             if hasattr(self.text_embedder, "similarity"):
                 # Instruction-tuned embedder - use task-specific instruction if available
-                instruction_type = self.task_type or "substitution"  # Default to substitution
+                instruction_type = task_type or self.task_type or "substitution"
                 similarity = self.text_embedder.similarity(
                     query_input,
                     candidate_input,
@@ -635,7 +637,7 @@ class WeightedLateFusion:
         return candidates
 
     def _compute_similarity_scores(
-        self, query: str, candidates: set[str]
+        self, query: str, candidates: set[str], task_type: str | None = None,
     ) -> dict[str, dict[str, float]]:
         """Compute similarity scores for all modalities (optimized)."""
         scores = {c: {} for c in candidates}
@@ -677,7 +679,7 @@ class WeightedLateFusion:
                 )
             if compute_text_embed:
                 scores[candidate]["text_embed"] = self._get_text_embedding_similarity(
-                    query, candidate
+                    query, candidate, task_type=task_type,
                 )
             if compute_visual_embed:
                 scores[candidate]["visual_embed"] = self._get_visual_embedding_similarity(
@@ -969,187 +971,171 @@ class WeightedLateFusion:
         Returns:
             List of (card_name, similarity_score) tuples, sorted by score descending
         """
-        # Use provided task_type for this call, or fall back to instance task_type
-        original_task_type = self.task_type
-        if task_type is not None:
-            self.task_type = task_type
+        effective_task_type = task_type or self.task_type
 
-        try:
-            if query not in self.adj and (not self.embeddings or query not in self.embeddings):
-                # Restore original task_type before returning
-                if task_type is not None:
-                    self.task_type = original_task_type
-                return []
+        if query not in self.adj and (not self.embeddings or query not in self.embeddings):
+            return []
 
-            candidates = self._get_candidates(query)
-            if not candidates:
-                # Restore original task_type before returning
-                if task_type is not None:
-                    self.task_type = original_task_type
-                return []
+        candidates = self._get_candidates(query)
+        if not candidates:
+            return []
 
-            # Compute similarity scores for all modalities
-            modality_scores = self._compute_similarity_scores(query, candidates)
+        # Compute similarity scores for all modalities
+        modality_scores = self._compute_similarity_scores(
+            query, candidates, task_type=effective_task_type,
+        )
 
-            # Aggregate scores based on method
-            if self.aggregator == "rrf" or self.aggregator == "isr":
-                # For RRF, we need ranks instead of scores
-                # Build ranked lists per modality
-                embed_ranked = []
-                jaccard_ranked = []
-                functional_ranked = []
-                text_embed_ranked = []
-                visual_embed_ranked = []
-                sideboard_ranked = []
-                temporal_ranked = []
-                gnn_ranked = []
-                pack_embed_ranked = []
-                archetype_ranked = []
-                format_ranked = []
+        # Aggregate scores based on method
+        if self.aggregator == "rrf" or self.aggregator == "isr":
+            # For RRF, we need ranks instead of scores
+            # Build ranked lists per modality
+            embed_ranked = []
+            jaccard_ranked = []
+            functional_ranked = []
+            text_embed_ranked = []
+            visual_embed_ranked = []
+            sideboard_ranked = []
+            temporal_ranked = []
+            gnn_ranked = []
+            pack_embed_ranked = []
+            archetype_ranked = []
+            format_ranked = []
 
-                for candidate in candidates:
-                    if "embed" in modality_scores[candidate]:
-                        embed_ranked.append((candidate, modality_scores[candidate]["embed"]))
-                    if "jaccard" in modality_scores[candidate]:
-                        jaccard_ranked.append((candidate, modality_scores[candidate]["jaccard"]))
-                    if "functional" in modality_scores[candidate]:
-                        functional_ranked.append(
-                            (candidate, modality_scores[candidate]["functional"])
-                        )
-                    if "text_embed" in modality_scores[candidate]:
-                        text_embed_ranked.append(
-                            (candidate, modality_scores[candidate]["text_embed"])
-                        )
-                    if "visual_embed" in modality_scores[candidate]:
-                        visual_embed_ranked.append(
-                            (candidate, modality_scores[candidate]["visual_embed"])
-                        )
-                    if "sideboard" in modality_scores[candidate]:
-                        sideboard_ranked.append(
-                            (candidate, modality_scores[candidate]["sideboard"])
-                        )
-                    if "temporal" in modality_scores[candidate]:
-                        temporal_ranked.append((candidate, modality_scores[candidate]["temporal"]))
-                    if "gnn" in modality_scores[candidate]:
-                        gnn_ranked.append((candidate, modality_scores[candidate]["gnn"]))
-                    if "pack_embed" in modality_scores[candidate]:
-                        pack_embed_ranked.append(
-                            (candidate, modality_scores[candidate]["pack_embed"])
-                        )
-                    if "archetype" in modality_scores[candidate]:
-                        archetype_ranked.append(
-                            (candidate, modality_scores[candidate]["archetype"])
-                        )
-                    if "format" in modality_scores[candidate]:
-                        format_ranked.append((candidate, modality_scores[candidate]["format"]))
+            for candidate in candidates:
+                if "embed" in modality_scores[candidate]:
+                    embed_ranked.append((candidate, modality_scores[candidate]["embed"]))
+                if "jaccard" in modality_scores[candidate]:
+                    jaccard_ranked.append((candidate, modality_scores[candidate]["jaccard"]))
+                if "functional" in modality_scores[candidate]:
+                    functional_ranked.append(
+                        (candidate, modality_scores[candidate]["functional"])
+                    )
+                if "text_embed" in modality_scores[candidate]:
+                    text_embed_ranked.append(
+                        (candidate, modality_scores[candidate]["text_embed"])
+                    )
+                if "visual_embed" in modality_scores[candidate]:
+                    visual_embed_ranked.append(
+                        (candidate, modality_scores[candidate]["visual_embed"])
+                    )
+                if "sideboard" in modality_scores[candidate]:
+                    sideboard_ranked.append(
+                        (candidate, modality_scores[candidate]["sideboard"])
+                    )
+                if "temporal" in modality_scores[candidate]:
+                    temporal_ranked.append((candidate, modality_scores[candidate]["temporal"]))
+                if "gnn" in modality_scores[candidate]:
+                    gnn_ranked.append((candidate, modality_scores[candidate]["gnn"]))
+                if "pack_embed" in modality_scores[candidate]:
+                    pack_embed_ranked.append(
+                        (candidate, modality_scores[candidate]["pack_embed"])
+                    )
+                if "archetype" in modality_scores[candidate]:
+                    archetype_ranked.append(
+                        (candidate, modality_scores[candidate]["archetype"])
+                    )
+                if "format" in modality_scores[candidate]:
+                    format_ranked.append((candidate, modality_scores[candidate]["format"]))
 
-                embed_ranked.sort(key=lambda x: x[1], reverse=True)
-                jaccard_ranked.sort(key=lambda x: x[1], reverse=True)
-                functional_ranked.sort(key=lambda x: x[1], reverse=True)
-                text_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-                visual_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-                sideboard_ranked.sort(key=lambda x: x[1], reverse=True)
-                temporal_ranked.sort(key=lambda x: x[1], reverse=True)
-                gnn_ranked.sort(key=lambda x: x[1], reverse=True)
-                pack_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-                archetype_ranked.sort(key=lambda x: x[1], reverse=True)
-                format_ranked.sort(key=lambda x: x[1], reverse=True)
+            embed_ranked.sort(key=lambda x: x[1], reverse=True)
+            jaccard_ranked.sort(key=lambda x: x[1], reverse=True)
+            functional_ranked.sort(key=lambda x: x[1], reverse=True)
+            text_embed_ranked.sort(key=lambda x: x[1], reverse=True)
+            visual_embed_ranked.sort(key=lambda x: x[1], reverse=True)
+            sideboard_ranked.sort(key=lambda x: x[1], reverse=True)
+            temporal_ranked.sort(key=lambda x: x[1], reverse=True)
+            gnn_ranked.sort(key=lambda x: x[1], reverse=True)
+            pack_embed_ranked.sort(key=lambda x: x[1], reverse=True)
+            archetype_ranked.sort(key=lambda x: x[1], reverse=True)
+            format_ranked.sort(key=lambda x: x[1], reverse=True)
 
-                # Build rank dicts
-                ranks = {}
-                for rank, (candidate, _) in enumerate(embed_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["embed"] = rank
-                for rank, (candidate, _) in enumerate(jaccard_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["jaccard"] = rank
-                for rank, (candidate, _) in enumerate(functional_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["functional"] = rank
-                for rank, (candidate, _) in enumerate(text_embed_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["text_embed"] = rank
-                for rank, (candidate, _) in enumerate(visual_embed_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["visual_embed"] = rank
-                for rank, (candidate, _) in enumerate(sideboard_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["sideboard"] = rank
-                for rank, (candidate, _) in enumerate(temporal_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["temporal"] = rank
-                for rank, (candidate, _) in enumerate(gnn_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["gnn"] = rank
-                for rank, (candidate, _) in enumerate(pack_embed_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["pack_embed"] = rank
-                for rank, (candidate, _) in enumerate(archetype_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["archetype"] = rank
-                for rank, (candidate, _) in enumerate(format_ranked, start=1):
-                    if candidate not in ranks:
-                        ranks[candidate] = {}
-                    ranks[candidate]["format"] = rank
+            # Build rank dicts
+            ranks = {}
+            for rank, (candidate, _) in enumerate(embed_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["embed"] = rank
+            for rank, (candidate, _) in enumerate(jaccard_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["jaccard"] = rank
+            for rank, (candidate, _) in enumerate(functional_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["functional"] = rank
+            for rank, (candidate, _) in enumerate(text_embed_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["text_embed"] = rank
+            for rank, (candidate, _) in enumerate(visual_embed_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["visual_embed"] = rank
+            for rank, (candidate, _) in enumerate(sideboard_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["sideboard"] = rank
+            for rank, (candidate, _) in enumerate(temporal_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["temporal"] = rank
+            for rank, (candidate, _) in enumerate(gnn_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["gnn"] = rank
+            for rank, (candidate, _) in enumerate(pack_embed_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["pack_embed"] = rank
+            for rank, (candidate, _) in enumerate(archetype_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["archetype"] = rank
+            for rank, (candidate, _) in enumerate(format_ranked, start=1):
+                if candidate not in ranks:
+                    ranks[candidate] = {}
+                ranks[candidate]["format"] = rank
 
-                # Compute RRF or ISR scores
-                fused_scores = {}
-                for candidate in candidates:
-                    candidate_ranks = ranks.get(candidate, {})
-                    if self.aggregator == "rrf":
-                        fused_scores[candidate] = self._aggregate_rrf(candidate_ranks)
-                    elif self.aggregator == "isr":
-                        fused_scores[candidate] = self._aggregate_isr(candidate_ranks)
+            # Compute RRF or ISR scores
+            fused_scores = {}
+            for candidate in candidates:
+                candidate_ranks = ranks.get(candidate, {})
+                if self.aggregator == "rrf":
+                    fused_scores[candidate] = self._aggregate_rrf(candidate_ranks)
+                elif self.aggregator == "isr":
+                    fused_scores[candidate] = self._aggregate_isr(candidate_ranks)
 
-            else:
-                # For other aggregators, use scores directly
-                fused_scores = {}
-                for candidate in candidates:
-                    candidate_scores = modality_scores[candidate]
-                    if self.aggregator == "weighted":
-                        fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
-                    elif self.aggregator == "combsum":
-                        fused_scores[candidate] = self._aggregate_combsum(candidate_scores)
-                    elif self.aggregator == "combmnz":
-                        fused_scores[candidate] = self._aggregate_combmnz(candidate_scores)
-                    elif self.aggregator == "combmax":
-                        fused_scores[candidate] = self._aggregate_combmax(candidate_scores)
-                    elif self.aggregator == "combmin":
-                        fused_scores[candidate] = self._aggregate_combmin(candidate_scores)
-                    else:
-                        # Default to weighted
-                        fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
+        else:
+            # For other aggregators, use scores directly
+            fused_scores = {}
+            for candidate in candidates:
+                candidate_scores = modality_scores[candidate]
+                if self.aggregator == "weighted":
+                    fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
+                elif self.aggregator == "combsum":
+                    fused_scores[candidate] = self._aggregate_combsum(candidate_scores)
+                elif self.aggregator == "combmnz":
+                    fused_scores[candidate] = self._aggregate_combmnz(candidate_scores)
+                elif self.aggregator == "combmax":
+                    fused_scores[candidate] = self._aggregate_combmax(candidate_scores)
+                elif self.aggregator == "combmin":
+                    fused_scores[candidate] = self._aggregate_combmin(candidate_scores)
+                else:
+                    # Default to weighted
+                    fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
 
-            # Sort by score
-            sorted_candidates = sorted(
-                candidates, key=lambda c: fused_scores.get(c, 0.0), reverse=True
-            )
+        # Sort by score
+        sorted_candidates = sorted(
+            candidates, key=lambda c: fused_scores.get(c, 0.0), reverse=True
+        )
 
-            # Apply MMR if needed
-            if self.mmr_lambda > 0.0:
-                results = self._apply_mmr(sorted_candidates, fused_scores, k)
-            else:
-                results = [(c, fused_scores[c]) for c in sorted_candidates[:k]]
+        # Apply MMR if needed
+        if self.mmr_lambda > 0.0:
+            results = self._apply_mmr(sorted_candidates, fused_scores, k)
+        else:
+            results = [(c, fused_scores[c]) for c in sorted_candidates[:k]]
 
-            # Restore original task_type
-            if task_type is not None:
-                self.task_type = original_task_type
-
-            return results
-        finally:
-            # Ensure task_type is restored even on exception
-            if task_type is not None:
-                self.task_type = original_task_type
+        return results
 
     def similar_multi(self, queries: list[str], k: int = 10) -> list[tuple[str, float]]:
         """
