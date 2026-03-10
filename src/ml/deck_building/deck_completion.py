@@ -393,10 +393,29 @@ def greedy_complete(
         if not cands:
             break
 
-        # Take best candidate
+        # Take best candidate, adding up to the game's copy limit per card
         cand, _ = cands[0]
+        # Count existing copies in deck
+        existing = 0
+        for p in state.get("partitions", []) or []:
+            for c in p.get("cards", []) or []:
+                if c.get("name") == cand:
+                    existing += int(c.get("count", 0))
+        # Determine max copies allowed by game rules
+        if cand in MAGIC_BASIC_LANDS or cand in POKEMON_BASIC_ENERGY:
+            max_copies = 99  # effectively unlimited
+        elif game == "yugioh":
+            max_copies = 3
+        else:  # magic, pokemon
+            max_copies = 4
+        # How many to add: fill to copy limit, but don't exceed remaining deck space
+        remaining = (target_main - _current_size(state, main_name)) if target_main else 1
+        add_count = min(max_copies - existing, remaining)
+        if add_count < 1:
+            add_count = 1  # always try at least 1 (let patch validation catch illegals)
+
         patch = DeckPatch(
-            ops=[{"op": "add_card", "partition": main_name, "card": cand, "count": 1}],
+            ops=[{"op": "add_card", "partition": main_name, "card": cand, "count": add_count}],
         )
         res = apply_deck_patch(game, state, patch)
         if not res.is_valid or not res.deck:
@@ -406,7 +425,7 @@ def greedy_complete(
                 break
             continue
 
-        steps.append({"op": "add_card", "partition": main_name, "card": cand, "count": 1})
+        steps.append({"op": "add_card", "partition": main_name, "card": cand, "count": add_count})
         state = res.deck
 
         # Check quality threshold if set

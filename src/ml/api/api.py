@@ -1060,18 +1060,17 @@ _GAME_EXTRA_FIELDS: dict[str, tuple[str, ...]] = {
 _BASE_FIELDS: tuple[str, ...] = (
     "image_url",
     "type",
-    "mana_cost",
-    "cmc",
     "oracle_text",
     "rarity",
-    "colors",
-    "power",
-    "toughness",
-    "attribute",
-    "race",
-    "hp",
     "keywords",
 )
+
+# Game-specific base fields (avoid leaking MTG stats into Pokemon/YGO and vice versa)
+_GAME_BASE_FIELDS: dict[str, tuple[str, ...]] = {
+    "magic": ("mana_cost", "cmc", "colors", "power", "toughness"),
+    "pokemon": (),  # hp is in _GAME_EXTRA_FIELDS; suppress for Trainers below
+    "yugioh": ("attribute", "race"),
+}
 
 
 def _lookup_ban_status(card_name: str, banlist: dict | None) -> dict[str, str] | None:
@@ -1099,9 +1098,10 @@ def _enrich_similar_card(
         raw = state.card_metadata.get(card_name)
         if raw:
             meta = {}
-            # Combine base + per-game fields
+            # Combine base + game-specific base + per-game extra fields
+            game_base = _GAME_BASE_FIELDS.get(game, ())
             extra = _GAME_EXTRA_FIELDS.get(game, ())
-            for key in _BASE_FIELDS + extra:
+            for key in _BASE_FIELDS + game_base + extra:
                 val = raw.get(key)
                 if not _is_valid(val):
                     continue
@@ -1115,6 +1115,11 @@ def _enrich_similar_card(
                 tl = raw.get("type_line")
                 if _is_valid(tl):
                     meta["type"] = tl
+            # Pokemon Trainer cards: suppress meaningless stats (hp=0, retreat_cost=0)
+            if game == "pokemon" and meta.get("supertype") == "Trainer":
+                for k in ("hp", "retreat_cost"):
+                    if meta.get(k) in (0, "0", 0.0):
+                        meta.pop(k, None)
             if not meta:
                 meta = None
 
@@ -1781,8 +1786,9 @@ def search_cards_v1(request: SearchRequest):
         if state.card_metadata:
             raw = state.card_metadata.get(r.card_name)
             if raw:
+                game_base = _GAME_BASE_FIELDS.get(game, ())
                 extra = _GAME_EXTRA_FIELDS.get(game, ())
-                for key in _BASE_FIELDS + extra:
+                for key in _BASE_FIELDS + game_base + extra:
                     if key in merged and _is_valid(merged[key]):
                         continue  # don't overwrite valid search-provided fields
                     val = raw.get(key)
@@ -1796,6 +1802,11 @@ def search_cards_v1(request: SearchRequest):
                     tl = raw.get("type_line")
                     if _is_valid(tl):
                         merged["type"] = tl
+                # Pokemon Trainer: suppress meaningless stats
+                if game == "pokemon" and merged.get("supertype") == "Trainer":
+                    for k in ("hp", "retreat_cost"):
+                        if merged.get(k) in (0, "0", 0.0):
+                            merged.pop(k, None)
 
         # Ban status
         ban = _lookup_ban_status(r.card_name, state.banlist)
