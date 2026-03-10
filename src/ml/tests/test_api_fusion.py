@@ -37,9 +37,10 @@ def make_app_with_fusion():
         def similarity(self, q, c):
             return 0.9 if (q, c) in [("A", "B"), ("A", "C")] else 0.0
 
-    api.embeddings = DummyEmb()
-    api.model_info = {"methods": ["embedding"]}
-    api.graph_data = {"adj": {"A": {"B", "C"}, "B": {"A"}, "C": {"A"}}, "weights": {}}
+    state = api.get_state()
+    state.embeddings = DummyEmb()
+    state.model_info = {"methods": ["embedding"]}
+    state.graph_data = {"adj": {"A": {"B", "C"}, "B": {"A"}, "C": {"A"}}, "weights": {}}
     return api.app
 
 

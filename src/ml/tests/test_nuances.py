@@ -49,11 +49,6 @@ def test_api_readiness_and_live_without_models(api_client):
     if hasattr(api_mod.app.state, "api"):
         delattr(api_mod.app.state, "api")
 
-    # Clear legacy module-level globals that _adopt_legacy_globals() uses
-    api_mod.embeddings = None
-    api_mod.graph_data = None
-    api_mod.model_info = {}
-
     # Get fresh state (will be empty)
     state = api_mod.get_state()
     assert state.embeddings is None, "State should be clean at test start"

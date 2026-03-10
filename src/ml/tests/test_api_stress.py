@@ -26,13 +26,14 @@ class DummyEmb:
 
 
 def setup_dummy_state():
-    api.embeddings = DummyEmb()
-    api.model_info = {"methods": ["embedding"]}
-    api.graph_data = {
+    state = api.get_state()
+    state.embeddings = DummyEmb()
+    state.model_info = {"methods": ["embedding"]}
+    state.graph_data = {
         "adj": {"Lightning Bolt": {"Lava Spike", "Rift Bolt"}},
         "weights": {},
     }
-    api.get_state().card_attrs = {
+    state.card_attrs = {
         "lightning bolt": {"cmc": 1, "type": "Instant"},
         "lava spike": {"cmc": 1, "type": "Sorcery"},
         "rift bolt": {"cmc": 3, "type": "Sorcery"},
