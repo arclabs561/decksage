@@ -13,11 +13,14 @@ from __future__ import annotations
 import json
 import time
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from unittest.mock import MagicMock
 
 import pytest
-from fastapi.testclient import TestClient
+
+
+if TYPE_CHECKING:
+    from ml.api.chat import ChatDeps
 
 
 # ---------------------------------------------------------------------------
@@ -71,7 +74,7 @@ def _make_graph() -> dict[str, dict[str, float]]:
     }
 
 
-def _make_deps(game: str = "magic") -> "ChatDeps":
+def _make_deps(game: str = "magic") -> ChatDeps:
     from ml.api.chat import ChatDeps
     return ChatDeps(
         game=game,

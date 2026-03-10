@@ -7,13 +7,13 @@ import pytest
 
 from ml.deck_building.ot_completion import (
     OTCompletionConfig,
-    _build_candidate_pool,
     _round_transport_plan,
     build_cost_matrix,
     compute_reference_distribution,
     deck_to_distribution,
     ot_complete_deck,
 )
+
 
 # ---------------------------------------------------------------------------
 # Helpers: fake KeyedVectors-like object for testing without gensim
