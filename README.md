@@ -5,7 +5,7 @@
 
 Card similarity search and deck operations for **Magic: The Gathering**, **Pokemon TCG**, and **Yu-Gi-Oh!**.
 
-Given a card name, DeckSage returns the most similar cards by combining tournament co-occurrence embeddings (Word2Vec / Node2Vec on deck lists), text embeddings, visual embeddings, and graph neural network signals via late fusion. It also provides deck completion (greedy fill, suggestion, patching) and faceted semantic search.
+Given a card name, DeckSage returns the most similar cards by combining tournament co-occurrence embeddings (Word2Vec / Node2Vec on deck lists), text embeddings, and Jaccard co-occurrence via late fusion. It also provides deck completion (greedy fill, suggestion, patching) and faceted semantic search.
 
 ## Install
 
@@ -25,7 +25,7 @@ uv sync --extra dev --extra embeddings
 
 ### Start the API
 
-DeckSage requires pre-built embedding files (`.wv`). Generate them with `just train` or see `docs/quick-reference.md`.
+DeckSage requires pre-built embedding files (`.wv`). Generate them with `just train-runctl-local` or the training scripts in `scripts/training/`.
 
 ```bash
 # Single game
@@ -73,14 +73,14 @@ Interactive docs at `/docs` when the server is running.
 
 DeckSage fuses multiple similarity signals per query. Each signal is optional; the system uses whichever artifacts are available.
 
-| Signal | Source | Method |
-|---|---|---|
-| Co-occurrence embedding | Tournament deck lists | Word2Vec / Node2Vec (cosine) |
-| Text embedding | Card text | Sentence transformers (cosine) |
-| Visual embedding | Card images | SigLIP / CLIP (cosine) |
-| GNN embedding | Co-occurrence graph | GraphSAGE (cosine) |
-| Functional tags | Card attributes | Jaccard similarity |
-| Jaccard co-occurrence | Deck pair overlap | Jaccard index |
+| Signal | Source | Method | Status |
+|---|---|---|---|
+| Co-occurrence embedding | Tournament deck lists | Word2Vec / Node2Vec (cosine) | Active |
+| Text embedding | Card text | Sentence transformers (cosine) | Active |
+| Jaccard co-occurrence | Deck pair overlap | Jaccard index | Active |
+| Visual embedding | Card images | SigLIP / CLIP (cosine) | Requires external artifacts |
+| GNN embedding | Co-occurrence graph | GraphSAGE (cosine) | Requires external artifacts |
+| Functional tags | Card attributes | Jaccard similarity | Not loaded |
 
 Aggregation methods: reciprocal rank fusion (default), inverse square root, weighted linear, CombSUM, CombMNZ, CombMAX, CombMIN. MMR diversification is available.
 
@@ -88,10 +88,11 @@ Aggregation methods: reciprocal rank fusion (default), inverse square root, weig
 
 ```
 src/ml/           Python ML code (similarity, deck building, search, training, API, CLI)
+src/ml/tests/     Test suite (698 tests)
 src/backend/      Go backend (scraper, data extraction, transforms)
 frontend/         Web frontend
 scripts/          Data pipeline and training scripts
-tests/            Test suite
+tests/e2e/        End-to-end Playwright tests
 ```
 
 ## Development

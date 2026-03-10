@@ -2178,7 +2178,9 @@ def suggest_actions(req: SuggestActionsRequest):
     archetype = getattr(req, "archetype", None)
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
 
-    part = {"magic": "Main", "yugioh": "Main Deck"}.get(game, "Main Deck")
+    from ..deck_building.deck_completion import _main_partition_name
+
+    part = _main_partition_name(game)
     actions = []
     action_type = (req.action_type or "add").lower()
 
