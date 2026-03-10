@@ -90,7 +90,11 @@ from ml.deck_building.deck_completion import (
     greedy_complete,
 )
 from ml.deck_building.deck_quality import assess_deck_quality
-from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
+try:
+    from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
+except ImportError:
+    DeckRefiner = None  # type: ignore[assignment,misc]
+    RefinementConstraints = None  # type: ignore[assignment,misc]
 from ml.similarity.fusion import FusionWeights, WeightedLateFusion
 from ml.utils.logging_config import setup_script_logging
 from ml.utils.paths import PATHS
@@ -599,6 +603,9 @@ def evaluate_deck_refinement_task(
 
     if not assets["fusion"]:
         return {"error": "Fusion not available"}
+
+    if DeckRefiner is None:
+        return {"error": "DeckRefiner not available (deck_refinement module removed)"}
 
     refiner = DeckRefiner(
         fusion=assets[
