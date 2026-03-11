@@ -45,6 +45,7 @@ class CompletionConfig:
     budget_max: float | None = None
     method: Literal["embedding", "jaccard", "fusion"] = "fusion"
     coverage_weight: float = 0.15  # boost per new functional tag
+    synergy_weight: float = 0.2  # pairwise co-occurrence bonus strength
 
 
 def _main_partition_name(game: str) -> str:
@@ -121,6 +122,8 @@ def suggest_additions(
     curve_target: dict[int, float] | None = None,
     curve_weight: float = 0.0,
     return_metrics: bool = False,
+    adj: dict[str, set[str]] | None = None,
+    synergy_weight: float = 0.2,
     # New parameters for role-aware, archetype-aware suggestions
     archetype: str | None = None,
     archetype_staples: dict[str, dict[str, float]] | None = None,
@@ -178,6 +181,16 @@ def suggest_additions(
             if any(resolver.equals(cand, h) for h in have):
                 continue
             scores[cand] = max(scores.get(cand, 0.0), float(score))
+
+    # Pairwise synergy bonus: cards that co-occur with many existing deck cards
+    # get a boost, capturing combo/synergy interactions that independent scoring
+    # misses (Bundle Recommendation Survey, arXiv:2411.00341).
+    if adj and synergy_weight > 0:
+        for cand in list(scores):
+            if cand in adj:
+                overlap = len(adj[cand] & have)
+                bonus = min(overlap / max(len(have), 1), 0.3)  # cap at 0.3
+                scores[cand] = scores[cand] * (1.0 + bonus * synergy_weight)
 
     # Boost archetype staples if archetype provided
     if archetype and archetype_staples:
@@ -338,6 +351,7 @@ def greedy_complete(
     *,
     price_fn: PriceFn | None = None,
     tag_set_fn: TagSetFn | None = None,
+    adj: dict[str, set[str]] | None = None,
     assess_quality: bool = False,
     quality_threshold: float | None = None,
 ) -> tuple[dict, list[dict], dict[str, Any] | None]:
@@ -389,6 +403,8 @@ def greedy_complete(
             max_unit_price=cfg.budget_max,
             tag_set_fn=tag_set_fn,
             coverage_weight=cfg.coverage_weight,
+            adj=adj,
+            synergy_weight=cfg.synergy_weight,
         )
         if not cands:
             break
