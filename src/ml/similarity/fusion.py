@@ -241,11 +241,6 @@ class WeightedLateFusion:
         self.candidate_topn = candidate_topn
         self.task_type = task_type
 
-        # OPTIMIZATION: Cache for similarity computations (LRU cache for repeated queries)
-        self._similarity_cache: dict[
-            tuple[str, str, str], float
-        ] = {}  # (query, candidate, modality) -> score
-        self._cache_max_size = 10000  # Limit cache size to prevent memory issues
 
     def _get_embedding_similarity(self, query: str, candidate: str) -> float:
         """Get embedding similarity between query and candidate."""
