@@ -356,6 +356,60 @@ class TestOTCompleteDeck:
         with pytest.raises(ImportError, match="POT library required"):
             ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
 
+    def test_empty_candidate_pool(self):
+        """Empty candidate pool returns error metric, not crash."""
+        # Use embeddings with only the seed cards -- no candidates available
+        rng = np.random.RandomState(99)
+        data = {f"Seed_{i}": rng.randn(8) for i in range(5)}
+        embeddings = FakeKeyedVectors(data)
+        deck = _make_deck([f"Seed_{i}" for i in range(5)], "magic")
+
+        # candidate_fn that returns nothing
+        def empty_candidate_fn(card: str, top_k: int) -> list[tuple[str, float]]:
+            return []
+
+        cfg = OTCompletionConfig(game="magic", target_main_size=15, pool_size=20)
+        result = ot_complete_deck(
+            game="magic",
+            deck=deck,
+            embeddings=embeddings,
+            cfg=cfg,
+            candidate_fn=empty_candidate_fn,
+        )
+
+        assert result.additions == []
+        assert result.metrics.get("error") == "empty_candidate_pool"
+
+    def test_sinkhorn_failure_returns_error(self, monkeypatch):
+        """Sinkhorn solver exception returns error metric, not crash."""
+        import ml.deck_building.ot_completion as mod
+
+        embeddings, names = _make_embeddings(20)
+        deck = _make_deck(names[:3], "magic")
+        cfg = OTCompletionConfig(
+            game="magic", target_main_size=10, pool_size=15, sinkhorn_reg=0.1
+        )
+
+        # Make pot.sinkhorn raise an exception
+        real_pot = mod.pot
+
+        class FakePot:
+            def __getattr__(self, name):
+                if name == "sinkhorn":
+                    def fail(*args, **kwargs):
+                        raise RuntimeError("Solver diverged")
+                    return fail
+                return getattr(real_pot, name)
+
+        monkeypatch.setattr(mod, "pot", FakePot())
+
+        result = ot_complete_deck(
+            game="magic", deck=deck, embeddings=embeddings, cfg=cfg
+        )
+
+        assert result.additions == []
+        assert "sinkhorn_failed" in result.metrics.get("error", "")
+
 
 # ---------------------------------------------------------------------------
 # Tests: idempotency
