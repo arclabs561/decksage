@@ -2017,6 +2017,7 @@ def suggest_actions(req: SuggestActionsRequest):
     if action_type in ("add", "suggest"):
         from ..deck_building.deck_completion import suggest_additions
 
+        sa_adj = state.graph_data.get("adj") if state.graph_data else None
         pairs_or = suggest_additions(
             game,  # type: ignore[arg-type]
             req.deck,
@@ -2035,6 +2036,7 @@ def suggest_actions(req: SuggestActionsRequest):
             archetype_staples=archetype_staples,
             role_aware=True,
             max_suggestions=min(req.top_k, 10),  # Constrained choice
+            adj=sa_adj,
         )
         if isinstance(pairs_or, tuple):
             pairs, s_metrics = pairs_or
@@ -2258,6 +2260,8 @@ def complete_deck(req: CompleteRequest):
         from ..deck_building.beam_search import beam_search_completion
 
         # Convert candidate_fn to beam search format
+        beam_adj = state.graph_data.get("adj") if state.graph_data else None
+
         def beam_candidate_fn(deck: dict, top_k: int) -> list[tuple[str, float]]:
             result = suggest_additions(
                 game,  # type: ignore[arg-type]
@@ -2268,6 +2272,7 @@ def complete_deck(req: CompleteRequest):
                 max_unit_price=cfg.budget_max,
                 tag_set_fn=tag_set_fn,
                 coverage_weight=cfg.coverage_weight,
+                adj=beam_adj,
             )
             # Handle tuple return (with metrics) or list return
             if isinstance(result, tuple):
@@ -2289,6 +2294,7 @@ def complete_deck(req: CompleteRequest):
         steps: list[dict] = []  # Beam search doesn't return steps in same format
         quality_metrics = None
     else:
+        adj = state.graph_data.get("adj") if state.graph_data else None
         deck_out, steps, quality_metrics = greedy_complete(
             game,  # type: ignore[arg-type]
             req.deck,
@@ -2296,6 +2302,7 @@ def complete_deck(req: CompleteRequest):
             cfg,
             price_fn=price_fn,
             tag_set_fn=tag_set_fn,
+            adj=adj,
         )
     # Final strict validation pass according to flags
     strict_errors: list[str] = []
