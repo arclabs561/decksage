@@ -7,9 +7,10 @@ Formulates deck building as a discrete OT problem: transport mass from a
 card pool, where the cost matrix encodes embedding distance, role gaps,
 and mana-curve fit.
 
-The Sinkhorn solver from the POT library produces a fractional transport
-plan, which is then rounded to integer card counts respecting copy limits
-and deck-size targets.
+The log-stabilized Sinkhorn solver (pot.sinkhorn_log) produces a fractional
+transport plan, which is then rounded to integer card counts respecting copy
+limits and deck-size targets. Log-domain stabilization avoids overflow/underflow
+at low regularization (reg=0.01).
 
 Requires: pip install pot  (or uv add pot)
 """
@@ -455,17 +456,26 @@ def ot_complete_deck(
         cost_vec=cost_vec,
     )
 
-    # Solve OT with Sinkhorn
+    # Solve OT with log-stabilized Sinkhorn (numerically safer at low regularization)
     try:
         transport_plan = pot.sinkhorn(
             source,
             target,
             cost_matrix,
             reg=cfg.sinkhorn_reg,
+            method="sinkhorn_log",
             numItermax=cfg.sinkhorn_max_iter,
             stopThr=cfg.sinkhorn_tol,
             warn=False,
         )
+        # Verify marginal convergence: row sums should match source distribution
+        row_marginal = transport_plan.sum(axis=1)
+        marginal_err = float(np.max(np.abs(row_marginal - source)))
+        if marginal_err > 1e-3:
+            logger.warning(
+                f"Sinkhorn marginal error {marginal_err:.6f} exceeds tolerance; "
+                "transport plan may be inaccurate"
+            )
     except Exception as e:
         logger.error(f"Sinkhorn solver failed: {e}")
         return OTCompletionResult(
@@ -525,6 +535,7 @@ def ot_complete_deck(
             "cards_added": sum(c for _, c in additions),
             "ot_distance": ot_distance,
             "sinkhorn_reg": cfg.sinkhorn_reg,
+            "marginal_error": marginal_err,
         },
     )
 
