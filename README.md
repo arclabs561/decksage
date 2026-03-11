@@ -80,7 +80,7 @@ DeckSage fuses multiple similarity signals per query. Each signal is optional; t
 | Jaccard co-occurrence | Deck pair overlap | Jaccard index | Active |
 | Visual embedding | Card images | SigLIP / CLIP (cosine) | Requires external artifacts |
 | GNN embedding | Co-occurrence graph | GraphSAGE (cosine) | Requires external artifacts |
-| Functional tags | Card attributes | Jaccard similarity | Not loaded |
+| Functional tags | Card attributes | Jaccard similarity | Active (optional) |
 
 Aggregation methods: reciprocal rank fusion (default), inverse square root, weighted linear, CombSUM, CombMNZ, CombMAX, CombMIN. MMR diversification is available.
 
@@ -88,7 +88,7 @@ Aggregation methods: reciprocal rank fusion (default), inverse square root, weig
 
 ```
 src/ml/           Python ML code (similarity, deck building, search, training, API, CLI)
-src/ml/tests/     Test suite (698 tests)
+src/ml/tests/     Test suite (775 tests)
 src/backend/      Go backend (scraper, data extraction, transforms)
 frontend/         Web frontend
 scripts/          Data pipeline and training scripts
