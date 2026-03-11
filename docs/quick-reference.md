@@ -7,7 +7,6 @@ Keep this file operational: commands, invariants, and the minimum pointers. Put 
 - `README.md`: run + configure (single-game + multi-game)
 - `data/README.md`: expected data layout + pipelines (large artifacts are not in git)
 - `src/ml/search/README.md`: Meilisearch/Qdrant setup + indexing
-- `docs/priority-matrix.md`: planning (historical; not a source of truth for current metrics)
 
 ## Development workflow
 

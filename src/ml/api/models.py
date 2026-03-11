@@ -91,7 +91,10 @@ class SimilarityResponse(BaseModel):
         None, description="Metadata for the query card (image_url, type, etc.)"
     )
     results: list[SimilarCard]
-    model_info: dict
+    model_info: dict[str, Any] = Field(
+        default_factory=dict,
+        description="Model metadata (vocab_size, dimension, method, game, etc.)",
+    )
     feedback_url: str | None = Field(None, description="URL for submitting feedback on results")
 
 
@@ -119,11 +122,17 @@ class CardsResponse(BaseModel):
     next_offset: int | None = None
 
 
+class ContextualItem(BaseModel):
+    card: str = Field(..., description="Card name")
+    similarity: float = Field(..., description="Similarity score")
+    metadata: dict[str, Any] | None = None
+
+
 class ContextualResponse(BaseModel):
-    synergies: list[dict]
-    alternatives: list[dict]
-    upgrades: list[dict]
-    downgrades: list[dict]
+    synergies: list[ContextualItem | dict] = Field(default_factory=list)
+    alternatives: list[ContextualItem | dict] = Field(default_factory=list)
+    upgrades: list[ContextualItem | dict] = Field(default_factory=list)
+    downgrades: list[ContextualItem | dict] = Field(default_factory=list)
     feedback_url: str | None = Field(None, description="URL for submitting feedback on suggestions")
 
 
