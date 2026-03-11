@@ -431,7 +431,7 @@ async def lifespan(app: FastAPI):
 
         # Load enriched card metadata (with image URLs) for API responses.
         # Uses the enriched CSV which preserves all columns including image_url.
-        enriched_path = Path(f"data/processed/card_attributes_{game}_enriched.csv")
+        enriched_path = PATHS.processed / f"card_attributes_{game}_enriched.csv"
         if enriched_path.exists():
             try:
                 from ..utils.data_loading import load_card_attributes
@@ -556,7 +556,7 @@ async def lifespan(app: FastAPI):
             logger.info("Built archetype index for %s: %d cards", game, len(archetypes_index))
 
         # Deck frequency
-        freq_path = Path(f"data/processed/deck_frequency_{game}.json")
+        freq_path = PATHS.processed / f"deck_frequency_{game}.json"
         if freq_path.exists():
             try:
                 with open(freq_path, encoding="utf-8") as f:
@@ -685,7 +685,7 @@ def root(request: Request):
     # Serve HTML for browsers (default)
     if not wants_json:
         # Serve HTML landing page for browsers
-        _landing_html = Path(__file__).parent.parent.parent.parent / "frontend" / "test_search.html"
+        _landing_html = PATHS.project_root / "frontend" / "test_search.html"
         if _landing_html.exists():
             return FileResponse(str(_landing_html), media_type="text/html")
         # Fallback to redirect
@@ -2418,7 +2418,7 @@ except Exception as e:
 
 # Serve static HTML files for frontend interface
 # Mount static directory if it exists
-_static_dir = Path(__file__).parent.parent.parent.parent / "frontend" / "static"
+_static_dir = PATHS.project_root / "frontend" / "static"
 if _static_dir.exists():
     try:
         app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
@@ -2426,7 +2426,7 @@ if _static_dir.exists():
         logger.debug("Could not mount static files: %s", e)
 
 # Serve main search interface at /search.html
-_search_html = Path(__file__).parent.parent.parent.parent / "frontend" / "test_search.html"
+_search_html = PATHS.project_root / "frontend" / "test_search.html"
 if _search_html.exists():
 
     @app.get("/search.html")
