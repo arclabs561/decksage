@@ -14,7 +14,6 @@ from __future__ import annotations
 
 import argparse
 import json
-from collections import defaultdict
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -198,15 +197,11 @@ def _extract_format_from_deck(deck: dict[str, Any]) -> str | None:
     return None
 
 
-def _extract_archetype_from_deck(deck: dict[str, Any]) -> str | None:
-    """Extract archetype from deck structure."""
-    if "archetype" in deck:
-        return deck["archetype"]
-    if "type" in deck and isinstance(deck["type"], dict):
-        inner = deck["type"].get("inner")
-        if isinstance(inner, dict) and "archetype" in inner:
-            return inner["archetype"]
-    return None
+# Canonical home is utils/matchup_analysis.py; imported here for use in this script.
+from ..utils.matchup_analysis import (
+    _extract_archetype_from_deck,
+    compute_matchup_statistics,
+)
 
 
 def _extract_game_from_deck(deck: dict[str, Any]) -> str | None:
@@ -224,101 +219,6 @@ def _extract_game_from_deck(deck: dict[str, Any]) -> str | None:
     if "yugioh" in source or "ygo" in source:
         return "YGO"
     return None
-
-
-def compute_matchup_statistics(
-    deck: dict[str, Any],
-    all_decks: list[dict[str, Any]] | None = None,
-) -> dict[str, Any] | None:
-    """
-    Compute matchup statistics from round results.
-
-    Args:
-        deck: Deck dictionary with roundResults
-        all_decks: All decks for opponent archetype lookup (optional)
-
-    Returns:
-        Dict with matchup statistics, or None if no round results
-    """
-    # Extract round results
-    round_results = deck.get("roundResults") or (
-        deck.get("type", {}).get("inner", {}) if isinstance(deck.get("type"), dict) else {}
-    ).get("roundResults")
-
-    if not round_results or not isinstance(round_results, list):
-        return None
-
-    # Create lookup for opponent archetypes if all_decks provided
-    opponent_archetypes: dict[str, str] = {}
-    if all_decks:
-        for d in all_decks:
-            if not isinstance(d, dict):
-                continue
-            player = d.get("player") or (
-                d.get("type", {}).get("inner", {}) if isinstance(d.get("type"), dict) else {}
-            ).get("player")
-            archetype = _extract_archetype_from_deck(d)
-            if player and archetype:
-                opponent_archetypes[player] = archetype
-
-    # Filter out invalid round results
-    valid_rounds = [
-        r
-        for r in round_results
-        if isinstance(r, dict) and r.get("result") in ("W", "L", "T", "BYE")
-    ]
-
-    if not valid_rounds:
-        return None
-
-    # Compute statistics
-    total_rounds = len(valid_rounds)
-    wins = sum(1 for r in valid_rounds if r.get("result") == "W")
-    losses = sum(1 for r in valid_rounds if r.get("result") == "L")
-    ties = sum(1 for r in valid_rounds if r.get("result") == "T")
-    byes = sum(1 for r in valid_rounds if r.get("result") == "BYE")
-
-    # Matchup win rates by archetype
-    matchup_wr = defaultdict(lambda: {"wins": 0, "losses": 0, "ties": 0})
-    for r in valid_rounds:
-        opponent_deck = r.get("opponentDeck") or r.get("opponent_deck")
-        if not opponent_deck:
-            # Try to look up from opponent name
-            opponent = r.get("opponent")
-            if opponent and opponent in opponent_archetypes:
-                opponent_deck = opponent_archetypes[opponent]
-
-        if opponent_deck:
-            result = r.get("result")
-            if result == "W":
-                matchup_wr[opponent_deck]["wins"] += 1
-            elif result == "L":
-                matchup_wr[opponent_deck]["losses"] += 1
-            elif result == "T":
-                matchup_wr[opponent_deck]["ties"] += 1
-
-    # Convert to win rates
-    matchup_win_rates: dict[str, dict[str, Any]] = {}
-    for archetype, stats in matchup_wr.items():
-        total = stats["wins"] + stats["losses"] + stats["ties"]
-        if total > 0:
-            matchup_win_rates[archetype] = {
-                "win_rate": stats["wins"] / total,
-                "wins": stats["wins"],
-                "losses": stats["losses"],
-                "ties": stats["ties"],
-                "total": total,
-            }
-
-    return {
-        "total_rounds": total_rounds,
-        "wins": wins,
-        "losses": losses,
-        "ties": ties,
-        "byes": byes,
-        "win_rate": wins / total_rounds if total_rounds > 0 else 0.0,
-        "matchup_win_rates": matchup_win_rates,
-    }
 
 
 def enrich_deck_with_temporal_metadata(

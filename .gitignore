@@ -263,6 +263,8 @@ test-results/
 playwright-report/
 
 # Generated reports and artifacts
+.claude/enrich-report*.md
+.claude/audit-report*.md
 comparison_report.html
 data/comparison_report.html
 data/triage_report.md
