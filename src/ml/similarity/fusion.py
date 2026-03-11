@@ -27,7 +27,6 @@ Also supports MMR (Maximal Marginal Relevance) for result diversification.
 
 NOTE: This is manual fusion. For optimal performance, consider using learned reranking
 (learning-to-rank) which learns optimal feature combination from labeled data.
-See docs/LTR_CRITIQUE_AND_REFINEMENT.md for details.
 """
 
 from __future__ import annotations
