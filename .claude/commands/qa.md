@@ -18,17 +18,17 @@ API responses use `card` and `similarity` field names (NOT `name`/`score`). Each
 
 ## Report convention
 
-Reports go in `qa/reports/qa-YYYY-MM-DD.md` (or `qa-YYYY-MM-DD-rN.md` for multiple runs on the same day). Read any existing reports before starting -- step 7 requires comparing against them.
+Write to `.claude/reports/qa-YYYY-MM-DD.md` (globally gitignored via `~/.gitignore_global`). For same-day reruns, append `-v2`, `-v3`. Read any existing reports before starting -- step 7 requires comparing against them.
 
 ## Procedure
 
 ### 0. Read prior reports
 
-Before starting, read existing QA reports for context:
+Before starting, check for prior reports in order: `.claude/reports/`, `qa/reports/`, `.qa/reports/`, `.claude/` root (flat files like `audit-report.md`). Read the most recent found. If reports exist in old locations, move them to `.claude/reports/` with dated names before proceeding.
 
 ```bash
 # List all existing reports
-ls qa/reports/*.md 2>/dev/null
+ls .claude/reports/qa-*.md qa/reports/*.md 2>/dev/null
 ```
 
 Read the most recent report (if any). Extract:
@@ -38,7 +38,7 @@ Read the most recent report (if any). Extract:
 
 Keep this context loaded throughout the run -- you'll compare against it in steps 5-7.
 
-If reports exist from the same day, use `-rN` suffix for the new report (e.g., `qa-2026-03-02-r3.md`).
+If reports exist from the same day, use `-v2`, `-v3` suffix for the new report.
 
 ### 1. Verify environment and start the API server
 
@@ -560,7 +560,7 @@ Record pass/fail counts in the report.
 
 ### 5. Write the report
 
-Save to `qa/reports/qa-YYYY-MM-DD.md`. Produce a structured critique covering:
+Save to `.claude/reports/qa-YYYY-MM-DD.md`. Produce a structured critique covering:
 
 1. **Test conditions**: date, API version, card counts per game, embedding dimensions, wall-clock timings, port used
 2. **Baseline results**: exact top-5 for each stable baseline (section 3a), diffed against previous run if available
@@ -614,7 +614,7 @@ MMR lambda no-effect and falsy-check bugs, suggest_actions/apply_patch deck form
 
 ### 7. Compare against previous runs
 
-Read previous reports from `qa/reports/`. For each:
+Read previous reports from `.claude/reports/` (or `qa/reports/` as fallback). For each:
 - Are baseline top-5 results identical, improved, or regressed?
 - Are bugs from section 6 still present?
 - Any new bugs not seen before?

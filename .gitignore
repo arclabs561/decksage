@@ -278,3 +278,7 @@ data/decks/
 
 # Debug scripts
 scripts/data/_debug_*
+
+# Hygiene (added by guardian audit)
+.env.*
+!.env.example
