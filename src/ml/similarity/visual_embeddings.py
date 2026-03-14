@@ -155,14 +155,18 @@ class CardVisualEmbedder:
                 import torch
                 from transformers import AutoModel, AutoProcessor
 
-                self.processor = AutoProcessor.from_pretrained(model_name)
-                self.vision_model = AutoModel.from_pretrained(model_name)
+                import warnings
+
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    self.processor = AutoProcessor.from_pretrained(model_name)
+                    self.vision_model = AutoModel.from_pretrained(model_name)
                 self.vision_model.eval()
                 self._use_transformers = True
                 self._sentence_transformer = None
                 self.model = None  # Not used for SigLIP
 
-                logger.info(f"Loaded SigLIP model with transformers: {model_name}")
+                logger.debug(f"Loaded SigLIP model with transformers: {model_name}")
 
                 # Verify model works and get embedding dimension
                 test_img = Image.new("RGB", (self.image_size, self.image_size))
@@ -178,7 +182,7 @@ class CardVisualEmbedder:
                 test_emb = outputs[0].cpu().numpy().astype(np.float32)
 
                 self._embedding_dim = len(test_emb)
-                logger.info(f"Model embedding dimension: {self._embedding_dim}")
+                logger.debug(f"Model embedding dimension: {self._embedding_dim}")
 
             except Exception as e:
                 raise RuntimeError(
@@ -201,7 +205,7 @@ class CardVisualEmbedder:
                 test_img = Image.new("RGB", (self.image_size, self.image_size))
                 test_emb = self.model.encode(test_img, convert_to_numpy=True)
                 self._embedding_dim = len(test_emb)
-                logger.info(f"Model embedding dimension: {self._embedding_dim}")
+                logger.debug(f"Model embedding dimension: {self._embedding_dim}")
 
             except Exception as e:
                 raise RuntimeError(
@@ -220,7 +224,7 @@ class CardVisualEmbedder:
             try:
                 with open(self.cache_file, "rb") as f:
                     self._memory_cache = pickle.load(f)
-                logger.info(f"Loaded {len(self._memory_cache)} cached visual embeddings")
+                logger.debug(f"Loaded {len(self._memory_cache)} cached visual embeddings")
             except Exception as e:
                 logger.warning(f"Failed to load visual embedding cache: {e}")
                 self._memory_cache = {}

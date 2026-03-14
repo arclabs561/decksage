@@ -59,8 +59,6 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel, Field  # noqa: F401 - used by downstream importers
-
 # Local application imports
 from ..deck_building.deck_completion import (
     CompletionConfig,
@@ -218,26 +216,55 @@ def load_embeddings_to_state(
     tuned_weights_path: str | None = None,
 ) -> None:
     """Load embeddings and graph data into app.state for a specific game."""
+    import time as _time
+
     state = get_state(game)
-    logger.info("Loading embeddings from %s...", emb_path)
+
+    # Embeddings
+    _ep = Path(emb_path)
+    _emb_size = _ep.stat().st_size / 1e6 if _ep.exists() else 0
+    logger.info("Loading embeddings: %s (%.1f MB)", emb_path, _emb_size)
+    _t0 = _time.monotonic()
     emb = KeyedVectors.load(emb_path)
     state.embeddings = emb
     state.model_info = {
         "num_cards": len(emb),
         "embedding_dim": emb.vector_size,
         "model_path": emb_path,
-        "embedding_source": Path(emb_path).stem,
+        "embedding_source": _ep.stem,
         "game": game,
         "methods": ["embedding"],
     }
-    logger.info("Loaded %s cards (%sD)", f"{len(emb):,}", emb.vector_size)
+    logger.info(
+        "Loaded %s cards (%sD) in %.1fs",
+        f"{len(emb):,}",
+        emb.vector_size,
+        _time.monotonic() - _t0,
+    )
+
+    # Graph
     if pairs_csv:
-        logger.info("Loading graph from %s...", pairs_csv)
-        # Only MTG has "lands" semantics; do not apply land filtering to other games.
+        _pp = Path(pairs_csv)
+        _pairs_size = _pp.stat().st_size / 1e6 if _pp.exists() else 0
+        _cache_p = _pp.with_suffix(_pp.suffix + ".pkl")
+        _cached = _cache_p.exists() and _cache_p.stat().st_mtime >= _pp.stat().st_mtime
+        logger.info(
+            "Loading graph: %s (%.1f MB%s)",
+            _pp.name,
+            _pairs_size,
+            ", cached" if _cached else "",
+        )
+        _t0 = _time.monotonic()
         adj, weights = sm_load_graph(pairs_csv, filter_lands=(game == "magic"))
         state.graph_data = {"adj": adj, "weights": weights}
         state.model_info["methods"].append("jaccard")
-        logger.info("Loaded graph: %s cards, %s weights", f"{len(adj):,}", f"{len(weights):,}")
+        state.model_info["pairs_path"] = pairs_csv
+        logger.info(
+            "Loaded graph: %s cards, %s weights in %.1fs",
+            f"{len(adj):,}",
+            f"{len(weights):,}",
+            _time.monotonic() - _t0,
+        )
 
     # Load tuned fusion weights if available (non-fatal).
     # In multi-game mode this must be configured per game to avoid cross-game contamination.
@@ -332,6 +359,16 @@ async def lifespan(app: FastAPI):
     - Embeddings are read-only, so per-worker loading is acceptable
     - Consider shared memory (mmap) for very large embeddings if needed
     """
+    import logging as _logging
+    import time as _time
+
+    _t_start = _time.monotonic()
+
+    # Quiet noisy third-party loggers during startup
+    for _noisy in ("gensim", "httpx", "sentence_transformers", "transformers"):
+        _logging.getLogger(_noisy).setLevel(_logging.WARNING)
+    os.environ.setdefault("TRANSFORMERS_VERBOSITY", "error")
+
     # Load environment variables lazily (respects test-time monkeypatching)
     with suppress(Exception):
         load_dotenv()
@@ -358,8 +395,39 @@ async def lifespan(app: FastAPI):
     logger.info("Configured games: %s (default=%s)", games, default_game)
 
     # Shared settings (global)
-    text_embedder_model = os.getenv("TEXT_EMBEDDER_MODEL", "all-MiniLM-L6-v2")
+    instruction_embedder_model = os.getenv("INSTRUCTION_EMBEDDER_MODEL", "intfloat/e5-base-v2")
     visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
+
+    # ------------------------------------------------------------------
+    # Load shared ML models once (reused across all games)
+    # ------------------------------------------------------------------
+    _shared_text_embedder = None
+    _shared_visual_embedder = None
+
+    try:
+        from .load_signals import (
+            HAS_INSTRUCTION_EMBED,
+            HAS_VISUAL_EMBED,
+            CardVisualEmbedder,
+            InstructionTunedCardEmbedder,
+        )
+
+        if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
+            _shared_text_embedder = InstructionTunedCardEmbedder(
+                model_name=instruction_embedder_model
+            )
+            logger.info("Loaded shared text embedder: %s", instruction_embedder_model)
+    except Exception:
+        logger.warning("Failed to load shared text embedder", exc_info=True)
+
+    try:
+        from .load_signals import HAS_VISUAL_EMBED, CardVisualEmbedder
+
+        if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
+            _shared_visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
+            logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
+    except Exception:
+        logger.warning("Failed to load shared visual embedder", exc_info=True)
 
     # Load resources per game
     for game in games:
@@ -567,21 +635,32 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError):
                 logger.debug("Failed to load deck frequency for game=%s", game, exc_info=True)
 
-        # Additional signals (per game)
+        # Additional signals (per game) -- shared embedders, per-game data signals
         try:
             from .load_signals import load_signals_to_state
 
             state = get_state(game)
+
+            # Assign shared embedder references (loaded once above)
+            if _shared_text_embedder is not None:
+                state.text_embedder = _shared_text_embedder
+            if _shared_visual_embedder is not None:
+                state.visual_embedder = _shared_visual_embedder
+
             default_signals_dir = (
                 (PATHS.experiments / "signals" / game) if multi else (PATHS.experiments / "signals")
             )
             signal_status = load_signals_to_state(
                 state=state,
                 signals_dir=(signals_dir or default_signals_dir),
-                text_embedder_model=text_embedder_model,
-                visual_embedder_model=visual_embedder_model,
                 reranker_path=reranker_path,
+                skip_embedders=True,  # already loaded globally
             )
+            # Mark embedder status based on shared instances
+            if _shared_text_embedder is not None:
+                signal_status["text_embedder"] = True
+            if _shared_visual_embedder is not None:
+                signal_status["visual_embedder"] = True
             state.signal_status = signal_status
 
             loaded_signals = [name for name, loaded in signal_status.items() if loaded]
@@ -598,6 +677,55 @@ async def lifespan(app: FastAPI):
             logger.debug(
                 "Failed to load additional signals for game=%s (optional)", game, exc_info=True
             )
+    # ------------------------------------------------------------------
+    # Startup summary with data provenance
+    # ------------------------------------------------------------------
+    def _file_provenance(p: Path | str) -> str:
+        """Return 'size mtime' string for a file path."""
+        try:
+            p = Path(p)
+            if not p.exists():
+                return "missing"
+            st = p.stat()
+            from datetime import datetime, timezone
+
+            mtime = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+            size_mb = st.st_size / 1e6
+            return f"{size_mb:.1f}MB {mtime}"
+        except OSError:
+            return "?"
+
+    for game in games:
+        state = get_state(game)
+        _parts = [f"game={game}"]
+        if state.embeddings is not None:
+            _parts.append(f"vocab={len(state.embeddings)}")
+            _parts.append(f"dim={state.embeddings.vector_size}")
+            emb_src = state.model_info.get("model_path", "?")
+            _parts.append(f"emb={Path(emb_src).name}({_file_provenance(emb_src)})")
+        if state.graph_data:
+            _adj = state.graph_data.get("adj")
+            _parts.append(f"graph_nodes={len(_adj) if _adj else 0}")
+            _pairs_src = state.model_info.get("pairs_path")
+            if _pairs_src:
+                _parts.append(f"pairs={Path(_pairs_src).name}({_file_provenance(_pairs_src)})")
+        if state.card_metadata:
+            _parts.append(f"metadata={len(state.card_metadata)}")
+        if state.banlist:
+            _parts.append(f"banlist_formats={len(state.banlist)}")
+        if state.archetypes:
+            _parts.append(f"archetypes={len(state.archetypes)}")
+        logger.info("Ready: %s", " ".join(_parts))
+    _elapsed = _time.monotonic() - _t_start
+    logger.info(
+        "Serving %d game(s) in %.1fs [default=%s, instruction_embedder=%s, visual_embedder=%s]",
+        len(games),
+        _elapsed,
+        default_game,
+        instruction_embedder_model,
+        visual_embedder_model,
+    )
+
     try:
         yield
     finally:
@@ -1242,7 +1370,7 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
             for r in results:
                 freq = state.deck_frequency.get(r.card, {}).get("total_decks", 0)
                 pop_ratio = freq / max_freq
-                r.similarity = round(0.5 * r.similarity + 0.5 * pop_ratio, 4)
+                r.similarity = round(min(1.0, max(0.0, 0.5 * r.similarity + 0.5 * pop_ratio)), 4)
             results.sort(key=lambda r: r.similarity, reverse=True)
         results = results[:k]
     else:  # pragma: no cover - shouldn't happen
@@ -1756,11 +1884,20 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
                     card_entries.append({"name": c, "count": 1})
                 elif isinstance(c, dict):
                     card_entries.append(c)
+            if len(card_entries) > _MAX_CARDS_PER_PARTITION:
+                raise HTTPException(
+                    status_code=422,
+                    detail=f"Too many cards in partition (max {_MAX_CARDS_PER_PARTITION})",
+                )
             # Remap legacy "Main" to game-specific partition name (e.g. "Main Deck" for YGO/Pokemon)
             actual_name = part_name
             if part_name.lower() == "main":
                 actual_name = _main_partition_name(game)
             partitions.append({"name": actual_name, "cards": card_entries})
+    if len(partitions) > _MAX_PARTITIONS:
+        raise HTTPException(
+            status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})"
+        )
     if partitions:
         return {"partitions": partitions}
     return deck

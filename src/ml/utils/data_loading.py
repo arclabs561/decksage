@@ -433,7 +433,7 @@ def load_card_attributes(
         import logging
 
         logger = logging.getLogger(__name__)
-        logger.info(f"Loading card attributes from {attrs_path}...")
+        logger.debug(f"Loading card attributes from {attrs_path}...")
         attrs_df = pd.read_csv(attrs_path)
 
         # Find name column
@@ -462,7 +462,7 @@ def load_card_attributes(
                 attrs["name"] = card_name
                 card_attributes[card_name] = attrs
 
-        logger.info(f"Loaded attributes for {len(card_attributes):,} cards")
+        logger.debug(f"Loaded attributes for {len(card_attributes):,} cards")
 
         # Optionally enrich with image URLs
         if enrich_with_images and (game is None or game == "magic"):

@@ -40,8 +40,8 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
 
     Returns: adjacency dict, edge weights dict
 
-    Principle: Don't reload graph in every experiment.
-    Default: Uses PATHS.incremental_graph_db (preferred) or PATHS.pairs_large (fallback)
+    Caching: parsed CSV results are cached as .pkl next to the source file.
+    The cache is invalidated when the CSV is newer than the pickle.
 
     Args:
         csv_path: Path to pairs CSV (legacy option)
@@ -49,13 +49,16 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
         game: Filter by game ("MTG", "PKM", "YGO")
         filter_lands: Filter out basic lands (Magic only)
     """
+    import logging
     import os
+    import pickle
     from pathlib import Path
 
     from ..utils.paths import PATHS
 
+    _logger = logging.getLogger(__name__)
+
     # Try graph database first (preferred), but only if csv_path not explicitly provided
-    # If csv_path is provided, skip graph DB to allow testing with custom CSVs
     use_graph_db = csv_path is None
 
     if use_graph_db:
@@ -67,7 +70,6 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                 from ..utils.shared_operations import load_graph_for_jaccard
 
                 adj = load_graph_for_jaccard(graph_db=Path(graph_db), game=game)
-                # Convert to weights dict (simplified - use presence as weight)
                 weights = {}
                 for c1 in adj:
                     for c2 in adj[c1]:
@@ -79,7 +81,6 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                         weights[(c2, c1)] = weights.get((c2, c1), 0) + 1
                 return adj, weights
             except Exception as e:
-                # Fall back to CSV if graph DB fails
                 import warnings
 
                 warnings.warn(
@@ -87,24 +88,17 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                     stacklevel=2,
                 )
 
-    # Fallback to CSV (legacy or explicit csv_path)
+    # Resolve CSV path
     if csv_path is None:
         csv_path = str(PATHS.pairs_large)
 
-    # Handle different working directories - try PATHS first
     if not os.path.exists(csv_path):
-        # Try PATHS canonical path
         if PATHS.pairs_large.exists():
             csv_path = str(PATHS.pairs_large)
         else:
-            # Fallback to alternatives (for backward compatibility)
             alternatives = [
                 str(PATHS.pairs_500),
-                "../../data/processed/pairs_large.csv",
-                "../data/processed/pairs_large.csv",
                 "data/processed/pairs_large.csv",
-                "../backend/pairs_large.csv",
-                "../../src/backend/pairs_large.csv",
             ]
             for alt in alternatives:
                 if os.path.exists(alt):
@@ -115,6 +109,28 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
                     f"Could not find pairs CSV. Tried: {[csv_path, *alternatives]}"
                 )
 
+    csv_p = Path(csv_path)
+    cache_suffix = f".{game}.pkl" if game else ".pkl"
+    cache_path = csv_p.with_suffix(csv_p.suffix + cache_suffix)
+
+    # Use pickle cache if it exists and is newer than the CSV
+    if cache_path.exists() and cache_path.stat().st_mtime >= csv_p.stat().st_mtime:
+        _logger.debug("Loading graph from cache: %s", cache_path)
+        try:
+            with open(cache_path, "rb") as f:
+                cached = pickle.load(f)
+            return cached["adj"], cached["weights"]
+        except (pickle.UnpicklingError, EOFError, KeyError, Exception) as exc:
+            _logger.warning(
+                "Corrupt graph cache %s (%s); deleting and rebuilding from CSV",
+                cache_path, exc,
+            )
+            try:
+                cache_path.unlink()
+            except OSError:
+                pass
+
+    # Parse CSV (slow path)
     df = pd.read_csv(csv_path)
 
     adj = defaultdict(set)
@@ -131,6 +147,16 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
 
         weights[(c1, c2)] = row.get("COUNT_MULTISET", 1)
         weights[(c2, c1)] = row.get("COUNT_MULTISET", 1)
+
+    adj = dict(adj)
+
+    # Write cache for next startup
+    try:
+        with open(cache_path, "wb") as f:
+            pickle.dump({"adj": adj, "weights": weights}, f, protocol=5)
+        _logger.info("Wrote graph cache: %s (%.1f MB)", cache_path, cache_path.stat().st_size / 1e6)
+    except OSError:
+        _logger.debug("Could not write graph cache: %s", cache_path, exc_info=True)
 
     return adj, weights
 
