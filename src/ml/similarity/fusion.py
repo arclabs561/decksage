@@ -19,7 +19,7 @@ Supports multiple aggregation methods:
 - isr: Inverse Square Root (slower rank decay, gives more weight to lower ranks)
 - weighted: Linear combination of normalized scores (requires weight tuning)
 - combsum: Sum of scores
-- combmnz: Sum of scores × overlap count (rewards agreement between modalities)
+- combmnz: Sum of scores x overlap count (rewards agreement between modalities)
 - combmax: Maximum of scores
 - combmin: Minimum of scores
 
@@ -32,11 +32,27 @@ NOTE: This is manual fusion. For optimal performance, consider using learned rer
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
+import math
+from dataclasses import dataclass, fields
 from typing import Any
 
 
 logger = logging.getLogger(__name__)
+
+# Canonical ordered list of signal names, matching FusionWeights field order.
+_SIGNAL_NAMES: tuple[str, ...] = (
+    "embed",
+    "jaccard",
+    "functional",
+    "text_embed",
+    "visual_embed",
+    "sideboard",
+    "temporal",
+    "gnn",
+    "pack_embed",
+    "archetype",
+    "format",
+)
 
 
 def _clamp01(x: float) -> float:
@@ -83,21 +99,14 @@ class FusionWeights:
     archetype: float = 0.0  # Archetype staples and co-occurrence (optional)
     format: float = 0.0  # Format-specific and cross-format patterns (optional)
 
+    def to_dict(self) -> dict[str, float]:
+        """Return weights as a dict keyed by signal name."""
+        return {f.name: getattr(self, f.name) for f in fields(self)}
+
     def normalized(self) -> FusionWeights:
         """Return normalized weights that sum to 1.0."""
-        total = (
-            self.embed
-            + self.jaccard
-            + self.functional
-            + self.text_embed
-            + self.visual_embed
-            + self.sideboard
-            + self.temporal
-            + self.gnn
-            + self.pack_embed
-            + self.archetype
-            + self.format
-        )
+        d = self.to_dict()
+        total = sum(d.values())
         if total <= 0.0:
             return FusionWeights(
                 embed=0.15,
@@ -112,19 +121,7 @@ class FusionWeights:
                 archetype=0.10,
                 format=0.10,
             )
-        return FusionWeights(
-            embed=self.embed / total,
-            jaccard=self.jaccard / total,
-            functional=self.functional / total,
-            text_embed=self.text_embed / total,
-            visual_embed=self.visual_embed / total,
-            sideboard=self.sideboard / total,
-            temporal=self.temporal / total,
-            gnn=self.gnn / total,
-            pack_embed=self.pack_embed / total,
-            archetype=self.archetype / total,
-            format=self.format / total,
-        )
+        return FusionWeights(**{k: v / total for k, v in d.items()})
 
 
 class WeightedLateFusion:
@@ -134,6 +131,23 @@ class WeightedLateFusion:
     Combines embedding, Jaccard, and functional tag similarities
     using configurable weights and aggregation methods.
     """
+
+    # Signal registry: signal_name -> method_name.
+    # "jaccard" is None because it is special-cased for optimization
+    # (pre-computed query_neighbors).
+    _SIGNAL_COMPUTERS: dict[str, str | None] = {
+        "embed": "_get_embedding_similarity",
+        "jaccard": None,
+        "functional": "_get_functional_tag_similarity",
+        "text_embed": "_get_text_embedding_similarity",
+        "visual_embed": "_get_visual_embedding_similarity",
+        "sideboard": "_get_sideboard_similarity",
+        "temporal": "_get_temporal_similarity",
+        "gnn": "_get_gnn_similarity",
+        "pack_embed": "_get_pack_embed_similarity",
+        "archetype": "_get_archetype_similarity",
+        "format": "_get_format_similarity",
+    }
 
     def __init__(
         self,
@@ -240,6 +254,8 @@ class WeightedLateFusion:
         self.candidate_topn = candidate_topn
         self.task_type = task_type
 
+        # Pre-compute the weights dict for use in aggregation hot path.
+        self._weights_dict = self.weights.to_dict()
 
     def _get_embedding_similarity(self, query: str, candidate: str) -> float:
         """Get embedding similarity between query and candidate."""
@@ -579,15 +595,17 @@ class WeightedLateFusion:
         except (ImportError, KeyError, TypeError):
             return 0.0
 
+    # ------------------------------------------------------------------
+    # Candidate gathering
+    # ------------------------------------------------------------------
+
     def _get_candidates(self, query: str) -> set[str]:
         """Get candidate set from all available modalities."""
         candidates = set()
 
-        # OPTIMIZATION: Limit 2-hop expansion to reduce candidate set size
         # From adjacency graph (1-hop only for speed)
         if self.adj and query in self.adj:
             candidates.update(self.adj[query])
-            # OPTIMIZATION: Skip 2-hop expansion in fast mode (too many candidates)
             # Only do 2-hop if we have very few 1-hop neighbors
             if len(self.adj[query]) < 10:
                 for neighbor in list(self.adj[query])[:5]:  # Limit 2-hop expansion
@@ -622,287 +640,100 @@ class WeightedLateFusion:
             except (AttributeError, KeyError, RuntimeError):
                 pass
 
-        # OPTIMIZATION: Skip text embeddings in candidate generation (too slow)
-        # Text embeddings are only used for similarity scoring, not candidate generation
-        # This avoids expensive LLM calls during candidate generation
+        # Text embeddings skipped in candidate generation (too slow).
 
         # Remove query itself
         candidates.discard(query)
         return candidates
+
+    # ------------------------------------------------------------------
+    # Similarity scoring
+    # ------------------------------------------------------------------
 
     def _compute_similarity_scores(
         self, query: str, candidates: set[str], task_type: str | None = None,
     ) -> dict[str, dict[str, float]]:
         """Compute similarity scores for all modalities (optimized)."""
         scores = {c: {} for c in candidates}
+        wd = self._weights_dict
 
-        # OPTIMIZATION: Pre-compute query neighbors for Jaccard (used for all candidates)
+        # Pre-compute query neighbors for Jaccard (used for all candidates)
         query_neighbors = self.adj.get(query, set()) if self.adj else set()
-        query_neighbors_len = len(query_neighbors)  # Pre-compute length for union calculation
+        query_neighbors_len = len(query_neighbors)
 
-        # OPTIMIZATION: Batch process candidates to reduce function call overhead
-        candidates_list = list(candidates)
+        # Determine which signals to compute (non-zero weight).
+        active_signals = [sig for sig in _SIGNAL_NAMES if wd[sig] > 0.0]
 
-        # OPTIMIZATION: Pre-compute which modalities to compute (avoid repeated conditionals)
-        compute_embed = self.weights.embed > 0.0
-        compute_jaccard = self.weights.jaccard > 0.0
-        compute_functional = self.weights.functional > 0.0
-        compute_text_embed = self.weights.text_embed > 0.0
-        compute_visual_embed = self.weights.visual_embed > 0.0
-        compute_sideboard = self.weights.sideboard > 0.0
-        compute_temporal = self.weights.temporal > 0.0
-        compute_gnn = self.weights.gnn > 0.0
-        compute_pack_embed = self.weights.pack_embed > 0.0
-
-        for candidate in candidates_list:
-            # OPTIMIZATION: Only compute modalities with non-zero weights
-            if compute_embed:
-                scores[candidate]["embed"] = self._get_embedding_similarity(query, candidate)
-            if compute_jaccard:
-                # OPTIMIZATION: Use pre-computed query_neighbors and optimized Jaccard
-                candidate_neighbors = self.adj.get(candidate, set()) if self.adj else set()
-                intersection = len(query_neighbors & candidate_neighbors)
-                # OPTIMIZATION: Faster union calculation: |A ∪ B| = |A| + |B| - |A ∩ B|
-                union = query_neighbors_len + len(candidate_neighbors) - intersection
-                scores[candidate]["jaccard"] = (
-                    float(intersection) / float(union) if union > 0 else 0.0
-                )
-            if compute_functional:
-                scores[candidate]["functional"] = self._get_functional_tag_similarity(
-                    query, candidate
-                )
-            if compute_text_embed:
-                scores[candidate]["text_embed"] = self._get_text_embedding_similarity(
-                    query, candidate, task_type=task_type,
-                )
-            if compute_visual_embed:
-                scores[candidate]["visual_embed"] = self._get_visual_embedding_similarity(
-                    query, candidate
-                )
-            if compute_sideboard:
-                scores[candidate]["sideboard"] = self._get_sideboard_similarity(query, candidate)
-            if compute_temporal:
-                scores[candidate]["temporal"] = self._get_temporal_similarity(query, candidate)
-            if compute_gnn:
-                scores[candidate]["gnn"] = self._get_gnn_similarity(query, candidate)
-            if compute_pack_embed:
-                scores[candidate]["pack_embed"] = self._get_pack_embed_similarity(
-                    query, candidate
-                )
+        for candidate in candidates:
+            for sig in active_signals:
+                if sig == "jaccard":
+                    # Optimized inline Jaccard using pre-computed query_neighbors
+                    candidate_neighbors = self.adj.get(candidate, set()) if self.adj else set()
+                    intersection = len(query_neighbors & candidate_neighbors)
+                    union = query_neighbors_len + len(candidate_neighbors) - intersection
+                    scores[candidate]["jaccard"] = (
+                        float(intersection) / float(union) if union > 0 else 0.0
+                    )
+                elif sig == "text_embed":
+                    # text_embed needs the task_type kwarg
+                    scores[candidate]["text_embed"] = self._get_text_embedding_similarity(
+                        query, candidate, task_type=task_type,
+                    )
+                else:
+                    method = getattr(self, self._SIGNAL_COMPUTERS[sig])
+                    scores[candidate][sig] = method(query, candidate)
 
         return scores
 
-    def _aggregate_weighted(self, scores: dict[str, float]) -> float:
-        """Weighted linear combination (optimized with vectorized operations)."""
-        # OPTIMIZATION: Pre-compute weight-score pairs for enabled modalities
-        # This avoids repeated dict lookups and conditionals
-        weight_score_pairs = []
-        if self.weights.embed > 0.0 and "embed" in scores:
-            weight_score_pairs.append((self.weights.embed, scores["embed"]))
-        if self.weights.jaccard > 0.0 and "jaccard" in scores:
-            weight_score_pairs.append((self.weights.jaccard, scores["jaccard"]))
-        if self.weights.functional > 0.0 and "functional" in scores:
-            weight_score_pairs.append((self.weights.functional, scores["functional"]))
-        if self.weights.text_embed > 0.0 and "text_embed" in scores:
-            weight_score_pairs.append((self.weights.text_embed, scores["text_embed"]))
-        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
-            weight_score_pairs.append((self.weights.visual_embed, scores["visual_embed"]))
-        if self.weights.sideboard > 0.0 and "sideboard" in scores:
-            weight_score_pairs.append((self.weights.sideboard, scores["sideboard"]))
-        if self.weights.temporal > 0.0 and "temporal" in scores:
-            weight_score_pairs.append((self.weights.temporal, scores["temporal"]))
-        if self.weights.gnn > 0.0 and "gnn" in scores:
-            weight_score_pairs.append((self.weights.gnn, scores["gnn"]))
-        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
-            weight_score_pairs.append((self.weights.pack_embed, scores["pack_embed"]))
-        if self.weights.archetype > 0.0 and "archetype" in scores:
-            weight_score_pairs.append((self.weights.archetype, scores["archetype"]))
-        if self.weights.format > 0.0 and "format" in scores:
-            weight_score_pairs.append((self.weights.format, scores["format"]))
+    # ------------------------------------------------------------------
+    # Aggregation
+    # ------------------------------------------------------------------
 
-        # OPTIMIZATION: Use sum() with generator for faster computation
-        return sum(w * s for w, s in weight_score_pairs)
+    def _active_pairs(self, data: dict[str, float]) -> list[tuple[str, float, float]]:
+        """Return (signal, weight, value) triples for signals present in *data* with weight > 0."""
+        wd = self._weights_dict
+        return [
+            (sig, wd[sig], data[sig])
+            for sig in _SIGNAL_NAMES
+            if wd[sig] > 0.0 and sig in data
+        ]
 
-    def _aggregate_rrf(self, ranks: dict[str, int]) -> float:
-        """Reciprocal Rank Fusion."""
-        total = 0.0
-        if self.weights.embed > 0.0 and "embed" in ranks:
-            total += self.weights.embed / (self.rrf_k + ranks["embed"])
-        if self.weights.jaccard > 0.0 and "jaccard" in ranks:
-            total += self.weights.jaccard / (self.rrf_k + ranks["jaccard"])
-        if self.weights.functional > 0.0 and "functional" in ranks:
-            total += self.weights.functional / (self.rrf_k + ranks["functional"])
-        if self.weights.text_embed > 0.0 and "text_embed" in ranks:
-            total += self.weights.text_embed / (self.rrf_k + ranks["text_embed"])
-        if self.weights.visual_embed > 0.0 and "visual_embed" in ranks:
-            total += self.weights.visual_embed / (self.rrf_k + ranks["visual_embed"])
-        if self.weights.sideboard > 0.0 and "sideboard" in ranks:
-            total += self.weights.sideboard / (self.rrf_k + ranks["sideboard"])
-        if self.weights.temporal > 0.0 and "temporal" in ranks:
-            total += self.weights.temporal / (self.rrf_k + ranks["temporal"])
-        if self.weights.gnn > 0.0 and "gnn" in ranks:
-            total += self.weights.gnn / (self.rrf_k + ranks["gnn"])
-        if self.weights.pack_embed > 0.0 and "pack_embed" in ranks:
-            total += self.weights.pack_embed / (self.rrf_k + ranks["pack_embed"])
-        if self.weights.archetype > 0.0 and "archetype" in ranks:
-            total += self.weights.archetype / (self.rrf_k + ranks["archetype"])
-        if self.weights.format > 0.0 and "format" in ranks:
-            total += self.weights.format / (self.rrf_k + ranks["format"])
-        return total
+    def _aggregate(self, data: dict[str, float], mode: str) -> float:
+        """Dispatch aggregation by mode.
 
-    def _aggregate_isr(self, ranks: dict[str, int]) -> float:
-        """Inverse Square Root rank fusion (slower decay than RRF, gives more weight to lower ranks)."""
-        import math
-
-        total = 0.0
-        if self.weights.embed > 0.0 and "embed" in ranks:
-            total += self.weights.embed / math.sqrt(self.rrf_k + ranks["embed"])
-        if self.weights.jaccard > 0.0 and "jaccard" in ranks:
-            total += self.weights.jaccard / math.sqrt(self.rrf_k + ranks["jaccard"])
-        if self.weights.functional > 0.0 and "functional" in ranks:
-            total += self.weights.functional / math.sqrt(self.rrf_k + ranks["functional"])
-        if self.weights.text_embed > 0.0 and "text_embed" in ranks:
-            total += self.weights.text_embed / math.sqrt(self.rrf_k + ranks["text_embed"])
-        if self.weights.visual_embed > 0.0 and "visual_embed" in ranks:
-            total += self.weights.visual_embed / math.sqrt(self.rrf_k + ranks["visual_embed"])
-        if self.weights.sideboard > 0.0 and "sideboard" in ranks:
-            total += self.weights.sideboard / math.sqrt(self.rrf_k + ranks["sideboard"])
-        if self.weights.temporal > 0.0 and "temporal" in ranks:
-            total += self.weights.temporal / math.sqrt(self.rrf_k + ranks["temporal"])
-        if self.weights.gnn > 0.0 and "gnn" in ranks:
-            total += self.weights.gnn / math.sqrt(self.rrf_k + ranks["gnn"])
-        if self.weights.pack_embed > 0.0 and "pack_embed" in ranks:
-            total += self.weights.pack_embed / math.sqrt(self.rrf_k + ranks["pack_embed"])
-        if self.weights.archetype > 0.0 and "archetype" in ranks:
-            total += self.weights.archetype / math.sqrt(self.rrf_k + ranks["archetype"])
-        if self.weights.format > 0.0 and "format" in ranks:
-            total += self.weights.format / math.sqrt(self.rrf_k + ranks["format"])
-        return total
-
-    def _aggregate_combsum(self, scores: dict[str, float]) -> float:
-        """Sum of scores."""
-        total = 0.0
-        if self.weights.embed > 0.0 and "embed" in scores:
-            total += self.weights.embed * scores["embed"]
-        if self.weights.jaccard > 0.0 and "jaccard" in scores:
-            total += self.weights.jaccard * scores["jaccard"]
-        if self.weights.functional > 0.0 and "functional" in scores:
-            total += self.weights.functional * scores["functional"]
-        if self.weights.text_embed > 0.0 and "text_embed" in scores:
-            total += self.weights.text_embed * scores["text_embed"]
-        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
-            total += self.weights.visual_embed * scores["visual_embed"]
-        if self.weights.sideboard > 0.0 and "sideboard" in scores:
-            total += self.weights.sideboard * scores["sideboard"]
-        if self.weights.temporal > 0.0 and "temporal" in scores:
-            total += self.weights.temporal * scores["temporal"]
-        if self.weights.gnn > 0.0 and "gnn" in scores:
-            total += self.weights.gnn * scores["gnn"]
-        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
-            total += self.weights.pack_embed * scores["pack_embed"]
-        if self.weights.archetype > 0.0 and "archetype" in scores:
-            total += self.weights.archetype * scores["archetype"]
-        if self.weights.format > 0.0 and "format" in scores:
-            total += self.weights.format * scores["format"]
-        return total
-
-    def _aggregate_combmnz(self, scores: dict[str, float]) -> float:
-        """Combined Multiple Normalized Z-scores (rewards agreement between modalities).
-
-        Formula: (Σ normalized_scores) × overlap_count
-        Where overlap_count is the number of modalities that have scores for this candidate.
+        For rank-based modes (rrf, isr) *data* values are integer ranks.
+        For score-based modes (weighted, combsum, combmnz, combmax, combmin) *data* values are scores.
         """
-        # Count how many modalities have scores (overlap count)
-        overlap_count = sum(
-            1
-            for key, weight in [
-                ("embed", self.weights.embed),
-                ("jaccard", self.weights.jaccard),
-                ("functional", self.weights.functional),
-                ("text_embed", self.weights.text_embed),
-                ("visual_embed", self.weights.visual_embed),
-                ("sideboard", self.weights.sideboard),
-                ("temporal", self.weights.temporal),
-                ("gnn", self.weights.gnn),
-                ("pack_embed", self.weights.pack_embed),
-                ("archetype", self.weights.archetype),
-                ("format", self.weights.format),
-            ]
-            if weight > 0.0 and key in scores
-        )
+        pairs = self._active_pairs(data)
+        if not pairs:
+            return 0.0
 
-        # Sum of normalized scores (same as CombSUM)
-        score_sum = self._aggregate_combsum(scores)
+        if mode == "weighted" or mode == "combsum":
+            # Both weighted and combsum use w * score in the original code.
+            return sum(w * v for _, w, v in pairs)
 
-        # Multiply by overlap count to reward agreement
-        return score_sum * overlap_count
+        if mode == "rrf":
+            return sum(w / (self.rrf_k + v) for _, w, v in pairs)
 
-    def _aggregate_combmax(self, scores: dict[str, float]) -> float:
-        """Maximum of scores (optimized)."""
-        # OPTIMIZATION: Collect enabled scores and use max() once
-        enabled_scores = []
-        if self.weights.embed > 0.0 and "embed" in scores:
-            enabled_scores.append(scores["embed"])
-        if self.weights.jaccard > 0.0 and "jaccard" in scores:
-            enabled_scores.append(scores["jaccard"])
-        if self.weights.functional > 0.0 and "functional" in scores:
-            enabled_scores.append(scores["functional"])
-        if self.weights.text_embed > 0.0 and "text_embed" in scores:
-            enabled_scores.append(scores["text_embed"])
-        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
-            enabled_scores.append(scores["visual_embed"])
-        if self.weights.sideboard > 0.0 and "sideboard" in scores:
-            enabled_scores.append(scores["sideboard"])
-        if self.weights.temporal > 0.0 and "temporal" in scores:
-            enabled_scores.append(scores["temporal"])
-        if self.weights.gnn > 0.0 and "gnn" in scores:
-            enabled_scores.append(scores["gnn"])
-        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
-            enabled_scores.append(scores["pack_embed"])
-        if self.weights.archetype > 0.0 and "archetype" in scores:
-            enabled_scores.append(scores["archetype"])
-        if self.weights.format > 0.0 and "format" in scores:
-            enabled_scores.append(scores["format"])
-        return max(enabled_scores) if enabled_scores else 0.0
+        if mode == "isr":
+            return sum(w / math.sqrt(self.rrf_k + v) for _, w, v in pairs)
 
-    def _aggregate_combmin(self, scores: dict[str, float]) -> float:
-        """Minimum of scores."""
-        min_score = 1.0
-        found = False
-        if self.weights.embed > 0.0 and "embed" in scores:
-            min_score = min(min_score, scores["embed"])
-            found = True
-        if self.weights.jaccard > 0.0 and "jaccard" in scores:
-            min_score = min(min_score, scores["jaccard"])
-            found = True
-        if self.weights.functional > 0.0 and "functional" in scores:
-            min_score = min(min_score, scores["functional"])
-            found = True
-        if self.weights.text_embed > 0.0 and "text_embed" in scores:
-            min_score = min(min_score, scores["text_embed"])
-            found = True
-        if self.weights.visual_embed > 0.0 and "visual_embed" in scores:
-            min_score = min(min_score, scores["visual_embed"])
-            found = True
-        if self.weights.sideboard > 0.0 and "sideboard" in scores:
-            min_score = min(min_score, scores["sideboard"])
-            found = True
-        if self.weights.temporal > 0.0 and "temporal" in scores:
-            min_score = min(min_score, scores["temporal"])
-            found = True
-        if self.weights.gnn > 0.0 and "gnn" in scores:
-            min_score = min(min_score, scores["gnn"])
-            found = True
-        if self.weights.pack_embed > 0.0 and "pack_embed" in scores:
-            min_score = min(min_score, scores["pack_embed"])
-            found = True
-        if self.weights.archetype > 0.0 and "archetype" in scores:
-            min_score = min(min_score, scores["archetype"])
-            found = True
-        if self.weights.format > 0.0 and "format" in scores:
-            min_score = min(min_score, scores["format"])
-            found = True
-        return min_score if found else 0.0
+        if mode == "combmnz":
+            score_sum = sum(w * v for _, w, v in pairs)
+            return score_sum * len(pairs)
+
+        if mode == "combmax":
+            return max(v for _, _, v in pairs)
+
+        if mode == "combmin":
+            return min(v for _, _, v in pairs)
+
+        # Default fallback: weighted
+        return sum(w * v for _, w, v in pairs)
+
+    # ------------------------------------------------------------------
+    # MMR diversification
+    # ------------------------------------------------------------------
 
     def _apply_mmr(
         self, candidates: list[str], scores: dict[str, float], k: int
@@ -950,6 +781,10 @@ class WeightedLateFusion:
 
         return [(c, scores[c]) for c in selected]
 
+    # ------------------------------------------------------------------
+    # Public API
+    # ------------------------------------------------------------------
+
     def similar(
         self, query: str, k: int = 10, task_type: str | None = None
     ) -> list[tuple[str, float]]:
@@ -980,143 +815,48 @@ class WeightedLateFusion:
         )
 
         # Aggregate scores based on method
-        if self.aggregator == "rrf" or self.aggregator == "isr":
-            # For RRF, we need ranks instead of scores
-            # Build ranked lists per modality
-            embed_ranked = []
-            jaccard_ranked = []
-            functional_ranked = []
-            text_embed_ranked = []
-            visual_embed_ranked = []
-            sideboard_ranked = []
-            temporal_ranked = []
-            gnn_ranked = []
-            pack_embed_ranked = []
-            archetype_ranked = []
-            format_ranked = []
+        if self.aggregator in ("rrf", "isr"):
+            # For rank-based aggregators, convert scores to ranks per modality.
+            # Collect all active signal names present in scores.
+            active_sigs = [
+                sig for sig in _SIGNAL_NAMES
+                if self._weights_dict[sig] > 0.0
+            ]
 
+            # Build per-signal ranked lists and convert to rank dicts.
+            per_signal_ranked: dict[str, list[tuple[str, float]]] = {
+                sig: [] for sig in active_sigs
+            }
             for candidate in candidates:
-                if "embed" in modality_scores[candidate]:
-                    embed_ranked.append((candidate, modality_scores[candidate]["embed"]))
-                if "jaccard" in modality_scores[candidate]:
-                    jaccard_ranked.append((candidate, modality_scores[candidate]["jaccard"]))
-                if "functional" in modality_scores[candidate]:
-                    functional_ranked.append(
-                        (candidate, modality_scores[candidate]["functional"])
-                    )
-                if "text_embed" in modality_scores[candidate]:
-                    text_embed_ranked.append(
-                        (candidate, modality_scores[candidate]["text_embed"])
-                    )
-                if "visual_embed" in modality_scores[candidate]:
-                    visual_embed_ranked.append(
-                        (candidate, modality_scores[candidate]["visual_embed"])
-                    )
-                if "sideboard" in modality_scores[candidate]:
-                    sideboard_ranked.append(
-                        (candidate, modality_scores[candidate]["sideboard"])
-                    )
-                if "temporal" in modality_scores[candidate]:
-                    temporal_ranked.append((candidate, modality_scores[candidate]["temporal"]))
-                if "gnn" in modality_scores[candidate]:
-                    gnn_ranked.append((candidate, modality_scores[candidate]["gnn"]))
-                if "pack_embed" in modality_scores[candidate]:
-                    pack_embed_ranked.append(
-                        (candidate, modality_scores[candidate]["pack_embed"])
-                    )
-                if "archetype" in modality_scores[candidate]:
-                    archetype_ranked.append(
-                        (candidate, modality_scores[candidate]["archetype"])
-                    )
-                if "format" in modality_scores[candidate]:
-                    format_ranked.append((candidate, modality_scores[candidate]["format"]))
+                cs = modality_scores[candidate]
+                for sig in active_sigs:
+                    if sig in cs:
+                        per_signal_ranked[sig].append((candidate, cs[sig]))
 
-            embed_ranked.sort(key=lambda x: x[1], reverse=True)
-            jaccard_ranked.sort(key=lambda x: x[1], reverse=True)
-            functional_ranked.sort(key=lambda x: x[1], reverse=True)
-            text_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-            visual_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-            sideboard_ranked.sort(key=lambda x: x[1], reverse=True)
-            temporal_ranked.sort(key=lambda x: x[1], reverse=True)
-            gnn_ranked.sort(key=lambda x: x[1], reverse=True)
-            pack_embed_ranked.sort(key=lambda x: x[1], reverse=True)
-            archetype_ranked.sort(key=lambda x: x[1], reverse=True)
-            format_ranked.sort(key=lambda x: x[1], reverse=True)
+            # Sort each signal's list descending by score.
+            for sig in active_sigs:
+                per_signal_ranked[sig].sort(key=lambda x: x[1], reverse=True)
 
-            # Build rank dicts
-            ranks = {}
-            for rank, (candidate, _) in enumerate(embed_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["embed"] = rank
-            for rank, (candidate, _) in enumerate(jaccard_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["jaccard"] = rank
-            for rank, (candidate, _) in enumerate(functional_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["functional"] = rank
-            for rank, (candidate, _) in enumerate(text_embed_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["text_embed"] = rank
-            for rank, (candidate, _) in enumerate(visual_embed_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["visual_embed"] = rank
-            for rank, (candidate, _) in enumerate(sideboard_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["sideboard"] = rank
-            for rank, (candidate, _) in enumerate(temporal_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["temporal"] = rank
-            for rank, (candidate, _) in enumerate(gnn_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["gnn"] = rank
-            for rank, (candidate, _) in enumerate(pack_embed_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["pack_embed"] = rank
-            for rank, (candidate, _) in enumerate(archetype_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["archetype"] = rank
-            for rank, (candidate, _) in enumerate(format_ranked, start=1):
-                if candidate not in ranks:
-                    ranks[candidate] = {}
-                ranks[candidate]["format"] = rank
+            # Build per-candidate rank dicts.
+            ranks: dict[str, dict[str, int]] = {}
+            for sig in active_sigs:
+                for rank, (cand, _) in enumerate(per_signal_ranked[sig], start=1):
+                    if cand not in ranks:
+                        ranks[cand] = {}
+                    ranks[cand][sig] = rank
 
-            # Compute RRF or ISR scores
-            fused_scores = {}
-            for candidate in candidates:
-                candidate_ranks = ranks.get(candidate, {})
-                if self.aggregator == "rrf":
-                    fused_scores[candidate] = self._aggregate_rrf(candidate_ranks)
-                elif self.aggregator == "isr":
-                    fused_scores[candidate] = self._aggregate_isr(candidate_ranks)
+            # Compute fused scores.
+            fused_scores = {
+                cand: self._aggregate(ranks.get(cand, {}), self.aggregator)
+                for cand in candidates
+            }
 
         else:
-            # For other aggregators, use scores directly
-            fused_scores = {}
-            for candidate in candidates:
-                candidate_scores = modality_scores[candidate]
-                if self.aggregator == "weighted":
-                    fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
-                elif self.aggregator == "combsum":
-                    fused_scores[candidate] = self._aggregate_combsum(candidate_scores)
-                elif self.aggregator == "combmnz":
-                    fused_scores[candidate] = self._aggregate_combmnz(candidate_scores)
-                elif self.aggregator == "combmax":
-                    fused_scores[candidate] = self._aggregate_combmax(candidate_scores)
-                elif self.aggregator == "combmin":
-                    fused_scores[candidate] = self._aggregate_combmin(candidate_scores)
-                else:
-                    # Default to weighted
-                    fused_scores[candidate] = self._aggregate_weighted(candidate_scores)
+            # Score-based aggregators use modality_scores directly.
+            fused_scores = {
+                cand: self._aggregate(modality_scores[cand], self.aggregator)
+                for cand in candidates
+            }
 
         # Sort by score
         sorted_candidates = sorted(
@@ -1164,18 +904,7 @@ class WeightedLateFusion:
                 modality_scores = self._compute_similarity_scores(query, {candidate})
                 if candidate in modality_scores:
                     candidate_modality = modality_scores[candidate]
-                    if self.aggregator == "weighted":
-                        score = self._aggregate_weighted(candidate_modality)
-                    elif self.aggregator == "combsum":
-                        score = self._aggregate_combsum(candidate_modality)
-                    elif self.aggregator == "combmnz":
-                        score = self._aggregate_combmnz(candidate_modality)
-                    elif self.aggregator == "combmax":
-                        score = self._aggregate_combmax(candidate_modality)
-                    elif self.aggregator == "combmin":
-                        score = self._aggregate_combmin(candidate_modality)
-                    else:
-                        score = self._aggregate_weighted(candidate_modality)
+                    score = self._aggregate(candidate_modality, self.aggregator)
                     scores.append(score)
 
             if scores:
