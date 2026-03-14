@@ -193,6 +193,7 @@ class SuggestedAction(BaseModel):
 class SuggestActionsResponse(BaseModel):
     actions: list[SuggestedAction]
     metrics: dict | None = None
+    feedback_url: str | None = Field(None, description="URL for submitting feedback on suggestions")
 
 
 class CompleteRequest(BaseModel):
@@ -206,7 +207,7 @@ class CompleteRequest(BaseModel):
     strict_size: bool | None = None
     check_legality: bool | None = None
     method: str = "greedy"  # "greedy", "beam", or "ot"
-    beam_width: int = 5  # For beam search
+    beam_width: int = Field(5, ge=1, le=50)  # For beam search
     # OT-specific parameters
     sinkhorn_reg: float = 0.01  # Entropic regularization for OT
     embedding_weight: float = 0.3  # Cost weight for embedding distance

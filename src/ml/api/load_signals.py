@@ -64,6 +64,7 @@ def load_signals_to_state(
     format_cooccur_path: Path | str | None = None,
     cross_format_path: Path | str | None = None,
     reranker_path: Path | str | None = None,
+    skip_embedders: bool = False,
 ) -> dict[str, bool]:
     """
     Load pre-computed signals into API state.
@@ -78,6 +79,8 @@ def load_signals_to_state(
         archetype_cooccur_path: Path to archetype co-occurrence JSON
         format_cooccur_path: Path to format co-occurrence JSON
         cross_format_path: Path to cross-format patterns JSON
+        skip_embedders: Skip loading text/visual embedders (when shared instances
+            are assigned externally by the caller)
 
     Returns:
         Dict mapping signal name -> is_loaded (bool)
@@ -111,7 +114,7 @@ def load_signals_to_state(
                 state.sideboard_cooccurrence = json.load(f)
             status["sideboard"] = True
             logger.info(
-                f"✓ Loaded sideboard co-occurrence: {len(state.sideboard_cooccurrence)} cards"
+                f"[ok] Loaded sideboard co-occurrence: {len(state.sideboard_cooccurrence)} cards"
             )
         except Exception as e:
             logger.warning(f"✗ Failed to load sideboard signal: {e}")
@@ -133,7 +136,7 @@ def load_signals_to_state(
                 state.temporal_cooccurrence = json.load(f)
             status["temporal"] = True
             logger.info(
-                f"✓ Loaded temporal co-occurrence: {len(state.temporal_cooccurrence)} months"
+                f"[ok] Loaded temporal co-occurrence: {len(state.temporal_cooccurrence)} months"
             )
         except Exception as e:
             logger.warning(f"✗ Failed to load temporal signal: {e}")
@@ -158,7 +161,7 @@ def load_signals_to_state(
         try:
             state.gnn_embedder = CardGNNEmbedder(model_path=gnn_path)
             status["gnn"] = True
-            logger.info(f"✓ Loaded GNN embeddings: {gnn_path}")
+            logger.info(f"[ok] Loaded GNN embeddings: {gnn_path}")
         except Exception as e:
             logger.warning(f"✗ Failed to load GNN embeddings: {e}")
             state.gnn_embedder = None
@@ -166,64 +169,65 @@ def load_signals_to_state(
         logger.debug(f"✗ GNN embeddings not found or not available: {gnn_path}")
         state.gnn_embedder = None
 
-    # Initialize text embedder - prefer instruction-tuned (hybrid system)
-    import os
+    # Initialize text/visual embedders (skipped when caller provides shared instances)
+    if not skip_embedders:
+        import os
 
-    instruction_model = os.getenv("INSTRUCTION_EMBEDDER_MODEL", "intfloat/e5-base-v2")
+        instruction_model = os.getenv("INSTRUCTION_EMBEDDER_MODEL", "intfloat/e5-base-v2")
 
-    # Try instruction-tuned embedder first (better for new cards)
-    if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
-        try:
-            state.text_embedder = InstructionTunedCardEmbedder(model_name=instruction_model)
-            status["text_embedder"] = True
-            logger.info(f"✓ Initialized instruction-tuned embedder: {instruction_model}")
-        except Exception as e:
-            logger.warning(f"✗ Failed to initialize instruction-tuned embedder: {e}")
-            # Fallback to regular text embedder
-            if text_embedder_model and HAS_TEXT_EMBED:
-                try:
-                    state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
-                    status["text_embedder"] = True
-                    logger.info(f"✓ Initialized fallback text embedder: {text_embedder_model}")
-                except Exception as e2:
-                    logger.warning(f"✗ Failed to initialize fallback text embedder: {e2}")
+        if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
+            try:
+                state.text_embedder = InstructionTunedCardEmbedder(model_name=instruction_model)
+                status["text_embedder"] = True
+                logger.info("[ok] Initialized instruction-tuned embedder: %s", instruction_model)
+            except Exception as e:
+                logger.warning("Failed to initialize instruction-tuned embedder: %s", e)
+                if text_embedder_model and HAS_TEXT_EMBED:
+                    try:
+                        state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
+                        status["text_embedder"] = True
+                        logger.info("[ok] Initialized fallback text embedder: %s", text_embedder_model)
+                    except Exception as e2:
+                        logger.warning("Failed to initialize fallback text embedder: %s", e2)
+                        state.text_embedder = None
+                else:
                     state.text_embedder = None
-            else:
+        elif text_embedder_model and HAS_TEXT_EMBED:
+            try:
+                state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
+                status["text_embedder"] = True
+                logger.info("[ok] Initialized text embedder: %s", text_embedder_model)
+            except Exception as e:
+                logger.warning("Failed to initialize text embedder: %s", e)
                 state.text_embedder = None
-    elif text_embedder_model and HAS_TEXT_EMBED:
-        # Fallback to regular text embedder if instruction-tuned not available
-        try:
-            state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
-            status["text_embedder"] = True
-            logger.info(f"✓ Initialized text embedder: {text_embedder_model}")
-        except Exception as e:
-            logger.warning(f"✗ Failed to initialize text embedder: {e}")
+        elif not HAS_TEXT_EMBED and not HAS_INSTRUCTION_EMBED:
+            logger.debug("Text embeddings not available (sentence-transformers not installed)")
             state.text_embedder = None
-    elif not HAS_TEXT_EMBED and not HAS_INSTRUCTION_EMBED:
-        logger.debug("✗ Text embeddings not available (sentence-transformers not installed)")
-        state.text_embedder = None
 
-    # Initialize visual embedder
-    import os
+        if visual_embedder_model is None:
+            visual_embedder_model = os.getenv(
+                "VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224"
+            )
 
-    if visual_embedder_model is None:
-        visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
-
-    if visual_embedder_model and HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
-        try:
-            state.visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
-            status["visual_embedder"] = True
-            logger.info(f"✓ Initialized visual embedder: {visual_embedder_model}")
-        except Exception as e:
-            logger.warning(f"✗ Failed to initialize visual embedder: {e}")
+        if visual_embedder_model and HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
+            try:
+                state.visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
+                status["visual_embedder"] = True
+                logger.info("[ok] Initialized visual embedder: %s", visual_embedder_model)
+            except Exception as e:
+                logger.warning("Failed to initialize visual embedder: %s", e)
+                state.visual_embedder = None
+        elif not HAS_VISUAL_EMBED:
+            logger.debug(
+                "Visual embeddings not available (sentence-transformers or pillow not installed)"
+            )
             state.visual_embedder = None
-    elif not HAS_VISUAL_EMBED:
-        logger.debug(
-            "✗ Visual embeddings not available (sentence-transformers or pillow not installed)"
-        )
-        state.visual_embedder = None
+        else:
+            state.visual_embedder = None
     else:
-        state.visual_embedder = None
+        # Embedders managed externally; mark status based on what's on state
+        status["text_embedder"] = state.text_embedder is not None
+        status["visual_embedder"] = state.visual_embedder is not None
 
     # Load archetype signals
     if archetype_staples_path is None:
@@ -244,7 +248,7 @@ def load_signals_to_state(
                 state.archetype_cooccurrence = json.load(f)
             status["archetype"] = True
             logger.info(
-                f"✓ Loaded archetype signals: {len(state.archetype_staples)} cards with staples, {len(state.archetype_cooccurrence)} cards with co-occurrence"
+                f"[ok] Loaded archetype signals: {len(state.archetype_staples)} cards with staples, {len(state.archetype_cooccurrence)} cards with co-occurrence"
             )
         except Exception as e:
             logger.warning(f"✗ Failed to load archetype signals: {e}")
@@ -276,7 +280,7 @@ def load_signals_to_state(
                 state.cross_format_patterns = json.load(f)
             status["format"] = True
             logger.info(
-                f"✓ Loaded format signals: {len(state.format_cooccurrence)} formats, {len(state.cross_format_patterns)} cards with cross-format patterns"
+                f"[ok] Loaded format signals: {len(state.format_cooccurrence)} formats, {len(state.cross_format_patterns)} cards with cross-format patterns"
             )
         except Exception as e:
             logger.warning(f"✗ Failed to load format signals: {e}")
@@ -287,15 +291,17 @@ def load_signals_to_state(
         state.format_cooccurrence = None
         state.cross_format_patterns = None
 
-    # Log summary
+    # Summary (caller logs the per-game summary; keep debug-level here)
     loaded_count = sum(status.values())
     total_count = len(status)
     loaded_signals = [name for name, loaded in status.items() if loaded]
     missing_signals = [name for name, loaded in status.items() if not loaded]
 
-    logger.info(
-        f"Signal loading complete: {loaded_count}/{total_count} signals loaded. "
-        f"Available: {', '.join(loaded_signals) if loaded_signals else 'none'}"
+    logger.debug(
+        "Signal loading: %d/%d loaded. Available: %s",
+        loaded_count,
+        total_count,
+        ", ".join(loaded_signals) if loaded_signals else "none",
     )
     if missing_signals:
         logger.debug(f"Missing signals: {', '.join(missing_signals)}")
@@ -315,7 +321,7 @@ def load_signals_to_state(
             reranker.load(reranker_path)
             state.reranker = reranker
             status["reranker"] = True
-            logger.info(f"✓ Loaded reranker from {reranker_path}")
+            logger.info(f"[ok] Loaded reranker from {reranker_path}")
         except Exception as e:
             logger.warning(f"✗ Failed to load reranker from {reranker_path}: {e}")
             status["reranker"] = False

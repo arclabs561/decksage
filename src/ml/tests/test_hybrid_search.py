@@ -240,8 +240,8 @@ class TestHybridSearchSearch:
         bolt_results = [r for r in results if r.card_name == "Lightning Bolt"]
         assert len(bolt_results) == 1
         assert bolt_results[0].source == "hybrid"
-        # text contribution: 0.8 * 0.5 = 0.4, vector: (1.0 - 0.2) * 0.5 = 0.4
-        assert bolt_results[0].score == pytest.approx(0.8, abs=0.01)
+        # text contribution: 0.8 * 0.5 = 0.4, vector: 0.2 * 0.5 = 0.1
+        assert bolt_results[0].score == pytest.approx(0.5, abs=0.01)
 
     def test_text_weight_one_only_meili(self):
         """text_weight=1.0, vector_weight=0.0 -> only meilisearch queried."""

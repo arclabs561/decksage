@@ -298,10 +298,26 @@ pipeline-train:
     #!/usr/bin/env bash
     . .venv/bin/activate && cd src/ml && python card_similarity_pecan.py --input ../backend/pairs.csv
 
-# Start API server
-serve embeddings='src/ml/vectors.kv' pairs='src/backend/pairs.csv':
+# Start API + MeiliSearch + Qdrant (Ctrl-C stops everything)
+serve:
     #!/usr/bin/env bash
-    . .venv/bin/activate && EMBEDDINGS_PATH={{embeddings}} PAIRS_PATH={{pairs}} uv run uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000
+    set -e
+    # Stop any containers holding our ports
+    for port in 7700 6333; do
+        cid=$(docker ps -q --filter "publish=$port" 2>/dev/null)
+        if [ -n "$cid" ]; then
+            name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's|^/||')
+            echo "Stopping $name (port $port)..."
+            docker stop "$cid" >/dev/null
+        fi
+    done
+    exec docker compose up --build
+
+# Start API server without Docker (deps must be running separately)
+serve-local:
+    #!/usr/bin/env bash
+    . .venv/bin/activate
+    exec uv run uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000
 
 # Enrichment
 enrich-mtg:
