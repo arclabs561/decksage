@@ -78,11 +78,11 @@ class InstructionTunedCardEmbedder:
         self.cache_dir = Path(cache_dir) if cache_dir else None
         self.default_instruction = default_instruction
 
-        logger.info(f"Loading instruction-tuned model: {model_name}")
+        logger.debug(f"Loading instruction-tuned model: {model_name}")
         self.model = SentenceTransformer(
             model_name, cache_folder=str(self.cache_dir) if self.cache_dir else None
         )
-        logger.info("✓ Model loaded")
+        logger.debug("Model loaded")
 
         # Memory cache for embeddings
         self._memory_cache: dict[str, np.ndarray] = {}

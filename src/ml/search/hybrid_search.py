@@ -370,10 +370,8 @@ class HybridSearch:
                         card_name = payload.get("name", "")
                         if not card_name:
                             continue
-                        # Qdrant returns distance (lower is better), convert to similarity
-                        # For cosine distance: similarity = 1 - distance
-                        distance = float(result.score)
-                        score = (1.0 - distance) * vector_weight
+                        # Qdrant with Distance.COSINE returns similarity (higher = more similar, [0,1])
+                        score = float(result.score) * vector_weight
                         if card_name not in results:
                             results[card_name] = SearchResult(
                                 card_name=card_name,
