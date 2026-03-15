@@ -121,7 +121,7 @@ def test_aggregate_weighted_with_visual():
         "visual_embed": 0.8,  # High visual similarity
     }
 
-    result = fusion._aggregate_weighted(scores)
+    result = fusion._aggregate(scores, "weighted")
     assert 0.0 <= result <= 1.0
     # Visual should contribute to result
     assert result > 0.0
@@ -144,7 +144,7 @@ def test_aggregate_rrf_with_visual():
         "visual_embed": 1,  # Rank 1
     }
 
-    result = fusion._aggregate_rrf(ranks)
+    result = fusion._aggregate(ranks, "rrf")
     assert result > 0.0
     # Higher weight + lower rank = higher contribution
     assert result > 0.0
