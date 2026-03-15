@@ -108,12 +108,15 @@ class HealthResponse(BaseModel):
 class CardSuggestion(BaseModel):
     name: str
     image_url: str | None = None
-    type_line: str | None = None
-    mana_cost: str | None = None
+    type_line: str | None = None  # "type" for Pokemon/YGO, "type_line" for Magic
     rarity: str | None = None
-    colors: str | None = None
     total_decks: int | None = None
     ban_status: dict[str, str] | None = None  # {format: "banned"|"restricted"|...}
+    # Game-specific fields (populated per-game, None for others)
+    mana_cost: str | None = None  # Magic only
+    colors: str | None = None  # Magic only
+    attribute: str | None = None  # YGO only
+    hp: int | None = None  # Pokemon only
 
 
 class CardsResponse(BaseModel):
