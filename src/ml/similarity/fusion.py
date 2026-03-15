@@ -205,7 +205,7 @@ class WeightedLateFusion:
         base_weights = weights or FusionWeights()
         if task_type:
             try:
-                from ..utils.fusion_improvements import create_task_specific_weights
+                from .fusion_improvements import create_task_specific_weights
 
                 self.weights = create_task_specific_weights(task_type, base_weights).normalized()
             except ImportError:
@@ -236,7 +236,7 @@ class WeightedLateFusion:
         # Adjust weights based on visual coverage if adaptive mode enabled
         if adaptive_visual_weights and visual_embedder and weights and weights.visual_embed > 0.0:
             try:
-                from ..utils.visual_coverage import (
+                from .visual_coverage import (
                     adjust_weights_for_coverage,
                     compute_visual_coverage,
                 )
@@ -286,7 +286,7 @@ class WeightedLateFusion:
         if not self.tagger:
             return 0.0
         try:
-            from ..utils.tagger_utils import extract_tag_set
+            from .tagger_utils import extract_tag_set
 
             query_tags = self.tagger.tag_card(query)
             candidate_tags = self.tagger.tag_card(candidate)

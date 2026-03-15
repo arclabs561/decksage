@@ -12,7 +12,7 @@ from typing import Any
 from hypothesis import given
 from hypothesis import strategies as st
 
-from ..utils.tagger_utils import extract_tag_dict, extract_tag_set
+from ..similarity.tagger_utils import extract_tag_dict, extract_tag_set
 
 
 class TestTaggerUtilsProperties:

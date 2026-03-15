@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from ..utils.tagger_utils import extract_tag_dict, extract_tag_set
+from ..similarity.tagger_utils import extract_tag_dict, extract_tag_set
 
 
 class TestExtractTagDict:
