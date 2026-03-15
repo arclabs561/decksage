@@ -27,7 +27,7 @@ except ImportError:
 import pandas as pd
 
 from ml.similarity.visual_embeddings import CardVisualEmbedder
-from ml.utils.visual_coverage import compute_visual_coverage
+from ml.similarity.visual_coverage import compute_visual_coverage
 
 
 def analyze_coverage(
