@@ -1,6 +1,6 @@
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["gensim>=4.3.0", "numpy>=1.26.0"]
+# dependencies = ["gensim>=4.3.0", "numpy>=1.26.0", "pandas>=2.0.0"]
 # ///
 """Degree-stratified evaluation of embedding quality.
 
