@@ -1,7 +1,7 @@
 [project]
 name = "decksage"
 version = "0.1.0"
-description = "Card similarity via tournament deck co-occurrence"
+description = "Card similarity search and deck operations for Magic, Pokemon, and Yu-Gi-Oh"
 license = {text = "MIT"}
 authors = [{name = "arclabs561"}]
 requires-python = ">=3.11"
@@ -9,10 +9,10 @@ dependencies = [
     "pandas>=2.0.0",
     "numpy>=1.26.0",
     "scikit-learn>=1.3.0",
-    "pecanpy>=2.0.0",
+    # pecanpy moved to [training] -- only used by training scripts
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
-    "pydantic-ai>=0.0.1",
+    "pydantic-ai>=0.1.0",
     "requests>=2.31.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
@@ -40,7 +40,7 @@ dev = [
     "fastapi>=0.100.0",
     "httpx>=0.28.0",
     "playwright>=1.57.0",
-    "aim>=3.0.0",
+    # aim removed -- AimStack archived 2024, superseded by structured results logs
 ]
 api = [
     "fastapi>=0.100.0",
@@ -49,13 +49,17 @@ api = [
 embeddings = [
     "gensim>=4.3.0",
 ]
+training = [
+    "pecanpy>=2.0.0",
+    "gensim>=4.3.0",
+]
 viz = [
     "matplotlib>=3.7.0",
     "umap-learn>=0.5.4",
     "plotly>=5.17.0",
 ]
 fast = [
-    "fastnode2vec>=0.0.5",
+    # fastnode2vec removed -- last release 2021, PecanPy used instead
     "numba>=0.57.0",
 ]
 enrichment = [
@@ -74,7 +78,7 @@ stats = [
 extras = [
     "diskcache>=5.6.3",
     "zstandard>=0.22.0",
-    "evoc>=0.1.3",
+    # evoc removed -- zero imports in codebase
     "lightgbm>=4.6.0",
 ]
 ot = [

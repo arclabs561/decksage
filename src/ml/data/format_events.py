@@ -130,6 +130,10 @@ def get_format_events(
     Returns:
         List of format events in date range
     """
+    # Normalize game names: accept both "magic"/"pokemon"/"yugioh" and "MTG"/"PKM"/"YGO"
+    _GAME_ALIASES = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
+    game = _GAME_ALIASES.get(game.lower(), game)
+
     events = []
 
     if game not in FORMAT_EVENTS:
@@ -227,6 +231,9 @@ def get_format_period_key(
     Returns:
         Format period key string
     """
+    _GAME_ALIASES = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
+    game = _GAME_ALIASES.get(game.lower(), game)
+
     if game == "PKM" and format == "Standard":
         # Use regulation marks for Pokémon
         events = get_format_events(game, format, end_date=date)
