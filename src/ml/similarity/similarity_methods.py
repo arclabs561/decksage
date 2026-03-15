@@ -51,7 +51,6 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
     """
     import logging
     import os
-    import pickle
     from pathlib import Path
 
     from ..utils.paths import PATHS
@@ -113,14 +112,19 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
     cache_suffix = f".{game}.pkl" if game else ".pkl"
     cache_path = csv_p.with_suffix(csv_p.suffix + cache_suffix)
 
-    # Use pickle cache if it exists and is newer than the CSV
+    # Use pickle cache if it exists and is newer than the CSV.
+    # Pickle is used over msgpack because the graph has 14M weight entries with
+    # repeated card name strings -- pickle's object reference sharing makes the
+    # cache 3x smaller and 3x faster to load (281MB/3s vs 714MB/12s for Magic).
     if cache_path.exists() and cache_path.stat().st_mtime >= csv_p.stat().st_mtime:
         _logger.debug("Loading graph from cache: %s", cache_path)
         try:
+            import pickle
+
             with open(cache_path, "rb") as f:
                 cached = pickle.load(f)
             return cached["adj"], cached["weights"]
-        except (pickle.UnpicklingError, EOFError, KeyError, Exception) as exc:
+        except Exception as exc:
             _logger.warning(
                 "Corrupt graph cache %s (%s); deleting and rebuilding from CSV",
                 cache_path, exc,
@@ -150,8 +154,10 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
 
     adj = dict(adj)
 
-    # Write cache for next startup
+    # Write pickle cache for next startup
     try:
+        import pickle
+
         with open(cache_path, "wb") as f:
             pickle.dump({"adj": adj, "weights": weights}, f, protocol=5)
         _logger.info("Wrote graph cache: %s (%.1f MB)", cache_path, cache_path.stat().st_size / 1e6)
