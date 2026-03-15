@@ -1248,6 +1248,7 @@ def _similar_fusion(
         cross_format_patterns=state.cross_format_patterns,
         task_type=task_type,
         graph=state.graph_data.get("graph") if state.graph_data else None,
+        graph_weights=state.graph_data.get("weights") if state.graph_data else None,
     )
 
     # Use reranking if available
@@ -1509,6 +1510,7 @@ def get_contextual_suggestions(
         weights=fast_weights,
         task_type="synergy",  # Default for contextual discovery
         card_data=state.card_attrs,
+        graph_weights=state.graph_data.get("weights") if state.graph_data else None,
     )
 
     price_fn, tag_set_fn, _ = _build_deck_hooks(state)

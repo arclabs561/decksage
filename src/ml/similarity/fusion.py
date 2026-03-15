@@ -173,6 +173,7 @@ class WeightedLateFusion:
         task_type: str | None = None,
         graph: Any | None = None,  # IncrementalCardGraph instance for enhanced temporal similarity
         adaptive_visual_weights: bool = True,  # Adjust visual weights based on coverage
+        graph_weights: dict | None = None,  # Edge weights for candidate capping
     ):
         """
         Initialize fusion model.
@@ -228,6 +229,7 @@ class WeightedLateFusion:
         self.format_cooccurrence = format_cooccurrence or {}
         self.cross_format_patterns = cross_format_patterns or {}
         self.graph = graph  # IncrementalCardGraph for enhanced temporal similarity
+        self._weights_cache = graph_weights or {}
         self.aggregator = aggregator
         self.adaptive_visual_weights = adaptive_visual_weights
 
@@ -600,17 +602,37 @@ class WeightedLateFusion:
     # ------------------------------------------------------------------
 
     def _get_candidates(self, query: str) -> set[str]:
-        """Get candidate set from all available modalities."""
+        """Get candidate set from all available modalities.
+
+        Graph neighbors are capped at candidate_topn (default 100) by edge
+        weight to avoid O(V) scoring on popular cards (Lightning Bolt has
+        4,930 neighbors).
+        """
         candidates = set()
 
-        # From adjacency graph (1-hop only for speed)
+        # From adjacency graph -- cap by co-occurrence weight for popular cards
         if self.adj and query in self.adj:
-            candidates.update(self.adj[query])
-            # Only do 2-hop if we have very few 1-hop neighbors
-            if len(self.adj[query]) < 10:
-                for neighbor in list(self.adj[query])[:5]:  # Limit 2-hop expansion
+            neighbors = self.adj[query]
+            if len(neighbors) <= self.candidate_topn:
+                candidates.update(neighbors)
+            else:
+                # Keep top-N neighbors by edge weight (most co-occurred)
+                if self._weights_cache:
+                    scored = []
+                    for n in neighbors:
+                        w = self._weights_cache.get((query, n), 0)
+                        scored.append((n, w))
+                    scored.sort(key=lambda x: -x[1])
+                    candidates.update(n for n, _ in scored[: self.candidate_topn])
+                else:
+                    # No weights available -- take arbitrary subset
+                    candidates.update(list(neighbors)[: self.candidate_topn])
+            # 2-hop only if very few 1-hop neighbors
+            if len(neighbors) < 10:
+                for neighbor in list(neighbors)[:5]:
                     if neighbor in self.adj:
-                        candidates.update(self.adj[neighbor])
+                        for n2 in list(self.adj[neighbor])[: self.candidate_topn]:
+                            candidates.add(n2)
 
         # From embeddings (fast, always include)
         if self.embeddings and query in self.embeddings:
