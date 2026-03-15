@@ -30,7 +30,7 @@ NS_EXPONENTS = [-1.0, -0.5, 0.0, 0.5, 0.75, 1.0]
 def run_sweep(game: str, dim: int, window: int, epochs: int, dry_run: bool) -> None:
     from gensim.models import Word2Vec
 
-    corpus_path = Path(f"data/processed/collections_{game}.csv")
+    corpus_path = Path(f"data/decks/collections_{game}.csv")
     if not corpus_path.exists():
         print(f"Corpus not found: {corpus_path}")
         sys.exit(1)
