@@ -153,6 +153,8 @@ docs/assets
 # Large data files (should not be committed)
 data/processed/pairs_*.csv
 data/processed/pairs_*.csv.*.pkl
+data/processed/pairs_*.csv.*.msgpack
+data/processed/pairs_*.csv.msgpack
 data/graphs/incremental_graph.*
 data/embeddings/**/*.wv
 **/*.db
