@@ -57,15 +57,17 @@ def _main_partition_name(game: str) -> str:
 
 
 def _current_size(deck: dict, part_name: str) -> int:
+    target = (part_name or "").strip().lower()
     for p in deck.get("partitions", []) or []:
-        if p.get("name") == part_name:
+        if (p.get("name") or "").strip().lower() == target:
             return sum(c.get("count", 0) for c in p.get("cards", []) or [])
     return 0
 
 
 def _cards_in_partition(deck: dict, part_name: str) -> set[str]:
+    target = (part_name or "").strip().lower()
     for p in deck.get("partitions", []) or []:
-        if p.get("name") == part_name:
+        if (p.get("name") or "").strip().lower() == target:
             return {c.get("name") for c in p.get("cards", []) or []}
     return set()
 
