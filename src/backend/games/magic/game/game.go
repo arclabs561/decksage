@@ -39,11 +39,65 @@ type CardFace struct {
 	// ManaCost ManaCost `json:"mana_cost"`
 	ManaCost string `json:"mana_cost"`
 	// TypeLine TypeLine `json:"type_line"`
-	TypeLine   string `json:"type_line"`
-	OracleText string `json:"oracle_text"`
-	FlavorText string `json:"flavor_text,omitempty"`
-	Power      string `json:"power,omitempty"`
-	Toughness  string `json:"toughness,omitempty"`
+	TypeLine   string   `json:"type_line"`
+	Supertypes []string `json:"supertypes,omitempty"`
+	Types      []string `json:"types,omitempty"`
+	Subtypes   []string `json:"subtypes,omitempty"`
+	OracleText string   `json:"oracle_text"`
+	FlavorText string   `json:"flavor_text,omitempty"`
+	Power      string   `json:"power,omitempty"`
+	Toughness  string   `json:"toughness,omitempty"`
+}
+
+// knownSupertypes lists recognized MTG supertypes.
+var knownSupertypes = map[string]bool{
+	"Legendary": true, "Basic": true, "Snow": true,
+	"World": true, "Ongoing": true,
+}
+
+// knownTypes lists recognized MTG card types.
+var knownTypes = map[string]bool{
+	"Creature": true, "Instant": true, "Sorcery": true,
+	"Enchantment": true, "Artifact": true, "Land": true,
+	"Planeswalker": true, "Battle": true, "Kindred": true,
+	"Tribal": true, "Conspiracy": true, "Plane": true,
+	"Phenomenon": true, "Scheme": true, "Vanguard": true,
+	"Dungeon": true,
+}
+
+// ParseTypeLine splits an MTG type_line into supertypes, types, and subtypes.
+// Format: "[Supertypes] [Types] \u2014 [Subtypes]"
+func ParseTypeLine(typeLine string) (supertypes, types, subtypes []string) {
+	if typeLine == "" {
+		return nil, nil, nil
+	}
+
+	// Split on em-dash (with surrounding spaces)
+	parts := strings.SplitN(typeLine, "\u2014", 2)
+	leftSide := strings.TrimSpace(parts[0])
+
+	if len(parts) == 2 {
+		right := strings.TrimSpace(parts[1])
+		if right != "" {
+			for _, s := range strings.Fields(right) {
+				subtypes = append(subtypes, s)
+			}
+		}
+	}
+
+	for _, word := range strings.Fields(leftSide) {
+		switch {
+		case knownSupertypes[word]:
+			supertypes = append(supertypes, word)
+		case knownTypes[word]:
+			types = append(types, word)
+		default:
+			// Unknown token on left side -- treat as type
+			types = append(types, word)
+		}
+	}
+
+	return supertypes, types, subtypes
 }
 
 type ManaCost struct {
