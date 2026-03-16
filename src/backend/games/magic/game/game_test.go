@@ -100,6 +100,94 @@ func TestParseTypeLine(t *testing.T) {
 	}
 }
 
+func TestParseManaCost(t *testing.T) {
+	tests := []struct {
+		name       string
+		manaCost   string
+		wantCMC    int
+		wantColors []string
+	}{
+		{
+			name:       "empty",
+			manaCost:   "",
+			wantCMC:    0,
+			wantColors: nil,
+		},
+		{
+			name:       "generic only",
+			manaCost:   "{3}",
+			wantCMC:    3,
+			wantColors: nil,
+		},
+		{
+			name:       "single color",
+			manaCost:   "{U}",
+			wantCMC:    1,
+			wantColors: []string{"Blue"},
+		},
+		{
+			name:       "generic plus colors",
+			manaCost:   "{2}{U}{B}",
+			wantCMC:    4,
+			wantColors: []string{"Blue", "Black"},
+		},
+		{
+			name:       "all five colors",
+			manaCost:   "{W}{U}{B}{R}{G}",
+			wantCMC:    5,
+			wantColors: []string{"White", "Blue", "Black", "Red", "Green"},
+		},
+		{
+			name:       "variable X",
+			manaCost:   "{X}{R}{R}",
+			wantCMC:    2,
+			wantColors: []string{"Red"},
+		},
+		{
+			name:       "colorless",
+			manaCost:   "{C}{C}",
+			wantCMC:    2,
+			wantColors: nil,
+		},
+		{
+			name:       "snow",
+			manaCost:   "{S}{S}{S}",
+			wantCMC:    3,
+			wantColors: nil,
+		},
+		{
+			name:       "hybrid",
+			manaCost:   "{W/U}{B}",
+			wantCMC:    2,
+			wantColors: []string{"White", "Blue", "Black"},
+		},
+		{
+			name:       "hybrid with generic",
+			manaCost:   "{2/W}",
+			wantCMC:    1,
+			wantColors: []string{"White"},
+		},
+		{
+			name:       "duplicate color symbols",
+			manaCost:   "{R}{R}{R}",
+			wantCMC:    3,
+			wantColors: []string{"Red"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			cmc, colors := ParseManaCost(tt.manaCost)
+			if cmc != tt.wantCMC {
+				t.Errorf("cmc: got %d, want %d", cmc, tt.wantCMC)
+			}
+			if !sliceEq(colors, tt.wantColors) {
+				t.Errorf("colors: got %v, want %v", colors, tt.wantColors)
+			}
+		})
+	}
+}
+
 func sliceEq(a, b []string) bool {
 	if len(a) == 0 && len(b) == 0 {
 		return true

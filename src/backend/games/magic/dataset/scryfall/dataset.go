@@ -248,9 +248,12 @@ func (d *Dataset) parseCard(
 ) error {
 	buildFace := func(name, manaCost, typeLine, oracleText, flavorText, power, toughness string) game.CardFace {
 		supers, types, subs := game.ParseTypeLine(typeLine)
+		cmc, colors := game.ParseManaCost(manaCost)
 		return game.CardFace{
 			Name:       name,
 			ManaCost:   manaCost,
+			CMC:        cmc,
+			Colors:     colors,
 			TypeLine:   typeLine,
 			Supertypes: supers,
 			Types:      types,

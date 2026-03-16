@@ -7,6 +7,7 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,7 +38,9 @@ type CardFeatures struct {
 type CardFace struct {
 	Name string `json:"name"`
 	// ManaCost ManaCost `json:"mana_cost"`
-	ManaCost string `json:"mana_cost"`
+	ManaCost string   `json:"mana_cost"`
+	CMC      int      `json:"cmc"`
+	Colors   []string `json:"colors,omitempty"`
 	// TypeLine TypeLine `json:"type_line"`
 	TypeLine   string   `json:"type_line"`
 	Supertypes []string `json:"supertypes,omitempty"`
@@ -98,6 +101,78 @@ func ParseTypeLine(typeLine string) (supertypes, types, subtypes []string) {
 	}
 
 	return supertypes, types, subtypes
+}
+
+// colorSymbols maps Scryfall mana symbols to color names.
+var colorSymbols = map[string]string{
+	"W": "White",
+	"U": "Blue",
+	"B": "Black",
+	"R": "Red",
+	"G": "Green",
+}
+
+// ParseManaCost parses a Scryfall mana cost string like "{2}{U}{B}" and
+// returns the converted mana cost (CMC) and the set of colors present.
+// Generic {N} adds N to CMC; each colored/snow/colorless symbol adds 1;
+// {X} adds 0. Hybrid symbols like {W/U} add 1 to CMC and contribute
+// both colors.
+func ParseManaCost(manaCost string) (cmc int, colors []string) {
+	if manaCost == "" {
+		return 0, nil
+	}
+	colorSet := make(map[string]bool)
+	i := 0
+	for i < len(manaCost) {
+		if manaCost[i] != '{' {
+			i++
+			continue
+		}
+		end := strings.IndexByte(manaCost[i:], '}')
+		if end < 0 {
+			break
+		}
+		symbol := manaCost[i+1 : i+end]
+		i += end + 1
+
+		if symbol == "X" {
+			// Variable: contributes 0
+			continue
+		}
+
+		// Check for hybrid (e.g. "W/U", "2/W")
+		if strings.Contains(symbol, "/") {
+			parts := strings.Split(symbol, "/")
+			for _, p := range parts {
+				if c, ok := colorSymbols[p]; ok {
+					colorSet[c] = true
+				}
+			}
+			cmc++
+			continue
+		}
+
+		// Check for generic numeric
+		if n, err := strconv.Atoi(symbol); err == nil {
+			cmc += n
+			continue
+		}
+
+		// Colored, colorless, snow, or other named symbol: each adds 1
+		if c, ok := colorSymbols[symbol]; ok {
+			colorSet[c] = true
+		}
+		cmc++
+	}
+
+	// Build sorted color list for deterministic output
+	colorOrder := []string{"White", "Blue", "Black", "Red", "Green"}
+	for _, c := range colorOrder {
+		if colorSet[c] {
+			colors = append(colors, c)
+		}
+	}
+	return cmc, colors
 }
 
 type ManaCost struct {
