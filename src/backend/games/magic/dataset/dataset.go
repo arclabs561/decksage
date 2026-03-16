@@ -3,7 +3,7 @@ package dataset
 import (
 	"collections/blob"
 	"collections/games/magic/game"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"errors"
@@ -20,7 +20,7 @@ type Dataset interface {
 	Description() Description
 	Extract(
 		ctx context.Context,
-		scraper *scraper.Scraper,
+		scraper *limpet.Client,
 		options ...UpdateOption,
 	) error
 	IterItems(
@@ -167,13 +167,13 @@ func ResolveUpdateOptions(options ...UpdateOption) (ResolvedUpdateOptions, error
 
 func Do(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts ResolvedUpdateOptions,
 	req *http.Request,
-) (*scraper.Page, error) {
-	var doOpts []scraper.DoOption
+) (*limpet.Page, error) {
+	var doOpts []limpet.DoOption
 	if opts.FetchReplaceAll {
-		doOpts = append(doOpts, &scraper.OptDoReplace{})
+		doOpts = append(doOpts, &limpet.OptDoReplace{})
 	}
 	return sc.Do(ctx, req, doOpts...)
 }

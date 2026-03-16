@@ -19,7 +19,7 @@ import (
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 
 	"github.com/PuerkitoBio/goquery"
 )
@@ -61,7 +61,7 @@ type task struct {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...dataset.UpdateOption,
 ) error {
 	opts, err := dataset.ResolveUpdateOptions(options...)
@@ -126,7 +126,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) scrollPages(
 	ctx context.Context,
 	opts dataset.ResolvedUpdateOptions,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	tasks chan task,
 ) error {
 	startPage := opts.ScrollStart.OrElse(1)
@@ -180,7 +180,7 @@ scroll:
 func (d *Dataset) parsePage(
 	ctx context.Context,
 	opts dataset.ResolvedUpdateOptions,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	currPage int,
 ) ([]string, error) {
 	u := base.JoinPath("/search").String()
@@ -250,7 +250,7 @@ var reDeckID = regexp.MustCompile(`^https://mtgtop8\.com/event\?e=(\d+)&d=(\d+)`
 func (d *Dataset) parseItem(
 	ctx context.Context,
 	opts dataset.ResolvedUpdateOptions,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	itemURL string,
 ) error {
 	idSubmatches := reDeckID.FindStringSubmatch(itemURL)

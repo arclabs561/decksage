@@ -6,7 +6,7 @@ import (
 	"collections/games"
 	"collections/games/riftbound/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,9 +26,8 @@ import (
 // No API key required - scrapes https://riftbound.gg/decks
 // Uses Playwright for JavaScript rendering
 type Dataset struct {
-	log           *logger.Logger
-	blob          *blob.Bucket
-	browserScraper *scraper.BrowserScraper
+	log  *logger.Logger
+	blob *blob.Bucket
 }
 
 var base *url.URL
@@ -42,15 +41,9 @@ func init() {
 }
 
 func NewDataset(log *logger.Logger, blob *blob.Bucket) (*Dataset, error) {
-	browserScraper, err := scraper.NewBrowserScraper(log)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create browser scraper: %w", err)
-	}
-
 	return &Dataset{
-		log:           log,
-		blob:          blob,
-		browserScraper: browserScraper,
+		log:  log,
+		blob: blob,
 	}, nil
 }
 
@@ -65,17 +58,9 @@ var reDeckURL = regexp.MustCompile(`^https://riftbound\.gg/decks?/[^/?]+$`)
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
-	defer func() {
-		if d.browserScraper != nil {
-			if err := d.browserScraper.Close(); err != nil {
-				d.log.Errorf(ctx, "Failed to close browser scraper: %v", err)
-			}
-		}
-	}()
-
 	opts, err := games.ResolveUpdateOptions(options...)
 	if err != nil {
 		return err
@@ -153,7 +138,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	listingURL := "https://riftbound.gg/decks"
@@ -180,27 +165,18 @@ func (d *Dataset) scrapeDeckListingPages(
 
 		// Use Playwright to render JavaScript-rendered page
 		d.log.Infof(ctx, "Rendering page %d with Playwright...", page)
-		// Use shorter timeout - site can be slow, but we'll accept partial content
-		html, err := d.browserScraper.RenderPage(ctx, pageURL, "body", 30*time.Second)
+		pg, err := sc.Get(ctx, pageURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
 		if err != nil {
-			// If it's just a timeout, try to parse what we got
-			if strings.Contains(err.Error(), "timeout") {
-				d.log.Warnf(ctx, "Timeout rendering listing page %d, but attempting to parse partial content", page)
-				// Try to get content anyway
-				html, err = d.browserScraper.RenderPage(ctx, pageURL, "", 10*time.Second)
+			d.log.Warnf(ctx, "Failed to render listing page %d: %v", page, err)
+			if page == 1 {
+				// First page failure is critical
+				return nil, fmt.Errorf("failed to render first listing page: %w", err)
 			}
-			if err != nil {
-				d.log.Warnf(ctx, "Failed to render listing page %d: %v", page, err)
-				if page == 1 {
-					// First page failure is critical
-					return nil, fmt.Errorf("failed to render first listing page: %w", err)
-				}
-				// Subsequent page failures might mean we've reached the end
-				break
-			}
+			// Subsequent page failures might mean we've reached the end
+			break
 		}
 
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(pg.Response.Body))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse HTML: %w", err)
 		}
@@ -280,7 +256,7 @@ func (d *Dataset) scrapeDeckListingPages(
 
 func (d *Dataset) parseDeck(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	deckURL string,
 	opts games.ResolvedUpdateOptions,
 ) error {
@@ -311,19 +287,12 @@ func (d *Dataset) parseDeck(
 
 	// Use Playwright to render JavaScript-rendered deck page
 	d.log.Debugf(ctx, "Rendering deck page %s with Playwright...", deckURL)
-	// Use longer timeout for deck pages and more flexible wait selector
-	html, err := d.browserScraper.RenderPage(ctx, deckURL, "body", 45*time.Second)
+	pg, err := sc.Get(ctx, deckURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
 	if err != nil {
-		// Log warning but try to parse anyway - page might have loaded partially
-		d.log.Warnf(ctx, "Timeout/error rendering deck page %s, attempting to parse partial content: %v", deckURL, err)
-		// Try one more time with shorter timeout
-		html, err = d.browserScraper.RenderPage(ctx, deckURL, "", 20*time.Second)
-		if err != nil {
-			return fmt.Errorf("failed to render deck page with Playwright after retry: %w", err)
-		}
+		return fmt.Errorf("failed to render deck page with Playwright: %w", err)
 	}
 
-	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(pg.Response.Body))
 	if err != nil {
 		return fmt.Errorf("failed to parse deck HTML: %w", err)
 	}

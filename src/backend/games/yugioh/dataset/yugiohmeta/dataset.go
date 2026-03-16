@@ -6,7 +6,7 @@ import (
 	"collections/games"
 	"collections/games/yugioh/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -55,7 +55,7 @@ func (d *Dataset) Description() games.Description {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	// Temporary guard: yugiohmeta has changed site structure; scraper blocked pending maintenance
@@ -64,7 +64,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) extractTournamentURLs(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	req, err := http.NewRequest("GET", "https://www.yugiohmeta.com/tournaments", nil)
@@ -107,7 +107,7 @@ func (d *Dataset) extractTournamentURLs(
 
 func (d *Dataset) extractDecksFromTournament(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	tournamentURL string,
 	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
@@ -150,7 +150,7 @@ var reDeckID = regexp.MustCompile(`/deck[list]*[s]*/([^/]+)`)
 
 func (d *Dataset) parseDeck(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	deckURL string,
 	opts games.ResolvedUpdateOptions,
 ) error {

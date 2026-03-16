@@ -19,7 +19,7 @@ import (
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 
 	"github.com/PuerkitoBio/goquery"
 	"go.uber.org/ratelimit"
@@ -60,7 +60,7 @@ var reCollectionURL = regexp.MustCompile(`^https://www.mtggoldfish.com/deck/`)
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...dataset.UpdateOption,
 ) error {
 	opts, err := dataset.ResolveUpdateOptions(options...)
@@ -122,7 +122,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) parseRoot(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	urls chan<- string,
 	opts dataset.ResolvedUpdateOptions,
 ) error {
@@ -220,7 +220,7 @@ func (p parsedSection) Next() bool {
 
 func (d *Dataset) scrollSection(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	urls chan<- string,
 	sectionURL string,
 	opts dataset.ResolvedUpdateOptions,
@@ -278,7 +278,7 @@ var reDeckID = regexp.MustCompile(`^https://www.mtggoldfish.com/([^#]+)`)
 
 func (d *Dataset) parseCollection(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	u string,
 	opts dataset.ResolvedUpdateOptions,
 ) error {
@@ -568,11 +568,11 @@ func (d *Dataset) resolveRef(ref string) (string, error) {
 var (
 	reSilentThrottle = regexp.MustCompile(`^Throttled`)
 	limiter          = ratelimit.New(100, ratelimit.Per(time.Minute))
-	defaultFetchOpts = []scraper.DoOption{
-		&scraper.OptDoSilentThrottle{
+	defaultFetchOpts = []limpet.DoOption{
+		&limpet.OptDoSilentThrottle{
 			PageBytesRegexp: reSilentThrottle,
 		},
-		&scraper.OptDoLimiter{
+		&limpet.OptDoLimiter{
 			Limiter: limiter,
 		},
 	}
@@ -580,13 +580,13 @@ var (
 
 func (d *Dataset) fetch(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	u string,
 	datasetOptions dataset.ResolvedUpdateOptions,
-) (*scraper.Page, error) {
+) (*limpet.Page, error) {
 	opts := defaultFetchOpts
 	if datasetOptions.FetchReplaceAll {
-		opts = append(opts, &scraper.OptDoReplace{})
+		opts = append(opts, &limpet.OptDoReplace{})
 	}
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {

@@ -6,7 +6,7 @@ import (
 	"collections/games"
 	"collections/games/pokemon/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -59,7 +59,7 @@ var reDeckListURL = regexp.MustCompile(`^https://limitlesstcg\.com/decks/list/\d
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	opts, err := games.ResolveUpdateOptions(options...)
@@ -136,7 +136,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	// Start with the main deck lists page
@@ -202,7 +202,7 @@ func (d *Dataset) scrapeDeckListingPages(
 
 func (d *Dataset) parseDeck(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	deckURL string,
 	opts games.ResolvedUpdateOptions,
 ) error {
@@ -372,11 +372,11 @@ func (d *Dataset) parseDeck(
 var (
 	reSilentThrottle = regexp.MustCompile(`rate.?limit|too.?many.?requests`)
 	limiter          = ratelimit.New(30, ratelimit.Per(time.Minute)) // Conservative rate
-	defaultFetchOpts = []scraper.DoOption{
-		&scraper.OptDoSilentThrottle{
+	defaultFetchOpts = []limpet.DoOption{
+		&limpet.OptDoSilentThrottle{
 			PageBytesRegexp: reSilentThrottle,
 		},
-		&scraper.OptDoLimiter{
+		&limpet.OptDoLimiter{
 			Limiter: limiter,
 		},
 	}
@@ -384,10 +384,10 @@ var (
 
 func (d *Dataset) fetch(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	req *http.Request,
 	opts games.ResolvedUpdateOptions,
-) (*scraper.Page, error) {
+) (*limpet.Page, error) {
 	return games.Do(ctx, sc, &opts, req)
 }
 

@@ -14,7 +14,7 @@ import (
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 
 	"github.com/spf13/cobra"
 )
@@ -263,5 +263,5 @@ var (
 	_ = goldfish.Dataset{}
 	_ = mtgtop8.Dataset{}
 	_ = scryfall.Dataset{}
-	_ = scraper.Scraper{}
+	_ *limpet.Client
 )

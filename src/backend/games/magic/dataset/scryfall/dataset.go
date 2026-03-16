@@ -22,7 +22,7 @@ import (
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 )
 
 var base *url.URL
@@ -60,7 +60,7 @@ var reCollectionRef = regexp.MustCompile(`^https://scryfall.com/sets/.+$`)
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...dataset.UpdateOption,
 ) error {
 	opts, err := dataset.ResolveUpdateOptions(options...)
@@ -132,7 +132,7 @@ type cardFace struct {
 
 func (d *Dataset) extractCards(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts dataset.ResolvedUpdateOptions,
 ) error {
 	start := time.Now()
@@ -317,7 +317,7 @@ func (d *Dataset) parseCard(
 
 func (d *Dataset) extractCollections(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts dataset.ResolvedUpdateOptions,
 ) error {
 	urls := make(chan string)
@@ -383,7 +383,7 @@ func (d *Dataset) extractCollections(
 
 func (d *Dataset) parsePage(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	ref string,
 ) ([]string, error) {
 	u, err := d.resolveRef(ref)
@@ -425,7 +425,7 @@ var reSetReleased = regexp.MustCompile(`Released[\p{Zs}\s]+(\d+-\d+-\d+)`)
 
 func (d *Dataset) parseCollection(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	u string,
 	opts dataset.ResolvedUpdateOptions,
 ) error {

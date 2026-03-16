@@ -7,7 +7,7 @@ import (
 	"collections/blob"
 	"collections/games/magic/dataset"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 )
 
 // Dataset scrapes Commander decks from Moxfield
@@ -26,7 +26,7 @@ func (d *Dataset) Description() dataset.Description {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...dataset.UpdateOption,
 ) error {
 	// TODO: Implement Moxfield scraper
