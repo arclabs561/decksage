@@ -143,7 +143,7 @@ def _validate_card_name(card_name: str, game: str | None = None) -> tuple[bool, 
         # Lazy import to avoid circular dependency
         # api.py imports feedback.py, so we can't import get_state at module level
         try:
-            from ..api.api import get_state
+            from .models import get_state
         except (ImportError, AttributeError):
             # App not initialized yet, skip validation
             logger.debug("get_state() not available (app not initialized), skipping validation")
@@ -352,7 +352,7 @@ def submit_feedback(req: FeedbackRequest) -> FeedbackResponse:
         game_norm: str | None = None
         try:
             # Lazy import to avoid circular dependency (api.py imports feedback.py).
-            from ..api.api import _require_game
+            from .models import _require_game
 
             game_norm = _require_game(game_in)
         except HTTPException:
@@ -369,7 +369,7 @@ def submit_feedback(req: FeedbackRequest) -> FeedbackResponse:
             dup_game = game_norm
             try:
                 # Only treat game as a duplicate key in multi-game mode.
-                from ..api.api import _configured_games
+                from .models import _configured_games
 
                 if len(_configured_games()) <= 1:
                     dup_game = None

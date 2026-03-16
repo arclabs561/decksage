@@ -95,7 +95,10 @@ from .models import (
     SimilarityRequest,
     SimilarityResponse,
     UseCaseEnum,
+    _configured_games,
+    _default_game,
     _normalize_game,
+    _require_game,
     get_state,
 )
 
@@ -153,51 +156,8 @@ if not HAS_GENSIM:
 # ---------------------------------------------------------------------------
 
 
-def _configured_games() -> list[str]:
-    """Return configured games from app state (fallback: [default_game])."""
-    try:
-        games = getattr(app.state, "games", None)
-        if isinstance(games, list) and games:
-            return [str(g).strip().lower() for g in games if str(g).strip()]
-    except AttributeError:
-        pass
-    # Fallback to a single default game
-    return [_default_game()]
 
-
-def _default_game() -> str:
-    try:
-        g = getattr(app.state, "default_game", None)
-        if isinstance(g, str) and g.strip():
-            return g.strip().lower()
-    except AttributeError:
-        pass
-    return os.getenv("DECKSAGE_DEFAULT_GAME", "magic").strip().lower() or "magic"
-
-
-def _require_game(game: str | None) -> str:
-    """
-    Require an explicit game in multi-game mode.
-
-    - If only one game is configured, default to it.
-    - If multiple games are configured, require request to specify it.
-    """
-    cfg = _configured_games()
-    g = _normalize_game(game)
-    if g is None:
-        if len(cfg) == 1:
-            g = cfg[0]
-        else:
-            raise HTTPException(
-                status_code=400,
-                detail=f"game is required (configured_games={cfg})",
-            )
-    if g not in SUPPORTED_GAMES:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
-    return g
-
-
-# Models, ApiState, get_state -- imported from .models (see top of file)
+# _configured_games, _default_game, _require_game -- imported from .models (see top of file)
 
 
 def load_embeddings_to_state(
