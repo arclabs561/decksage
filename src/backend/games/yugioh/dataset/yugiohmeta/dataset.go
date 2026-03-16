@@ -65,7 +65,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) extractTournamentURLs(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	req, err := http.NewRequest("GET", "https://www.yugiohmeta.com/tournaments", nil)
 	if err != nil {
@@ -109,7 +109,7 @@ func (d *Dataset) extractDecksFromTournament(
 	ctx context.Context,
 	sc *limpet.Client,
 	tournamentURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	req, err := http.NewRequest("GET", tournamentURL, nil)
 	if err != nil {
@@ -152,7 +152,7 @@ func (d *Dataset) parseDeck(
 	ctx context.Context,
 	sc *limpet.Client,
 	deckURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Extract deck ID from URL
 	matches := reDeckID.FindStringSubmatch(deckURL)

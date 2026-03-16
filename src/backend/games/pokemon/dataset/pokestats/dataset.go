@@ -54,7 +54,7 @@ func (d *Dataset) Extract(
 	if len(opts.ItemOnlyURLs) > 0 {
 		postURLs = append(postURLs, opts.ItemOnlyURLs...)
 	} else {
-		urls, err := d.scrapeIndex(ctx, sc, opts)
+		urls, err := d.scrapeIndex(ctx, sc, &opts)
 		if err != nil {
 			return err
 		}
@@ -70,7 +70,7 @@ func (d *Dataset) Extract(
 		if (i+1)%10 == 0 {
 			d.log.Infof(ctx, "Processing post %d/%d...", i+1, len(postURLs))
 		}
-		if err := d.parsePost(ctx, sc, u, opts); err != nil {
+		if err := d.parsePost(ctx, sc, u, &opts); err != nil {
 			d.log.Field("url", u).Warnf(ctx, "failed to parse post: %v", err)
 			continue
 		}
@@ -83,14 +83,14 @@ func (d *Dataset) Extract(
 func (d *Dataset) scrapeIndex(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	index := "http://www.ptcgstats.com/"
 	req, err := http.NewRequest("GET", index, nil)
 	if err != nil {
 		return nil, err
 	}
-	page, err := games.Do(ctx, sc, &opts, req)
+	page, err := games.Do(ctx, sc, opts, req)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +127,7 @@ func (d *Dataset) parsePost(
 	ctx context.Context,
 	sc *limpet.Client,
 	postURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Use URL path as ID
 	u, err := url.Parse(postURL)
@@ -149,7 +149,7 @@ func (d *Dataset) parsePost(
 	if err != nil {
 		return err
 	}
-	page, err := games.Do(ctx, sc, &opts, req)
+	page, err := games.Do(ctx, sc, opts, req)
 	if err != nil {
 		return err
 	}

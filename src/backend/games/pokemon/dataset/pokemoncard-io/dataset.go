@@ -59,7 +59,7 @@ func (d *Dataset) Extract(
 	if len(opts.ItemOnlyURLs) > 0 {
 		deckURLs = append(deckURLs, opts.ItemOnlyURLs...)
 	} else {
-		urls, err := d.scrapeDeckListingPages(ctx, sc, opts)
+		urls, err := d.scrapeDeckListingPages(ctx, sc, &opts)
 		if err != nil {
 			return err
 		}
@@ -75,7 +75,7 @@ func (d *Dataset) Extract(
 		if (i+1)%10 == 0 {
 			d.log.Infof(ctx, "Processing deck %d/%d...", i+1, len(deckURLs))
 		}
-		if err := d.parseDeck(ctx, sc, u, opts); err != nil {
+		if err := d.parseDeck(ctx, sc, u, &opts); err != nil {
 			d.log.Field("url", u).Warnf(ctx, "failed to parse deck: %v", err)
 			continue
 		}
@@ -88,7 +88,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	// Basic pagination over deck search
 	// Try page parameter; stop when no new links found or pages limit reached
@@ -122,7 +122,7 @@ func (d *Dataset) scrapeDeckListingPages(
 			req.Header.Set("Accept-Language", "en-US,en;q=0.5")
 
 			requestLimiter.Take()
-			page, err := games.Do(ctx, sc, &opts, req)
+			page, err := games.Do(ctx, sc, opts, req)
 			if err != nil || len(page.Response.Body) == 0 {
 				continue
 			}
@@ -186,7 +186,7 @@ func (d *Dataset) parseDeck(
 	ctx context.Context,
 	sc *limpet.Client,
 	deckURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Derive ID from slug suffix
 	id := ""
@@ -220,7 +220,7 @@ func (d *Dataset) parseDeck(
 	req.Header.Set("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
 	req.Header.Set("Accept-Language", "en-US,en;q=0.5")
 	requestLimiter.Take()
-	page, err := games.Do(ctx, sc, &opts, req)
+	page, err := games.Do(ctx, sc, opts, req)
 	if err != nil {
 		return err
 	}
