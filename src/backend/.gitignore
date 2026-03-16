@@ -16,3 +16,4 @@ coverage.html
 *.swp
 *.swo
 *~
+.cache/
