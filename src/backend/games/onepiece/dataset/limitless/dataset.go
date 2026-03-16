@@ -93,7 +93,7 @@ func (d *Dataset) Extract(
 	d.log.Infof(ctx, "Extracting One Piece tournament decks from Limitless TCG API...")
 
 	// Step 1: Fetch tournament list
-	tournaments, err := d.fetchTournaments(ctx, sc, opts)
+	tournaments, err := d.fetchTournaments(ctx, sc, &opts)
 	if err != nil {
 		return fmt.Errorf("failed to fetch tournaments: %w", err)
 	}
@@ -110,7 +110,7 @@ func (d *Dataset) Extract(
 
 		d.log.Infof(ctx, "Processing tournament %d/%d: %s (%s)", i+1, len(tournaments), tournament.Name, tournament.ID)
 
-		standings, err := d.fetchStandings(ctx, sc, tournament.ID, opts)
+		standings, err := d.fetchStandings(ctx, sc, tournament.ID, &opts)
 		if err != nil {
 			d.log.Field("tournament_id", tournament.ID).Errorf(ctx, "Failed to fetch standings: %v", err)
 			continue
@@ -122,7 +122,7 @@ func (d *Dataset) Extract(
 				break
 			}
 
-			if err := d.storeDecklist(ctx, tournament, standing, opts); err != nil {
+			if err := d.storeDecklist(ctx, tournament, standing, &opts); err != nil {
 				d.log.Field("player", standing.Player).Errorf(ctx, "Failed to store decklist: %v", err)
 				continue
 			}
@@ -138,7 +138,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) fetchTournaments(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]apiTournament, error) {
 	// API endpoint: GET /tournaments?game=OPCG&limit=100
 	// OPCG = One Piece Card Game
@@ -150,7 +150,7 @@ func (d *Dataset) fetchTournaments(
 	}
 	req.Header.Set("X-Access-Key", d.apiKey)
 
-	resp, err := games.Do(ctx, sc, &opts, req)
+	resp, err := games.Do(ctx, sc, opts, req)
 	if err != nil {
 		return nil, err
 	}
@@ -172,7 +172,7 @@ func (d *Dataset) fetchStandings(
 	ctx context.Context,
 	sc *limpet.Client,
 	tournamentID string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]apiStanding, error) {
 	url := fmt.Sprintf("https://play.limitlesstcg.com/api/tournaments/%s/standings", tournamentID)
 
@@ -182,7 +182,7 @@ func (d *Dataset) fetchStandings(
 	}
 	req.Header.Set("X-Access-Key", d.apiKey)
 
-	resp, err := games.Do(ctx, sc, &opts, req)
+	resp, err := games.Do(ctx, sc, opts, req)
 	if err != nil {
 		return nil, err
 	}
@@ -199,7 +199,7 @@ func (d *Dataset) storeDecklist(
 	ctx context.Context,
 	tournament apiTournament,
 	standing apiStanding,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Build unique ID: tournament_id:player_id
 	id := fmt.Sprintf("%s:%s", tournament.ID, standing.Player)

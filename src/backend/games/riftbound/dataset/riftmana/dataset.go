@@ -97,7 +97,7 @@ func (d *Dataset) Extract(
 			defer wg.Done()
 			defer func() { <-sem }()
 
-			if err := d.extractDeck(ctx, sc, url, opts); err != nil {
+			if err := d.extractDeck(ctx, sc, url, &opts); err != nil {
 				d.log.Warnf(ctx, "Failed to extract deck from %s: %v", url, err)
 				return
 			}
@@ -201,7 +201,7 @@ func (d *Dataset) extractDeck(
 	ctx context.Context,
 	sc *limpet.Client,
 	tournamentURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Use browser scraper for JavaScript rendering
 	pg, err := sc.Get(ctx, tournamentURL, limpet.DoConfig{Browser: true, Replace: true})
@@ -217,7 +217,7 @@ func (d *Dataset) parseTournamentPage(
 	_ *limpet.Client, //nolint:revive
 	tournamentURL string,
 	html []byte,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
 	if err != nil {
@@ -345,7 +345,7 @@ func (d *Dataset) storeDecklist(
 	placement int,
 	eventDate time.Time,
 	cards map[string]int,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Build unique ID
 	id := fmt.Sprintf("riftmana:%s:%d", event, placement)

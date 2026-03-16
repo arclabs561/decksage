@@ -421,8 +421,3 @@ func (ct CollectionTypeCube) Type() string { return "Cube" }
 func (ct *CollectionTypeSet) collectionType()  {}
 func (ct *CollectionTypeDeck) collectionType() {}
 func (ct *CollectionTypeCube) collectionType() {}
-
-// TODO
-type DeckFormat int
-
-const ()

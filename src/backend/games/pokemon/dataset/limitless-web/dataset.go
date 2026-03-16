@@ -75,7 +75,7 @@ func (d *Dataset) Extract(
 		deckURLs = opts.ItemOnlyURLs
 	} else {
 		var err error
-		deckURLs, err = d.scrapeDeckListingPages(ctx, sc, opts)
+		deckURLs, err = d.scrapeDeckListingPages(ctx, sc, &opts)
 		if err != nil {
 			return fmt.Errorf("failed to scrape deck listings: %w", err)
 		}
@@ -103,7 +103,7 @@ func (d *Dataset) Extract(
 					if limit, ok := opts.ItemLimit.Get(); ok && int(totalDecks.Load()) >= limit {
 						return
 					}
-						if err := d.parseDeck(ctx, sc, deckURL, opts); err != nil {
+						if err := d.parseDeck(ctx, sc, deckURL, &opts); err != nil {
 							d.log.Field("url", deckURL).Errorf(ctx, "Failed to parse deck: %v", err)
 							// Record error in statistics if available
 							if stats := games.ExtractStatsFromContext(ctx); stats != nil {
@@ -137,7 +137,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	// Start with the main deck lists page
 	listingURL := "https://limitlesstcg.com/decks/lists"
@@ -204,7 +204,7 @@ func (d *Dataset) parseDeck(
 	ctx context.Context,
 	sc *limpet.Client,
 	deckURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Extract deck ID from URL
 	reDeckID := regexp.MustCompile(`/decks/list/(\d+)$`)
@@ -382,7 +382,7 @@ func (d *Dataset) fetch(
 	ctx context.Context,
 	sc *limpet.Client,
 	req *http.Request,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) (*limpet.Page, error) {
 	cfg := defaultFetchCfg
 	cfg.Replace = opts.FetchReplaceAll

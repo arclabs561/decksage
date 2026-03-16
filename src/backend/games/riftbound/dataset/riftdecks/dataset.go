@@ -70,7 +70,7 @@ func (d *Dataset) storeDecklist(
 	placement int,
 	eventDate time.Time,
 	cards map[string]int,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Build unique ID
 	id := fmt.Sprintf("riftdecks:%s:%d", event, placement)
