@@ -17,9 +17,14 @@ DATA LINEAGE: Order 2 (depends on Order 1: Exported Decks)
 import argparse
 import csv
 import json
+import re
 import sys
 from collections import defaultdict
 from pathlib import Path
+
+# YGOProDeck numeric IDs (e.g., Card_10000080) that should never enter
+# co-occurrence pairs.
+_NUMERIC_ID_RE = re.compile(r"^Card_\d+$")
 
 
 # Add src to path
@@ -65,7 +70,7 @@ def extract_pairs_from_decks(
                         else:
                             card_name = str(card)
                             count = 1
-                        if card_name:
+                        if card_name and not _NUMERIC_ID_RE.match(card_name):
                             all_cards.extend([card_name] * count)
                 if "partitions" in deck:
                     for partition in deck["partitions"]:
@@ -76,7 +81,7 @@ def extract_pairs_from_decks(
                             else:
                                 card_name = str(card)
                                 count = 1
-                            if card_name:
+                            if card_name and not _NUMERIC_ID_RE.match(card_name):
                                 all_cards.extend([card_name] * count)
 
                 if not all_cards:

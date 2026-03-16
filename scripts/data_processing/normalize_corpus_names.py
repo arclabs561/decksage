@@ -32,8 +32,13 @@ from __future__ import annotations
 
 import argparse
 import csv
+import re
 import sys
 from pathlib import Path
+
+# YGOProDeck numeric IDs that leak from deck JSONLs when --name-mapping is
+# incomplete or omitted.  These have no metadata and form isolated subgraphs.
+_NUMERIC_ID_RE = re.compile(r"^Card_\d+$")
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -52,6 +57,11 @@ COLLECTIONS_FILES = {
 }
 
 PAIRS_FILE = REPO_ROOT / "data" / "processed" / "pairs_large.csv"
+
+
+def is_valid_card_name(name: str, canonical: set[str]) -> bool:
+    """Check if a card name is canonical and not a numeric ID leak."""
+    return name in canonical and not _NUMERIC_ID_RE.match(name)
 
 
 def load_canonical_names() -> set[str]:
@@ -87,16 +97,20 @@ def audit_collections(canonical: set[str]) -> dict[str, set[str]]:
                     name = name.strip()
                     if name:
                         total_names.add(name)
-                        if name not in canonical:
+                        if not is_valid_card_name(name, canonical):
                             dropped.add(name)
+        numeric_ids = {n for n in dropped if _NUMERIC_ID_RE.match(n)}
+        non_canonical = dropped - numeric_ids
         pct = len(dropped) / len(total_names) * 100 if total_names else 0
         print(f"  {game}: {len(total_names):,} unique names, "
               f"{len(dropped):,} non-canonical ({pct:.1f}%)")
-        if dropped:
-            for n in sorted(dropped)[:10]:
+        if numeric_ids:
+            print(f"    ({len(numeric_ids)} Card_XXXX numeric IDs)")
+        if non_canonical:
+            for n in sorted(non_canonical)[:10]:
                 print(f"    - {n}")
-            if len(dropped) > 10:
-                print(f"    ... and {len(dropped) - 10} more")
+            if len(non_canonical) > 10:
+                print(f"    ... and {len(non_canonical) - 10} more")
         dropped_by_file[game] = dropped
     return dropped_by_file
 
@@ -120,16 +134,20 @@ def audit_pairs(canonical: set[str]) -> set[str]:
                 name = name.strip()
                 if name:
                     total_names.add(name)
-                    if name not in canonical:
+                    if not is_valid_card_name(name, canonical):
                         dropped.add(name)
+    numeric_ids = {n for n in dropped if _NUMERIC_ID_RE.match(n)}
+    non_canonical = dropped - numeric_ids
     pct = len(dropped) / len(total_names) * 100 if total_names else 0
     print(f"  pairs_large: {len(total_names):,} unique names, "
           f"{len(dropped):,} non-canonical ({pct:.1f}%)")
-    if dropped:
-        for n in sorted(dropped)[:10]:
+    if numeric_ids:
+        print(f"    ({len(numeric_ids)} Card_XXXX numeric IDs)")
+    if non_canonical:
+        for n in sorted(non_canonical)[:10]:
             print(f"    - {n}")
-        if len(dropped) > 10:
-            print(f"    ... and {len(dropped) - 10} more")
+        if len(non_canonical) > 10:
+            print(f"    ... and {len(non_canonical) - 10} more")
     return dropped
 
 
@@ -145,7 +163,7 @@ def clean_collections(canonical: set[str]) -> None:
         with open(path, newline="", encoding="utf-8") as f:
             for row in csv.reader(f):
                 rows_in += 1
-                cleaned = [n for n in row if n.strip() in canonical]
+                cleaned = [n for n in row if is_valid_card_name(n.strip(), canonical)]
                 names_dropped += len(row) - len(cleaned)
                 if cleaned:  # Don't write empty decks
                     cleaned_rows.append(cleaned)
@@ -177,7 +195,7 @@ def clean_pairs(canonical: set[str]) -> None:
             if len(row) < 2:
                 continue
             name1, name2 = row[0].strip(), row[1].strip()
-            if name1 in canonical and name2 in canonical:
+            if is_valid_card_name(name1, canonical) and is_valid_card_name(name2, canonical):
                 cleaned_rows.append(row)
                 rows_out += 1
 
