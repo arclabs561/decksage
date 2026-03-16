@@ -50,7 +50,10 @@ def ensure_test_set_has_metadata(
     # Add metadata
     logger.info(f"Adding format/archetype metadata to {test_set_path}...")
     try:
-        from ..scripts.add_format_metadata_to_test_set import add_metadata_to_test_set
+        import importlib
+
+        _mod = importlib.import_module("ml.scripts.add_format_metadata_to_test_set")
+        add_metadata_to_test_set = _mod.add_metadata_to_test_set
 
         metadata_path = test_set_path.parent / f"{test_set_path.stem}_with_metadata.json"
         add_metadata_to_test_set(
@@ -94,7 +97,10 @@ def ensure_test_set_size(
     logger.info(f"Expanding test set from {current_size} to {min_size} queries...")
     try:
         if game == "pokemon":
-            from ..scripts.expand_pokemon_test_set import expand_pokemon_test_set
+            import importlib
+
+            _mod = importlib.import_module("ml.scripts.expand_pokemon_test_set")
+            expand_pokemon_test_set = _mod.expand_pokemon_test_set
 
             expanded_path = test_set_path.parent / f"{test_set_path.stem}_expanded.json"
             expand_pokemon_test_set(
