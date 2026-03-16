@@ -4,6 +4,10 @@
  * Used by both:
  *   - tests/e2e/visual.spec.mjs   (Playwright CI gate)
  *   - scripts/vlm_critique.mjs    (detailed standalone report)
+ *
+ * The CARD_GAME_RUBRIC object is passed directly to ai-visual-test's
+ * validateWithRubric(), which handles prompt construction and dimension
+ * score extraction. No manual prompt serialization needed.
  */
 
 export const PASS_THRESHOLD = 7;
@@ -125,33 +129,11 @@ export const GAME_CONTEXTS = {
 };
 
 // ---------------------------------------------------------------------------
-// Prompt builder
+// Context prompt builder (game-specific, rubric handled by library)
 // ---------------------------------------------------------------------------
 
-export function makePrompt(gameKey) {
+export function gamePrompt(gameKey) {
   const ctx = GAME_CONTEXTS[gameKey];
   if (!ctx) throw new Error(`Unknown game: ${gameKey}`);
-
-  const dimSection = Object.entries(CARD_GAME_RUBRIC.dimensions)
-    .map(([key, dim], i) => {
-      const name = key.replace(/_/g, ' ').toUpperCase();
-      return `${i + 1}. ${name}: ${dim.description}\n${dim.criteria.map(c => `   - ${c}`).join('\n')}`;
-    })
-    .join('\n\n');
-
-  return `You are a senior UI designer reviewing a card game search tool for "${ctx.name}".
-
-CURRENT DESIGN: ${ctx.desc}
-
-Evaluate strictly on these 7 dimensions. For each, give a score 0-10 and ONE specific actionable CSS fix:
-
-${dimSection}
-
-IMPORTANT: Look at what IS shown in the screenshot, not what you imagine.
-
-Respond with a JSON object containing:
-- "score": overall 0-10 integer
-- "dimensionScores": {"game_identity": N, "visual_hierarchy": N, "typography": N, "whitespace_layout": N, "color_harmony": N, "card_presentation": N, "modern_polish": N}
-- "issues": array of strings (top issues)
-- "reasoning": brief text explaining the score`;
+  return `You are a senior UI designer reviewing a card game search tool for "${ctx.name}".\n\nCURRENT DESIGN: ${ctx.desc}\n\nIMPORTANT: Look at what IS shown in the screenshot, not what you imagine.`;
 }
