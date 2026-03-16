@@ -73,8 +73,10 @@ type apiCard struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"set"`
-	Rarity string `json:"rarity"`
-	Artist string `json:"artist"`
+	Rarity         string            `json:"rarity"`
+	Artist         string            `json:"artist"`
+	RegulationMark string            `json:"regulationMark"`
+	Legalities     map[string]string `json:"legalities"`
 }
 
 type apiResponse struct {
@@ -197,10 +199,12 @@ func convertToCard(apiCard apiCard) game.Card {
 		Artist:      apiCard.Artist,
 	}
 
-	// National dex number (take first if multiple)
-	if len(apiCard.NationalPokedexNumbers) > 0 {
-		card.NationalDex = apiCard.NationalPokedexNumbers[0]
-	}
+	// National dex numbers (all entries)
+	card.NationalDex = apiCard.NationalPokedexNumbers
+
+	// Regulation mark and legalities
+	card.Regulation = apiCard.RegulationMark
+	card.Legalities = apiCard.Legalities
 
 	// Attacks
 	for _, atk := range apiCard.Attacks {

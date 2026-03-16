@@ -61,7 +61,7 @@ func TestCardMarshal(t *testing.T) {
 		},
 		RetreatCost: []string{"Colorless", "Colorless", "Colorless"},
 		Rarity:      "Rare Holo",
-		NationalDex: 6,
+		NationalDex: []int{6},
 	}
 
 	data, err := json.Marshal(card)
