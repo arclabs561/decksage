@@ -230,6 +230,8 @@ func TestCardTypeDetection(t *testing.T) {
 		{"Counter Trap Card", game.TypeTrap, "Counter"},
 		{"Continuous Trap Card", game.TypeTrap, "Continuous"},
 		{"Normal Trap Card", game.TypeTrap, "Normal"},
+		{"Spell Card", game.TypeSpell, "Normal"},
+		{"Trap Card", game.TypeTrap, "Normal"},
 	}
 
 	for _, tt := range tests {

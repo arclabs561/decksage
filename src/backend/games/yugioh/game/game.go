@@ -36,8 +36,11 @@ type Card struct {
 	DEF         int          `json:"def,omitempty"`
 	Scale       int          `json:"scale,omitempty"` // Pendulum
 	Description string       `json:"description"`
+	PendDesc    string       `json:"pend_desc,omitempty"`    // Pendulum effect text (split)
+	MonsterDesc string       `json:"monster_desc,omitempty"` // Monster effect text (split)
 	Archetype   string       `json:"archetype,omitempty"`
 	Race        string       `json:"race,omitempty"` // Dragon, Warrior, Spellcaster, etc.
+	Typeline    []string     `json:"typeline,omitempty"` // e.g. ["Spellcaster", "Pendulum", "Effect"]
 	Images      []CardImage  `json:"images,omitempty"`
 	References  []CardRef    `json:"references,omitempty"`
 
