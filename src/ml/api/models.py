@@ -42,6 +42,10 @@ class UseCaseEnum(str, Enum):
     substitute = "substitute"
     synergy = "synergy"
     meta = "meta"
+    # Raw method modes (lower-level, bypass use-case weight presets)
+    embedding = "embedding"
+    jaccard = "jaccard"
+    fusion = "fusion"
 
 
 class SimilarityRequest(BaseModel):
