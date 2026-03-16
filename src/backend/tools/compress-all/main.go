@@ -8,7 +8,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 func main() {
@@ -72,11 +72,13 @@ func main() {
 					continue
 				}
 
-				compressed_data, err := zstd.Compress(nil, data)
+				enc, err := zstd.NewWriter(nil)
 				if err != nil {
 					errors.Add(1)
 					continue
 				}
+				compressed_data := enc.EncodeAll(data, nil)
+				enc.Close()
 
 				if err := os.WriteFile(path, compressed_data, 0644); err != nil {
 					errors.Add(1)

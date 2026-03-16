@@ -9,7 +9,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 func getKeys(m map[string]interface{}) []string {
@@ -67,7 +67,14 @@ func main() {
 		}
 
 		// Decompress
-		decompressed, err := zstd.Decompress(nil, data)
+		dec, err := zstd.NewReader(nil)
+		if err != nil {
+			fmt.Printf("  ❌ Decoder creation error: %v\n\n", err)
+			stats.decompressErrors++
+			continue
+		}
+		decompressed, err := dec.DecodeAll(data, nil)
+		dec.Close()
 		if err != nil {
 			fmt.Printf("  ❌ Decompress error: %v\n\n", err)
 			stats.decompressErrors++

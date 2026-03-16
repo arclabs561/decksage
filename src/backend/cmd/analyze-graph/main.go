@@ -9,7 +9,7 @@ import (
 
 	"collections/games/magic/game"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 func main() {
@@ -162,7 +162,12 @@ func loadCollection(path string) (*game.Collection, error) {
 	}
 
 	if filepath.Ext(path) == ".zst" {
-		data, err = zstd.Decompress(nil, data)
+		dec, err := zstd.NewReader(nil)
+		if err != nil {
+			return nil, err
+		}
+		data, err = dec.DecodeAll(data, nil)
+		dec.Close()
 		if err != nil {
 			return nil, err
 		}

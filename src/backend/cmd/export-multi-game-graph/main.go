@@ -12,7 +12,7 @@ import (
 
 	"collections/logger"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 // MultiGamePair represents a card pair with game context
@@ -275,7 +275,12 @@ func loadCollection(path string) (*SimpleCollection, error) {
 
 	// Decompress
 	if filepath.Ext(path) == ".zst" {
-		data, err = zstd.Decompress(nil, data)
+		dec, err := zstd.NewReader(nil)
+		if err != nil {
+			return nil, err
+		}
+		data, err = dec.DecodeAll(data, nil)
+		dec.Close()
 		if err != nil {
 			return nil, err
 		}

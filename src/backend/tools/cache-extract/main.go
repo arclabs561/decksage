@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/dgraph-io/badger/v3"
 )
 
@@ -307,10 +307,12 @@ func extractEntry(txn *badger.Txn, key string) error {
 	}
 
 	// Compress data using zstd
-	compressed, err := zstd.Compress(nil, data)
+	enc, err := zstd.NewWriter(nil)
 	if err != nil {
-		return fmt.Errorf("failed to compress data: %w", err)
+		return fmt.Errorf("failed to create zstd encoder: %w", err)
 	}
+	compressed := enc.EncodeAll(data, nil)
+	enc.Close()
 
 	if err := os.WriteFile(diskPath, compressed, 0644); err != nil {
 		return fmt.Errorf("failed to write file: %w", err)
