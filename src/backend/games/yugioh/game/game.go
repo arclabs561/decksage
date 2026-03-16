@@ -41,12 +41,14 @@ type Card struct {
 	Images      []CardImage  `json:"images,omitempty"`
 	References  []CardRef    `json:"references,omitempty"`
 
+	// Spell/Trap property
+	Property string `json:"property,omitempty"` // Normal, Continuous, Quick-Play, Equip, Field, Counter, Ritual
+
 	// Enrichment data
+	Passcode   int          `json:"passcode,omitempty"`   // Card passcode / ID
 	Prices     CardPrices   `json:"prices,omitempty"`     // Market pricing
 	BanStatus  string       `json:"ban_status,omitempty"` // Forbidden, Limited, Semi-Limited, Unlimited
-	Set        string       `json:"set,omitempty"`        // Set code
-	SetName    string       `json:"set_name,omitempty"`   // Set name
-	Rarity     string       `json:"rarity,omitempty"`     // Common, Rare, Ultra Rare, etc.
+	Sets       []CardSet    `json:"sets,omitempty"`        // All printings
 }
 
 type CardPrices struct {
@@ -75,6 +77,13 @@ type MonsterType struct {
 	IsLink     bool     `json:"is_link"`
 	IsRitual   bool     `json:"is_ritual"`
 	IsPendulum bool     `json:"is_pendulum"`
+}
+
+type CardSet struct {
+	SetCode   string `json:"set_code"`
+	SetName   string `json:"set_name"`
+	Rarity    string `json:"rarity,omitempty"`
+	SetPrice  string `json:"set_price,omitempty"`
 }
 
 type CardImage struct {
