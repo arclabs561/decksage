@@ -11,7 +11,7 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/dgraph-io/badger/v3"
@@ -213,7 +213,12 @@ func (b *Bucket) Write(ctx context.Context, key string, data []byte) error {
 			continue
 		}
 		var _ io.Writer
-		zw := zstd.NewWriter(w)
+		zw, err := zstd.NewWriter(w)
+		if err != nil {
+			_ = w.Close()
+			lastErr = fmt.Errorf("failed to create zstd writer: %w", err)
+			continue
+		}
 		n, err := zw.Write(data)
 		if err != nil {
 			_ = zw.Close()
@@ -319,16 +324,18 @@ func (b *Bucket) Read(ctx context.Context, key string) (data []byte, err error) 
 		}
 		return nil, fmt.Errorf("failed to create bucket reader: %w", err)
 	}
-	zr := zstd.NewReader(r)
+	zr, err := zstd.NewReader(r)
+	if err != nil {
+		_ = r.Close()
+		return nil, fmt.Errorf("failed to create zstd reader: %w", err)
+	}
 	data, err = io.ReadAll(zr)
 	if err != nil {
-		_ = zr.Close()
+		zr.Close()
 		_ = r.Close()
 		return nil, err
 	}
-	if err := zr.Close(); err != nil {
-		return nil, fmt.Errorf("failed to close zstd reader: %w", err)
-	}
+	zr.Close()
 	if err := r.Close(); err != nil {
 		return nil, fmt.Errorf("failed to close bucket reader: %w", err)
 	}

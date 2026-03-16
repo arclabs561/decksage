@@ -12,7 +12,7 @@ import (
 	"collections/games/magic/game"
 	"collections/logger"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/spf13/cobra"
 )
 
@@ -142,7 +142,12 @@ func validateCollection(ctx context.Context, log *logger.Logger, path string, st
 		return fmt.Errorf("read failed: %w", err)
 	}
 
-	decompressed, err := zstd.Decompress(nil, compressed)
+	dec, err := zstd.NewReader(nil)
+	if err != nil {
+		return fmt.Errorf("failed to create zstd decoder: %w", err)
+	}
+	decompressed, err := dec.DecodeAll(compressed, nil)
+	dec.Close()
 	if err != nil {
 		return fmt.Errorf("decompress failed: %w", err)
 	}

@@ -8,7 +8,7 @@ import (
 
 	"collections/games"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 )
 
 func main() {
@@ -25,7 +25,13 @@ func main() {
 		os.Exit(1)
 	}
 
-	decompressed, err := zstd.Decompress(nil, data)
+	dec, err := zstd.NewReader(nil)
+	if err != nil {
+		fmt.Printf("Error creating decoder: %v\n", err)
+		os.Exit(1)
+	}
+	decompressed, err := dec.DecodeAll(data, nil)
+	dec.Close()
 	if err != nil {
 		fmt.Printf("Error decompressing: %v\n", err)
 		os.Exit(1)

@@ -11,7 +11,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 
 	"collections/blob"
 	"collections/games"
@@ -121,7 +121,16 @@ func main() {
 			continue
 		}
 
-		decompressed, err := zstd.Decompress(nil, data)
+		dec, err := zstd.NewReader(nil)
+		if err != nil {
+			errorCount++
+			if errorCount <= maxErrorsToLog {
+				fmt.Printf("⚠️  Failed to create decoder for %s: %v\n", filepath.Base(file), err)
+			}
+			continue
+		}
+		decompressed, err := dec.DecodeAll(data, nil)
+		dec.Close()
 		if err != nil {
 			errorCount++
 			if errorCount <= maxErrorsToLog {

@@ -16,7 +16,7 @@ import (
 	"collections/games/magic/dataset/scryfall"
 	"collections/logger"
 
-	"github.com/DataDog/zstd"
+	"github.com/klauspost/compress/zstd"
 	"github.com/spf13/cobra"
 )
 
@@ -272,7 +272,12 @@ func readOldFormat(filePath string) ([]byte, error) {
 	}
 
 	// Decompress
-	decompressed, err := zstd.Decompress(nil, compressed)
+	dec, err := zstd.NewReader(nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create zstd decoder: %w", err)
+	}
+	decompressed, err := dec.DecodeAll(compressed, nil)
+	dec.Close()
 	if err != nil {
 		return nil, fmt.Errorf("decompress failed: %w", err)
 	}
