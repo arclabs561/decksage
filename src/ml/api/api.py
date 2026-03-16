@@ -97,7 +97,6 @@ from .models import (
     UseCaseEnum,
     _configured_games,
     _default_game,
-    _normalize_game,
     _require_game,
     get_state,
 )
@@ -154,7 +153,6 @@ if not HAS_GENSIM:
 # ---------------------------------------------------------------------------
 # Multi-game support
 # ---------------------------------------------------------------------------
-
 
 
 # _configured_games, _default_game, _require_game -- imported from .models (see top of file)
