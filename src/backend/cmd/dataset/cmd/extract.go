@@ -31,7 +31,8 @@ import (
 	"collections/games/yugioh/dataset/ygoprodeck"
 	"collections/games/yugioh/dataset/yugiohmeta"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
+	limpetblob "github.com/arclabs561/limpet/blob"
 )
 
 var extractCmd = &cobra.Command{
@@ -64,12 +65,17 @@ func runExtract(cmd *cobra.Command, args []string) error {
 	defer func() {
 		gamesBlob.Close(config.Ctx)
 	}()
-	scraperBlob := config.Bucket.WithPrefix("scraper/")
-	defer func() {
-		scraperBlob.Close(config.Ctx)
-	}()
 
-	scraper := scraper.NewScraper(config.Log, scraperBlob)
+	scraperBucket, err := limpetblob.NewBucket(config.Ctx, config.BucketURL+"/scraper", nil)
+	if err != nil {
+		return fmt.Errorf("failed to create limpet bucket: %w", err)
+	}
+	defer scraperBucket.Close()
+	sc, err := limpet.NewClient(config.Ctx, scraperBucket)
+	if err != nil {
+		return fmt.Errorf("failed to create limpet client: %w", err)
+	}
+	defer sc.Close()
 
 	var d games.Dataset
 	datasetName := strings.ToLower(args[0])
@@ -140,7 +146,7 @@ func runExtract(cmd *cobra.Command, args []string) error {
 
 	config.Log.Infof(ctxWithStats, "🚀 Starting extraction for dataset: %s", d.Description().Name)
 
-	if err := d.Extract(ctxWithStats, scraper, opts...); err != nil {
+	if err := d.Extract(ctxWithStats, sc, opts...); err != nil {
 		stats.RecordError(config.Ctx, "", d.Description().Name, err)
 		progress.IncrementFailed()
 		config.Log.Errorf(config.Ctx, "Extraction failed: %v", err)

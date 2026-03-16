@@ -5,7 +5,7 @@ import (
 	"collections/games"
 	"collections/games/digimon/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -78,7 +78,7 @@ type apiDeckType struct {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	if d.apiKey == "" {
@@ -137,7 +137,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) fetchTournaments(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts games.ResolvedUpdateOptions,
 ) ([]apiTournament, error) {
 	// API endpoint: GET /tournaments?game=DCG&limit=100
@@ -170,7 +170,7 @@ func (d *Dataset) fetchTournaments(
 
 func (d *Dataset) fetchStandings(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	tournamentID string,
 	opts games.ResolvedUpdateOptions,
 ) ([]apiStanding, error) {

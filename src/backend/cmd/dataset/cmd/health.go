@@ -17,7 +17,9 @@ import (
 	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
 	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
 	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
-	"collections/scraper"
+	"fmt"
+	limpet "github.com/arclabs561/limpet"
+	limpetblob "github.com/arclabs561/limpet/blob"
 )
 
 var healthCmd = &cobra.Command{
@@ -40,10 +42,17 @@ func runHealth(cmd *cobra.Command, args []string) error {
 
 	gamesBlob := config.Bucket.WithPrefix("games/")
 	defer gamesBlob.Close(config.Ctx)
-	scraperBlob := config.Bucket.WithPrefix("scraper/")
-	defer scraperBlob.Close(config.Ctx)
 
-	sc := scraper.NewScraper(config.Log, scraperBlob)
+	scraperBucket, err := limpetblob.NewBucket(config.Ctx, config.BucketURL+"/scraper", nil)
+	if err != nil {
+		return fmt.Errorf("failed to create limpet bucket: %w", err)
+	}
+	defer scraperBucket.Close()
+	sc, err := limpet.NewClient(config.Ctx, scraperBucket)
+	if err != nil {
+		return fmt.Errorf("failed to create limpet client: %w", err)
+	}
+	defer sc.Close()
 
 	limit, err := cmd.Flags().GetInt("limit")
 	if err != nil {

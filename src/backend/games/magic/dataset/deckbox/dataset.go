@@ -22,7 +22,7 @@ import (
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 )
 
 var base *url.URL
@@ -65,7 +65,7 @@ type task struct {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...dataset.UpdateOption,
 ) error {
 	opts, err := dataset.ResolveUpdateOptions(options...)
@@ -132,7 +132,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) scrollPages(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	tasks chan task,
 	opts dataset.ResolvedUpdateOptions,
 ) error {
@@ -195,7 +195,7 @@ func (p parsedPage) Next() bool {
 
 func (d *Dataset) parsePage(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	ref string,
 ) (*parsedPage, error) {
 	u, err := d.resolveRef(ref)
@@ -280,7 +280,7 @@ var reDeckID = regexp.MustCompile(`/sets/(\d+)`)
 
 func (d *Dataset) parseCollection(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	task task,
 	opts dataset.ResolvedUpdateOptions,
 ) error {

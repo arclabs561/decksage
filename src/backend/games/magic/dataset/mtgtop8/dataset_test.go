@@ -7,7 +7,8 @@ import (
 	"collections/blob"
 	"collections/games/magic/dataset"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
+	limpetblob "github.com/arclabs561/limpet/blob"
 )
 
 // TestErrorHandling verifies that URL parsing errors are properly captured
@@ -26,12 +27,15 @@ func TestErrorHandling(t *testing.T) {
 	defer blob.Close(ctx)
 
 	// Create scraper with test blob
-	scraperBlob, err := blob.NewBucket(ctx, log, bucketURL)
+	scraperBucket, err := limpetblob.NewBucket(ctx, bucketURL, nil)
 	if err != nil {
-		t.Fatalf("failed to create scraper blob: %v", err)
+		t.Fatalf("failed to create limpet bucket: %v", err)
 	}
-	defer scraperBlob.Close(ctx)
-	sc := scraper.NewScraper(log, scraperBlob)
+	sc, err := limpet.NewClient(ctx, scraperBucket)
+	if err != nil {
+		t.Fatalf("failed to create limpet client: %v", err)
+	}
+	defer sc.Close()
 
 	// Create dataset
 	d := NewDataset(log, blob)

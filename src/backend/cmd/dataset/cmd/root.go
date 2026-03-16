@@ -47,9 +47,10 @@ func runRoot(cmd *cobra.Command, args []string) error {
 }
 
 type rootConfig struct {
-	Ctx    context.Context
-	Log    *logger.Logger
-	Bucket *blob.Bucket
+	Ctx       context.Context
+	Log       *logger.Logger
+	Bucket    *blob.Bucket
+	BucketURL string
 }
 
 func newRootConfig(cmd *cobra.Command) (*rootConfig, error) {
@@ -102,8 +103,9 @@ func newRootConfig(cmd *cobra.Command) (*rootConfig, error) {
 	}
 
 	return &rootConfig{
-		Ctx:    ctx,
-		Log:    log,
-		Bucket: bucket,
+		Ctx:       ctx,
+		Log:       log,
+		Bucket:    bucket,
+		BucketURL: bucketUrl,
 	}, nil
 }
