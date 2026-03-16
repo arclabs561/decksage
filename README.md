@@ -88,8 +88,8 @@ Aggregation methods: reciprocal rank fusion (default), inverse square root, weig
 
 ```
 src/ml/           Python ML code (similarity, deck building, search, training, API, CLI)
-src/ml/tests/     Test suite (775 tests)
-src/backend/      Go backend (scraper, data extraction, transforms)
+src/ml/tests/     Test suite (850 tests)
+src/backend/      Go backend (data extraction, transforms)
 frontend/         Web frontend
 scripts/          Data pipeline and training scripts
 tests/e2e/        End-to-end Playwright tests

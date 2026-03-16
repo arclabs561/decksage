@@ -285,3 +285,4 @@ scripts/data/_debug_*
 # Hygiene (added by guardian audit)
 .env.*
 !.env.example
+src/backend/games/magic/dataset/scryfall/.cache/
