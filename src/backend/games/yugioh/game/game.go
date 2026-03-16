@@ -48,10 +48,12 @@ type Card struct {
 	Property string `json:"property,omitempty"` // Normal, Continuous, Quick-Play, Equip, Field, Counter, Ritual
 
 	// Enrichment data
-	Passcode   int          `json:"passcode,omitempty"`   // Card passcode / ID
-	Prices     CardPrices   `json:"prices,omitempty"`     // Market pricing
-	BanStatus  string       `json:"ban_status,omitempty"` // Forbidden, Limited, Semi-Limited, Unlimited
-	Sets       []CardSet    `json:"sets,omitempty"`        // All printings
+	Passcode        int          `json:"passcode,omitempty"`        // Card passcode / ID
+	Prices          CardPrices   `json:"prices,omitempty"`          // Market pricing
+	BanStatus       string       `json:"ban_status,omitempty"`      // Forbidden, Limited, Semi-Limited, Unlimited
+	Sets            []CardSet    `json:"sets,omitempty"`            // All printings
+	Classifications []string     `json:"classifications,omitempty"` // Wiki classifications
+	WikiURL         string       `json:"wiki_url,omitempty"`        // Wiki page URL
 }
 
 type CardPrices struct {
