@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -239,20 +240,13 @@ func (d *Dataset) parseCard(
 		card.Health = *rawCard.Attributes.Power
 	}
 
-	// Handle Champion type
+	// Handle Champion type: use Supertype field; tags are supplementary metadata
 	if rawCard.Classification.Supertype != nil && *rawCard.Classification.Supertype == "Champion" {
-		// Extract champion name from tags or name
-		championName := rawCard.Name
-		if len(rawCard.Tags) > 0 {
-			// Tags often contain champion names
-			for _, tag := range rawCard.Tags {
-				// Check if tag is a known champion name (simplified - could be enhanced)
-				championName = tag
-				break
-			}
-		}
-		card.Champion = championName
+		card.Champion = rawCard.Name
 	}
+
+	// Store all tags as keywords (includes champion names, mechanics, etc.)
+	card.Keywords = rawCard.Tags
 
 	// Add image
 	if rawCard.Media.ImageURL != "" {
@@ -266,9 +260,8 @@ func (d *Dataset) parseCard(
 		{URL: fmt.Sprintf("https://riftcodex.com/cards/%s", rawCard.RiftboundID)},
 	}
 
-	// Extract keywords from text (simplified - could parse more thoroughly)
-	// Keywords like [Shield], [Tank], [Quick Attack] are in the text
-	// This is a basic implementation - could be enhanced with proper keyword extraction
+	// Extract bracketed keywords from effect text (e.g., [Shield], [Quick Attack])
+	card.Keywords = appendBracketedKeywords(card.Keywords, rawCard.Text.Plain)
 
 	bkey := d.cardKey(card.Name)
 	b, err := json.Marshal(card)
@@ -299,6 +292,25 @@ func (d *Dataset) cardKey(cardName string) string {
 	safeName = strings.ReplaceAll(safeName, "|", "_")
 	safeName = filepath.Clean(safeName)
 	return filepath.Join(prefix, safeName+".json")
+}
+
+var reBracketedKeyword = regexp.MustCompile(`\[([^\]]+)\]`)
+
+// appendBracketedKeywords extracts [Keyword] patterns from effect text
+// and appends any new ones to the existing keywords slice.
+func appendBracketedKeywords(keywords []string, effectText string) []string {
+	seen := make(map[string]bool, len(keywords))
+	for _, k := range keywords {
+		seen[k] = true
+	}
+	for _, match := range reBracketedKeyword.FindAllStringSubmatch(effectText, -1) {
+		kw := match[1]
+		if !seen[kw] {
+			seen[kw] = true
+			keywords = append(keywords, kw)
+		}
+	}
+	return keywords
 }
 
 func (d *Dataset) IterItems(
