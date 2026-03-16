@@ -586,6 +586,26 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError):
                 logger.debug("Failed to load deck frequency for game=%s", game, exc_info=True)
 
+        # Scryfall legality + prices (Magic-only, shared across games but only useful for magic)
+        if game == "magic":
+            legality_path = PATHS.project_root / "data/processed/scryfall_legality.json"
+            if legality_path.exists():
+                try:
+                    with open(legality_path, encoding="utf-8") as f:
+                        state.legality_data = json.load(f)
+                    logger.info("Loaded Scryfall legality data: %d cards", len(state.legality_data))
+                except (OSError, ValueError, KeyError):
+                    logger.debug("Failed to load Scryfall legality data", exc_info=True)
+
+            prices_path = PATHS.project_root / "data/processed/scryfall_prices.json"
+            if prices_path.exists():
+                try:
+                    with open(prices_path, encoding="utf-8") as f:
+                        state.price_data = json.load(f)
+                    logger.info("Loaded Scryfall price data: %d cards", len(state.price_data))
+                except (OSError, ValueError, KeyError):
+                    logger.debug("Failed to load Scryfall price data", exc_info=True)
+
         # Additional signals (per game) -- shared embedders, per-game data signals
         try:
             from .load_signals import load_signals_to_state
@@ -667,6 +687,10 @@ async def lifespan(app: FastAPI):
             _parts.append(f"banlist_formats={len(state.banlist)}")
         if state.archetypes:
             _parts.append(f"archetypes={len(state.archetypes)}")
+        if state.legality_data:
+            _parts.append(f"legality={len(state.legality_data)}")
+        if state.price_data:
+            _parts.append(f"prices={len(state.price_data)}")
         logger.info("Ready: %s", " ".join(_parts))
     _elapsed = _time.monotonic() - _t_start
     logger.info(
@@ -1098,6 +1122,12 @@ def _enrich_similar_card(
         if freq:
             meta["deck_popularity"] = freq
 
+    # Scryfall legalities (Magic-only)
+    if game == "magic" and state.legality_data:
+        legality = state.legality_data.get(card_name, {})
+        if legality:
+            meta["legalities"] = legality
+
     # Top co-occurrence (from graph adjacency + weights, top 3 by weight)
     if state.graph_data and "adj" in state.graph_data:
         adj = state.graph_data["adj"]
@@ -1391,6 +1421,9 @@ def get_similar_v1(
     mmr_lambda: float | None = Query(
         None, ge=0.0, le=1.0, description="MMR diversification strength"
     ),
+    format: str | None = Query(
+        None, description="Filter by format legality (e.g., standard, pioneer, modern)"
+    ),
 ):
     # Log query for analytics
     try:
@@ -1419,7 +1452,20 @@ def get_similar_v1(
         req = SimilarityRequest(
             game=game, query=name, top_k=k, use_case=mode, mmr_lambda=mmr_lambda
         )
-    return _similar_impl(req)
+    resp = _similar_impl(req)
+
+    # Post-filter by format legality (Scryfall data, Magic-only)
+    if format:
+        resolved_game = _require_game(game)
+        state = get_state(resolved_game)
+        if state.legality_data:
+            resp.results = [
+                r
+                for r in resp.results
+                if state.legality_data.get(r.card, {}).get(format) == "legal"
+            ]
+
+    return resp
 
 
 @router.get("/cards/{card}/contextual", response_model=ContextualResponse)
