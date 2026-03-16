@@ -165,7 +165,7 @@ func (d *Dataset) scrapeDeckListingPages(
 
 		// Use Playwright to render JavaScript-rendered page
 		d.log.Infof(ctx, "Rendering page %d with Playwright...", page)
-		pg, err := sc.Get(ctx, pageURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
+		pg, err := sc.Get(ctx, pageURL, limpet.DoConfig{Browser: true, Replace: true})
 		if err != nil {
 			d.log.Warnf(ctx, "Failed to render listing page %d: %v", page, err)
 			if page == 1 {
@@ -287,7 +287,7 @@ func (d *Dataset) parseDeck(
 
 	// Use Playwright to render JavaScript-rendered deck page
 	d.log.Debugf(ctx, "Rendering deck page %s with Playwright...", deckURL)
-	pg, err := sc.Get(ctx, deckURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
+	pg, err := sc.Get(ctx, deckURL, limpet.DoConfig{Browser: true, Replace: true})
 	if err != nil {
 		return fmt.Errorf("failed to render deck page with Playwright: %w", err)
 	}

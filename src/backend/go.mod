@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.11.0
-	github.com/arclabs561/limpet v0.0.0-20260316195120-0b39c28b1748
+	github.com/arclabs561/limpet v0.0.0-20260316211505-3415d03d5433
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.4
 	github.com/dgraph-io/badger/v3 v3.2103.5
