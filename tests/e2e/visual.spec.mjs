@@ -1,14 +1,14 @@
 // @ts-check
 import { test, expect } from '@playwright/test';
 import { existsSync } from 'fs';
-import { PASS_THRESHOLD, GAME_CONTEXTS, makePrompt } from './vlm-rubric.mjs';
+import { PASS_THRESHOLD, CARD_GAME_RUBRIC, GAME_CONTEXTS, gamePrompt } from './vlm-rubric.mjs';
 
 /**
  * Visual regression tests using VLM (ai-visual-test).
  *
  * Takes Playwright screenshots and evaluates them with the custom
- * 7-dimension card-game rubric. Requires an API key in environment
- * (auto-loaded from ../.env by playwright.config.mjs).
+ * 7-dimension card-game rubric via validateWithRubric(). Requires an
+ * API key in environment (auto-loaded from ../.env by playwright.config.mjs).
  *
  * Run with: npx playwright test tests/e2e/visual.spec.mjs
  * Skip VLM: SKIP_VLM=1 npx playwright test tests/e2e/visual.spec.mjs
@@ -36,7 +36,7 @@ const GAMES = Object.entries(GAME_CONTEXTS).map(([key, ctx]) => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Screenshot capture (always runs — useful even without VLM)
+// Screenshot capture (always runs -- useful even without VLM)
 // ---------------------------------------------------------------------------
 
 test.describe('Visual screenshots', () => {
@@ -68,12 +68,12 @@ test.describe('Visual screenshots', () => {
 test.describe('VLM visual quality', () => {
   test.skip(() => skipVLM, 'No VLM API key available (set OPENROUTER_API_KEY, GEMINI_API_KEY, OPENAI_API_KEY, or ANTHROPIC_API_KEY)');
 
-  let validateScreenshot;
+  let validateWithRubric;
 
   test.beforeAll(async () => {
     try {
       const mod = await import('@arclabs561/ai-visual-test');
-      validateScreenshot = mod.validateScreenshot;
+      validateWithRubric = mod.validateWithRubric;
     } catch {
       test.skip();
     }
@@ -87,13 +87,13 @@ test.describe('VLM visual quality', () => {
         return;
       }
 
-      const result = await validateScreenshot(path, makePrompt(game.key), {
-        useCache: true,
-        modelTier: 'balanced',
-        useRubric: true,
-        includeDimensions: true,
-        testType: 'visual-quality',
-      });
+      const result = await validateWithRubric(
+        path,
+        gamePrompt(game.key),
+        CARD_GAME_RUBRIC,
+        { testType: 'visual-quality' },
+        { enforceZeroTolerance: false },
+      );
 
       const score = result.score ?? 0;
       console.log(`${game.key}: ${score}/10`);
