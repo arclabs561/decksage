@@ -13,8 +13,8 @@
  *   node scripts/vlm_critique.mjs --clear    # clear cache first
  */
 import { readFileSync, existsSync } from 'fs';
-import { validateScreenshot, createConfig, clearCache, getCacheStats } from '@arclabs561/ai-visual-test';
-import { PASS_THRESHOLD, CARD_GAME_RUBRIC, GAME_CONTEXTS, makePrompt } from '../tests/e2e/vlm-rubric.mjs';
+import { validateWithRubric, clearCache, getCacheStats } from '@arclabs561/ai-visual-test';
+import { PASS_THRESHOLD, CARD_GAME_RUBRIC, GAME_CONTEXTS, gamePrompt } from '../tests/e2e/vlm-rubric.mjs';
 
 // Load .env (lightweight, no dependency needed)
 try {
@@ -49,31 +49,6 @@ const UI_REF = {
 };
 
 // ---------------------------------------------------------------------------
-// Config with domain-level visual anchors
-// ---------------------------------------------------------------------------
-const config = createConfig({
-  anchors: {
-    domain: 'Card similarity search tool -- Apple-minimal design (white bg, 12px radius cards, layered shadows, system fonts, game-specific accent color)',
-    positive: [
-      'White or near-white background (#f5f5f7 / #fafafa range)',
-      'Cards have 12px border-radius, 1px borders, layered box-shadow',
-      'Generous padding inside cards (20px+) and 12px+ gap between cards',
-      'System font stack for body; game-specific font for card names only',
-      'Similarity percentage is the largest number on the card (22px+, bold, accent-colored)',
-      'Each result shows: card image, name, similarity %, stat badges, keyword tags',
-      'Game accent color used only for: links, similarity %, active borders, button CTA',
-    ],
-    negative: [
-      'Dark themed backgrounds (dark purple, dark navy, black)',
-      'Heavy borders (>1px), colored glows, text-shadows, drop-shadows with opacity > 0.15',
-      'Cramped layout: cards touching, text truncated, no padding between elements',
-      'Flat hierarchy: all text same size/weight, nothing stands out',
-      'Saturated colored backgrounds on cards or result containers',
-    ],
-  },
-});
-
-// ---------------------------------------------------------------------------
 // Per-game screenshot config
 // ---------------------------------------------------------------------------
 const screenshots = Object.entries(GAME_CONTEXTS).map(([key, ctx]) => ({
@@ -94,11 +69,10 @@ async function main() {
 
   const stats = getCacheStats();
   console.log(`Cache: ${stats.size} entries`);
-  console.log(`Config: provider=${config.provider}, anchors=${config.anchors ? 'yes' : 'no'}`);
 
   let allPassed = true;
 
-  for (const { path, game, gameKey, desc } of screenshots) {
+  for (const { path, game, gameKey } of screenshots) {
     if (!existsSync(path)) {
       console.log(`\nSKIP: ${path} not found`);
       continue;
@@ -124,15 +98,13 @@ async function main() {
         ],
       };
 
-      const result = await validateScreenshot(path, makePrompt(gameKey), {
-        useCache: false,
-        modelTier: 'balanced',
-        useRubric: true,
-        includeDimensions: true,
-        description: `DeckSage ${game} theme visual quality`,
-        testType: 'visual-quality',
-        anchors: gameAnchors,
-      });
+      const result = await validateWithRubric(
+        path,
+        gamePrompt(gameKey),
+        CARD_GAME_RUBRIC,
+        { testType: 'visual-quality', anchors: gameAnchors },
+        { enforceZeroTolerance: false },
+      );
 
       const score = result.score ?? 0;
       const status = score >= PASS_THRESHOLD ? 'PASS' : 'NEEDS WORK';
