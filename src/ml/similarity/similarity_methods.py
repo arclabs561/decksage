@@ -127,7 +127,8 @@ def load_graph(csv_path=None, graph_db=None, game=None, filter_lands=True):
         except Exception as exc:
             _logger.warning(
                 "Corrupt graph cache %s (%s); deleting and rebuilding from CSV",
-                cache_path, exc,
+                cache_path,
+                exc,
             )
             try:
                 cache_path.unlink()

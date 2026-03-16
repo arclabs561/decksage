@@ -152,10 +152,10 @@ class CardVisualEmbedder:
         if use_transformers_direct:
             # SigLIP: Use transformers directly (sentence-transformers has compatibility issues)
             try:
+                import warnings
+
                 import torch
                 from transformers import AutoModel, AutoProcessor
-
-                import warnings
 
                 with warnings.catch_warnings():
                     warnings.simplefilter("ignore")

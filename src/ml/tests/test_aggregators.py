@@ -4,6 +4,7 @@
 Tests the aggregation methods in isolation with synthetic scores,
 no real embeddings or file I/O required.
 """
+
 from __future__ import annotations
 
 import math
@@ -42,9 +43,7 @@ class FakeEmbeddings:
         return self._sims.get((q, c), 0.0)
 
     def most_similar(self, q: str, topn: int = 10) -> list[tuple[str, float]]:
-        results = [
-            (c, self.similarity(q, c)) for c in self._vocab if c != q
-        ]
+        results = [(c, self.similarity(q, c)) for c in self._vocab if c != q]
         results.sort(key=lambda x: x[1], reverse=True)
         return results[:topn]
 
@@ -52,9 +51,9 @@ class FakeEmbeddings:
 # Tiny vocab with known cosine similarities (pre cosine-to-unit mapping).
 # _cosine_to_unit maps [-1,1] -> [0,1] via (c+1)/2.
 _SIMS = {
-    ("Q", "A"): 0.8,   # -> 0.9 after cosine_to_unit
-    ("Q", "B"): 0.4,   # -> 0.7
-    ("Q", "C"): 0.0,   # -> 0.5
+    ("Q", "A"): 0.8,  # -> 0.9 after cosine_to_unit
+    ("Q", "B"): 0.4,  # -> 0.7
+    ("Q", "C"): 0.0,  # -> 0.5
     ("Q", "D"): -0.4,  # -> 0.3
     ("Q", "E"): -0.8,  # -> 0.1
     ("A", "B"): 0.6,
@@ -111,13 +110,13 @@ def _all_aggregators() -> list[str]:
 
 
 class TestAggregateWeighted:
-    """_aggregate_weighted: weighted sum of modality scores."""
+    """_aggregate weighted: weighted sum of modality scores."""
 
     def test_basic_computation(self):
         f = _make_fusion("weighted")
         scores = {"embed": 0.8, "jaccard": 0.4}
         # weights are normalized: embed=0.5, jaccard=0.5
-        result = f._aggregate_weighted(scores)
+        result = f._aggregate(scores, "weighted")
         expected = 0.5 * 0.8 + 0.5 * 0.4
         assert math.isclose(result, expected, abs_tol=1e-9)
 
@@ -125,48 +124,48 @@ class TestAggregateWeighted:
         f = _make_fusion("weighted")
         # All inputs in [0,1] and weights sum to 1 -> output in [0,1]
         for embed_s, jacc_s in [(0.0, 0.0), (1.0, 1.0), (0.5, 0.5), (0.0, 1.0)]:
-            score = f._aggregate_weighted({"embed": embed_s, "jaccard": jacc_s})
+            score = f._aggregate({"embed": embed_s, "jaccard": jacc_s}, "weighted")
             assert 0.0 <= score <= 1.0, f"score {score} out of [0,1]"
 
     def test_missing_modality_ignored(self):
         f = _make_fusion("weighted")
         # Only embed provided; jaccard absent -> only embed contributes
-        result = f._aggregate_weighted({"embed": 0.8})
+        result = f._aggregate({"embed": 0.8}, "weighted")
         expected = 0.5 * 0.8
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_zero_weight_modality_ignored(self):
         f = _make_fusion("weighted")
         # functional has weight 0.0, should not contribute even if present
-        result = f._aggregate_weighted({"embed": 0.8, "functional": 0.9})
+        result = f._aggregate({"embed": 0.8, "functional": 0.9}, "weighted")
         expected = 0.5 * 0.8
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_empty_scores(self):
         f = _make_fusion("weighted")
-        assert f._aggregate_weighted({}) == 0.0
+        assert f._aggregate({}, "weighted") == 0.0
 
 
 class TestAggregateRRF:
-    """_aggregate_rrf: reciprocal rank fusion with k parameter."""
+    """_aggregate rrf: reciprocal rank fusion with k parameter."""
 
     def test_basic_computation(self):
         f = _make_fusion("rrf", rrf_k=60)
         ranks = {"embed": 1, "jaccard": 2}
         expected = 0.5 / (60 + 1) + 0.5 / (60 + 2)
-        result = f._aggregate_rrf(ranks)
+        result = f._aggregate(ranks, "rrf")
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_rank_1_scores_higher_than_rank_10(self):
         f = _make_fusion("rrf", rrf_k=60)
-        score_rank1 = f._aggregate_rrf({"embed": 1, "jaccard": 1})
-        score_rank10 = f._aggregate_rrf({"embed": 10, "jaccard": 10})
+        score_rank1 = f._aggregate({"embed": 1, "jaccard": 1}, "rrf")
+        score_rank10 = f._aggregate({"embed": 10, "jaccard": 10}, "rrf")
         assert score_rank1 > score_rank10
 
     def test_bounded_positive(self):
         f = _make_fusion("rrf", rrf_k=60)
         # Rank 1 in both modalities is the maximum possible
-        max_score = f._aggregate_rrf({"embed": 1, "jaccard": 1})
+        max_score = f._aggregate({"embed": 1, "jaccard": 1}, "rrf")
         assert max_score > 0.0
         # With k=60, max per modality is w/(60+1), total <= sum(weights)/(60+1)
         assert max_score <= 1.0 / (60 + 1) + 0.01  # some tolerance
@@ -176,33 +175,33 @@ class TestAggregateRRF:
         f_large_k = _make_fusion("rrf", rrf_k=1000)
         ranks = {"embed": 1, "jaccard": 1}
         # Smaller k -> higher scores (rank matters more)
-        assert f_small_k._aggregate_rrf(ranks) > f_large_k._aggregate_rrf(ranks)
+        assert f_small_k._aggregate(ranks, "rrf") > f_large_k._aggregate(ranks, "rrf")
 
     def test_empty_ranks(self):
         f = _make_fusion("rrf")
-        assert f._aggregate_rrf({}) == 0.0
+        assert f._aggregate({}, "rrf") == 0.0
 
 
 class TestAggregateISR:
-    """_aggregate_isr: inverse square root decay (slower than RRF)."""
+    """_aggregate isr: inverse square root decay (slower than RRF)."""
 
     def test_basic_computation(self):
         f = _make_fusion("isr", rrf_k=60)
         ranks = {"embed": 1, "jaccard": 2}
         expected = 0.5 / math.sqrt(60 + 1) + 0.5 / math.sqrt(60 + 2)
-        result = f._aggregate_isr(ranks)
+        result = f._aggregate(ranks, "isr")
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_slower_decay_than_rrf(self):
         """ISR decays slower: ratio between rank 1 and rank 100 is smaller for ISR."""
         f = _make_fusion("isr", rrf_k=60)
-        score_r1 = f._aggregate_isr({"embed": 1})
-        score_r100 = f._aggregate_isr({"embed": 100})
+        score_r1 = f._aggregate({"embed": 1}, "isr")
+        score_r100 = f._aggregate({"embed": 100}, "isr")
         ratio_isr = score_r100 / score_r1
 
         f2 = _make_fusion("rrf", rrf_k=60)
-        score_r1_rrf = f2._aggregate_rrf({"embed": 1})
-        score_r100_rrf = f2._aggregate_rrf({"embed": 100})
+        score_r1_rrf = f2._aggregate({"embed": 1}, "rrf")
+        score_r100_rrf = f2._aggregate({"embed": 100}, "rrf")
         ratio_rrf = score_r100_rrf / score_r1_rrf
 
         # ISR ratio should be larger (slower decay)
@@ -210,24 +209,24 @@ class TestAggregateISR:
 
     def test_rank_ordering_preserved(self):
         f = _make_fusion("isr", rrf_k=60)
-        score_r1 = f._aggregate_isr({"embed": 1, "jaccard": 1})
-        score_r5 = f._aggregate_isr({"embed": 5, "jaccard": 5})
+        score_r1 = f._aggregate({"embed": 1, "jaccard": 1}, "isr")
+        score_r5 = f._aggregate({"embed": 5, "jaccard": 5}, "isr")
         assert score_r1 > score_r5
 
     def test_empty_ranks(self):
         f = _make_fusion("isr")
-        assert f._aggregate_isr({}) == 0.0
+        assert f._aggregate({}, "isr") == 0.0
 
 
 class TestAggregateCombSUM:
-    """_aggregate_combsum: sum of weighted scores. CAN exceed 1.0 because it is
-    a weighted sum without normalization (same formula as _aggregate_weighted)."""
+    """_aggregate combsum: sum of weighted scores. CAN exceed 1.0 because it is
+    a weighted sum without normalization (same formula as weighted)."""
 
     def test_basic_computation(self):
         f = _make_fusion("combsum")
         scores = {"embed": 0.8, "jaccard": 0.6}
         expected = 0.5 * 0.8 + 0.5 * 0.6
-        result = f._aggregate_combsum(scores)
+        result = f._aggregate(scores, "combsum")
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_matches_weighted_for_same_inputs(self):
@@ -235,18 +234,18 @@ class TestAggregateCombSUM:
         f = _make_fusion("combsum")
         scores = {"embed": 0.7, "jaccard": 0.3}
         assert math.isclose(
-            f._aggregate_combsum(scores),
-            f._aggregate_weighted(scores),
+            f._aggregate(scores, "combsum"),
+            f._aggregate(scores, "weighted"),
             abs_tol=1e-9,
         )
 
     def test_empty_scores(self):
         f = _make_fusion("combsum")
-        assert f._aggregate_combsum({}) == 0.0
+        assert f._aggregate({}, "combsum") == 0.0
 
 
 class TestAggregateCombMNZ:
-    """_aggregate_combmnz: combsum * overlap_count. CAN exceed 1.0 because the
+    """_aggregate combmnz: combsum * overlap_count. CAN exceed 1.0 because the
     overlap multiplier amplifies the sum."""
 
     def test_basic_computation(self):
@@ -255,14 +254,14 @@ class TestAggregateCombMNZ:
         combsum = 0.5 * 0.8 + 0.5 * 0.6  # 0.7
         overlap = 2
         expected = combsum * overlap  # 1.4
-        result = f._aggregate_combmnz(scores)
+        result = f._aggregate(scores, "combmnz")
         assert math.isclose(result, expected, abs_tol=1e-9)
 
     def test_exceeds_one_with_high_scores(self):
         """CombMNZ can exceed 1.0 -- this is by design."""
         f = _make_fusion("combmnz")
         scores = {"embed": 1.0, "jaccard": 1.0}
-        result = f._aggregate_combmnz(scores)
+        result = f._aggregate(scores, "combmnz")
         assert result > 1.0
 
     def test_single_modality_equals_combsum(self):
@@ -270,8 +269,8 @@ class TestAggregateCombMNZ:
         f = _make_fusion("combmnz")
         scores = {"embed": 0.8}
         assert math.isclose(
-            f._aggregate_combmnz(scores),
-            f._aggregate_combsum(scores),
+            f._aggregate(scores, "combmnz"),
+            f._aggregate(scores, "combsum"),
             abs_tol=1e-9,
         )
 
@@ -279,62 +278,62 @@ class TestAggregateCombMNZ:
         """More modalities -> higher score (given same combsum base)."""
         f = _make_fusion("combmnz")
         # Both modalities present
-        score_both = f._aggregate_combmnz({"embed": 0.5, "jaccard": 0.5})
+        score_both = f._aggregate({"embed": 0.5, "jaccard": 0.5}, "combmnz")
         # Only one modality, but same total weighted score
-        score_one = f._aggregate_combmnz({"embed": 1.0})
+        score_one = f._aggregate({"embed": 1.0}, "combmnz")
         # score_both = (0.5*0.5 + 0.5*0.5) * 2 = 0.5 * 2 = 1.0
         # score_one  = (0.5*1.0) * 1 = 0.5
         assert score_both > score_one
 
     def test_empty_scores(self):
         f = _make_fusion("combmnz")
-        assert f._aggregate_combmnz({}) == 0.0
+        assert f._aggregate({}, "combmnz") == 0.0
 
 
 class TestAggregateCombMAX:
-    """_aggregate_combmax: maximum of raw scores (ignores weights for max selection)."""
+    """_aggregate combmax: maximum of raw scores (ignores weights for max selection)."""
 
     def test_basic_computation(self):
         f = _make_fusion("combmax")
         scores = {"embed": 0.3, "jaccard": 0.9}
-        assert f._aggregate_combmax(scores) == 0.9
+        assert f._aggregate(scores, "combmax") == 0.9
 
     def test_bounded_by_max_input(self):
         f = _make_fusion("combmax")
         scores = {"embed": 0.6, "jaccard": 0.4}
-        result = f._aggregate_combmax(scores)
+        result = f._aggregate(scores, "combmax")
         assert result == max(scores.values())
 
     def test_single_modality(self):
         f = _make_fusion("combmax")
-        assert f._aggregate_combmax({"embed": 0.42}) == 0.42
+        assert f._aggregate({"embed": 0.42}, "combmax") == 0.42
 
     def test_empty_scores(self):
         f = _make_fusion("combmax")
-        assert f._aggregate_combmax({}) == 0.0
+        assert f._aggregate({}, "combmax") == 0.0
 
 
 class TestAggregateCombMIN:
-    """_aggregate_combmin: minimum of raw scores (ignores weights for min selection)."""
+    """_aggregate combmin: minimum of raw scores (ignores weights for min selection)."""
 
     def test_basic_computation(self):
         f = _make_fusion("combmin")
         scores = {"embed": 0.3, "jaccard": 0.9}
-        assert f._aggregate_combmin(scores) == 0.3
+        assert f._aggregate(scores, "combmin") == 0.3
 
     def test_bounded_by_min_input(self):
         f = _make_fusion("combmin")
         scores = {"embed": 0.6, "jaccard": 0.4}
-        result = f._aggregate_combmin(scores)
+        result = f._aggregate(scores, "combmin")
         assert result == min(scores.values())
 
     def test_single_modality(self):
         f = _make_fusion("combmin")
-        assert f._aggregate_combmin({"jaccard": 0.77}) == 0.77
+        assert f._aggregate({"jaccard": 0.77}, "combmin") == 0.77
 
     def test_empty_scores(self):
         f = _make_fusion("combmin")
-        assert f._aggregate_combmin({}) == 0.0
+        assert f._aggregate({}, "combmin") == 0.0
 
 
 # ---------------------------------------------------------------------------
@@ -398,18 +397,33 @@ class TestCrossAggregatorProperties:
         """If only one modality returns results, RRF and weighted produce same ranking."""
         # Use embed-only weights so only one modality contributes
         embed_only_weights = FusionWeights(
-            embed=1.0, jaccard=0.0, functional=0.0, text_embed=0.0,
-            visual_embed=0.0, sideboard=0.0, temporal=0.0, gnn=0.0,
-            pack_embed=0.0, archetype=0.0, format=0.0,
+            embed=1.0,
+            jaccard=0.0,
+            functional=0.0,
+            text_embed=0.0,
+            visual_embed=0.0,
+            sideboard=0.0,
+            temporal=0.0,
+            gnn=0.0,
+            pack_embed=0.0,
+            archetype=0.0,
+            format=0.0,
         )
         emb = FakeEmbeddings(_SIMS)
         f_rrf = WeightedLateFusion(
-            embeddings=emb, adj=_ADJ, weights=embed_only_weights,
-            aggregator="rrf", rrf_k=60, candidate_topn=50,
+            embeddings=emb,
+            adj=_ADJ,
+            weights=embed_only_weights,
+            aggregator="rrf",
+            rrf_k=60,
+            candidate_topn=50,
         )
         f_weighted = WeightedLateFusion(
-            embeddings=emb, adj=_ADJ, weights=embed_only_weights,
-            aggregator="weighted", candidate_topn=50,
+            embeddings=emb,
+            adj=_ADJ,
+            weights=embed_only_weights,
+            aggregator="weighted",
+            candidate_topn=50,
         )
         r_rrf = [card for card, _ in f_rrf.similar("Q", k=5)]
         r_weighted = [card for card, _ in f_weighted.similar("Q", k=5)]
@@ -521,7 +535,6 @@ class TestRegressionPinnedRankings:
 
 
 class TestEdgeCases:
-
     def test_empty_candidate_set(self):
         """Query not in adj or embeddings -> empty results for all aggregators."""
         for agg in _all_aggregators():
@@ -536,8 +549,10 @@ class TestEdgeCases:
         emb = FakeEmbeddings(single_sims)
         for agg in _all_aggregators():
             f = WeightedLateFusion(
-                embeddings=emb, adj=single_adj,
-                weights=_simple_weights(), aggregator=agg,
+                embeddings=emb,
+                adj=single_adj,
+                weights=_simple_weights(),
+                aggregator=agg,
                 candidate_topn=50,
             )
             results = f.similar("X", k=5)
@@ -565,17 +580,19 @@ class TestEdgeCases:
         rank_based = ["rrf", "isr"]
         for agg in _all_aggregators():
             f = WeightedLateFusion(
-                embeddings=emb, adj=equal_adj,
-                weights=_simple_weights(), aggregator=agg,
+                embeddings=emb,
+                adj=equal_adj,
+                weights=_simple_weights(),
+                aggregator=agg,
                 candidate_topn=50,
             )
             results = f.similar("Q", k=3)
             assert len(results) == 3, f"{agg}: expected 3 results, got {len(results)}"
             if agg in score_based:
                 scores = [s for _, s in results]
-                assert all(
-                    math.isclose(scores[0], s, abs_tol=1e-9) for s in scores
-                ), f"{agg}: scores not equal: {scores}"
+                assert all(math.isclose(scores[0], s, abs_tol=1e-9) for s in scores), (
+                    f"{agg}: scores not equal: {scores}"
+                )
             else:
                 # Rank-based: just verify no crash and 3 results returned
                 assert all(s >= 0.0 for _, s in results), f"{agg}: negative scores"
@@ -584,8 +601,10 @@ class TestEdgeCases:
         """No embeddings, only adj -> aggregators still work."""
         for agg in _all_aggregators():
             f = WeightedLateFusion(
-                embeddings=None, adj=_ADJ,
-                weights=_simple_weights(), aggregator=agg,
+                embeddings=None,
+                adj=_ADJ,
+                weights=_simple_weights(),
+                aggregator=agg,
                 candidate_topn=50,
             )
             results = f.similar("Q", k=3)
@@ -599,8 +618,10 @@ class TestEdgeCases:
         emb = FakeEmbeddings(_SIMS)
         for agg in _all_aggregators():
             f = WeightedLateFusion(
-                embeddings=emb, adj=None,
-                weights=_simple_weights(), aggregator=agg,
+                embeddings=emb,
+                adj=None,
+                weights=_simple_weights(),
+                aggregator=agg,
                 candidate_topn=50,
             )
             results = f.similar("Q", k=3)
