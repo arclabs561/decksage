@@ -105,7 +105,4 @@ class BanlistFilter:
             banned = self.banned_by_format.get(fmt, set())
             return {"format": fmt, "num_banned": len(banned)}
 
-        return {
-            fmt: len(banned)
-            for fmt, banned in sorted(self.banned_by_format.items())
-        }
+        return {fmt: len(banned) for fmt, banned in sorted(self.banned_by_format.items())}

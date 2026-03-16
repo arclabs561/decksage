@@ -100,15 +100,21 @@ class CardSimilarityAnnotation(BaseModel):
 
     # Multi-faceted similarity breakdown (richer than a single score)
     functional_score: float | None = Field(
-        default=None, ge=0.0, le=1.0,
+        default=None,
+        ge=0.0,
+        le=1.0,
         description="Functional replacement similarity (same role/effect). 0=different function, 1=identical function",
     )
     synergy_score: float | None = Field(
-        default=None, ge=0.0, le=1.0,
+        default=None,
+        ge=0.0,
+        le=1.0,
         description="Synergy/combo potential (how well they work together). 0=no synergy, 1=key combo piece",
     )
     meta_relevance: float | None = Field(
-        default=None, ge=0.0, le=1.0,
+        default=None,
+        ge=0.0,
+        le=1.0,
         description="Competitive meta relevance (co-occurrence in tournament play). 0=never paired, 1=always paired in meta decks",
     )
     key_similarities: list[str] = Field(
@@ -132,7 +138,9 @@ class CardSimilarityAnnotation(BaseModel):
         default=None,
         description="Semantic version of the prompt template (e.g., 'v3.1')",
     )
-    prompt_hash: str | None = Field(default=None, description="SHA-256 prefix of full prompt text sent")
+    prompt_hash: str | None = Field(
+        default=None, description="SHA-256 prefix of full prompt text sent"
+    )
     annotator_id: str | None = Field(
         default=None, description="Annotator/judge ID for multi-judge systems"
     )

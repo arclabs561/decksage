@@ -32,7 +32,13 @@ class DummyEmb:
     """Minimal KeyedVectors stub for testing chat tools."""
 
     def __init__(self, cards: list[str] | None = None):
-        self._cards = cards or ["Lightning Bolt", "Lava Spike", "Rift Bolt", "Chain Lightning", "Boros Charm"]
+        self._cards = cards or [
+            "Lightning Bolt",
+            "Lava Spike",
+            "Rift Bolt",
+            "Chain Lightning",
+            "Boros Charm",
+        ]
         self.key_to_index = {c: i for i, c in enumerate(self._cards)}
 
     def __contains__(self, k: str) -> bool:
@@ -48,11 +54,36 @@ class DummyEmb:
 
     def most_similar(self, q: str, topn: int = 10) -> list[tuple[str, float]]:
         scores = {
-            "Lightning Bolt": [("Lava Spike", 0.92), ("Rift Bolt", 0.88), ("Chain Lightning", 0.85), ("Boros Charm", 0.70)],
-            "Lava Spike": [("Lightning Bolt", 0.92), ("Rift Bolt", 0.80), ("Chain Lightning", 0.78), ("Boros Charm", 0.65)],
-            "Rift Bolt": [("Lightning Bolt", 0.88), ("Lava Spike", 0.80), ("Chain Lightning", 0.75), ("Boros Charm", 0.60)],
-            "Chain Lightning": [("Lightning Bolt", 0.85), ("Lava Spike", 0.78), ("Rift Bolt", 0.75), ("Boros Charm", 0.55)],
-            "Boros Charm": [("Lightning Bolt", 0.70), ("Lava Spike", 0.65), ("Rift Bolt", 0.60), ("Chain Lightning", 0.55)],
+            "Lightning Bolt": [
+                ("Lava Spike", 0.92),
+                ("Rift Bolt", 0.88),
+                ("Chain Lightning", 0.85),
+                ("Boros Charm", 0.70),
+            ],
+            "Lava Spike": [
+                ("Lightning Bolt", 0.92),
+                ("Rift Bolt", 0.80),
+                ("Chain Lightning", 0.78),
+                ("Boros Charm", 0.65),
+            ],
+            "Rift Bolt": [
+                ("Lightning Bolt", 0.88),
+                ("Lava Spike", 0.80),
+                ("Chain Lightning", 0.75),
+                ("Boros Charm", 0.60),
+            ],
+            "Chain Lightning": [
+                ("Lightning Bolt", 0.85),
+                ("Lava Spike", 0.78),
+                ("Rift Bolt", 0.75),
+                ("Boros Charm", 0.55),
+            ],
+            "Boros Charm": [
+                ("Lightning Bolt", 0.70),
+                ("Lava Spike", 0.65),
+                ("Rift Bolt", 0.60),
+                ("Chain Lightning", 0.55),
+            ],
         }
         return [(c, s) for c, s in scores.get(q, []) if c != q][:topn]
 
@@ -76,6 +107,7 @@ def _make_graph() -> dict[str, dict[str, float]]:
 
 def _make_deps(game: str = "magic") -> ChatDeps:
     from ml.api.chat import ChatDeps
+
     return ChatDeps(
         game=game,
         embeddings=DummyEmb(),
@@ -90,6 +122,7 @@ def _make_deps(game: str = "magic") -> ChatDeps:
 @dataclass
 class FakeRunContext:
     """Minimal RunContext stub for testing tool functions directly."""
+
     deps: Any
 
 
@@ -101,6 +134,7 @@ class FakeRunContext:
 class TestFindSimilarCards:
     def test_embedding_method(self):
         from ml.api.chat import find_similar_cards
+
         ctx = FakeRunContext(deps=_make_deps())
         result = find_similar_cards(ctx, "Lightning Bolt", top_k=3)
         assert len(result) == 3
@@ -110,6 +144,7 @@ class TestFindSimilarCards:
 
     def test_cooccurrence_method(self):
         from ml.api.chat import find_similar_cards
+
         ctx = FakeRunContext(deps=_make_deps())
         result = find_similar_cards(ctx, "Lightning Bolt", top_k=3, method="cooccurrence")
         assert len(result) == 3
@@ -119,6 +154,7 @@ class TestFindSimilarCards:
 
     def test_card_not_in_embeddings_fuzzy_match(self):
         from ml.api.chat import find_similar_cards
+
         ctx = FakeRunContext(deps=_make_deps())
         result = find_similar_cards(ctx, "lightning bolt")  # lowercase
         assert len(result) > 0
@@ -126,6 +162,7 @@ class TestFindSimilarCards:
 
     def test_card_not_found_at_all(self):
         from ml.api.chat import find_similar_cards
+
         ctx = FakeRunContext(deps=_make_deps())
         result = find_similar_cards(ctx, "Nonexistent Card ZZZZ")
         assert len(result) == 1
@@ -133,6 +170,7 @@ class TestFindSimilarCards:
 
     def test_card_not_in_graph(self):
         from ml.api.chat import find_similar_cards
+
         ctx = FakeRunContext(deps=_make_deps())
         result = find_similar_cards(ctx, "Nonexistent", method="cooccurrence")
         assert len(result) == 1
@@ -142,24 +180,28 @@ class TestFindSimilarCards:
 class TestSearchCardsByName:
     def test_prefix_match(self):
         from ml.api.chat import search_cards_by_name
+
         ctx = FakeRunContext(deps=_make_deps())
         result = search_cards_by_name(ctx, "Lightning")
         assert "Lightning Bolt" in result
 
     def test_case_insensitive(self):
         from ml.api.chat import search_cards_by_name
+
         ctx = FakeRunContext(deps=_make_deps())
         result = search_cards_by_name(ctx, "lava")
         assert "Lava Spike" in result
 
     def test_no_match(self):
         from ml.api.chat import search_cards_by_name
+
         ctx = FakeRunContext(deps=_make_deps())
         result = search_cards_by_name(ctx, "ZZZZNOTFOUND")
         assert result == []
 
     def test_limit(self):
         from ml.api.chat import search_cards_by_name
+
         ctx = FakeRunContext(deps=_make_deps())
         result = search_cards_by_name(ctx, "l", limit=2)  # matches Lightning Bolt, Lava Spike
         assert len(result) <= 2
@@ -168,6 +210,7 @@ class TestSearchCardsByName:
 class TestGetCardInfo:
     def test_card_with_attrs(self):
         from ml.api.chat import get_card_info
+
         ctx = FakeRunContext(deps=_make_deps())
         info = get_card_info(ctx, "Lightning Bolt")
         assert info["name"] == "Lightning Bolt"
@@ -178,6 +221,7 @@ class TestGetCardInfo:
 
     def test_card_without_attrs(self):
         from ml.api.chat import get_card_info
+
         ctx = FakeRunContext(deps=_make_deps())
         info = get_card_info(ctx, "Boros Charm")
         assert "attributes" not in info  # No attrs for Boros Charm
@@ -185,6 +229,7 @@ class TestGetCardInfo:
 
     def test_card_not_in_graph(self):
         from ml.api.chat import get_card_info
+
         deps = _make_deps()
         deps.graph = {}  # Empty graph
         ctx = FakeRunContext(deps=deps)
@@ -195,6 +240,7 @@ class TestGetCardInfo:
 class TestAnalyzeDeck:
     def test_basic_analysis(self):
         from ml.api.chat import analyze_deck
+
         ctx = FakeRunContext(deps=_make_deps())
         deck = ["Lightning Bolt", "Lava Spike", "Rift Bolt"]
         result = analyze_deck(ctx, deck)
@@ -206,6 +252,7 @@ class TestAnalyzeDeck:
 
     def test_missing_cards(self):
         from ml.api.chat import analyze_deck
+
         ctx = FakeRunContext(deps=_make_deps())
         deck = ["Lightning Bolt", "Not A Real Card"]
         result = analyze_deck(ctx, deck)
@@ -215,6 +262,7 @@ class TestAnalyzeDeck:
 
     def test_single_card_no_synergy(self):
         from ml.api.chat import analyze_deck
+
         ctx = FakeRunContext(deps=_make_deps())
         result = analyze_deck(ctx, ["Lightning Bolt"])
         assert "internal_synergy" not in result
@@ -223,6 +271,7 @@ class TestAnalyzeDeck:
 class TestSuggestAdditions:
     def test_basic_suggestions(self):
         from ml.api.chat import suggest_additions
+
         ctx = FakeRunContext(deps=_make_deps())
         deck = ["Lightning Bolt", "Lava Spike"]
         result = suggest_additions(ctx, deck, top_k=3)
@@ -235,6 +284,7 @@ class TestSuggestAdditions:
 
     def test_empty_deck(self):
         from ml.api.chat import suggest_additions
+
         ctx = FakeRunContext(deps=_make_deps())
         result = suggest_additions(ctx, [], top_k=5)
         assert result == []
@@ -243,6 +293,7 @@ class TestSuggestAdditions:
 class TestSuggestReplacements:
     def test_basic_replacement(self):
         from ml.api.chat import suggest_replacements
+
         ctx = FakeRunContext(deps=_make_deps())
         deck = ["Lightning Bolt", "Lava Spike", "Rift Bolt"]
         result = suggest_replacements(ctx, "Lava Spike", deck, top_k=3)
@@ -254,6 +305,7 @@ class TestSuggestReplacements:
 
     def test_card_not_in_embeddings(self):
         from ml.api.chat import suggest_replacements
+
         ctx = FakeRunContext(deps=_make_deps())
         result = suggest_replacements(ctx, "Not Real", ["Lightning Bolt"], top_k=3)
         assert len(result) == 1
@@ -268,6 +320,7 @@ class TestSuggestReplacements:
 class TestSessionManagement:
     def test_create_new_session(self):
         from ml.api.chat import _get_or_create_session, _sessions
+
         _sessions.clear()
         sess = _get_or_create_session(None, "magic", None)
         assert sess.session_id is not None
@@ -277,6 +330,7 @@ class TestSessionManagement:
 
     def test_restore_session(self):
         from ml.api.chat import _get_or_create_session, _sessions
+
         _sessions.clear()
         sess1 = _get_or_create_session(None, "magic", None)
         sess2 = _get_or_create_session(sess1.session_id, "magic", None)
@@ -285,6 +339,7 @@ class TestSessionManagement:
 
     def test_session_updates_game(self):
         from ml.api.chat import _get_or_create_session, _sessions
+
         _sessions.clear()
         sess = _get_or_create_session(None, "magic", None)
         sess2 = _get_or_create_session(sess.session_id, "yugioh", None)
@@ -292,6 +347,7 @@ class TestSessionManagement:
 
     def test_session_stores_deck(self):
         from ml.api.chat import _get_or_create_session, _sessions
+
         _sessions.clear()
         deck = {"Main": ["Card A"]}
         sess = _get_or_create_session(None, "magic", deck)
@@ -299,6 +355,7 @@ class TestSessionManagement:
 
     def test_ttl_cleanup(self):
         from ml.api.chat import SESSION_TTL, _get_or_create_session, _sessions
+
         _sessions.clear()
         sess = _get_or_create_session(None, "magic", None)
         sess.last_used = time.time() - SESSION_TTL - 10
@@ -308,6 +365,7 @@ class TestSessionManagement:
 
     def test_explicit_session_id(self):
         from ml.api.chat import _get_or_create_session, _sessions
+
         _sessions.clear()
         sess = _get_or_create_session("my-custom-id", "magic", None)
         assert sess.session_id == "my-custom-id"
@@ -368,7 +426,7 @@ class TestChatEndpointValidation:
         assert r.status_code == 422
 
 
-def _make_mock_stream_ctx(tokens: list[str], new_messages: bytes = b'[]'):
+def _make_mock_stream_ctx(tokens: list[str], new_messages: bytes = b"[]"):
     """Create a mock async context manager that mimics agent.run_stream().
 
     The key subtlety: stream_output() must return an async iterator directly
@@ -401,13 +459,16 @@ class TestChatEndpointStreaming:
 
     def test_stream_returns_event_stream_content_type(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
 
         with patch("ml.api.chat._get_agent") as mock_get_agent:
             mock_agent = MagicMock()
-            mock_agent.run_stream = MagicMock(return_value=_make_mock_stream_ctx(["Hello", "Hello world"]))
+            mock_agent.run_stream = MagicMock(
+                return_value=_make_mock_stream_ctx(["Hello", "Hello world"])
+            )
             mock_get_agent.return_value = mock_agent
 
             r = api_client.post(
@@ -419,6 +480,7 @@ class TestChatEndpointStreaming:
 
     def test_stream_emits_session_event(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
@@ -444,6 +506,7 @@ class TestChatEndpointStreaming:
 
     def test_stream_emits_token_events(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
@@ -466,6 +529,7 @@ class TestChatEndpointStreaming:
 
     def test_stream_error_emits_error_event(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
@@ -473,6 +537,7 @@ class TestChatEndpointStreaming:
         class ErrorStreamCtx:
             async def __aenter__(self):
                 raise RuntimeError("LLM API down")
+
             async def __aexit__(self, *args):
                 return False
 
@@ -493,6 +558,7 @@ class TestChatEndpointStreaming:
     def test_session_persists_across_requests(self, api_client):
         from ml.api.api import app
         from ml.api.chat import _sessions
+
         _setup_game_state(app)
         _sessions.clear()
 
@@ -501,9 +567,7 @@ class TestChatEndpointStreaming:
         with patch("ml.api.chat._get_agent") as mock_get_agent:
             mock_agent = MagicMock()
             mock_agent.run_stream = MagicMock(
-                side_effect=lambda *a, **kw: _make_mock_stream_ctx(
-                    ["ok"], new_messages=b'[]'
-                )
+                side_effect=lambda *a, **kw: _make_mock_stream_ctx(["ok"], new_messages=b"[]")
             )
             mock_get_agent.return_value = mock_agent
 
@@ -513,7 +577,9 @@ class TestChatEndpointStreaming:
             sid = events1[0]["session_id"]
 
             # Second request with same session
-            r2 = api_client.post("/v1/chat", json={"message": "again", "game": "magic", "session_id": sid})
+            r2 = api_client.post(
+                "/v1/chat", json={"message": "again", "game": "magic", "session_id": sid}
+            )
             events2 = _parse_sse_events(r2.text)
             assert events2[0]["session_id"] == sid
 
@@ -522,6 +588,7 @@ class TestChatEndpointStreaming:
 
     def test_deck_context_passed_to_agent(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
@@ -539,17 +606,23 @@ class TestChatEndpointStreaming:
 
             deck = {
                 "partitions": [
-                    {"name": "Main", "cards": [
-                        {"name": "Lightning Bolt", "count": 4},
-                        {"name": "Lava Spike", "count": 3},
-                    ]}
+                    {
+                        "name": "Main",
+                        "cards": [
+                            {"name": "Lightning Bolt", "count": 4},
+                            {"name": "Lava Spike", "count": 3},
+                        ],
+                    }
                 ]
             }
-            api_client.post("/v1/chat", json={
-                "message": "analyze my deck",
-                "game": "magic",
-                "deck": deck,
-            })
+            api_client.post(
+                "/v1/chat",
+                json={
+                    "message": "analyze my deck",
+                    "game": "magic",
+                    "deck": deck,
+                },
+            )
 
             assert len(captured_deps) == 1
             deps = captured_deps[0]
@@ -559,6 +632,7 @@ class TestChatEndpointStreaming:
 
     def test_legacy_deck_format(self, api_client):
         from ml.api.api import app
+
         _setup_game_state(app)
 
         from unittest.mock import patch
@@ -575,11 +649,14 @@ class TestChatEndpointStreaming:
             mock_get_agent.return_value = mock_agent
 
             legacy_deck = {"Main": ["Lightning Bolt", "Lava Spike", "Lava Spike"]}
-            api_client.post("/v1/chat", json={
-                "message": "help",
-                "game": "magic",
-                "deck": legacy_deck,
-            })
+            api_client.post(
+                "/v1/chat",
+                json={
+                    "message": "help",
+                    "game": "magic",
+                    "deck": legacy_deck,
+                },
+            )
 
             deps = captured_deps[0]
             assert deps.deck is not None
@@ -620,6 +697,7 @@ class TestChatEndpointStreaming:
 class TestSSEFormat:
     def test_sse_event_format(self):
         from ml.api.chat import _sse_event
+
         event = _sse_event({"type": "token", "content": "hello"})
         assert event.startswith("data: ")
         assert event.endswith("\n\n")
@@ -629,6 +707,7 @@ class TestSSEFormat:
 
     def test_sse_event_json_escaping(self):
         from ml.api.chat import _sse_event
+
         event = _sse_event({"type": "token", "content": 'He said "hi"\nNew line'})
         parsed = json.loads(event[6:].strip())
         assert '"hi"' in parsed["content"]
@@ -643,6 +722,7 @@ class TestSSEFormat:
 class TestAgentFactory:
     def test_agent_caching_per_game(self):
         from ml.api.chat import _agents, _get_agent
+
         _agents.clear()
 
         # This will fail if pydantic-ai can't resolve the model,

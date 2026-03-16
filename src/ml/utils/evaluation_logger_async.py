@@ -36,6 +36,7 @@ def _is_asyncio_loop() -> bool:
     except RuntimeError:
         return False
 
+
 # Optional Pydantic validation
 try:
     from pydantic import BaseModel, Field, field_validator

@@ -54,14 +54,16 @@ def _merge_edgelists(
     new_pairs = []
     for _, row in func_df.iterrows():
         if row["PAIR_KEY"] not in existing_keys:
-            new_pairs.append({
-                "NAME_1": row["NAME_1"],
-                "NAME_2": row["NAME_2"],
-                "COUNT_SET": 0,
-                "COUNT_MULTISET": 0,
-                "FUNCTIONAL_SIMILARITY": row["FUNCTIONAL_SIMILARITY"],
-                "PAIR_KEY": row["PAIR_KEY"],
-            })
+            new_pairs.append(
+                {
+                    "NAME_1": row["NAME_1"],
+                    "NAME_2": row["NAME_2"],
+                    "COUNT_SET": 0,
+                    "COUNT_MULTISET": 0,
+                    "FUNCTIONAL_SIMILARITY": row["FUNCTIONAL_SIMILARITY"],
+                    "PAIR_KEY": row["PAIR_KEY"],
+                }
+            )
 
     if new_pairs:
         new_df = pd.DataFrame(new_pairs)
@@ -177,10 +179,10 @@ class TestBlendedEdgelistMerge:
         _make_pairs_csv(base_pairs, base_csv)
 
         functional_edges = [
-            ("A", "B", 0.9),   # overlaps
-            ("C", "D", 0.6),   # overlaps
-            ("G", "H", 0.5),   # new
-            ("I", "J", 0.4),   # new
+            ("A", "B", 0.9),  # overlaps
+            ("C", "D", 0.6),  # overlaps
+            ("G", "H", 0.5),  # new
+            ("I", "J", 0.4),  # new
         ]
 
         output = tmp_path / "merged.csv"
