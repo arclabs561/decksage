@@ -76,7 +76,29 @@ func TestConvertToCard(t *testing.T) {
 		t.Errorf("Expected 1 weakness, got %d", len(card.Weaknesses))
 	}
 
-	if card.NationalDex != 6 {
-		t.Errorf("Expected national dex=6, got %d", card.NationalDex)
+	if len(card.NationalDex) != 1 || card.NationalDex[0] != 6 {
+		t.Errorf("Expected national dex=[6], got %v", card.NationalDex)
+	}
+}
+
+func TestConvertToCard_RegulationAndLegalities(t *testing.T) {
+	apiCard := apiCard{
+		ID:             "sv1-1",
+		Name:           "Sprigatito",
+		Supertype:      "Pokémon",
+		Subtypes:       []string{"Basic"},
+		HP:             "70",
+		Types:          []string{"Grass"},
+		RegulationMark: "G",
+		Legalities:     map[string]string{"standard": "Legal", "expanded": "Legal", "unlimited": "Legal"},
+	}
+
+	card := convertToCard(apiCard)
+
+	if card.Regulation != "G" {
+		t.Errorf("Regulation: got %q, want %q", card.Regulation, "G")
+	}
+	if card.Legalities["standard"] != "Legal" {
+		t.Errorf("Legalities[standard]: got %q, want %q", card.Legalities["standard"], "Legal")
 	}
 }

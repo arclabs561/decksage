@@ -43,7 +43,7 @@ type Card struct {
 	Rules       []string     `json:"rules,omitempty"`       // For special cards (GX, V, VMAX, etc.)
 	Rarity      string       `json:"rarity,omitempty"`
 	Artist      string       `json:"artist,omitempty"`
-	NationalDex int          `json:"nationalPokedexNumber,omitempty"`
+	NationalDex []int        `json:"nationalPokedexNumbers,omitempty"`
 	Images      []CardImage  `json:"images,omitempty"`
 	References  []CardRef    `json:"references,omitempty"`
 

@@ -56,8 +56,10 @@ type apiCard struct {
 		ID   string `json:"id"`
 		Name string `json:"name"`
 	} `json:"set"`
-	Rarity string `json:"rarity"`
-	Artist string `json:"artist"`
+	Rarity         string            `json:"rarity"`
+	Artist         string            `json:"artist"`
+	RegulationMark string            `json:"regulationMark"`
+	Legalities     map[string]string `json:"legalities"`
 }
 
 // apiSet matches the structure of set objects in the pokemon-tcg-data repo
@@ -164,7 +166,7 @@ func (d *Dataset) Extract(
 			key := fmt.Sprintf("pokemon/pokemontcg-data/cards/%s.json", apiCard.ID)
 			data, err := json.Marshal(card)
 			if err != nil {
-				d.log.Warnf(ctx, "failed to marshal card %s: %w", card.Name, err)
+				d.log.Warnf(ctx, "failed to marshal card %s: %v", card.Name, err)
 				continue
 			}
 
@@ -181,7 +183,7 @@ func (d *Dataset) Extract(
 			}
 
 			if err := d.blob.Write(ctx, key, data); err != nil {
-				d.log.Warnf(ctx, "failed to write card %s: %w", card.Name, err)
+				d.log.Warnf(ctx, "failed to write card %s: %v", card.Name, err)
 				continue
 			}
 			totalCardsProcessed++
@@ -283,9 +285,9 @@ func convertToCard(apiCard apiCard) game.Card {
 		SetName:     apiCard.Set.Name,
 	}
 
-	if len(apiCard.NationalPokedexNumbers) > 0 {
-		card.NationalDex = apiCard.NationalPokedexNumbers[0]
-	}
+	card.NationalDex = apiCard.NationalPokedexNumbers
+	card.Regulation = apiCard.RegulationMark
+	card.Legalities = apiCard.Legalities
 
 	for _, atk := range apiCard.Attacks {
 		card.Attacks = append(card.Attacks, game.Attack{
