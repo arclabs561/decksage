@@ -18,9 +18,18 @@ import (
 	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	onepiecelimitless "collections/games/onepiece/dataset/limitless"
 	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
+	pokemonlimitless "collections/games/pokemon/dataset/limitless"
+	pokemonlimitlessweb "collections/games/pokemon/dataset/limitless-web"
+	"collections/games/pokemon/dataset/pokemoncard-io"
+	"collections/games/pokemon/dataset/pokemon-tcg-price-api"
+	"collections/games/pokemon/dataset/pokemontcg"
+	"collections/games/pokemon/dataset/pokemontcg-data"
+	"collections/games/pokemon/dataset/pokestats"
 	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
 	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
 	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
+	"collections/games/yugioh/dataset/ygoprodeck"
+	"collections/games/yugioh/dataset/yugiohmeta"
 	"collections/logger"
 	"collections/scraper"
 )
@@ -95,11 +104,29 @@ func runExtract(cmd *cobra.Command, args []string) error {
 				return fmt.Errorf("failed to create riftbound.gg dataset: %w", err)
 			}
 			d = dataset
+	case "pokemontcg-data", "pokemontcgdata":
+		d = wrapExtractOnly(pokemontcgdata.NewDataset(config.Log, gamesBlob))
+	case "pokemontcg":
+		d = pokemontcg.NewDataset(config.Log, gamesBlob)
+	case "pokemon-limitless", "pokemonlimitless":
+		d = pokemonlimitless.NewDataset(config.Log, gamesBlob)
+	case "pokemon-limitless-web", "pokemonlimitlessweb":
+		d = pokemonlimitlessweb.NewDataset(config.Log, gamesBlob)
+	case "pokestats":
+		d = wrapExtractOnly(pokestats.NewDataset(config.Log, gamesBlob))
+	case "pokemoncard-io", "pokemoncardio":
+		d = wrapExtractOnly(pokemoncardio.NewDataset(config.Log, gamesBlob))
+	case "pokemon-tcg-price-api", "pokemontcgpriceapi":
+		d = wrapExtractOnly(pokemontcgpriceapi.NewDataset(config.Log, gamesBlob))
+	case "ygoprodeck":
+		d = ygoprodeck.NewDataset(config.Log, gamesBlob)
+	case "yugiohmeta":
+		d = yugiohmeta.NewDataset(config.Log, gamesBlob)
 	default:
 		return fmt.Errorf(
 			"unsupported dataset %q, allowed (%+v)",
 			datasetName,
-			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimon-limitless", "digimon-limitless-web", "onepiece-limitless", "onepiece-limitless-web", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
+			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimon-limitless", "digimon-limitless-web", "onepiece-limitless", "onepiece-limitless-web", "pokemontcg-data", "pokemontcg", "pokemon-limitless", "pokemon-limitless-web", "pokestats", "pokemoncard-io", "pokemon-tcg-price-api", "ygoprodeck", "yugiohmeta", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
 		)
 	}
 	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
