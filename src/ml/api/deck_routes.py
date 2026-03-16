@@ -295,7 +295,7 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
 @router.post("/deck/apply_patch", response_model=DeckPatchResult)
 def deck_apply_patch(req: PatchRequest):
     # Late import to avoid circular dependency
-    from .api import _require_game
+    from .models import _require_game
 
     game = _require_game(req.game)
     req.deck = _normalize_deck_format(req.deck, game)
@@ -311,7 +311,7 @@ def deck_apply_patch(req: PatchRequest):
 @router.post("/deck/suggest_actions", response_model=SuggestActionsResponse)
 def suggest_actions(req: SuggestActionsRequest):
     # Late import to avoid circular dependency
-    from .api import _require_game
+    from .models import _require_game
 
     # Log query for analytics
     try:
@@ -509,7 +509,7 @@ def suggest_actions(req: SuggestActionsRequest):
 @router.post("/deck/complete", response_model=CompleteResponse)
 def complete_deck(req: CompleteRequest):
     # Late import to avoid circular dependency
-    from .api import _require_game
+    from .models import _require_game
 
     # Log query for analytics
     try:
