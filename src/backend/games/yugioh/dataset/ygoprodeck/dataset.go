@@ -45,9 +45,12 @@ type apiCard struct {
 	Rank       *int   `json:"rank"`
 	Scale      *int   `json:"scale"`
 	LinkVal    *int   `json:"linkval"`
-	Race       string `json:"race"`
-	Attribute  string `json:"attribute"`
-	Archetype  string `json:"archetype"`
+	Race        string   `json:"race"`
+	Attribute   string   `json:"attribute"`
+	Archetype   string   `json:"archetype"`
+	Typeline    []string `json:"typeline"`
+	PendDesc    string   `json:"pend_desc"`
+	MonsterDesc string   `json:"monster_desc"`
 	CardImages []struct {
 		ImageURL      string `json:"image_url"`
 		ImageURLSmall string `json:"image_url_small"`
@@ -136,9 +139,12 @@ func convertToCard(apiCard apiCard) game.Card {
 		Name:        apiCard.Name,
 		Passcode:    apiCard.ID,
 		Description: apiCard.Desc,
+		PendDesc:    apiCard.PendDesc,
+		MonsterDesc: apiCard.MonsterDesc,
 		Race:        apiCard.Race,
 		Attribute:   apiCard.Attribute,
 		Archetype:   apiCard.Archetype,
+		Typeline:    apiCard.Typeline,
 	}
 
 	// Determine card type
@@ -244,10 +250,16 @@ func parseMonsterType(typeStr string) *game.MonsterType {
 	mt.IsRitual = contains(typeStr, "Ritual")
 	mt.IsPendulum = contains(typeStr, "Pendulum")
 
-	// Parse subtypes (Tuner, Gemini, Spirit, Toon, Union, Flip)
-	for _, sub := range []string{"Tuner", "Gemini", "Spirit", "Toon", "Union", "Flip"} {
-		if contains(typeStr, sub) {
-			mt.SubTypes = append(mt.SubTypes, sub)
+	// Extract subtypes: anything in the type string that isn't a known
+	// structural token is a subtype (Tuner, Gemini, Spirit, Toon, etc.)
+	known := map[string]bool{
+		"Normal": true, "Effect": true, "Fusion": true, "Synchro": true,
+		"XYZ": true, "Link": true, "Ritual": true, "Pendulum": true,
+		"Monster": true,
+	}
+	for _, word := range strings.Fields(typeStr) {
+		if !known[word] {
+			mt.SubTypes = append(mt.SubTypes, word)
 		}
 	}
 
