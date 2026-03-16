@@ -152,7 +152,16 @@ def _build_deck_hooks(
             return float(p.usd) if p and p.usd else None
 
     except Exception:
-        if state.deck_frequency:
+        # Fallback: Scryfall price data (loaded from JSON)
+        if state.price_data:
+            _prices = state.price_data
+
+            def price_fn(card: str) -> float | None:
+                prices = _prices.get(card, {})
+                usd = prices.get("usd")
+                return float(usd) if usd else None
+
+        elif state.deck_frequency:
             _freq = state.deck_frequency
 
             def price_fn(card: str) -> float | None:
