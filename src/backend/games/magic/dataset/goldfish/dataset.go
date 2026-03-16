@@ -568,13 +568,9 @@ func (d *Dataset) resolveRef(ref string) (string, error) {
 var (
 	reSilentThrottle = regexp.MustCompile(`^Throttled`)
 	limiter          = ratelimit.New(100, ratelimit.Per(time.Minute))
-	defaultFetchOpts = []limpet.DoOption{
-		&limpet.OptDoSilentThrottle{
-			PageBytesRegexp: reSilentThrottle,
-		},
-		&limpet.OptDoLimiter{
-			Limiter: limiter,
-		},
+	defaultFetchCfg  = limpet.DoConfig{
+		SilentThrottle: reSilentThrottle,
+		Limiter:        limiter,
 	}
 )
 
@@ -584,15 +580,13 @@ func (d *Dataset) fetch(
 	u string,
 	datasetOptions dataset.ResolvedUpdateOptions,
 ) (*limpet.Page, error) {
-	opts := defaultFetchOpts
-	if datasetOptions.FetchReplaceAll {
-		opts = append(opts, &limpet.OptDoReplace{})
-	}
+	cfg := defaultFetchCfg
+	cfg.Replace = datasetOptions.FetchReplaceAll
 	req, err := http.NewRequest("GET", u, nil)
 	if err != nil {
 		return nil, err
 	}
-	page, err := sc.Do(ctx, req, opts...)
+	page, err := sc.Do(ctx, req, cfg)
 	if err != nil {
 		return nil, err
 	}

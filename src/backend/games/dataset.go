@@ -189,11 +189,10 @@ func Do(
 	opts *ResolvedUpdateOptions,
 	req *http.Request,
 ) (*limpet.Page, error) {
-	var doOpts []limpet.DoOption
-	if opts.FetchReplaceAll {
-		doOpts = append(doOpts, &limpet.OptDoReplace{})
+	cfg := limpet.DoConfig{
+		Replace: opts.FetchReplaceAll,
 	}
-	return sc.Do(ctx, req, doOpts...)
+	return sc.Do(ctx, req, cfg)
 }
 
 // --- Item Types (Cards and Collections) ---

@@ -344,13 +344,9 @@ func (d *Dataset) parseDeck(
 var (
 	reSilentThrottle = regexp.MustCompile(`rate.?limit|too.?many.?requests`)
 	limiter          = ratelimit.New(30, ratelimit.Per(time.Minute))
-	defaultFetchOpts = []limpet.DoOption{
-		&limpet.OptDoSilentThrottle{
-			PageBytesRegexp: reSilentThrottle,
-		},
-		&limpet.OptDoLimiter{
-			Limiter: limiter,
-		},
+	defaultFetchCfg  = limpet.DoConfig{
+		SilentThrottle: reSilentThrottle,
+		Limiter:        limiter,
 	}
 )
 
@@ -360,7 +356,9 @@ func (d *Dataset) fetch(
 	req *http.Request,
 	opts games.ResolvedUpdateOptions,
 ) (*limpet.Page, error) {
-	return games.Do(ctx, sc, &opts, req)
+	cfg := defaultFetchCfg
+	cfg.Replace = opts.FetchReplaceAll
+	return sc.Do(ctx, req, cfg)
 }
 
 var prefix = filepath.Join("digimon", "limitless-web")

@@ -126,7 +126,7 @@ func (d *Dataset) scrapeTournamentListingPages(ctx context.Context, sc *limpet.C
 		d.log.Debugf(ctx, "Scraping tournament listing page %d: %s", page, listingURL)
 
 		// Use browser scraper for JavaScript rendering
-		pg, err := sc.Get(ctx, listingURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
+		pg, err := sc.Get(ctx, listingURL, limpet.DoConfig{Browser: true, Replace: true})
 		if err != nil {
 			d.log.Warnf(ctx, "Failed to render page %d: %v", page, err)
 			return nil, fmt.Errorf("failed to render listing page: %w", err)
@@ -204,7 +204,7 @@ func (d *Dataset) extractDeck(
 	opts games.ResolvedUpdateOptions,
 ) error {
 	// Use browser scraper for JavaScript rendering
-	pg, err := sc.Get(ctx, tournamentURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
+	pg, err := sc.Get(ctx, tournamentURL, limpet.DoConfig{Browser: true, Replace: true})
 	if err != nil {
 		return fmt.Errorf("failed to render tournament page: %w", err)
 	}
