@@ -271,6 +271,8 @@ class ApiState:
         self.banlist: dict[str, dict[str, list[str]]] | None = None  # {format: {status: [cards]}}
         self.archetypes: dict[str, list[str]] | None = None  # {card_name: [archetype_names]}
         self.deck_frequency: dict[str, dict] | None = None  # {card_name: {total_decks, by_format}}
+        self.legality_data: dict[str, dict[str, str]] | None = None  # {card: {format: status}}
+        self.price_data: dict[str, dict[str, str | None]] | None = None  # {card: {usd: "1.23", ...}}
 
 
 # ---------------------------------------------------------------------------
