@@ -35,6 +35,7 @@ func (d *Dataset) Description() games.Description {
 
 // YGOPRODeck API response structure
 type apiCard struct {
+	ID         int    `json:"id"` // Passcode
 	Name       string `json:"name"`
 	Type       string `json:"type"`
 	Desc       string `json:"desc"`
@@ -42,6 +43,7 @@ type apiCard struct {
 	DEF        *int   `json:"def"`
 	Level      *int   `json:"level"`
 	Rank       *int   `json:"rank"`
+	Scale      *int   `json:"scale"`
 	LinkVal    *int   `json:"linkval"`
 	Race       string `json:"race"`
 	Attribute  string `json:"attribute"`
@@ -55,17 +57,17 @@ type apiCard struct {
 		SetCode       string `json:"set_code"`
 		SetRarity     string `json:"set_rarity"`
 		SetRarityCode string `json:"set_rarity_code"`
-		SetPrice      string `json:"set_price"` // Price as string
+		SetPrice      string `json:"set_price"`
 	} `json:"card_sets,omitempty"`
 	CardPrices []struct {
-		TCGPlayer     string `json:"tcgplayer_price"`
-		Cardmarket    string `json:"cardmarket_price"`
-		Amazon        string `json:"amazon_price"`
-		Ebay          string `json:"ebay_price"`
-		CoolStuffInc  string `json:"coolstuffinc_price"`
+		TCGPlayer    string `json:"tcgplayer_price"`
+		Cardmarket   string `json:"cardmarket_price"`
+		Amazon       string `json:"amazon_price"`
+		Ebay         string `json:"ebay_price"`
+		CoolStuffInc string `json:"coolstuffinc_price"`
 	} `json:"card_prices,omitempty"`
 	BanlistInfo *struct {
-		BanTCG string `json:"ban_tcg,omitempty"` // Banned, Limited, Semi-Limited
+		BanTCG string `json:"ban_tcg,omitempty"`
 		BanOCG string `json:"ban_ocg,omitempty"`
 	} `json:"banlist_info,omitempty"`
 }
@@ -132,6 +134,7 @@ func (d *Dataset) Extract(
 func convertToCard(apiCard apiCard) game.Card {
 	card := game.Card{
 		Name:        apiCard.Name,
+		Passcode:    apiCard.ID,
 		Description: apiCard.Desc,
 		Race:        apiCard.Race,
 		Attribute:   apiCard.Attribute,
@@ -155,15 +158,20 @@ func convertToCard(apiCard apiCard) game.Card {
 		if apiCard.Rank != nil {
 			card.Rank = *apiCard.Rank
 		}
+		if apiCard.Scale != nil {
+			card.Scale = *apiCard.Scale
+		}
 		if apiCard.LinkVal != nil {
 			card.LinkRating = *apiCard.LinkVal
 		}
 
 	case contains(apiCard.Type, "Spell"):
 		card.Type = game.TypeSpell
+		card.Property = parseSpellTrapProperty(apiCard.Type)
 
 	case contains(apiCard.Type, "Trap"):
 		card.Type = game.TypeTrap
+		card.Property = parseSpellTrapProperty(apiCard.Type)
 	}
 
 	// Images
@@ -200,12 +208,14 @@ func convertToCard(apiCard apiCard) game.Card {
 		card.BanStatus = apiCard.BanlistInfo.BanTCG
 	}
 
-	// Set info (use first set if available)
-	if len(apiCard.CardSets) > 0 {
-		set := apiCard.CardSets[0]
-		card.Set = set.SetCode
-		card.SetName = set.SetName
-		card.Rarity = set.SetRarity
+	// All printings
+	for _, s := range apiCard.CardSets {
+		card.Sets = append(card.Sets, game.CardSet{
+			SetCode:  s.SetCode,
+			SetName:  s.SetName,
+			Rarity:   s.SetRarity,
+			SetPrice: s.SetPrice,
+		})
 	}
 
 	return card
@@ -234,7 +244,25 @@ func parseMonsterType(typeStr string) *game.MonsterType {
 	mt.IsRitual = contains(typeStr, "Ritual")
 	mt.IsPendulum = contains(typeStr, "Pendulum")
 
+	// Parse subtypes (Tuner, Gemini, Spirit, Toon, Union, Flip)
+	for _, sub := range []string{"Tuner", "Gemini", "Spirit", "Toon", "Union", "Flip"} {
+		if contains(typeStr, sub) {
+			mt.SubTypes = append(mt.SubTypes, sub)
+		}
+	}
+
 	return mt
+}
+
+// parseSpellTrapProperty extracts the property from a Spell/Trap type string.
+// e.g. "Quick-Play Spell Card" -> "Quick-Play", "Counter Trap Card" -> "Counter"
+func parseSpellTrapProperty(typeStr string) string {
+	for _, prop := range []string{"Continuous", "Quick-Play", "Equip", "Field", "Counter", "Ritual"} {
+		if contains(typeStr, prop) {
+			return prop
+		}
+	}
+	return "Normal"
 }
 
 func contains(s, substr string) bool {
