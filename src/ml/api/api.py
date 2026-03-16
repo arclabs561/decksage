@@ -51,6 +51,7 @@ import json
 import logging
 import os
 from contextlib import asynccontextmanager, suppress
+from datetime import UTC
 from pathlib import Path
 from typing import Any
 
@@ -59,6 +60,25 @@ from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+
+from ..similarity.fusion import FusionWeights, WeightedLateFusion
+from ..similarity.similarity_methods import (
+    jaccard_similarity as sm_jaccard,
+)
+from ..similarity.similarity_methods import (
+    load_graph as sm_load_graph,
+)
+from ..utils.paths import PATHS
+
+# Deck operation endpoints (extracted router)
+from .deck_routes import (  # noqa: F401 -- re-exported for backward compat
+    _build_deck_hooks,
+    _extract_deck_colors,
+    _normalize_deck_format,
+    _wrap_cand_fn_color_filter,
+)
+from .deck_routes import router as deck_router
+
 # Local application imports
 # Models, ApiState, and get_state extracted to models.py
 from .models import (
@@ -78,25 +98,6 @@ from .models import (
     _normalize_game,
     get_state,
 )
-
-
-# Deck operation endpoints (extracted router)
-from .deck_routes import (  # noqa: F401 -- re-exported for backward compat
-    _build_deck_hooks,
-    _extract_deck_colors,
-    _normalize_deck_format,
-    _wrap_cand_fn_color_filter,
-)
-from .deck_routes import router as deck_router
-
-from ..similarity.fusion import FusionWeights, WeightedLateFusion
-from ..similarity.similarity_methods import (
-    jaccard_similarity as sm_jaccard,
-)
-from ..similarity.similarity_methods import (
-    load_graph as sm_load_graph,
-)
-from ..utils.paths import PATHS
 
 
 # Search integration
@@ -433,7 +434,7 @@ async def lifespan(app: FastAPI):
         pairs_path = os.getenv(pairs_key)
         if not pairs_path:
             # Auto-discover pairs file: prefer largest available
-            pairs_dir = Path("data/processed")
+            pairs_dir = PATHS.project_root / "data/processed"
             candidates = sorted(
                 pairs_dir.glob(f"pairs_{game}_*.csv"),
                 key=lambda p: p.stat().st_size,
@@ -560,7 +561,7 @@ async def lifespan(app: FastAPI):
         state = get_state(game)
 
         # Banlists
-        banlist_path = Path(f"data/banlists/{game}_banlists.json")
+        banlist_path = PATHS.project_root / f"data/banlists/{game}_banlists.json"
         if banlist_path.exists():
             try:
                 with open(banlist_path, encoding="utf-8") as f:
@@ -574,7 +575,7 @@ async def lifespan(app: FastAPI):
         archetypes_index: dict[str, list[str]] = {}
 
         # From game_knowledge (core_cards + flex_slots -> archetype name)
-        gk_path = Path(f"data/game_knowledge/{game}.json")
+        gk_path = PATHS.project_root / f"data/game_knowledge/{game}.json"
         if gk_path.exists():
             try:
                 with open(gk_path, encoding="utf-8") as f:
@@ -595,7 +596,7 @@ async def lifespan(app: FastAPI):
 
         # YGO: merge yugioh_archetype_mapping.json (card -> single archetype)
         if game == "yugioh":
-            ygo_map_path = Path("data/yugioh_archetype_mapping.json")
+            ygo_map_path = PATHS.project_root / "data/yugioh_archetype_mapping.json"
             if ygo_map_path.exists():
                 try:
                     with open(ygo_map_path, encoding="utf-8") as f:
@@ -667,6 +668,7 @@ async def lifespan(app: FastAPI):
             logger.debug(
                 "Failed to load additional signals for game=%s (optional)", game, exc_info=True
             )
+
     # ------------------------------------------------------------------
     # Startup summary with data provenance
     # ------------------------------------------------------------------
@@ -677,9 +679,9 @@ async def lifespan(app: FastAPI):
             if not p.exists():
                 return "missing"
             st = p.stat()
-            from datetime import datetime, timezone
+            from datetime import datetime
 
-            mtime = datetime.fromtimestamp(st.st_mtime, tz=timezone.utc).strftime("%Y-%m-%d")
+            mtime = datetime.fromtimestamp(st.st_mtime, tz=UTC).strftime("%Y-%m-%d")
             size_mb = st.st_size / 1e6
             return f"{size_mb:.1f}MB {mtime}"
         except OSError:
@@ -977,6 +979,13 @@ def _resolve_method(request: SimilarityRequest) -> str:
         return "jaccard"
     if request.use_case is UseCaseEnum.meta:
         return "meta"
+    # Raw method modes passed through use_case (defensive fallback)
+    if request.use_case is UseCaseEnum.embedding:
+        return "embedding"
+    if request.use_case is UseCaseEnum.jaccard:
+        return "jaccard"
+    if request.use_case is UseCaseEnum.fusion:
+        return "fusion"
     return "embedding"
 
 
@@ -1143,7 +1152,9 @@ def _enrich_similar_card(
         meta = None
 
     return SimilarCard(
-        card=card_name, similarity=min(1.0, max(0.0, float(similarity))), metadata=meta,
+        card=card_name,
+        similarity=min(1.0, max(0.0, float(similarity))),
+        metadata=meta,
     )
 
 
@@ -1438,7 +1449,16 @@ def get_similar_v1(
         )
     except Exception:
         pass  # Non-fatal - don't break API if logging fails
-    req = SimilarityRequest(game=game, query=name, top_k=k, use_case=mode, mmr_lambda=mmr_lambda)
+    # Raw method modes (embedding/jaccard/fusion) bypass use-case weight presets
+    _RAW_METHODS = {UseCaseEnum.embedding, UseCaseEnum.jaccard, UseCaseEnum.fusion}
+    if mode in _RAW_METHODS:
+        req = SimilarityRequest(
+            game=game, query=name, top_k=k, mode=mode.value, mmr_lambda=mmr_lambda
+        )
+    else:
+        req = SimilarityRequest(
+            game=game, query=name, top_k=k, use_case=mode, mmr_lambda=mmr_lambda
+        )
     return _similar_impl(req)
 
 

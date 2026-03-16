@@ -35,8 +35,13 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import re
 import sys
 from pathlib import Path
+
+# YGOProDeck numeric IDs (e.g., Card_10000080) that should never enter the
+# training corpus.  Dropped even when --canonical-names is not provided.
+_NUMERIC_ID_RE = re.compile(r"^Card_\d+$")
 
 
 def load_name_mapping(mapping_path: Path) -> dict[str, str]:
@@ -93,6 +98,10 @@ def convert_jsonl_to_collections(
                         if name_mapping and name in name_mapping:
                             name = name_mapping[name]
                             stats["remapped"] += 1
+                        # Drop numeric IDs not resolved by name mapping
+                        if _NUMERIC_ID_RE.match(name):
+                            stats["filtered"] += 1
+                            continue
                         # Optional partition filter (e.g., "Deck" to exclude sideboard)
                         if partition_filter and card.get("partition", "") != partition_filter:
                             continue
