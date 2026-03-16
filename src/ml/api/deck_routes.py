@@ -26,6 +26,7 @@ from .models import (
     get_state,
 )
 
+
 # deck_patch module - optional dependency
 try:
     from ..deck_building.deck_patch import DeckPatch, DeckPatchResult, apply_deck_patch
@@ -119,9 +120,7 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
                 actual_name = _main_partition_name(game)
             partitions.append({"name": actual_name, "cards": card_entries})
     if len(partitions) > _MAX_PARTITIONS:
-        raise HTTPException(
-            status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})"
-        )
+        raise HTTPException(status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})")
     if partitions:
         return {"partitions": partitions}
     return deck

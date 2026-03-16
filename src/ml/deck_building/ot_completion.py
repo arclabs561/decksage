@@ -514,7 +514,9 @@ def ot_complete_deck(
             if role_gaps:
                 filled_roles = [r for r in role_gaps if r in tags]
             record["reasoning"] = (
-                f"Fills roles: {', '.join(filled_roles)}" if filled_roles else "Embedding similarity"
+                f"Fills roles: {', '.join(filled_roles)}"
+                if filled_roles
+                else "Embedding similarity"
             )
         else:
             record["reasoning"] = "Embedding similarity"

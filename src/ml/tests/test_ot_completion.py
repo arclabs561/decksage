@@ -54,7 +54,9 @@ class FakeKeyedVectors:
         return results[:topn]
 
 
-def _make_embeddings(n: int = 20, dim: int = 8, seed: int = 42) -> tuple[FakeKeyedVectors, list[str]]:
+def _make_embeddings(
+    n: int = 20, dim: int = 8, seed: int = 42
+) -> tuple[FakeKeyedVectors, list[str]]:
     """Create fake embeddings for n cards."""
     rng = np.random.RandomState(seed)
     names = [f"Card_{i}" for i in range(n)]
@@ -386,9 +388,7 @@ class TestOTCompleteDeck:
 
         embeddings, names = _make_embeddings(20)
         deck = _make_deck(names[:3], "magic")
-        cfg = OTCompletionConfig(
-            game="magic", target_main_size=10, pool_size=15, sinkhorn_reg=0.1
-        )
+        cfg = OTCompletionConfig(game="magic", target_main_size=10, pool_size=15, sinkhorn_reg=0.1)
 
         # Make pot.sinkhorn raise an exception
         real_pot = mod.pot
@@ -396,16 +396,16 @@ class TestOTCompleteDeck:
         class FakePot:
             def __getattr__(self, name):
                 if name == "sinkhorn":
+
                     def fail(*args, **kwargs):
                         raise RuntimeError("Solver diverged")
+
                     return fail
                 return getattr(real_pot, name)
 
         monkeypatch.setattr(mod, "pot", FakePot())
 
-        result = ot_complete_deck(
-            game="magic", deck=deck, embeddings=embeddings, cfg=cfg
-        )
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
 
         assert result.additions == []
         assert "sinkhorn_failed" in result.metrics.get("error", "")
@@ -429,8 +429,12 @@ class TestIdempotency:
             sinkhorn_reg=0.1,
         )
 
-        r1 = ot_complete_deck(game="magic", deck=_make_deck(names[:4], "magic"), embeddings=embeddings, cfg=cfg)
-        r2 = ot_complete_deck(game="magic", deck=_make_deck(names[:4], "magic"), embeddings=embeddings, cfg=cfg)
+        r1 = ot_complete_deck(
+            game="magic", deck=_make_deck(names[:4], "magic"), embeddings=embeddings, cfg=cfg
+        )
+        r2 = ot_complete_deck(
+            game="magic", deck=_make_deck(names[:4], "magic"), embeddings=embeddings, cfg=cfg
+        )
 
         # Same additions
         names1 = [(a["card"], a["count"]) for a in r1.additions]

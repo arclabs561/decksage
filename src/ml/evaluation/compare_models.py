@@ -31,8 +31,13 @@ except ImportError:
     HAS_GENSIM = False
 
 
-RELEVANCE_GRADES = ("highly_relevant", "relevant", "somewhat_relevant",
-                    "marginally_relevant", "irrelevant")
+RELEVANCE_GRADES = (
+    "highly_relevant",
+    "relevant",
+    "somewhat_relevant",
+    "marginally_relevant",
+    "irrelevant",
+)
 
 
 class SimilarityMethod:
@@ -155,10 +160,7 @@ class ModelComparator:
         if not query_subset:
             return {}
         metric_names = list(next(iter(per_query.values())).keys())
-        return {
-            m: float(np.mean([per_query[q][m] for q in query_subset]))
-            for m in metric_names
-        }
+        return {m: float(np.mean([per_query[q][m] for q in query_subset])) for m in metric_names}
 
     def _precision_at_k(self, predictions: list, ground_truth: dict) -> float:
         relevance_weights = {
@@ -233,32 +235,36 @@ class ModelComparator:
 
             for sim_name, sim_fn in similarity_methods.items():
                 print(f"    Using {sim_name} similarity...")
-                metrics = self.evaluate_model(
-                    wv, sim_fn, stratify_by_use_case=stratify_by_use_case
-                )
+                metrics = self.evaluate_model(wv, sim_fn, stratify_by_use_case=stratify_by_use_case)
 
                 if stratify_by_use_case:
                     # Overall row
-                    results.append({
-                        "model": model_name,
-                        "similarity": sim_name,
-                        "use_case": "overall",
-                        **metrics["overall"],
-                    })
-                    # Per-use-case rows
-                    for uc, uc_metrics in sorted(metrics["by_use_case"].items()):
-                        results.append({
+                    results.append(
+                        {
                             "model": model_name,
                             "similarity": sim_name,
-                            "use_case": uc,
-                            **uc_metrics,
-                        })
+                            "use_case": "overall",
+                            **metrics["overall"],
+                        }
+                    )
+                    # Per-use-case rows
+                    for uc, uc_metrics in sorted(metrics["by_use_case"].items()):
+                        results.append(
+                            {
+                                "model": model_name,
+                                "similarity": sim_name,
+                                "use_case": uc,
+                                **uc_metrics,
+                            }
+                        )
                 else:
-                    results.append({
-                        "model": model_name,
-                        "similarity": sim_name,
-                        **metrics,
-                    })
+                    results.append(
+                        {
+                            "model": model_name,
+                            "similarity": sim_name,
+                            **metrics,
+                        }
+                    )
 
         return pd.DataFrame(results)
 

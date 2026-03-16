@@ -124,15 +124,17 @@ def _make_deck(
     }
 
 
-_BURN_DECK = _make_deck([
-    ("Lightning Bolt", 4),
-    ("Goblin Guide", 4),
-    ("Monastery Swiftspear", 4),
-    ("Searing Blaze", 4),
-    ("Lava Spike", 4),
-    ("Rift Bolt", 4),
-    ("Mountain", 20),
-])
+_BURN_DECK = _make_deck(
+    [
+        ("Lightning Bolt", 4),
+        ("Goblin Guide", 4),
+        ("Monastery Swiftspear", 4),
+        ("Searing Blaze", 4),
+        ("Lava Spike", 4),
+        ("Rift Bolt", 4),
+        ("Mountain", 20),
+    ]
+)
 
 # Archetype data: card -> {archetype -> inclusion_rate}
 _BURN_STAPLES: dict[str, dict[str, float]] = {
@@ -154,18 +156,21 @@ _BURN_STAPLES: dict[str, dict[str, float]] = {
 # TestSuggestRemovals
 # ---------------------------------------------------------------------------
 
+
 class TestSuggestRemovals:
     """Tests for suggest_removals()."""
 
     def test_basic_returns_tuples(self):
         """With archetype context, returns non-empty list of 3-tuples."""
         # Add a non-burn card so there is something to flag
-        deck = _make_deck([
-            ("Lightning Bolt", 4),
-            ("Goblin Guide", 4),
-            ("Dark Confidant", 2),
-            ("Mountain", 10),
-        ])
+        deck = _make_deck(
+            [
+                ("Lightning Bolt", 4),
+                ("Goblin Guide", 4),
+                ("Dark Confidant", 2),
+                ("Mountain", 10),
+            ]
+        )
         results = suggest_removals(
             "magic",
             deck,
@@ -183,13 +188,15 @@ class TestSuggestRemovals:
 
     def test_returned_cards_are_in_deck(self):
         """All suggested removals must be cards actually present in the deck."""
-        deck = _make_deck([
-            ("Lightning Bolt", 4),
-            ("Goblin Guide", 4),
-            ("Dark Confidant", 2),
-            ("Tarmogoyf", 3),
-            ("Mountain", 10),
-        ])
+        deck = _make_deck(
+            [
+                ("Lightning Bolt", 4),
+                ("Goblin Guide", 4),
+                ("Dark Confidant", 2),
+                ("Tarmogoyf", 3),
+                ("Mountain", 10),
+            ]
+        )
         have = {c["name"] for p in deck["partitions"] for c in p["cards"]}
         results = suggest_removals(
             "magic",
@@ -203,15 +210,17 @@ class TestSuggestRemovals:
 
     def test_respects_max_suggestions(self):
         """Output length capped by max_suggestions."""
-        deck = _make_deck([
-            ("Lightning Bolt", 4),
-            ("Goblin Guide", 4),
-            ("Dark Confidant", 2),
-            ("Tarmogoyf", 3),
-            ("Thoughtseize", 4),
-            ("Fatal Push", 4),
-            ("Mountain", 10),
-        ])
+        deck = _make_deck(
+            [
+                ("Lightning Bolt", 4),
+                ("Goblin Guide", 4),
+                ("Dark Confidant", 2),
+                ("Tarmogoyf", 3),
+                ("Thoughtseize", 4),
+                ("Fatal Push", 4),
+                ("Mountain", 10),
+            ]
+        )
         results = suggest_removals(
             "magic",
             deck,
@@ -224,12 +233,14 @@ class TestSuggestRemovals:
 
     def test_off_archetype_cards_flagged(self):
         """Cards not in the archetype staples get higher removal scores."""
-        deck = _make_deck([
-            ("Lightning Bolt", 4),
-            ("Goblin Guide", 4),
-            ("Dark Confidant", 2),  # midrange, not burn
-            ("Mountain", 10),
-        ])
+        deck = _make_deck(
+            [
+                ("Lightning Bolt", 4),
+                ("Goblin Guide", 4),
+                ("Dark Confidant", 2),  # midrange, not burn
+                ("Mountain", 10),
+            ]
+        )
         results = suggest_removals(
             "magic",
             deck,
@@ -283,6 +294,7 @@ class TestSuggestRemovals:
 # ---------------------------------------------------------------------------
 # TestSuggestReplacements
 # ---------------------------------------------------------------------------
+
 
 class TestSuggestReplacements:
     """Tests for suggest_replacements()."""
@@ -362,6 +374,7 @@ class TestSuggestReplacements:
             price_fn=_price_fn,
             upgrade=True,
         )
+
         # Searing Blaze costs $3.00 vs Lightning Bolt $1.50 -- upgrade should
         # boost its score relative to non-upgrade.
         def score_for(results: list, card: str) -> float | None:
@@ -449,6 +462,7 @@ class TestSuggestReplacements:
 # Edge cases
 # ---------------------------------------------------------------------------
 
+
 class TestEdgeCases:
     """Edge cases spanning both functions."""
 
@@ -456,29 +470,41 @@ class TestEdgeCases:
         """Deck with only copies of one card."""
         deck = _make_deck([("Lightning Bolt", 4)])
         removals = suggest_removals(
-            "magic", deck, _candidate_fn,
-            archetype="burn", archetype_staples=_BURN_STAPLES,
+            "magic",
+            deck,
+            _candidate_fn,
+            archetype="burn",
+            archetype_staples=_BURN_STAPLES,
         )
         # Lightning Bolt IS a burn staple at 98%, no reason to flag
         assert all(name != "Lightning Bolt" or score < 0.5 for name, score, _ in removals)
 
         replacements = suggest_replacements(
-            "magic", deck, "Lightning Bolt", _candidate_fn,
+            "magic",
+            deck,
+            "Lightning Bolt",
+            _candidate_fn,
         )
         assert len(replacements) > 0
 
     def test_empty_tags(self):
         """tag_set_fn returning empty set for all cards."""
+
         def empty_tags(_):
             return set()
-        deck = _make_deck([
-            ("Lightning Bolt", 4),
-            ("Goblin Guide", 4),
-            ("Dark Confidant", 2),
-            ("Mountain", 10),
-        ])
+
+        deck = _make_deck(
+            [
+                ("Lightning Bolt", 4),
+                ("Goblin Guide", 4),
+                ("Dark Confidant", 2),
+                ("Mountain", 10),
+            ]
+        )
         removals = suggest_removals(
-            "magic", deck, _candidate_fn,
+            "magic",
+            deck,
+            _candidate_fn,
             preserve_roles=True,
             tag_set_fn=empty_tags,
         )
@@ -486,7 +512,10 @@ class TestEdgeCases:
         assert removals == []
 
         replacements = suggest_replacements(
-            "magic", deck, "Lightning Bolt", _candidate_fn,
+            "magic",
+            deck,
+            "Lightning Bolt",
+            _candidate_fn,
             tag_set_fn=empty_tags,
         )
         # Still returns results (similarity-based, role overlap is 0)
@@ -497,8 +526,10 @@ class TestEdgeCases:
 
     def test_candidate_fn_returns_empty(self):
         """candidate_fn producing no candidates."""
+
         def empty_fn(card, k):
             return []
+
         deck = _make_deck([("Lightning Bolt", 4), ("Mountain", 10)])
         # Removals don't depend on candidate_fn for scoring
         # (they use archetype and role heuristics), so this is a no-op test
@@ -506,6 +537,9 @@ class TestEdgeCases:
         assert removals == []
 
         replacements = suggest_replacements(
-            "magic", deck, "Lightning Bolt", empty_fn,
+            "magic",
+            deck,
+            "Lightning Bolt",
+            empty_fn,
         )
         assert replacements == []

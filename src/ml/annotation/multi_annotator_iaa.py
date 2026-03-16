@@ -169,7 +169,9 @@ class MultiAnnotatorResult:
     consensus_annotation: CardSimilarityAnnotation | None
     iaa_metrics: dict[str, Any]
     agreement_level: str  # "high", "medium", "low", "disagreement"
-    usage_by_judge: dict[str, dict] | None = None  # judge_name -> {input_tokens, output_tokens, requests}
+    usage_by_judge: dict[str, dict] | None = (
+        None  # judge_name -> {input_tokens, output_tokens, requests}
+    )
 
 
 class MultiAnnotatorIAA:
@@ -217,6 +219,7 @@ class MultiAnnotatorIAA:
         if game:
             try:
                 from .llm_annotator import get_similarity_prompt
+
                 similarity_prompt_str = get_similarity_prompt(game)
             except ImportError:
                 pass  # Fall back to base prompt
@@ -230,7 +233,7 @@ class MultiAnnotatorIAA:
                 if ban_list and isinstance(ban_list, list) and len(ban_list) > 0:
                     knowledge_lines.append(
                         f"- {fmt['name']} ban list: {', '.join(ban_list[:20])}"
-                        + (f" (+{len(ban_list)-20} more)" if len(ban_list) > 20 else "")
+                        + (f" (+{len(ban_list) - 20} more)" if len(ban_list) > 20 else "")
                     )
             # Temporal context (current meta)
             temporal = game_knowledge.get("temporal_context", {})
@@ -246,7 +249,9 @@ class MultiAnnotatorIAA:
                 )
             if len(knowledge_lines) > 1:
                 similarity_prompt_str += "\n".join(knowledge_lines)
-                logger.info(f"Injected {len(knowledge_lines)-1} game knowledge items into system prompt")
+                logger.info(
+                    f"Injected {len(knowledge_lines) - 1} game knowledge items into system prompt"
+                )
 
         # Create agents for each annotator with model-specific settings
         self.agents: dict[str, Agent] = {}
@@ -345,7 +350,12 @@ class MultiAnnotatorIAA:
             try:
                 result = await _aio.wait_for(
                     self._annotate_with_agent(
-                        agent, config, prompt, card1, card2, annotator_history,
+                        agent,
+                        config,
+                        prompt,
+                        card1,
+                        card2,
+                        annotator_history,
                     ),
                     timeout=JUDGE_TIMEOUT,
                 )

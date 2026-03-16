@@ -34,7 +34,7 @@ from __future__ import annotations
 import logging
 import math
 from dataclasses import dataclass, fields
-from typing import Any
+from typing import Any, ClassVar
 
 
 logger = logging.getLogger(__name__)
@@ -135,7 +135,7 @@ class WeightedLateFusion:
     # Signal registry: signal_name -> method_name.
     # "jaccard" is None because it is special-cased for optimization
     # (pre-computed query_neighbors).
-    _SIGNAL_COMPUTERS: dict[str, str | None] = {
+    _SIGNAL_COMPUTERS: ClassVar[dict[str, str | None]] = {
         "embed": "_get_embedding_similarity",
         "jaccard": None,
         "functional": "_get_functional_tag_similarity",
@@ -301,7 +301,10 @@ class WeightedLateFusion:
             return 0.0
 
     def _get_text_embedding_similarity(
-        self, query: str, candidate: str, task_type: str | None = None,
+        self,
+        query: str,
+        candidate: str,
+        task_type: str | None = None,
     ) -> float:
         """Get text embedding similarity from card Oracle text."""
         if not self.text_embedder:
@@ -673,7 +676,10 @@ class WeightedLateFusion:
     # ------------------------------------------------------------------
 
     def _compute_similarity_scores(
-        self, query: str, candidates: set[str], task_type: str | None = None,
+        self,
+        query: str,
+        candidates: set[str],
+        task_type: str | None = None,
     ) -> dict[str, dict[str, float]]:
         """Compute similarity scores for all modalities (optimized)."""
         scores = {c: {} for c in candidates}
@@ -699,7 +705,9 @@ class WeightedLateFusion:
                 elif sig == "text_embed":
                     # text_embed needs the task_type kwarg
                     scores[candidate]["text_embed"] = self._get_text_embedding_similarity(
-                        query, candidate, task_type=task_type,
+                        query,
+                        candidate,
+                        task_type=task_type,
                     )
                 else:
                     method = getattr(self, self._SIGNAL_COMPUTERS[sig])
@@ -714,11 +722,7 @@ class WeightedLateFusion:
     def _active_pairs(self, data: dict[str, float]) -> list[tuple[str, float, float]]:
         """Return (signal, weight, value) triples for signals present in *data* with weight > 0."""
         wd = self._weights_dict
-        return [
-            (sig, wd[sig], data[sig])
-            for sig in _SIGNAL_NAMES
-            if wd[sig] > 0.0 and sig in data
-        ]
+        return [(sig, wd[sig], data[sig]) for sig in _SIGNAL_NAMES if wd[sig] > 0.0 and sig in data]
 
     def _aggregate(self, data: dict[str, float], mode: str) -> float:
         """Dispatch aggregation by mode.
@@ -833,22 +837,19 @@ class WeightedLateFusion:
 
         # Compute similarity scores for all modalities
         modality_scores = self._compute_similarity_scores(
-            query, candidates, task_type=effective_task_type,
+            query,
+            candidates,
+            task_type=effective_task_type,
         )
 
         # Aggregate scores based on method
         if self.aggregator in ("rrf", "isr"):
             # For rank-based aggregators, convert scores to ranks per modality.
             # Collect all active signal names present in scores.
-            active_sigs = [
-                sig for sig in _SIGNAL_NAMES
-                if self._weights_dict[sig] > 0.0
-            ]
+            active_sigs = [sig for sig in _SIGNAL_NAMES if self._weights_dict[sig] > 0.0]
 
             # Build per-signal ranked lists and convert to rank dicts.
-            per_signal_ranked: dict[str, list[tuple[str, float]]] = {
-                sig: [] for sig in active_sigs
-            }
+            per_signal_ranked: dict[str, list[tuple[str, float]]] = {sig: [] for sig in active_sigs}
             for candidate in candidates:
                 cs = modality_scores[candidate]
                 for sig in active_sigs:
@@ -869,21 +870,17 @@ class WeightedLateFusion:
 
             # Compute fused scores.
             fused_scores = {
-                cand: self._aggregate(ranks.get(cand, {}), self.aggregator)
-                for cand in candidates
+                cand: self._aggregate(ranks.get(cand, {}), self.aggregator) for cand in candidates
             }
 
         else:
             # Score-based aggregators use modality_scores directly.
             fused_scores = {
-                cand: self._aggregate(modality_scores[cand], self.aggregator)
-                for cand in candidates
+                cand: self._aggregate(modality_scores[cand], self.aggregator) for cand in candidates
             }
 
         # Sort by score
-        sorted_candidates = sorted(
-            candidates, key=lambda c: fused_scores.get(c, 0.0), reverse=True
-        )
+        sorted_candidates = sorted(candidates, key=lambda c: fused_scores.get(c, 0.0), reverse=True)
 
         # Apply MMR if needed
         if self.mmr_lambda > 0.0:

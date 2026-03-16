@@ -17,6 +17,7 @@ from ml.search.hybrid_search import HybridSearch, SearchResult
 # Fixtures
 # ---------------------------------------------------------------------------
 
+
 def _make_mock_embeddings(vocab: dict[str, list[float]] | None = None) -> MagicMock:
     """Return a KeyedVectors-like mock with __contains__ and __getitem__."""
     if vocab is None:
@@ -91,9 +92,7 @@ def _build_search(
 
     if qdrant_enabled:
         mock_qdrant = MagicMock()
-        mock_qdrant.search.return_value = (
-            qdrant_points if qdrant_points is not None else []
-        )
+        mock_qdrant.search.return_value = qdrant_points if qdrant_points is not None else []
         hs.qdrant = mock_qdrant
     else:
         hs.qdrant = None
@@ -104,6 +103,7 @@ def _build_search(
 # ---------------------------------------------------------------------------
 # TestHybridSearchInit
 # ---------------------------------------------------------------------------
+
 
 class TestHybridSearchInit:
     """Initialization and graceful degradation on connection failure."""
@@ -215,6 +215,7 @@ class TestHybridSearchInit:
 # TestHybridSearchSearch
 # ---------------------------------------------------------------------------
 
+
 class TestHybridSearchSearch:
     """Core hybrid search method."""
 
@@ -297,6 +298,7 @@ class TestHybridSearchSearch:
 # TestHybridSearchTextOnly
 # ---------------------------------------------------------------------------
 
+
 class TestHybridSearchTextOnly:
     def test_text_only_queries_meili(self):
         hs = _build_search(
@@ -318,6 +320,7 @@ class TestHybridSearchTextOnly:
 # ---------------------------------------------------------------------------
 # TestHybridSearchVectorOnly
 # ---------------------------------------------------------------------------
+
 
 class TestHybridSearchVectorOnly:
     def test_vector_only_queries_qdrant(self):
@@ -351,6 +354,7 @@ class TestHybridSearchVectorOnly:
 # ---------------------------------------------------------------------------
 # TestHybridSearchDegradation
 # ---------------------------------------------------------------------------
+
 
 class TestHybridSearchDegradation:
     """Runtime exceptions during search degrade gracefully."""

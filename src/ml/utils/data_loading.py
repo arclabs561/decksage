@@ -535,7 +535,11 @@ def load_edgelist(
             name1_col = next((c for c in ("NAME_1", "name_1") if c in fields), None)
             name2_col = next((c for c in ("NAME_2", "name_2") if c in fields), None)
             weight_col = next(
-                (c for c in ("COUNT_MULTISET", "COUNT_SET", "COUNT", "count", "weight") if c in fields),
+                (
+                    c
+                    for c in ("COUNT_MULTISET", "COUNT_SET", "COUNT", "count", "weight")
+                    if c in fields
+                ),
                 None,
             )
             if not name1_col or not name2_col:

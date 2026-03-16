@@ -101,9 +101,7 @@ class TestMeanCentering:
             cosines[query_idx] = -2.0
             top2 = np.sort(cosines)[-2:]
             gap = top2[1] - top2[0]
-            assert gap < 0.05, (
-                f"NN changed after centering but gap was {gap:.4f}, expected < 0.05"
-            )
+            assert gap < 0.05, f"NN changed after centering but gap was {gap:.4f}, expected < 0.05"
 
     def test_centering_idempotent(self):
         """Centering twice should give same result as centering once."""

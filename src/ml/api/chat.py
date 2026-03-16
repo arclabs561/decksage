@@ -231,7 +231,9 @@ def analyze_deck(
             if c2 in dc.graph.get(c1, {}):
                 cooccur_pairs += 1
     total_pairs = len(deck_cards) * (len(deck_cards) - 1) // 2
-    analysis["cooccurrence_coverage"] = round(cooccur_pairs / total_pairs, 4) if total_pairs > 0 else 0
+    analysis["cooccurrence_coverage"] = (
+        round(cooccur_pairs / total_pairs, 4) if total_pairs > 0 else 0
+    )
 
     return analysis
 
@@ -309,12 +311,14 @@ def suggest_replacements(
                     pass
         avg_deck_sim = sum(deck_sims) / len(deck_sims) if deck_sims else 0
         combined = 0.6 * float(sim_score) + 0.4 * avg_deck_sim
-        results.append({
-            "card": cand,
-            "similarity": round(float(sim_score), 4),
-            "deck_synergy": round(avg_deck_sim, 4),
-            "combined": round(combined, 4),
-        })
+        results.append(
+            {
+                "card": cand,
+                "similarity": round(float(sim_score), 4),
+                "deck_synergy": round(avg_deck_sim, 4),
+                "combined": round(combined, 4),
+            }
+        )
         if len(results) >= top_k:
             break
 
@@ -359,7 +363,9 @@ When suggesting cards:
 
 def _build_agent(game: str) -> Agent:
     provider = os.getenv("LLM_PROVIDER", "openrouter")
-    model_name = os.getenv("CHAT_MODEL", os.getenv("DEFAULT_LLM_MODEL", "anthropic/claude-sonnet-4.5"))
+    model_name = os.getenv(
+        "CHAT_MODEL", os.getenv("DEFAULT_LLM_MODEL", "anthropic/claude-sonnet-4.5")
+    )
     model_id = f"{provider}:{model_name}"
 
     tools = [

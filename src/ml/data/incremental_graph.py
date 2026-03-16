@@ -111,11 +111,15 @@ class Edge:
     metadata: dict[str, Any] | None = (
         None  # Format, placement, event_date, archetype, partition, similarity scores
     )
-    source_type: str = "co_occurrence"  # co_occurrence, ppmi, oracle_text, annotation, propagated, card_set
+    source_type: str = (
+        "co_occurrence"  # co_occurrence, ppmi, oracle_text, annotation, propagated, card_set
+    )
 
     # Enhanced temporal distribution (new)
     monthly_counts: dict[str, int] | None = None  # "2024-01" -> 12 (month -> count)
-    format_periods: dict[str, dict[str, int]] | None = None  # "Standard_2024-2025" -> {"2024-01": 10, ...}
+    format_periods: dict[str, dict[str, int]] | None = (
+        None  # "Standard_2024-2025" -> {"2024-01": 10, ...}
+    )
     temporal_stats: dict[str, Any] | None = None  # Cached temporal statistics
 
     def __post_init__(self):
@@ -868,10 +872,7 @@ class IncrementalCardGraph:
         total_decks = max(self.total_decks_processed, 1)
 
         # P(card) = card.total_decks / total_decks
-        card_prob = {
-            name: node.total_decks / total_decks
-            for name, node in self.nodes.items()
-        }
+        card_prob = {name: node.total_decks / total_decks for name, node in self.nodes.items()}
 
         lift_values: dict[tuple[str, str], float] = {}
         for key, edge in self.edges.items():
@@ -1185,7 +1186,9 @@ class IncrementalCardGraph:
                 self._db_conn.execute("ALTER TABLE edges ADD COLUMN format_periods TEXT")
 
             with suppress(sqlite3.OperationalError):
-                self._db_conn.execute("ALTER TABLE edges ADD COLUMN source_type TEXT DEFAULT 'co_occurrence'")
+                self._db_conn.execute(
+                    "ALTER TABLE edges ADD COLUMN source_type TEXT DEFAULT 'co_occurrence'"
+                )
 
             with suppress(sqlite3.OperationalError):
                 self._db_conn.execute("ALTER TABLE nodes ADD COLUMN oracle_text TEXT")
@@ -1199,7 +1202,9 @@ class IncrementalCardGraph:
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_card2 ON edges(card2)")
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_game ON edges(game)")
             self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_weight ON edges(weight)")
-            self._db_conn.execute("CREATE INDEX IF NOT EXISTS idx_edges_source_type ON edges(source_type)")
+            self._db_conn.execute(
+                "CREATE INDEX IF NOT EXISTS idx_edges_source_type ON edges(source_type)"
+            )
 
             self._db_conn.commit()
 
@@ -1380,9 +1385,7 @@ class IncrementalCardGraph:
                         card1=card1,
                         card2=card2,
                         game=game,
-                        weight=float(weight)
-                        if isinstance(weight, (int, float))
-                        else weight,
+                        weight=float(weight) if isinstance(weight, (int, float)) else weight,
                         first_seen=datetime.fromisoformat(first_seen)
                         if isinstance(first_seen, str)
                         else first_seen,
@@ -1465,7 +1468,9 @@ class IncrementalCardGraph:
         for edge_key, edge_data in data.get("edges", {}).items():
             parts = edge_key.split("|||")
             card1, card2 = parts[0], parts[1]
-            source_type = parts[2] if len(parts) > 2 else edge_data.get("source_type", "co_occurrence")
+            source_type = (
+                parts[2] if len(parts) > 2 else edge_data.get("source_type", "co_occurrence")
+            )
             edge = Edge.from_dict(edge_data)
             self.edges[(card1, card2, source_type)] = edge
 

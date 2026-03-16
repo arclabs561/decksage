@@ -253,7 +253,11 @@ class TestGraphIntegrationEdgeCases:
             temp_graph.add_deck(deck_with_format, timestamp=timestamp, deck_id=deck_id)
 
         # Check for an edge that exists in sample_deck (e.g., Lightning Bolt and Rift Bolt)
-        edge_key = (min("Lightning Bolt", "Rift Bolt"), max("Lightning Bolt", "Rift Bolt"), "co_occurrence")
+        edge_key = (
+            min("Lightning Bolt", "Rift Bolt"),
+            max("Lightning Bolt", "Rift Bolt"),
+            "co_occurrence",
+        )
         assert edge_key in temp_graph.edges, (
             f"Edge {edge_key} not found. Available edges: {list(temp_graph.edges.keys())[:5]}"
         )
@@ -277,7 +281,11 @@ class TestGraphIntegrationEdgeCases:
         temp_graph.add_deck(deck_with_format, timestamp=datetime(2024, 1, 15), deck_id="deck1")
 
         # Check for an edge that exists in sample_deck (e.g., Lightning Bolt and Rift Bolt)
-        edge_key = (min("Lightning Bolt", "Rift Bolt"), max("Lightning Bolt", "Rift Bolt"), "co_occurrence")
+        edge_key = (
+            min("Lightning Bolt", "Rift Bolt"),
+            max("Lightning Bolt", "Rift Bolt"),
+            "co_occurrence",
+        )
         assert edge_key in temp_graph.edges
         original_edge = temp_graph.edges[edge_key]
         original_monthly = original_edge.monthly_counts.copy()

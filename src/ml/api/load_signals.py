@@ -186,7 +186,9 @@ def load_signals_to_state(
                     try:
                         state.text_embedder = CardTextEmbedder(model_name=text_embedder_model)
                         status["text_embedder"] = True
-                        logger.info("[ok] Initialized fallback text embedder: %s", text_embedder_model)
+                        logger.info(
+                            "[ok] Initialized fallback text embedder: %s", text_embedder_model
+                        )
                     except Exception as e2:
                         logger.warning("Failed to initialize fallback text embedder: %s", e2)
                         state.text_embedder = None
