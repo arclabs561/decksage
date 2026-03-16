@@ -246,28 +246,34 @@ func (d *Dataset) parseCard(
 	ctx context.Context,
 	rawCard card,
 ) error {
+	buildFace := func(name, manaCost, typeLine, oracleText, flavorText, power, toughness string) game.CardFace {
+		supers, types, subs := game.ParseTypeLine(typeLine)
+		return game.CardFace{
+			Name:       name,
+			ManaCost:   manaCost,
+			TypeLine:   typeLine,
+			Supertypes: supers,
+			Types:      types,
+			Subtypes:   subs,
+			OracleText: oracleText,
+			FlavorText: flavorText,
+			Power:      power,
+			Toughness:  toughness,
+		}
+	}
+
 	var faces []game.CardFace
 	if len(rawCard.Faces) == 0 {
-		faces = append(faces, game.CardFace{
-			Name:       rawCard.Name,
-			ManaCost:   rawCard.ManaCost,
-			TypeLine:   rawCard.TypeLine,
-			OracleText: rawCard.OracleText,
-			FlavorText: rawCard.FlavorText,
-			Power:      rawCard.Power,
-			Toughness:  rawCard.Toughness,
-		})
+		faces = append(faces, buildFace(
+			rawCard.Name, rawCard.ManaCost, rawCard.TypeLine,
+			rawCard.OracleText, rawCard.FlavorText, rawCard.Power, rawCard.Toughness,
+		))
 	} else {
 		for _, rawFace := range rawCard.Faces {
-			faces = append(faces, game.CardFace{
-				Name:       rawFace.Name,
-				ManaCost:   rawFace.ManaCost,
-				TypeLine:   rawFace.TypeLine,
-				OracleText: rawFace.OracleText,
-				FlavorText: rawFace.FlavorText,
-				Power:      rawFace.Power,
-				Toughness:  rawFace.Toughness,
-			})
+			faces = append(faces, buildFace(
+				rawFace.Name, rawFace.ManaCost, rawFace.TypeLine,
+				rawFace.OracleText, rawFace.FlavorText, rawFace.Power, rawFace.Toughness,
+			))
 		}
 	}
 	ref, err := url.Parse(rawCard.ScryfallURI)
