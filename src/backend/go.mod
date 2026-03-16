@@ -1,9 +1,9 @@
 module collections
 
-go 1.24.9
+go 1.25.0
 
 require (
-	github.com/DataDog/zstd v1.5.7
+	github.com/klauspost/compress v1.18.2
 	github.com/PuerkitoBio/goquery v1.11.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.6
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.95.0
@@ -72,7 +72,6 @@ require (
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
-	github.com/klauspost/compress v1.18.2 // indirect
 	github.com/mailru/easyjson v0.9.1 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
