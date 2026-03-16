@@ -6,7 +6,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/go-redis/redis/v9"
+	"github.com/redis/go-redis/v9"
 
 	"collections/blob"
 	"collections/games/magic/dataset"
