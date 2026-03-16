@@ -3,6 +3,7 @@ package cmd
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 
 	"collections/games"
 	magicdataset "collections/games/magic/dataset"
@@ -104,4 +105,42 @@ func (a *mtgDatasetAdapter) IterItems(
 // wrapMTGDataset wraps a magic dataset to implement games.Dataset
 func wrapMTGDataset(d magicdataset.Dataset) games.Dataset {
 	return &mtgDatasetAdapter{inner: d}
+}
+
+// extractOnlyDataset is a minimal interface for datasets that support Extract
+// but haven't implemented IterItems yet.
+type extractOnlyDataset interface {
+	Description() games.Description
+	Extract(ctx context.Context, sc *scraper.Scraper, options ...games.UpdateOption) error
+}
+
+// extractOnlyAdapter wraps a dataset that only has Description + Extract,
+// providing a no-op IterItems to satisfy games.Dataset.
+type extractOnlyAdapter struct {
+	inner extractOnlyDataset
+}
+
+func (a *extractOnlyAdapter) Description() games.Description {
+	return a.inner.Description()
+}
+
+func (a *extractOnlyAdapter) Extract(
+	ctx context.Context,
+	sc *scraper.Scraper,
+	options ...games.UpdateOption,
+) error {
+	return a.inner.Extract(ctx, sc, options...)
+}
+
+func (a *extractOnlyAdapter) IterItems(
+	_ context.Context,
+	_ func(item games.Item) error,
+	_ ...games.IterItemsOption,
+) error {
+	return fmt.Errorf("IterItems not implemented for dataset %q", a.inner.Description().Name)
+}
+
+// wrapExtractOnly wraps a dataset that only supports Extract into games.Dataset.
+func wrapExtractOnly(d extractOnlyDataset) games.Dataset {
+	return &extractOnlyAdapter{inner: d}
 }
