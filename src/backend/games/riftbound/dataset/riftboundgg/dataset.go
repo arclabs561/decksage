@@ -74,7 +74,7 @@ func (d *Dataset) Extract(
 		deckURLs = opts.ItemOnlyURLs
 	} else {
 		var err error
-		deckURLs, err = d.scrapeDeckListingPages(ctx, sc, opts)
+		deckURLs, err = d.scrapeDeckListingPages(ctx, sc, &opts)
 		if err != nil {
 			return fmt.Errorf("failed to scrape deck listings: %w", err)
 		}
@@ -102,7 +102,7 @@ func (d *Dataset) Extract(
 					if limit, ok := opts.ItemLimit.Get(); ok && int(totalDecks.Load()) >= limit {
 						return
 					}
-					if err := d.parseDeck(ctx, sc, deckURL, opts); err != nil {
+					if err := d.parseDeck(ctx, sc, deckURL, &opts); err != nil {
 						d.log.Field("url", deckURL).Errorf(ctx, "Failed to parse deck: %v", err)
 						if stats := games.ExtractStatsFromContext(ctx); stats != nil {
 							stats.RecordCategorizedError(ctx, deckURL, "riftboundgg", err)
@@ -139,7 +139,7 @@ func (d *Dataset) Extract(
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
 	sc *limpet.Client,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	listingURL := "https://riftbound.gg/decks"
 
@@ -258,7 +258,7 @@ func (d *Dataset) parseDeck(
 	ctx context.Context,
 	sc *limpet.Client,
 	deckURL string,
-	opts games.ResolvedUpdateOptions,
+	opts *games.ResolvedUpdateOptions,
 ) error {
 	// Extract deck ID from URL - handle various URL formats
 	reDeckID := regexp.MustCompile(`/decks?/([^/?]+)`)
