@@ -6,7 +6,7 @@ import (
 	"collections/games"
 	"collections/games/riftbound/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -26,9 +26,8 @@ import (
 // Website: https://riftmana.com/tournaments/
 // No API key required - scrapes tournament deck listings
 type Dataset struct {
-	log           *logger.Logger
-	blob          *blob.Bucket
-	browserScraper *scraper.BrowserScraper
+	log  *logger.Logger
+	blob *blob.Bucket
 }
 
 var base *url.URL
@@ -42,15 +41,9 @@ func init() {
 }
 
 func NewDataset(log *logger.Logger, blob *blob.Bucket) (*Dataset, error) {
-	browserScraper, err := scraper.NewBrowserScraper(log)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create browser scraper: %w", err)
-	}
-
 	return &Dataset{
-		log:            log,
-		blob:           blob,
-		browserScraper: browserScraper,
+		log:  log,
+		blob: blob,
 	}, nil
 }
 
@@ -65,7 +58,7 @@ var reDeckURL = regexp.MustCompile(`^https://riftmana\.com/tournaments?/[^/?]+$`
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	opts, err := games.ResolveUpdateOptions(options...)
@@ -76,7 +69,7 @@ func (d *Dataset) Extract(
 	d.log.Infof(ctx, "Extracting Riftbound tournament decks from RiftMana (https://riftmana.com/tournaments/)...")
 
 	// Get all tournament deck URLs
-	deckURLs, err := d.scrapeTournamentListingPages(ctx)
+	deckURLs, err := d.scrapeTournamentListingPages(ctx, sc)
 	if err != nil {
 		return fmt.Errorf("failed to scrape tournament listings: %w", err)
 	}
@@ -118,7 +111,7 @@ func (d *Dataset) Extract(
 	return nil
 }
 
-func (d *Dataset) scrapeTournamentListingPages(ctx context.Context) ([]string, error) {
+func (d *Dataset) scrapeTournamentListingPages(ctx context.Context, sc *limpet.Client) ([]string, error) {
 	allURLs := make([]string, 0)
 	seenURLs := make(map[string]bool)
 	page := 1
@@ -133,13 +126,13 @@ func (d *Dataset) scrapeTournamentListingPages(ctx context.Context) ([]string, e
 		d.log.Debugf(ctx, "Scraping tournament listing page %d: %s", page, listingURL)
 
 		// Use browser scraper for JavaScript rendering
-		html, err := d.browserScraper.RenderPage(ctx, listingURL, ".tournament-list, .deck-list, .meta-deck", 45*time.Second)
+		pg, err := sc.Get(ctx, listingURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
 		if err != nil {
 			d.log.Warnf(ctx, "Failed to render page %d: %v", page, err)
 			return nil, fmt.Errorf("failed to render listing page: %w", err)
 		}
 
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(html))
+		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(pg.Response.Body))
 		if err != nil {
 			return nil, fmt.Errorf("failed to parse HTML: %w", err)
 		}
@@ -206,22 +199,22 @@ func (d *Dataset) scrapeTournamentListingPages(ctx context.Context) ([]string, e
 
 func (d *Dataset) extractDeck(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	tournamentURL string,
 	opts games.ResolvedUpdateOptions,
 ) error {
 	// Use browser scraper for JavaScript rendering
-	html, err := d.browserScraper.RenderPage(ctx, tournamentURL, ".deck-list, .card-list, .deck", 45*time.Second)
+	pg, err := sc.Get(ctx, tournamentURL, &limpet.OptDoBrowser{}, &limpet.OptDoReplace{})
 	if err != nil {
 		return fmt.Errorf("failed to render tournament page: %w", err)
 	}
 
-	return d.parseTournamentPage(ctx, nil, tournamentURL, html, opts)
+	return d.parseTournamentPage(ctx, nil, tournamentURL, pg.Response.Body, opts)
 }
 
 func (d *Dataset) parseTournamentPage(
 	ctx context.Context,
-	_ *scraper.Scraper,
+	_ *limpet.Client, //nolint:revive
 	tournamentURL string,
 	html []byte,
 	opts games.ResolvedUpdateOptions,
@@ -451,8 +444,5 @@ func (d *Dataset) IterItems(
 }
 
 func (d *Dataset) Close() error {
-	if d.browserScraper != nil {
-		return d.browserScraper.Close()
-	}
 	return nil
 }

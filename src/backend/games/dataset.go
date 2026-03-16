@@ -2,7 +2,7 @@ package games
 
 import (
 	"collections/blob"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"errors"
@@ -24,7 +24,7 @@ type Dataset interface {
 	// Extract scrapes data from the source and stores in blob storage
 	Extract(
 		ctx context.Context,
-		scraper *scraper.Scraper,
+		scraper *limpet.Client,
 		options ...UpdateOption,
 	) error
 
@@ -185,13 +185,13 @@ func ResolveUpdateOptions(options ...UpdateOption) (ResolvedUpdateOptions, error
 // Do performs an HTTP request with appropriate scraper options
 func Do(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts *ResolvedUpdateOptions,
 	req *http.Request,
-) (*scraper.Page, error) {
-	var doOpts []scraper.DoOption
+) (*limpet.Page, error) {
+	var doOpts []limpet.DoOption
 	if opts.FetchReplaceAll {
-		doOpts = append(doOpts, &scraper.OptDoReplace{})
+		doOpts = append(doOpts, &limpet.OptDoReplace{})
 	}
 	return sc.Do(ctx, req, doOpts...)
 }

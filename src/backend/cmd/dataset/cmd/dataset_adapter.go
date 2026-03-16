@@ -7,7 +7,7 @@ import (
 
 	"collections/games"
 	magicdataset "collections/games/magic/dataset"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 )
 
 // Adapter to make MTG datasets compatible with games.Dataset interface
@@ -25,7 +25,7 @@ func (a *mtgDatasetAdapter) Description() games.Description {
 
 func (a *mtgDatasetAdapter) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	// Convert games.UpdateOption to magicdataset.UpdateOption
@@ -111,7 +111,7 @@ func wrapMTGDataset(d magicdataset.Dataset) games.Dataset {
 // but haven't implemented IterItems yet.
 type extractOnlyDataset interface {
 	Description() games.Description
-	Extract(ctx context.Context, sc *scraper.Scraper, options ...games.UpdateOption) error
+	Extract(ctx context.Context, sc *limpet.Client, options ...games.UpdateOption) error
 }
 
 // extractOnlyAdapter wraps a dataset that only has Description + Extract,
@@ -126,7 +126,7 @@ func (a *extractOnlyAdapter) Description() games.Description {
 
 func (a *extractOnlyAdapter) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	return a.inner.Extract(ctx, sc, options...)

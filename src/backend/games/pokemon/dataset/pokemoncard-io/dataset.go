@@ -6,7 +6,7 @@ import (
 	"collections/games"
 	pgame "collections/games/pokemon/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -47,7 +47,7 @@ var (
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	opts, err := games.ResolveUpdateOptions(options...)
@@ -87,7 +87,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) scrapeDeckListingPages(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	opts games.ResolvedUpdateOptions,
 ) ([]string, error) {
 	// Basic pagination over deck search
@@ -184,7 +184,7 @@ func (d *Dataset) scrapeDeckListingPages(
 
 func (d *Dataset) parseDeck(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	deckURL string,
 	opts games.ResolvedUpdateOptions,
 ) error {

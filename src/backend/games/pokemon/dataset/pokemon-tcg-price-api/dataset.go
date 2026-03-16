@@ -5,7 +5,7 @@ import (
 	"collections/games"
 	"collections/games/pokemon/game"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -63,7 +63,7 @@ type priceRecord struct {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	opts, err := games.ResolveUpdateOptions(options...)
@@ -133,7 +133,7 @@ func (d *Dataset) Extract(
 
 func (d *Dataset) fetchPricesFromTCGIO(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	id string,
 ) (game.CardPrices, error) {
 	// Prefer RapidAPI if configured, else direct API

@@ -11,7 +11,8 @@ import (
 	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
+	limpetblob "github.com/arclabs561/limpet/blob"
 )
 
 // TestPartitionNameExtraction tests the partition name extraction logic
@@ -187,13 +188,16 @@ func TestParseCollectionWithVariousPartitions(t *testing.T) {
 	}
 	defer bucket.Close(ctx)
 
-	scraperBlob, err := blob.NewBucket(ctx, log, bucketURL)
+	scraperBucket, err := limpetblob.NewBucket(ctx, bucketURL, nil)
 	if err != nil {
-		t.Fatalf("failed to create scraper blob: %v", err)
+		t.Fatalf("failed to create limpet bucket: %v", err)
 	}
-	defer scraperBlob.Close(ctx)
 
-	sc := scraper.NewScraper(log, scraperBlob)
+	sc, err := limpet.NewClient(ctx, scraperBucket)
+	if err != nil {
+		t.Fatalf("failed to create limpet client: %v", err)
+	}
+	defer sc.Close()
 	d := NewDataset(log, bucket)
 
 	// Test with a known problematic set URL

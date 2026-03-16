@@ -4,7 +4,7 @@ import (
 	"collections/blob"
 	"collections/games"
 	"collections/logger"
-	"collections/scraper"
+	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -95,7 +95,7 @@ func (d *Dataset) Description() games.Description {
 
 func (d *Dataset) Extract(
 	ctx context.Context,
-	sc *scraper.Scraper,
+	sc *limpet.Client,
 	options ...games.UpdateOption,
 ) error {
 	opts, err := games.ResolveUpdateOptions(options...)
