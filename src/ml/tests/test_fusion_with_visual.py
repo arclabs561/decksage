@@ -35,7 +35,7 @@ def test_fusion_weights_with_visual():
         + normalized.functional
         + normalized.text_embed
         + normalized.visual_embed
-        + normalized.gnn
+        + normalized.archetype
     )
     assert abs(total - 1.0) < 1e-6  # Should sum to 1.0
 

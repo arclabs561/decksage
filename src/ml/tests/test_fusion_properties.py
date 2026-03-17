@@ -69,18 +69,7 @@ def test_fusion_weights_normalize_sum_to_one(embed_list, jacc_list):
     f = 1.0
     fw = FusionWeights(embed=e, jaccard=j, functional=f).normalized()
     # Check that ALL weights sum to 1.0 (not just the three we set)
-    total = (
-        fw.embed
-        + fw.jaccard
-        + fw.functional
-        + fw.text_embed
-        + fw.visual_embed
-        + fw.sideboard
-        + fw.temporal
-        + fw.gnn
-        + fw.archetype
-        + fw.format
-    )
+    total = fw.embed + fw.jaccard + fw.functional + fw.text_embed + fw.visual_embed + fw.archetype
     assert math.isclose(total, 1.0, rel_tol=1e-9)
 
 
@@ -95,11 +84,7 @@ def test_fusion_weight_scale_invariance_property(scale: float):
         functional=0.25,
         text_embed=0.0,
         visual_embed=0.0,
-        sideboard=0.0,
-        temporal=0.0,
-        gnn=0.0,
         archetype=0.0,
-        format=0.0,
     )
     scaled = FusionWeights(
         embed=base.embed * scale,
@@ -107,11 +92,7 @@ def test_fusion_weight_scale_invariance_property(scale: float):
         functional=base.functional * scale,
         text_embed=0.0,
         visual_embed=0.0,
-        sideboard=0.0,
-        temporal=0.0,
-        gnn=0.0,
         archetype=0.0,
-        format=0.0,
     )
     nb = base.normalized()
     ns = scaled.normalized()

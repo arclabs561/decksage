@@ -37,9 +37,6 @@ Multi-game serving (single process, multiple games):
     # Optional per-game tuned fusion weights (JSON)
     export FUSION_WEIGHTS_PATH_MAGIC=/path/to/fusion_weights_magic.json
 
-    # Optional per-game learned reranker (pickle)
-    export RERANKER_PATH_MAGIC=/path/to/reranker_magic.pkl
-
     # Optional per-game search namespaces (default: cards_<game>)
     export MEILISEARCH_INDEX_MAGIC=cards_magic
     export QDRANT_COLLECTION_MAGIC=cards_magic
@@ -279,12 +276,11 @@ def load_embeddings_to_state(
                 "functional": fw.functional,
             }
             logger.info(
-                "Loaded tuned fusion weights: embed=%.2f, jaccard=%.2f, functional=%.2f, text_embed=%.2f, gnn=%.2f",
+                "Loaded tuned fusion weights: embed=%.2f, jaccard=%.2f, functional=%.2f, text_embed=%.2f",
                 fw.embed,
                 fw.jaccard,
                 fw.functional,
                 fw.text_embed,
-                fw.gnn,
             )
     except (OSError, json.JSONDecodeError, KeyError, ValueError):
         logger.debug("No tuned fusion weights loaded", exc_info=True)
@@ -386,7 +382,6 @@ async def lifespan(app: FastAPI):
         attrs_key = f"ATTRIBUTES_PATH_{suffix}" if multi else "ATTRIBUTES_PATH"
         weights_key = f"FUSION_WEIGHTS_PATH_{suffix}"
         signals_key = f"SIGNALS_DIR_{suffix}"
-        reranker_key = f"RERANKER_PATH_{suffix}" if multi else "RERANKER_PATH"
 
         emb_path = os.getenv(emb_key)
         pairs_path = os.getenv(pairs_key)
@@ -404,7 +399,6 @@ async def lifespan(app: FastAPI):
         attrs_path = os.getenv(attrs_key)
         tuned_weights_path = os.getenv(weights_key)
         signals_dir = os.getenv(signals_key) or None
-        reranker_path = os.getenv(reranker_key) or None
 
         if emb_path:
             if not HAS_GENSIM:
@@ -637,7 +631,6 @@ async def lifespan(app: FastAPI):
             signal_status = load_signals_to_state(
                 state=state,
                 signals_dir=(signals_dir or default_signals_dir),
-                reranker_path=reranker_path,
                 skip_embedders=True,  # already loaded globally
             )
             # Mark embedder status based on shared instances
@@ -725,14 +718,9 @@ async def lifespan(app: FastAPI):
             state.embeddings = None
             state.graph_data = None
             state.card_attrs = None
-            state.sideboard_cooccurrence = None
-            state.temporal_cooccurrence = None
             state.archetype_staples = None
             state.archetype_cooccurrence = None
-            state.format_cooccurrence = None
-            state.cross_format_patterns = None
             state.signal_status = None
-            state.reranker = None
             state.card_metadata = None
             state.banlist = None
             state.archetypes = None
@@ -916,14 +904,7 @@ def ready():
             "available_methods": _methods_for(state),
         }
         if state.fusion_default_weights is not None:
-            resp["fusion_default_weights"] = {
-                "embed": state.fusion_default_weights.embed,
-                "jaccard": state.fusion_default_weights.jaccard,
-                "functional": state.fusion_default_weights.functional,
-                "text_embed": state.fusion_default_weights.text_embed,
-                "visual_embed": state.fusion_default_weights.visual_embed,
-                "gnn": state.fusion_default_weights.gnn,
-            }
+            resp["fusion_default_weights"] = state.fusion_default_weights.to_dict()
         return resp
 
     # Multi-game readiness
@@ -942,14 +923,7 @@ def ready():
             "embedding_dim": int(getattr(state.embeddings, "vector_size", 0)),
         }
         if state.fusion_default_weights is not None:
-            entry["fusion_default_weights"] = {
-                "embed": state.fusion_default_weights.embed,
-                "jaccard": state.fusion_default_weights.jaccard,
-                "functional": state.fusion_default_weights.functional,
-                "text_embed": state.fusion_default_weights.text_embed,
-                "visual_embed": state.fusion_default_weights.visual_embed,
-                "gnn": state.fusion_default_weights.gnn,
-            }
+            entry["fusion_default_weights"] = state.fusion_default_weights.to_dict()
         status_by_game[g] = entry
 
     if missing:
@@ -1216,19 +1190,13 @@ def _similar_fusion(
         base_fw = dataclasses.replace(base_fw, text_embed=0.0)
     if state.visual_embedder is None:
         base_fw = dataclasses.replace(base_fw, visual_embed=0.0)
-    if getattr(state, "gnn_embedder", None) is None:
-        base_fw = dataclasses.replace(base_fw, gnn=0.0)
     fw = FusionWeights(
         embed=float(w.get("embed", base_fw.embed)),
         jaccard=float(w.get("jaccard", base_fw.jaccard)),
         functional=float(w.get("functional", base_fw.functional)),
         text_embed=float(w.get("text_embed", base_fw.text_embed)),
         visual_embed=float(w.get("visual_embed", base_fw.visual_embed)),
-        sideboard=float(w.get("sideboard", base_fw.sideboard)),
-        temporal=float(w.get("temporal", base_fw.temporal)),
-        gnn=float(w.get("gnn", base_fw.gnn)),
         archetype=float(w.get("archetype", base_fw.archetype)),
-        format=float(w.get("format", base_fw.format)),
     ).normalized()
 
     # Map use_case to task_type for instruction-tuned embeddings
@@ -1238,6 +1206,10 @@ def _similar_fusion(
         UseCaseEnum.meta: "similar",  # Meta uses general similarity
     }
     task_type = use_case_to_task.get(request.use_case, "substitution")
+
+    # If user provided explicit weights, skip task-specific weight adjustment
+    # (explicit weights should override, not be overridden by task presets)
+    effective_task_type = task_type if not w else None
 
     fusion = WeightedLateFusion(
         state.embeddings,
@@ -1252,44 +1224,17 @@ def _similar_fusion(
         text_embedder=state.text_embedder,
         visual_embedder=state.visual_embedder,
         card_data=state.card_attrs,  # Use card_attrs for Oracle text access
-        sideboard_cooccurrence=state.sideboard_cooccurrence,
-        temporal_cooccurrence=state.temporal_cooccurrence,
-        gnn_embedder=state.gnn_embedder,
         archetype_staples=state.archetype_staples,
         archetype_cooccurrence=state.archetype_cooccurrence,
-        format_cooccurrence=state.format_cooccurrence,
-        cross_format_patterns=state.cross_format_patterns,
-        task_type=task_type,
-        graph=state.graph_data.get("graph") if state.graph_data else None,
+        task_type=effective_task_type,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
     )
 
-    # Use reranking if available
-    use_reranking = state.reranker is not None
-    if use_reranking:
-        # Two-stage pipeline: retrieve → rerank
-        from ml.reranking.hybrid_search import HybridSearchWithReranking
-
-        hybrid_search = HybridSearchWithReranking(
-            retriever=fusion,
-            reranker=state.reranker,
-            top_k_retrieve=100,  # Retrieve more candidates
-            top_k_final=k,  # Final results after reranking
-            use_reranking=True,
-        )
-        if request.also_like:
-            # Multi-query not yet supported in hybrid search, fallback to fusion
-            queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
-            similar = fusion.similar_multi(queries, k)
-        else:
-            similar = hybrid_search.search(query)
+    if request.also_like:
+        queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
+        similar = fusion.similar_multi(queries, k)
     else:
-        # Fallback to manual fusion
-        if request.also_like:
-            queries = [query] + [q for q in request.also_like if isinstance(q, str) and q]
-            similar = fusion.similar_multi(queries, k)
-        else:
-            similar = fusion.similar(query, k, task_type=task_type)
+        similar = fusion.similar(query, k, task_type=task_type)
 
     return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
 
@@ -1572,9 +1517,6 @@ def get_contextual_suggestions(
     archetype_cooccurrence = (
         state.archetype_cooccurrence if hasattr(state, "archetype_cooccurrence") else None
     )
-    format_cooccurrence = (
-        state.format_cooccurrence if hasattr(state, "format_cooccurrence") else None
-    )
 
     # Create discovery instance
     from ..deck_building.contextual_discovery import ContextualCardDiscovery
@@ -1585,7 +1527,6 @@ def get_contextual_suggestions(
         tag_set_fn=tag_set_fn,
         archetype_staples=archetype_staples,
         archetype_cooccurrence=archetype_cooccurrence,
-        format_cooccurrence=format_cooccurrence,
         price_label=price_label,
     )
 

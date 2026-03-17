@@ -65,7 +65,6 @@ class ContextualCardDiscovery:
         tag_set_fn: Callable[[str], set[str]] | None = None,
         archetype_staples: dict[str, dict[str, float]] | None = None,
         archetype_cooccurrence: dict[str, dict[str, float]] | None = None,
-        format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
         price_label: str = "price",
     ):
         self.fusion = fusion
@@ -73,7 +72,6 @@ class ContextualCardDiscovery:
         self.tag_set_fn = tag_set_fn
         self.archetype_staples = archetype_staples or {}
         self.archetype_cooccurrence = archetype_cooccurrence or {}
-        self.format_cooccurrence = format_cooccurrence or {}
         self.price_label = price_label
 
     def find_synergies(
@@ -134,16 +132,6 @@ class ContextualCardDiscovery:
                                 f"high archetype co-occurrence ({neighbor_cooccur_rate:.0%})"
                             )
 
-                    if format and self.format_cooccurrence:
-                        format_data = self.format_cooccurrence.get(format, {})
-                        card_format = format_data.get(card, {})
-                        format_cooccur_rate = card_format.get(neighbor, 0.0)
-                        if format_cooccur_rate > 0.3:  # Lower threshold
-                            score *= 1.0 + format_cooccur_rate * 0.2  # Up to 20% boost
-                            reasoning_parts.append(
-                                f"high format co-occurrence ({format_cooccur_rate:.0%})"
-                            )
-
                     if score <= 0.0:
                         continue
 
@@ -187,10 +175,10 @@ class ContextualCardDiscovery:
         if self.tag_set_fn:
             current_role = self.tag_set_fn(card)
 
-        # Use fusion to find similar cards with "similar" task type for alternatives
+        # Use fusion to find similar cards with "substitution" task type for alternatives
+        # (alternatives are functional substitutes, not co-occurrence partners)
         try:
-            # Use fusion.similar() with task_type="similar" for finding alternatives
-            similar = self.fusion.similar(card, k=top_k * 2, task_type="similar")
+            similar = self.fusion.similar(card, k=top_k * 2, task_type="substitution")
 
             for alt_card, embed_score in similar:
                 if alt_card == card:
