@@ -45,6 +45,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
 from .deck_completion import (
     CandidateFn,
     CMCFn,
@@ -61,6 +62,91 @@ try:
 except ImportError:
     pot = None
     logger.warning("POT not installed. Install with: uv add pot")
+
+
+@dataclass
+class FormatConstraints:
+    """Format-specific deck building constraints.
+
+    Returned by ``get_format_constraints`` for known game/format pairs.
+    """
+
+    min_deck_size: int = 60
+    max_deck_size: int | None = None  # None = no upper bound
+    copy_limit: int = 4
+    singleton: bool = False  # Commander: all non-basics limited to 1
+    color_identity_required: bool = False  # Commander: cards must match CI
+    basics_unlimited: bool = True  # Basic lands/energy exempt from copy limit
+
+
+# -- Format preset tables --------------------------------------------------
+
+_MAGIC_FORMATS: dict[str, FormatConstraints] = {
+    "standard": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "modern": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "pioneer": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "legacy": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "vintage": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "pauper": FormatConstraints(min_deck_size=60, copy_limit=4),
+    "commander": FormatConstraints(
+        min_deck_size=100,
+        max_deck_size=100,
+        copy_limit=1,
+        singleton=True,
+        color_identity_required=True,
+    ),
+    "draft": FormatConstraints(min_deck_size=40, copy_limit=100, basics_unlimited=True),
+    "sealed": FormatConstraints(min_deck_size=40, copy_limit=100, basics_unlimited=True),
+}
+
+_YUGIOH_FORMATS: dict[str, FormatConstraints] = {
+    "advanced": FormatConstraints(min_deck_size=40, max_deck_size=60, copy_limit=3),
+    "traditional": FormatConstraints(min_deck_size=40, max_deck_size=60, copy_limit=3),
+}
+
+_POKEMON_FORMATS: dict[str, FormatConstraints] = {
+    "standard": FormatConstraints(min_deck_size=60, max_deck_size=60, copy_limit=4),
+    "expanded": FormatConstraints(min_deck_size=60, max_deck_size=60, copy_limit=4),
+    "pocket": FormatConstraints(min_deck_size=20, max_deck_size=20, copy_limit=2),
+}
+
+_FORMAT_TABLES: dict[str, dict[str, FormatConstraints]] = {
+    "magic": _MAGIC_FORMATS,
+    "yugioh": _YUGIOH_FORMATS,
+    "pokemon": _POKEMON_FORMATS,
+}
+
+
+def get_format_constraints(game: str, format: str | None = None) -> FormatConstraints:
+    """Return format constraints for a game/format pair.
+
+    Falls back to sensible per-game defaults when ``format`` is None or
+    unrecognised.
+    """
+    if format is None:
+        # Sensible defaults per game
+        if game == "yugioh":
+            return FormatConstraints(min_deck_size=40, max_deck_size=60, copy_limit=3)
+        if game == "pokemon":
+            return FormatConstraints(min_deck_size=60, max_deck_size=60, copy_limit=4)
+        return FormatConstraints(min_deck_size=60, copy_limit=4)
+
+    table = _FORMAT_TABLES.get(game, {})
+    key = format.strip().lower()
+    if key in table:
+        return table[key]
+
+    logger.debug("Unknown format '%s' for game '%s', using game defaults", format, game)
+    return get_format_constraints(game, None)
+
+
+def _is_basic(game: str, card_name: str) -> bool:
+    """Return True if *card_name* is a basic land / basic energy."""
+    if game == "magic":
+        return card_name in MAGIC_BASIC_LANDS
+    if game == "pokemon":
+        return card_name in POKEMON_BASIC_ENERGY
+    return False
 
 
 @dataclass
@@ -98,6 +184,12 @@ class OTCompletionConfig:
 
     # Pool filtering
     pool_size: int = 200  # Max candidate pool size (top-k by embedding similarity)
+
+    # Format-aware constraints (v3, 2026-03-17)
+    format: str | None = None  # e.g. "standard", "modern", "commander"
+    legality_data: dict[str, dict[str, str]] | None = None  # card -> format -> status
+    color_identity: set[str] | None = None  # For Commander CI filtering
+    card_color_identity: dict[str, set[str]] | None = None  # card -> color identity set
 
 
 @dataclass
@@ -322,6 +414,9 @@ def _round_transport_plan_greedy(
     game: str,
     slots_to_fill: int,
     max_copies: int | None = None,
+    *,
+    per_card_limits: dict[str, int] | None = None,
+    format_constraints: FormatConstraints | None = None,
 ) -> list[tuple[str, int]]:
     """
     Round fractional OT plan to integer card counts via greedy rounding.
@@ -336,12 +431,16 @@ def _round_transport_plan_greedy(
         game: Game name
         slots_to_fill: Number of card slots to add
         max_copies: Override per-game copy limit
+        per_card_limits: Per-card copy limit overrides (e.g. restricted/limited cards)
+        format_constraints: Format constraints (singleton, basics_unlimited, etc.)
 
     Returns:
         List of (card_name, count) tuples
     """
     if max_copies is None:
-        if game == "yugioh":
+        if format_constraints is not None:
+            max_copies = format_constraints.copy_limit
+        elif game == "yugioh":
             max_copies = 3
         else:
             max_copies = 4
@@ -402,6 +501,9 @@ def _round_transport_plan_ilp(
     game: str,
     slots_to_fill: int,
     max_copies: int | None = None,
+    *,
+    per_card_limits: dict[str, int] | None = None,
+    format_constraints: FormatConstraints | None = None,
 ) -> list[tuple[str, int]]:
     """
     Round fractional OT plan to integer card counts via integer linear program.
@@ -424,6 +526,8 @@ def _round_transport_plan_ilp(
         game: Game name
         slots_to_fill: Number of card slots to add
         max_copies: Override per-game copy limit
+        per_card_limits: Per-card copy limit overrides (e.g. restricted/limited cards)
+        format_constraints: Format constraints (singleton, basics_unlimited, etc.)
 
     Returns:
         List of (card_name, count) tuples
@@ -439,7 +543,10 @@ def _round_transport_plan_ilp(
         )
 
     if max_copies is None:
-        max_copies = 3 if game == "yugioh" else 4
+        if format_constraints is not None:
+            max_copies = format_constraints.copy_limit
+        else:
+            max_copies = 3 if game == "yugioh" else 4
 
     n = len(card_pool)
     if n == 0 or slots_to_fill <= 0:
@@ -450,6 +557,19 @@ def _round_transport_plan_ilp(
 
     # Determine per-card copy limit (accounting for cards already in deck)
     upper_bounds = np.full(n, max_copies, dtype=np.float64)
+
+    # Apply format-specific overrides
+    fc = format_constraints
+    for i, name in enumerate(card_pool):
+        limit = max_copies
+        # Basics are unlimited in most formats
+        if fc and fc.basics_unlimited and _is_basic(game, name):
+            limit = slots_to_fill  # effectively unlimited
+        # Per-card overrides (restricted/limited/semi-limited)
+        if per_card_limits and name in per_card_limits:
+            limit = min(limit, per_card_limits[name])
+        upper_bounds[i] = limit
+
     part_name = _main_partition_name(game)
     for i, name in enumerate(card_pool):
         existing = 0
@@ -457,7 +577,7 @@ def _round_transport_plan_ilp(
             for c in p.get("cards", []) or []:
                 if c.get("name") == name:
                     existing += int(c.get("count", 0))
-        upper_bounds[i] = max(0, max_copies - existing)
+        upper_bounds[i] = max(0, upper_bounds[i] - existing)
 
     # Variables: x_0..x_{n-1} (integer card counts), t_0..t_{n-1} (abs deviations)
     # Objective: minimize sum(t_i)  (c = [0]*n + [1]*n)
@@ -638,6 +758,37 @@ def ot_complete_deck(
         exclude=set(seed_cards),
     )
 
+    # Format-aware candidate filtering (before OT, so solver only sees legal cards)
+    fmt_constraints = get_format_constraints(game, cfg.format)
+    pre_filter_size = len(card_pool)
+
+    if cfg.format and cfg.legality_data:
+        fmt_key = cfg.format.strip().lower()
+        card_pool = [
+            c
+            for c in card_pool
+            if cfg.legality_data.get(c, {}).get(fmt_key) in ("legal", "restricted", None)
+        ]
+
+    if cfg.color_identity and cfg.card_color_identity:
+        # Commander: exclude cards whose CI is not a subset of the deck CI
+        deck_ci = cfg.color_identity
+        card_pool = [
+            c
+            for c in card_pool
+            if _is_basic(game, c) or cfg.card_color_identity.get(c, set()).issubset(deck_ci)
+        ]
+
+    format_filtered = pre_filter_size - len(card_pool)
+    if format_filtered > 0:
+        logger.info(
+            "Format filter (%s/%s): removed %d of %d candidates",
+            game,
+            cfg.format,
+            format_filtered,
+            pre_filter_size,
+        )
+
     if not card_pool:
         logger.warning("Empty candidate pool, cannot complete deck via OT")
         return OTCompletionResult(
@@ -744,6 +895,21 @@ def ot_complete_deck(
     else:
         target_marginal_norm = target_marginal
 
+    # Build per-card copy limit overrides from legality data
+    per_card_limits: dict[str, int] | None = None
+    if cfg.format and cfg.legality_data:
+        fmt_key = cfg.format.strip().lower()
+        pcl: dict[str, int] = {}
+        for cname in card_pool:
+            status = cfg.legality_data.get(cname, {}).get(fmt_key)
+            if status == "restricted":
+                pcl[cname] = 1  # Vintage restricted, YGO limited
+            # "banned" cards were already filtered out above; this handles
+            # semi-limited (YGO convention: not in Scryfall data but could be
+            # supplied by caller).
+        if pcl:
+            per_card_limits = pcl
+
     # Round to integer counts
     if cfg.rounding == "ilp":
         additions = _round_transport_plan_ilp(
@@ -753,6 +919,8 @@ def ot_complete_deck(
             game=game,
             slots_to_fill=slots_to_fill,
             max_copies=cfg.max_copies,
+            per_card_limits=per_card_limits,
+            format_constraints=fmt_constraints,
         )
     else:
         additions = _round_transport_plan_greedy(
@@ -762,6 +930,8 @@ def ot_complete_deck(
             game=game,
             slots_to_fill=slots_to_fill,
             max_copies=cfg.max_copies,
+            per_card_limits=per_card_limits,
+            format_constraints=fmt_constraints,
         )
 
     # Build addition records with reasoning
@@ -806,6 +976,9 @@ def ot_complete_deck(
     if unbalanced:
         metrics["reg_m"] = cfg.reg_m
         metrics["transported_mass"] = float(transport_plan.sum())
+    if cfg.format:
+        metrics["format"] = cfg.format
+        metrics["format_filtered"] = format_filtered
 
     return OTCompletionResult(
         deck=deck,
@@ -900,11 +1073,13 @@ def _build_pairwise_cost_matrix(
 
 
 __all__ = [
+    "FormatConstraints",
     "OTCompletionConfig",
     "OTCompletionResult",
     "build_cost_matrix",
     "compute_reference_distribution",
     "compute_source_distribution",
     "deck_to_distribution",
+    "get_format_constraints",
     "ot_complete_deck",
 ]
