@@ -6,10 +6,10 @@ import (
 	"collections/games"
 	"collections/games/digimon/game"
 	"collections/logger"
-	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
+	limpet "github.com/arclabs561/limpet"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -24,8 +24,10 @@ import (
 	"go.uber.org/ratelimit"
 )
 
-// Dataset scrapes Digimon tournament decks from Limitless TCG public website
-// No API key required - scrapes https://limitlesstcg.com/decks/lists?game=DCG
+// Dataset scrapes Digimon tournament decks from Limitless TCG play platform.
+// Digimon decklists are hosted on play.limitlesstcg.com (the tournament platform),
+// not the main database site. Decks are organized by archetype under
+// /decks?game=DCG, with individual decklists at /tournament/{id}/player/{name}/decklist.
 type Dataset struct {
 	log  *logger.Logger
 	blob *blob.Bucket
@@ -34,7 +36,7 @@ type Dataset struct {
 var base *url.URL
 
 func init() {
-	u, err := url.Parse("https://limitlesstcg.com/")
+	u, err := url.Parse("https://play.limitlesstcg.com/")
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +57,7 @@ func (d *Dataset) Description() games.Description {
 	}
 }
 
-var reDeckListURL = regexp.MustCompile(`^https://limitlesstcg\.com/decks/list/\d+$`)
+var reDeckListURL = regexp.MustCompile(`^https://play\.limitlesstcg\.com/tournament/[a-f0-9]+/player/[^/]+/decklist$`)
 
 func (d *Dataset) Extract(
 	ctx context.Context,
@@ -67,7 +69,7 @@ func (d *Dataset) Extract(
 		return err
 	}
 
-	d.log.Infof(ctx, "Extracting Digimon tournament decks from Limitless TCG website...")
+	d.log.Infof(ctx, "Extracting Digimon tournament decks from Limitless TCG play platform...")
 
 	// Scrape deck listing pages to get deck URLs
 	deckURLs := []string{}
@@ -129,7 +131,7 @@ func (d *Dataset) Extract(
 	close(tasks)
 	wg.Wait()
 
-	d.log.Infof(ctx, "✅ Extracted %d Digimon tournament decks from Limitless TCG website", totalDecks.Load())
+	d.log.Infof(ctx, "Extracted %d Digimon tournament decks from Limitless TCG play platform", totalDecks.Load())
 	return nil
 }
 
@@ -138,63 +140,100 @@ func (d *Dataset) scrapeDeckListingPages(
 	sc *limpet.Client,
 	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
-	// Use game=DCG filter for Digimon
-	listingURL := "https://limitlesstcg.com/decks/lists?game=DCG"
+	// Digimon decks are on the play platform, organized by archetype.
+	// First, scrape the metagame page to get archetype URLs.
+	metaURL := "https://play.limitlesstcg.com/decks?game=DCG&format=standard"
 
+	req, err := http.NewRequest("GET", metaURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := d.fetch(ctx, sc, req, opts)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch metagame page: %w", err)
+	}
+
+	doc, err := goquery.NewDocumentFromReader(bytes.NewReader(resp.Response.Body))
+	if err != nil {
+		return nil, err
+	}
+
+	// Collect archetype page URLs (e.g., /decks/styraco?game=DCG&format=standard&set=EX11)
+	archetypeURLs := []string{}
+	seenArchetypes := make(map[string]bool)
+	doc.Find("a[href*='/decks/'][href*='game=DCG']").Each(func(i int, s *goquery.Selection) {
+		href, exists := s.Attr("href")
+		if !exists {
+			return
+		}
+		// Skip matchup links
+		if strings.Contains(href, "/matchups") {
+			return
+		}
+		fullURL := "https://play.limitlesstcg.com" + href
+		if !seenArchetypes[fullURL] {
+			seenArchetypes[fullURL] = true
+			archetypeURLs = append(archetypeURLs, fullURL)
+		}
+	})
+
+	d.log.Infof(ctx, "Found %d Digimon archetypes to scrape", len(archetypeURLs))
+
+	// For each archetype, scrape individual decklist URLs
 	allURLs := []string{}
-	page := 1
+	seenURLs := make(map[string]bool)
 	maxPages := 10
 	if limit, ok := opts.ScrollLimit.Get(); ok {
 		maxPages = limit
 	}
 
-	for page <= maxPages {
-		pageURL := listingURL
-		if page > 1 {
-			pageURL = fmt.Sprintf("%s&page=%d", listingURL, page)
-		}
+	// Limit number of archetypes to scrape based on page limit
+	archetypeLimit := maxPages
+	if archetypeLimit > len(archetypeURLs) {
+		archetypeLimit = len(archetypeURLs)
+	}
 
-		req, err := http.NewRequest("GET", pageURL, nil)
+	for i, archURL := range archetypeURLs[:archetypeLimit] {
+		d.log.Infof(ctx, "Scraping archetype %d/%d: %s", i+1, archetypeLimit, archURL)
+
+		archReq, err := http.NewRequest("GET", archURL, nil)
 		if err != nil {
-			return nil, err
+			d.log.Errorf(ctx, "Failed to create request for archetype: %v", err)
+			continue
 		}
 
-		resp, err := d.fetch(ctx, sc, req, opts)
+		archResp, err := d.fetch(ctx, sc, archReq, opts)
 		if err != nil {
-			return nil, fmt.Errorf("failed to fetch listing page %d: %w", page, err)
+			d.log.Errorf(ctx, "Failed to fetch archetype page: %v", err)
+			continue
 		}
 
-		doc, err := goquery.NewDocumentFromReader(bytes.NewReader(resp.Response.Body))
+		archDoc, err := goquery.NewDocumentFromReader(bytes.NewReader(archResp.Response.Body))
 		if err != nil {
-			return nil, err
+			d.log.Errorf(ctx, "Failed to parse archetype page: %v", err)
+			continue
 		}
 
-		seenURLs := make(map[string]bool)
-		pageURLs := []string{}
-		doc.Find("table tbody tr td a[href^='/decks/list/']").Each(func(i int, s *goquery.Selection) {
+		// Find individual decklist links: /tournament/{id}/player/{name}/decklist
+		archDoc.Find("a[href*='/player/'][href*='/decklist']").Each(func(j int, s *goquery.Selection) {
 			href, exists := s.Attr("href")
 			if !exists {
 				return
 			}
-			fullURL := "https://limitlesstcg.com" + href
+			fullURL := "https://play.limitlesstcg.com" + href
 			if !seenURLs[fullURL] {
 				seenURLs[fullURL] = true
-				pageURLs = append(pageURLs, fullURL)
+				allURLs = append(allURLs, fullURL)
 			}
 		})
-
-		if len(pageURLs) == 0 {
-			d.log.Infof(ctx, "No more decks found on page %d, stopping", page)
-			break
-		}
-
-		d.log.Infof(ctx, "Found %d deck URLs on page %d", len(pageURLs), page)
-		allURLs = append(allURLs, pageURLs...)
-		page++
 	}
 
 	return allURLs, nil
 }
+
+// reDeckCard matches Digimon card lines: "4 CardName (SET-NNN)" or "1 CardName (SET-NNN)"
+var reDeckCard = regexp.MustCompile(`^(\d+)\s+(.+?)\s+\(([A-Z0-9]+-[A-Z]?\d+)\)$`)
 
 func (d *Dataset) parseDeck(
 	ctx context.Context,
@@ -202,12 +241,13 @@ func (d *Dataset) parseDeck(
 	deckURL string,
 	opts *games.ResolvedUpdateOptions,
 ) error {
-	reDeckID := regexp.MustCompile(`/decks/list/(\d+)$`)
+	// Extract a stable ID from the URL: tournament_id + player_name
+	reDeckID := regexp.MustCompile(`/tournament/([a-f0-9]+)/player/([^/]+)/decklist$`)
 	matches := reDeckID.FindStringSubmatch(deckURL)
-	if len(matches) < 2 {
+	if len(matches) < 3 {
 		return fmt.Errorf("failed to extract deck ID from URL")
 	}
-	deckID := matches[1]
+	deckID := matches[1] + "_" + matches[2]
 	bkey := d.collectionKey(deckID)
 
 	if !opts.Reparse && !opts.FetchReplaceAll {
@@ -236,56 +276,61 @@ func (d *Dataset) parseDeck(
 		return err
 	}
 
-	// Extract deck metadata
-	deckName := doc.Find("h1").First().Text()
-	deckName = strings.TrimSpace(deckName)
-
-	// Extract tournament info
-	tournamentName := ""
+	// Extract player name and deck archetype from .infobox
 	playerName := ""
+	deckName := ""
+	infobox := doc.Find(".infobox")
+	if infobox.Length() > 0 {
+		heading := infobox.Find(".heading")
+		// Player name is the text node before the flag image
+		playerName = strings.TrimSpace(heading.Clone().Children().Remove().End().Text())
+		// Deck archetype from .deck-name
+		deckName = strings.TrimSpace(heading.Find(".deck-name").Text())
+	}
+
+	// Extract tournament name from tournament header
+	tournamentName := strings.TrimSpace(doc.Find(".tournament-header .name").Text())
+
+	// Extract placement from .details text (e.g., "15 points (5-0-0)")
 	placement := 0
-	eventDateStr := ""
+	details := strings.TrimSpace(infobox.Find(".details").Text())
+	_ = details // Placement is not directly available in this format
 
-	doc.Find(".deck-info, .tournament-info").Each(func(i int, s *goquery.Selection) {
-		text := s.Text()
-		if strings.Contains(text, "Tournament:") {
-			tournamentName = strings.TrimSpace(strings.Split(text, "Tournament:")[1])
-		}
-		if strings.Contains(text, "Player:") {
-			playerName = strings.TrimSpace(strings.Split(text, "Player:")[1])
-		}
-		if strings.Contains(text, "Placement:") || strings.Contains(text, "Place:") {
-			placeStr := strings.TrimSpace(strings.Split(text, ":")[1])
-			if p, err := strconv.Atoi(strings.Fields(placeStr)[0]); err == nil {
-				placement = p
-			}
-		}
-		if strings.Contains(text, "Date:") {
-			eventDateStr = strings.TrimSpace(strings.Split(text, "Date:")[1])
-		}
-	})
+	eventDateStr := time.Now().Format("2006-01-02")
 
-	// Extract cards from deck list
+	// Parse cards from the decklist.
+	// Structure: .decklist .column .cards, with <p><a>4 CardName (SET-NNN)</a></p>
 	cards := []game.CardDesc{}
-	doc.Find(".deck-list .card, .card-list .card, table tbody tr").Each(func(i int, s *goquery.Selection) {
-		cardName := s.Find(".card-name, td:first-child").Text()
-		cardName = strings.TrimSpace(cardName)
-		if cardName == "" {
+
+	doc.Find(".decklist .cards p").Each(func(i int, s *goquery.Selection) {
+		text := strings.TrimSpace(s.Text())
+		if text == "" {
 			return
 		}
 
-		countStr := s.Find(".card-count, td:last-child").Text()
-		countStr = strings.TrimSpace(countStr)
-		count := 1
-		if c, err := strconv.Atoi(countStr); err == nil {
-			count = c
+		m := reDeckCard.FindStringSubmatch(text)
+		if m == nil {
+			return
 		}
 
-		for i := 0; i < count; i++ {
-			cards = append(cards, game.CardDesc{
-				Name: cardName,
-			})
+		count, err := strconv.Atoi(m[1])
+		if err != nil {
+			return
 		}
+
+		// Card name includes the set code in parens, e.g., "Elizamon (BT21-008)"
+		// Keep the full name with set code for uniqueness (same card name can appear
+		// from different sets)
+		cardName := fmt.Sprintf("%s (%s)", m[2], m[3])
+		normalizedName := games.NormalizeCardName(cardName)
+		if normalizedName == "" {
+			return
+		}
+
+		cards = append(cards, game.CardDesc{
+			Name:  normalizedName,
+			Count: count,
+		})
 	})
 
 	if len(cards) == 0 {

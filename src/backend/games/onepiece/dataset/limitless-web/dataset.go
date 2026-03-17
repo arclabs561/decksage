@@ -6,10 +6,10 @@ import (
 	"collections/games"
 	"collections/games/onepiece/game"
 	"collections/logger"
-	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"fmt"
+	limpet "github.com/arclabs561/limpet"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -24,8 +24,8 @@ import (
 	"go.uber.org/ratelimit"
 )
 
-// Dataset scrapes One Piece tournament decks from Limitless TCG public website
-// No API key required - scrapes https://limitlesstcg.com/decks/lists?game=OPCG
+// Dataset scrapes One Piece tournament decks from Limitless TCG public website.
+// No API key required - scrapes https://onepiece.limitlesstcg.com/decks/lists
 type Dataset struct {
 	log  *logger.Logger
 	blob *blob.Bucket
@@ -34,7 +34,7 @@ type Dataset struct {
 var base *url.URL
 
 func init() {
-	u, err := url.Parse("https://limitlesstcg.com/")
+	u, err := url.Parse("https://onepiece.limitlesstcg.com/")
 	if err != nil {
 		panic(err)
 	}
@@ -55,7 +55,7 @@ func (d *Dataset) Description() games.Description {
 	}
 }
 
-var reDeckListURL = regexp.MustCompile(`^https://limitlesstcg\.com/decks/list/\d+$`)
+var reDeckListURL = regexp.MustCompile(`^https://onepiece\.limitlesstcg\.com/decks/list/\d+$`)
 
 func (d *Dataset) Extract(
 	ctx context.Context,
@@ -138,8 +138,8 @@ func (d *Dataset) scrapeDeckListingPages(
 	sc *limpet.Client,
 	opts *games.ResolvedUpdateOptions,
 ) ([]string, error) {
-	// Use game=OPCG filter for One Piece
-	listingURL := "https://limitlesstcg.com/decks/lists?game=OPCG"
+	// One Piece has its own subdomain on Limitless TCG
+	listingURL := "https://onepiece.limitlesstcg.com/decks/lists"
 
 	allURLs := []string{}
 	page := 1
@@ -151,7 +151,7 @@ func (d *Dataset) scrapeDeckListingPages(
 	for page <= maxPages {
 		pageURL := listingURL
 		if page > 1 {
-			pageURL = fmt.Sprintf("%s&page=%d", listingURL, page)
+			pageURL = fmt.Sprintf("%s?page=%d", listingURL, page)
 		}
 
 		req, err := http.NewRequest("GET", pageURL, nil)
@@ -176,7 +176,7 @@ func (d *Dataset) scrapeDeckListingPages(
 			if !exists {
 				return
 			}
-			fullURL := "https://limitlesstcg.com" + href
+			fullURL := "https://onepiece.limitlesstcg.com" + href
 			if !seenURLs[fullURL] {
 				seenURLs[fullURL] = true
 				pageURLs = append(pageURLs, fullURL)
@@ -236,56 +236,69 @@ func (d *Dataset) parseDeck(
 		return err
 	}
 
-	// Extract deck metadata
-	deckName := doc.Find("h1").First().Text()
-	deckName = strings.TrimSpace(deckName)
+	// Extract deck name from .decklist-title (same structure as Pokemon on Limitless)
+	deckName := strings.TrimSpace(doc.Find(".decklist-title").First().Clone().Children().Remove().End().Text())
 
-	// Extract tournament info
-	tournamentName := ""
+	// Extract player and tournament info from results section
 	playerName := ""
+	tournamentName := ""
 	placement := 0
 	eventDateStr := ""
 
-	doc.Find(".deck-info, .tournament-info").Each(func(i int, s *goquery.Selection) {
+	doc.Find(".decklist-results ul li").Each(func(i int, s *goquery.Selection) {
 		text := s.Text()
-		if strings.Contains(text, "Tournament:") {
-			tournamentName = strings.TrimSpace(strings.Split(text, "Tournament:")[1])
-		}
-		if strings.Contains(text, "Player:") {
-			playerName = strings.TrimSpace(strings.Split(text, "Player:")[1])
-		}
-		if strings.Contains(text, "Placement:") || strings.Contains(text, "Place:") {
-			placeStr := strings.TrimSpace(strings.Split(text, ":")[1])
-			if p, err := strconv.Atoi(strings.Fields(placeStr)[0]); err == nil {
-				placement = p
+		// Format: "1st Place Championship Finals Melbourne - Kaan Cekli"
+		if strings.Contains(text, " Place ") || strings.Contains(text, "st ") || strings.Contains(text, "nd ") || strings.Contains(text, "rd ") || strings.Contains(text, "th ") {
+			parts := strings.Split(text, " - ")
+			if len(parts) >= 2 {
+				playerName = strings.TrimSpace(parts[len(parts)-1])
+
+				leftPart := strings.TrimSpace(parts[0])
+				placeParts := strings.Fields(leftPart)
+				if len(placeParts) >= 1 {
+					placeStr := strings.ToLower(placeParts[0])
+					placeStr = strings.TrimSuffix(placeStr, "st")
+					placeStr = strings.TrimSuffix(placeStr, "nd")
+					placeStr = strings.TrimSuffix(placeStr, "rd")
+					placeStr = strings.TrimSuffix(placeStr, "th")
+					if p, err := strconv.Atoi(placeStr); err == nil {
+						placement = p
+					}
+				}
+				if len(placeParts) >= 3 {
+					tournamentName = strings.Join(placeParts[2:], " ")
+				}
 			}
-		}
-		if strings.Contains(text, "Date:") {
-			eventDateStr = strings.TrimSpace(strings.Split(text, "Date:")[1])
 		}
 	})
 
-	// Extract cards from deck list
+	eventDateStr = time.Now().Format("2006-01-02")
+
+	// Extract cards from deck list using .decklist-card elements
 	cards := []game.CardDesc{}
-	doc.Find(".deck-list .card, .card-list .card, table tbody tr").Each(func(i int, s *goquery.Selection) {
-		cardName := s.Find(".card-name, td:first-child").Text()
-		cardName = strings.TrimSpace(cardName)
+	doc.Find(".decklist-card").Each(func(i int, s *goquery.Selection) {
+		countStr := strings.TrimSpace(s.Find(".card-count").Text())
+		cardName := strings.TrimSpace(s.Find(".card-name").Text())
+
 		if cardName == "" {
 			return
 		}
 
-		countStr := s.Find(".card-count, td:last-child").Text()
-		countStr = strings.TrimSpace(countStr)
 		count := 1
-		if c, err := strconv.Atoi(countStr); err == nil {
-			count = c
+		if countStr != "" {
+			if c, err := strconv.Atoi(countStr); err == nil {
+				count = c
+			}
 		}
 
-		for i := 0; i < count; i++ {
-			cards = append(cards, game.CardDesc{
-				Name: cardName,
-			})
+		normalizedName := games.NormalizeCardName(cardName)
+		if normalizedName == "" {
+			return
 		}
+		cards = append(cards, game.CardDesc{
+			Name:  normalizedName,
+			Count: count,
+		})
 	})
 
 	if len(cards) == 0 {
