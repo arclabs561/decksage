@@ -8,8 +8,10 @@ import pytest
 from ml.deck_building.ot_completion import (
     OTCompletionConfig,
     _round_transport_plan,
+    _round_transport_plan_ilp,
     build_cost_matrix,
     compute_reference_distribution,
+    compute_source_distribution,
     deck_to_distribution,
     ot_complete_deck,
 )
@@ -150,6 +152,43 @@ class TestReferenceDistribution:
 
 
 # ---------------------------------------------------------------------------
+# Tests: compute_source_distribution
+# ---------------------------------------------------------------------------
+
+
+class TestSourceDistribution:
+    def test_none_temperature_returns_uniform(self):
+        embeddings, names = _make_embeddings(10)
+        dist = compute_source_distribution(names[:3], embeddings, names[3:], temperature=None)
+        n = len(names) - 3
+        expected = 1.0 / n
+        for d in dist:
+            assert abs(d - expected) < 1e-10
+
+    def test_quality_weighted_not_uniform(self):
+        embeddings, names = _make_embeddings(10)
+        seeds = [names[0]]
+        pool = names[1:]
+        dist = compute_source_distribution(seeds, embeddings, pool, temperature=0.2)
+
+        assert dist.shape == (len(pool),)
+        assert abs(dist.sum() - 1.0) < 1e-8
+        # Should not be uniform
+        assert dist.max() > 1.5 / len(pool)
+
+    def test_low_temperature_more_concentrated(self):
+        embeddings, names = _make_embeddings(20)
+        seeds = [names[0]]
+        pool = names[5:]
+
+        dist_warm = compute_source_distribution(seeds, embeddings, pool, temperature=1.0)
+        dist_cold = compute_source_distribution(seeds, embeddings, pool, temperature=0.05)
+
+        # Colder temperature should have higher max (more concentrated)
+        assert dist_cold.max() > dist_warm.max()
+
+
+# ---------------------------------------------------------------------------
 # Tests: build_cost_matrix
 # ---------------------------------------------------------------------------
 
@@ -202,7 +241,7 @@ class TestBuildCostMatrix:
 
 
 # ---------------------------------------------------------------------------
-# Tests: _round_transport_plan
+# Tests: _round_transport_plan (greedy, backward compat alias)
 # ---------------------------------------------------------------------------
 
 
@@ -258,6 +297,88 @@ class TestRoundTransportPlan:
 
         card_names = [name for name, _ in additions]
         assert "B" not in card_names
+
+
+# ---------------------------------------------------------------------------
+# Tests: _round_transport_plan_ilp
+# ---------------------------------------------------------------------------
+
+
+class TestILPRounding:
+    def test_basic_ilp_rounding(self):
+        pool = ["A", "B", "C", "D"]
+        plan = np.array([0.4, 0.3, 0.2, 0.1])
+        deck = _make_deck(["Seed"], "magic")
+
+        additions = _round_transport_plan_ilp(
+            plan_marginal=plan,
+            card_pool=pool,
+            deck=deck,
+            game="magic",
+            slots_to_fill=5,
+        )
+
+        total_added = sum(c for _, c in additions)
+        assert total_added == 5
+
+    def test_ilp_respects_copy_limit(self):
+        pool = ["A", "B"]
+        plan = np.array([0.9, 0.1])
+        deck = _make_deck(["Seed"], "magic")
+
+        additions = _round_transport_plan_ilp(
+            plan_marginal=plan,
+            card_pool=pool,
+            deck=deck,
+            game="magic",
+            slots_to_fill=8,
+        )
+
+        for name, count in additions:
+            assert count <= 4, f"{name} has {count} copies, exceeds 4"
+
+    def test_ilp_closer_to_fractional_than_greedy(self):
+        """ILP should produce an assignment closer to the fractional target."""
+        pool = [f"Card_{i}" for i in range(10)]
+        # Fractional plan: spread across many cards
+        plan = np.array([0.15, 0.14, 0.13, 0.12, 0.11, 0.10, 0.09, 0.07, 0.05, 0.04])
+        deck = _make_deck(["Seed"], "magic")
+        slots = 10
+
+        ilp_adds = _round_transport_plan_ilp(
+            plan_marginal=plan, card_pool=pool, deck=deck, game="magic", slots_to_fill=slots
+        )
+        # ILP should fill exactly slots_to_fill
+        total = sum(c for _, c in ilp_adds)
+        assert total == slots
+
+    def test_ilp_empty_pool(self):
+        additions = _round_transport_plan_ilp(
+            plan_marginal=np.array([]),
+            card_pool=[],
+            deck=_make_deck([], "magic"),
+            game="magic",
+            slots_to_fill=5,
+        )
+        assert additions == []
+
+    def test_ilp_yugioh_3_copy_limit(self):
+        pool = ["A", "B"]
+        plan = np.array([0.8, 0.2])
+        deck = _make_deck(["Seed"], "yugioh")
+
+        additions = _round_transport_plan_ilp(
+            plan_marginal=plan,
+            card_pool=pool,
+            deck=deck,
+            game="yugioh",
+            slots_to_fill=6,
+        )
+
+        for name, count in additions:
+            assert count <= 3, f"{name} has {count} copies, exceeds YGO 3-copy limit"
+        total = sum(c for _, c in additions)
+        assert total == 6
 
 
 # ---------------------------------------------------------------------------
@@ -409,6 +530,148 @@ class TestOTCompleteDeck:
 
         assert result.additions == []
         assert "sinkhorn_failed" in result.metrics.get("error", "")
+
+
+# ---------------------------------------------------------------------------
+# Tests: unbalanced OT
+# ---------------------------------------------------------------------------
+
+
+class TestUnbalancedOT:
+    def test_unbalanced_completes(self):
+        """Unbalanced OT should still produce valid completions."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            reg_m=1.0,  # Enable unbalanced OT
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        assert result.additions
+        total_added = sum(a["count"] for a in result.additions)
+        assert total_added > 0
+        assert result.metrics.get("reg_m") == 1.0
+        assert "transported_mass" in result.metrics
+
+    def test_low_reg_m_transports_less(self):
+        """Lower reg_m should transport less mass (more aggressive filtering)."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg_high = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            reg_m=5.0,  # Near-balanced
+        )
+        cfg_low = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            reg_m=0.1,  # Aggressive filtering
+        )
+
+        r_high = ot_complete_deck(
+            game="magic",
+            deck=_make_deck(names[:5], "magic"),
+            embeddings=embeddings,
+            cfg=cfg_high,
+        )
+        r_low = ot_complete_deck(
+            game="magic",
+            deck=_make_deck(names[:5], "magic"),
+            embeddings=embeddings,
+            cfg=cfg_low,
+        )
+
+        # Lower reg_m should transport less total mass
+        assert r_low.metrics["transported_mass"] <= r_high.metrics["transported_mass"] + 1e-6
+
+
+# ---------------------------------------------------------------------------
+# Tests: quality-weighted source
+# ---------------------------------------------------------------------------
+
+
+class TestQualityWeightedSource:
+    def test_quality_weighted_source_in_metrics(self):
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            source_temperature=0.2,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+        assert result.metrics["source_type"] == "quality_weighted"
+
+    def test_uniform_source_in_metrics(self):
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            source_temperature=None,  # Uniform
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+        assert result.metrics["source_type"] == "uniform"
+
+
+# ---------------------------------------------------------------------------
+# Tests: ILP rounding via ot_complete_deck
+# ---------------------------------------------------------------------------
+
+
+class TestOTWithILPRounding:
+    def test_ilp_rounding_mode(self):
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            rounding="ilp",
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+        assert result.additions
+        assert result.metrics["rounding"] == "ilp"
+        total = sum(a["count"] for a in result.additions)
+        assert total == 10  # ILP should fill exactly
+
+    def test_greedy_rounding_mode(self):
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            rounding="greedy",
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+        assert result.additions
+        assert result.metrics["rounding"] == "greedy"
 
 
 # ---------------------------------------------------------------------------
