@@ -290,6 +290,30 @@ def sim_to_relevance(sim: float) -> str:
     return "irrelevant"
 
 
+def _card_context(name: str, card_data: dict[str, dict] | None) -> str:
+    """Build card context string from metadata (oracle text, type, mana cost)."""
+    if not card_data:
+        return name
+    info = card_data.get(name) or card_data.get(name.lower())
+    if not info:
+        return name
+    parts = [name]
+    if info.get("type_line") or info.get("type"):
+        parts.append(f"  Type: {info.get('type_line') or info.get('type')}")
+    if info.get("mana_cost"):
+        parts.append(f"  Mana cost: {info['mana_cost']}")
+    if info.get("oracle_text") or info.get("text"):
+        text = str(info.get("oracle_text") or info.get("text"))[:300]
+        parts.append(f"  Text: {text}")
+    if info.get("power") and info.get("toughness"):
+        parts.append(f"  P/T: {info['power']}/{info['toughness']}")
+    if info.get("atk") is not None:
+        parts.append(f"  ATK/DEF: {info.get('atk')}/{info.get('def_stat', '?')}")
+    if info.get("hp"):
+        parts.append(f"  HP: {info['hp']}")
+    return "\n".join(parts)
+
+
 async def annotate_pair_with_mode(
     agent: Any,
     query_card: str,
@@ -298,19 +322,28 @@ async def annotate_pair_with_mode(
     game: str = "magic",
     model_name: str = "unknown",
     embedding_version: str = "unknown",
+    card_data: dict[str, dict] | None = None,
 ) -> dict[str, Any]:
     """Annotate a single query-candidate pair with relevance + mode.
 
     Returns dict with rich metadata per annotation.
     """
+    q_ctx = _card_context(query_card, card_data)
+    c_ctx = _card_context(candidate_card, card_data)
+
     prompt = f"""Judge the similarity between these two {game.upper()} cards:
 
-Card 1 (query): {query_card}
-Card 2 (candidate): {candidate_card}
+Card 1 (query):
+{q_ctx}
+
+Card 2 (candidate):
+{c_ctx}
 
 Their embedding cosine similarity is {cosine_sim:.3f}.
 
 {MODE_PROMPT}
+
+IMPORTANT: Base your judgment on the card text and attributes above, NOT on the cosine similarity score. The score may be misleading -- cards with high co-occurrence similarity may serve completely different roles.
 
 Rate the candidate's relevance to the query and classify the similarity mode.
 """
@@ -404,6 +437,7 @@ async def annotate_query(
     semaphore: asyncio.Semaphore | None = None,
     model_name: str = "unknown",
     embedding_version: str = "unknown",
+    card_data: dict[str, dict] | None = None,
 ) -> dict[str, Any]:
     """Annotate all neighbors of a query card."""
     sem = semaphore or asyncio.Semaphore(5)
@@ -418,6 +452,7 @@ async def annotate_query(
                 game,
                 model_name=model_name,
                 embedding_version=embedding_version,
+                card_data=card_data,
             )
 
     tasks = [_annotate_one(card, sim) for card, sim in neighbors]
@@ -581,6 +616,38 @@ async def run_pipeline(
         return {"error": "No embeddings found"}
     logger.info(f"Embedding vocabulary: {len(kv)} cards (version: {embedding_version})")
 
+    # 4b. Load card metadata for prompt context (oracle text, type, mana cost)
+    card_metadata: dict[str, dict] | None = None
+    for attrs_name in [
+        f"card_attributes_{game}_enriched.csv",
+        f"card_attributes_enriched.csv" if game == "magic" else f"card_attributes_{game}.csv",
+        f"card_attributes_{game}.csv",
+    ]:
+        attrs_path = PATHS.processed / attrs_name
+        if attrs_path.exists():
+            try:
+                import pandas as pd
+
+                df = pd.read_csv(attrs_path, low_memory=False)
+                name_col = "name" if "name" in df.columns else df.columns[0]
+                card_metadata = {}
+                for _, row in df.iterrows():
+                    name = str(row.get(name_col, ""))
+                    if name:
+                        card_metadata[name] = {
+                            k: v for k, v in row.to_dict().items() if pd.notna(v)
+                        }
+                logger.info(
+                    f"Loaded card metadata: {len(card_metadata)} cards from {attrs_path.name}"
+                )
+                break
+            except Exception as e:
+                logger.debug(f"Failed to load card attrs from {attrs_path}: {e}")
+    if not card_metadata:
+        logger.warning(
+            "No card metadata loaded -- LLM annotations will be name-only (lower quality)"
+        )
+
     # 5. Compute card popularity
     edgelist_path = PATHS.graphs / f"{game}_merged_all.edg"
     if edgelist_path.exists():
@@ -731,6 +798,7 @@ async def run_pipeline(
                     sem,
                     model_name=model_name,
                     embedding_version=embedding_version,
+                    card_data=card_metadata,
                 )
                 # Keep annotations for rich metadata, strip bulk from stored result
                 stored = {k: v for k, v in result.items() if k != "annotations"}
