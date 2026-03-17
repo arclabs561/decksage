@@ -432,6 +432,66 @@ class HybridSearch:
         hash_bytes = hashlib.sha256(card_name.encode()).digest()[:8]
         return int.from_bytes(hash_bytes, byteorder="big", signed=False)
 
+    def batch_index_qdrant(
+        self,
+        card_metadata: dict[str, dict[str, Any]] | None = None,
+        batch_size: int = 500,
+    ) -> int:
+        """Batch-upsert all embeddings into Qdrant. Idempotent: skips if
+        the collection already has the expected number of points.
+
+        Args:
+            card_metadata: Optional {card_name: {oracle_text, type_line, ...}} for payloads.
+            batch_size: Points per upsert call.
+
+        Returns:
+            Number of points indexed (0 if skipped).
+        """
+        if self.qdrant is None or models is None or self.embeddings is None:
+            return 0
+
+        try:
+            info = self.qdrant.get_collection(self.collection_name)
+            if info.points_count and info.points_count >= len(self.embeddings):
+                logger.info(
+                    "Qdrant collection '%s' already has %d points, skipping batch index",
+                    self.collection_name,
+                    info.points_count,
+                )
+                return 0
+        except Exception:
+            pass  # collection may not exist yet -- _init_qdrant handles creation
+
+        points: list[models.PointStruct] = []
+        for card_name in self.embeddings.index_to_key:
+            vec = self.embeddings[card_name].tolist()
+            payload: dict[str, Any] = {"name": card_name}
+            if card_metadata and card_name in card_metadata:
+                meta = card_metadata[card_name]
+                payload["text"] = str(meta.get("oracle_text") or meta.get("text") or "")[:2000]
+                payload["type_line"] = str(meta.get("type_line") or meta.get("type") or "")
+                payload["image_url"] = str(meta.get("image_url") or "")
+            points.append(
+                models.PointStruct(
+                    id=self._point_id(card_name),
+                    vector=vec,
+                    payload=payload,
+                )
+            )
+
+            if len(points) >= batch_size:
+                self.qdrant.upsert(collection_name=self.collection_name, points=points)
+                points = []
+
+        if points:
+            self.qdrant.upsert(collection_name=self.collection_name, points=points)
+
+        total = len(self.embeddings)
+        logger.info(
+            "Batch-indexed %d points into Qdrant collection '%s'", total, self.collection_name
+        )
+        return total
+
     def search(
         self,
         query: str,

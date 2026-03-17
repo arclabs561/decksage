@@ -521,6 +521,13 @@ async def lifespan(app: FastAPI):
                     "MeiliSearch auto-index failed for %s (non-fatal)", game, exc_info=True
                 )
 
+            # Qdrant: batch-index embeddings if collection is empty
+            try:
+                if _hs.qdrant and state.embeddings:
+                    _hs.batch_index_qdrant(card_metadata=state.card_metadata)
+            except Exception:
+                logger.warning("Qdrant auto-index failed for %s (non-fatal)", game, exc_info=True)
+
         # ------------------------------------------------------------------
         # Enrichment data: banlists, archetypes, deck frequency
         # ------------------------------------------------------------------
