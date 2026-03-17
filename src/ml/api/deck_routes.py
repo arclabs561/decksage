@@ -49,6 +49,68 @@ router = APIRouter()
 
 
 # ---------------------------------------------------------------------------
+# Archetype detection (inline, mirrors scripts/training/build_archetype_templates.py)
+# ---------------------------------------------------------------------------
+
+
+def _detect_archetype(
+    deck: dict,
+    game: str,
+    templates: list[dict],
+) -> tuple[str | None, dict | None, float]:
+    """Detect archetype from seed deck by weighted Jaccard overlap with templates.
+
+    Returns (archetype_name, matching_template_dict, score).
+    Returns (None, None, 0.0) if no templates or no match above threshold.
+    """
+    if not templates:
+        return None, None, 0.0
+
+    from ..deck_building.deck_completion import _main_partition_name
+
+    part = _main_partition_name(game)
+    deck_set: set[str] = set()
+    for p in deck.get("partitions", []) or []:
+        if p.get("name") != part:
+            continue
+        for card in p.get("cards", []) or []:
+            name = str(card.get("name", ""))
+            if name:
+                deck_set.add(name)
+
+    if not deck_set:
+        return None, None, 0.0
+
+    best_name: str | None = None
+    best_template: dict | None = None
+    best_score = 0.0
+
+    for t in templates:
+        core_cards = {name for name, _ in (t.get("core_cards") or [])}
+        flex_cards = {name for name, _ in (t.get("flex_cards") or [])}
+        template_all = core_cards | flex_cards
+        if not template_all:
+            continue
+        core_overlap = len(deck_set & core_cards)
+        flex_overlap = len(deck_set & flex_cards)
+        # Weighted Jaccard: core matches count double
+        denom = (
+            2 * len(core_cards) + len(flex_cards) + len(deck_set) - 2 * core_overlap - flex_overlap
+        )
+        score = (2 * core_overlap + flex_overlap) / denom if denom > 0 else 0.0
+        if score > best_score:
+            best_score = score
+            best_name = t.get("name")
+            best_template = t
+
+    # Minimum threshold to avoid spurious matches
+    if best_score < 0.02:
+        return None, None, 0.0
+
+    return best_name, best_template, round(best_score, 4)
+
+
+# ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
 
@@ -370,9 +432,21 @@ def suggest_actions(req: SuggestActionsRequest):
     def tag_weight_fn(tag: str) -> float:
         return float(tw.get(tag, 1.0))
 
-    # Get archetype from request or infer from deck
+    # Get archetype from request or auto-detect from deck
     archetype = getattr(req, "archetype", None)
     archetype_staples = state.archetype_staples if hasattr(state, "archetype_staples") else None
+    sa_archetype_score: float = 0.0
+    if not archetype and state.archetype_templates:
+        _det_name, _det_tmpl, sa_archetype_score = _detect_archetype(
+            req.deck, game, state.archetype_templates
+        )
+        if _det_name:
+            archetype = _det_name
+            logger.debug(
+                "suggest_actions: auto-detected archetype '%s' (score=%.4f)",
+                archetype,
+                sa_archetype_score,
+            )
 
     from ..deck_building.deck_completion import _main_partition_name
 
@@ -524,6 +598,9 @@ def suggest_actions(req: SuggestActionsRequest):
         "coverage_weight": req.coverage_weight,
         "facets_available": bool(state.card_attrs is not None),
     }
+    if archetype:
+        metrics["archetype"] = archetype
+        metrics["archetype_score"] = sa_archetype_score
 
     return SuggestActionsResponse(actions=actions, metrics=metrics, feedback_url="/v1/feedback")
 
@@ -558,6 +635,32 @@ def complete_deck(req: CompleteRequest):
     game = _require_game(req.game)
     state = get_state(game)
     req.deck = _normalize_deck_format(req.deck, game)
+
+    # Auto-detect archetype from seed deck if not explicitly set
+    detected_archetype: str | None = None
+    detected_archetype_score: float = 0.0
+    matched_template: dict | None = None
+    if req.archetype and state.archetype_templates:
+        # Explicit archetype: find matching template by name
+        for t in state.archetype_templates:
+            if t.get("name", "").lower() == req.archetype.lower():
+                matched_template = t
+                detected_archetype = t.get("name")
+                detected_archetype_score = 1.0
+                break
+        if not matched_template:
+            logger.debug("Requested archetype '%s' not found in templates", req.archetype)
+    elif state.archetype_templates:
+        # Auto-detect from seed deck
+        detected_archetype, matched_template, detected_archetype_score = _detect_archetype(
+            req.deck, game, state.archetype_templates
+        )
+        if detected_archetype:
+            logger.debug(
+                "Auto-detected archetype '%s' (score=%.4f)",
+                detected_archetype,
+                detected_archetype_score,
+            )
 
     # Deck completion uses "completion" task type
     cand_fn = _make_candidate_fn(game, req.mode, task_type="completion")
@@ -603,6 +706,7 @@ def complete_deck(req: CompleteRequest):
             legality_data=state.legality_data,
             color_identity=deck_colors,
             card_color_identity=card_color_identity,
+            archetype_template=matched_template,
         )
 
         # Detect role gaps for role-aware OT cost
@@ -767,6 +871,9 @@ def complete_deck(req: CompleteRequest):
         "check_legality": bool(req.check_legality),
         "strict_errors": strict_errors,
     }
+    if detected_archetype:
+        metrics["archetype"] = detected_archetype
+        metrics["archetype_score"] = detected_archetype_score
     if quality_metrics:
         metrics["quality"] = quality_metrics
     # Include OT-specific metrics when method=ot
