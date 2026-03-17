@@ -3,14 +3,36 @@
 Optimal Transport deck completion.
 
 Formulates deck building as a discrete OT problem: transport mass from a
-"current deck" distribution to a "target archetype" distribution over the
-card pool, where the cost matrix encodes embedding distance, role gaps,
-and mana-curve fit.
+quality-weighted source distribution over the candidate pool to a target
+archetype distribution, where the cost matrix encodes embedding distance,
+role gaps, and mana-curve fit.
 
-The log-stabilized Sinkhorn solver (pot.sinkhorn_log) produces a fractional
-transport plan, which is then rounded to integer card counts respecting copy
-limits and deck-size targets. Log-domain stabilization avoids overflow/underflow
-at low regularization (reg=0.01).
+Key design choices (v2, 2026-03-17):
+
+1. **Quality-weighted source**: candidates with higher affinity to the seed
+   deck receive more source mass, replacing the prior uniform distribution
+   that treated all candidates equally.
+
+2. **Unbalanced OT** (optional): uses sinkhorn_unbalanced with KL penalty
+   (reg_m) so the solver can leave low-quality candidate slots empty rather
+   than filling them with weak cards.  When reg_m is large the problem
+   approaches balanced OT; when small, more mass is allowed to vanish.
+
+3. **ILP rounding**: instead of greedy rounding (which discards the structure
+   of the fractional plan), solves a small integer linear program via
+   scipy.optimize.milp to find the integer card counts closest to the
+   fractional marginal while respecting copy limits and deck-size targets.
+   Falls back to greedy rounding if scipy is unavailable.
+
+4. **Seed-relative cost**: the pairwise cost matrix C[i,j] blends embedding
+   distance between pool cards (structural diversity) with each card's
+   individual affinity cost to the seed deck (quality signal), avoiding the
+   circular pattern where both source and target are derived from the same
+   embedding similarity.
+
+The log-stabilized Sinkhorn solver (pot.sinkhorn with method='sinkhorn_log')
+produces the fractional transport plan.  Log-domain stabilization avoids
+overflow/underflow at low regularization (reg=0.01).
 
 Requires: pip install pot  (or uv add pot)
 """
@@ -58,6 +80,18 @@ class OTCompletionConfig:
     sinkhorn_reg: float = 0.01  # Entropic regularization (lower = sparser plan)
     sinkhorn_max_iter: int = 1000
     sinkhorn_tol: float = 1e-9
+
+    # Unbalanced OT: KL marginal penalty.  None = balanced (original behavior).
+    # Typical values: 0.5 (aggressive filtering) to 5.0 (near-balanced).
+    # When set, sinkhorn_unbalanced is used instead of sinkhorn.
+    reg_m: float | None = None
+
+    # Source distribution temperature.  Lower = concentrate mass on high-affinity
+    # candidates.  None = uniform source (original behavior).
+    source_temperature: float | None = 0.2
+
+    # Rounding strategy: "ilp" (integer linear program) or "greedy" (original).
+    rounding: Literal["ilp", "greedy"] = "ilp"
 
     # Rounding
     max_copies: int | None = None  # Override per-game default
@@ -165,6 +199,43 @@ def compute_reference_distribution(
     return dist
 
 
+def compute_source_distribution(
+    seed_cards: list[str],
+    embeddings: Any,
+    card_pool: list[str],
+    temperature: float | None = None,
+) -> np.ndarray:
+    """
+    Build a quality-weighted source distribution over the candidate pool.
+
+    Unlike the uniform source in balanced OT, this assigns more mass to
+    candidates with higher affinity to the seed deck.  The solver then
+    preferentially transports from these high-quality candidates.
+
+    When temperature is None, returns uniform (backward-compatible).
+
+    Args:
+        seed_cards: Cards currently in deck
+        embeddings: KeyedVectors with card embeddings
+        card_pool: Candidate pool
+        temperature: Softmax temperature (lower = sharper).  None = uniform.
+
+    Returns:
+        1-D array of shape (len(card_pool),) summing to 1.0
+    """
+    n = len(card_pool)
+    if temperature is None or not seed_cards or embeddings is None:
+        return np.ones(n, dtype=np.float64) / n
+
+    # Reuse the reference distribution logic with the source temperature
+    return compute_reference_distribution(
+        seed_cards=seed_cards,
+        embeddings=embeddings,
+        card_pool=card_pool,
+        temperature=temperature,
+    )
+
+
 def build_cost_matrix(
     card_pool: list[str],
     embeddings: Any,  # gensim KeyedVectors
@@ -179,20 +250,15 @@ def build_cost_matrix(
     curve_weight: float = 0.2,
 ) -> np.ndarray:
     """
-    Build the cost matrix C[i, j] for transporting from source card i to target card j.
+    Build a per-card cost vector for adding each candidate to the deck.
 
     The cost combines:
-    1. Embedding distance (1 - cosine similarity) between cards
+    1. Embedding distance (1 - cosine similarity) to seed cards
     2. Role penalty: higher cost for cards that don't fill identified role gaps
     3. Curve penalty: higher cost for cards whose CMC deviates from target curve
 
-    For deck completion, we use a simplified form: C[i] is the cost of adding
-    card i to the deck (1-D cost vector, not a full matrix), since we're
-    transporting from a "deficit" source to the card pool.
-
     Returns:
-        2-D array of shape (len(card_pool), len(card_pool)) for full OT, or
-        1-D array of shape (len(card_pool),) for simplified marginal cost.
+        1-D array of shape (len(card_pool),).
     """
     n = len(card_pool)
     costs = np.ones(n, dtype=np.float64)  # Default high cost
@@ -249,7 +315,7 @@ def build_cost_matrix(
     return costs
 
 
-def _round_transport_plan(
+def _round_transport_plan_greedy(
     plan_marginal: np.ndarray,
     card_pool: list[str],
     deck: dict,
@@ -258,10 +324,10 @@ def _round_transport_plan(
     max_copies: int | None = None,
 ) -> list[tuple[str, int]]:
     """
-    Round fractional OT plan to integer card counts.
+    Round fractional OT plan to integer card counts via greedy rounding.
 
-    Uses greedy rounding: sort by fractional mass, greedily assign copies
-    while respecting copy limits and total slot count.
+    Sort by fractional mass, greedily assign copies while respecting copy
+    limits and total slot count.
 
     Args:
         plan_marginal: 1-D array of fractional card masses from OT solution
@@ -325,6 +391,170 @@ def _round_transport_plan(
     return additions
 
 
+# Keep the old name as an alias for backward compatibility
+_round_transport_plan = _round_transport_plan_greedy
+
+
+def _round_transport_plan_ilp(
+    plan_marginal: np.ndarray,
+    card_pool: list[str],
+    deck: dict,
+    game: str,
+    slots_to_fill: int,
+    max_copies: int | None = None,
+) -> list[tuple[str, int]]:
+    """
+    Round fractional OT plan to integer card counts via integer linear program.
+
+    Solves:  minimize  sum_i |x_i - slots_to_fill * marginal_i|
+    subject to:  sum_i x_i = slots_to_fill
+                 0 <= x_i <= copy_limit_i  (integer)
+
+    The absolute-value objective is linearized via auxiliary variables:
+      for each i: t_i >= x_i - f_i,  t_i >= f_i - x_i,  t_i >= 0
+    where f_i = slots_to_fill * marginal_i.
+
+    Falls back to greedy rounding if scipy.optimize.milp is unavailable or
+    the solver fails.
+
+    Args:
+        plan_marginal: 1-D array of fractional card masses from OT solution
+        card_pool: List of card names corresponding to plan indices
+        deck: Current deck (for copy limit checking)
+        game: Game name
+        slots_to_fill: Number of card slots to add
+        max_copies: Override per-game copy limit
+
+    Returns:
+        List of (card_name, count) tuples
+    """
+    try:
+        from scipy.optimize import LinearConstraint, milp
+        from scipy.sparse import eye as speye
+        from scipy.sparse import hstack, vstack
+    except ImportError:
+        logger.debug("scipy.optimize.milp unavailable, falling back to greedy rounding")
+        return _round_transport_plan_greedy(
+            plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
+        )
+
+    if max_copies is None:
+        max_copies = 3 if game == "yugioh" else 4
+
+    n = len(card_pool)
+    if n == 0 or slots_to_fill <= 0:
+        return []
+
+    # Fractional targets
+    frac = plan_marginal * slots_to_fill
+
+    # Determine per-card copy limit (accounting for cards already in deck)
+    upper_bounds = np.full(n, max_copies, dtype=np.float64)
+    part_name = _main_partition_name(game)
+    for i, name in enumerate(card_pool):
+        existing = 0
+        for p in deck.get("partitions", []) or []:
+            for c in p.get("cards", []) or []:
+                if c.get("name") == name:
+                    existing += int(c.get("count", 0))
+        upper_bounds[i] = max(0, max_copies - existing)
+
+    # Variables: x_0..x_{n-1} (integer card counts), t_0..t_{n-1} (abs deviations)
+    # Objective: minimize sum(t_i)  (c = [0]*n + [1]*n)
+    c_obj = np.zeros(2 * n)
+    c_obj[n:] = 1.0  # minimize sum of t_i
+
+    # Bounds: x_i in [0, upper_bounds[i]] (integer), t_i in [0, inf]
+    from scipy.optimize import Bounds
+
+    lb = np.zeros(2 * n)
+    ub = np.concatenate([upper_bounds, np.full(n, np.inf)])
+    bounds = Bounds(lb=lb, ub=ub)
+
+    # Integrality: x_i = 1 (integer), t_i = 0 (continuous)
+    integrality = np.zeros(2 * n, dtype=int)
+    integrality[:n] = 1
+
+    # Constraint 1: sum(x_i) = slots_to_fill
+    import scipy.sparse as sp
+
+    row_x = sp.csc_matrix(np.ones((1, n)))
+    row_t = sp.csc_matrix(np.zeros((1, n)))
+    A_eq = hstack([row_x, row_t], format="csc")
+    sum_constraint = LinearConstraint(A_eq, lb=slots_to_fill, ub=slots_to_fill)
+
+    # Constraint 2: t_i >= x_i - f_i  =>  -t_i + x_i <= f_i
+    # Constraint 3: t_i >= f_i - x_i  =>  -t_i - x_i <= -f_i
+    # Combined: for each i,
+    #   x_i - t_i <= f_i     =>  row: [...0, 1, 0... | ...0, -1, 0...]
+    #   -x_i - t_i <= -f_i   =>  row: [...0, -1, 0... | ...0, -1, 0...]
+
+    I_n = speye(n, format="csc")
+    # x_i - t_i <= f_i
+    A_pos = hstack([I_n, -I_n], format="csc")
+    # -x_i - t_i <= -f_i
+    A_neg = hstack([-I_n, -I_n], format="csc")
+
+    A_abs = vstack([A_pos, A_neg], format="csc")
+    abs_ub = np.concatenate([frac, -frac])
+    abs_constraint = LinearConstraint(A_abs, lb=-np.inf, ub=abs_ub)
+
+    try:
+        result = milp(
+            c=c_obj,
+            constraints=[sum_constraint, abs_constraint],
+            integrality=integrality,
+            bounds=bounds,
+            options={"time_limit": 5.0},
+        )
+        if not result.success:
+            logger.debug(
+                f"ILP solver did not find optimal: {result.message}, falling back to greedy"
+            )
+            return _round_transport_plan_greedy(
+                plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
+            )
+
+        x = np.round(result.x[:n]).astype(int)
+    except Exception as e:
+        logger.debug(f"ILP solver failed: {e}, falling back to greedy")
+        return _round_transport_plan_greedy(
+            plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
+        )
+
+    # Build additions list (verify legality).
+    # Mutate ``deck`` in place (same contract as the greedy rounding function)
+    # so that the caller sees the updated deck.
+    additions: list[tuple[str, int]] = []
+
+    for idx in np.argsort(-x):
+        count = int(x[idx])
+        if count <= 0:
+            continue
+        name = card_pool[idx]
+
+        actual = 0
+        for _ in range(count):
+            if _legal_add(game, deck, name):
+                actual += 1
+                for p in deck.get("partitions", []) or []:
+                    if p.get("name") == part_name:
+                        added = False
+                        for c in p.get("cards", []) or []:
+                            if c.get("name") == name:
+                                c["count"] = c.get("count", 0) + 1
+                                added = True
+                                break
+                        if not added:
+                            p.setdefault("cards", []).append({"name": name, "count": 1})
+                        break
+
+        if actual > 0:
+            additions.append((name, actual))
+
+    return additions
+
+
 def ot_complete_deck(
     game: str,
     deck: dict,
@@ -341,10 +571,10 @@ def ot_complete_deck(
     Complete a deck using optimal transport.
 
     1. Build candidate pool from seed cards via embeddings
-    2. Construct source distribution (current deck) and target distribution
+    2. Construct source (quality-weighted) and target (archetype) distributions
     3. Build cost matrix (embedding + role + curve)
-    4. Solve OT with Sinkhorn
-    5. Round fractional plan to integer counts
+    4. Solve OT (balanced or unbalanced) with Sinkhorn
+    5. Round fractional plan to integer counts (ILP or greedy)
     6. Apply additions to deck
 
     Args:
@@ -418,9 +648,15 @@ def ot_complete_deck(
 
     n = len(card_pool)
 
-    # Source distribution: uniform over "deficit" (we want to fill slots_to_fill)
+    # Source distribution: quality-weighted (or uniform if source_temperature is None)
+    source = compute_source_distribution(
+        seed_cards=seed_cards,
+        embeddings=embeddings,
+        card_pool=card_pool,
+        temperature=cfg.source_temperature,
+    )
+
     # Target distribution: similarity-weighted over candidate pool
-    source = np.ones(n, dtype=np.float64) / n
     target = compute_reference_distribution(
         seed_cards=seed_cards,
         embeddings=embeddings,
@@ -442,40 +678,53 @@ def ot_complete_deck(
         curve_weight=cfg.curve_weight,
     )
 
-    # For 1-D OT (Earth Mover's Distance variant), we use the cost vector
-    # as a diagonal cost matrix: C[i,j] = cost_vec[i] if i==j, else high cost.
-    # But more naturally, we solve: minimize sum_j plan[j] * cost[j]
-    # subject to: sum_j plan[j] = 1, plan[j] >= 0
-    # This is just argmin(cost), which is trivial.
-    #
-    # Instead, use full OT between source and target with cost matrix derived
-    # from pairwise embedding distances in the pool.
+    # Build pairwise cost matrix for OT
     cost_matrix = _build_pairwise_cost_matrix(
         card_pool=card_pool,
         embeddings=embeddings,
         cost_vec=cost_vec,
     )
 
-    # Solve OT with log-stabilized Sinkhorn (numerically safer at low regularization)
+    # Solve OT
+    unbalanced = cfg.reg_m is not None
+    marginal_err = 0.0
     try:
-        transport_plan = pot.sinkhorn(
-            source,
-            target,
-            cost_matrix,
-            reg=cfg.sinkhorn_reg,
-            method="sinkhorn_log",
-            numItermax=cfg.sinkhorn_max_iter,
-            stopThr=cfg.sinkhorn_tol,
-            warn=False,
-        )
-        # Verify marginal convergence: row sums should match source distribution
-        row_marginal = transport_plan.sum(axis=1)
-        marginal_err = float(np.max(np.abs(row_marginal - source)))
-        if marginal_err > 1e-3:
-            logger.warning(
-                f"Sinkhorn marginal error {marginal_err:.6f} exceeds tolerance; "
-                "transport plan may be inaccurate"
+        if unbalanced:
+            # Unbalanced OT: allows partial transport.  Cards that are poor
+            # matches can be skipped (their mass is "destroyed" with KL penalty).
+            transport_plan = pot.sinkhorn_unbalanced(
+                source,
+                target,
+                cost_matrix,
+                reg=cfg.sinkhorn_reg,
+                reg_m=cfg.reg_m,
+                numItermax=cfg.sinkhorn_max_iter,
+                stopThr=cfg.sinkhorn_tol,
             )
+            # For unbalanced, marginals don't have to match source/target exactly
+            row_marginal = transport_plan.sum(axis=1)
+            transported_mass = float(transport_plan.sum())
+            marginal_err = float(abs(transported_mass - 1.0))
+        else:
+            # Balanced OT with log-stabilized Sinkhorn
+            transport_plan = pot.sinkhorn(
+                source,
+                target,
+                cost_matrix,
+                reg=cfg.sinkhorn_reg,
+                method="sinkhorn_log",
+                numItermax=cfg.sinkhorn_max_iter,
+                stopThr=cfg.sinkhorn_tol,
+                warn=False,
+            )
+            # Verify marginal convergence
+            row_marginal = transport_plan.sum(axis=1)
+            marginal_err = float(np.max(np.abs(row_marginal - source)))
+            if marginal_err > 1e-3:
+                logger.warning(
+                    f"Sinkhorn marginal error {marginal_err:.6f} exceeds tolerance; "
+                    "transport plan may be inaccurate"
+                )
     except Exception as e:
         logger.error(f"Sinkhorn solver failed: {e}")
         return OTCompletionResult(
@@ -487,15 +736,33 @@ def ot_complete_deck(
     # Extract target marginal (how much mass each target card receives)
     target_marginal = transport_plan.sum(axis=0)
 
+    # For unbalanced OT, renormalize the marginal so it sums to 1.0
+    # (total transported mass may be < 1.0)
+    marginal_sum = target_marginal.sum()
+    if marginal_sum > 1e-10:
+        target_marginal_norm = target_marginal / marginal_sum
+    else:
+        target_marginal_norm = target_marginal
+
     # Round to integer counts
-    additions = _round_transport_plan(
-        plan_marginal=target_marginal,
-        card_pool=card_pool,
-        deck=deck,
-        game=game,
-        slots_to_fill=slots_to_fill,
-        max_copies=cfg.max_copies,
-    )
+    if cfg.rounding == "ilp":
+        additions = _round_transport_plan_ilp(
+            plan_marginal=target_marginal_norm,
+            card_pool=card_pool,
+            deck=deck,
+            game=game,
+            slots_to_fill=slots_to_fill,
+            max_copies=cfg.max_copies,
+        )
+    else:
+        additions = _round_transport_plan_greedy(
+            plan_marginal=target_marginal_norm,
+            card_pool=card_pool,
+            deck=deck,
+            game=game,
+            slots_to_fill=slots_to_fill,
+            max_copies=cfg.max_copies,
+        )
 
     # Build addition records with reasoning
     addition_records: list[dict[str, Any]] = []
@@ -525,20 +792,27 @@ def ot_complete_deck(
     # Compute OT distance (Wasserstein approximation)
     ot_distance = float(np.sum(transport_plan * cost_matrix))
 
+    metrics: dict[str, Any] = {
+        "slots_to_fill": slots_to_fill,
+        "current_size": current_size,
+        "pool_size": n,
+        "cards_added": sum(c for _, c in additions),
+        "ot_distance": ot_distance,
+        "sinkhorn_reg": cfg.sinkhorn_reg,
+        "marginal_error": marginal_err,
+        "rounding": cfg.rounding,
+        "source_type": "quality_weighted" if cfg.source_temperature is not None else "uniform",
+    }
+    if unbalanced:
+        metrics["reg_m"] = cfg.reg_m
+        metrics["transported_mass"] = float(transport_plan.sum())
+
     return OTCompletionResult(
         deck=deck,
         additions=addition_records,
         transport_plan=transport_plan,
         cost_matrix=cost_matrix,
-        metrics={
-            "slots_to_fill": slots_to_fill,
-            "current_size": current_size,
-            "pool_size": n,
-            "cards_added": sum(c for _, c in additions),
-            "ot_distance": ot_distance,
-            "sinkhorn_reg": cfg.sinkhorn_reg,
-            "marginal_error": marginal_err,
-        },
+        metrics=metrics,
     )
 
 
@@ -630,6 +904,7 @@ __all__ = [
     "OTCompletionResult",
     "build_cost_matrix",
     "compute_reference_distribution",
+    "compute_source_distribution",
     "deck_to_distribution",
     "ot_complete_deck",
 ]
