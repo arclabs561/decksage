@@ -11,30 +11,31 @@
 # ]
 # ///
 """
-Scale the annotated test set from 171 to 500 queries with mode labels.
+Scale the annotated test set with mode labels. Designed for iterative growth.
 
 Loads the existing annotated test set, selects new query cards from the
 embedding vocabulary (prioritizing popular and cold-start cards), and uses
 the LLM annotator to judge similarity + mode (synergy/substitution/meta)
 for the top-10 neighbors of each new query.
 
-Mode labels enable per-mode evaluation: synergy nDCG vs substitution nDCG.
-Without them, embedding improvements that help one mode look like regressions
-on the co-occurrence-aligned test set.
+Resilience features:
+- Incremental save: each query annotation is flushed to disk immediately.
+  If the script crashes at query 200, all 200 are preserved.
+- Resume: re-running skips queries already in the output file.
+- --batch-size: controls how many new queries to annotate per invocation.
 
 Usage:
     # Dry run (no API calls, shows what would be annotated):
     uv run scripts/annotation/scale_annotations.py --dry-run
 
-    # Full run (requires ANNOTATOR_MODEL_SIMILARITY or OPENAI_API_KEY):
-    uv run scripts/annotation/scale_annotations.py
+    # Full run (requires OPENROUTER_API_KEY or similar):
+    uv run scripts/annotation/scale_annotations.py --game magic --target 500
 
-    # Custom target count:
-    uv run scripts/annotation/scale_annotations.py --target 300
+    # Incremental batch (50 queries at a time):
+    uv run scripts/annotation/scale_annotations.py --game magic --target 500 --batch-size 50
 
-    # Use specific model:
-    ANNOTATOR_MODEL_SIMILARITY=openai/gpt-4o \\
-        uv run scripts/annotation/scale_annotations.py
+    # Resume after crash (just re-run the same command):
+    uv run scripts/annotation/scale_annotations.py --game magic --target 500
 """
 
 from __future__ import annotations
@@ -140,27 +141,41 @@ def load_existing_test_set(path: Path) -> dict[str, Any]:
         return json.load(f)
 
 
-def load_embeddings(game: str = "magic") -> KeyedVectors | None:
-    """Load the current production embeddings for a game."""
+def load_embeddings(
+    game: str = "magic", embedding_name: str | None = None
+) -> tuple[KeyedVectors | None, str]:
+    """Load embeddings for a game.
+
+    Returns (KeyedVectors, embedding_version_string) or (None, "").
+    """
     if not HAS_GENSIM:
         logger.error("gensim not installed, cannot load embeddings")
-        return None
+        return None, ""
+
+    # If explicit embedding name given, use it
+    if embedding_name:
+        p = PATHS.embeddings / f"{embedding_name}.wv"
+        if p.exists():
+            logger.info(f"Loading embeddings from {p}")
+            return KeyedVectors.load(str(p)), embedding_name
+        logger.error(f"Embedding not found: {p}")
+        return None, ""
 
     # Try common embedding file patterns in priority order
     candidates = [
-        PATHS.embeddings / f"{game}_blended.wv",
-        PATHS.embeddings / f"{game}_enriched_v3.wv",
-        PATHS.embeddings / f"{game}_enriched_v2.wv",
-        PATHS.embeddings / f"{game}_cleaned_v4.wv",
-        PATHS.embeddings / f"{game}_lightgcn.wv",
+        (f"{game}_blended", PATHS.embeddings / f"{game}_blended.wv"),
+        (f"{game}_enriched_v3", PATHS.embeddings / f"{game}_enriched_v3.wv"),
+        (f"{game}_enriched_v2", PATHS.embeddings / f"{game}_enriched_v2.wv"),
+        (f"{game}_cleaned_v4", PATHS.embeddings / f"{game}_cleaned_v4.wv"),
+        (f"{game}_lightgcn", PATHS.embeddings / f"{game}_lightgcn.wv"),
     ]
-    for p in candidates:
+    for name, p in candidates:
         if p.exists():
             logger.info(f"Loading embeddings from {p}")
-            return KeyedVectors.load(str(p))
+            return KeyedVectors.load(str(p)), name
 
     logger.error(f"No embeddings found for {game}")
-    return None
+    return None, ""
 
 
 def compute_card_popularity(
@@ -281,10 +296,12 @@ async def annotate_pair_with_mode(
     candidate_card: str,
     cosine_sim: float,
     game: str = "magic",
+    model_name: str = "unknown",
+    embedding_version: str = "unknown",
 ) -> dict[str, Any]:
     """Annotate a single query-candidate pair with relevance + mode.
 
-    Returns dict with relevance label, mode, and reasoning.
+    Returns dict with rich metadata per annotation.
     """
     prompt = f"""Judge the similarity between these two {game.upper()} cards:
 
@@ -300,14 +317,16 @@ Rate the candidate's relevance to the query and classify the similarity mode.
 
     try:
         result = await agent.run(prompt)
-        ann = result.data
+        ann = result.output
 
         # Extract mode from similarity_type or infer from scores
         mode = _classify_mode(ann)
         relevance = _score_to_relevance(ann.similarity_score)
 
         return {
+            "query": query_card,
             "candidate": candidate_card,
+            "cosine_similarity": cosine_sim,
             "relevance": relevance,
             "mode": mode,
             "similarity_score": ann.similarity_score,
@@ -316,17 +335,26 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "meta_relevance": ann.meta_relevance,
             "reasoning": ann.reasoning,
             "is_substitute": ann.is_substitute,
-            "model_name": getattr(ann, "model_name", None),
+            "llm_model": model_name,
+            "embedding_version": embedding_version,
+            "game": game,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
     except Exception as e:
         logger.warning(f"Annotation failed for {query_card} <-> {candidate_card}: {e}")
         return {
+            "query": query_card,
             "candidate": candidate_card,
+            "cosine_similarity": cosine_sim,
             "relevance": sim_to_relevance(cosine_sim),
             "mode": "unknown",
             "similarity_score": cosine_sim,
             "reasoning": f"LLM annotation failed: {e}",
             "error": True,
+            "llm_model": model_name,
+            "embedding_version": embedding_version,
+            "game": game,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -374,13 +402,23 @@ async def annotate_query(
     neighbors: list[tuple[str, float]],
     game: str = "magic",
     semaphore: asyncio.Semaphore | None = None,
+    model_name: str = "unknown",
+    embedding_version: str = "unknown",
 ) -> dict[str, Any]:
     """Annotate all neighbors of a query card."""
     sem = semaphore or asyncio.Semaphore(5)
 
     async def _annotate_one(card: str, sim: float) -> dict[str, Any]:
         async with sem:
-            return await annotate_pair_with_mode(agent, query_card, card, sim, game)
+            return await annotate_pair_with_mode(
+                agent,
+                query_card,
+                card,
+                sim,
+                game,
+                model_name=model_name,
+                embedding_version=embedding_version,
+            )
 
     tasks = [_annotate_one(card, sim) for card, sim in neighbors]
     results = await asyncio.gather(*tasks)
@@ -411,6 +449,8 @@ async def annotate_query(
 def build_fallback_query(
     query_card: str,
     neighbors: list[tuple[str, float]],
+    embedding_version: str = "unknown",
+    game: str = "magic",
 ) -> dict[str, Any]:
     """Build a query entry using cosine similarity thresholds (no LLM)."""
     by_relevance: dict[str, list[str]] = {
@@ -420,15 +460,59 @@ def build_fallback_query(
         "marginally_relevant": [],
         "irrelevant": [],
     }
+    annotations = []
 
     for card, sim in neighbors:
         label = sim_to_relevance(sim)
         by_relevance[label].append(card)
+        annotations.append(
+            {
+                "query": query_card,
+                "candidate": card,
+                "cosine_similarity": sim,
+                "relevance": label,
+                "mode": "unknown",
+                "similarity_score": sim,
+                "llm_model": "cosine_fallback",
+                "embedding_version": embedding_version,
+                "game": game,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+        )
 
     return {
         **by_relevance,
         "modes": {},  # No mode labels without LLM
+        "annotations": annotations,
     }
+
+
+# ---------------------------------------------------------------------------
+# Incremental save
+# ---------------------------------------------------------------------------
+
+
+def _load_output_file(path: Path) -> dict[str, Any]:
+    """Load existing output file for resume, or return empty structure."""
+    if path.exists():
+        try:
+            with open(path) as f:
+                data = json.load(f)
+            logger.info(
+                f"Loaded existing output with {len(data.get('queries', {}))} queries for resume"
+            )
+            return data
+        except (json.JSONDecodeError, KeyError) as e:
+            logger.warning(f"Corrupt output file {path}, starting fresh: {e}")
+    return {}
+
+
+def _flush_output(path: Path, data: dict[str, Any]) -> None:
+    """Atomically write output file (write to .tmp then rename)."""
+    tmp = path.with_suffix(".json.tmp")
+    with open(tmp, "w") as f:
+        json.dump(data, f, indent=2)
+    tmp.rename(path)
 
 
 # ---------------------------------------------------------------------------
@@ -461,27 +545,43 @@ async def run_pipeline(
     target: int = 500,
     k: int = 10,
     batch_concurrency: int = 5,
+    batch_size: int | None = None,
     dry_run: bool = False,
     output_path: Path | None = None,
+    embedding_name: str | None = None,
 ) -> dict[str, Any]:
     """Run the full annotation scaling pipeline.
 
+    Saves incrementally (each query flushed to disk). Supports resume
+    by skipping queries already in the output file.
+
     Returns summary statistics.
     """
-    # 1. Load existing test set
-    existing_path = PATHS.data / f"test_set_annotated_{game}.json"
-    existing = load_existing_test_set(existing_path)
-    existing_queries = set(existing.get("queries", {}).keys())
-    n_existing = len(existing_queries)
-    logger.info(f"Existing test set: {n_existing} queries from {existing_path}")
+    # 1. Resolve output path
+    if output_path is None:
+        output_path = PATHS.data / "test_sets" / f"annotated_{game}_v2.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    # 2. Load embeddings
-    kv = load_embeddings(game)
+    # 2. Load seed test set (original annotations)
+    existing_path = PATHS.data / f"test_set_annotated_{game}.json"
+    seed_data = load_existing_test_set(existing_path)
+    seed_queries = set(seed_data.get("queries", {}).keys())
+    logger.info(f"Seed test set: {len(seed_queries)} queries from {existing_path}")
+
+    # 3. Load output file for resume (may already have queries from prior runs)
+    output_data = _load_output_file(output_path)
+    already_done = set(output_data.get("queries", {}).keys())
+    all_existing = seed_queries | already_done
+    n_existing = len(all_existing)
+    logger.info(f"Total existing queries (seed + prior runs): {n_existing}")
+
+    # 4. Load embeddings
+    kv, embedding_version = load_embeddings(game, embedding_name)
     if kv is None:
         return {"error": "No embeddings found"}
-    logger.info(f"Embedding vocabulary: {len(kv)} cards")
+    logger.info(f"Embedding vocabulary: {len(kv)} cards (version: {embedding_version})")
 
-    # 3. Compute card popularity
+    # 5. Compute card popularity
     edgelist_path = PATHS.graphs / f"{game}_merged_all.edg"
     if edgelist_path.exists():
         popularity = compute_card_popularity(edgelist_path)
@@ -490,15 +590,20 @@ async def run_pipeline(
         logger.warning(f"Edgelist not found: {edgelist_path}, using uniform popularity")
         popularity = Counter({c: 1 for c in kv.key_to_index})
 
-    # 4. Select new queries
+    # 6. Select new queries
     target_new = target - n_existing
     if target_new <= 0:
         logger.info(f"Already have {n_existing} >= {target} queries, nothing to add")
         return {"n_existing": n_existing, "n_new": 0, "n_total": n_existing}
 
-    new_queries = select_new_queries(kv, existing_queries, popularity, target_new=target_new)
+    new_queries = select_new_queries(kv, all_existing, popularity, target_new=target_new)
 
-    # 5. Get neighbors for each new query
+    # Apply batch_size limit
+    if batch_size is not None and batch_size > 0:
+        new_queries = new_queries[:batch_size]
+        logger.info(f"Batch size limit: processing {len(new_queries)} of {target_new} remaining")
+
+    # 7. Get neighbors for each new query
     query_neighbors: dict[str, list[tuple[str, float]]] = {}
     for q in new_queries:
         neighbors = get_top_k_neighbors(kv, q, k=k)
@@ -523,9 +628,13 @@ async def run_pipeline(
         print(f"\n--- Dry Run Summary ---")
         print(f"  Existing queries: {n_existing}")
         print(f"  New queries to add: {len(query_neighbors)}")
+        if batch_size:
+            print(f"  Batch size: {batch_size}")
+            print(f"  Remaining after this batch: {target_new - len(query_neighbors)}")
         print(f"  Target total: {target}")
         print(f"  Pairs to annotate: {cost['n_pairs']}")
         print(f"  Estimated cost: ${cost['cost_estimate_usd']}")
+        print(f"  Embedding version: {embedding_version}")
         print(
             f"  New query popularity: mean={pop_arr.mean():.0f}, "
             f"median={np.median(pop_arr):.0f}, "
@@ -543,29 +652,29 @@ async def run_pipeline(
         for c in cold:
             print(f"    {c} (popularity={popularity.get(c, 0):.0f})")
 
-        # Build output with cosine-only labels (no LLM)
-        new_annotations: dict[str, dict[str, Any]] = {}
-        for q, neighbors in query_neighbors.items():
-            new_annotations[q] = build_fallback_query(q, neighbors)
-            new_annotations[q]["use_case"] = "embedding"
-
         return {
             "n_existing": n_existing,
             "n_new": len(query_neighbors),
             "n_total": n_existing + len(query_neighbors),
             "cost": cost,
             "dry_run": True,
-            "new_annotations": new_annotations,
+            "embedding_version": embedding_version,
         }
 
-    # 6. Annotate with LLM
-    # Check for API keys
+    # 8. Build merged queries dict (seed + prior output)
+    merged_queries: dict[str, Any] = dict(seed_data.get("queries", {}))
+    merged_queries.update(output_data.get("queries", {}))
+
+    # Determine annotation method
+    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
     has_keys = bool(
         os.getenv("OPENAI_API_KEY")
         or os.getenv("ANTHROPIC_API_KEY")
         or os.getenv("GOOGLE_API_KEY")
         or os.getenv("OPENROUTER_API_KEY")
     )
+
+    use_llm = HAS_PYDANTIC_AI and has_keys
 
     if not has_keys:
         logger.warning(
@@ -574,99 +683,125 @@ async def run_pipeline(
             "Falling back to cosine-similarity-only labels (no mode classification)."
         )
 
-    if not HAS_PYDANTIC_AI or not has_keys:
-        # Fallback: use cosine similarity thresholds, no mode labels
-        logger.info("Building annotations from cosine similarity (no LLM)")
-        new_annotations = {}
-        for q, neighbors in query_neighbors.items():
-            new_annotations[q] = build_fallback_query(q, neighbors)
-            new_annotations[q]["use_case"] = "embedding"
-    else:
-        # Full LLM annotation with mode classification
-        # Import the similarity prompt (available when pydantic-ai is installed)
+    agent = None
+    if use_llm:
         import ml.annotation.llm_annotator as _ann_mod
 
         base_prompt = getattr(_ann_mod, "SIMILARITY_PROMPT_BASE", "")
         if not base_prompt:
             base_prompt = "You are an expert TCG judge creating similarity annotations."
 
-        model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
         prompt = base_prompt + "\n\n" + MODE_PROMPT
         agent = make_agent(model_name, CardSimilarityAnnotation, prompt)
+        logger.info(f"LLM annotation enabled: model={model_name}")
+    else:
+        logger.info("Building annotations from cosine similarity (no LLM)")
+        model_name = "cosine_fallback"
 
-        sem = asyncio.Semaphore(batch_concurrency)
-        new_annotations = {}
-        n_done = 0
-        t0 = time.monotonic()
+    # 9. Annotate queries incrementally
+    sem = asyncio.Semaphore(batch_concurrency)
+    n_done = 0
+    n_total_to_do = len(query_neighbors)
+    t0 = time.monotonic()
+    mode_counts: Counter = Counter()
 
-        for q, neighbors in query_neighbors.items():
+    def _build_header() -> dict[str, Any]:
+        """Build the output file header with current stats."""
+        return {
+            "version": "2.0",
+            "game": game,
+            "source": "scale_annotations.py",
+            "embedding_version": embedding_version,
+            "llm_model": model_name,
+            "created": output_data.get("created", datetime.now(timezone.utc).isoformat()),
+            "updated": datetime.now(timezone.utc).isoformat(),
+            "num_queries": len(merged_queries),
+            "num_seed": len(seed_queries),
+            "mode_counts": dict(mode_counts),
+        }
+
+    for q, neighbors in query_neighbors.items():
+        if use_llm and agent is not None:
             try:
-                result = await annotate_query(agent, q, neighbors, game, sem)
-                # Strip raw annotations from stored result (keep compact)
+                result = await annotate_query(
+                    agent,
+                    q,
+                    neighbors,
+                    game,
+                    sem,
+                    model_name=model_name,
+                    embedding_version=embedding_version,
+                )
+                # Keep annotations for rich metadata, strip bulk from stored result
                 stored = {k: v for k, v in result.items() if k != "annotations"}
                 stored["use_case"] = "embedding"
-                new_annotations[q] = stored
+                stored["annotations"] = result["annotations"]
+                merged_queries[q] = stored
             except Exception as e:
                 logger.warning(f"Failed to annotate query {q}: {e}")
-                new_annotations[q] = build_fallback_query(q, neighbors)
-                new_annotations[q]["use_case"] = "embedding"
-
-            n_done += 1
-            if n_done % 50 == 0:
-                elapsed = time.monotonic() - t0
-                rate = n_done / elapsed if elapsed > 0 else 0
-                logger.info(
-                    f"  Progress: {n_done}/{len(query_neighbors)} queries ({rate:.1f} queries/sec)"
+                fallback = build_fallback_query(
+                    q,
+                    neighbors,
+                    embedding_version=embedding_version,
+                    game=game,
                 )
+                fallback["use_case"] = "embedding"
+                merged_queries[q] = fallback
+        else:
+            fallback = build_fallback_query(
+                q,
+                neighbors,
+                embedding_version=embedding_version,
+                game=game,
+            )
+            fallback["use_case"] = "embedding"
+            merged_queries[q] = fallback
 
-    # 7. Merge with existing and save
-    merged_queries = dict(existing.get("queries", {}))
-    merged_queries.update(new_annotations)
-
-    # Count modes
-    mode_counts: Counter = Counter()
-    for q_data in new_annotations.values():
-        modes = q_data.get("modes", {})
-        for mode in modes.values():
+        # Update mode counts
+        q_modes = merged_queries[q].get("modes", {})
+        for mode in q_modes.values():
             mode_counts[mode] += 1
 
-    output = {
-        "version": "2.0",
-        "game": game,
-        "source": "scale_annotations.py",
-        "created": datetime.now(timezone.utc).isoformat(),
-        "num_queries": len(merged_queries),
-        "num_original": n_existing,
-        "num_new": len(new_annotations),
-        "mode_counts": dict(mode_counts),
-        "queries": merged_queries,
-    }
+        n_done += 1
 
-    if output_path is None:
-        output_path = PATHS.data / "test_sets" / f"annotated_{game}_v2.json"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
-        json.dump(output, f, indent=2)
-    logger.info(f"Saved {len(merged_queries)} queries to {output_path}")
+        # Incremental save after every query
+        output_doc = {**_build_header(), "queries": merged_queries}
+        _flush_output(output_path, output_doc)
 
-    # 8. Report
+        if n_done % 10 == 0 or n_done == n_total_to_do:
+            elapsed = time.monotonic() - t0
+            rate = n_done / elapsed if elapsed > 0 else 0
+            logger.info(
+                f"  Progress: {n_done}/{n_total_to_do} queries "
+                f"({rate:.1f} q/s, {len(merged_queries)} total saved)"
+            )
+
+    # 10. Final report
     print(f"\n--- Annotation Summary ---")
-    print(f"  Original queries: {n_existing}")
-    print(f"  New queries: {len(new_annotations)}")
+    print(f"  Seed queries: {len(seed_queries)}")
+    print(f"  New queries this run: {n_done}")
     print(f"  Total queries: {len(merged_queries)}")
     print(f"  Output: {output_path}")
+    print(f"  Embedding version: {embedding_version}")
+    print(f"  LLM model: {model_name}")
     if mode_counts:
         print(f"  Mode breakdown (new queries):")
         for mode, count in mode_counts.most_common():
             print(f"    {mode}: {count}")
     print(f"  Cost: {cost}")
 
+    remaining = target - len(merged_queries)
+    if remaining > 0:
+        print(f"\n  {remaining} queries remain to reach target {target}.")
+        print(f"  Re-run this command to continue.")
+
     return {
         "n_existing": n_existing,
-        "n_new": len(new_annotations),
+        "n_new": n_done,
         "n_total": len(merged_queries),
         "mode_counts": dict(mode_counts),
         "output_path": str(output_path),
+        "embedding_version": embedding_version,
         "cost": cost,
     }
 
@@ -675,6 +810,20 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="Scale annotated test set with mode labels.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Designed for iterative growth. Re-run to resume where you left off.
+Use --batch-size to control how many queries per invocation.
+
+Examples:
+  # Dry run:
+  uv run scripts/annotation/scale_annotations.py --dry-run --game magic --target 500
+
+  # Annotate 50 queries at a time:
+  uv run scripts/annotation/scale_annotations.py --game magic --target 500 --batch-size 50
+
+  # Resume after crash or interruption (same command):
+  uv run scripts/annotation/scale_annotations.py --game magic --target 500
+""",
     )
     parser.add_argument("--game", type=str, default="magic", help="Game name")
     parser.add_argument("--target", type=int, default=500, help="Target total query count")
@@ -684,6 +833,18 @@ def main() -> int:
         type=int,
         default=5,
         help="Max concurrent LLM calls",
+    )
+    parser.add_argument(
+        "--batch-size",
+        type=int,
+        default=None,
+        help="Max queries to annotate this run (default: all remaining)",
+    )
+    parser.add_argument(
+        "--embedding",
+        type=str,
+        default=None,
+        help="Embedding name (e.g. magic_cleaned_v4). Default: auto-detect.",
     )
     parser.add_argument(
         "--output",
@@ -704,8 +865,10 @@ def main() -> int:
             target=args.target,
             k=args.k,
             batch_concurrency=args.concurrency,
+            batch_size=args.batch_size,
             dry_run=args.dry_run,
             output_path=args.output,
+            embedding_name=args.embedding,
         )
     )
 
