@@ -126,6 +126,66 @@ class CardSimilarityAnnotation(BaseModel):
         description="Concrete differentiators (e.g., 'Bolt hits face, Path only hits creatures')",
     )
 
+    # Richer pair-level labels
+    substitutability: float = Field(
+        default=0.0,
+        ge=0.0,
+        le=1.0,
+        description="Continuous substitutability 0-1 (finer-grained than binary is_substitute). 0=not interchangeable, 1=drop-in replacement",
+    )
+    combo_potential: bool = Field(
+        default=False,
+        description="Do these cards form a known combo or rules interaction?",
+    )
+    same_archetype: bool = Field(
+        default=False,
+        description="Would both cards typically appear in the same deck archetype?",
+    )
+    upgrade_direction: str = Field(
+        default="neither",
+        description="Power relationship: 'a_upgrades_b' (card1 is strictly better), 'b_upgrades_a', 'neither', or 'sidegrade' (tradeoffs)",
+    )
+    mana_efficiency_comparison: str = Field(
+        default="similar",
+        description="Mana/resource efficiency: 'a_more_efficient', 'b_more_efficient', or 'similar'",
+    )
+
+    # Per-card role labels (card-level annotations derived from pair judgments)
+    card_a_role: str = Field(
+        default="",
+        description="Primary role of card1: removal, threat, ramp, draw, counter, combo_piece, utility, land, other",
+    )
+    card_b_role: str = Field(
+        default="",
+        description="Primary role of card2: removal, threat, ramp, draw, counter, combo_piece, utility, land, other",
+    )
+    card_a_power_level: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Competitive power level of card1: 1=unplayable, 5=average, 10=format-defining staple",
+    )
+    card_b_power_level: int = Field(
+        default=5,
+        ge=1,
+        le=10,
+        description="Competitive power level of card2: 1=unplayable, 5=average, 10=format-defining staple",
+    )
+
+    # Relationship classification (multi-label)
+    relationship_types: list[str] = Field(
+        default_factory=list,
+        description="All applicable relationship types: functional_substitute, synergy_partner, meta_companion, curve_filler, archetype_staple, budget_alternative",
+    )
+
+    # Confidence
+    confidence: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="LLM confidence in this judgment: 0=guessing, 1=certain",
+    )
+
     # Provenance fingerprint
     model_name: str | None = Field(
         default=None,
@@ -173,7 +233,7 @@ if HAS_PYDANTIC_AI:
     SIM_MODEL = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
 
     # Prompt version -- bump on any semantic change to scoring rules or output schema
-    SIMILARITY_PROMPT_VERSION = "v5.0"
+    SIMILARITY_PROMPT_VERSION = "v6.0"
 
     # Enhanced SIMILARITY_PROMPT with CoT and score diversity
     SIMILARITY_PROMPT_BASE = """You are an expert TCG judge creating similarity annotations.
@@ -223,6 +283,21 @@ if HAS_PYDANTIC_AI:
 - Provide `meta_relevance` (0-1): how often do they co-occur in competitive/tournament decks? 0=never paired, 1=always paired
 - Provide `key_similarities`: 2-4 concrete shared traits (e.g., "both 1-mana instant removal")
 - Provide `key_differences`: 1-3 concrete differentiators (e.g., "Bolt hits face, Path only hits creatures")
+
+**Per-card role labels:**
+- For each card, classify its primary role into one of: removal, threat, ramp, draw, counter, combo_piece, utility, land, other
+- Set `card_a_role` for card1 and `card_b_role` for card2
+- Rate each card's competitive power level 1-10 in `card_a_power_level` / `card_b_power_level`:
+  1=unplayable draft chaff, 3=fringe playable, 5=average constructed card, 7=strong staple, 9=format-defining, 10=banned-level power
+
+**Pair-level extended labels:**
+- `substitutability` (0-1): continuous measure of interchangeability, finer than binary is_substitute
+- `combo_potential` (true/false): do these cards form a known combo or rules interaction?
+- `same_archetype` (true/false): would both cards appear in the same deck archetype?
+- `upgrade_direction`: is one card strictly better? One of: a_upgrades_b, b_upgrades_a, sidegrade, neither
+- `mana_efficiency_comparison`: resource efficiency comparison. One of: a_more_efficient, b_more_efficient, similar
+- `relationship_types`: list ALL that apply: functional_substitute, synergy_partner, meta_companion, curve_filler, archetype_staple, budget_alternative
+- `confidence` (0-1): how confident are you in this judgment? 0=guessing, 1=certain
 
 Your task: Judge how similar two cards are and explain WHY.
 
