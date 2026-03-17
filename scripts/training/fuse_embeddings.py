@@ -16,6 +16,7 @@ Usage:
         --output data/embeddings/pokemon_fused.wv \
         --alpha 0.7 --dim 128
 """
+
 from __future__ import annotations
 
 import argparse
@@ -47,6 +48,7 @@ def load_card_features(path: Path) -> tuple[dict[str, np.ndarray], int]:
         for val in df["type"].dropna():
             type_words.extend(str(val).split())
         from collections import Counter
+
         top_types = [w for w, _ in Counter(type_words).most_common(15)]
         for t in top_types:
             col = f"type_{t}"
@@ -97,8 +99,10 @@ def load_card_features(path: Path) -> tuple[dict[str, np.ndarray], int]:
         top_kws = sorted(kw_counter, key=kw_counter.get, reverse=True)[:30]
         for kw in top_kws:
             col = f"kw_{kw}"
-            df[col] = df["keywords"].fillna("").apply(
-                lambda x, kw=kw: 1.0 if kw in str(x).lower() else 0.0
+            df[col] = (
+                df["keywords"]
+                .fillna("")
+                .apply(lambda x, kw=kw: 1.0 if kw in str(x).lower() else 0.0)
             )
             feature_cols.append(col)
 
@@ -118,13 +122,20 @@ def load_card_features(path: Path) -> tuple[dict[str, np.ndarray], int]:
 
 def main():
     parser = argparse.ArgumentParser(description="Fuse structural embeddings with card attributes")
-    parser.add_argument("--embeddings", type=Path, required=True, help="Input .wv file (PecanPy, etc)")
+    parser.add_argument(
+        "--embeddings", type=Path, required=True, help="Input .wv file (PecanPy, etc)"
+    )
     parser.add_argument("--card-attrs", type=Path, required=True, help="Card attributes CSV")
     parser.add_argument("--output", type=Path, required=True, help="Output .wv file")
-    parser.add_argument("--alpha", type=float, default=0.7,
-                        help="Weight for structural embeddings (1-alpha for attributes, default: 0.7)")
-    parser.add_argument("--dim", type=int, default=128,
-                        help="Output embedding dimension after PCA (default: 128)")
+    parser.add_argument(
+        "--alpha",
+        type=float,
+        default=0.7,
+        help="Weight for structural embeddings (1-alpha for attributes, default: 0.7)",
+    )
+    parser.add_argument(
+        "--dim", type=int, default=128, help="Output embedding dimension after PCA (default: 128)"
+    )
     args = parser.parse_args()
 
     # Load structural embeddings
@@ -141,7 +152,7 @@ def main():
 
     # Match cards in both sources
     matched = [name for name in vocab if name in name_to_feat]
-    print(f"  Matched: {len(matched)}/{len(vocab)} ({100*len(matched)/len(vocab):.1f}%)")
+    print(f"  Matched: {len(matched)}/{len(vocab)} ({100 * len(matched) / len(vocab):.1f}%)")
 
     if len(matched) < 10:
         print("Error: too few matched cards", file=sys.stderr)
@@ -152,21 +163,23 @@ def main():
     feat_matrix = np.array([name_to_feat[name] for name in matched], dtype=np.float32)
 
     # L2 normalize each source
-    struct_norm = normalize(struct_matrix, norm='l2')
-    feat_norm = normalize(feat_matrix, norm='l2')
+    struct_norm = normalize(struct_matrix, norm="l2")
+    feat_norm = normalize(feat_matrix, norm="l2")
 
     # Weighted concatenation
-    combined = np.hstack([
-        args.alpha * struct_norm,
-        (1 - args.alpha) * feat_norm,
-    ])
+    combined = np.hstack(
+        [
+            args.alpha * struct_norm,
+            (1 - args.alpha) * feat_norm,
+        ]
+    )
     print(f"  Combined shape: {combined.shape} (alpha={args.alpha})")
 
     # PCA to target dimension
     target_dim = min(args.dim, combined.shape[1], combined.shape[0])
     if combined.shape[1] > target_dim:
         print(f"  PCA: {combined.shape[1]} -> {target_dim}")
-        pca = PCA(n_components=target_dim)
+        pca = PCA(n_components=target_dim, random_state=42)
         combined = pca.fit_transform(combined)
         explained = sum(pca.explained_variance_ratio_)
         print(f"  Explained variance: {explained:.3f}")
@@ -181,7 +194,7 @@ def main():
     rng = np.random.default_rng(42)
     n_pairs = min(10000, len(matched) * (len(matched) - 1) // 2)
     sims = []
-    combined_norm = normalize(combined, norm='l2')
+    combined_norm = normalize(combined, norm="l2")
     for _ in range(n_pairs):
         i, j = rng.choice(len(matched), 2, replace=False)
         sims.append(np.dot(combined_norm[i], combined_norm[j]))
