@@ -243,6 +243,11 @@ class CompleteRequest(BaseModel):
     check_legality: bool | None = None
     method: str = "greedy"  # "greedy", "beam", or "ot"
     beam_width: int = Field(5, ge=1, le=50)  # For beam search
+    # Format-aware constraints (OT method)
+    format: str | None = Field(
+        None,
+        description="Target format for legality filtering (e.g., standard, modern, commander). OT method only.",
+    )
     # OT-specific parameters
     sinkhorn_reg: float = 0.01  # Entropic regularization for OT
     embedding_weight: float = 0.3  # Cost weight for embedding distance

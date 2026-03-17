@@ -583,6 +583,15 @@ def complete_deck(req: CompleteRequest):
         from ..deck_building.deck_completion import _main_partition_name
         from ..deck_building.ot_completion import OTCompletionConfig, ot_complete_deck
 
+        # Build card color identity map for Commander CI filtering
+        card_color_identity: dict[str, set[str]] | None = None
+        if deck_colors and state.card_metadata and req.format and req.format.lower() == "commander":
+            card_ci: dict[str, set[str]] = {}
+            for cname, meta in state.card_metadata.items():
+                ci_str = meta.get("color_identity_str", "")
+                card_ci[cname] = _effective_color_identity(cname, ci_str)
+            card_color_identity = card_ci
+
         ot_cfg = OTCompletionConfig(
             game=game,
             target_main_size=req.target_main_size or (40 if game == "yugioh" else 60),
@@ -590,6 +599,10 @@ def complete_deck(req: CompleteRequest):
             role_weight=req.role_weight,
             curve_weight=req.curve_weight,
             sinkhorn_reg=req.sinkhorn_reg,
+            format=req.format,
+            legality_data=state.legality_data,
+            color_identity=deck_colors,
+            card_color_identity=card_color_identity,
         )
 
         # Detect role gaps for role-aware OT cost

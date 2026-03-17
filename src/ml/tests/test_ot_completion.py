@@ -6,6 +6,7 @@ import numpy as np
 import pytest
 
 from ml.deck_building.ot_completion import (
+    FormatConstraints,
     OTCompletionConfig,
     _round_transport_plan,
     _round_transport_plan_ilp,
@@ -13,6 +14,7 @@ from ml.deck_building.ot_completion import (
     compute_reference_distribution,
     compute_source_distribution,
     deck_to_distribution,
+    get_format_constraints,
     ot_complete_deck,
 )
 
@@ -718,3 +720,260 @@ class TestIdempotency:
 
         assert r2.additions == []
         assert r2.metrics["slots_to_fill"] == 0
+
+
+# ---------------------------------------------------------------------------
+# Tests: get_format_constraints
+# ---------------------------------------------------------------------------
+
+
+class TestGetFormatConstraints:
+    def test_magic_standard(self):
+        fc = get_format_constraints("magic", "standard")
+        assert fc.min_deck_size == 60
+        assert fc.copy_limit == 4
+        assert fc.singleton is False
+
+    def test_magic_commander(self):
+        fc = get_format_constraints("magic", "commander")
+        assert fc.min_deck_size == 100
+        assert fc.max_deck_size == 100
+        assert fc.copy_limit == 1
+        assert fc.singleton is True
+        assert fc.color_identity_required is True
+
+    def test_magic_draft(self):
+        fc = get_format_constraints("magic", "draft")
+        assert fc.min_deck_size == 40
+        assert fc.copy_limit == 100  # effectively unlimited
+
+    def test_yugioh_advanced(self):
+        fc = get_format_constraints("yugioh", "advanced")
+        assert fc.min_deck_size == 40
+        assert fc.max_deck_size == 60
+        assert fc.copy_limit == 3
+
+    def test_pokemon_pocket(self):
+        fc = get_format_constraints("pokemon", "pocket")
+        assert fc.min_deck_size == 20
+        assert fc.max_deck_size == 20
+        assert fc.copy_limit == 2
+
+    def test_unknown_format_falls_back(self):
+        fc = get_format_constraints("magic", "notaformat")
+        assert fc.min_deck_size == 60
+        assert fc.copy_limit == 4
+
+    def test_none_format_defaults(self):
+        fc = get_format_constraints("yugioh", None)
+        assert fc.copy_limit == 3
+
+
+# ---------------------------------------------------------------------------
+# Tests: format-aware OT completion
+# ---------------------------------------------------------------------------
+
+
+class TestFormatAwareCompletion:
+    def test_format_legality_filters_banned_cards(self):
+        """Banned cards in the target format are excluded from the pool."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        # Mark half the non-seed cards as "banned" in standard
+        legality: dict[str, dict[str, str]] = {}
+        for name in names:
+            if name in names[5:20]:
+                legality[name] = {"standard": "banned"}
+            else:
+                legality[name] = {"standard": "legal"}
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=25,
+            sinkhorn_reg=0.1,
+            format="standard",
+            legality_data=legality,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        # None of the banned cards should appear in additions
+        banned_names = set(names[5:20])
+        added_names = {a["card"] for a in result.additions}
+        assert not added_names.intersection(banned_names), (
+            f"Banned cards appeared in additions: {added_names & banned_names}"
+        )
+        assert result.metrics.get("format") == "standard"
+        assert result.metrics.get("format_filtered", 0) > 0
+
+    def test_commander_singleton_constraint(self):
+        """Commander mode: all non-basic cards should have count=1."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=25,
+            sinkhorn_reg=0.1,
+            format="commander",
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        for a in result.additions:
+            assert a["count"] == 1, (
+                f"Commander singleton violated: {a['card']} has count={a['count']}"
+            )
+
+    def test_commander_basics_can_exceed_singleton(self):
+        """Basic lands are exempt from the singleton rule in Commander."""
+        # Create embeddings that include basic land names
+        rng = np.random.RandomState(77)
+        names_custom = ["Plains", "Island", "Card_A", "Card_B", "Card_C"]
+        data = {name: rng.randn(8).astype(np.float64) for name in names_custom}
+        # Add more cards for pool
+        for i in range(20):
+            cname = f"Pool_{i}"
+            data[cname] = rng.randn(8).astype(np.float64)
+            names_custom.append(cname)
+        embeddings = FakeKeyedVectors(data)
+
+        deck = _make_deck(["Card_A", "Card_B"], "magic")
+
+        # Singleton format but basics should be unlimited
+        fc = FormatConstraints(
+            min_deck_size=10, copy_limit=1, singleton=True, basics_unlimited=True
+        )
+        pool = ["Plains", "Island"] + [f"Pool_{i}" for i in range(10)]
+        plan = np.zeros(len(pool))
+        plan[0] = 0.4  # Plains
+        plan[1] = 0.3  # Island
+        for i in range(2, len(pool)):
+            plan[i] = 0.3 / (len(pool) - 2)
+
+        additions = _round_transport_plan_ilp(
+            plan_marginal=plan,
+            card_pool=pool,
+            deck=deck,
+            game="magic",
+            slots_to_fill=8,
+            format_constraints=fc,
+        )
+
+        # Plains should be allowed more than 1 copy
+        plains_count = sum(c for name, c in additions if name == "Plains")
+        # Non-basic cards should be limited to 1
+        for name, count in additions:
+            if name not in ("Plains", "Island"):
+                assert count <= 1, f"Non-basic {name} has {count} copies in singleton"
+
+    def test_standard_only_legal_cards(self):
+        """OT completion with format=standard only uses standard-legal cards."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:3], "magic")
+
+        # Make only a subset legal in standard
+        legality = {}
+        standard_legal = set(names[:3]) | set(names[20:])  # seeds + last 10
+        for name in names:
+            if name in standard_legal:
+                legality[name] = {"standard": "legal"}
+            else:
+                legality[name] = {"standard": "not_legal"}
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=10,
+            pool_size=25,
+            sinkhorn_reg=0.1,
+            format="standard",
+            legality_data=legality,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        added_names = {a["card"] for a in result.additions}
+        # All additions should be from the standard-legal set
+        for card in added_names:
+            assert card in standard_legal, f"{card} is not standard-legal but was added"
+
+    def test_restricted_cards_limited_to_one_copy(self):
+        """Restricted cards (Vintage) should get upper_bound=1 in ILP."""
+        embeddings, names = _make_embeddings(20)
+        deck = _make_deck(names[:3], "magic")
+
+        # Mark one card as restricted
+        legality = {}
+        for name in names:
+            legality[name] = {"vintage": "legal"}
+        restricted_card = names[5]
+        legality[restricted_card] = {"vintage": "restricted"}
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=10,
+            pool_size=15,
+            sinkhorn_reg=0.1,
+            format="vintage",
+            legality_data=legality,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        for a in result.additions:
+            if a["card"] == restricted_card:
+                assert a["count"] <= 1, f"Restricted card {restricted_card} has count={a['count']}"
+
+    def test_color_identity_filtering(self):
+        """Commander CI filtering removes cards outside the deck's colors."""
+        rng = np.random.RandomState(88)
+        card_names = [f"Card_{i}" for i in range(25)]
+        data = {name: rng.randn(8).astype(np.float64) for name in card_names}
+        embeddings = FakeKeyedVectors(data)
+
+        deck = _make_deck(card_names[:3], "magic")
+
+        # Deck is W/U; cards 10-19 are R/G (outside CI)
+        card_ci: dict[str, set[str]] = {}
+        for name in card_names:
+            card_ci[name] = {"W", "U"}
+        for i in range(10, 20):
+            card_ci[card_names[i]] = {"R", "G"}
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=10,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+            format="commander",
+            color_identity={"W", "U"},
+            card_color_identity=card_ci,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        off_color = set(card_names[10:20])
+        added_names = {a["card"] for a in result.additions}
+        assert not added_names.intersection(off_color), (
+            f"Off-color cards added: {added_names & off_color}"
+        )
+
+    def test_no_format_backward_compatible(self):
+        """Without format, OT completion works exactly as before."""
+        embeddings, names = _make_embeddings(30)
+        deck = _make_deck(names[:5], "magic")
+
+        cfg = OTCompletionConfig(
+            game="magic",
+            target_main_size=15,
+            pool_size=20,
+            sinkhorn_reg=0.1,
+        )
+
+        result = ot_complete_deck(game="magic", deck=deck, embeddings=embeddings, cfg=cfg)
+
+        assert result.additions
+        assert "format" not in result.metrics
