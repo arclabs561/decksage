@@ -124,6 +124,39 @@ between the query card and each candidate. Choose exactly one:
 
 If uncertain, prefer the mode that best explains WHY a deckbuilder would
 search for the candidate after seeing the query card.
+
+**EXTENDED ANNOTATIONS (fill all of these):**
+
+For each card, classify its primary role. Choose one:
+  removal, threat, ramp, draw, counter, combo_piece, utility, land, other
+Put the result in card_a_role (for the query card) and card_b_role (for the candidate).
+
+Rate each card's competitive power level 1-10:
+  1=unplayable draft chaff, 3=fringe playable, 5=average constructed card,
+  7=strong staple, 9=format-defining, 10=banned-level power.
+Put the result in card_a_power_level and card_b_power_level.
+
+Rate substitutability as a continuous 0-1 value (finer than binary is_substitute).
+  0.0=completely different cards, 0.5=partial overlap, 1.0=functional reprint.
+
+Is card B a strict upgrade over card A (same effect but cheaper/better stats)?
+  Set upgrade_direction to one of: a_upgrades_b, b_upgrades_a, sidegrade, neither.
+
+Compare mana/resource efficiency:
+  Set mana_efficiency_comparison to: a_more_efficient, b_more_efficient, or similar.
+
+Do these two cards form a known combo or rules interaction?
+  Set combo_potential to true/false.
+
+Would both cards appear in the same deck archetype?
+  Set same_archetype to true/false.
+
+List ALL relationship types that apply (multi-label, pick all that fit):
+  functional_substitute, synergy_partner, meta_companion, curve_filler,
+  archetype_staple, budget_alternative
+
+Rate your overall confidence in this annotation 0-1:
+  0=uncertain/guessing, 0.5=reasonable judgment, 1.0=definitive.
 """
 
 
@@ -368,6 +401,22 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "meta_relevance": ann.meta_relevance,
             "reasoning": ann.reasoning,
             "is_substitute": ann.is_substitute,
+            # Extended pair-level labels
+            "substitutability": getattr(ann, "substitutability", 0.0),
+            "combo_potential": getattr(ann, "combo_potential", False),
+            "same_archetype": getattr(ann, "same_archetype", False),
+            "upgrade_direction": getattr(ann, "upgrade_direction", "neither"),
+            "mana_efficiency_comparison": getattr(ann, "mana_efficiency_comparison", "similar"),
+            # Per-card role labels
+            "card_a_role": getattr(ann, "card_a_role", ""),
+            "card_b_role": getattr(ann, "card_b_role", ""),
+            "card_a_power_level": getattr(ann, "card_a_power_level", 5),
+            "card_b_power_level": getattr(ann, "card_b_power_level", 5),
+            # Multi-label relationship classification
+            "relationship_types": getattr(ann, "relationship_types", []),
+            # Confidence
+            "confidence": getattr(ann, "confidence", 0.5),
+            # Provenance
             "llm_model": model_name,
             "embedding_version": embedding_version,
             "game": game,
