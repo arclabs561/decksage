@@ -22,6 +22,7 @@ Usage:
 Edge merge rule: if a card pair (A, B) appears in multiple edgelists,
 the merged weight is sum(count_i * weight_i).
 """
+
 from __future__ import annotations
 
 import argparse
@@ -66,6 +67,19 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--q", type=float, default=1.0, help="Node2Vec in-out parameter.")
     parser.add_argument("--workers", type=int, default=4, help="Parallel workers.")
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
+    # Negative sampling exponent for Word2Vec. Default 0.75 matches gensim/NLP convention.
+    # Caselles-Dupre et al. 2018 ("Word2Vec applied to Recommendation: Hyperparameters Matter")
+    # found that recommendation domains benefit from ns_exponent in [-0.5, 0.0].
+    # Sweep results in data/embeddings/magic_ns*.wv (from 2026-03-14) should be evaluated
+    # before changing this default. See also scripts/sweep_ns_exponent.py.
+    parser.add_argument(
+        "--ns-exponent",
+        type=float,
+        default=0.75,
+        help="Negative sampling exponent (default: 0.75, gensim default). "
+        "Lower values (e.g. 0.0 or -0.5) may work better for recommendation-like graphs. "
+        "See Caselles-Dupre et al. 2018.",
+    )
     return parser.parse_args()
 
 
@@ -158,8 +172,10 @@ def quality_metrics(wv_path: str, merged: dict[tuple[str, str], float], seed: in
     arr = np.array(sims)
     print(f"  Random-pair cosine similarity (n={n_samples}):")
     print(f"    mean={arr.mean():.4f}  std={arr.std():.4f}")
-    print(f"    min={arr.min():.4f}  p25={np.percentile(arr, 25):.4f}  "
-          f"median={np.median(arr):.4f}  p75={np.percentile(arr, 75):.4f}  max={arr.max():.4f}")
+    print(
+        f"    min={arr.min():.4f}  p25={np.percentile(arr, 25):.4f}  "
+        f"median={np.median(arr):.4f}  p75={np.percentile(arr, 75):.4f}  max={arr.max():.4f}"
+    )
 
     # Top-edge similarity (edges with highest weight should have high similarity)
     top_edges = sorted(merged.items(), key=lambda x: -x[1])[:100]
@@ -170,15 +186,19 @@ def quality_metrics(wv_path: str, merged: dict[tuple[str, str], float], seed: in
     if top_sims:
         top_arr = np.array(top_sims)
         print("  Top-100 weighted edges similarity:")
-        print(f"    mean={top_arr.mean():.4f}  std={top_arr.std():.4f}  "
-              f"min={top_arr.min():.4f}  max={top_arr.max():.4f}")
+        print(
+            f"    mean={top_arr.mean():.4f}  std={top_arr.std():.4f}  "
+            f"min={top_arr.min():.4f}  max={top_arr.max():.4f}"
+        )
 
 
 def main() -> int:
     args = parse_args()
 
     if len(args.edgelist) != len(args.weight):
-        print(f"Error: {len(args.edgelist)} edgelists but {len(args.weight)} weights", file=sys.stderr)
+        print(
+            f"Error: {len(args.edgelist)} edgelists but {len(args.weight)} weights", file=sys.stderr
+        )
         return 1
 
     print("=" * 70)
@@ -210,8 +230,10 @@ def main() -> int:
     write_merged_edgelist(merged, tmp_edg)
     print(f"  Wrote merged edgelist to {tmp_edg}")
 
-    print(f"\n[2/3] Training PecanPy (dim={args.dim}, walks={args.walks}, "
-          f"walk_length={args.walk_length}, p={args.p}, q={args.q})...")
+    print(
+        f"\n[2/3] Training PecanPy (dim={args.dim}, walks={args.walks}, "
+        f"walk_length={args.walk_length}, p={args.p}, q={args.q})..."
+    )
     t0 = time.time()
     g = SparseOTF(p=args.p, q=args.q, workers=args.workers, verbose=True, extend=True)
     g.read_edg(tmp_edg, weighted=True, directed=False)
@@ -225,6 +247,7 @@ def main() -> int:
         workers=args.workers,
         epochs=1,
         seed=args.seed,
+        ns_exponent=args.ns_exponent,
     )
 
     Path(args.output).parent.mkdir(parents=True, exist_ok=True)
