@@ -1,0 +1,24 @@
+{
+  "description": "Functional substitutes - cards that serve the same role regardless of co-occurrence in decks",
+  "version": "v1",
+  "game": "pokemon",
+  "pairs": [
+    {"card_a": "Ultra Ball", "card_b": "Nest Ball", "relevance": "relevant", "reason": "Pokemon search items, Ultra Ball is broader but costs 2 discards"},
+    {"card_a": "Professor's Research", "card_b": "Professor Juniper", "relevance": "highly_relevant", "reason": "discard hand draw 7, same effect different era"},
+    {"card_a": "Boss's Orders", "card_b": "Lysandre", "relevance": "highly_relevant", "reason": "switch opponent active, same effect different era"},
+    {"card_a": "Switch", "card_b": "Escape Rope", "relevance": "relevant", "reason": "switch your active, Escape Rope also forces opponent switch"},
+    {"card_a": "Rare Candy", "card_b": "Rare Candy", "relevance": "highly_relevant", "reason": "stage skip evolution, same card across eras"},
+    {"card_a": "N", "card_b": "Judge", "relevance": "relevant", "reason": "shuffle both hands into deck and draw, N is prize-based"},
+    {"card_a": "Quick Ball", "card_b": "Ultra Ball", "relevance": "relevant", "reason": "Pokemon search items, Quick Ball finds basics only"},
+    {"card_a": "Marnie", "card_b": "N", "relevance": "relevant", "reason": "hand disruption supporters, different draw counts"},
+    {"card_a": "Choice Belt", "card_b": "Muscle Band", "relevance": "relevant", "reason": "damage boost tools, Belt targets V/ex only"},
+    {"card_a": "Float Stone", "card_b": "Air Balloon", "relevance": "highly_relevant", "reason": "zero retreat cost tool"}
+  ],
+  "negative_pairs": [
+    {"card_a": "Ultra Ball", "card_b": "Fire Energy", "relevance": "irrelevant", "reason": "search item vs basic energy"},
+    {"card_a": "Professor's Research", "card_b": "Rare Candy", "relevance": "irrelevant", "reason": "draw supporter vs evolution item"},
+    {"card_a": "Boss's Orders", "card_b": "Water Energy", "relevance": "irrelevant", "reason": "gust supporter vs basic energy"},
+    {"card_a": "Switch", "card_b": "N", "relevance": "irrelevant", "reason": "mobility item vs hand disruption supporter"},
+    {"card_a": "Nest Ball", "card_b": "Choice Belt", "relevance": "irrelevant", "reason": "search item vs damage tool"}
+  ]
+}

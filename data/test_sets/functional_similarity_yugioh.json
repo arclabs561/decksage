@@ -1,0 +1,24 @@
+{
+  "description": "Functional substitutes - cards that serve the same role regardless of co-occurrence in decks",
+  "version": "v1",
+  "game": "yugioh",
+  "pairs": [
+    {"card_a": "Ash Blossom & Joyous Spring", "card_b": "Ghost Ogre & Snow Rabbit", "relevance": "relevant", "reason": "hand traps that disrupt opponent, different triggers"},
+    {"card_a": "Mystical Space Typhoon", "card_b": "Cosmic Cyclone", "relevance": "highly_relevant", "reason": "quick-play spell/trap removal"},
+    {"card_a": "Raigeki", "card_b": "Dark Hole", "relevance": "highly_relevant", "reason": "board wipe spell, Raigeki is one-sided"},
+    {"card_a": "Monster Reborn", "card_b": "Call of the Haunted", "relevance": "relevant", "reason": "graveyard revival, spell vs trap"},
+    {"card_a": "Pot of Desires", "card_b": "Pot of Extravagance", "relevance": "relevant", "reason": "draw 2 pot spells with different costs"},
+    {"card_a": "Torrential Tribute", "card_b": "Mirror Force", "relevance": "relevant", "reason": "reactive board wipe traps, different triggers"},
+    {"card_a": "Effect Veiler", "card_b": "Infinite Impermanence", "relevance": "relevant", "reason": "negate monster effect, hand trap vs trap card"},
+    {"card_a": "Twin Twisters", "card_b": "Mystical Space Typhoon", "relevance": "relevant", "reason": "spell/trap removal quick-plays, Twin Twisters pops 2"},
+    {"card_a": "Solemn Judgment", "card_b": "Solemn Strike", "relevance": "relevant", "reason": "counter trap negation, Judgment is broader"},
+    {"card_a": "Foolish Burial", "card_b": "Mathematician", "relevance": "relevant", "reason": "send monster from deck to GY, spell vs monster"}
+  ],
+  "negative_pairs": [
+    {"card_a": "Ash Blossom & Joyous Spring", "card_b": "Polymerization", "relevance": "irrelevant", "reason": "hand trap vs fusion spell"},
+    {"card_a": "Raigeki", "card_b": "Pot of Desires", "relevance": "irrelevant", "reason": "board wipe vs draw spell"},
+    {"card_a": "Monster Reborn", "card_b": "Mystical Space Typhoon", "relevance": "irrelevant", "reason": "revival vs removal"},
+    {"card_a": "Effect Veiler", "card_b": "Dark Hole", "relevance": "irrelevant", "reason": "targeted negate vs board wipe"},
+    {"card_a": "Solemn Judgment", "card_b": "Foolish Burial", "relevance": "irrelevant", "reason": "counter trap vs GY setup"}
+  ]
+}
