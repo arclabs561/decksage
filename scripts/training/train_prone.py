@@ -15,6 +15,7 @@ Usage:
         --output data/embeddings/pokemon_prone.wv \
         --dim 128
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,14 +39,23 @@ def main():
     parser.add_argument("--edgelist", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--dim", type=int, default=128)
-    parser.add_argument("--max-edges", type=int, default=0,
-                        help="Subsample to top-K weighted edges (0=no limit)")
-    parser.add_argument("--card-attributes", type=Path, default=None,
-                        help="Card attributes CSV for cold-start text embeddings. "
-                             "Cards with zero/few graph edges get initialized from "
-                             "oracle text embeddings (all-MiniLM-L6-v2).")
-    parser.add_argument("--cold-start-threshold", type=int, default=3,
-                        help="Nodes with <= this many edges get text-based init (default: 3)")
+    parser.add_argument(
+        "--max-edges", type=int, default=0, help="Subsample to top-K weighted edges (0=no limit)"
+    )
+    parser.add_argument(
+        "--card-attributes",
+        type=Path,
+        default=None,
+        help="Card attributes CSV for cold-start text embeddings. "
+        "Cards with zero/few graph edges get initialized from "
+        "oracle text embeddings (all-MiniLM-L6-v2).",
+    )
+    parser.add_argument(
+        "--cold-start-threshold",
+        type=int,
+        default=3,
+        help="Nodes with <= this many edges get text-based init (default: 3)",
+    )
     args = parser.parse_args()
 
     print(f"Loading edgelist from {args.edgelist}...")
@@ -55,7 +65,7 @@ def main():
     if args.max_edges > 0 and len(edges) > args.max_edges:
         print(f"  Subsampling to top {args.max_edges} edges by weight...")
         edges.sort(key=lambda x: -x[2])
-        edges = edges[:args.max_edges]
+        edges = edges[: args.max_edges]
         nodes = set()
         for n1, n2, _ in edges:
             nodes.add(n1)
@@ -68,6 +78,7 @@ def main():
 
     # Build CSR graph for ProNE
     import scipy.sparse as sp
+
     rows, cols, weights = [], [], []
     for n1, n2, w in edges:
         i, j = node_to_idx[n1], node_to_idx[n2]
@@ -81,6 +92,10 @@ def main():
     t0 = time.time()
 
     import nodevectors
+
+    # nodevectors ProNE uses randomized SVD internally; setting numpy's global
+    # seed is the only way to make it deterministic (no random_state param).
+    np.random.seed(42)
     model = nodevectors.ProNE(n_components=args.dim)
     model.fit(adj)
 
@@ -127,13 +142,16 @@ def main():
 
             st_model = SentenceTransformer("all-MiniLM-L6-v2")
             text_embs = st_model.encode(
-                cold_texts, batch_size=256, show_progress_bar=False,
-                convert_to_numpy=True, normalize_embeddings=True,
+                cold_texts,
+                batch_size=256,
+                show_progress_bar=False,
+                convert_to_numpy=True,
+                normalize_embeddings=True,
             )
             # Project 384-dim -> target dim via PCA
             if text_embs.shape[1] != actual_dim:
                 n_comp = min(actual_dim, text_embs.shape[0], text_embs.shape[1])
-                pca = PCA(n_components=n_comp)
+                pca = PCA(n_components=n_comp, random_state=42)
                 text_embs = pca.fit_transform(text_embs)
                 # Pad with zeros if n_comp < actual_dim
                 if n_comp < actual_dim:
@@ -144,8 +162,10 @@ def main():
             for i, idx in enumerate(cold_indices):
                 embeddings[idx] = text_embs[i].astype(np.float32)
 
-            print(f"  {len(cold_indices)} cold-start nodes initialized from text "
-                  f"(degree <= {args.cold_start_threshold})")
+            print(
+                f"  {len(cold_indices)} cold-start nodes initialized from text "
+                f"(degree <= {args.cold_start_threshold})"
+            )
         else:
             print("  No cold-start candidates found (all nodes have sufficient edges or no text)")
 
@@ -158,7 +178,8 @@ def main():
 
     # Quality check
     from sklearn.preprocessing import normalize
-    emb_norm = normalize(embeddings, norm='l2')
+
+    emb_norm = normalize(embeddings, norm="l2")
     rng = np.random.default_rng(42)
     n_pairs = min(10000, len(node_list) * (len(node_list) - 1) // 2)
     sims = []
