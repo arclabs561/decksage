@@ -17,6 +17,8 @@ from .models import (
     ApiState,
     CompleteRequest,
     CompleteResponse,
+    DeckParseRequest,
+    DeckParseResponse,
     PatchRequest,
     SimilarityRequest,
     SuggestActionsRequest,
@@ -299,6 +301,17 @@ def _make_candidate_fn(game: str, mode: str | None, task_type: str | None = None
 # ---------------------------------------------------------------------------
 # Endpoints
 # ---------------------------------------------------------------------------
+
+
+@router.post("/deck/parse", response_model=DeckParseResponse)
+def parse_deck(req: DeckParseRequest):
+    """Parse a raw deck list text into DeckSage partition format."""
+    from ..utils.deck_parser import parse_deck_text
+
+    result = parse_deck_text(req.text, game=req.game)
+    if "error" in result:
+        return DeckParseResponse(error=result["error"])
+    return DeckParseResponse(partitions=result["partitions"])
 
 
 @router.post("/deck/apply_patch", response_model=DeckPatchResult)

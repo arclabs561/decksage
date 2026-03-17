@@ -89,6 +89,10 @@ class SimilarityRequest(BaseModel):
         None,
         description="Facet for jaccard_faceted: 'type' or 'cmc'",
     )
+    format: str | None = Field(
+        None,
+        description="Filter results by format legality (e.g., standard, pioneer, modern). Magic-only.",
+    )
 
 
 class SimilarityResponse(BaseModel):
@@ -151,6 +155,10 @@ class SearchRequest(BaseModel):
     limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
     text_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for text search (0-1)")
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for vector search (0-1)")
+    format: str | None = Field(
+        None,
+        description="Filter results by format legality (e.g., standard, modern). Magic-only.",
+    )
 
 
 class SearchResultItem(BaseModel):
@@ -240,6 +248,18 @@ class CompleteResponse(BaseModel):
     steps: list[dict]
     metrics: dict | None = None
     feedback_url: str | None = Field(None, description="URL for submitting feedback on completion")
+
+
+class DeckParseRequest(BaseModel):
+    text: str = Field(..., description="Raw deck list text to parse")
+    game: str = Field("magic", description="Game name (magic, yugioh, pokemon)")
+
+
+class DeckParseResponse(BaseModel):
+    partitions: list[dict[str, Any]] | None = Field(
+        None, description="Parsed partitions (present on success)"
+    )
+    error: str | None = Field(None, description="Error message (present on failure)")
 
 
 # ---------------------------------------------------------------------------
