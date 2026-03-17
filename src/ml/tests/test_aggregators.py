@@ -79,12 +79,7 @@ def _simple_weights() -> FusionWeights:
         functional=0.0,
         text_embed=0.0,
         visual_embed=0.0,
-        sideboard=0.0,
-        temporal=0.0,
-        gnn=0.0,
-        pack_embed=0.0,
         archetype=0.0,
-        format=0.0,
     )
 
 
@@ -402,12 +397,7 @@ class TestCrossAggregatorProperties:
             functional=0.0,
             text_embed=0.0,
             visual_embed=0.0,
-            sideboard=0.0,
-            temporal=0.0,
-            gnn=0.0,
-            pack_embed=0.0,
             archetype=0.0,
-            format=0.0,
         )
         emb = FakeEmbeddings(_SIMS)
         f_rrf = WeightedLateFusion(

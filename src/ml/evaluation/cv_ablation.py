@@ -61,12 +61,12 @@ class AblationConfig:
     - Full hybrid system
     """
 
-    components: list[str] = None  # ['cooccurrence', 'instruction', 'gnn', 'jaccard', 'functional']
+    components: list[str] = None  # ['cooccurrence', 'instruction', 'jaccard', 'functional']
     fusion_weights: dict[str, float] = None
 
     def __post_init__(self):
         if self.components is None:
-            self.components = ["cooccurrence", "instruction", "gnn", "jaccard", "functional"]
+            self.components = ["cooccurrence", "instruction", "jaccard", "functional"]
         if self.fusion_weights is None:
             self.fusion_weights = {}
 
@@ -301,9 +301,8 @@ class AblationStudy:
         """
         # Default weights when all enabled
         default_weights = {
-            "cooccurrence": 0.20,
-            "instruction": 0.25,
-            "gnn": 0.30,
+            "cooccurrence": 0.25,
+            "instruction": 0.30,
             "jaccard": 0.15,
             "functional": 0.10,
         }
@@ -330,7 +329,6 @@ class AblationStudy:
         return FusionWeights(
             embed=weights.get("cooccurrence", 0.0),
             text_embed=weights.get("instruction", 0.0),
-            gnn=weights.get("gnn", 0.0),
             jaccard=weights.get("jaccard", 0.0),
             functional=weights.get("functional", 0.0),
         )
@@ -381,7 +379,6 @@ def evaluate_ablation(
 def run_ablation_study(
     test_set_path: Path,
     graph_path: Path,
-    gnn_path: Path | None = None,
     cooccurrence_path: Path | None = None,
     output_path: Path | None = None,
 ) -> list[AblationResult]:
@@ -391,7 +388,6 @@ def run_ablation_study(
     Args:
         test_set_path: Path to test set JSON
         graph_path: Path to incremental graph JSON
-        gnn_path: Path to GNN embeddings JSON (optional)
         cooccurrence_path: Path to co-occurrence embeddings .wv (optional)
         output_path: Path to save results JSON (optional)
 
@@ -428,7 +424,6 @@ def run_ablation_study(
         # Load components based on config
         cooccurrence_embeddings = None
         instruction_embedder = None
-        gnn_embedder = None
         adj = {}
         tagger = None
 
@@ -458,18 +453,6 @@ def run_ablation_study(
                 except Exception as e:
                     logger.warning(f"  Could not load instruction embedder: {e}")
 
-            # Load GNN embedder
-            if component_config.get("gnn"):
-                try:
-                    from ml.similarity.gnn_embeddings import CardGNNEmbedder
-
-                    gnn_path = PATHS.embeddings / "gnn_graphsage.json"
-                    if gnn_path.exists():
-                        gnn_embedder = CardGNNEmbedder.load(str(gnn_path))
-                        logger.info("  Loaded GNN embedder")
-                except Exception as e:
-                    logger.warning(f"  Could not load GNN embedder: {e}")
-
             # Load graph for Jaccard
             if component_config.get("jaccard"):
                 try:
@@ -498,7 +481,6 @@ def run_ablation_study(
                 jaccard=weights.get("jaccard", 0.0),
                 functional=weights.get("functional", 0.0),
                 text_embed=weights.get("instruction", 0.0),
-                gnn=weights.get("gnn", 0.0),
             ).normalized()
 
             fusion = WeightedLateFusion(
@@ -507,7 +489,6 @@ def run_ablation_study(
                 tagger=tagger,
                 weights=fusion_weights,
                 text_embedder=instruction_embedder,
-                gnn_embedder=gnn_embedder,
             )
 
             # Evaluate if test set available (check both parameter and graph metadata)
@@ -608,12 +589,6 @@ if __name__ == "__main__":
         help="Graph path (SQLite .db or JSON .json)",
     )
     parser.add_argument(
-        "--gnn",
-        type=Path,
-        default=PATHS.embeddings / "gnn_graphsage.json",
-        help="GNN embeddings path",
-    )
-    parser.add_argument(
         "--cooccurrence",
         type=Path,
         default=PATHS.embeddings / "production.wv",
@@ -633,7 +608,6 @@ if __name__ == "__main__":
     results = run_ablation_study(
         test_set_path=args.test_set,
         graph_path=args.graph,
-        gnn_path=args.gnn,
         cooccurrence_path=args.cooccurrence,
         output_path=args.output,
     )

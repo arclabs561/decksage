@@ -2,17 +2,12 @@
 """
 Weighted Late Fusion for Multi-Modal Card Similarity
 
-This module implements manual fusion (weighted combination) of similarity signals.
-For learned reranking (learning-to-rank), see src/ml/reranking/learned_reranker.py
-
 Combines multiple similarity signals:
 1. Embedding similarity (cosine similarity in embedding space)
 2. Jaccard similarity (co-occurrence graph)
 3. Functional tag similarity (Jaccard on functional tags)
 4. Text embedding similarity (instruction-tuned embeddings)
 5. Visual embedding similarity (SigLIP/CLIP on card images)
-6. GNN embedding similarity (GraphSAGE learned representations)
-7. Pack embedding similarity (pack-level co-occurrence embeddings)
 
 Supports multiple aggregation methods:
 - rrf: Reciprocal Rank Fusion (default, recommended for heterogeneous signals)
@@ -24,9 +19,6 @@ Supports multiple aggregation methods:
 - combmin: Minimum of scores
 
 Also supports MMR (Maximal Marginal Relevance) for result diversification.
-
-NOTE: This is manual fusion. For optimal performance, consider using learned reranking
-(learning-to-rank) which learns optimal feature combination from labeled data.
 """
 
 from __future__ import annotations
@@ -46,12 +38,7 @@ _SIGNAL_NAMES: tuple[str, ...] = (
     "functional",
     "text_embed",
     "visual_embed",
-    "sideboard",
-    "temporal",
-    "gnn",
-    "pack_embed",
     "archetype",
-    "format",
 )
 
 
@@ -78,26 +65,21 @@ def _jaccard_sets(a: set[str], b: set[str]) -> float:
 class FusionWeights:
     """Weights for combining different similarity modalities.
 
-    Default weights match recommended hybrid system configuration:
-    - GNN: 30% (multi-hop, new cards, inductive learning)
-    - Instruction-tuned: 25% (zero-shot, semantic understanding)
-    - Co-occurrence: 20% (established patterns, Node2Vec/PecanPy)
+    Default weights:
+    - Instruction-tuned: 30% (zero-shot, semantic understanding)
+    - Co-occurrence: 25% (established patterns, Node2Vec/PecanPy)
     - Visual: 20% (visual similarity from card images)
     - Jaccard: 15% (direct co-occurrence)
     - Functional: 10% (role-based similarity)
+    - Archetype: 0% (optional, archetype-aware co-occurrence)
     """
 
-    embed: float = 0.20  # Co-occurrence embeddings (Node2Vec/PecanPy)
+    embed: float = 0.25  # Co-occurrence embeddings (Node2Vec/PecanPy)
     jaccard: float = 0.15  # Direct co-occurrence (Jaccard similarity)
     functional: float = 0.10  # Functional tag similarity (role-based)
-    text_embed: float = 0.25  # Instruction-tuned embeddings (zero-shot, semantic)
+    text_embed: float = 0.30  # Instruction-tuned embeddings (zero-shot, semantic)
     visual_embed: float = 0.20  # Visual embeddings (card images, CLIP/SigLIP)
-    sideboard: float = 0.0  # Sideboard co-occurrence signal (optional)
-    temporal: float = 0.0  # Temporal trend signal (optional)
-    gnn: float = 0.30  # GNN-learned embeddings (GraphSAGE, multi-hop)
-    pack_embed: float = 0.0  # Pack-level co-occurrence embeddings (optional)
     archetype: float = 0.0  # Archetype staples and co-occurrence (optional)
-    format: float = 0.0  # Format-specific and cross-format patterns (optional)
 
     def to_dict(self) -> dict[str, float]:
         """Return weights as a dict keyed by signal name."""
@@ -109,17 +91,12 @@ class FusionWeights:
         total = sum(d.values())
         if total <= 0.0:
             return FusionWeights(
-                embed=0.15,
+                embed=0.25,
                 jaccard=0.15,
                 functional=0.15,
-                text_embed=0.10,
+                text_embed=0.25,
                 visual_embed=0.10,
-                sideboard=0.10,
-                temporal=0.05,
-                gnn=0.10,
-                pack_embed=0.0,
                 archetype=0.10,
-                format=0.10,
             )
         return FusionWeights(**{k: v / total for k, v in d.items()})
 
@@ -141,12 +118,7 @@ class WeightedLateFusion:
         "functional": "_get_functional_tag_similarity",
         "text_embed": "_get_text_embedding_similarity",
         "visual_embed": "_get_visual_embedding_similarity",
-        "sideboard": "_get_sideboard_similarity",
-        "temporal": "_get_temporal_similarity",
-        "gnn": "_get_gnn_similarity",
-        "pack_embed": "_get_pack_embed_similarity",
         "archetype": "_get_archetype_similarity",
-        "format": "_get_format_similarity",
     }
 
     def __init__(
@@ -162,18 +134,13 @@ class WeightedLateFusion:
         text_embedder: Any | None = None,
         visual_embedder: Any | None = None,
         card_data: dict[str, dict[str, Any]] | None = None,
-        sideboard_cooccurrence: dict[str, dict[str, float]] | None = None,
-        temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
-        gnn_embedder: Any | None = None,
-        pack_embeddings: Any | None = None,
         archetype_staples: dict[str, dict[str, float]] | None = None,
         archetype_cooccurrence: dict[str, dict[str, float]] | None = None,
-        format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None,
-        cross_format_patterns: dict[str, dict[str, float]] | None = None,
         task_type: str | None = None,
-        graph: Any | None = None,  # IncrementalCardGraph instance for enhanced temporal similarity
         adaptive_visual_weights: bool = True,  # Adjust visual weights based on coverage
         graph_weights: dict | None = None,  # Edge weights for candidate capping
+        # Legacy kwargs accepted but ignored (callers may still pass them).
+        **_kwargs: Any,
     ):
         """
         Initialize fusion model.
@@ -190,15 +157,8 @@ class WeightedLateFusion:
             text_embedder: Optional CardTextEmbedder instance for text embeddings
             visual_embedder: Optional CardVisualEmbedder instance for visual embeddings
             card_data: Optional dict mapping card name -> card dict (for Oracle text access)
-            sideboard_cooccurrence: Optional dict mapping card -> dict of co-occurring cards -> frequency
-            temporal_cooccurrence: Optional dict mapping month -> card -> co-occurring card -> frequency
-            gnn_embedder: Optional GNN embedder (CardGNNEmbedder) for learned graph representations
-            pack_embeddings: Optional pack-level embedding model with similarity(q, c) and most_similar(q, topn) methods
             archetype_staples: Optional dict mapping card -> archetype -> frequency
             archetype_cooccurrence: Optional dict mapping card -> co-occurring card -> frequency (within archetypes)
-            format_cooccurrence: Optional dict mapping format -> card -> co-occurring card -> frequency
-            cross_format_patterns: Optional dict mapping card -> co-occurring card -> cross-format frequency
-            graph: Optional IncrementalCardGraph instance for enhanced temporal similarity with monthly_counts
             task_type: Optional task type for instruction-tuned embeddings (e.g., "substitution", "completion", "synergy")
         """
         # Apply task-specific weights if task_type provided
@@ -220,15 +180,8 @@ class WeightedLateFusion:
         self.text_embedder = text_embedder
         self.visual_embedder = visual_embedder
         self.card_data = card_data or {}
-        self.sideboard_cooccurrence = sideboard_cooccurrence or {}
-        self.temporal_cooccurrence = temporal_cooccurrence or {}
-        self.gnn_embedder = gnn_embedder
-        self.pack_embeddings = pack_embeddings
         self.archetype_staples = archetype_staples or {}
         self.archetype_cooccurrence = archetype_cooccurrence or {}
-        self.format_cooccurrence = format_cooccurrence or {}
-        self.cross_format_patterns = cross_format_patterns or {}
-        self.graph = graph  # IncrementalCardGraph for enhanced temporal similarity
         self._weights_cache = graph_weights or {}
         self.aggregator = aggregator
         self.adaptive_visual_weights = adaptive_visual_weights
@@ -364,210 +317,6 @@ class WeightedLateFusion:
             # Gracefully handle errors (missing images, download failures, etc.)
             return 0.0
 
-    def _get_sideboard_similarity(self, query: str, candidate: str) -> float:
-        """Get sideboard co-occurrence similarity."""
-        if not self.sideboard_cooccurrence:
-            return 0.0
-        try:
-            query_sb = self.sideboard_cooccurrence.get(query, {})
-            return float(query_sb.get(candidate, 0.0))
-        except (KeyError, TypeError):
-            return 0.0
-
-    def _get_temporal_similarity(
-        self,
-        query: str,
-        candidate: str,
-        format: str | None = None,
-        game: str | None = None,
-    ) -> float:
-        """
-        Get temporal co-occurrence similarity (weighted by recency and format awareness).
-
-        Enhanced version that uses Edge monthly_counts if graph is available,
-        otherwise falls back to temporal_cooccurrence dict.
-
-        Args:
-            query: Query card name
-            candidate: Candidate card name
-            format: Format name (e.g., "Standard", "Modern") for format-aware weighting
-            game: Game name ("MTG", "PKM", "YGO") for format-aware weighting
-
-        Returns:
-            Temporal similarity score (0-1)
-        """
-        # Try to get edge from graph if available
-        edge = None
-        if hasattr(self, "graph") and self.graph:
-            try:
-                from ml.data.incremental_graph import IncrementalCardGraph
-
-                if isinstance(self.graph, IncrementalCardGraph):
-                    edge_key = tuple(sorted([query, candidate]))
-                    edge = self.graph.edges.get(edge_key)
-            except (ImportError, AttributeError):
-                pass
-
-        # If we have an edge with monthly_counts, use enhanced computation
-        if edge and edge.monthly_counts:
-            return self._get_temporal_similarity_from_edge(edge, format, game)
-
-        # Fallback to existing temporal_cooccurrence dict
-        if not self.temporal_cooccurrence:
-            return 0.0
-
-        try:
-            # Get all months sorted
-            months = sorted(self.temporal_cooccurrence.keys())
-            if not months:
-                return 0.0
-
-            # Weight recent months more heavily
-            recent_months = months[-3:] if len(months) >= 3 else months
-            total_score = 0.0
-            total_weight = 0.0
-
-            for i, month in enumerate(recent_months):
-                weight = i + 1  # More recent = higher weight
-                month_data = self.temporal_cooccurrence[month]
-                query_data = month_data.get(query, {})
-                freq = query_data.get(candidate, 0.0)
-                total_score += freq * weight
-                total_weight += weight
-
-            return float(total_score / total_weight) if total_weight > 0 else 0.0
-        except (KeyError, TypeError):
-            return 0.0
-
-    def _get_temporal_similarity_from_edge(
-        self,
-        edge,
-        format: str | None = None,
-        game: str | None = None,
-    ) -> float:
-        """
-        Compute enhanced temporal similarity from Edge monthly_counts.
-
-        Uses format-aware weighting, recency decay, consistency, and trend signals.
-
-        Args:
-            edge: Edge object with monthly_counts
-            format: Format name for format-aware weighting
-            game: Game name for format-aware weighting
-
-        Returns:
-            Enhanced temporal similarity score (0-1)
-        """
-        try:
-            from datetime import datetime
-
-            from ml.data.format_events import (
-                get_legal_periods,
-                is_legal_in_period,
-            )
-            from ml.data.temporal_stats import (
-                compute_consistency,
-                compute_recency_score,
-                compute_trend,
-            )
-
-            monthly_counts = edge.monthly_counts
-            if not monthly_counts:
-                return 0.0
-
-            current_date = datetime.now()
-
-            # 1. Recency score (exponential decay)
-            recency_score = compute_recency_score(monthly_counts, current_date, decay_days=365.0)
-
-            # 2. Consistency score (prefer stable co-occurrence)
-            consistency = compute_consistency(monthly_counts)
-
-            # 3. Trend score (boost if co-occurrence is increasing)
-            trend = compute_trend(monthly_counts, lookback_months=6)
-            # Normalize trend to 0-1 range (assuming max trend of 10 per month)
-            trend_score = max(0.0, min(1.0, (trend + 5.0) / 10.0))  # Shift and scale
-
-            # 4. Format-aware weighting (if format and game provided)
-            format_weight = 1.0
-            if format and game:
-                try:
-                    legal_periods = get_legal_periods(game, format, current_date)
-
-                    # Count occurrences in current legal period vs historical
-                    current_period_count = 0
-                    historical_period_count = 0
-
-                    for month_key, count in monthly_counts.items():
-                        try:
-                            month_date = datetime.strptime(month_key, "%Y-%m")
-                            if is_legal_in_period(month_date, legal_periods):
-                                current_period_count += count
-                            else:
-                                historical_period_count += count
-                        except ValueError:
-                            continue
-
-                    total_count = current_period_count + historical_period_count
-                    if total_count > 0:
-                        # Weight current period 2x higher than historical
-                        format_weight = (
-                            current_period_count * 2.0 + historical_period_count * 0.3
-                        ) / total_count
-                except (ImportError, KeyError, ValueError, AttributeError):
-                    # If format events lookup fails, use default weight
-                    pass
-
-            # Combine signals
-            base_score = recency_score * format_weight
-            enhanced_score = (
-                base_score * 0.4  # Recency + format awareness
-                + consistency * 0.3  # Consistency
-                + trend_score * 0.2  # Trend
-                + 0.1  # Small baseline
-            )
-
-            return float(min(1.0, enhanced_score))
-
-        except ImportError:
-            # Fallback if temporal_stats module not available
-            # Simple recency-weighted average
-            sorted_months = sorted(monthly_counts.keys())
-            recent_months = sorted_months[-3:] if len(sorted_months) >= 3 else sorted_months
-
-            total_score = 0.0
-            total_weight = 0.0
-
-            for i, month in enumerate(recent_months):
-                weight = i + 1
-                count = monthly_counts.get(month, 0)
-                total_score += count * weight
-                total_weight += weight
-
-            return float(total_score / total_weight) if total_weight > 0 else 0.0
-
-    def _get_gnn_similarity(self, query: str, candidate: str) -> float:
-        """Get GNN embedding similarity."""
-        if not self.gnn_embedder:
-            return 0.0
-        try:
-            similarity = self.gnn_embedder.similarity(query, candidate)
-            return _cosine_to_unit(similarity)  # Map to [0, 1]
-        except (AttributeError, KeyError, RuntimeError, ValueError):
-            return 0.0
-
-    def _get_pack_embed_similarity(self, query: str, candidate: str) -> float:
-        """Get pack-level embedding similarity."""
-        if not self.pack_embeddings:
-            return 0.0
-        if query not in self.pack_embeddings or candidate not in self.pack_embeddings:
-            return 0.0
-        try:
-            similarity = self.pack_embeddings.similarity(query, candidate)
-            return _cosine_to_unit(similarity)  # Map to [0, 1]
-        except (AttributeError, KeyError, RuntimeError, ValueError):
-            return 0.0
-
     def _get_archetype_similarity(self, query: str, candidate: str) -> float:
         """Get archetype-based similarity."""
         if not self.archetype_staples or not self.archetype_cooccurrence:
@@ -580,22 +329,6 @@ class WeightedLateFusion:
                 candidate,
                 self.archetype_staples,
                 self.archetype_cooccurrence,
-            )
-        except (ImportError, KeyError, TypeError):
-            return 0.0
-
-    def _get_format_similarity(self, query: str, candidate: str) -> float:
-        """Get format-based similarity."""
-        if not self.format_cooccurrence:
-            return 0.0
-        try:
-            from ..similarity.format_signal import format_similarity
-
-            return format_similarity(
-                query,
-                candidate,
-                self.format_cooccurrence,
-                self.cross_format_patterns,
             )
         except (ImportError, KeyError, TypeError):
             return 0.0
@@ -645,24 +378,6 @@ class WeightedLateFusion:
                 )  # Limit to 50
                 candidates.update(card for card, _ in similar)
             except (KeyError, RuntimeError, ValueError):
-                pass
-
-        # From GNN embeddings (skip if not available - expensive)
-        if self.gnn_embedder:
-            try:
-                similar = self.gnn_embedder.most_similar(query, topn=min(self.candidate_topn, 50))
-                candidates.update(card for card, _ in similar)
-            except (AttributeError, KeyError, RuntimeError):
-                pass
-
-        # From pack embeddings
-        if self.pack_embeddings and query in self.pack_embeddings:
-            try:
-                similar = self.pack_embeddings.most_similar(
-                    query, topn=min(self.candidate_topn, 50)
-                )
-                candidates.update(card for card, _ in similar)
-            except (AttributeError, KeyError, RuntimeError):
                 pass
 
         # Text embeddings skipped in candidate generation (too slow).
