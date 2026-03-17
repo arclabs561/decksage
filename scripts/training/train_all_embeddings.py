@@ -34,6 +34,7 @@ Usage:
     # Skip rebuild (use existing .db)
     python scripts/training/train_all_embeddings.py --skip-build
 """
+
 from __future__ import annotations
 
 import argparse
@@ -103,10 +104,15 @@ def step_build_unified_graph(game: str, dry_run: bool) -> Path:
     """Step 0: Build the unified SQLite graph from all edge sources."""
     db_path = PROJECT_ROOT / "data" / "graphs" / f"{game}_unified.db"
     print(f"\n[0] Build unified graph -> {db_path.name}")
-    run([
-        VENV_PYTHON, "scripts/training/build_unified_graph.py",
-        "--game", game,
-    ], dry_run)
+    run(
+        [
+            VENV_PYTHON,
+            "scripts/training/build_unified_graph.py",
+            "--game",
+            game,
+        ],
+        dry_run,
+    )
     return db_path
 
 
@@ -143,12 +149,19 @@ def step_train_prone(game: str, merged_edgelist: str, dry_run: bool) -> str:
     """Step 2a: Train ProNE embeddings."""
     output = f"data/embeddings/{game}_prone_propagated.wv"
     print(f"\n[2a] ProNE training: {merged_edgelist} -> {output}")
-    run([
-        VENV_PYTHON, "scripts/training/train_prone.py",
-        "--edgelist", merged_edgelist,
-        "--output", output,
-        "--dim", "128",
-    ], dry_run)
+    run(
+        [
+            VENV_PYTHON,
+            "scripts/training/train_prone.py",
+            "--edgelist",
+            merged_edgelist,
+            "--output",
+            output,
+            "--dim",
+            "128",
+        ],
+        dry_run,
+    )
     return output
 
 
@@ -156,32 +169,53 @@ def step_train_pecanpy(game: str, merged_edgelist: str, dry_run: bool) -> str:
     """Step 2b: Train PecanPy embeddings."""
     output = f"data/embeddings/{game}_pecanpy_propagated.wv"
     print(f"\n[2b] PecanPy training: {merged_edgelist} -> {output}")
-    run([
-        VENV_PYTHON, "scripts/training/train_blended_embeddings.py",
-        "--edgelist", merged_edgelist, "--weight", "1.0",
-        "--output", output,
-        "--dim", "128",
-        "--walks", "10",
-        "--walk-length", "80",
-    ], dry_run)
+    run(
+        [
+            VENV_PYTHON,
+            "scripts/training/train_blended_embeddings.py",
+            "--edgelist",
+            merged_edgelist,
+            "--weight",
+            "1.0",
+            "--output",
+            output,
+            "--dim",
+            "128",
+            "--walks",
+            "10",
+            "--walk-length",
+            "80",
+        ],
+        dry_run,
+    )
     return output
 
 
-def step_fuse_attributes(game: str, config: dict, embedding_path: str,
-                         suffix: str, dry_run: bool) -> str:
+def step_fuse_attributes(
+    game: str, config: dict, embedding_path: str, suffix: str, dry_run: bool
+) -> str:
     """Step 3: Fuse structural embeddings with card attributes."""
     if not config["card_attributes"]:
         return ""
     output = f"data/embeddings/{game}_{suffix}_fused.wv"
     print(f"\n[3] Fusion: {embedding_path} + {config['card_attributes']} -> {output}")
-    run([
-        VENV_PYTHON, "scripts/training/fuse_embeddings.py",
-        "--embeddings", embedding_path,
-        "--card-attrs", config["card_attributes"],
-        "--output", output,
-        "--alpha", "0.7",
-        "--dim", "128",
-    ], dry_run)
+    run(
+        [
+            VENV_PYTHON,
+            "scripts/training/fuse_embeddings.py",
+            "--embeddings",
+            embedding_path,
+            "--card-attrs",
+            config["card_attributes"],
+            "--output",
+            output,
+            "--alpha",
+            "0.7",
+            "--dim",
+            "128",
+        ],
+        dry_run,
+    )
     return output
 
 
@@ -208,8 +242,13 @@ def step_evaluate(game: str, config: dict, embedding_paths: list[str], dry_run: 
     import math
     from gensim.models import KeyedVectors
 
-    GRADES = {"highly_relevant": 3, "relevant": 2, "somewhat_relevant": 1,
-              "marginally_relevant": 0.5, "irrelevant": 0}
+    GRADES = {
+        "highly_relevant": 3,
+        "relevant": 2,
+        "somewhat_relevant": 1,
+        "marginally_relevant": 0.5,
+        "irrelevant": 0,
+    }
 
     def dcg(scores, k):
         return sum(s / math.log2(i + 2) for i, s in enumerate(scores[:k]))
@@ -253,8 +292,94 @@ def step_evaluate(game: str, config: dict, embedding_paths: list[str], dry_run: 
         print(f"  {name}: nDCG@10={mean_ndcg:.3f}  ({n}/{n + n_miss} queries)")
 
 
-def step_generate_review(game: str, config: dict, embedding_paths: list[str],
-                         dry_run: bool) -> None:
+def step_validate_vocab_coverage(
+    game: str,
+    db_path: Path,
+    embedding_paths: list[str],
+    min_decks: int = 10,
+    dry_run: bool = False,
+) -> bool:
+    """Step 4b: Verify every card appearing in >= min_decks decks is in the embedding vocab.
+
+    Catches issues like Card_XXXX numeric IDs leaking into embeddings or
+    legitimate cards being dropped during training.
+
+    Returns True if all checks pass, False if any embedding is missing cards.
+    """
+    import re
+    import sqlite3
+
+    print(f"\n[4b] Vocab coverage check (min_decks={min_decks})")
+    if dry_run:
+        print("  [DRY RUN] would check vocab coverage")
+        return True
+
+    if not db_path.exists():
+        print(f"  SKIPPED: no graph DB at {db_path}")
+        return True
+
+    # Query cards with >= min_decks from the unified graph
+    conn = sqlite3.connect(str(db_path))
+    rows = conn.execute(
+        "SELECT name, total_decks FROM nodes WHERE total_decks >= ?",
+        (min_decks,),
+    ).fetchall()
+    conn.close()
+
+    if not rows:
+        print(f"  WARNING: no cards with >= {min_decks} decks in {db_path.name}")
+        return True
+
+    # Filter out Card_XXXX numeric IDs (known noise from YGOProDeck)
+    numeric_id_re = re.compile(r"^Card_\d+$")
+    expected_cards = {name for name, _ in rows if not numeric_id_re.match(name)}
+    print(f"  {len(expected_cards)} cards with >= {min_decks} decks (excluding Card_XXXX IDs)")
+
+    all_passed = True
+    for emb_path in embedding_paths:
+        if not emb_path or not Path(emb_path).exists():
+            continue
+        try:
+            from gensim.models import KeyedVectors
+
+            kv = KeyedVectors.load(str(emb_path))
+        except Exception as e:
+            print(f"  {Path(emb_path).stem}: FAILED to load - {e}")
+            all_passed = False
+            continue
+
+        vocab = set(kv.key_to_index.keys())
+        missing = expected_cards - vocab
+        noise = {k for k in vocab if numeric_id_re.match(k)}
+        coverage = len(expected_cards & vocab) / len(expected_cards) * 100
+
+        name = Path(emb_path).stem
+        if missing:
+            print(
+                f"  {name}: MISSING {len(missing)}/{len(expected_cards)} "
+                f"cards ({coverage:.1f}% coverage)"
+            )
+            # Show up to 10 missing cards sorted by deck count
+            missing_with_count = sorted(
+                [(n, d) for n, d in rows if n in missing],
+                key=lambda x: -x[1],
+            )[:10]
+            for card_name, deck_count in missing_with_count:
+                print(f"    - {card_name} ({deck_count} decks)")
+            all_passed = False
+        else:
+            print(f"  {name}: OK ({coverage:.1f}% coverage)")
+
+        if noise:
+            print(f"  {name}: WARNING: {len(noise)} Card_XXXX numeric IDs in vocab")
+            all_passed = False
+
+    return all_passed
+
+
+def step_generate_review(
+    game: str, config: dict, embedding_paths: list[str], dry_run: bool
+) -> None:
     """Step 5: Generate visual review HTML with card images."""
     test_set = config["test_set"]
     image_urls = config.get("image_urls", "")
@@ -273,13 +398,20 @@ def step_generate_review(game: str, config: dict, embedding_paths: list[str],
     db_path = PROJECT_ROOT / "data" / "graphs" / f"{game}_unified.db"
     print(f"\n[5] Review HTML: {len(existing)} models -> {output}")
     cmd = [
-        VENV_PYTHON, "scripts/evaluation/generate_review_html.py",
-        "--test-set", test_set,
-        "--embeddings", *existing,
-        "--game", game,
-        "--output", output,
-        "--top-k", "10",
-        "--max-queries", "40",
+        VENV_PYTHON,
+        "scripts/evaluation/generate_review_html.py",
+        "--test-set",
+        test_set,
+        "--embeddings",
+        *existing,
+        "--game",
+        game,
+        "--output",
+        output,
+        "--top-k",
+        "10",
+        "--max-queries",
+        "40",
     ]
     if db_path.exists() and not dry_run:
         cmd.extend(["--graph-db", str(db_path)])
@@ -290,9 +422,9 @@ def step_generate_review(game: str, config: dict, embedding_paths: list[str],
 
 def train_game(game: str, config: dict, args: argparse.Namespace) -> None:
     """Run full training pipeline for one game."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Training pipeline: {game.upper()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Step 0: Build unified graph
     if not args.skip_build:
@@ -316,11 +448,16 @@ def train_game(game: str, config: dict, args: argparse.Namespace) -> None:
 
     pecanpy_fused = ""
     if pecanpy_path:
-        pecanpy_fused = step_fuse_attributes(game, config, pecanpy_path, "pecanpy_merged", args.dry_run)
+        pecanpy_fused = step_fuse_attributes(
+            game, config, pecanpy_path, "pecanpy_merged", args.dry_run
+        )
 
     # Step 4: Evaluate
     all_embeddings = [prone_path, pecanpy_path, prone_fused, pecanpy_fused]
     step_evaluate(game, config, all_embeddings, args.dry_run)
+
+    # Step 4b: Vocab coverage validation
+    step_validate_vocab_coverage(game, db_path, all_embeddings, min_decks=10, dry_run=args.dry_run)
 
     # Step 5: Visual review HTML
     step_generate_review(game, config, all_embeddings, args.dry_run)
@@ -331,14 +468,20 @@ def main() -> int:
         description="Reproducible embedding training pipeline for all games.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--game", choices=list(GAME_CONFIGS.keys()),
-                        help="Train specific game only (default: all)")
-    parser.add_argument("--skip-pecanpy", action="store_true",
-                        help="Skip PecanPy training (ProNE only, much faster)")
-    parser.add_argument("--skip-build", action="store_true",
-                        help="Skip unified graph build (use existing .db)")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would be done without executing")
+    parser.add_argument(
+        "--game", choices=list(GAME_CONFIGS.keys()), help="Train specific game only (default: all)"
+    )
+    parser.add_argument(
+        "--skip-pecanpy",
+        action="store_true",
+        help="Skip PecanPy training (ProNE only, much faster)",
+    )
+    parser.add_argument(
+        "--skip-build", action="store_true", help="Skip unified graph build (use existing .db)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be done without executing"
+    )
     args = parser.parse_args()
 
     games = [args.game] if args.game else list(GAME_CONFIGS.keys())
@@ -347,9 +490,9 @@ def main() -> int:
         config = GAME_CONFIGS[game]
         train_game(game, config, args)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  Pipeline complete.")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return 0
 
 
