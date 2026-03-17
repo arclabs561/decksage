@@ -466,7 +466,7 @@ async def lifespan(app: FastAPI):
                 )
 
         # ------------------------------------------------------------------
-        # Auto-populate MeiliSearch if index is empty
+        # Configure MeiliSearch settings + auto-populate if index is empty
         # ------------------------------------------------------------------
         state = get_state(game)
         if state.card_metadata and HAS_SEARCH and HybridSearch is not None:
@@ -478,23 +478,31 @@ async def lifespan(app: FastAPI):
                     collection_name=idx_name,
                 )
                 if _hs.meilisearch:
+                    # Apply ranking rules, searchable/filterable attrs, synonyms, typo tolerance.
+                    # Idempotent: skips if settings already match.
+                    _hs.configure_settings(game=game)
+
                     _idx = _hs.meilisearch.index(idx_name)
                     _stats = _idx.get_stats()
                     if _stats.number_of_documents == 0:
                         _docs = []
                         for _i_card, (_name, _meta) in enumerate(state.card_metadata.items()):
-                            _docs.append(
-                                {
-                                    "id": str(_i_card),
-                                    "name": _name,
-                                    "text": str(
-                                        _meta.get("oracle_text") or _meta.get("text") or ""
-                                    )[:2000],
-                                    "type_line": str(
-                                        _meta.get("type_line") or _meta.get("type") or ""
-                                    ),
-                                }
-                            )
+                            _doc: dict[str, Any] = {
+                                "id": str(_i_card),
+                                "name": _name,
+                                "game": game,
+                                "text": str(_meta.get("oracle_text") or _meta.get("text") or "")[
+                                    :2000
+                                ],
+                                "type_line": str(_meta.get("type_line") or _meta.get("type") or ""),
+                                "keywords": str(_meta.get("keywords") or ""),
+                            }
+                            # Filterable fields (present when enriched CSV has them)
+                            for _fk in ("colors", "cmc", "rarity", "set_name"):
+                                _fv = _meta.get(_fk)
+                                if _fv is not None and _fv != "":
+                                    _doc[_fk] = _fv
+                            _docs.append(_doc)
                         for _i in range(0, len(_docs), 500):
                             _idx.add_documents(_docs[_i : _i + 500])
                         logger.info(
@@ -1126,6 +1134,15 @@ def _enrich_similar_card(
         if legality:
             meta["legalities"] = legality
 
+    # Scryfall prices (Magic-only)
+    if game == "magic" and state.price_data:
+        prices = state.price_data.get(card_name, {})
+        # Only include non-null price entries
+        if prices:
+            filtered = {k: v for k, v in prices.items() if v is not None}
+            if filtered:
+                meta["prices"] = filtered
+
     # Top co-occurrence (from graph adjacency + weights, top 3 by weight)
     if state.graph_data and "adj" in state.graph_data:
         adj = state.graph_data["adj"]
@@ -1407,7 +1424,20 @@ def find_similar_v1(request: SimilarityRequest):
         )
     except Exception:
         pass  # Non-fatal - don't break API if logging fails
-    return _similar_impl(request)
+    resp = _similar_impl(request)
+
+    # Post-filter by format legality (Scryfall data, Magic-only)
+    if request.format:
+        resolved_game = _require_game(request.game)
+        state = get_state(resolved_game)
+        if state.legality_data:
+            resp.results = [
+                r
+                for r in resp.results
+                if state.legality_data.get(r.card, {}).get(request.format) == "legal"
+            ]
+
+    return resp
 
 
 @router.get("/cards/{name}/similar", response_model=SimilarityResponse)
@@ -1761,6 +1791,7 @@ def search_cards_v1(request: SearchRequest):
             limit=request.limit,
             text_weight=request.text_weight,
             vector_weight=request.vector_weight,
+            filters=request.filters,
         )
     except Exception as exc:
         raise HTTPException(
@@ -1815,6 +1846,20 @@ def search_cards_v1(request: SearchRequest):
             if freq:
                 merged["deck_popularity"] = freq
 
+        # Scryfall legalities (Magic-only)
+        if game == "magic" and state.legality_data:
+            legality = state.legality_data.get(r.card_name, {})
+            if legality:
+                merged["legalities"] = legality
+
+        # Scryfall prices (Magic-only)
+        if game == "magic" and state.price_data:
+            prices = state.price_data.get(r.card_name, {})
+            if prices:
+                filtered = {k: v for k, v in prices.items() if v is not None}
+                if filtered:
+                    merged["prices"] = filtered
+
         # Top co-occurrence
         if state.graph_data and "adj" in state.graph_data:
             adj = state.graph_data["adj"]
@@ -1834,6 +1879,14 @@ def search_cards_v1(request: SearchRequest):
             )
         )
 
+    # Post-filter by format legality (Scryfall data, Magic-only)
+    if request.format and state.legality_data:
+        enriched = [
+            r
+            for r in enriched
+            if state.legality_data.get(r.card_name, {}).get(request.format) == "legal"
+        ]
+
     return SearchResponse(
         query=request.query,
         results=enriched,
@@ -1848,10 +1901,18 @@ def search_cards_get_v1(
     limit: int = Query(10, ge=1, le=100, description="Maximum number of results"),
     text_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for text search"),
     vector_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for vector search"),
+    format: str | None = Query(
+        None, description="Filter by format legality (e.g., standard, modern). Magic-only."
+    ),
 ):
     """GET version of card search endpoint."""
     request = SearchRequest(
-        game=game, query=q, limit=limit, text_weight=text_weight, vector_weight=vector_weight
+        game=game,
+        query=q,
+        limit=limit,
+        text_weight=text_weight,
+        vector_weight=vector_weight,
+        format=format,
     )
     return search_cards_v1(request)
 

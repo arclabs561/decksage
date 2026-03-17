@@ -45,6 +45,115 @@ except ImportError:
     KeyedVectors = None
 
 
+# ---------------------------------------------------------------------------
+# MeiliSearch index configuration
+# ---------------------------------------------------------------------------
+
+# Synonyms keyed by game. Each maps a short/colloquial term to the canonical
+# card name(s) so MeiliSearch treats them as equivalent during text search.
+_SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
+    "magic": {
+        "bolt": ["Lightning Bolt"],
+        "wrath": ["Wrath of God"],
+        "counterspell": ["Counter Spell"],
+        "path": ["Path to Exile"],
+        "snap": ["Snapcaster Mage"],
+        "bob": ["Dark Confidant"],
+        "lili": ["Liliana of the Veil"],
+        "jace": ["Jace, the Mind Sculptor"],
+        "sol ring": ["Sol Ring"],
+        "stp": ["Swords to Plowshares"],
+    },
+    "pokemon": {
+        "research": ["Professor's Research"],
+        "boss": ["Boss's Orders"],
+        "ultra ball": ["Ultra Ball"],
+        "nest ball": ["Nest Ball"],
+        "rare candy": ["Rare Candy"],
+        "switch": ["Switch"],
+    },
+    "yugioh": {
+        "ash": ["Ash Blossom & Joyous Spring"],
+        "maxx c": ['Maxx "C"'],
+        "nib": ["Nibiru, the Primal Being"],
+        "imperm": ["Infinite Impermanence"],
+        "called by": ["Called by the Grave"],
+        "droplet": ["Forbidden Droplet"],
+        "raigeki": ["Raigeki"],
+        "hfd": ["Harpie's Feather Duster"],
+    },
+}
+
+
+def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
+    """Build the MeiliSearch settings dict for a card index.
+
+    Args:
+        game: Optional game name. When provided, game-specific synonyms are
+              included. Pass None for a generic configuration.
+
+    Returns:
+        A dict suitable for ``index.update_settings()``.
+    """
+    settings: dict[str, Any] = {
+        # Ranking rules -- MeiliSearch defaults but explicit for clarity.
+        # "words": presence of query terms
+        # "typo": fewer typos ranked higher
+        # "proximity": closer query terms ranked higher
+        # "attribute": matches in higher-priority attributes ranked higher
+        # "sort": user-requested sort order
+        # "exactness": exact matches ranked higher
+        "rankingRules": [
+            "words",
+            "typo",
+            "proximity",
+            "attribute",
+            "sort",
+            "exactness",
+        ],
+        # Attribute search priority (name > oracle_text > type_line > keywords).
+        # Order matters: matches in earlier attributes score higher.
+        "searchableAttributes": [
+            "name",
+            "text",
+            "type_line",
+            "keywords",
+        ],
+        # Attributes returned in search results.
+        "displayedAttributes": ["*"],
+        # Attributes available for filtering (e.g. ``filter="game = magic"``).
+        "filterableAttributes": [
+            "game",
+            "colors",
+            "type_line",
+            "cmc",
+            "rarity",
+            "set_name",
+        ],
+        # Attributes available for sorting.
+        "sortableAttributes": [
+            "name",
+            "cmc",
+        ],
+        # Typo tolerance: allow 1 typo for 5+ char words, 2 for 8+ chars.
+        "typoTolerance": {
+            "enabled": True,
+            "minWordSizeForTypos": {
+                "oneTypo": 4,
+                "twoTypos": 8,
+            },
+        },
+    }
+
+    # Merge game-specific synonyms.
+    synonyms: dict[str, list[str]] = {}
+    if game and game in _SYNONYMS_BY_GAME:
+        synonyms.update(_SYNONYMS_BY_GAME[game])
+    settings["synonyms"] = synonyms
+
+    return settings
+
+
 @dataclass
 class SearchResult:
     """Single search result with metadata."""
@@ -138,11 +247,6 @@ class HybridSearch:
                     options={"primaryKey": "id"},
                 )
                 logger.info(f"Created Meilisearch index '{self.index_name}'")
-
-                # Configure searchable attributes
-                index = self.meilisearch.index(self.index_name)
-                index.update_searchable_attributes(["name", "text", "type_line"])
-                index.update_displayed_attributes(["id", "name", "image_url", "ref_url"])
             else:
                 logger.error(f"Failed to initialize Meilisearch: {e}")
         except Exception as e:
@@ -191,6 +295,44 @@ class HybridSearch:
         except Exception as e:
             if "already exists" not in str(e).lower():
                 logger.error(f"Failed to create Qdrant collection: {e}")
+
+    def configure_settings(self, game: str | None = None) -> bool:
+        """Apply ranking rules, searchable/filterable/sortable attributes,
+        synonyms, and typo tolerance to the Meilisearch index.
+
+        Idempotent: compares current settings and skips if already configured.
+
+        Returns True if settings were applied (or already matched), False on error.
+        """
+        if self.meilisearch is None:
+            return False
+
+        try:
+            index = self.meilisearch.index(self.index_name)
+            settings = build_meilisearch_settings(game)
+
+            current = index.get_settings()
+            # Compare the keys we care about
+            needs_update = False
+            for key in settings:
+                if current.get(key) != settings[key]:
+                    needs_update = True
+                    break
+
+            if not needs_update:
+                logger.info("Meilisearch index '%s' settings already configured", self.index_name)
+                return True
+
+            index.update_settings(settings)
+            logger.info(
+                "Applied Meilisearch settings to index '%s' (game=%s)",
+                self.index_name,
+                game or "generic",
+            )
+            return True
+        except Exception as e:
+            logger.error(f"Failed to configure Meilisearch settings: {e}")
+            return False
 
     def _card_id(self, card_name: str) -> str:
         """Generate consistent card ID from name."""
@@ -296,6 +438,7 @@ class HybridSearch:
         limit: int = 10,
         text_weight: float = 0.5,
         vector_weight: float = 0.5,
+        filters: str | None = None,
     ) -> list[SearchResult]:
         """
         Hybrid search combining text and vector results.
@@ -305,6 +448,9 @@ class HybridSearch:
             limit: Maximum number of results
             text_weight: Weight for Meilisearch results (0-1)
             vector_weight: Weight for Qdrant results (0-1)
+            filters: Optional MeiliSearch filter expression, e.g.
+                     ``"game = magic AND colors = W"`` or ``"cmc <= 3"``.
+                     Only applies to the MeiliSearch text search leg.
 
         Returns:
             List of SearchResult sorted by combined score
@@ -315,9 +461,14 @@ class HybridSearch:
         if self.meilisearch and text_weight > 0:
             try:
                 index = self.meilisearch.index(self.index_name)
-                meilisearch_results = index.search(
-                    query, {"limit": limit * 2, "showRankingScore": True}
-                )
+                search_params: dict[str, Any] = {
+                    "limit": limit * 2,
+                    "showRankingScore": True,
+                    "showRankingScoreDetails": True,
+                }
+                if filters:
+                    search_params["filter"] = filters
+                meilisearch_results = index.search(query, search_params)
                 hits = meilisearch_results.get("hits", [])
                 for hit in hits:
                     card_name = hit.get("name", "")
@@ -393,9 +544,11 @@ class HybridSearch:
         sorted_results = sorted(results.values(), key=lambda x: x.score, reverse=True)
         return sorted_results[:limit]
 
-    def search_text_only(self, query: str, limit: int = 10) -> list[SearchResult]:
+    def search_text_only(
+        self, query: str, limit: int = 10, filters: str | None = None
+    ) -> list[SearchResult]:
         """Text-only search using Meilisearch."""
-        return self.search(query, limit=limit, text_weight=1.0, vector_weight=0.0)
+        return self.search(query, limit=limit, text_weight=1.0, vector_weight=0.0, filters=filters)
 
     def search_vector_only(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Vector-only search using Qdrant."""
