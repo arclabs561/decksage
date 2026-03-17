@@ -130,6 +130,11 @@ type cardFace struct {
 	cardProps
 }
 
+func scryfallHeaders(req *http.Request) {
+	req.Header.Set("User-Agent", "DeckSage/1.0 (card-data-extractor)")
+	req.Header.Set("Accept", "application/json")
+}
+
 func (d *Dataset) extractCards(
 	ctx context.Context,
 	sc *limpet.Client,
@@ -140,6 +145,7 @@ func (d *Dataset) extractCards(
 	if err != nil {
 		return err
 	}
+	scryfallHeaders(req)
 	page, err := sc.Do(ctx, req)
 	if err != nil {
 		return err
@@ -160,17 +166,33 @@ func (d *Dataset) extractCards(
 	if uri.IsAbsent() {
 		return fmt.Errorf("failed to find default_cards type, but found: %v", types)
 	}
-	req, err = http.NewRequest("GET", uri.MustGet(), nil)
+	// Download bulk data directly with net/http (too large for limpet's cache).
+	// Stream-decode to avoid holding the full ~500MB JSON in memory.
+	bulkReq, err := http.NewRequestWithContext(ctx, "GET", uri.MustGet(), nil)
 	if err != nil {
 		return err
 	}
-	page, err = sc.Do(ctx, req)
+	scryfallHeaders(bulkReq)
+	bulkResp, err := http.DefaultClient.Do(bulkReq)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to download bulk data: %w", err)
+	}
+	defer bulkResp.Body.Close()
+	if bulkResp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bulk data download returned status %d", bulkResp.StatusCode)
+	}
+	dec := json.NewDecoder(bulkResp.Body)
+	// Read opening bracket
+	if _, err := dec.Token(); err != nil {
+		return fmt.Errorf("failed to read opening bracket: %w", err)
 	}
 	var rawCards []card
-	if err := json.Unmarshal(page.Response.Body, &rawCards); err != nil {
-		return err
+	for dec.More() {
+		var c card
+		if err := dec.Decode(&c); err != nil {
+			return fmt.Errorf("failed to decode card: %w", err)
+		}
+		rawCards = append(rawCards, c)
 	}
 	d.log.Fieldf("dur", "%v", time.Since(start).Round(time.Millisecond)).
 		Infof(ctx, "extracted %d raw cards", len(rawCards))
@@ -191,15 +213,15 @@ func (d *Dataset) extractCards(
 					if !ok {
 						return
 					}
-						if err := d.parseCard(ctx, rawCard); err != nil {
-							d.log.Errorf(ctx, "failed to parse card %q: %v", rawCard.Name, err)
-							atomic.AddUint32(&nerr, 1)
-							// Record error in statistics if available
-							if stats := games.ExtractStatsFromContext(ctx); stats != nil {
-								stats.RecordCategorizedError(ctx, rawCard.ScryfallURI, "scryfall", err)
-							}
-							continue
+					if err := d.parseCard(ctx, rawCard); err != nil {
+						d.log.Errorf(ctx, "failed to parse card %q: %v", rawCard.Name, err)
+						atomic.AddUint32(&nerr, 1)
+						// Record error in statistics if available
+						if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+							stats.RecordCategorizedError(ctx, rawCard.ScryfallURI, "scryfall", err)
 						}
+						continue
+					}
 					atomic.AddUint32(&nok, 1)
 				}
 			}
@@ -474,20 +496,20 @@ func (d *Dataset) parseCollection(
 	if setReleasedSubmatches == nil {
 		return fmt.Errorf("failed to extract set release date: %q", setReleasedRaw)
 	}
-		// Use centralized date parsing with validation
-		setReleaseDate, err := games.ParseDateWithValidation(setReleasedSubmatches[1])
-		if err != nil {
-			// Try fallback format
-			if fallbackDate, fallbackErr := time.Parse("2006-01-02", setReleasedSubmatches[1]); fallbackErr == nil {
-				year := fallbackDate.Year()
-				if year >= 1990 && year <= 2100 {
-					setReleaseDate = fallbackDate
-					err = nil
-				} else {
-					err = fmt.Errorf("fallback date has invalid year %d", year)
-				}
+	// Use centralized date parsing with validation
+	setReleaseDate, err := games.ParseDateWithValidation(setReleasedSubmatches[1])
+	if err != nil {
+		// Try fallback format
+		if fallbackDate, fallbackErr := time.Parse("2006-01-02", setReleasedSubmatches[1]); fallbackErr == nil {
+			year := fallbackDate.Year()
+			if year >= 1990 && year <= 2100 {
+				setReleaseDate = fallbackDate
+				err = nil
+			} else {
+				err = fmt.Errorf("fallback date has invalid year %d", year)
 			}
 		}
+	}
 	if err != nil {
 		return fmt.Errorf("failed to parse set release date %q: %w", setReleasedSubmatches[1], err)
 	}
@@ -522,9 +544,9 @@ func (d *Dataset) parseCollection(
 					line = strings.TrimSpace(line)
 					// Skip lines with "cards", bullet points, or empty
 					if line != "" &&
-					   !strings.Contains(strings.ToLower(line), "cards") &&
-					   !strings.Contains(line, "•") &&
-					   !strings.HasPrefix(line, "<") {
+						!strings.Contains(strings.ToLower(line), "cards") &&
+						!strings.Contains(line, "•") &&
+						!strings.HasPrefix(line, "<") {
 						partitionName = line
 						break
 					}
