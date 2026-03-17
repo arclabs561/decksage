@@ -71,7 +71,7 @@ QUERIES: dict[str, list[str]] = {
 DEFAULT_EMBEDDINGS: dict[str, str] = {
     "magic": "data/embeddings/magic_cleaned_v4.wv",
     "pokemon": "data/embeddings/pokemon_cleaned_v4.wv",
-    "yugioh": "data/embeddings/yugioh_cleaned_v4.wv",
+    "yugioh": "data/embeddings/yugioh_cleaned_v5.wv",
 }
 
 DEFAULT_PAIRS: dict[str, str] = {
