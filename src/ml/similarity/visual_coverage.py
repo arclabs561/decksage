@@ -150,17 +150,7 @@ def adjust_weights_for_coverage(
         visual_reduction = weights.visual_embed - adjusted_visual
 
         # Get other signal weights (excluding visual)
-        other_weights = {
-            "embed": weights.embed,
-            "jaccard": weights.jaccard,
-            "functional": weights.functional,
-            "text_embed": weights.text_embed,
-            "sideboard": weights.sideboard,
-            "temporal": weights.temporal,
-            "gnn": weights.gnn,
-            "archetype": weights.archetype,
-            "format": weights.format,
-        }
+        other_weights = {k: v for k, v in weights.to_dict().items() if k != "visual_embed"}
 
         # Sum of other weights
         other_total = sum(w for w in other_weights.values() if w > 0)
@@ -171,18 +161,8 @@ def adjust_weights_for_coverage(
                 if other_weights[key] > 0:
                     other_weights[key] += visual_reduction * (other_weights[key] / other_total)
 
-        return FusionWeights(
-            embed=other_weights["embed"],
-            jaccard=other_weights["jaccard"],
-            functional=other_weights["functional"],
-            text_embed=other_weights["text_embed"],
-            visual_embed=adjusted_visual,
-            sideboard=other_weights["sideboard"],
-            temporal=other_weights["temporal"],
-            gnn=other_weights["gnn"],
-            archetype=other_weights["archetype"],
-            format=other_weights["format"],
-        ).normalized()
+        other_weights["visual_embed"] = adjusted_visual
+        return FusionWeights(**other_weights).normalized()
     else:
         # Coverage is sufficient, return original weights
         return weights.normalized()

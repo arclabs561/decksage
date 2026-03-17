@@ -23,63 +23,25 @@ else:
     load_hand_annotations = _annotation_utils.load_hand_annotations
     load_similarity_annotations = _annotation_utils.load_similarity_annotations
 
-# AimStack helpers (optional)
-try:
-    from .aim_helpers import (
-        create_training_run,
-        track_artifact,
-        track_evaluation_metrics,
-        track_hyperparameter_result,
-        track_training_metrics,
+__all__ = [
+    "GAME_FILTERS",
+    "PATHS",
+    "RELEVANCE_WEIGHTS",
+    "build_adjacency_dict",
+    "compute_precision_at_k",
+    "evaluate_similarity",
+    "get_filter_set",
+    "jaccard_similarity",
+    "load_embeddings",
+    "load_pairs",
+    "load_test_set",
+]
+if HAS_ANNOTATION_UTILS:
+    __all__.extend(
+        [
+            "convert_annotations_to_substitution_pairs",
+            "extract_substitution_pairs_from_annotations",
+            "load_hand_annotations",
+            "load_similarity_annotations",
+        ]
     )
-
-    __all__ = [
-        "GAME_FILTERS",
-        "PATHS",
-        "RELEVANCE_WEIGHTS",
-        "build_adjacency_dict",
-        "compute_precision_at_k",
-        "create_training_run",
-        "evaluate_similarity",
-        "get_filter_set",
-        "jaccard_similarity",
-        "load_embeddings",
-        "load_pairs",
-        "load_test_set",
-        "track_artifact",
-        "track_evaluation_metrics",
-        "track_hyperparameter_result",
-        "track_training_metrics",
-    ]
-    if HAS_ANNOTATION_UTILS:
-        __all__.extend(
-            [
-                "convert_annotations_to_substitution_pairs",
-                "extract_substitution_pairs_from_annotations",
-                "load_hand_annotations",
-                "load_similarity_annotations",
-            ]
-        )
-except ImportError:
-    __all__ = [
-        "GAME_FILTERS",
-        "PATHS",
-        "RELEVANCE_WEIGHTS",
-        "build_adjacency_dict",
-        "compute_precision_at_k",
-        "evaluate_similarity",
-        "get_filter_set",
-        "jaccard_similarity",
-        "load_embeddings",
-        "load_pairs",
-        "load_test_set",
-    ]
-    if HAS_ANNOTATION_UTILS:
-        __all__.extend(
-            [
-                "convert_annotations_to_substitution_pairs",
-                "extract_substitution_pairs_from_annotations",
-                "load_hand_annotations",
-                "load_similarity_annotations",
-            ]
-        )

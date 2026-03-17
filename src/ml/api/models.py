@@ -64,7 +64,7 @@ class SimilarityRequest(BaseModel):
     )
     weights: dict[str, float] | None = Field(
         None,
-        description="Optional fusion weights {embed, jaccard, functional, text_embed, sideboard, temporal, gnn, archetype, format}; will be normalized",
+        description="Optional fusion weights {embed, jaccard, functional, text_embed, visual_embed, archetype}; will be normalized",
     )
     aggregator: str | None = Field(
         None,
@@ -282,17 +282,11 @@ class ApiState:
         self.fusion_default_weights: Any = None  # FusionWeights | None
         self.card_attrs: dict | None = None
         # Optional signal providers (loaded by load_signals_to_state)
-        self.sideboard_cooccurrence: dict[str, dict[str, float]] | None = None
-        self.temporal_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
         self.text_embedder: object | None = None
         self.visual_embedder: object | None = None
-        self.gnn_embedder: object | None = None
         self.archetype_staples: dict[str, dict[str, float]] | None = None
         self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
-        self.format_cooccurrence: dict[str, dict[str, dict[str, float]]] | None = None
-        self.cross_format_patterns: dict[str, dict[str, float]] | None = None
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
-        self.reranker: object | None = None  # Learned reranker (optional)
         self.card_metadata: dict[str, dict[str, Any]] | None = None  # Full card attrs w/ image_url
         # Enrichment data (loaded from data/ assets)
         self.banlist: dict[str, dict[str, list[str]]] | None = None  # {format: {status: [cards]}}
