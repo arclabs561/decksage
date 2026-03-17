@@ -55,7 +55,7 @@ def calculate_deck_balance(
     # Get main partition
     main_partition = None
     for p in deck.get("partitions", []) or []:
-        if p.get("name") in ("Main", "Main Deck"):
+        if p.get("name") in ("Main", "Main Deck", "Deck"):
             main_partition = p
             break
 

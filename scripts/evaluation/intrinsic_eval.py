@@ -73,7 +73,7 @@ DECK_FILES = {
 
 MAIN_PARTITIONS = {
     "magic": "Main",
-    "pokemon": "Main Deck",
+    "pokemon": "Deck",
     "yugioh": "Main Deck",
 }
 

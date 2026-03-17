@@ -53,7 +53,7 @@ def _main_partition_name(game: str) -> str:
         return "Main"
     if game == "yugioh":
         return "Main Deck"
-    return "Main Deck"  # pokemon
+    return "Deck"  # pokemon
 
 
 def _current_size(deck: dict, part_name: str) -> int:
