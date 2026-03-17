@@ -159,6 +159,13 @@ class SearchRequest(BaseModel):
         None,
         description="Filter results by format legality (e.g., standard, modern). Magic-only.",
     )
+    filters: str | None = Field(
+        None,
+        description=(
+            "MeiliSearch filter expression for the text search leg. "
+            'Examples: "colors = W", "cmc <= 3", "rarity = rare".'
+        ),
+    )
 
 
 class SearchResultItem(BaseModel):
