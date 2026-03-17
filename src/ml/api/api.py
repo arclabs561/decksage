@@ -593,6 +593,21 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError):
                 logger.debug("Failed to load deck frequency for game=%s", game, exc_info=True)
 
+        # Archetype templates (from build_archetype_templates.py)
+        archetype_templates_path = PATHS.processed / f"archetype_templates_{game}.json"
+        if archetype_templates_path.exists():
+            try:
+                with open(archetype_templates_path, encoding="utf-8") as f:
+                    at_data = json.load(f)
+                state.archetype_templates = at_data.get("templates", [])
+                logger.info(
+                    "Loaded archetype templates for %s: %d archetypes",
+                    game,
+                    len(state.archetype_templates),
+                )
+            except (OSError, ValueError, KeyError):
+                logger.debug("Failed to load archetype templates for game=%s", game, exc_info=True)
+
         # Scryfall legality + prices (Magic-only, shared across games but only useful for magic)
         if game == "magic":
             legality_path = PATHS.project_root / "data/processed/scryfall_legality.json"
@@ -693,6 +708,8 @@ async def lifespan(app: FastAPI):
             _parts.append(f"banlist_formats={len(state.banlist)}")
         if state.archetypes:
             _parts.append(f"archetypes={len(state.archetypes)}")
+        if state.archetype_templates:
+            _parts.append(f"archetype_templates={len(state.archetype_templates)}")
         if state.legality_data:
             _parts.append(f"legality={len(state.legality_data)}")
         if state.price_data:
@@ -724,6 +741,7 @@ async def lifespan(app: FastAPI):
             state.card_metadata = None
             state.banlist = None
             state.archetypes = None
+            state.archetype_templates = None
             state.deck_frequency = None
         # Remove entire api_by_game dict so next lifespan creates fresh ApiState objects
         with suppress(Exception):
