@@ -257,12 +257,12 @@ def validate_deck_completion(
         deck_to_complete = incomplete_deck
         if game == "pokemon" and "cards" in incomplete_deck and "partitions" not in incomplete_deck:
             # Convert cards array to partitions format
-            # Pokemon completion expects "Main Deck" partition name
+            # Pokemon completion expects "Deck" partition name
             deck_cards = [
                 c for c in incomplete_deck.get("cards", []) if c.get("partition") == "Deck"
             ]
             deck_to_complete = incomplete_deck.copy()
-            deck_to_complete["partitions"] = [{"name": "Main Deck", "cards": deck_cards}]
+            deck_to_complete["partitions"] = [{"name": "Deck", "cards": deck_cards}]
             # Keep other metadata
             for key in ["deck_id", "archetype", "format", "url", "source"]:
                 if key in incomplete_deck:

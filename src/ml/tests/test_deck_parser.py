@@ -226,7 +226,7 @@ Energy - 10
 2 Charmander SV3 4
 """
         result = parse_deck_text(text, game="pokemon")
-        main = _cards(result, "Main Deck")
+        main = _cards(result, "Deck")
         assert main["Charizard ex"] == 4
         assert main["Charmander"] == 2
 

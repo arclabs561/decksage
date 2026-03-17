@@ -129,7 +129,7 @@ class _DeckBase(BaseModel):
 
     def get_main_deck(self) -> Partition:
         """Return the main deck partition (best-effort, never None)."""
-        return self.get_partition("main", "mainboard", "main deck") or self.partitions[0]
+        return self.get_partition("main", "mainboard", "main deck", "deck") or self.partitions[0]
 
     def get_sideboard(self) -> Partition | None:
         """Return the sideboard/side deck partition, if present."""

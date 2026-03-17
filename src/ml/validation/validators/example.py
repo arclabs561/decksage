@@ -96,7 +96,7 @@ def example_valid_decks():
         archetype="Pikarom",
         partitions=[
             Partition(
-                name="Main Deck",
+                name="Deck",
                 cards=[
                     CardDesc(name="Pikachu & Zekrom-GX", count=4),
                     CardDesc(name="Tapu Koko Prism Star", count=1),
