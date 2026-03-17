@@ -17,7 +17,12 @@ no feature transforms, no nonlinearity. Each layer is just symmetric-normalized
 message passing, and the final embedding is the mean across all layer outputs
 (layer 0 = raw embedding, layer K = K-hop aggregated).
 
-Training uses BPR loss on co-occurrence edges with random negative sampling.
+Two loss functions:
+  - reconstruction (default): Weighted MSE between dot-product scores and
+    normalized edge weights. Correct for dense co-occurrence graphs where
+    BPR's "random negative" assumption breaks down (few true negatives).
+  - bpr: Bayesian Personalized Ranking with random negative sampling.
+    Included for comparison but not recommended for dense graphs.
 
 Usage:
     uv run scripts/training/train_lightgcn.py \\
@@ -25,6 +30,12 @@ Usage:
         --edgelist data/graphs/magic_merged_all.edg \\
         --output data/embeddings/magic_lightgcn.wv \\
         --dim 128 --layers 3 --epochs 100 --lr 1e-3
+
+    # Compare loss functions:
+    uv run scripts/training/train_lightgcn.py \\
+        --game magic --loss reconstruction ...
+    uv run scripts/training/train_lightgcn.py \\
+        --game magic --loss bpr ...
 
     # All 3 games:
     for game in magic pokemon yugioh; do
@@ -218,6 +229,33 @@ def bpr_loss(
     return loss.mean()
 
 
+def reconstruction_loss(
+    embeddings: torch.Tensor,
+    edge_index: torch.Tensor,
+    edge_weight: torch.Tensor,
+) -> torch.Tensor:
+    """Weighted MSE reconstruction loss.
+
+    Predicts edge weights from dot-product similarity and minimizes MSE
+    against normalized target weights. Unlike BPR, this does not require
+    negative sampling -- it directly fits the co-occurrence signal, which
+    is the right objective for dense graphs where most random "negatives"
+    are actually connected nodes.
+
+    Args:
+        embeddings: [N, D] node embeddings from the current forward pass.
+        edge_index: [2, E] edge indices (one direction per undirected edge).
+        edge_weight: [E] raw edge weights (will be normalized to [0, 1]).
+    """
+    src, dst = edge_index
+    pred = (embeddings[src] * embeddings[dst]).sum(dim=1)
+    # Normalize targets to [0, 1] -- edge_weight may already be normalized
+    # by build_graph, but be defensive
+    w_max = edge_weight.max()
+    target = edge_weight / w_max if w_max > 0 else edge_weight
+    return F.mse_loss(pred, target)
+
+
 def train_val_split(
     edge_index: torch.Tensor,
     edge_weight: torch.Tensor,
@@ -265,8 +303,15 @@ def train_lightgcn(
     val_ratio: float = 0.1,
     patience: int = 10,
     device: torch.device | None = None,
+    loss_fn: str = "reconstruction",
+    l2_reg: float = 1e-4,
 ) -> tuple[KeyedVectors, list[str]]:
     """Train LightGCN and return embeddings as KeyedVectors.
+
+    Args:
+        loss_fn: "reconstruction" (weighted MSE, default) or "bpr".
+        l2_reg: L2 regularization weight on embedding vectors (prevents
+            collapse in reconstruction mode, supplements weight_decay).
 
     Returns:
         (kv, idx_to_node) tuple.
@@ -295,15 +340,17 @@ def train_lightgcn(
     full_ew = edge_weight.to(device)
     full_norm = compute_norm(full_ei, full_ew, num_nodes).to(device)
 
-    # Build adjacency set for negative sampling
-    adj_set: set[tuple[int, int]] = set()
-    for k in range(edge_index.shape[1]):
-        adj_set.add((int(edge_index[0, k]), int(edge_index[1, k])))
+    # Build adjacency set for negative sampling (only needed for BPR)
+    if loss_fn == "bpr":
+        adj_set: set[tuple[int, int]] = set()
+        for k in range(edge_index.shape[1]):
+            adj_set.add((int(edge_index[0, k]), int(edge_index[1, k])))
 
     model = LightGCN(num_nodes, dim, num_layers).to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=weight_decay)
 
     print(f"  Model: LightGCN, {num_layers} layers, dim={dim}")
+    print(f"  Loss: {loss_fn}, l2_reg={l2_reg}")
     print(f"  Training: {epochs} epochs, lr={lr}, batch_size={batch_size}, patience={patience}")
 
     best_val_loss = float("inf")
@@ -331,15 +378,21 @@ def train_lightgcn(
             pos_dst = train_ei[1, edge_idx]
             batch_weights = train_ew[edge_idx]
 
-            # Negative sampling: random nodes not connected to source
-            neg_dst = torch.randint(0, num_nodes, (pos_src.shape[0],), device=device)
-
             optimizer.zero_grad()
-            loss = bpr_loss(emb, pos_src, pos_dst, neg_dst, batch_weights)
 
-            # L2 regularization on embeddings of involved nodes only
-            unique_nodes = torch.unique(torch.cat([pos_src, pos_dst, neg_dst]))
-            reg_loss = weight_decay * model.embedding.weight[unique_nodes].pow(2).sum()
+            if loss_fn == "reconstruction":
+                batch_ei = torch.stack([pos_src, pos_dst])
+                loss = reconstruction_loss(emb, batch_ei, batch_weights)
+                # L2 regularization on embeddings of involved nodes
+                unique_nodes = torch.unique(torch.cat([pos_src, pos_dst]))
+                reg_loss = l2_reg * model.embedding.weight[unique_nodes].pow(2).sum()
+            else:
+                # BPR path
+                neg_dst = torch.randint(0, num_nodes, (pos_src.shape[0],), device=device)
+                loss = bpr_loss(emb, pos_src, pos_dst, neg_dst, batch_weights)
+                unique_nodes = torch.unique(torch.cat([pos_src, pos_dst, neg_dst]))
+                reg_loss = l2_reg * model.embedding.weight[unique_nodes].pow(2).sum()
+
             total_loss = loss + reg_loss
 
             total_loss.backward()
@@ -356,12 +409,16 @@ def train_lightgcn(
         # Validation loss
         with torch.no_grad():
             emb = model(full_ei, full_ew, full_norm)
-            val_half = val_ei.shape[1] // 2
             val_src = val_ei[0, ::2]  # even indices = one direction
             val_dst = val_ei[1, ::2]
             val_w = val_ew[::2]
-            val_neg = torch.randint(0, num_nodes, (val_src.shape[0],), device=device)
-            val_loss = bpr_loss(emb, val_src, val_dst, val_neg, val_w).item()
+
+            if loss_fn == "reconstruction":
+                val_batch_ei = torch.stack([val_src, val_dst])
+                val_loss = reconstruction_loss(emb, val_batch_ei, val_w).item()
+            else:
+                val_neg = torch.randint(0, num_nodes, (val_src.shape[0],), device=device)
+                val_loss = bpr_loss(emb, val_src, val_dst, val_neg, val_w).item()
 
         if val_loss < best_val_loss - 1e-5:
             best_val_loss = val_loss
@@ -486,8 +543,14 @@ def main() -> int:
     parser.add_argument("--layers", type=int, default=3, help="Number of LightGCN layers")
     parser.add_argument("--epochs", type=int, default=100, help="Max training epochs")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
-    parser.add_argument("--weight-decay", type=float, default=1e-4, help="L2 regularization")
-    parser.add_argument("--batch-size", type=int, default=2048, help="BPR batch size")
+    parser.add_argument("--weight-decay", type=float, default=1e-4, help="Optimizer weight decay")
+    parser.add_argument(
+        "--l2-reg",
+        type=float,
+        default=1e-4,
+        help="L2 regularization on embedding vectors (prevents collapse)",
+    )
+    parser.add_argument("--batch-size", type=int, default=2048, help="Training batch size")
     parser.add_argument("--val-ratio", type=float, default=0.1, help="Validation edge ratio")
     parser.add_argument("--patience", type=int, default=10, help="Early stopping patience")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
@@ -502,6 +565,13 @@ def main() -> int:
         type=int,
         default=0,
         help="Subsample to top-K weighted edges (0=no limit)",
+    )
+    parser.add_argument(
+        "--loss",
+        type=str,
+        default="reconstruction",
+        choices=["reconstruction", "bpr"],
+        help="Loss function: reconstruction (weighted MSE, default) or bpr",
     )
     args = parser.parse_args()
 
@@ -548,6 +618,8 @@ def main() -> int:
         val_ratio=args.val_ratio,
         patience=args.patience,
         device=device,
+        loss_fn=args.loss,
+        l2_reg=args.l2_reg,
     )
     elapsed = time.monotonic() - t0
     print(f"\n  Training complete in {elapsed:.1f}s")
