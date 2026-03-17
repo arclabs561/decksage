@@ -682,6 +682,8 @@ def complete_deck(req: CompleteRequest):
     t0 = time.time()
 
     # Choose completion method
+    _ot_metrics: dict = {}
+    quality_metrics = None
     if req.method == "ot":
         from ..deck_building.deck_completion import _main_partition_name
         from ..deck_building.ot_completion import OTCompletionConfig, ot_complete_deck
@@ -823,23 +825,10 @@ def complete_deck(req: CompleteRequest):
     elapsed_ms = int((time.time() - t0) * 1000)
 
     # Assess deck quality if we have the necessary functions
-    quality_metrics = None
+    # (reuse cmc_fn from _build_deck_hooks, don't redefine)
     if tag_set_fn:
         try:
             from ..deck_building.deck_quality import assess_deck_quality
-
-            # Build CMC function from card attributes
-            def cmc_fn(card: str) -> int | None:
-                attrs = state.card_attrs
-                if not attrs:
-                    return None
-                data = attrs.get(card) or attrs.get(card.lower())
-                if not data:
-                    return None
-                try:
-                    return int(data.get("cmc", 0))
-                except (ValueError, TypeError):
-                    return None
 
             # Assess quality (reference decks optional for now)
             quality = assess_deck_quality(
@@ -877,11 +866,8 @@ def complete_deck(req: CompleteRequest):
     if quality_metrics:
         metrics["quality"] = quality_metrics
     # Include OT-specific metrics when method=ot
-    if req.method == "ot":
-        try:
-            metrics["ot"] = _ot_metrics  # type: ignore[possibly-undefined]
-        except NameError:
-            pass
+    if req.method == "ot" and _ot_metrics:
+        metrics["ot"] = _ot_metrics
 
     return CompleteResponse(
         deck=deck_out, steps=steps, metrics=metrics, feedback_url="/v1/feedback"
