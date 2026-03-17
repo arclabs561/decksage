@@ -191,6 +191,11 @@ class OTCompletionConfig:
     color_identity: set[str] | None = None  # For Commander CI filtering
     card_color_identity: dict[str, set[str]] | None = None  # card -> color identity set
 
+    # Archetype-aware completion (v4, 2026-03-17)
+    # When set, uses archetype template to shape source distribution,
+    # curve target, and cost matrix.  Load from archetype_templates_{game}.json.
+    archetype_template: dict | None = None  # ArchetypeTemplate as dict
+
 
 @dataclass
 class OTCompletionResult:
@@ -799,6 +804,24 @@ def ot_complete_deck(
 
     n = len(card_pool)
 
+    # Archetype-derived defaults: when an archetype template is provided,
+    # use its curve/role distributions as fallback targets and bias costs
+    # toward archetype-appropriate cards.
+    archetype_core_set: set[str] = set()
+    if cfg.archetype_template is not None:
+        at = cfg.archetype_template
+        # Use archetype CMC histogram as curve target if none provided
+        if curve_target is None and at.get("cmc_histogram"):
+            curve_target = {int(k): v for k, v in at["cmc_histogram"].items()}
+            logger.info("Using archetype curve target from '%s'", at.get("name", "?"))
+        # Build core card set for cost bonus
+        for entry in at.get("core_cards", []):
+            if isinstance(entry, (list, tuple)) and len(entry) >= 1:
+                archetype_core_set.add(entry[0])
+        for entry in at.get("flex_cards", []):
+            if isinstance(entry, (list, tuple)) and len(entry) >= 1:
+                archetype_core_set.add(entry[0])
+
     # Source distribution: quality-weighted (or uniform if source_temperature is None)
     source = compute_source_distribution(
         seed_cards=seed_cards,
@@ -828,6 +851,12 @@ def ot_complete_deck(
         role_weight=cfg.role_weight,
         curve_weight=cfg.curve_weight,
     )
+
+    # Archetype cost bonus: reduce cost for cards in archetype core/flex
+    if archetype_core_set:
+        for i, name in enumerate(card_pool):
+            if name in archetype_core_set:
+                cost_vec[i] *= 0.7  # 30% cost reduction for archetype cards
 
     # Build pairwise cost matrix for OT
     cost_matrix = _build_pairwise_cost_matrix(
@@ -979,6 +1008,9 @@ def ot_complete_deck(
     if cfg.format:
         metrics["format"] = cfg.format
         metrics["format_filtered"] = format_filtered
+    if cfg.archetype_template:
+        metrics["archetype"] = cfg.archetype_template.get("name", "unknown")
+        metrics["archetype_core_cards_in_pool"] = len(archetype_core_set & set(card_pool))
 
     return OTCompletionResult(
         deck=deck,

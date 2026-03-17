@@ -1,0 +1,3064 @@
+{
+  "game": "magic",
+  "total_decks": 20000,
+  "total_clusters": 25,
+  "vocab_size": 4847,
+  "templates": [
+    {
+      "name": "Omen of the Sea / Elspeth's Nightmare / Extinction Event",
+      "game": "magic",
+      "cluster_id": 16,
+      "deck_count": 1868,
+      "type_distribution": {
+        "land": 0.2971,
+        "creature": 0.2164,
+        "instant": 0.1519,
+        "enchantment": 0.1487,
+        "sorcery": 0.1224,
+        "artifact": 0.0395,
+        "planeswalker": 0.024
+      },
+      "cmc_histogram": {
+        "0": 0.3014,
+        "1": 0.085,
+        "2": 0.2268,
+        "3": 0.1397,
+        "4": 0.1124,
+        "5": 0.0686,
+        "6": 0.0283,
+        "7": 0.0277,
+        "8": 0.0081,
+        "9": 0.002,
+        "12": 0.0001,
+        "13": 0.0
+      },
+      "color_distribution": {
+        "W": 0.1806,
+        "U": 0.2226,
+        "B": 0.3242,
+        "R": 0.1078,
+        "G": 0.1648
+      },
+      "core_cards": [
+        [
+          "Fabled Passage",
+          0.689
+        ],
+        [
+          "Heartless Act",
+          0.488
+        ],
+        [
+          "Mystical Dispute",
+          0.38
+        ],
+        [
+          "Extinction Event",
+          0.379
+        ],
+        [
+          "Negate",
+          0.363
+        ],
+        [
+          "Yorion, Sky Nomad",
+          0.344
+        ],
+        [
+          "Elspeth's Nightmare",
+          0.343
+        ],
+        [
+          "Duress",
+          0.331
+        ],
+        [
+          "Clearwater Pathway",
+          0.317
+        ],
+        [
+          "Eliminate",
+          0.306
+        ],
+        [
+          "Omen of the Sea",
+          0.305
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Shark Typhoon",
+          0.272
+        ],
+        [
+          "Cling to Dust",
+          0.269
+        ],
+        [
+          "Mazemind Tome",
+          0.267
+        ],
+        [
+          "Elspeth Conquers Death",
+          0.259
+        ],
+        [
+          "Bloodchief's Thirst",
+          0.258
+        ],
+        [
+          "Zagoth Triome",
+          0.24
+        ],
+        [
+          "Bonecrusher Giant",
+          0.237
+        ],
+        [
+          "Castle Locthwain",
+          0.225
+        ],
+        [
+          "Ketria Triome",
+          0.219
+        ],
+        [
+          "Ugin, the Spirit Dragon",
+          0.219
+        ],
+        [
+          "Darkbore Pathway",
+          0.216
+        ],
+        [
+          "Valki, God of Lies",
+          0.213
+        ],
+        [
+          "Shadows' Verdict",
+          0.211
+        ],
+        [
+          "Binding the Old Gods",
+          0.201
+        ],
+        [
+          "Barkchannel Pathway",
+          0.197
+        ],
+        [
+          "Brightclimb Pathway",
+          0.195
+        ],
+        [
+          "Skyclave Apparition",
+          0.193
+        ],
+        [
+          "Cultivate",
+          0.192
+        ],
+        [
+          "Temple of Malady",
+          0.176
+        ],
+        [
+          "Shatterskull Smashing",
+          0.174
+        ],
+        [
+          "Emeria's Call",
+          0.174
+        ],
+        [
+          "Sea Gate Restoration",
+          0.173
+        ],
+        [
+          "Jwari Disruption",
+          0.167
+        ],
+        [
+          "Elder Gargaroth",
+          0.162
+        ],
+        [
+          "Glass Casket",
+          0.162
+        ],
+        [
+          "Kiora Bests the Sea God",
+          0.16
+        ],
+        [
+          "Temple of Deceit",
+          0.16
+        ],
+        [
+          "Kroxa, Titan of Death's Hunger",
+          0.155
+        ],
+        [
+          "Cragcrown Pathway",
+          0.154
+        ],
+        [
+          "Ox of Agonas",
+          0.153
+        ]
+      ]
+    },
+    {
+      "name": "Kazandu Mammoth / Lovestruck Beast / Edgewall Innkeeper",
+      "game": "magic",
+      "cluster_id": 20,
+      "deck_count": 1309,
+      "type_distribution": {
+        "land": 0.3565,
+        "creature": 0.3154,
+        "instant": 0.1363,
+        "enchantment": 0.0671,
+        "artifact": 0.0575,
+        "sorcery": 0.0481,
+        "planeswalker": 0.0191
+      },
+      "cmc_histogram": {
+        "0": 0.3615,
+        "1": 0.1372,
+        "2": 0.2072,
+        "3": 0.1133,
+        "4": 0.0776,
+        "5": 0.0404,
+        "6": 0.0353,
+        "7": 0.0098,
+        "8": 0.0025,
+        "9": 0.0148,
+        "12": 0.0004
+      },
+      "color_distribution": {
+        "W": 0.1166,
+        "U": 0.1612,
+        "B": 0.117,
+        "R": 0.2924,
+        "G": 0.3129
+      },
+      "core_cards": [
+        [
+          "Fabled Passage",
+          0.407
+        ],
+        [
+          "Bonecrusher Giant",
+          0.385
+        ],
+        [
+          "Lovestruck Beast",
+          0.357
+        ],
+        [
+          "The Great Henge",
+          0.338
+        ],
+        [
+          "Kazandu Mammoth",
+          0.332
+        ],
+        [
+          "Embercleave",
+          0.33
+        ],
+        [
+          "Scavenging Ooze",
+          0.328
+        ],
+        [
+          "Shatterskull Smashing",
+          0.306
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Questing Beast",
+          0.29
+        ],
+        [
+          "Vivien, Monsters' Advocate",
+          0.261
+        ],
+        [
+          "Edgewall Innkeeper",
+          0.255
+        ],
+        [
+          "Cragcrown Pathway",
+          0.232
+        ],
+        [
+          "Scorching Dragonfire",
+          0.217
+        ],
+        [
+          "Ox of Agonas",
+          0.214
+        ],
+        [
+          "Brushfire Elemental",
+          0.194
+        ],
+        [
+          "The Akroan War",
+          0.184
+        ],
+        [
+          "Phoenix of Ash",
+          0.18
+        ],
+        [
+          "Fire Prophecy",
+          0.163
+        ],
+        [
+          "Soul Sear",
+          0.156
+        ],
+        [
+          "Wilt",
+          0.154
+        ]
+      ]
+    },
+    {
+      "name": "Faceless Haven / Frost Bite / Anax, Hardened in the Forge",
+      "game": "magic",
+      "cluster_id": 13,
+      "deck_count": 1219,
+      "type_distribution": {
+        "land": 0.3519,
+        "creature": 0.3042,
+        "instant": 0.1407,
+        "sorcery": 0.0698,
+        "enchantment": 0.0628,
+        "artifact": 0.0543,
+        "planeswalker": 0.0163
+      },
+      "cmc_histogram": {
+        "0": 0.3572,
+        "1": 0.1461,
+        "2": 0.1777,
+        "3": 0.1324,
+        "4": 0.087,
+        "5": 0.0456,
+        "6": 0.0352,
+        "7": 0.0082,
+        "8": 0.006,
+        "9": 0.004,
+        "12": 0.0006
+      },
+      "color_distribution": {
+        "W": 0.2346,
+        "U": 0.1596,
+        "B": 0.1478,
+        "R": 0.2945,
+        "G": 0.1634
+      },
+      "core_cards": [
+        [
+          "Faceless Haven",
+          0.587
+        ],
+        [
+          "Frost Bite",
+          0.379
+        ],
+        [
+          "Bonecrusher Giant",
+          0.372
+        ],
+        [
+          "Fabled Passage",
+          0.355
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Embercleave",
+          0.203
+        ],
+        [
+          "Ox of Agonas",
+          0.196
+        ],
+        [
+          "Negate",
+          0.193
+        ],
+        [
+          "Goldspan Dragon",
+          0.191
+        ],
+        [
+          "Phoenix of Ash",
+          0.189
+        ],
+        [
+          "Skyclave Apparition",
+          0.187
+        ],
+        [
+          "Shatterskull Smashing",
+          0.182
+        ],
+        [
+          "Luminarch Aspirant",
+          0.181
+        ],
+        [
+          "Selfless Savior",
+          0.176
+        ],
+        [
+          "Fervent Champion",
+          0.176
+        ],
+        [
+          "Robber of the Rich",
+          0.174
+        ],
+        [
+          "Saw It Coming",
+          0.173
+        ],
+        [
+          "Giant Killer",
+          0.167
+        ],
+        [
+          "Anax, Hardened in the Forge",
+          0.166
+        ],
+        [
+          "Torbran, Thane of Red Fell",
+          0.165
+        ],
+        [
+          "Mystical Dispute",
+          0.163
+        ],
+        [
+          "Scorching Dragonfire",
+          0.159
+        ],
+        [
+          "Rimrock Knight",
+          0.158
+        ],
+        [
+          "Shark Typhoon",
+          0.153
+        ],
+        [
+          "Fireblade Charger",
+          0.153
+        ],
+        [
+          "Maul of the Skyclaves",
+          0.152
+        ],
+        [
+          "Seasoned Hallowblade",
+          0.151
+        ],
+        [
+          "Brazen Borrower",
+          0.151
+        ]
+      ]
+    },
+    {
+      "name": "Thieves' Guild Enforcer / Into the Story / Soaring Thought-Thief",
+      "game": "magic",
+      "cluster_id": 1,
+      "deck_count": 1202,
+      "type_distribution": {
+        "creature": 0.3685,
+        "land": 0.3202,
+        "instant": 0.1544,
+        "sorcery": 0.0863,
+        "enchantment": 0.0337,
+        "artifact": 0.0284,
+        "planeswalker": 0.0086
+      },
+      "cmc_histogram": {
+        "0": 0.3231,
+        "1": 0.1684,
+        "2": 0.2269,
+        "3": 0.1437,
+        "4": 0.0646,
+        "5": 0.0313,
+        "6": 0.0158,
+        "7": 0.0223,
+        "8": 0.0018,
+        "9": 0.002,
+        "12": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.1745,
+        "U": 0.2789,
+        "B": 0.2914,
+        "R": 0.0975,
+        "G": 0.1577
+      },
+      "core_cards": [
+        [
+          "Fabled Passage",
+          0.515
+        ],
+        [
+          "Heartless Act",
+          0.355
+        ],
+        [
+          "Clearwater Pathway",
+          0.345
+        ],
+        [
+          "Soaring Thought-Thief",
+          0.34
+        ],
+        [
+          "Bloodchief's Thirst",
+          0.339
+        ],
+        [
+          "Thieves' Guild Enforcer",
+          0.339
+        ],
+        [
+          "Agadeem's Awakening",
+          0.331
+        ],
+        [
+          "Drown in the Loch",
+          0.326
+        ],
+        [
+          "Lurrus of the Dream-Den",
+          0.313
+        ],
+        [
+          "Merfolk Windrobber",
+          0.31
+        ],
+        [
+          "Into the Story",
+          0.306
+        ],
+        [
+          "Temple of Deceit",
+          0.302
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Ruin Crab",
+          0.295
+        ],
+        [
+          "Mystical Dispute",
+          0.272
+        ],
+        [
+          "Cling to Dust",
+          0.254
+        ],
+        [
+          "Negate",
+          0.229
+        ],
+        [
+          "Zagoth Triome",
+          0.226
+        ],
+        [
+          "Lullmage's Domination",
+          0.198
+        ],
+        [
+          "Castle Locthwain",
+          0.194
+        ],
+        [
+          "Didn't Say Please",
+          0.19
+        ],
+        [
+          "Skyclave Shade",
+          0.189
+        ],
+        [
+          "Eliminate",
+          0.176
+        ],
+        [
+          "Of One Mind",
+          0.172
+        ],
+        [
+          "Luminarch Aspirant",
+          0.156
+        ]
+      ]
+    },
+    {
+      "name": "Reckoner Bankbuster / Make Disappear / Adarkar Wastes",
+      "game": "magic",
+      "cluster_id": 7,
+      "deck_count": 1198,
+      "type_distribution": {
+        "land": 0.3598,
+        "creature": 0.2796,
+        "instant": 0.1783,
+        "sorcery": 0.0742,
+        "artifact": 0.0423,
+        "planeswalker": 0.0345,
+        "enchantment": 0.0313
+      },
+      "cmc_histogram": {
+        "0": 0.3599,
+        "1": 0.1148,
+        "2": 0.241,
+        "3": 0.1208,
+        "4": 0.0805,
+        "5": 0.0444,
+        "6": 0.0171,
+        "7": 0.0153,
+        "8": 0.0031,
+        "9": 0.0028,
+        "10": 0.0003,
+        "15": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.2375,
+        "U": 0.2089,
+        "B": 0.2273,
+        "R": 0.181,
+        "G": 0.1453
+      },
+      "core_cards": [
+        [
+          "Takenuma, Abandoned Mire",
+          0.354
+        ],
+        [
+          "Eiganjo, Seat of the Empire",
+          0.353
+        ],
+        [
+          "Otawara, Soaring City",
+          0.343
+        ],
+        [
+          "Reckoner Bankbuster",
+          0.324
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Fable of the Mirror-Breaker",
+          0.295
+        ],
+        [
+          "Sokenzan, Crucible of Defiance",
+          0.286
+        ],
+        [
+          "Cut Down",
+          0.275
+        ],
+        [
+          "The Wandering Emperor",
+          0.261
+        ],
+        [
+          "Negate",
+          0.255
+        ],
+        [
+          "Adarkar Wastes",
+          0.242
+        ],
+        [
+          "Infernal Grasp",
+          0.241
+        ],
+        [
+          "Sheoldred, the Apocalypse",
+          0.238
+        ],
+        [
+          "Unlicensed Hearse",
+          0.231
+        ],
+        [
+          "Make Disappear",
+          0.226
+        ],
+        [
+          "Deserted Beach",
+          0.22
+        ],
+        [
+          "Boseiju, Who Endures",
+          0.22
+        ],
+        [
+          "Duress",
+          0.217
+        ],
+        [
+          "Haunted Ridge",
+          0.214
+        ],
+        [
+          "Shipwreck Marsh",
+          0.213
+        ],
+        [
+          "Sulfurous Springs",
+          0.208
+        ],
+        [
+          "Abrade",
+          0.193
+        ],
+        [
+          "Disdainful Stroke",
+          0.186
+        ],
+        [
+          "Raffine's Tower",
+          0.184
+        ],
+        [
+          "Destroy Evil",
+          0.184
+        ],
+        [
+          "Wedding Announcement",
+          0.181
+        ],
+        [
+          "Shivan Reef",
+          0.172
+        ],
+        [
+          "Caves of Koilos",
+          0.169
+        ],
+        [
+          "Xander's Lounge",
+          0.169
+        ],
+        [
+          "Shattered Sanctum",
+          0.166
+        ],
+        [
+          "Liliana of the Veil",
+          0.164
+        ],
+        [
+          "Overgrown Farmland",
+          0.161
+        ],
+        [
+          "Bloodtithe Harvester",
+          0.156
+        ]
+      ]
+    },
+    {
+      "name": "Infernal Grasp / Haunted Ridge / Play with Fire",
+      "game": "magic",
+      "cluster_id": 0,
+      "deck_count": 1184,
+      "type_distribution": {
+        "land": 0.3024,
+        "creature": 0.2724,
+        "instant": 0.2045,
+        "sorcery": 0.1252,
+        "enchantment": 0.0447,
+        "planeswalker": 0.0256,
+        "artifact": 0.0251
+      },
+      "cmc_histogram": {
+        "0": 0.3026,
+        "1": 0.1416,
+        "2": 0.2713,
+        "3": 0.137,
+        "4": 0.0781,
+        "5": 0.047,
+        "6": 0.0103,
+        "7": 0.0094,
+        "8": 0.0025,
+        "9": 0.0,
+        "10": 0.0001,
+        "12": 0.0,
+        "15": 0.0001
+      },
+      "color_distribution": {
+        "W": 0.2357,
+        "U": 0.1717,
+        "B": 0.2528,
+        "R": 0.2103,
+        "G": 0.1295
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Infernal Grasp",
+          0.251
+        ],
+        [
+          "Hive of the Eye Tyrant",
+          0.231
+        ],
+        [
+          "Duress",
+          0.23
+        ],
+        [
+          "Field of Ruin",
+          0.206
+        ],
+        [
+          "The Meathook Massacre",
+          0.199
+        ],
+        [
+          "Disdainful Stroke",
+          0.178
+        ],
+        [
+          "Negate",
+          0.178
+        ],
+        [
+          "Hall of Storm Giants",
+          0.176
+        ],
+        [
+          "Brightclimb Pathway",
+          0.171
+        ],
+        [
+          "Cave of the Frost Dragon",
+          0.171
+        ],
+        [
+          "Deserted Beach",
+          0.167
+        ],
+        [
+          "Fateful Absence",
+          0.165
+        ],
+        [
+          "Fading Hope",
+          0.165
+        ],
+        [
+          "Den of the Bugbear",
+          0.159
+        ],
+        [
+          "Hengegate Pathway",
+          0.159
+        ],
+        [
+          "Shipwreck Marsh",
+          0.156
+        ],
+        [
+          "Go Blank",
+          0.154
+        ],
+        [
+          "Clearwater Pathway",
+          0.152
+        ]
+      ]
+    },
+    {
+      "name": "Edgewall Innkeeper / Bonecrusher Giant / Lovestruck Beast",
+      "game": "magic",
+      "cluster_id": 8,
+      "deck_count": 1161,
+      "type_distribution": {
+        "creature": 0.3162,
+        "land": 0.2921,
+        "instant": 0.1419,
+        "enchantment": 0.0993,
+        "sorcery": 0.0978,
+        "artifact": 0.0358,
+        "planeswalker": 0.0169
+      },
+      "cmc_histogram": {
+        "0": 0.295,
+        "1": 0.1187,
+        "2": 0.21,
+        "3": 0.1487,
+        "4": 0.1127,
+        "5": 0.0697,
+        "6": 0.0215,
+        "7": 0.0159,
+        "8": 0.0037,
+        "9": 0.004,
+        "12": 0.0001
+      },
+      "color_distribution": {
+        "W": 0.2405,
+        "U": 0.1624,
+        "B": 0.19,
+        "R": 0.2123,
+        "G": 0.1949
+      },
+      "core_cards": [
+        [
+          "Fabled Passage",
+          0.54
+        ],
+        [
+          "Bonecrusher Giant",
+          0.37
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Needleverge Pathway",
+          0.295
+        ],
+        [
+          "Cragcrown Pathway",
+          0.29
+        ],
+        [
+          "Goldspan Dragon",
+          0.22
+        ],
+        [
+          "Branchloft Pathway",
+          0.218
+        ],
+        [
+          "Riverglide Pathway",
+          0.211
+        ],
+        [
+          "Lovestruck Beast",
+          0.202
+        ],
+        [
+          "Heartless Act",
+          0.193
+        ],
+        [
+          "Brightclimb Pathway",
+          0.178
+        ],
+        [
+          "Shatterskull Smashing",
+          0.178
+        ],
+        [
+          "Edgewall Innkeeper",
+          0.177
+        ],
+        [
+          "Mystical Dispute",
+          0.174
+        ],
+        [
+          "Ox of Agonas",
+          0.171
+        ],
+        [
+          "Saw It Coming",
+          0.169
+        ],
+        [
+          "Redcap Melee",
+          0.169
+        ],
+        [
+          "Darkbore Pathway",
+          0.161
+        ],
+        [
+          "Jaspera Sentinel",
+          0.158
+        ],
+        [
+          "Barkchannel Pathway",
+          0.157
+        ],
+        [
+          "Showdown of the Skalds",
+          0.157
+        ],
+        [
+          "Giant Killer",
+          0.152
+        ],
+        [
+          "Hengegate Pathway",
+          0.152
+        ]
+      ]
+    },
+    {
+      "name": "Hired Claw / Floodfarm Verge / Burst Lightning",
+      "game": "magic",
+      "cluster_id": 17,
+      "deck_count": 1108,
+      "type_distribution": {
+        "land": 0.4005,
+        "creature": 0.3104,
+        "instant": 0.1271,
+        "sorcery": 0.0643,
+        "enchantment": 0.0518,
+        "artifact": 0.0371,
+        "planeswalker": 0.0087,
+        "other": 0.0
+      },
+      "cmc_histogram": {
+        "0": 0.4022,
+        "1": 0.1622,
+        "2": 0.2075,
+        "3": 0.1082,
+        "4": 0.0551,
+        "5": 0.0364,
+        "6": 0.0092,
+        "7": 0.0126,
+        "8": 0.0039,
+        "9": 0.0018,
+        "10": 0.0002,
+        "11": 0.0004,
+        "12": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.2811,
+        "U": 0.1901,
+        "B": 0.1702,
+        "R": 0.2111,
+        "G": 0.1476
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Get Lost",
+          0.204
+        ],
+        [
+          "Floodfarm Verge",
+          0.196
+        ],
+        [
+          "Soulstone Sanctuary",
+          0.181
+        ],
+        [
+          "Fountainport",
+          0.164
+        ],
+        [
+          "Restless Anchorage",
+          0.153
+        ],
+        [
+          "Seam Rip",
+          0.152
+        ]
+      ]
+    },
+    {
+      "name": "Faceless Haven / Frost Bite / Blizzard Brawl",
+      "game": "magic",
+      "cluster_id": 2,
+      "deck_count": 996,
+      "type_distribution": {
+        "land": 0.3445,
+        "creature": 0.2672,
+        "instant": 0.166,
+        "sorcery": 0.1221,
+        "enchantment": 0.0563,
+        "artifact": 0.0282,
+        "planeswalker": 0.0157
+      },
+      "cmc_histogram": {
+        "0": 0.3451,
+        "1": 0.1361,
+        "2": 0.1982,
+        "3": 0.1387,
+        "4": 0.0852,
+        "5": 0.0541,
+        "6": 0.0239,
+        "7": 0.0132,
+        "8": 0.0032,
+        "9": 0.0007,
+        "10": 0.0,
+        "12": 0.0016
+      },
+      "color_distribution": {
+        "W": 0.1335,
+        "U": 0.2159,
+        "B": 0.2475,
+        "R": 0.1845,
+        "G": 0.2186
+      },
+      "core_cards": [
+        [
+          "Faceless Haven",
+          0.361
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Frost Bite",
+          0.261
+        ],
+        [
+          "Blood on the Snow",
+          0.243
+        ],
+        [
+          "Saw It Coming",
+          0.225
+        ],
+        [
+          "Blizzard Brawl",
+          0.187
+        ],
+        [
+          "Environmental Sciences",
+          0.181
+        ],
+        [
+          "Bloodchief's Thirst",
+          0.174
+        ],
+        [
+          "Negate",
+          0.166
+        ]
+      ]
+    },
+    {
+      "name": "Haughty Djinn / Make Disappear / Thirst for Discovery",
+      "game": "magic",
+      "cluster_id": 24,
+      "deck_count": 994,
+      "type_distribution": {
+        "land": 0.3678,
+        "creature": 0.2958,
+        "instant": 0.1753,
+        "sorcery": 0.0598,
+        "enchantment": 0.0463,
+        "artifact": 0.0419,
+        "planeswalker": 0.0131
+      },
+      "cmc_histogram": {
+        "0": 0.3682,
+        "1": 0.1688,
+        "2": 0.2315,
+        "3": 0.1202,
+        "4": 0.0529,
+        "5": 0.0313,
+        "6": 0.0101,
+        "7": 0.0142,
+        "8": 0.0014,
+        "9": 0.0009,
+        "10": 0.0006,
+        "15": 0.0
+      },
+      "color_distribution": {
+        "W": 0.1935,
+        "U": 0.2608,
+        "B": 0.176,
+        "R": 0.2417,
+        "G": 0.1279
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Spell Pierce",
+          0.171
+        ],
+        [
+          "Fading Hope",
+          0.157
+        ]
+      ]
+    },
+    {
+      "name": "Flooded Strand / Arid Mesa / Phlage, Titan of Fire's Fury",
+      "game": "magic",
+      "cluster_id": 5,
+      "deck_count": 861,
+      "type_distribution": {
+        "land": 0.3627,
+        "creature": 0.3158,
+        "instant": 0.1624,
+        "sorcery": 0.0718,
+        "enchantment": 0.04,
+        "planeswalker": 0.0257,
+        "artifact": 0.0215
+      },
+      "cmc_histogram": {
+        "0": 0.3776,
+        "1": 0.2007,
+        "2": 0.1581,
+        "3": 0.1208,
+        "4": 0.0403,
+        "5": 0.0743,
+        "6": 0.0086,
+        "7": 0.0107,
+        "8": 0.0035,
+        "9": 0.0001,
+        "10": 0.0009,
+        "12": 0.0044,
+        "13": 0.0001,
+        "15": 0.0
+      },
+      "color_distribution": {
+        "W": 0.3024,
+        "U": 0.2913,
+        "B": 0.1237,
+        "R": 0.1586,
+        "G": 0.1241
+      },
+      "core_cards": [
+        [
+          "Flooded Strand",
+          0.662
+        ],
+        [
+          "Hallowed Fountain",
+          0.499
+        ],
+        [
+          "Solitude",
+          0.487
+        ],
+        [
+          "Arid Mesa",
+          0.46
+        ],
+        [
+          "Meticulous Archive",
+          0.453
+        ],
+        [
+          "Quantum Riddler",
+          0.429
+        ],
+        [
+          "Prismatic Ending",
+          0.415
+        ],
+        [
+          "Ephemerate",
+          0.384
+        ],
+        [
+          "Steam Vents",
+          0.38
+        ],
+        [
+          "Force of Negation",
+          0.352
+        ],
+        [
+          "Scalding Tarn",
+          0.346
+        ],
+        [
+          "Teferi, Time Raveler",
+          0.344
+        ],
+        [
+          "Thundering Falls",
+          0.34
+        ],
+        [
+          "Sacred Foundry",
+          0.333
+        ],
+        [
+          "Marsh Flats",
+          0.325
+        ],
+        [
+          "Phlage, Titan of Fire's Fury",
+          0.31
+        ],
+        [
+          "Arena of Glory",
+          0.308
+        ],
+        [
+          "Ragavan, Nimble Pilferer",
+          0.307
+        ],
+        [
+          "Consign to Memory",
+          0.301
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Elegant Parlor",
+          0.3
+        ],
+        [
+          "Subtlety",
+          0.265
+        ],
+        [
+          "Polluted Delta",
+          0.258
+        ],
+        [
+          "Phelia, Exuberant Shepherd",
+          0.242
+        ],
+        [
+          "Misty Rainforest",
+          0.208
+        ],
+        [
+          "Watery Grave",
+          0.207
+        ],
+        [
+          "Godless Shrine",
+          0.202
+        ],
+        [
+          "Breeding Pool",
+          0.19
+        ],
+        [
+          "Windswept Heath",
+          0.186
+        ],
+        [
+          "Galvanic Discharge",
+          0.18
+        ],
+        [
+          "Lightning Bolt",
+          0.179
+        ],
+        [
+          "Sink into Stupor",
+          0.168
+        ],
+        [
+          "Fable of the Mirror-Breaker",
+          0.166
+        ],
+        [
+          "Hedge Maze",
+          0.165
+        ],
+        [
+          "Undercity Sewers",
+          0.161
+        ],
+        [
+          "Boseiju, Who Endures",
+          0.157
+        ],
+        [
+          "Shadowy Backstreet",
+          0.156
+        ],
+        [
+          "Wrath of the Skies",
+          0.154
+        ],
+        [
+          "Counterspell",
+          0.151
+        ]
+      ]
+    },
+    {
+      "name": "Haunted Ridge / Bloodtithe Harvester / Voltage Surge",
+      "game": "magic",
+      "cluster_id": 12,
+      "deck_count": 852,
+      "type_distribution": {
+        "land": 0.2952,
+        "creature": 0.2637,
+        "instant": 0.1674,
+        "sorcery": 0.0904,
+        "enchantment": 0.0681,
+        "artifact": 0.0656,
+        "planeswalker": 0.0496
+      },
+      "cmc_histogram": {
+        "0": 0.2966,
+        "1": 0.1423,
+        "2": 0.2621,
+        "3": 0.1253,
+        "4": 0.0908,
+        "5": 0.0504,
+        "6": 0.0144,
+        "7": 0.0161,
+        "8": 0.0013,
+        "9": 0.0001,
+        "10": 0.0003,
+        "15": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.2467,
+        "U": 0.1567,
+        "B": 0.2571,
+        "R": 0.1915,
+        "G": 0.1481
+      },
+      "core_cards": [
+        [
+          "Eiganjo, Seat of the Empire",
+          0.391
+        ],
+        [
+          "Hive of the Eye Tyrant",
+          0.305
+        ]
+      ],
+      "flex_cards": [
+        [
+          "The Meathook Massacre",
+          0.298
+        ],
+        [
+          "Takenuma, Abandoned Mire",
+          0.296
+        ],
+        [
+          "Deserted Beach",
+          0.282
+        ],
+        [
+          "Haunted Ridge",
+          0.257
+        ],
+        [
+          "Duress",
+          0.256
+        ],
+        [
+          "Boseiju, Who Endures",
+          0.256
+        ],
+        [
+          "The Wandering Emperor",
+          0.255
+        ],
+        [
+          "Infernal Grasp",
+          0.251
+        ],
+        [
+          "Hengegate Pathway",
+          0.251
+        ],
+        [
+          "Otawara, Soaring City",
+          0.242
+        ],
+        [
+          "Fable of the Mirror-Breaker",
+          0.241
+        ],
+        [
+          "Den of the Bugbear",
+          0.235
+        ],
+        [
+          "Blightstep Pathway",
+          0.232
+        ],
+        [
+          "Sokenzan, Crucible of Defiance",
+          0.228
+        ],
+        [
+          "Branchloft Pathway",
+          0.211
+        ],
+        [
+          "Shipwreck Marsh",
+          0.207
+        ],
+        [
+          "Overgrown Farmland",
+          0.201
+        ],
+        [
+          "Reckoner Bankbuster",
+          0.197
+        ],
+        [
+          "Brightclimb Pathway",
+          0.194
+        ],
+        [
+          "Disdainful Stroke",
+          0.192
+        ],
+        [
+          "Ray of Enfeeblement",
+          0.189
+        ],
+        [
+          "Shattered Sanctum",
+          0.189
+        ],
+        [
+          "Clearwater Pathway",
+          0.181
+        ],
+        [
+          "Rockfall Vale",
+          0.175
+        ],
+        [
+          "Cragcrown Pathway",
+          0.175
+        ],
+        [
+          "Negate",
+          0.174
+        ],
+        [
+          "Hall of Storm Giants",
+          0.171
+        ],
+        [
+          "Lolth, Spider Queen",
+          0.164
+        ],
+        [
+          "Sundown Pass",
+          0.161
+        ],
+        [
+          "Bloodtithe Harvester",
+          0.155
+        ]
+      ]
+    },
+    {
+      "name": "Plumb the Forbidden / Hunt for Specimens / Eyetwitch",
+      "game": "magic",
+      "cluster_id": 6,
+      "deck_count": 753,
+      "type_distribution": {
+        "land": 0.3194,
+        "creature": 0.2892,
+        "sorcery": 0.1696,
+        "instant": 0.162,
+        "enchantment": 0.0375,
+        "artifact": 0.015,
+        "planeswalker": 0.0073
+      },
+      "cmc_histogram": {
+        "0": 0.3202,
+        "1": 0.1347,
+        "2": 0.2346,
+        "3": 0.1664,
+        "4": 0.0803,
+        "5": 0.0325,
+        "6": 0.0107,
+        "7": 0.0154,
+        "8": 0.0038,
+        "9": 0.0013,
+        "11": 0.0
+      },
+      "color_distribution": {
+        "W": 0.2577,
+        "U": 0.1221,
+        "B": 0.3015,
+        "R": 0.1338,
+        "G": 0.185
+      },
+      "core_cards": [
+        [
+          "Environmental Sciences",
+          0.312
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Pest Summoning",
+          0.246
+        ],
+        [
+          "Sedgemoor Witch",
+          0.228
+        ],
+        [
+          "Necrotic Fumes",
+          0.207
+        ],
+        [
+          "Plumb the Forbidden",
+          0.199
+        ],
+        [
+          "Hunt for Specimens",
+          0.198
+        ],
+        [
+          "Eyetwitch",
+          0.198
+        ],
+        [
+          "Mascot Exhibition",
+          0.177
+        ],
+        [
+          "Village Rites",
+          0.165
+        ],
+        [
+          "Darkbore Pathway",
+          0.163
+        ],
+        [
+          "Clever Lumimancer",
+          0.162
+        ],
+        [
+          "Leonin Lightscribe",
+          0.157
+        ],
+        [
+          "Containment Breach",
+          0.153
+        ]
+      ]
+    },
+    {
+      "name": "Polluted Delta / Psychic Frog / Bloodstained Mire",
+      "game": "magic",
+      "cluster_id": 10,
+      "deck_count": 709,
+      "type_distribution": {
+        "land": 0.3304,
+        "creature": 0.2583,
+        "instant": 0.1802,
+        "sorcery": 0.1357,
+        "artifact": 0.0481,
+        "enchantment": 0.0331,
+        "planeswalker": 0.0142,
+        "other": 0.0001
+      },
+      "cmc_histogram": {
+        "0": 0.3616,
+        "1": 0.2801,
+        "2": 0.188,
+        "3": 0.0801,
+        "4": 0.0315,
+        "5": 0.0296,
+        "6": 0.0052,
+        "7": 0.01,
+        "8": 0.0098,
+        "9": 0.0003,
+        "10": 0.002,
+        "12": 0.0005,
+        "13": 0.0006,
+        "15": 0.0006
+      },
+      "color_distribution": {
+        "W": 0.1005,
+        "U": 0.2661,
+        "B": 0.2706,
+        "R": 0.2492,
+        "G": 0.1135
+      },
+      "core_cards": [
+        [
+          "Bloodstained Mire",
+          0.508
+        ],
+        [
+          "Polluted Delta",
+          0.45
+        ],
+        [
+          "Scalding Tarn",
+          0.444
+        ],
+        [
+          "Thoughtseize",
+          0.405
+        ],
+        [
+          "Watery Grave",
+          0.395
+        ],
+        [
+          "Steam Vents",
+          0.385
+        ],
+        [
+          "Fatal Push",
+          0.379
+        ],
+        [
+          "Undercity Sewers",
+          0.324
+        ],
+        [
+          "Wooded Foothills",
+          0.313
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Lightning Bolt",
+          0.299
+        ],
+        [
+          "Psychic Frog",
+          0.282
+        ],
+        [
+          "Flooded Strand",
+          0.279
+        ],
+        [
+          "Thundering Falls",
+          0.267
+        ],
+        [
+          "Blood Crypt",
+          0.26
+        ],
+        [
+          "Mishra's Bauble",
+          0.255
+        ],
+        [
+          "Preordain",
+          0.244
+        ],
+        [
+          "Hallowed Fountain",
+          0.205
+        ],
+        [
+          "Dragon's Rage Channeler",
+          0.195
+        ],
+        [
+          "Arid Mesa",
+          0.192
+        ],
+        [
+          "Faithless Looting",
+          0.189
+        ],
+        [
+          "Raucous Theater",
+          0.182
+        ],
+        [
+          "Cori-Steel Cutter",
+          0.182
+        ],
+        [
+          "Lava Dart",
+          0.175
+        ],
+        [
+          "Force of Negation",
+          0.171
+        ],
+        [
+          "Windswept Heath",
+          0.169
+        ],
+        [
+          "Monastery Swiftspear",
+          0.164
+        ],
+        [
+          "Marsh Flats",
+          0.158
+        ],
+        [
+          "Unearth",
+          0.151
+        ],
+        [
+          "Expressive Iteration",
+          0.151
+        ]
+      ]
+    },
+    {
+      "name": "Sacred Foundry / Bringer of the Last Gift / Watery Grave",
+      "game": "magic",
+      "cluster_id": 4,
+      "deck_count": 701,
+      "type_distribution": {
+        "land": 0.4185,
+        "creature": 0.2621,
+        "instant": 0.1664,
+        "sorcery": 0.0632,
+        "enchantment": 0.0556,
+        "artifact": 0.0294,
+        "planeswalker": 0.0048
+      },
+      "cmc_histogram": {
+        "0": 0.4188,
+        "1": 0.1141,
+        "2": 0.2216,
+        "3": 0.0798,
+        "4": 0.0601,
+        "5": 0.0565,
+        "6": 0.0127,
+        "7": 0.0119,
+        "8": 0.0205,
+        "9": 0.0037,
+        "10": 0.0002,
+        "11": 0.0,
+        "15": 0.0
+      },
+      "color_distribution": {
+        "W": 0.235,
+        "U": 0.2549,
+        "B": 0.1928,
+        "R": 0.1906,
+        "G": 0.1266
+      },
+      "core_cards": [
+        [
+          "Watery Grave",
+          0.482
+        ],
+        [
+          "Sacred Foundry",
+          0.471
+        ],
+        [
+          "Floodfarm Verge",
+          0.409
+        ],
+        [
+          "Starting Town",
+          0.399
+        ],
+        [
+          "Sunbillow Verge",
+          0.361
+        ],
+        [
+          "Get Lost",
+          0.341
+        ],
+        [
+          "Breeding Pool",
+          0.338
+        ],
+        [
+          "Gloomlake Verge",
+          0.327
+        ],
+        [
+          "Lightning Helix",
+          0.31
+        ],
+        [
+          "Multiversal Passage",
+          0.31
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Stock Up",
+          0.298
+        ],
+        [
+          "Meticulous Archive",
+          0.294
+        ],
+        [
+          "Cavern of Souls",
+          0.294
+        ],
+        [
+          "Marang River Regent",
+          0.291
+        ],
+        [
+          "Riverpyre Verge",
+          0.277
+        ],
+        [
+          "Consult the Star Charts",
+          0.27
+        ],
+        [
+          "Thundering Falls",
+          0.26
+        ],
+        [
+          "Godless Shrine",
+          0.251
+        ],
+        [
+          "Three Steps Ahead",
+          0.241
+        ],
+        [
+          "No More Lies",
+          0.235
+        ],
+        [
+          "Bitter Triumph",
+          0.23
+        ],
+        [
+          "Willowrush Verge",
+          0.223
+        ],
+        [
+          "Day of Judgment",
+          0.22
+        ],
+        [
+          "Jeskai Revelation",
+          0.214
+        ],
+        [
+          "Undercity Sewers",
+          0.214
+        ],
+        [
+          "Overlord of the Balemurk",
+          0.207
+        ],
+        [
+          "Mistrise Village",
+          0.205
+        ],
+        [
+          "Superior Spider-Man",
+          0.2
+        ],
+        [
+          "Wastewood Verge",
+          0.198
+        ],
+        [
+          "Elegant Parlor",
+          0.174
+        ],
+        [
+          "Cori Mountain Monastery",
+          0.173
+        ],
+        [
+          "Ardyn, the Usurper",
+          0.17
+        ],
+        [
+          "Bringer of the Last Gift",
+          0.168
+        ],
+        [
+          "Underground Mortuary",
+          0.165
+        ],
+        [
+          "Ultima",
+          0.165
+        ],
+        [
+          "Awaken the Honored Dead",
+          0.163
+        ],
+        [
+          "Blooming Marsh",
+          0.157
+        ],
+        [
+          "Seam Rip",
+          0.153
+        ]
+      ]
+    },
+    {
+      "name": "Dragon's Fire / Deadly Dispute / Goldspan Dragon",
+      "game": "magic",
+      "cluster_id": 11,
+      "deck_count": 692,
+      "type_distribution": {
+        "creature": 0.344,
+        "land": 0.3025,
+        "instant": 0.1352,
+        "sorcery": 0.0959,
+        "enchantment": 0.0539,
+        "artifact": 0.0518,
+        "planeswalker": 0.0167,
+        "other": 0.0001
+      },
+      "cmc_histogram": {
+        "0": 0.3039,
+        "1": 0.127,
+        "2": 0.2515,
+        "3": 0.1421,
+        "4": 0.0922,
+        "5": 0.0541,
+        "6": 0.0152,
+        "7": 0.0123,
+        "8": 0.0012,
+        "9": 0.0005
+      },
+      "color_distribution": {
+        "W": 0.221,
+        "U": 0.1076,
+        "B": 0.2693,
+        "R": 0.2263,
+        "G": 0.1757
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Goldspan Dragon",
+          0.26
+        ],
+        [
+          "Prosperous Innkeeper",
+          0.225
+        ],
+        [
+          "Shambling Ghast",
+          0.207
+        ],
+        [
+          "Lair of the Hydra",
+          0.201
+        ],
+        [
+          "Cragcrown Pathway",
+          0.191
+        ],
+        [
+          "Den of the Bugbear",
+          0.188
+        ],
+        [
+          "Deadly Dispute",
+          0.185
+        ],
+        [
+          "Hive of the Eye Tyrant",
+          0.184
+        ],
+        [
+          "Environmental Sciences",
+          0.184
+        ],
+        [
+          "Shatterskull Smashing",
+          0.176
+        ],
+        [
+          "Magda, Brazen Outlaw",
+          0.173
+        ],
+        [
+          "Blightstep Pathway",
+          0.171
+        ],
+        [
+          "Brightclimb Pathway",
+          0.166
+        ],
+        [
+          "Esika's Chariot",
+          0.165
+        ],
+        [
+          "Jaspera Sentinel",
+          0.163
+        ],
+        [
+          "Cave of the Frost Dragon",
+          0.152
+        ],
+        [
+          "Dragon's Fire",
+          0.15
+        ],
+        [
+          "Darkbore Pathway",
+          0.15
+        ]
+      ]
+    },
+    {
+      "name": "Multiversal Passage / Stormchaser's Talent / Spirebluff Canal",
+      "game": "magic",
+      "cluster_id": 3,
+      "deck_count": 494,
+      "type_distribution": {
+        "land": 0.3863,
+        "creature": 0.2215,
+        "instant": 0.1588,
+        "sorcery": 0.0981,
+        "enchantment": 0.0816,
+        "artifact": 0.0468,
+        "planeswalker": 0.0069
+      },
+      "cmc_histogram": {
+        "0": 0.3864,
+        "1": 0.2348,
+        "2": 0.2226,
+        "3": 0.0894,
+        "4": 0.0273,
+        "5": 0.0302,
+        "6": 0.0025,
+        "7": 0.0042,
+        "8": 0.0012,
+        "9": 0.0012,
+        "10": 0.0003
+      },
+      "color_distribution": {
+        "W": 0.0609,
+        "U": 0.4301,
+        "B": 0.111,
+        "R": 0.2778,
+        "G": 0.1202
+      },
+      "core_cards": [
+        [
+          "Spirebluff Canal",
+          0.656
+        ],
+        [
+          "Riverpyre Verge",
+          0.638
+        ],
+        [
+          "Multiversal Passage",
+          0.597
+        ],
+        [
+          "Stormchaser's Talent",
+          0.553
+        ],
+        [
+          "Boomerang Basics",
+          0.516
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Torch the Tower",
+          0.358
+        ],
+        [
+          "Agna Qel'a",
+          0.283
+        ],
+        [
+          "Quantum Riddler",
+          0.277
+        ],
+        [
+          "Firebending Lesson",
+          0.275
+        ],
+        [
+          "Accumulate Wisdom",
+          0.275
+        ],
+        [
+          "Combustion Technique",
+          0.273
+        ],
+        [
+          "Gran-Gran",
+          0.263
+        ],
+        [
+          "Abandon Attachments",
+          0.257
+        ],
+        [
+          "Iroh's Demonstration",
+          0.253
+        ]
+      ]
+    },
+    {
+      "name": "Watery Grave / Gloomlake Verge / Restless Reef",
+      "game": "magic",
+      "cluster_id": 14,
+      "deck_count": 451,
+      "type_distribution": {
+        "land": 0.4231,
+        "creature": 0.2799,
+        "instant": 0.1374,
+        "sorcery": 0.0635,
+        "planeswalker": 0.0375,
+        "artifact": 0.0331,
+        "enchantment": 0.0256
+      },
+      "cmc_histogram": {
+        "0": 0.4233,
+        "1": 0.1466,
+        "2": 0.2122,
+        "3": 0.0846,
+        "4": 0.0908,
+        "5": 0.0218,
+        "6": 0.0152,
+        "7": 0.0024,
+        "8": 0.0018,
+        "9": 0.0008,
+        "10": 0.0002,
+        "11": 0.0,
+        "12": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.0691,
+        "U": 0.457,
+        "B": 0.3964,
+        "R": 0.0664,
+        "G": 0.0111
+      },
+      "core_cards": [
+        [
+          "Watery Grave",
+          0.856
+        ],
+        [
+          "Gloomlake Verge",
+          0.838
+        ],
+        [
+          "Restless Reef",
+          0.774
+        ],
+        [
+          "Bitter Triumph",
+          0.69
+        ],
+        [
+          "Shoot the Sheriff",
+          0.687
+        ],
+        [
+          "Kaito, Bane of Nightmares",
+          0.576
+        ],
+        [
+          "Enduring Curiosity",
+          0.572
+        ],
+        [
+          "Floodpits Drowner",
+          0.568
+        ],
+        [
+          "Soulstone Sanctuary",
+          0.55
+        ],
+        [
+          "Spyglass Siren",
+          0.539
+        ],
+        [
+          "Cecil, Dark Knight",
+          0.539
+        ],
+        [
+          "Tishana's Tidebinder",
+          0.517
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Multiversal Passage",
+          0.437
+        ],
+        [
+          "Deep-Cavern Bat",
+          0.43
+        ],
+        [
+          "Phantom Interference",
+          0.404
+        ],
+        [
+          "Tragic Trajectory",
+          0.401
+        ],
+        [
+          "Starting Town",
+          0.379
+        ],
+        [
+          "Preacher of the Schism",
+          0.361
+        ],
+        [
+          "Fountainport",
+          0.31
+        ],
+        [
+          "Stab",
+          0.302
+        ]
+      ]
+    },
+    {
+      "name": "Stomping Ground / Godless Shrine / Bleachbone Verge",
+      "game": "magic",
+      "cluster_id": 23,
+      "deck_count": 441,
+      "type_distribution": {
+        "land": 0.4011,
+        "creature": 0.3071,
+        "instant": 0.0984,
+        "sorcery": 0.0815,
+        "enchantment": 0.0753,
+        "artifact": 0.0291,
+        "planeswalker": 0.0077
+      },
+      "cmc_histogram": {
+        "0": 0.402,
+        "1": 0.1692,
+        "2": 0.218,
+        "3": 0.1007,
+        "4": 0.0533,
+        "5": 0.0314,
+        "6": 0.011,
+        "7": 0.0061,
+        "8": 0.0032,
+        "9": 0.0007,
+        "10": 0.004,
+        "11": 0.0001,
+        "12": 0.0002,
+        "13": 0.0001
+      },
+      "color_distribution": {
+        "W": 0.2305,
+        "U": 0.1708,
+        "B": 0.2051,
+        "R": 0.1716,
+        "G": 0.2219
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Breeding Pool",
+          0.449
+        ],
+        [
+          "Starting Town",
+          0.408
+        ],
+        [
+          "Godless Shrine",
+          0.401
+        ],
+        [
+          "Stomping Ground",
+          0.392
+        ],
+        [
+          "Bleachbone Verge",
+          0.354
+        ],
+        [
+          "Concealed Courtyard",
+          0.317
+        ],
+        [
+          "Thornspire Verge",
+          0.272
+        ]
+      ]
+    },
+    {
+      "name": "Escape Tunnel / Mightform Harmonizer / Earthbender Ascension",
+      "game": "magic",
+      "cluster_id": 15,
+      "deck_count": 416,
+      "type_distribution": {
+        "land": 0.4205,
+        "creature": 0.3215,
+        "instant": 0.1015,
+        "enchantment": 0.062,
+        "sorcery": 0.0556,
+        "artifact": 0.0347,
+        "planeswalker": 0.0042
+      },
+      "cmc_histogram": {
+        "0": 0.422,
+        "1": 0.1557,
+        "2": 0.1593,
+        "3": 0.1175,
+        "4": 0.0822,
+        "5": 0.0306,
+        "6": 0.0117,
+        "7": 0.0081,
+        "8": 0.01,
+        "9": 0.0016,
+        "10": 0.0003,
+        "11": 0.0003,
+        "12": 0.0005,
+        "15": 0.0002
+      },
+      "color_distribution": {
+        "W": 0.1087,
+        "U": 0.1207,
+        "B": 0.134,
+        "R": 0.1166,
+        "G": 0.52
+      },
+      "core_cards": [
+        [
+          "Fabled Passage",
+          0.661
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Llanowar Elves",
+          0.469
+        ],
+        [
+          "Escape Tunnel",
+          0.404
+        ],
+        [
+          "Icetill Explorer",
+          0.397
+        ],
+        [
+          "Sazh's Chocobo",
+          0.377
+        ],
+        [
+          "Ba Sing Se",
+          0.325
+        ],
+        [
+          "Mightform Harmonizer",
+          0.308
+        ],
+        [
+          "Earthbender Ascension",
+          0.308
+        ],
+        [
+          "Badgermole Cub",
+          0.252
+        ]
+      ]
+    },
+    {
+      "name": "Amulet of Vigor / Urza's Saga / Crumbling Vestige",
+      "game": "magic",
+      "cluster_id": 9,
+      "deck_count": 378,
+      "type_distribution": {
+        "land": 0.3303,
+        "creature": 0.2812,
+        "instant": 0.1298,
+        "sorcery": 0.1012,
+        "artifact": 0.0865,
+        "enchantment": 0.0602,
+        "planeswalker": 0.0108
+      },
+      "cmc_histogram": {
+        "0": 0.3793,
+        "1": 0.1743,
+        "2": 0.1856,
+        "3": 0.1063,
+        "4": 0.0713,
+        "5": 0.0174,
+        "6": 0.0182,
+        "7": 0.0274,
+        "8": 0.0033,
+        "9": 0.0023,
+        "10": 0.0032,
+        "11": 0.0001,
+        "12": 0.0003,
+        "13": 0.0102,
+        "15": 0.001
+      },
+      "color_distribution": {
+        "W": 0.1316,
+        "U": 0.2886,
+        "B": 0.1278,
+        "R": 0.1209,
+        "G": 0.3311
+      },
+      "core_cards": [],
+      "flex_cards": [
+        [
+          "Malevolent Rumble",
+          0.349
+        ],
+        [
+          "Boseiju, Who Endures",
+          0.336
+        ],
+        [
+          "Urza's Saga",
+          0.333
+        ],
+        [
+          "Cavern of Souls",
+          0.312
+        ],
+        [
+          "Kozilek's Command",
+          0.291
+        ],
+        [
+          "Eldrazi Temple",
+          0.275
+        ],
+        [
+          "Vexing Bauble",
+          0.265
+        ]
+      ]
+    },
+    {
+      "name": "Gene Pollinator / Badgermole Cub / Spider Manifestation",
+      "game": "magic",
+      "cluster_id": 21,
+      "deck_count": 289,
+      "type_distribution": {
+        "creature": 0.4833,
+        "land": 0.38,
+        "sorcery": 0.0546,
+        "instant": 0.0445,
+        "enchantment": 0.0272,
+        "artifact": 0.0093,
+        "planeswalker": 0.0011
+      },
+      "cmc_histogram": {
+        "0": 0.3804,
+        "1": 0.1997,
+        "2": 0.2192,
+        "3": 0.0614,
+        "4": 0.0693,
+        "5": 0.0507,
+        "6": 0.0068,
+        "7": 0.0024,
+        "8": 0.0088,
+        "9": 0.0004,
+        "10": 0.0005,
+        "11": 0.0001,
+        "12": 0.0003
+      },
+      "color_distribution": {
+        "W": 0.0354,
+        "U": 0.2355,
+        "B": 0.0069,
+        "R": 0.0863,
+        "G": 0.6358
+      },
+      "core_cards": [
+        [
+          "Llanowar Elves",
+          0.972
+        ],
+        [
+          "Breeding Pool",
+          0.889
+        ],
+        [
+          "Botanical Sanctum",
+          0.806
+        ],
+        [
+          "Willowrush Verge",
+          0.74
+        ],
+        [
+          "Ouroboroid",
+          0.692
+        ],
+        [
+          "Gene Pollinator",
+          0.685
+        ],
+        [
+          "Multiversal Passage",
+          0.664
+        ],
+        [
+          "Badgermole Cub",
+          0.661
+        ],
+        [
+          "Quantum Riddler",
+          0.581
+        ],
+        [
+          "Nature's Rhythm",
+          0.564
+        ],
+        [
+          "Mockingbird",
+          0.505
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Spider Manifestation",
+          0.439
+        ],
+        [
+          "Craterhoof Behemoth",
+          0.436
+        ],
+        [
+          "Spider-Sense",
+          0.37
+        ],
+        [
+          "Keen-Eyed Curator",
+          0.304
+        ],
+        [
+          "Marang River Regent",
+          0.277
+        ],
+        [
+          "Starting Town",
+          0.26
+        ]
+      ]
+    },
+    {
+      "name": "Kappa Cannoneer / Mox Opal / Urza's Saga",
+      "game": "magic",
+      "cluster_id": 22,
+      "deck_count": 269,
+      "type_distribution": {
+        "artifact": 0.2868,
+        "land": 0.2513,
+        "creature": 0.2179,
+        "instant": 0.0783,
+        "enchantment": 0.0636,
+        "sorcery": 0.0615,
+        "planeswalker": 0.0404,
+        "other": 0.0003
+      },
+      "cmc_histogram": {
+        "0": 0.4848,
+        "1": 0.1393,
+        "2": 0.1021,
+        "3": 0.1029,
+        "4": 0.0528,
+        "5": 0.0279,
+        "6": 0.0275,
+        "7": 0.0563,
+        "8": 0.0011,
+        "9": 0.0003,
+        "10": 0.0026,
+        "11": 0.0003,
+        "13": 0.0018,
+        "15": 0.0003
+      },
+      "color_distribution": {
+        "W": 0.0341,
+        "U": 0.5156,
+        "B": 0.163,
+        "R": 0.2197,
+        "G": 0.0676
+      },
+      "core_cards": [
+        [
+          "Urza's Saga",
+          0.654
+        ],
+        [
+          "Mishra's Bauble",
+          0.613
+        ],
+        [
+          "Mox Opal",
+          0.613
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Tormod's Crypt",
+          0.439
+        ],
+        [
+          "Shadowspear",
+          0.428
+        ],
+        [
+          "Lavaspur Boots",
+          0.416
+        ],
+        [
+          "Pinnacle Emissary",
+          0.387
+        ],
+        [
+          "Kappa Cannoneer",
+          0.368
+        ],
+        [
+          "Steam Vents",
+          0.357
+        ],
+        [
+          "Thoughtcast",
+          0.349
+        ],
+        [
+          "Metallic Rebuke",
+          0.346
+        ],
+        [
+          "Sink into Stupor",
+          0.335
+        ],
+        [
+          "Memnite",
+          0.331
+        ],
+        [
+          "Spirebluff Canal",
+          0.327
+        ],
+        [
+          "Engineered Explosives",
+          0.32
+        ],
+        [
+          "Pithing Needle",
+          0.316
+        ],
+        [
+          "Kozilek's Command",
+          0.316
+        ],
+        [
+          "Springleaf Drum",
+          0.305
+        ],
+        [
+          "Aether Spellbomb",
+          0.301
+        ],
+        [
+          "Urza's Tower",
+          0.297
+        ],
+        [
+          "Urza's Power Plant",
+          0.297
+        ],
+        [
+          "Expedition Map",
+          0.297
+        ],
+        [
+          "Urza's Mine",
+          0.297
+        ],
+        [
+          "Karn, the Great Creator",
+          0.294
+        ],
+        [
+          "Eldrazi Temple",
+          0.29
+        ],
+        [
+          "Ugin, Eye of the Storms",
+          0.283
+        ],
+        [
+          "Emry, Lurker of the Loch",
+          0.275
+        ],
+        [
+          "Devourer of Destiny",
+          0.275
+        ],
+        [
+          "Ugin's Labyrinth",
+          0.271
+        ],
+        [
+          "Otawara, Soaring City",
+          0.264
+        ]
+      ]
+    },
+    {
+      "name": "Zenith Flare / Drannith Healer / Flourishing Fox",
+      "game": "magic",
+      "cluster_id": 18,
+      "deck_count": 257,
+      "type_distribution": {
+        "creature": 0.3058,
+        "instant": 0.2388,
+        "land": 0.2054,
+        "sorcery": 0.1476,
+        "enchantment": 0.0808,
+        "artifact": 0.0205,
+        "planeswalker": 0.0011
+      },
+      "cmc_histogram": {
+        "0": 0.2061,
+        "1": 0.1425,
+        "2": 0.3736,
+        "3": 0.1043,
+        "4": 0.0725,
+        "5": 0.0392,
+        "6": 0.0545,
+        "7": 0.0071,
+        "9": 0.0001
+      },
+      "color_distribution": {
+        "W": 0.2867,
+        "U": 0.2454,
+        "B": 0.0864,
+        "R": 0.3556,
+        "G": 0.0259
+      },
+      "core_cards": [
+        [
+          "Flourishing Fox",
+          0.864
+        ],
+        [
+          "Drannith Stinger",
+          0.86
+        ],
+        [
+          "Go for Blood",
+          0.852
+        ],
+        [
+          "Zenith Flare",
+          0.837
+        ],
+        [
+          "Valiant Rescuer",
+          0.821
+        ],
+        [
+          "Boon of the Wish-Giver",
+          0.813
+        ],
+        [
+          "Startling Development",
+          0.798
+        ],
+        [
+          "Drannith Healer",
+          0.716
+        ],
+        [
+          "Needleverge Pathway",
+          0.607
+        ],
+        [
+          "Footfall Crater",
+          0.572
+        ],
+        [
+          "Frostveil Ambush",
+          0.56
+        ],
+        [
+          "Riverglide Pathway",
+          0.541
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Raugrin Triome",
+          0.479
+        ],
+        [
+          "Memory Leak",
+          0.475
+        ],
+        [
+          "Shredded Sails",
+          0.455
+        ],
+        [
+          "Lurrus of the Dream-Den",
+          0.451
+        ],
+        [
+          "Improbable Alliance",
+          0.451
+        ],
+        [
+          "Hengegate Pathway",
+          0.424
+        ],
+        [
+          "Redcap Melee",
+          0.377
+        ],
+        [
+          "Mystical Dispute",
+          0.358
+        ],
+        [
+          "Negate",
+          0.358
+        ],
+        [
+          "Irencrag Pyromancer",
+          0.296
+        ],
+        [
+          "Glass Casket",
+          0.284
+        ]
+      ]
+    },
+    {
+      "name": "Steam Vents / Abandon Attachments / Combustion Technique",
+      "game": "magic",
+      "cluster_id": 19,
+      "deck_count": 198,
+      "type_distribution": {
+        "land": 0.3857,
+        "instant": 0.265,
+        "creature": 0.1407,
+        "sorcery": 0.0898,
+        "enchantment": 0.0755,
+        "artifact": 0.0373,
+        "planeswalker": 0.006
+      },
+      "cmc_histogram": {
+        "0": 0.3858,
+        "1": 0.2363,
+        "2": 0.2402,
+        "3": 0.0812,
+        "4": 0.0248,
+        "5": 0.0106,
+        "6": 0.0002,
+        "7": 0.0121,
+        "8": 0.0001,
+        "9": 0.0084,
+        "10": 0.0003
+      },
+      "color_distribution": {
+        "W": 0.1285,
+        "U": 0.5066,
+        "B": 0.032,
+        "R": 0.2997,
+        "G": 0.0332
+      },
+      "core_cards": [
+        [
+          "Steam Vents",
+          0.758
+        ],
+        [
+          "Riverpyre Verge",
+          0.687
+        ],
+        [
+          "Spirebluff Canal",
+          0.662
+        ],
+        [
+          "Multiversal Passage",
+          0.636
+        ],
+        [
+          "Spell Snare",
+          0.616
+        ],
+        [
+          "Abandon Attachments",
+          0.525
+        ]
+      ],
+      "flex_cards": [
+        [
+          "Monument to Endurance",
+          0.434
+        ],
+        [
+          "Agna Qel'a",
+          0.434
+        ],
+        [
+          "Gran-Gran",
+          0.409
+        ],
+        [
+          "Accumulate Wisdom",
+          0.404
+        ],
+        [
+          "It'll Quench Ya!",
+          0.404
+        ],
+        [
+          "Combustion Technique",
+          0.404
+        ],
+        [
+          "Artist's Talent",
+          0.404
+        ],
+        [
+          "Firebending Lesson",
+          0.404
+        ],
+        [
+          "Boomerang Basics",
+          0.389
+        ],
+        [
+          "Three Steps Ahead",
+          0.369
+        ],
+        [
+          "Stormchaser's Talent",
+          0.333
+        ],
+        [
+          "Burst Lightning",
+          0.318
+        ]
+      ]
+    }
+  ]
+}
