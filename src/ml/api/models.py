@@ -248,6 +248,10 @@ class CompleteRequest(BaseModel):
         None,
         description="Target format for legality filtering (e.g., standard, modern, commander). OT method only.",
     )
+    archetype: str | None = Field(
+        None,
+        description="Archetype name for template-guided completion. Auto-detected from seed deck if omitted.",
+    )
     # OT-specific parameters
     sinkhorn_reg: float = 0.01  # Entropic regularization for OT
     embedding_weight: float = 0.3  # Cost weight for embedding distance
@@ -296,6 +300,7 @@ class ApiState:
         # Enrichment data (loaded from data/ assets)
         self.banlist: dict[str, dict[str, list[str]]] | None = None  # {format: {status: [cards]}}
         self.archetypes: dict[str, list[str]] | None = None  # {card_name: [archetype_names]}
+        self.archetype_templates: list[dict] | None = None  # From archetype_templates_{game}.json
         self.deck_frequency: dict[str, dict] | None = None  # {card_name: {total_decks, by_format}}
         self.legality_data: dict[str, dict[str, str]] | None = None  # {card: {format: status}}
         self.price_data: dict[str, dict[str, str | None]] | None = (
