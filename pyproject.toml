@@ -84,6 +84,10 @@ extras = [
 ot = [
     "pot>=0.9.0",  # Python Optimal Transport (Sinkhorn, etc.)
 ]
+discord = [
+    "discord.py>=2.3.0",
+    "httpx>=0.27.0",
+]
 
 [tool.hatch.build]
 # Only include Python ML code, exclude Go backend and massive data files
