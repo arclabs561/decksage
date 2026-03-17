@@ -641,8 +641,8 @@ def _round_transport_plan_ilp(
             )
 
         x = np.round(result.x[:n]).astype(int)
-    except Exception as e:
-        logger.debug(f"ILP solver failed: {e}, falling back to greedy")
+    except (ValueError, RuntimeError, TypeError) as e:
+        logger.debug("ILP solver failed: %s, falling back to greedy", e, exc_info=True)
         return _round_transport_plan_greedy(
             plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
         )
@@ -905,8 +905,8 @@ def ot_complete_deck(
                     f"Sinkhorn marginal error {marginal_err:.6f} exceeds tolerance; "
                     "transport plan may be inaccurate"
                 )
-    except Exception as e:
-        logger.error(f"Sinkhorn solver failed: {e}")
+    except (ValueError, RuntimeError, FloatingPointError, np.linalg.LinAlgError) as e:
+        logger.error("Sinkhorn solver failed: %s", e, exc_info=True)
         return OTCompletionResult(
             deck=deck,
             additions=[],
