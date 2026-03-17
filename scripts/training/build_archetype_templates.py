@@ -53,7 +53,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 MAIN_PARTITION: dict[str, str] = {
     "magic": "Main",
     "yugioh": "Main Deck",
-    "pokemon": "Main Deck",
+    "pokemon": "Deck",
 }
 
 # Major card supertypes for Magic type distribution
