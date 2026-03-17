@@ -90,7 +90,7 @@ def run_completion(
     **ot_params: float,
 ) -> dict:
     """Run a single completion and return metrics."""
-    part_name = "Main" if game == "magic" else "Main Deck"
+    part_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
     payload: dict = {
         "game": game,
         "deck": {part_name: seeds},
@@ -192,9 +192,7 @@ def run_comparison(client: httpx.Client, json_output: bool = False) -> list[dict
                         f"{result['elapsed_s']}s{quality_str}"
                     )
                     if result["added_names"]:
-                        print(
-                            f"            Top adds: {', '.join(result['added_names'][:5])}"
-                        )
+                        print(f"            Top adds: {', '.join(result['added_names'][:5])}")
 
         # Diversity comparison
         if not json_output and all("added_names" in r for r in results.values()):
@@ -213,7 +211,9 @@ def run_comparison(client: httpx.Client, json_output: bool = False) -> list[dict
 def run_sweep(client: httpx.Client, json_output: bool = False) -> list[dict]:
     """Sweep OT parameters and find optimal configuration."""
     # Use a subset of decks for sweep (speed)
-    sweep_decks = {k: v for k, v in TEST_DECKS.items() if k in ("magic_burn", "magic_control", "yugioh_dragon")}
+    sweep_decks = {
+        k: v for k, v in TEST_DECKS.items() if k in ("magic_burn", "magic_control", "yugioh_dragon")
+    }
 
     regs = SWEEP_GRID["sinkhorn_reg"]
     emb_ws = SWEEP_GRID["embedding_weight"]

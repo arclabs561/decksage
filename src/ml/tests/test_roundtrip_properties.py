@@ -116,7 +116,7 @@ def pkmn_deck_small(draw):
     deck = {
         "deck_id": "prop_pkmn",
         "format": "Standard",
-        "partitions": [{"name": "Main Deck", "cards": main_cards}],
+        "partitions": [{"name": "Deck", "cards": main_cards}],
     }
     return deck
 

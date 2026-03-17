@@ -53,8 +53,9 @@ _POKEMON_PARTITIONS: dict[str, str] = {
     "trainer": "Trainer",
     "trainers": "Trainer",
     "energy": "Energy",
-    "main": "Main Deck",
-    "main deck": "Main Deck",
+    "main": "Deck",
+    "main deck": "Deck",
+    "deck": "Deck",
 }
 
 _PARTITION_MAPS: dict[str, dict[str, str]] = {
@@ -66,7 +67,7 @@ _PARTITION_MAPS: dict[str, dict[str, str]] = {
 _DEFAULT_PARTITION: dict[str, str] = {
     "magic": "Main",
     "yugioh": "Main Deck",
-    "pokemon": "Main Deck",
+    "pokemon": "Deck",
 }
 
 

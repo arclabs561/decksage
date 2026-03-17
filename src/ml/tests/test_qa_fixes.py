@@ -39,10 +39,10 @@ class TestNormalizeDeckFormat:
         result = _normalize_deck_format(deck, "magic")
         assert result["partitions"][0]["name"] == "Main"
 
-    def test_pokemon_main_becomes_main_deck(self):
+    def test_pokemon_main_becomes_deck(self):
         deck = {"Main": ["Pikachu V"]}
         result = _normalize_deck_format(deck, "pokemon")
-        assert result["partitions"][0]["name"] == "Main Deck"
+        assert result["partitions"][0]["name"] == "Deck"
 
     def test_sideboard_key_preserved(self):
         deck = {"Main": ["Lightning Bolt"], "Sideboard": ["Pyroblast"]}

@@ -75,7 +75,7 @@ def compute_mana_curve(
         elif game == "yugioh":
             partition_name = "Main Deck"
         else:  # pokemon
-            partition_name = "Main Deck"
+            partition_name = "Deck"
 
     resolver = CardResolver()
     cmc_counts: Counter[int] = Counter()
@@ -135,7 +135,7 @@ def compute_archetype_curve(
     cmc_counts: Counter[int] = Counter()
     total = 0
 
-    partition_name = "Main" if game == "magic" else "Main Deck"
+    partition_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
 
     for deck in reference_decks:
         for p in deck.get("partitions", []) or []:
@@ -172,7 +172,7 @@ def compute_tag_distribution(
         elif game == "yugioh":
             partition_name = "Main Deck"
         else:  # pokemon
-            partition_name = "Main Deck"
+            partition_name = "Deck"
 
     resolver = CardResolver()
     tag_counts: Counter[str] = Counter()
@@ -230,7 +230,7 @@ def compute_synergy_score(
         elif game == "yugioh":
             partition_name = "Main Deck"
         else:  # pokemon
-            partition_name = "Main Deck"
+            partition_name = "Deck"
 
     resolver = CardResolver()
 
@@ -352,7 +352,7 @@ def assess_deck_quality(
     ) * 10.0
 
     # Collect metadata
-    partition_name = "Main" if game == "magic" else "Main Deck"
+    partition_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
     num_cards = sum(
         int(c.get("count", 0))
         for p in deck.get("partitions", []) or []

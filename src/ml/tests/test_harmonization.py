@@ -34,7 +34,7 @@ def test_all_decks_have_get_all_cards():
     pkmn = PokemonDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
+        partitions=[Partition(name="Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     # All should have get_all_cards
@@ -69,7 +69,7 @@ def test_all_decks_have_get_main_deck():
     pkmn = PokemonDeck(
         deck_id="test",
         format="Unknown",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
+        partitions=[Partition(name="Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     assert mtg.get_main_deck() is not None
@@ -104,7 +104,7 @@ def test_all_decks_have_same_metadata_fields():
         deck_id="test",
         format="Unknown",
         archetype="Test",
-        partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
+        partitions=[Partition(name="Deck", cards=[CardDesc(name="Grass Energy", count=60)])],
     )
 
     # All should have these core fields (common across all deck types)
@@ -227,5 +227,5 @@ def test_unknown_format_skips_validation():
         PokemonDeck(
             deck_id="test",
             format="CustomPokemon",
-            partitions=[Partition(name="Main Deck", cards=[CardDesc(name="Test", count=5)])],
+            partitions=[Partition(name="Deck", cards=[CardDesc(name="Test", count=5)])],
         )

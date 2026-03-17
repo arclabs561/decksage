@@ -90,6 +90,7 @@ from ml.deck_building.deck_completion import (
     greedy_complete,
 )
 from ml.deck_building.deck_quality import assess_deck_quality
+
 try:
     from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
 except ImportError:
@@ -529,7 +530,9 @@ def evaluate_deck_completion_task(
         try:
             # Create partial deck (remove some cards)
             partial_deck = json.loads(json.dumps(deck))  # Deep copy
-            main_partition = "Main" if game == "magic" else "Main Deck"
+            main_partition = (
+                "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
+            )
 
             # Remove 10-20 cards to create partial deck
             for p in partial_deck.get("partitions", []) or []:
@@ -638,7 +641,9 @@ def evaluate_deck_refinement_task(
             logger.debug(f"Deck {i}: Generated {len(add_suggestions)} add suggestions")
             if len(add_suggestions) == 0:
                 # Debug: check if deck has cards
-                main_partition = "Main" if game == "magic" else "Main Deck"
+                main_partition = (
+                    "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
+                )
                 main_cards = []
                 for p in deck.get("partitions", []) or []:
                     if p.get("name") == main_partition:

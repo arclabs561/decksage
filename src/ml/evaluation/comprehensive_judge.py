@@ -127,7 +127,7 @@ def judge_suggestion_comprehensively(
     deck_after_dict = json.loads(json.dumps(deck))  # Deep copy
     main_partition = None
     for p in deck_after_dict.get("partitions", []) or []:
-        if p.get("name") in ("Main", "Main Deck"):
+        if p.get("name") in ("Main", "Main Deck", "Deck"):
             main_partition = p
             break
 

@@ -70,7 +70,7 @@ def _make_embeddings(
 
 def _make_deck(card_names: list[str], game: str = "magic") -> dict:
     """Create a deck in partitions format."""
-    part_name = "Main" if game == "magic" else "Main Deck"
+    part_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
     cards = [{"name": name, "count": 1} for name in card_names]
     return {"partitions": [{"name": part_name, "cards": cards}]}
 
