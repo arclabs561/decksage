@@ -14,10 +14,12 @@ import (
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
+	"collections/games/digimon/dataset/digimoncard"
 	digimonlimitless "collections/games/digimon/dataset/limitless"
 	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	onepiecelimitless "collections/games/onepiece/dataset/limitless"
 	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
+	"collections/games/onepiece/dataset/onepiecetcg"
 	pokemonlimitless "collections/games/pokemon/dataset/limitless"
 	pokemonlimitlessweb "collections/games/pokemon/dataset/limitless-web"
 	"collections/games/pokemon/dataset/pokemoncard-io"
@@ -88,6 +90,8 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		d = wrapMTGDataset(goldfish.NewDataset(config.Log, gamesBlob))
 	case "mtgtop8":
 		d = wrapMTGDataset(mtgtop8.NewDataset(config.Log, gamesBlob))
+	case "digimoncard", "digimon-card":
+		d = digimoncard.NewDataset(config.Log, gamesBlob)
 	case "digimon-limitless", "digimonlimitless":
 		d = digimonlimitless.NewDataset(config.Log, gamesBlob)
 	case "digimon-limitless-web", "digimonlimitlessweb":
@@ -96,6 +100,8 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		d = onepiecelimitless.NewDataset(config.Log, gamesBlob)
 	case "onepiece-limitless-web", "onepiecelimitlessweb":
 		d = onepiecelimitlessweb.NewDataset(config.Log, gamesBlob)
+	case "onepiecetcg", "onepiece-tcg":
+		d = onepiecetcg.NewDataset(config.Log, gamesBlob)
 	case "riftbound-riftmana", "riftboundriftmana":
 		dataset, err := riftboundriftmana.NewDataset(config.Log, gamesBlob)
 		if err != nil {
@@ -132,7 +138,7 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(
 			"unsupported dataset %q, allowed (%+v)",
 			datasetName,
-			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimon-limitless", "digimon-limitless-web", "onepiece-limitless", "onepiece-limitless-web", "pokemontcg-data", "pokemontcg", "pokemon-limitless", "pokemon-limitless-web", "pokestats", "pokemoncard-io", "pokemon-tcg-price-api", "ygoprodeck", "yugiohmeta", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
+			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimoncard", "digimon-limitless", "digimon-limitless-web", "onepiecetcg", "onepiece-limitless", "onepiece-limitless-web", "pokemontcg-data", "pokemontcg", "pokemon-limitless", "pokemon-limitless-web", "pokestats", "pokemoncard-io", "pokemon-tcg-price-api", "ygoprodeck", "yugiohmeta", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
 		)
 	}
 	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
