@@ -9,6 +9,7 @@ Qdrant provides semantic vector search using embeddings.
 from __future__ import annotations
 
 import hashlib
+import json as _json
 import logging
 import os
 from dataclasses import dataclass
@@ -301,6 +302,7 @@ class HybridSearch:
         synonyms, and typo tolerance to the Meilisearch index.
 
         Idempotent: compares current settings and skips if already configured.
+        Waits for the async settings task to complete before returning.
 
         Returns True if settings were applied (or already matched), False on error.
         """
@@ -312,10 +314,39 @@ class HybridSearch:
             settings = build_meilisearch_settings(game)
 
             current = index.get_settings()
-            # Compare the keys we care about
+            # Compare the keys we care about.  Normalize to plain
+            # dicts/lists so that Meilisearch client wrapper types
+            # compare correctly against our plain-dict settings.
+            # MeiliSearch alphabetizes some list attributes (filterable,
+            # sortable, displayed) on return.  For order-sensitive lists
+            # (searchableAttributes, rankingRules) we compare as-is.
+            # MeiliSearch also returns extra sub-keys (e.g. typoTolerance
+            # has disableOnWords/disableOnAttributes/disableOnNumbers that
+            # we don't specify).  We project the current value onto our
+            # desired keys before comparing.
+            _ORDER_SENSITIVE = {"searchableAttributes", "rankingRules"}
             needs_update = False
             for key in settings:
-                if current.get(key) != settings[key]:
+                cur_val = current.get(key)
+                want_val = settings[key]
+                # Project dicts: only compare keys we actually set
+                if isinstance(want_val, dict) and isinstance(cur_val, dict):
+                    cur_val = {k: cur_val.get(k) for k in want_val}
+                # Normalize for comparison
+                cur_s = _json.dumps(cur_val, sort_keys=True)
+                want_s = _json.dumps(want_val, sort_keys=True)
+                if key not in _ORDER_SENSITIVE and isinstance(want_val, list):
+                    cur_s = _json.dumps(
+                        sorted(cur_val) if isinstance(cur_val, list) else cur_val, sort_keys=True
+                    )
+                    want_s = _json.dumps(sorted(want_val), sort_keys=True)
+                if cur_s != want_s:
+                    logger.info(
+                        "Meilisearch setting '%s' differs: have=%s want=%s",
+                        key,
+                        str(cur_val)[:120],
+                        str(want_val)[:120],
+                    )
                     needs_update = True
                     break
 
@@ -323,12 +354,25 @@ class HybridSearch:
                 logger.info("Meilisearch index '%s' settings already configured", self.index_name)
                 return True
 
-            index.update_settings(settings)
-            logger.info(
-                "Applied Meilisearch settings to index '%s' (game=%s)",
-                self.index_name,
-                game or "generic",
+            task_info = index.update_settings(settings)
+            # Wait for the async task to finish (up to 30s).
+            task_uid = getattr(task_info, "task_uid", None) or (
+                task_info.get("taskUid") if isinstance(task_info, dict) else None
             )
+            if task_uid is not None:
+                self.meilisearch.wait_for_task(task_uid, timeout_in_ms=30_000)
+                logger.info(
+                    "Applied Meilisearch settings to index '%s' (game=%s, task=%s)",
+                    self.index_name,
+                    game or "generic",
+                    task_uid,
+                )
+            else:
+                logger.info(
+                    "Applied Meilisearch settings to index '%s' (game=%s)",
+                    self.index_name,
+                    game or "generic",
+                )
             return True
         except Exception as e:
             logger.error(f"Failed to configure Meilisearch settings: {e}")
@@ -613,3 +657,23 @@ class HybridSearch:
     def search_vector_only(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Vector-only search using Qdrant."""
         return self.search(query, limit=limit, text_weight=0.0, vector_weight=1.0)
+
+
+if __name__ == "__main__":
+    """Apply MeiliSearch settings to all game indexes.
+
+    Usage: python -m src.ml.search.hybrid_search
+    """
+    import sys
+
+    logging.basicConfig(level=logging.INFO, format="%(name)s %(levelname)s %(message)s")
+    games = sys.argv[1:] or ["magic", "pokemon", "yugioh"]
+    for game in games:
+        idx_name = f"cards_{game}"
+        hs = HybridSearch(index_name=idx_name, collection_name=idx_name)
+        if hs.meilisearch is None:
+            logger.error("MeiliSearch client not available")
+            sys.exit(1)
+        ok = hs.configure_settings(game=game)
+        status = "OK" if ok else "FAILED"
+        print(f"{idx_name}: {status}")
