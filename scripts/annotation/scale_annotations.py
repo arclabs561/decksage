@@ -378,6 +378,14 @@ Their embedding cosine similarity is {cosine_sim:.3f}.
 
 IMPORTANT: Base your judgment on the card text and attributes above, NOT on the cosine similarity score. The score may be misleading -- cards with high co-occurrence similarity may serve completely different roles.
 
+**CALIBRATION ANCHORS** (use these to anchor your similarity_score):
+- 1.0: Functional reprint (e.g., Lightning Bolt = Chain Lightning for damage-to-face)
+- 0.8: Same role, minor differences (e.g., Counterspell vs Mana Leak)
+- 0.6: Related function, different power level (e.g., Counterspell vs Cancel)
+- 0.4: Same archetype, different role (e.g., Lightning Bolt vs Monastery Swiftspear)
+- 0.2: Tangential connection (e.g., both red, both cheap, but different functions)
+- 0.0: Unrelated (e.g., Lightning Bolt vs Birds of Paradise)
+
 Rate the candidate's relevance to the query and classify the similarity mode.
 """
 
@@ -782,7 +790,12 @@ async def run_pipeline(
     merged_queries.update(output_data.get("queries", {}))
 
     # Determine annotation method
-    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
+    # Support model rotation for IAA: comma-separated models in env var
+    # e.g., ANNOTATOR_MODEL_SIMILARITY=anthropic/claude-haiku-4-5-20251001,google/gemini-3-flash-preview
+    model_str = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
+    model_pool = [m.strip() for m in model_str.split(",") if m.strip()]
+    model_name = model_pool[0]  # Primary model for metadata
+
     has_keys = bool(
         os.getenv("OPENAI_API_KEY")
         or os.getenv("ANTHROPIC_API_KEY")
@@ -800,6 +813,7 @@ async def run_pipeline(
         )
 
     agent = None
+    agent_pool: list[tuple[str, Any]] = []  # (model_name, agent) for rotation
     if use_llm:
         import ml.annotation.llm_annotator as _ann_mod
 
@@ -808,8 +822,17 @@ async def run_pipeline(
             base_prompt = "You are an expert TCG judge creating similarity annotations."
 
         prompt = base_prompt + "\n\n" + MODE_PROMPT
-        agent = make_agent(model_name, CardSimilarityAnnotation, prompt)
-        logger.info(f"LLM annotation enabled: model={model_name}")
+
+        for m in model_pool:
+            a = make_agent(m, CardSimilarityAnnotation, prompt)
+            agent_pool.append((m, a))
+            logger.info(f"LLM annotation model: {m}")
+
+        agent = agent_pool[0][1]  # Default agent
+        if len(agent_pool) > 1:
+            logger.info(
+                f"Model rotation enabled for IAA: {len(agent_pool)} models, rotating per-query"
+            )
     else:
         logger.info("Building annotations from cosine similarity (no LLM)")
         model_name = "cosine_fallback"
@@ -828,7 +851,7 @@ async def run_pipeline(
             "game": game,
             "source": "scale_annotations.py",
             "embedding_version": embedding_version,
-            "llm_model": model_name,
+            "llm_model": ",".join(m for m, _ in agent_pool) if agent_pool else model_name,
             "created": output_data.get("created", datetime.now(timezone.utc).isoformat()),
             "updated": datetime.now(timezone.utc).isoformat(),
             "num_queries": len(merged_queries),
@@ -836,16 +859,24 @@ async def run_pipeline(
             "mode_counts": dict(mode_counts),
         }
 
-    for q, neighbors in query_neighbors.items():
-        if use_llm and agent is not None:
+    for q_idx, (q, neighbors) in enumerate(query_neighbors.items()):
+        # Rotate models for IAA (each query gets a different model)
+        if agent_pool and len(agent_pool) > 1:
+            chosen_model, chosen_agent = agent_pool[q_idx % len(agent_pool)]
+        elif agent_pool:
+            chosen_model, chosen_agent = agent_pool[0]
+        else:
+            chosen_model, chosen_agent = model_name, agent
+
+        if use_llm and chosen_agent is not None:
             try:
                 result = await annotate_query(
-                    agent,
+                    chosen_agent,
                     q,
                     neighbors,
                     game,
                     sem,
-                    model_name=model_name,
+                    model_name=chosen_model,
                     embedding_version=embedding_version,
                     card_data=card_metadata,
                 )
