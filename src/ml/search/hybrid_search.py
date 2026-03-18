@@ -752,13 +752,23 @@ class HybridSearch:
         # Cosine similarity via matrix multiply
         sims = card_matrix @ query_emb / (card_norms * query_norm + 1e-10)
 
-        # Top-K
+        # Top-K with score-gap filtering: E5 embeddings produce high
+        # baseline cosine (~0.85) for ANY pair, so fixed thresholds fail.
+        # Instead, check if the top results are meaningfully separated from
+        # the background: if top_1 - top_20 gap is < 0.02, results are noise.
         top_idx = _np.argsort(sims)[-limit * 2 :][::-1]
+
+        if len(top_idx) >= 2:
+            top_score = float(sims[top_idx[0]])
+            tail_score = float(sims[top_idx[min(19, len(top_idx) - 1)]])
+            score_gap = top_score - tail_score
+            if score_gap < 0.02:
+                # All results have near-identical similarity -- no signal
+                return []
+
         results = []
         for idx in top_idx[:limit]:
             score = float(sims[idx])
-            if score < 0.1:
-                break
             results.append(
                 SearchResult(
                     card_name=card_names[idx],
