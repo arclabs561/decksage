@@ -121,6 +121,90 @@ _SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
 }
 
 
+def parse_query_filters(query: str) -> tuple[str, str | None]:
+    """Extract structured attribute filters from a natural language query.
+
+    Parses color, cost, and type hints from queries like:
+    - "cheap red burn" -> query="burn", filter="colors = R AND cmc <= 2"
+    - "blue flying creatures" -> query="flying creatures", filter="colors = U"
+    - "green ramp" -> query="ramp", filter="colors = G"
+
+    Returns (cleaned_query, meilisearch_filter_string_or_None).
+    """
+    import re
+
+    query_lower = query.lower().strip()
+    filters = []
+    remaining_words = query_lower.split()
+
+    # Color extraction
+    color_map = {
+        "white": "W",
+        "red": "R",
+        "blue": "U",
+        "green": "G",
+        "black": "B",
+        "colorless": "C",
+        "multicolor": None,
+    }
+    extracted_colors = []
+    for word, code in color_map.items():
+        if word in remaining_words and code:
+            extracted_colors.append(code)
+            remaining_words.remove(word)
+
+    if extracted_colors:
+        # Use OR for multiple colors: cards matching ANY of the specified colors
+        color_parts = [f'colors = "{c}"' for c in extracted_colors]
+        if len(color_parts) == 1:
+            filters.append(color_parts[0])
+        else:
+            filters.append(f"({' OR '.join(color_parts)})")
+
+    # Cost extraction
+    cost_words = {"cheap": ("cmc", "<=", "2"), "expensive": ("cmc", ">=", "5")}
+    for word, (field, op, val) in cost_words.items():
+        if word in remaining_words:
+            filters.append(f"{field} {op} {val}")
+            remaining_words.remove(word)
+
+    # Type extraction
+    type_words = {
+        "creature": "Creature",
+        "creatures": "Creature",
+        "instant": "Instant",
+        "instants": "Instant",
+        "sorcery": "Sorcery",
+        "sorceries": "Sorcery",
+        "enchantment": "Enchantment",
+        "enchantments": "Enchantment",
+        "artifact": "Artifact",
+        "artifacts": "Artifact",
+        "planeswalker": "Planeswalker",
+        "planeswalkers": "Planeswalker",
+        "land": "Land",
+        "lands": "Land",
+        "spell": None,
+        "spells": None,  # Too generic to filter
+        "supporter": "Supporter",
+        "item": "Item",
+    }
+    for word, type_val in type_words.items():
+        if word in remaining_words and type_val:
+            filters.append(f'type_line = "{type_val}"')
+            remaining_words.remove(word)
+            break  # Only one type filter
+
+    # Remove filler words
+    filler = {"the", "a", "an", "for", "with", "that", "which", "my", "good", "best"}
+    remaining_words = [w for w in remaining_words if w not in filler]
+
+    cleaned = " ".join(remaining_words).strip()
+    filter_str = " AND ".join(filters) if filters else None
+
+    return cleaned or query, filter_str
+
+
 def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
     """Build the MeiliSearch settings dict for a card index.
 
@@ -601,6 +685,15 @@ class HybridSearch:
             List of SearchResult sorted by combined score
         """
         results: dict[str, SearchResult] = {}
+
+        # Parse structured filters from natural language queries
+        # (e.g., "cheap red burn" -> query="burn", filter="colors=R AND cmc<=2")
+        is_card_name = self.embeddings is not None and query in self.embeddings
+        if not is_card_name and not filters:
+            query, auto_filters = parse_query_filters(query)
+            if auto_filters:
+                filters = auto_filters
+                logger.debug("Auto-parsed filters: query='%s', filters='%s'", query, filters)
 
         # Text search via Meilisearch
         if self.meilisearch and text_weight > 0:
