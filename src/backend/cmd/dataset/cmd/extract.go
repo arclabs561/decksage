@@ -37,6 +37,18 @@ import (
 	limpetblob "github.com/arclabs561/limpet/blob"
 )
 
+// datasetCacheTTL overrides cache TTL per dataset. Card databases change
+// weekly at most. Datasets not listed use the bucket default (24h).
+var datasetCacheTTL = map[string]time.Duration{
+	"scryfall":            7 * 24 * time.Hour, // card data
+	"ygoprodeck":          7 * 24 * time.Hour,
+	"digimoncard":         7 * 24 * time.Hour,
+	"pokemontcg-data":     7 * 24 * time.Hour,
+	"pokemontcg":          7 * 24 * time.Hour,
+	"pokemoncard-io":      7 * 24 * time.Hour,
+	"riftbound-riftcodex": 7 * 24 * time.Hour,
+}
+
 var extractCmd = &cobra.Command{
 	Use:  "extract DATASET",
 	Args: cobra.ExactArgs(1),
@@ -152,8 +164,12 @@ func runExtract(cmd *cobra.Command, args []string) error {
 	stats := games.NewExtractStats(config.Log)
 	progress := games.NewProgressReporter(config.Log, d.Description().Name, 30*time.Second)
 
-	// Pass stats through context so datasets can access it
+	// Pass stats and per-dataset cache TTL through context.
+	// Card databases change weekly; tournament/deck sources use the bucket default (24h).
 	ctxWithStats := games.WithExtractStats(config.Ctx, stats)
+	if ttl, ok := datasetCacheTTL[datasetName]; ok {
+		ctxWithStats = limpet.WithCacheTTL(ctxWithStats, ttl)
+	}
 
 	config.Log.Infof(ctxWithStats, "🚀 Starting extraction for dataset: %s", d.Description().Name)
 

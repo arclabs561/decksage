@@ -2,7 +2,6 @@ package games
 
 import (
 	"collections/blob"
-	limpet "github.com/arclabs561/limpet"
 	"context"
 	"encoding/json"
 	"errors"
@@ -11,6 +10,7 @@ import (
 	"regexp"
 	"sync"
 
+	limpet "github.com/arclabs561/limpet"
 	"github.com/samber/lo"
 	"github.com/samber/mo"
 )
