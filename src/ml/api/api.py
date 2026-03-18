@@ -1559,12 +1559,29 @@ def get_contextual_suggestions(
     upgrades = discovery.find_upgrades(card, top_k=top_k)
     downgrades = discovery.find_downgrades(card, top_k=top_k)
 
+    # Normalize scores to 0-1 per category (raw fusion scores can be
+    # very small like 0.009 which looks broken in the UI). Divide by
+    # the max score in each category so the top result is always ~1.0.
+    def _normalize(items):
+        if not items:
+            return items
+        max_score = max(x.score for x in items)
+        if max_score > 0:
+            for x in items:
+                x.score = x.score / max_score
+        return items
+
+    synergies = _normalize(synergies)
+    alternatives = _normalize(alternatives)
+    upgrades = _normalize(upgrades)
+    downgrades = _normalize(downgrades)
+
     # Convert to dict format for JSON response
     return ContextualResponse(
         synergies=[
             {
                 "card": s.card,
-                "score": s.score,
+                "score": round(s.score, 4),
                 "co_occurrence_rate": s.co_occurrence_rate,
                 "reasoning": s.reasoning,
             }
@@ -1573,7 +1590,7 @@ def get_contextual_suggestions(
         alternatives=[
             {
                 "card": a.card,
-                "score": a.score,
+                "score": round(a.score, 4),
                 "reasoning": a.reasoning,
             }
             for a in alternatives
@@ -1581,7 +1598,7 @@ def get_contextual_suggestions(
         upgrades=[
             {
                 "card": u.card,
-                "score": u.score,
+                "score": round(u.score, 4),
                 "price_delta": u.price_delta,
                 "reasoning": u.reasoning,
             }
@@ -1590,7 +1607,7 @@ def get_contextual_suggestions(
         downgrades=[
             {
                 "card": d.card,
-                "score": d.score,
+                "score": round(d.score, 4),
                 "price_delta": d.price_delta,
                 "reasoning": d.reasoning,
             }
