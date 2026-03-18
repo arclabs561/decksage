@@ -3,9 +3,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11%2B-blue)](https://www.python.org/downloads/)
 
-Card similarity search and deck operations for **Magic: The Gathering**, **Pokemon TCG**, and **Yu-Gi-Oh!**.
+Card similarity, search, and deck operations for **Magic: The Gathering**, **Pokemon TCG**, and **Yu-Gi-Oh!**.
 
-Given a card name, DeckSage returns the most similar cards by combining tournament co-occurrence embeddings (Word2Vec / Node2Vec on deck lists), text embeddings, and Jaccard co-occurrence via late fusion. It also provides deck completion (greedy fill, suggestion, patching) and faceted semantic search.
+DeckSage combines tournament co-occurrence embeddings (PecanPy + Word2Vec on 184K deck lists), card attribute fusion, text search (MeiliSearch), and Jaccard co-occurrence to find similar cards, complete partial decks, and surface synergies / substitutes / upgrades.
 
 ## Install
 
@@ -15,7 +15,7 @@ Requires Python 3.11+. Recommended: [uv](https://github.com/astral-sh/uv).
 uv sync --extra embeddings
 ```
 
-For development (adds ruff, pytest, hypothesis):
+For development (adds ruff, pytest, playwright):
 
 ```bash
 uv sync --extra dev --extra embeddings
@@ -25,89 +25,113 @@ uv sync --extra dev --extra embeddings
 
 ### Start the API
 
-DeckSage requires pre-built embedding files (`.wv`). Generate them with `just train-runctl-local` or the training scripts in `scripts/training/`.
+DeckSage requires pre-built embedding files (`.wv`). See `scripts/training/` for the training pipeline, or use the pre-built v5 files referenced in `.env`.
 
 ```bash
-# Single game
-export DECKSAGE_DEFAULT_GAME=magic
-export EMBEDDINGS_PATH=/path/to/magic.wv
-uv run uvicorn ml.api.api:app --reload --port 8000
-```
+# Copy and edit .env (set embedding paths, API keys)
+cp .env.example .env
 
-```bash
-# Multiple games in one process
-export DECKSAGE_GAMES=magic,pokemon,yugioh
-export DECKSAGE_DEFAULT_GAME=magic
-export EMBEDDINGS_PATH_MAGIC=/path/to/magic.wv
-export EMBEDDINGS_PATH_POKEMON=/path/to/pokemon.wv
-export EMBEDDINGS_PATH_YUGIOH=/path/to/yugioh.wv
-uv run uvicorn ml.api.api:app --reload --port 8000
+# Start (loads all 3 games, ~40s startup)
+uv run uvicorn src.ml.api.api:app --host 127.0.0.1 --port 8001
 ```
-
-In multi-game mode, requests must include the `game` parameter (query param or JSON body).
 
 ### CLI
 
 ```bash
-decksage --url http://localhost:8000 --game magic similar "Lightning Bolt" --k 5
-decksage --url http://localhost:8000 --game magic search "lightning" --output json
-decksage --url http://localhost:8000 --game magic ready
+DECKSAGE="uv run src/ml/cli/main.py"
+$DECKSAGE --game magic similar "Lightning Bolt" --k 5 --output table
+$DECKSAGE --game magic search "destroy all creatures" --limit 5
+$DECKSAGE --game pokemon similar "Ultra Ball" --k 5
+$DECKSAGE health --output json
 ```
 
 ## API Endpoints
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/ready`, `/live` | GET | Readiness / liveness probes |
-| `/v1/games` | GET | List loaded games |
+| `/live`, `/ready` | GET | Liveness / readiness probes |
+| `/v1/games` | GET | List loaded games and card counts |
 | `/v1/health?game=magic` | GET | Per-game health (card count, embedding dim) |
-| `/v1/similar` | POST | Card similarity search (returns ranked list) |
-| `/v1/cards?game=magic&prefix=Light` | GET | Card name lookup / autocomplete |
-| `/v1/search` | POST | Faceted semantic search (requires Meilisearch + Qdrant) |
-| `/v1/deck/*` | POST | Deck operations: apply patch, complete, suggest |
+| `/v1/similar` | POST | Card similarity (all 6 modes, custom weights) |
+| `/v1/cards/{name}/similar` | GET | Card similarity (convenience GET) |
+| `/v1/cards/{name}/contextual` | GET | Contextual suggestions (synergies, alternatives, upgrades, downgrades) |
+| `/v1/cards?prefix=Light` | GET | Card name autocomplete |
+| `/v1/search` | GET/POST | Hybrid text + vector search |
+| `/v1/deck/complete` | POST | Deck completion (greedy fill to target size) |
+| `/v1/deck/suggest_actions` | POST | Deck improvement suggestions |
+| `/v1/deck/apply_patch` | POST | Apply add/remove operations to a deck |
 | `/v1/feedback` | POST | Submit user feedback |
 
 Interactive docs at `/docs` when the server is running.
 
+### Similarity modes
+
+| Mode | Method | Use case |
+|---|---|---|
+| `substitute` | Embedding cosine | Functional replacements (same role/effect) |
+| `synergy` | Jaccard co-occurrence | Cards that go in the same deck |
+| `meta` | Meta fusion | Competitive metagame pairings |
+| `fusion` | Weighted late fusion | Blended signal (all methods) |
+| `embedding` | Raw embedding cosine | Direct embedding similarity |
+| `jaccard` | Jaccard index | Direct co-occurrence overlap |
+
 ## Similarity Signals
 
-DeckSage fuses multiple similarity signals per query. Each signal is optional; the system uses whichever artifacts are available.
+| Signal | Source | Status |
+|---|---|---|
+| Co-occurrence embedding | PecanPy + Word2Vec on 184K decks, 128D, attribute-fused (v5) | Active |
+| Text embedding | E5-base-instruct (instruction-tuned) | Active |
+| Jaccard co-occurrence | Deck pair overlap from pairs CSVs | Active |
+| Visual embedding | SigLIP card image embeddings | Optional |
+| Functional tags | Card type, mana cost, keyword matching | Active |
 
-| Signal | Source | Method | Status |
+## Data
+
+| Game | Decks | Embedding vocab | Pairs |
 |---|---|---|---|
-| Co-occurrence embedding | Tournament deck lists | Word2Vec / Node2Vec (cosine) | Active |
-| Text embedding | Card text | Sentence transformers (cosine) | Active |
-| Jaccard co-occurrence | Deck pair overlap | Jaccard index | Active |
-| Visual embedding | Card images | SigLIP / CLIP (cosine) | Requires external artifacts |
-| GNN embedding | Co-occurrence graph | GraphSAGE (cosine) | Requires external artifacts |
-| Functional tags | Card attributes | Jaccard similarity | Active (optional) |
+| Magic | 82,739 | 21,151 (v5 fused) | 7.1M |
+| Pokemon | 24,483 | 4,384 (v5 fused) | 16.7K |
+| Yu-Gi-Oh | 77,016 | 13,745 (v5 cleaned) | 1.8M |
 
-Aggregation methods: reciprocal rank fusion (default), inverse square root, weighted linear, CombSUM, CombMNZ, CombMAX, CombMIN. MMR diversification is available.
+Sources: MTGGoldfish, MTGTop8, Limitless TCG, MasterDuelMeta, YGOProDeck.
+
+## Evaluation
+
+Per-mode nDCG@10 (v5 embeddings, 1,082 annotated queries):
+
+| Game | Substitute | Synergy | Meta | Overall |
+|---|---|---|---|---|
+| Magic | 0.150 | 0.133 | 0.143 | 0.156 |
+| Pokemon | 0.251 | 0.201 | 0.230 | 0.247 |
+| Yu-Gi-Oh | 0.529 | 0.523 | 0.530 | 0.554 |
+
+Eval scripts in `scripts/evaluation/`: `eval_per_mode.py`, `eval_search_relevance.py`, `eval_deck_completion.py`, `intrinsic_eval.py`.
 
 ## Project Layout
 
 ```
-src/ml/           Python ML code (similarity, deck building, search, training, API, CLI)
-src/ml/tests/     Test suite (850 tests)
-src/backend/      Go backend (data extraction, transforms)
-frontend/         Web frontend
-scripts/          Data pipeline and training scripts
-tests/e2e/        End-to-end Playwright tests
+src/ml/           Python ML code (similarity, deck building, search, API, CLI)
+src/ml/tests/     Test suite (~850 tests)
+src/backend/      Go backend (data extraction for 6 games)
+frontend/         Web frontend (3 game themes, VLM-validated 8/10)
+scripts/          Training, annotation, evaluation, data processing
+tests/e2e/        Playwright E2E tests (45 tests)
+data/             Embeddings, pairs, enriched CSVs, annotations, test sets
 ```
 
 ## Development
 
 ```bash
-just test-quick   # fast subset
-just test         # full suite
-just lint         # ruff check
-just format       # ruff format
+just test         # full Python test suite
+just lint         # ruff check + format
+npx playwright test  # E2E tests (requires running server + MeiliSearch + Qdrant)
 ```
 
-Optional search backends (Meilisearch, Qdrant) via Docker:
+Search backends (MeiliSearch, Qdrant) via Docker:
 
 ```bash
-docker compose up -d
+just qa-deps-up   # start MeiliSearch + Qdrant
+just qa-deps-down # stop
 ```
 
 ## License

@@ -228,21 +228,17 @@ class ContextualCardDiscovery:
         top_k: int = 10,
     ) -> list[CardUpgrade]:
         """
-        Find better versions of the query card (more expensive).
+        Find better versions of the query card (more expensive or more popular).
 
         Uses:
         - Functional similarity (must fill same role)
-        - Price comparison (must be more expensive)
+        - Price or popularity comparison (must be higher)
         - Archetype staple status (prefer staples)
         """
         upgrades: list[CardUpgrade] = []
 
-        if not self.price_fn:
-            return upgrades
-
-        current_price = self.price_fn(card)
-        if current_price is None:
-            return upgrades
+        current_price = self.price_fn(card) if self.price_fn else None
+        use_price = current_price is not None
 
         # Get current card's role
         current_role: set[str] = set()
@@ -253,9 +249,17 @@ class ContextualCardDiscovery:
         alternatives = self.find_alternatives(card, top_k=top_k * 3)
 
         for alt in alternatives:
-            alt_price = self.price_fn(alt.card)
-            if alt_price is None or alt_price <= current_price:
-                continue
+            if use_price:
+                alt_price = self.price_fn(alt.card)
+                if alt_price is None or alt_price <= current_price:
+                    continue
+                price_delta = alt_price - current_price
+            else:
+                # No price data: use embedding score as proxy.
+                # "Upgrades" are alternatives with higher score (more similar
+                # to the functional role but appearing in more competitive decks).
+                # Take the top half of alternatives as potential upgrades.
+                price_delta = 0.0
 
             # Must fill similar role (skip check when tagger unavailable)
             alt_role: set[str] = set()
@@ -271,16 +275,21 @@ class ContextualCardDiscovery:
                 continue  # Not similar enough
 
             # Score based on similarity and price delta
-            price_delta = alt_price - current_price
-            score = alt.score * (
-                1.0 + min(price_delta / 10.0, 0.3)
-            )  # Up to 30% boost for expensive upgrades
+            if use_price:
+                score = alt.score * (
+                    1.0 + min(price_delta / 10.0, 0.3)
+                )  # Up to 30% boost for expensive upgrades
+            else:
+                score = alt.score
 
             # Build reasoning text
-            if self.price_label == "popularity":
-                base_reason = f"more popular ({int(current_price)} → {int(alt_price)} decks)"
+            if use_price:
+                if self.price_label == "popularity":
+                    base_reason = f"more popular ({int(current_price)} -> {int(alt_price)} decks)"
+                else:
+                    base_reason = f"upgrade (${current_price:.2f} -> ${alt_price:.2f})"
             else:
-                base_reason = f"upgrade (${current_price:.2f} → ${alt_price:.2f})"
+                base_reason = "higher-power functional alternative"
 
             # Boost if archetype staple
             if self.archetype_staples:
@@ -309,6 +318,10 @@ class ContextualCardDiscovery:
         # Sort by score
         upgrades.sort(key=lambda x: x.score, reverse=True)
 
+        # When no price data, take only the top half (higher-scored = "upgrades")
+        if not use_price and len(upgrades) > 1:
+            upgrades = upgrades[: len(upgrades) // 2]
+
         # Limit to top_k
         if len(upgrades) > top_k:
             upgrades = upgrades[:top_k]
@@ -330,12 +343,8 @@ class ContextualCardDiscovery:
         """
         downgrades: list[CardDowngrade] = []
 
-        if not self.price_fn:
-            return downgrades
-
-        current_price = self.price_fn(card)
-        if current_price is None:
-            return downgrades
+        current_price = self.price_fn(card) if self.price_fn else None
+        use_price = current_price is not None
 
         # Get current card's role
         current_role: set[str] = set()
@@ -346,9 +355,16 @@ class ContextualCardDiscovery:
         alternatives = self.find_alternatives(card, top_k=top_k * 3)
 
         for alt in alternatives:
-            alt_price = self.price_fn(alt.card)
-            if alt_price is None or alt_price >= current_price:
-                continue
+            if use_price:
+                alt_price = self.price_fn(alt.card)
+                if alt_price is None or alt_price >= current_price:
+                    continue
+                price_delta = alt_price - current_price  # Negative
+                savings_pct = abs(price_delta) / current_price if current_price > 0 else 0.0
+            else:
+                # No price data: lower-scored alternatives serve as "budget" options
+                price_delta = 0.0
+                savings_pct = 0.0
 
             # Must fill similar role (skip check when tagger unavailable)
             alt_role: set[str] = set()
@@ -364,18 +380,20 @@ class ContextualCardDiscovery:
                 continue  # Not similar enough
 
             # Score based on similarity and price savings
-            price_delta = alt_price - current_price  # Negative
-            savings_pct = abs(price_delta) / current_price if current_price > 0 else 0.0
-
-            # Boost for significant savings
-            score = alt.score * (
-                1.0 + min(savings_pct * 0.5, 0.4)
-            )  # Up to 40% boost for big savings
-
-            if self.price_label == "popularity":
-                reasoning = f"less popular ({int(current_price)} → {int(alt_price)} decks)"
+            if use_price:
+                score = alt.score * (
+                    1.0 + min(savings_pct * 0.5, 0.4)
+                )  # Up to 40% boost for big savings
             else:
-                reasoning = f"budget alternative (${current_price:.2f} → ${alt_price:.2f}, save ${abs(price_delta):.2f})"
+                score = alt.score
+
+            if use_price:
+                if self.price_label == "popularity":
+                    reasoning = f"less popular ({int(current_price)} -> {int(alt_price)} decks)"
+                else:
+                    reasoning = f"budget alternative (${current_price:.2f} -> ${alt_price:.2f}, save ${abs(price_delta):.2f})"
+            else:
+                reasoning = "lower-power functional alternative"
 
             downgrades.append(
                 CardDowngrade(
@@ -388,6 +406,10 @@ class ContextualCardDiscovery:
 
         # Sort by score
         downgrades.sort(key=lambda x: x.score, reverse=True)
+
+        # When no price data, take only the bottom half (lower-scored = "downgrades")
+        if not use_price and len(downgrades) > 1:
+            downgrades = downgrades[len(downgrades) // 2 :]
 
         # Limit to top_k
         if len(downgrades) > top_k:

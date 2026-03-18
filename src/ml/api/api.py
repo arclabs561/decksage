@@ -1516,7 +1516,6 @@ def get_contextual_suggestions(
         functional=0.1,
         text_embed=0.0,
         visual_embed=0.0,
-        gnn=0.0,
     )
     fusion = WeightedLateFusion(
         embeddings=state.embeddings,
@@ -1680,7 +1679,8 @@ def _get_search_client(game: str) -> HybridSearch | None:
             cached_emb = getattr(cached, "embeddings", None)
         except AttributeError:
             cached_emb = None
-        if cached_emb is state.embeddings:
+        cached_te = getattr(cached, "text_embedder", None)
+        if cached_emb is state.embeddings and cached_te is getattr(state, "text_embedder", None):
             return cached
         by_game.pop(game, None)
 
@@ -1694,9 +1694,12 @@ def _get_search_client(game: str) -> HybridSearch | None:
     try:
         client = HybridSearch(
             embeddings=state.embeddings,
+            text_embedder=getattr(state, "text_embedder", None),
             index_name=index_name,
             collection_name=collection_name,
         )
+        # Pass card metadata for semantic search oracle text enrichment
+        client.card_metadata = getattr(state, "card_metadata", None) or {}
         has_text = getattr(client, "meilisearch", None) is not None
         has_vector = getattr(client, "qdrant", None) is not None and state.embeddings is not None
 
