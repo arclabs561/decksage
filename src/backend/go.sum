@@ -35,6 +35,8 @@ github.com/arclabs561/limpet v0.1.0 h1:AF+B97VPyq30OE/wbupw+8x7LtopUgfZEu3CKg9Xz
 github.com/arclabs561/limpet v0.1.0/go.mod h1:TWZlXWgPzKw11czx/G3PvHjv6Nlfw27FLSGlBAWgyIU=
 github.com/arclabs561/limpet v0.1.1-0.20260317203512-274777560f62 h1:3LyG9XsGdKzu98R/q8HlyM0YBtzj5Uy47J1xMn7P0LI=
 github.com/arclabs561/limpet v0.1.1-0.20260317203512-274777560f62/go.mod h1:TWZlXWgPzKw11czx/G3PvHjv6Nlfw27FLSGlBAWgyIU=
+github.com/arclabs561/limpet v0.1.1-0.20260318133323-5a7893a9a56b h1:E994XCu9KxsfQHu5jlNB0Lga8CMnvlPpDVwZOTYmcTY=
+github.com/arclabs561/limpet v0.1.1-0.20260318133323-5a7893a9a56b/go.mod h1:TWZlXWgPzKw11czx/G3PvHjv6Nlfw27FLSGlBAWgyIU=
 github.com/armon/consul-api v0.0.0-20180202201655-eb2c6b5be1b6/go.mod h1:grANhF5doyWs3UAsr3K4I6qtAmlQcZDesFNEHPZAzj8=
 github.com/aws/aws-sdk-go-v2 v1.41.3 h1:4kQ/fa22KjDt13QCy1+bYADvdgcxpfH18f0zP542kZA=
 github.com/aws/aws-sdk-go-v2 v1.41.3/go.mod h1:mwsPRE8ceUUpiTgF7QmQIJ7lgsKUPQOUl3o72QBrE1o=
