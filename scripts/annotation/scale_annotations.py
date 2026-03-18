@@ -886,15 +886,10 @@ async def run_pipeline(
                 stored["annotations"] = result["annotations"]
                 merged_queries[q] = stored
             except Exception as e:
-                logger.warning(f"Failed to annotate query {q}: {e}")
-                fallback = build_fallback_query(
-                    q,
-                    neighbors,
-                    embedding_version=embedding_version,
-                    game=game,
-                )
-                fallback["use_case"] = "embedding"
-                merged_queries[q] = fallback
+                logger.error(f"LLM annotation FAILED for query {q}: {e}")
+                # Do NOT silently fall back to cosine-only annotations.
+                # Skip the query entirely -- it can be retried on next run.
+                continue
         else:
             fallback = build_fallback_query(
                 q,
