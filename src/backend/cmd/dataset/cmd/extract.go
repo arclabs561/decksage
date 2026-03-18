@@ -10,26 +10,26 @@ import (
 	"github.com/spf13/pflag"
 
 	"collections/games"
+	"collections/games/digimon/dataset/digimoncard"
+	digimonlimitless "collections/games/digimon/dataset/limitless"
+	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
-	"collections/games/digimon/dataset/digimoncard"
-	digimonlimitless "collections/games/digimon/dataset/limitless"
-	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	onepiecelimitless "collections/games/onepiece/dataset/limitless"
 	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
 	"collections/games/onepiece/dataset/onepiecetcg"
 	pokemonlimitless "collections/games/pokemon/dataset/limitless"
 	pokemonlimitlessweb "collections/games/pokemon/dataset/limitless-web"
-	"collections/games/pokemon/dataset/pokemoncard-io"
 	"collections/games/pokemon/dataset/pokemon-tcg-price-api"
+	"collections/games/pokemon/dataset/pokemoncard-io"
 	"collections/games/pokemon/dataset/pokemontcg"
 	"collections/games/pokemon/dataset/pokemontcg-data"
 	"collections/games/pokemon/dataset/pokestats"
-	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
-	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
 	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
+	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
+	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
 	"collections/games/yugioh/dataset/ygoprodeck"
 	"collections/games/yugioh/dataset/yugiohmeta"
 	"collections/logger"
@@ -73,7 +73,12 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create limpet bucket: %w", err)
 	}
 	defer scraperBucket.Close()
-	sc, err := limpet.NewClient(config.Ctx, scraperBucket)
+	sc, err := limpet.NewClient(config.Ctx, scraperBucket,
+		limpet.WithUserAgent("decksage/1.0 (+https://github.com/arclabs561/decksage)"),
+		limpet.WithIgnoreHeaders("Accept-Encoding", "Accept-Language"),
+		limpet.WithIgnoreParams("utm_source", "utm_medium", "utm_campaign", "ref"),
+		limpet.WithCacheStatuses(200, 301),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create limpet client: %w", err)
 	}
@@ -110,12 +115,12 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		d = dataset
 	case "riftbound-riftcodex", "riftboundriftcodex":
 		d = riftboundriftcodex.NewDataset(config.Log, gamesBlob)
-		case "riftbound-riftboundgg", "riftboundriftboundgg", "riftbound-gg":
-			dataset, err := riftboundriftboundgg.NewDataset(config.Log, gamesBlob)
-			if err != nil {
-				return fmt.Errorf("failed to create riftbound.gg dataset: %w", err)
-			}
-			d = dataset
+	case "riftbound-riftboundgg", "riftboundriftboundgg", "riftbound-gg":
+		dataset, err := riftboundriftboundgg.NewDataset(config.Log, gamesBlob)
+		if err != nil {
+			return fmt.Errorf("failed to create riftbound.gg dataset: %w", err)
+		}
+		d = dataset
 	case "pokemontcg-data", "pokemontcgdata":
 		d = wrapExtractOnly(pokemontcgdata.NewDataset(config.Log, gamesBlob))
 	case "pokemontcg":
