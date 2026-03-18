@@ -288,7 +288,7 @@ async def run_enrichment(
         }
 
     # Set up LLM agent
-    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "google/gemini-3-flash-preview")
+    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5").split(",")[0]
     has_keys = bool(
         os.getenv("OPENAI_API_KEY")
         or os.getenv("ANTHROPIC_API_KEY")
