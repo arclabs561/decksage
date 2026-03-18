@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/PuerkitoBio/goquery v1.11.0
-	github.com/arclabs561/limpet v0.1.1-0.20260318141123-1cb31b102ef0
+	github.com/arclabs561/limpet v0.2.0
 	github.com/aws/aws-sdk-go-v2/config v1.32.11
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.96.4
 	github.com/dgraph-io/badger/v3 v3.2103.5
@@ -83,6 +83,7 @@ require (
 	go.opentelemetry.io/otel/trace v1.42.0 // indirect
 	go.uber.org/atomic v1.11.0 // indirect
 	golang.org/x/net v0.51.0 // indirect
+	golang.org/x/sync v0.19.0 // indirect
 	golang.org/x/sys v0.41.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	google.golang.org/api v0.269.0 // indirect
