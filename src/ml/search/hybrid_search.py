@@ -54,8 +54,9 @@ except ImportError:
 # card name(s) so MeiliSearch treats them as equivalent during text search.
 _SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
     "magic": {
+        # Card nicknames
         "bolt": ["Lightning Bolt"],
-        "wrath": ["Wrath of God"],
+        "wrath": ["Wrath of God", "destroy all creatures"],
         "counterspell": ["Counter Spell"],
         "path": ["Path to Exile"],
         "snap": ["Snapcaster Mage"],
@@ -64,16 +65,42 @@ _SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
         "jace": ["Jace, the Mind Sculptor"],
         "sol ring": ["Sol Ring"],
         "stp": ["Swords to Plowshares"],
+        # Functional concept synonyms (semantic -> oracle text keywords)
+        "burn": ["damage", "deals damage"],
+        "ramp": ["add", "mana", "land"],
+        "removal": ["destroy", "exile", "sacrifice"],
+        "counter": ["counter target"],
+        "draw": ["draw a card", "draw cards", "draw two"],
+        "board wipe": ["destroy all creatures", "destroy all"],
+        "tutor": ["search your library"],
+        "recursion": ["return from your graveyard", "graveyard to your hand"],
+        "discard": ["discard a card", "discard cards"],
+        "mill": ["put the top", "into your graveyard"],
+        "lifegain": ["gain life", "gains life"],
+        "token": ["create a", "creature token"],
+        "equipment": ["equip", "equipped creature"],
+        "enchantment": ["enchant", "enchanted"],
+        "flying": ["flying", "has flying"],
+        "haste": ["haste", "has haste"],
     },
     "pokemon": {
+        # Card nicknames
         "research": ["Professor's Research"],
         "boss": ["Boss's Orders"],
         "ultra ball": ["Ultra Ball"],
         "nest ball": ["Nest Ball"],
         "rare candy": ["Rare Candy"],
         "switch": ["Switch"],
+        # Functional concepts
+        "draw": ["draw cards", "draw a card"],
+        "search": ["search your deck"],
+        "supporter": ["Supporter"],
+        "item": ["Item"],
+        "energy": ["Energy"],
+        "gust": ["switch", "Active Pokemon"],
     },
     "yugioh": {
+        # Card nicknames
         "ash": ["Ash Blossom & Joyous Spring"],
         "maxx c": ['Maxx "C"'],
         "nib": ["Nibiru, the Primal Being"],
@@ -82,6 +109,14 @@ _SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
         "droplet": ["Forbidden Droplet"],
         "raigeki": ["Raigeki"],
         "hfd": ["Harpie's Feather Duster"],
+        # Functional concepts
+        "negate": ["negate", "negate the activation", "negate its effect"],
+        "destroy": ["destroy", "destroyed"],
+        "banish": ["banish", "remove from play"],
+        "hand trap": ["discard this card", "from your hand"],
+        "spell trap": ["Spell", "Trap"],
+        "special summon": ["Special Summon"],
+        "search": ["add 1", "from your Deck to your hand"],
     },
 }
 
@@ -112,11 +147,12 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
             "sort",
             "exactness",
         ],
-        # Attribute search priority (name > oracle_text > type_line > keywords).
-        # Order matters: matches in earlier attributes score higher.
+        # Attribute search priority: text first for effect-based searches,
+        # then name for card name lookups. MeiliSearch's "attribute" ranking
+        # rule boosts matches in earlier attributes.
         "searchableAttributes": [
-            "name",
             "text",
+            "name",
             "type_line",
             "keywords",
         ],
@@ -180,6 +216,7 @@ class HybridSearch:
         qdrant_url: str | None = None,
         qdrant_api_key: str | None = None,
         embeddings: KeyedVectors | None = None,
+        text_embedder: Any | None = None,
         collection_name: str = "cards",
         index_name: str = "cards",
     ):
@@ -192,12 +229,16 @@ class HybridSearch:
             qdrant_url: Qdrant server URL (default: http://localhost:6333)
             qdrant_api_key: Qdrant API key (optional)
             embeddings: Gensim KeyedVectors for generating query embeddings
+            text_embedder: Optional text encoder with encode(text) -> vector method
+                          (e.g., InstructionTunedCardEmbedder). Used to encode
+                          free-text queries that aren't card names in the vocab.
             collection_name: Qdrant collection name
             index_name: Meilisearch index name
         """
         self.collection_name = collection_name
         self.index_name = index_name
         self.embeddings = embeddings
+        self.text_embedder = text_embedder
 
         # Initialize Meilisearch
         if MeilisearchClient is None:
@@ -603,15 +644,23 @@ class HybridSearch:
             try:
                 # Generate query embedding
                 if query in self.embeddings:
+                    # Exact card name match -- use co-occurrence embedding
                     query_vector = self.embeddings[query].tolist()
+                elif self.text_embedder is not None:
+                    # Free-text query: co-occurrence embeddings are 128D but
+                    # text embedder produces 384/768D. Can't query Qdrant
+                    # directly. Skip vector search, rely on MeiliSearch +
+                    # text-based re-ranking below.
+                    query_vector = None
                 else:
-                    # Try to find similar card name
-                    similar = self.embeddings.most_similar(query, topn=1)
-                    if similar:
-                        query_vector = self.embeddings[similar[0][0]].tolist()
-                    else:
-                        logger.warning(f"Could not generate embedding for query: {query}")
+                    # Fallback: try to find similar card name in vocab
+                    try:
+                        similar = self.embeddings.most_similar(query, topn=1)
+                        query_vector = self.embeddings[similar[0][0]].tolist() if similar else None
+                    except KeyError:
                         query_vector = None
+                    if query_vector is None:
+                        logger.warning(f"Could not generate embedding for query: {query}")
 
                 if query_vector:
                     qdrant_results = self.qdrant.search(
@@ -644,9 +693,138 @@ class HybridSearch:
             except Exception as e:
                 logger.error(f"Qdrant query failed: {e}")
 
+        # Semantic search fallback: when the query is free-text (not a card name)
+        # and we have a text embedder, add semantic results that MeiliSearch missed.
+        is_free_text = self.embeddings is None or query not in self.embeddings
+        if is_free_text and self.text_embedder:
+            try:
+                semantic_results = self._semantic_search(query, limit=limit)
+                for sr in semantic_results:
+                    if sr.card_name not in results:
+                        # Weight semantic results by vector_weight
+                        sr.score *= max(vector_weight, 0.5)
+                        results[sr.card_name] = sr
+                    else:
+                        # Boost existing results that also match semantically
+                        results[sr.card_name].score += sr.score * 0.3
+                        results[sr.card_name].source = "hybrid"
+            except Exception as e:
+                logger.debug(f"Semantic search fallback failed: {e}")
+
         # Sort by combined score and return top results
         sorted_results = sorted(results.values(), key=lambda x: x.score, reverse=True)
         return sorted_results[:limit]
+
+    def _semantic_search(self, query: str, limit: int = 10) -> list[SearchResult]:
+        """Semantic search using text embedder against card names.
+
+        Embeds the query and computes cosine similarity against all card
+        names in the embedding vocabulary. Returns top results.
+        """
+        if not self.text_embedder or not self.embeddings:
+            return []
+
+        import numpy as _np
+
+        embed_fn = getattr(self.text_embedder, "embed_card", None) or getattr(
+            self.text_embedder, "encode", None
+        )
+        if not embed_fn:
+            return []
+
+        # Lazily build card text embedding cache
+        if not hasattr(self, "_text_emb_cache") or self._text_emb_cache is None:
+            self._text_emb_cache = self._build_text_embedding_cache(embed_fn)
+
+        if self._text_emb_cache is None:
+            return []
+
+        card_names, card_matrix, card_norms = self._text_emb_cache
+
+        # Embed query
+        query_emb = embed_fn(query)
+        if hasattr(query_emb, "flatten"):
+            query_emb = query_emb.flatten()
+        query_norm = _np.linalg.norm(query_emb)
+        if query_norm == 0:
+            return []
+
+        # Cosine similarity via matrix multiply
+        sims = card_matrix @ query_emb / (card_norms * query_norm + 1e-10)
+
+        # Top-K
+        top_idx = _np.argsort(sims)[-limit * 2 :][::-1]
+        results = []
+        for idx in top_idx[:limit]:
+            score = float(sims[idx])
+            if score < 0.1:
+                break
+            results.append(
+                SearchResult(
+                    card_name=card_names[idx],
+                    score=score,
+                    source="semantic",
+                    metadata=None,
+                )
+            )
+        return results
+
+    def _build_text_embedding_cache(self, embed_fn) -> tuple | None:
+        """Pre-compute text embeddings for all cards in vocab.
+
+        Embeds "{name}: {oracle_text}" for each card so semantic queries
+        about card effects (not just names) can match.
+        """
+        import numpy as _np
+
+        if not self.embeddings:
+            return None
+
+        card_names = list(self.embeddings.key_to_index.keys())
+        if len(card_names) > 50000:
+            import random
+
+            random.seed(42)
+            card_names = random.sample(card_names, 50000)
+
+        # Use card_metadata for oracle text (passed from API state)
+        card_meta = getattr(self, "card_metadata", None) or {}
+        n_with_text = 0
+
+        logger.info("Building text embedding cache for %d cards...", len(card_names))
+        embeddings_list = []
+        valid_names = []
+        for name in card_names:
+            try:
+                # Build rich text: "Name: oracle_text" for semantic matching
+                meta = card_meta.get(name, {})
+                oracle = meta.get("oracle_text", "") or meta.get("text", "")
+                if oracle and str(oracle) not in ("nan", "None", ""):
+                    text = f"{name}: {str(oracle)[:200]}"
+                    n_with_text += 1
+                else:
+                    text = name
+
+                emb = embed_fn(text)
+                if hasattr(emb, "flatten"):
+                    emb = emb.flatten()
+                embeddings_list.append(emb)
+                valid_names.append(name)
+            except Exception:
+                continue
+
+        if not embeddings_list:
+            return None
+
+        matrix = _np.stack(embeddings_list)
+        norms = _np.linalg.norm(matrix, axis=1)
+        logger.info(
+            "Text embedding cache built: %d cards (%d with oracle text), %dD",
+            len(valid_names),
+            n_with_text,
+            matrix.shape[1],
+        )
+        return valid_names, matrix, norms
 
     def search_text_only(
         self, query: str, limit: int = 10, filters: str | None = None

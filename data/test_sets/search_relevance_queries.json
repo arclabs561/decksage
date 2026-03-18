@@ -1,0 +1,185 @@
+{
+  "magic": [
+    {
+      "query": "destroy all creatures",
+      "relevant": [
+        "Day of Judgment",
+        "Wrath of God",
+        "Damnation",
+        "Blasphemous Act",
+        "Toxic Deluge",
+        "Terminus",
+        "Devastation",
+        "Life's Finale",
+        "Plague Wind",
+        "Fell the Mighty"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "draw two cards",
+      "relevant": [
+        "Divination",
+        "Night's Whisper",
+        "Sign in Blood",
+        "Chart a Course",
+        "Expressive Iteration",
+        "Preordain",
+        "Think Twice"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "counter target spell",
+      "relevant": [
+        "Counterspell",
+        "Negate",
+        "Mana Leak",
+        "Force of Will",
+        "Arcane Denial",
+        "Swan Song",
+        "Spell Pierce",
+        "Dovin's Veto"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "cheap red burn spells",
+      "relevant": [
+        "Lightning Bolt",
+        "Shock",
+        "Chain Lightning",
+        "Lava Spike",
+        "Rift Bolt",
+        "Searing Blaze",
+        "Goblin Guide",
+        "Monastery Swiftspear"
+      ],
+      "type": "semantic"
+    },
+    {
+      "query": "mana ramp green",
+      "relevant": [
+        "Llanowar Elves",
+        "Birds of Paradise",
+        "Rampant Growth",
+        "Cultivate",
+        "Kodama's Reach",
+        "Sol Ring",
+        "Elvish Mystic"
+      ],
+      "type": "semantic"
+    },
+    {
+      "query": "graveyard recursion",
+      "relevant": [
+        "Reanimate",
+        "Animate Dead",
+        "Living Death",
+        "Unburial Rites",
+        "Persist",
+        "Eternal Witness",
+        "Sun Titan"
+      ],
+      "type": "semantic"
+    },
+    {
+      "query": "flying creatures blue",
+      "relevant": [
+        "Mulldrifter",
+        "Brazen Borrower",
+        "Sprite Dragon",
+        "Vendilion Clique",
+        "Consecrated Sphinx",
+        "Dream Trawler"
+      ],
+      "type": "semantic"
+    },
+    {
+      "query": "artifact removal white",
+      "relevant": [
+        "Disenchant",
+        "Oblivion Ring",
+        "Vindicate",
+        "Fracture",
+        "Stony Silence",
+        "Seal of Cleansing",
+        "Return to Dust"
+      ],
+      "type": "semantic"
+    }
+  ],
+  "pokemon": [
+    {
+      "query": "search deck for pokemon",
+      "relevant": [
+        "Ultra Ball",
+        "Nest Ball",
+        "Quick Ball",
+        "Level Ball",
+        "Timer Ball",
+        "Great Ball"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "draw cards supporter",
+      "relevant": [
+        "Professor's Research",
+        "Iono",
+        "Cynthia",
+        "Professor Sycamore",
+        "N",
+        "Marnie"
+      ],
+      "type": "semantic"
+    },
+    {
+      "query": "switch active pokemon",
+      "relevant": [
+        "Switch",
+        "Escape Rope",
+        "Boss's Orders",
+        "Gust of Wind",
+        "Air Balloon"
+      ],
+      "type": "oracle"
+    }
+  ],
+  "yugioh": [
+    {
+      "query": "negate monster effect",
+      "relevant": [
+        "Ash Blossom & Joyous Spring",
+        "Effect Veiler",
+        "Infinite Impermanence",
+        "Solemn Strike",
+        "Breakthrough Skill"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "destroy spell trap",
+      "relevant": [
+        "Mystical Space Typhoon",
+        "Harpie's Feather Duster",
+        "Twin Twisters",
+        "Cosmic Cyclone",
+        "Heavy Storm Duster"
+      ],
+      "type": "oracle"
+    },
+    {
+      "query": "hand trap disruption",
+      "relevant": [
+        "Ash Blossom & Joyous Spring",
+        "Maxx \"C\"",
+        "Nibiru, the Primal Being",
+        "Effect Veiler",
+        "Ghost Ogre & Snow Rabbit",
+        "Droll & Lock Bird"
+      ],
+      "type": "semantic"
+    }
+  ]
+}
