@@ -6,17 +6,17 @@ import (
 	"github.com/spf13/cobra"
 
 	"collections/games"
+	digimonlimitless "collections/games/digimon/dataset/limitless"
+	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
 	"collections/games/magic/dataset/scryfall"
-	digimonlimitless "collections/games/digimon/dataset/limitless"
-	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
 	onepiecelimitless "collections/games/onepiece/dataset/limitless"
 	onepiecelimitlessweb "collections/games/onepiece/dataset/limitless-web"
-	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
-	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
 	riftboundriftboundgg "collections/games/riftbound/dataset/riftboundgg"
+	riftboundriftcodex "collections/games/riftbound/dataset/riftcodex"
+	riftboundriftmana "collections/games/riftbound/dataset/riftmana"
 	"fmt"
 	limpet "github.com/arclabs561/limpet"
 	limpetblob "github.com/arclabs561/limpet/blob"
@@ -48,7 +48,12 @@ func runHealth(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create limpet bucket: %w", err)
 	}
 	defer scraperBucket.Close()
-	sc, err := limpet.NewClient(config.Ctx, scraperBucket)
+	sc, err := limpet.NewClient(config.Ctx, scraperBucket,
+		limpet.WithUserAgent("decksage/1.0 (+https://github.com/arclabs561/decksage)"),
+		limpet.WithIgnoreHeaders("Accept-Encoding", "Accept-Language"),
+		limpet.WithIgnoreParams("utm_source", "utm_medium", "utm_campaign", "ref"),
+		limpet.WithCacheStatuses(200, 301),
+	)
 	if err != nil {
 		return fmt.Errorf("failed to create limpet client: %w", err)
 	}
