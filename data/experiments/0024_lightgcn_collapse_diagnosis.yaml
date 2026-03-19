@@ -1,0 +1,75 @@
+id: "0024"
+date: "2026-03-19"
+title: "LightGCN embedding collapse root cause"
+game: all
+
+hypothesis: >
+  LightGCN underperforms v5 fused across all games despite learning the
+  graph structure. Need to find root cause.
+
+method:
+  type: eval
+  details: >
+    Diagnostic analysis of LightGCN embeddings:
+    1. Vocab overlap and test query coverage
+    2. Singular value spectrum (Hamilton lens)
+    3. Random pair similarity distribution
+    4. Top-neighbor quality (manual inspection)
+    5. Reconstruction loss trivial solution analysis
+
+results:
+  vocab_overlap: "15,645 shared, 5,506 only in v5, 52 only in LightGCN"
+  annotated_cards_in_top10:
+    v5_fused: "476/3301 (14.4%)"
+    lightgcn: "292/3301 (8.8%)"
+  singular_value_spectrum:
+    v5_fused: "top/median ratio 2.7x, eff_rank 120.6/128 (healthy)"
+    lightgcn: "top/median ratio 1.3x, eff_rank 127.2/128 (TOO uniform)"
+  random_pair_similarity:
+    v5_fused: "mean=-0.0003, std=0.124, max=0.93"
+    lightgcn: "mean=0.001, std=0.090, max=0.46 (NO high-similarity pairs)"
+  top10_avg_similarity:
+    v5_fused: "0.49-0.69 (strong neighbors)"
+    lightgcn: "0.30-0.33 (barely above random)"
+  lightning_bolt_neighbors:
+    v5_fused: "Skullcrack, Searing Blaze, Boros Charm, Lava Spike (correct burn cards)"
+    lightgcn: "Turn to Slag, Kozilek's Predator, Rootweaver Druid (random, unrelated)"
+
+root_cause: >
+  EMBEDDING COLLAPSE via trivial solution. Graph density 0.27% (331K edges /
+  246M possible pairs). The reconstruction loss (weighted MSE on observed
+  edges) has a trivial optimum: make all dot products ~0 by spreading
+  embeddings uniformly on the unit hypersphere. This gives low MSE on
+  observed edges (small normalized targets) AND implicitly correct values
+  for the 99.7% of unobserved pairs (which should be 0).
+
+  Evidence: (1) eff_rank 127.2/128 = perfectly uniform, no structure learned.
+  (2) Max neighbor similarity 0.46 vs 0.93 for v5 -- no discriminative power.
+  (3) Early stopping at epoch 9 -- converged to trivial solution immediately.
+  (4) Variance uniform across all 128 dims (0.0078 each) -- hypersphere spread.
+
+  The prior "BPR collapsed" finding (experiment 0012) was correct but the
+  fix (reconstruction loss) found a DIFFERENT trivial solution instead of
+  learning useful structure.
+
+fix_options:
+  1: "InfoNCE contrastive loss: contrast observed edges against degree-weighted negatives"
+  2: "Margin-based loss: push positive pairs above threshold, negatives below"
+  3: "BPR with degree^0.75 weighted negatives (not uniform)"
+  4: "Abandon LightGCN for this graph density -- PecanPy random walks may be fundamentally better for sparse graphs"
+
+conclusion: >
+  LightGCN fails because both loss functions (BPR and reconstruction) have
+  degenerate solutions on sparse graphs. BPR collapses to constant
+  embeddings; reconstruction collapses to uniform hypersphere. The graph
+  is too sparse (0.27% density) for GNN-based methods without carefully
+  designed contrastive objectives. PecanPy/Word2Vec avoids this because
+  random walks create implicit positive pairs with co-occurrence statistics,
+  and Word2Vec's skip-gram objective naturally contrasts positives against
+  negatives.
+
+  Sutton lens signal: LightGCN is at a structural ceiling for this graph
+  density. Further tuning won't help. Either change the loss function
+  fundamentally (InfoNCE) or accept that PecanPy is the right method here.
+
+artifacts: []
