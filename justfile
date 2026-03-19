@@ -1174,6 +1174,30 @@ integrate-all game='':
     uv run python -m ml.scripts.integrate_all_data_sources $GAME_FLAG
 
 # ============================================================================
+# Evaluation
+# ============================================================================
+
+# Run all eval scripts (requires running server on port 8001)
+eval-all:
+    #!/usr/bin/env bash
+    set -e
+    echo "=== Per-mode nDCG ==="
+    uv run scripts/evaluation/eval_per_mode.py --all-games
+    echo ""
+    echo "=== Search Relevance ==="
+    uv run scripts/evaluation/eval_search_relevance.py --all-games
+    echo ""
+    echo "=== Deck Completion ==="
+    uv run scripts/evaluation/eval_deck_completion.py --all-games
+    echo ""
+    echo "=== Contextual Endpoint ==="
+    uv run scripts/evaluation/eval_contextual.py --all-games
+
+# Run per-mode nDCG eval only
+eval-ndcg:
+    uv run scripts/evaluation/eval_per_mode.py --all-games --compare-v5
+
+# ============================================================================
 # QA Dependencies (Docker)
 # ============================================================================
 
