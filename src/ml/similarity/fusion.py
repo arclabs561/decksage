@@ -139,6 +139,7 @@ class WeightedLateFusion:
         task_type: str | None = None,
         adaptive_visual_weights: bool = True,  # Adjust visual weights based on coverage
         graph_weights: dict | None = None,  # Edge weights for candidate capping
+        game: str | None = None,  # Game name for loading text index
         # Legacy kwargs accepted but ignored (callers may still pass them).
         **_kwargs: Any,
     ):
@@ -214,18 +215,15 @@ class WeightedLateFusion:
         self._text_index_matrix = None  # [N, D] L2-normalized
         self._text_index_names: list[str] = []
         self._text_name_to_idx: dict[str, int] = {}
-        if text_embedder is not None or (card_data and self.weights.text_embed > 0):
-            self._try_load_text_index(card_data)
+        self._game = game
+        if game and (text_embedder is not None or (card_data and self.weights.text_embed > 0)):
+            self._try_load_text_index(game)
 
         # Pre-compute the weights dict for use in aggregation hot path.
         self._weights_dict = self.weights.to_dict()
 
-    def _try_load_text_index(self, card_data: dict | None) -> None:
+    def _try_load_text_index(self, game: str) -> None:
         """Load precomputed text embedding index if available."""
-        import os
-
-        # Determine game from card_data or environment
-        game = os.environ.get("DECKSAGE_GAME", "magic")
         data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
         idx_path = data_dir / "cache" / "text_embeddings" / f"{game}_embeddings.npy"
         names_path = data_dir / "cache" / "text_embeddings" / f"{game}_names.txt"
@@ -417,16 +415,18 @@ class WeightedLateFusion:
 
         # Text embedding candidates (from precomputed index, fast)
         if self._text_index_matrix is not None and query in self._text_name_to_idx:
-            import numpy as np
+            try:
+                import numpy as np
 
-            q_idx = self._text_name_to_idx[query]
-            q_vec = self._text_index_matrix[q_idx : q_idx + 1]  # [1, D]
-            sims = (q_vec @ self._text_index_matrix.T).flatten()  # [N]
-            # Get top candidates by text similarity
-            n_text_candidates = min(30, self.candidate_topn)
-            top_indices = np.argpartition(-sims, n_text_candidates)[:n_text_candidates]
-            for idx in top_indices:
-                candidates.add(self._text_index_names[idx])
+                q_idx = self._text_name_to_idx[query]
+                q_vec = self._text_index_matrix[q_idx : q_idx + 1]  # [1, D]
+                sims = (q_vec @ self._text_index_matrix.T).flatten()  # [N]
+                n_text_candidates = min(30, self.candidate_topn)
+                top_indices = np.argpartition(-sims, n_text_candidates)[:n_text_candidates]
+                for idx in top_indices:
+                    candidates.add(self._text_index_names[idx])
+            except Exception as e:
+                logger.debug(f"Text index candidate retrieval failed: {e}")
 
         # Remove query itself
         candidates.discard(query)
