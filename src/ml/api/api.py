@@ -1246,6 +1246,7 @@ def _similar_fusion(
         archetype_cooccurrence=state.archetype_cooccurrence,
         task_type=effective_task_type,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
+        game=game,
     )
 
     if request.also_like:
@@ -1524,6 +1525,7 @@ def get_contextual_suggestions(
         task_type="synergy",  # Default for contextual discovery
         card_data=state.card_attrs,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
+        game=game,
     )
 
     price_fn, tag_set_fn, _ = _build_deck_hooks(state)
