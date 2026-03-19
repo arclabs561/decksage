@@ -357,6 +357,71 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
         "k": k,
     }
 
+    # Stratified nDCG by card popularity (experiment 0019 recommendation)
+    # Use embedding neighbor count as popularity proxy: popular cards appear
+    # as top-10 neighbors of many other cards. Computed efficiently by sampling.
+    neighbor_count: dict[str, int] = {}
+    sample_keys = list(wv.key_to_index.keys())
+    rng = np.random.default_rng(42)
+    sample_size = min(2000, len(sample_keys))
+    sampled = rng.choice(sample_keys, size=sample_size, replace=False)
+    for card in sampled:
+        try:
+            neighbors = wv.most_similar(card, topn=10)
+            for n, _ in neighbors:
+                neighbor_count[n] = neighbor_count.get(n, 0) + 1
+        except KeyError:
+            continue
+
+    query_popularity: dict[str, int] = {}
+    for qname in queries:
+        if qname in neighbor_count:
+            query_popularity[qname] = neighbor_count[qname]
+        else:
+            query_popularity[qname] = 0
+
+    if query_popularity:
+        median_pop = float(np.median(list(query_popularity.values())))
+        pop_ndcg = []
+        niche_ndcg = []
+        for qname, qdata in queries.items():
+            if qname not in wv or qname not in query_popularity:
+                continue
+            annotations = qdata.get("annotations", [])
+            if not annotations:
+                continue
+            gt = {}
+            for ann in annotations:
+                c = ann.get("candidate", "")
+                s = ann.get("similarity_score")
+                if s is not None and c:
+                    gt[c] = float(s)
+            if not gt:
+                continue
+            try:
+                neighbors = wv.most_similar(qname, topn=k)
+            except KeyError:
+                continue
+            relevances = [gt.get(card, 0.0) for card, _ in neighbors]
+            ideal = sorted(gt.values(), reverse=True)
+            if max(ideal[:k]) > 0:
+                score = ndcg(relevances, ideal, k)
+                if query_popularity[qname] > median_pop:
+                    pop_ndcg.append(score)
+                else:
+                    niche_ndcg.append(score)
+
+        results["stratified_ndcg"] = {
+            "popular_ndcg": float(np.mean(pop_ndcg)) if pop_ndcg else 0.0,
+            "popular_n": len(pop_ndcg),
+            "niche_ndcg": float(np.mean(niche_ndcg)) if niche_ndcg else 0.0,
+            "niche_n": len(niche_ndcg),
+            "median_popularity": median_pop,
+            "bias_ratio": (float(np.mean(pop_ndcg)) / float(np.mean(niche_ndcg)))
+            if niche_ndcg and pop_ndcg and np.mean(niche_ndcg) > 0
+            else 0.0,
+        }
+
     # Beyond-accuracy metrics (from experiment 0019 metrics audit)
 
     # Catalog Coverage: fraction of vocabulary ever recommended across all queries
@@ -482,6 +547,17 @@ def main():
             if ud["distribution"]:
                 for d, c in sorted(ud["distribution"].items(), key=lambda x: -x[1]):
                     print(f"    {d}: {c}")
+
+            strat = r.get("stratified_ndcg", {})
+            if strat:
+                bias = strat.get("bias_ratio", 0)
+                print(
+                    f"\n  Stratified nDCG (popularity bias check):"
+                    f"\n    Popular cards:  {strat['popular_ndcg']:.4f} (n={strat['popular_n']})"
+                    f"\n    Niche cards:    {strat['niche_ndcg']:.4f} (n={strat['niche_n']})"
+                    f"\n    Bias ratio:     {bias:.2f}x"
+                    f" {'(OK)' if bias < 2.0 else '(BIASED - popular cards get disproportionate nDCG)'}"
+                )
 
             cc = r.get("catalog_coverage", {})
             if cc:
