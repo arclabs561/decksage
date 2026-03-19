@@ -13,6 +13,7 @@ import json as _json
 import logging
 import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -825,9 +826,11 @@ class HybridSearch:
         if not embed_fn:
             return []
 
-        # Lazily build card text embedding cache
+        # Lazily build card text embedding cache (check disk first)
         if not hasattr(self, "_text_emb_cache") or self._text_emb_cache is None:
-            self._text_emb_cache = self._build_text_embedding_cache(embed_fn)
+            self._text_emb_cache = (
+                self._load_text_embedding_cache() or self._build_text_embedding_cache(embed_fn)
+            )
 
         if self._text_emb_cache is None:
             return []
@@ -927,7 +930,88 @@ class HybridSearch:
             n_with_text,
             matrix.shape[1],
         )
-        return valid_names, matrix, norms
+        result = (valid_names, matrix, norms)
+
+        # Persist to disk for fast reload on server restart
+        self._save_text_embedding_cache(result)
+
+        return result
+
+    def _cache_path(self) -> Path | None:
+        """Get the disk cache path for text embeddings."""
+        try:
+            cache_dir = Path("data/cache")
+            cache_dir.mkdir(parents=True, exist_ok=True)
+            return cache_dir / f"text_emb_cache_{self.index_name}.npz"
+        except Exception:
+            return None
+
+    def _save_text_embedding_cache(self, cache: tuple) -> None:
+        """Save text embedding cache to disk."""
+        import json as _json
+
+        import numpy as _np
+
+        path = self._cache_path()
+        if path is None:
+            return
+        try:
+            names, matrix, norms = cache
+            _np.savez_compressed(
+                path,
+                matrix=matrix,
+                norms=norms,
+            )
+            # Save names separately (numpy can't store variable-length strings well)
+            names_path = path.with_suffix(".names.json")
+            with open(names_path, "w") as f:
+                _json.dump(names, f)
+            logger.info("Saved text embedding cache to %s (%d cards)", path, len(names))
+        except Exception as e:
+            logger.debug(f"Failed to save text embedding cache: {e}")
+
+    def _load_text_embedding_cache(self) -> tuple | None:
+        """Load text embedding cache from disk if available and fresh."""
+        import json as _json
+
+        import numpy as _np
+
+        path = self._cache_path()
+        if path is None or not path.exists():
+            return None
+        names_path = path.with_suffix(".names.json")
+        if not names_path.exists():
+            return None
+
+        try:
+            # Check staleness: cache older than 7 days -> rebuild
+            import time
+
+            age_days = (time.time() - path.stat().st_mtime) / 86400
+            if age_days > 7:
+                logger.info("Text embedding cache stale (%.1f days), rebuilding", age_days)
+                return None
+
+            data = _np.load(path)
+            matrix = data["matrix"]
+            norms = data["norms"]
+            with open(names_path) as f:
+                names = _json.load(f)
+
+            # Sanity check
+            if len(names) != matrix.shape[0]:
+                logger.warning("Cache size mismatch, rebuilding")
+                return None
+
+            logger.info(
+                "Loaded text embedding cache from disk: %d cards, %dD",
+                len(names),
+                matrix.shape[1],
+            )
+            return names, matrix, norms
+        except Exception as e:
+            logger.debug(f"Failed to load text embedding cache: {e}")
+            return None
 
     def search_text_only(
         self, query: str, limit: int = 10, filters: str | None = None

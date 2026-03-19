@@ -496,8 +496,13 @@ async def annotate_query(
     embedding_version: str = "unknown",
     card_data: dict[str, dict] | None = None,
 ) -> dict[str, Any]:
-    """Annotate all neighbors of a query card."""
-    sem = semaphore or asyncio.Semaphore(5)
+    """Annotate all neighbors of a query card.
+
+    Uses concurrent per-pair calls (not batch) because pydantic-ai
+    structured output works per-call. Concurrency is controlled by
+    the semaphore.
+    """
+    sem = semaphore or asyncio.Semaphore(10)
 
     async def _annotate_one(card: str, sim: float) -> dict[str, Any]:
         async with sem:

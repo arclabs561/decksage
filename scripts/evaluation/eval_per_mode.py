@@ -103,11 +103,62 @@ def load_embeddings(game: str, name: str | None = None) -> KeyedVectors | None:
     return KeyedVectors.load(str(path))
 
 
+def normalize_scores_per_model(queries: dict) -> dict:
+    """Normalize annotation scores per LLM model to fix calibration drift.
+
+    Different models give different score ranges (GPT-4o-mini avg 0.52 vs
+    Gemini 0.25). This normalizes each model's scores to mean=0.5
+    using z-score normalization, so multi-model annotations are comparable.
+    """
+    # Collect scores per model
+    model_scores: dict[str, list[float]] = {}
+    for qdata in queries.values():
+        for ann in qdata.get("annotations", []):
+            model = ann.get("llm_model", "unknown")
+            sim = ann.get("similarity_score")
+            if sim is not None:
+                model_scores.setdefault(model, []).append(float(sim))
+
+    # Compute per-model mean/std
+    model_stats = {}
+    for model, scores in model_scores.items():
+        arr = np.array(scores)
+        model_stats[model] = {"mean": float(arr.mean()), "std": float(arr.std())}
+
+    # Only normalize if we have multiple models with different means
+    means = [s["mean"] for s in model_stats.values()]
+    if len(means) < 2 or max(means) - min(means) < 0.1:
+        return queries  # No significant drift
+
+    # Normalize: z-score -> rescale to [0, 1] range centered at 0.5
+    for qdata in queries.values():
+        for ann in qdata.get("annotations", []):
+            model = ann.get("llm_model", "unknown")
+            stats = model_stats.get(model)
+            if not stats or stats["std"] < 0.01:
+                continue
+            for field in [
+                "similarity_score",
+                "functional_score",
+                "synergy_score",
+                "meta_relevance",
+            ]:
+                val = ann.get(field)
+                if val is not None:
+                    z = (float(val) - stats["mean"]) / stats["std"]
+                    # Rescale z-score to 0-1 (clip to avoid negatives)
+                    normalized = max(0.0, min(1.0, 0.5 + z * 0.2))
+                    ann[f"{field}_normalized"] = round(normalized, 4)
+
+    return queries
+
+
 def eval_mode(
     wv: KeyedVectors,
     queries: dict,
     mode: str,
     k: int = 10,
+    use_normalized: bool = False,
 ) -> dict:
     """Evaluate a single mode's nDCG using per-pair annotation scores.
 
@@ -116,7 +167,8 @@ def eval_mode(
     2. Get the embedding's top-K ranking for that query
     3. Compute nDCG using the ground truth scores at the embedding's ranking positions
     """
-    score_field = MODE_SCORE_FIELD[mode]
+    base_field = MODE_SCORE_FIELD[mode]
+    score_field = f"{base_field}_normalized" if use_normalized else base_field
     ndcg_scores = []
     n_skipped = 0
     n_evaluated = 0
@@ -221,6 +273,10 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
         return {"game": game, "error": "no test set"}
 
     queries = test_set.get("queries", {})
+
+    # Normalize scores across models for fair comparison
+    queries = normalize_scores_per_model(queries)
+
     wv = load_embeddings(game, embedding_name)
     if wv is None:
         return {"game": game, "error": "no embeddings"}
