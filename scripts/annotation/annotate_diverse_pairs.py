@@ -225,11 +225,45 @@ def _classify_mode(ann) -> str:
     return "synergy"
 
 
+def _checkpoint_path(game: str) -> Path:
+    return DATA_DIR / "annotations" / f"diverse_checkpoint_{game}.jsonl"
+
+
+def _load_checkpoint(game: str) -> set[tuple[str, str]]:
+    """Load already-annotated pairs from checkpoint."""
+    path = _checkpoint_path(game)
+    if not path.exists():
+        return set()
+    done = set()
+    with open(path) as f:
+        for line in f:
+            if line.strip():
+                d = json.loads(line)
+                done.add((d.get("query", ""), d.get("candidate", "")))
+    return done
+
+
+def _save_to_checkpoint(game: str, result: dict) -> None:
+    """Append one annotation result to checkpoint file."""
+    path = _checkpoint_path(game)
+    with open(path, "a") as f:
+        f.write(json.dumps(result) + "\n")
+
+
 async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10) -> dict:
     """Annotate diverse pairs and integrate into test set."""
     pairs = load_diverse_pairs(game)
     if not pairs:
         return {"game": game, "error": "no diverse pairs"}
+
+    # Resume support: skip already-annotated pairs
+    done_pairs = _load_checkpoint(game)
+    if done_pairs:
+        before = len(pairs)
+        pairs = [p for p in pairs if (p["card1"], p["card2"]) not in done_pairs]
+        logger.info(
+            f"{game}: resuming -- {before - len(pairs)} already done, {len(pairs)} remaining"
+        )
 
     logger.info(f"{game}: {len(pairs)} diverse pairs to annotate")
 
@@ -278,6 +312,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         i, result = await coro
         if result:
             annotations_by_query.setdefault(result["query"], []).append(result)
+            _save_to_checkpoint(game, result)
             n_done += 1
         else:
             n_failed += 1
@@ -303,6 +338,24 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     # Rough cost estimate (Haiku 4.5: $0.25/1M in, $1.25/1M out)
     cost_usd = (total_input_tokens * 0.25 + total_output_tokens * 1.25) / 1_000_000
     elapsed = time.monotonic() - t0
+
+    # Merge any previously checkpointed results (from interrupted runs)
+    checkpoint_path = _checkpoint_path(game)
+    if checkpoint_path.exists():
+        n_from_checkpoint = 0
+        with open(checkpoint_path) as f:
+            for line in f:
+                if line.strip():
+                    ann = json.loads(line)
+                    q = ann.get("query", "")
+                    if not q:
+                        continue
+                    existing_cands = {a.get("candidate") for a in annotations_by_query.get(q, [])}
+                    if ann.get("candidate") not in existing_cands:
+                        annotations_by_query.setdefault(q, []).append(ann)
+                        n_from_checkpoint += 1
+        if n_from_checkpoint > 0:
+            logger.info(f"Loaded {n_from_checkpoint} additional results from checkpoint")
 
     logger.info(f"Annotated {n_done} pairs ({n_failed} failed) in {elapsed:.0f}s")
     logger.info(
