@@ -66,9 +66,10 @@ def evaluate_ndcg(kv, game: str, k: int = 10) -> dict[str, float]:
     def dcg(scores: list[float]) -> float:
         return sum(s / np.log2(i + 2) for i, s in enumerate(scores))
 
-    def ndcg_at_k(relevance_scores: list[float], k: int) -> float:
+    def ndcg_at_k(relevance_scores: list[float], ideal_scores: list[float], k: int) -> float:
+        """nDCG using external ideal ranking (not just retrieved docs)."""
         actual = dcg(relevance_scores[:k])
-        ideal = dcg(sorted(relevance_scores, reverse=True)[:k])
+        ideal = dcg(sorted(ideal_scores, reverse=True)[:k])
         return actual / ideal if ideal > 0 else 0.0
 
     mode_ndcgs: dict[str, list[float]] = {m: [] for m in mode_fields}
@@ -108,8 +109,11 @@ def evaluate_ndcg(kv, game: str, k: int = 10) -> dict[str, float]:
             for card, _ in neighbors[:k]:
                 ranked_scores.append(gt_map.get(card, 0.0))
 
-            if any(s > 0 for s in ranked_scores):
-                ndcg = ndcg_at_k(ranked_scores, k)
+            # Use ALL ground truth scores as the ideal, not just retrieved ones.
+            # This matches canonical eval_per_mode.py methodology.
+            all_gt_scores = list(gt_map.values())
+            if max(sorted(all_gt_scores, reverse=True)[:k]) > 0:
+                ndcg = ndcg_at_k(ranked_scores, all_gt_scores, k)
                 mode_ndcgs[mode].append(ndcg)
 
         # Overall: use max score across modes
@@ -131,8 +135,9 @@ def evaluate_ndcg(kv, game: str, k: int = 10) -> dict[str, float]:
                 continue
             gt_map = dict(all_scores)
             ranked = [gt_map.get(c, 0.0) for c, _ in neighbors[:k]]
-            if any(s > 0 for s in ranked):
-                overall_ndcgs.append(ndcg_at_k(ranked, k))
+            all_gt = list(gt_map.values())
+            if max(sorted(all_gt, reverse=True)[:k]) > 0:
+                overall_ndcgs.append(ndcg_at_k(ranked, all_gt, k))
 
     result = {
         "overall_ndcg": float(np.mean(overall_ndcgs)) if overall_ndcgs else 0.0,
