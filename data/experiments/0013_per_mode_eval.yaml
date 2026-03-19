@@ -1,0 +1,63 @@
+id: "0013"
+date: "2026-03-18"
+title: "Per-mode evaluation framework"
+game: all
+
+hypothesis: >
+  A single nDCG score hides mode-specific weaknesses. Per-mode eval
+  (substitute, synergy, meta), search relevance eval, and deck completion
+  eval will reveal where embeddings succeed and fail.
+
+method:
+  type: eval
+  script: scripts/evaluation/eval_per_mode.py
+  commit: a5c0c68
+  details: >
+    Created 3 evaluation scripts: (1) eval_per_mode.py -- per-mode nDCG@10
+    using v2 test set annotations with functional_score, synergy_score,
+    meta_relevance; (2) eval_search_relevance.py -- 14 hand-curated queries
+    (oracle + semantic) with ground truth, measures P@K, R@K, MRR, nDCG@K;
+    (3) eval_deck_completion.py -- 6 seed decks across 3 games, checks size,
+    copy limits, color identity, card quality. Also created
+    enrich_test_set_pairs.py for annotation enrichment. Fixed oracle MRR from
+    0.000 to 1.000 by reordering MeiliSearch searchableAttributes (text
+    before name).
+
+data:
+  training:
+    source: data/test_sets/annotated_{game}_v2.json
+    description: "v2 annotated test sets with mode labels"
+  search_queries:
+    source: data/test_sets/search_relevance_queries.json
+    description: "14 hand-curated search queries with ground truth"
+    count: 14
+
+results:
+  per_mode_ndcg:
+    magic: 0.156
+    pokemon: 0.294
+    yugioh: 0.554
+  substitutability_ndcg:
+    magic: 0.079
+    pokemon: 0.050
+    yugioh: 0.585
+  search_oracle_mrr:
+    magic: 1.0
+  contextual_recall:
+    magic: 0.08
+    pokemon: 0.20
+    yugioh: 0.60
+  deck_completion: "Magic burn correct (Eidolon, Skullcrack)"
+
+conclusion: >
+  Evaluation framework established. Magic substitutability is weakest (0.079
+  nDCG), confirming text_embed signal needed in fusion. YuGiOh leads across
+  all modes. Oracle search fixed (MRR 1.0). Contextual alternatives recall
+  very low for Magic (8%), moderate for YuGiOh (60%).
+
+artifacts:
+  - scripts/evaluation/eval_per_mode.py
+  - scripts/evaluation/eval_search_relevance.py
+  - scripts/evaluation/eval_deck_completion.py
+  - scripts/annotation/enrich_test_set_pairs.py
+  - data/test_sets/search_relevance_queries.json

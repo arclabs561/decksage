@@ -1,0 +1,55 @@
+id: "0005"
+date: "2026-03-19"
+title: "E5 multi-task fine-tuning (Magic)"
+game: magic
+
+hypothesis: >
+  Fine-tuning E5-base-v2 with mode-aware instruction routing (substitution
+  pairs get "Find functional substitute for", synergy pairs get "Find cards
+  that synergize with") and graded similarity labels should produce better
+  text embeddings for contextual search than zero-shot E5.
+
+method:
+  type: fine-tune
+  script: src/ml/scripts/train_instruction_finetune.py
+  args: "--base-model intfloat/e5-base-v2 --output data/embeddings/e5_finetuned_magic_multitask --test-set data/test_sets/annotated_magic_v2.json --graph data/graphs/magic_unified.db --multi-task --epochs 3"
+  commit: 25845f3
+  model: intfloat/e5-base-v2 (384D sentence transformer)
+  details: >
+    Multi-task training: annotation pairs routed by mode (952 substitution,
+    1559 synergy, 573 meta) to correct E5 instruction prefixes. Graded
+    similarity scores (0.0-1.0) as labels instead of binary. 5,000 graph
+    edges routed to synergy+completion instructions only (NOT substitution,
+    because co-occurrence anti-correlates substitution). CosineSimilarityLoss.
+    Key fix: prior version used all pairs with substitution instruction
+    regardless of mode, poisoning the objective.
+
+data:
+  training:
+    source: data/test_sets/annotated_magic_v2.json + data/graphs/magic_unified.db
+    description: "3,084 annotation pairs (mode-routed) + 5,000 graph edges (synergy/completion only)"
+    count: 8084
+    breakdown:
+      substitution_pairs: 952
+      synergy_pairs: 1559
+      meta_pairs: 573
+      graph_edges: 5000
+  eval: "not yet run against downstream metrics"
+
+results:
+  training_loss_final: 0.027
+  training_loss_initial: 0.065
+  epochs: 3
+  train_time_s: 638
+  samples_per_second: 38.01
+
+conclusion: >
+  Training converged (loss 0.065 -> 0.027). Model saved. Need to evaluate
+  downstream: (1) use as text_embed signal in fusion and measure contextual
+  recall improvement, (2) compare zero-shot vs fine-tuned E5 on substitution
+  nDCG. The mode-aware routing is critical -- prior version contaminated
+  substitution training with 314 synergy pairs and 10K graph co-occurrence
+  edges (all with wrong instruction prefix).
+
+artifacts:
+  - data/embeddings/e5_finetuned_magic_multitask/

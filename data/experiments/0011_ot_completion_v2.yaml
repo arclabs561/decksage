@@ -1,0 +1,47 @@
+id: "0011"
+date: "2026-03-17"
+title: "OT deck completion v2: format-aware constraints"
+game: all
+
+hypothesis: >
+  Reformulating OT deck completion with quality-weighted source distribution,
+  unbalanced OT, ILP rounding, and format-aware constraints will produce
+  legal, playable deck completions. Prior pool-to-pool formulation was
+  degenerate (no structure in the transport plan).
+
+method:
+  type: completion
+  script: src/ml/deck_building/ot_completion.py
+  commit: 1b2b813
+  details: >
+    Added FormatConstraints dataclass with presets for Magic (standard, modern,
+    commander, vintage, pauper, draft), YuGiOh (advanced, traditional),
+    Pokemon (standard, expanded, pocket). Candidate pool filtered by format
+    legality and color identity BEFORE building cost matrix. ILP/greedy
+    rounding respects per-card copy limits (restricted=1, basics unlimited in
+    singleton formats). CompleteRequest gains format field; deck_routes.py
+    passes legality_data and color identity from ApiState.
+
+data:
+  training:
+    source: src/ml/deck_building/ot_completion.py
+    description: "OT completion module with format constraints"
+
+results:
+  new_tests: 12
+  test_coverage: >
+    Format presets, banned-card filtering, commander singleton, basics
+    exemption, restricted=1, color identity filtering, backward compatibility
+  formats_supported: 11
+
+conclusion: >
+  Format-aware constraints ensure completed decks are legal. Commander
+  singleton, color identity, and copy limits all enforced at the candidate
+  filtering stage (solver only sees legal cards). 12 new tests cover all
+  constraint types.
+
+artifacts:
+  - src/ml/deck_building/ot_completion.py
+  - src/ml/tests/test_ot_completion.py
+  - src/ml/api/deck_routes.py
+  - src/ml/api/models.py

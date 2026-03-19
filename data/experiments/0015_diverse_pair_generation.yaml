@@ -1,0 +1,52 @@
+id: "0015"
+date: "2026-03-18"
+title: "Diverse pair generation to break embedding echo chamber"
+game: all
+
+hypothesis: >
+  Current annotations only cover embedding top-10 neighbors, creating a
+  self-reinforcing evaluation set. Generating pairs from text similarity,
+  role matching, hard negatives, and budget constraints will expose blind
+  spots in the embeddings.
+
+method:
+  type: annotation
+  script: scripts/annotation/generate_diverse_pairs.py
+  commit: c48f91c
+  details: >
+    Created 4 pair generation strategies: (1) text_similarity -- cards with
+    similar oracle text but low embedding similarity (e.g., Stalking Vengeance
+    <-> Dreadhorde Butcher, text=0.87 emb=0.11); (2) role_matched -- same
+    functional role across different colors/archetypes; (3) hard_negative --
+    high embedding similarity but different function; (4) budget -- cheap vs
+    expensive cards with matching roles. Companion annotate_diverse_pairs.py
+    script annotates with full extended schema. Informed by NV-Retriever
+    (2024), ESANS (2025), and LLM Hard Negatives (2025) papers.
+
+data:
+  training:
+    source: data/embeddings/*_v5_fused.wv
+    description: "v5 fused embeddings for similarity computation"
+  output:
+    description: "Diverse pairs across 4 strategies"
+    count:
+      magic: 600
+      pokemon: 501
+      yugioh: 499
+      total: 1600
+
+results:
+  pairs_generated: 1600
+  strategies: 4
+  example_text_sim_gap: "Stalking Vengeance <-> Dreadhorde Butcher: text=0.87, emb=0.11"
+
+conclusion: >
+  Generated 1,600 diverse pairs that the embedding model currently misses.
+  Text similarity pairs expose functional substitutes invisible to
+  co-occurrence. Hard negatives expose false positives. These pairs must be
+  annotated and integrated into v2 test sets to make evaluation
+  non-self-reinforcing.
+
+artifacts:
+  - scripts/annotation/generate_diverse_pairs.py
+  - scripts/annotation/annotate_diverse_pairs.py

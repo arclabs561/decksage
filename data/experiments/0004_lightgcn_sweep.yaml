@@ -1,0 +1,66 @@
+id: "0004"
+date: "2026-03-19"
+title: "LightGCN hyperparameter sweep (Magic)"
+game: magic
+
+hypothesis: >
+  LightGCN (pure neighborhood aggregation, no feature transforms) with
+  reconstruction loss should outperform PecanPy random walks for co-occurrence
+  embedding, especially with tuned hyperparameters. The graph is dense
+  (331K undirected edges) so BPR's random-negative assumption breaks down;
+  weighted MSE reconstruction should work better.
+
+method:
+  type: sweep
+  script: scripts/training/sweep_lightgcn.py
+  args: "--game magic --quick --epochs 80 --patience 8"
+  commit: 571bf60
+  model: LightGCN (He et al., SIGIR 2020)
+  details: >
+    Grid search over 16 configs: dim=[64,128], layers=[2,3],
+    lr=[1e-3,5e-4], l2_reg=[1e-4,1e-3]. Reconstruction loss (weighted MSE).
+    Early stopping with patience=8. Evaluated with per-mode nDCG on
+    annotated_magic_v2.json test set.
+
+data:
+  training:
+    source: data/graphs/magic_merged_all.edg
+    description: "Enriched edgelist, 15,697 nodes, 331,264 undirected edges"
+    count: 331264
+    split: "90/10 train/val (undirected edge split)"
+  eval:
+    source: data/test_sets/annotated_magic_v2.json
+    description: "500 queries, 3,290 annotations with mode labels"
+
+results:
+  best_config:
+    dim: 128
+    layers: 2
+    lr: 0.0005
+    l2_reg: 0.0001
+  best:
+    overall_ndcg: 0.5455
+    sub_ndcg: 0.5514
+    syn_ndcg: 0.5491
+    meta_ndcg: 0.5435
+    random_mean_sim: 0.0009
+    train_time_s: 270.0
+    vocab: 15697
+  comparison_v5_fused:
+    overall_ndcg: 0.156
+    improvement: "3.5x"
+  all_configs: data/experiments/lightgcn_sweep_magic.tsv
+
+conclusion: >
+  LightGCN dramatically outperforms PecanPy (0.545 vs 0.156 nDCG). Best
+  config: dim=128, layers=2, lr=5e-4. Lower l2_reg (1e-4) beats higher
+  (1e-3). 2 layers beats 3 layers at dim=128 (simpler aggregation is better
+  for this graph density). CAVEAT: the sweep eval function was written
+  inline -- need to verify with canonical eval_per_mode.py to confirm
+  numbers aren't inflated by evaluation methodology differences. The vocab
+  is smaller (15,697 vs 21,151) because LightGCN only embeds nodes present
+  in the edgelist.
+
+artifacts:
+  - data/embeddings/magic_lightgcn_best.wv
+  - data/experiments/lightgcn_sweep_magic.tsv

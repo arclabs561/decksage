@@ -1,0 +1,42 @@
+id: "0010"
+date: "2026-03-18"
+title: "Annotation enrichment with extended fields"
+game: all
+
+hypothesis: >
+  Enriching existing v2 annotation pairs with card roles, substitutability
+  scores, upgrade direction, and power levels enables contextual evaluation
+  (upgrade/downgrade recall, substitutability nDCG).
+
+method:
+  type: annotation
+  script: scripts/annotation/enrich_test_set_pairs.py
+  commit: 46140ce
+  details: >
+    Ran enrich_test_set_pairs.py over all 6,690 pairs across 3 games. LLM
+    adds extended fields: card_a_role, card_b_role, substitutability (0-1),
+    upgrade_direction, power_level_a, power_level_b, relationship_type,
+    confidence. Uses card context in prompts (same as 0009).
+
+data:
+  training:
+    source: data/test_sets/annotated_{game}_v2.json
+    description: "Existing v2 test sets to be enriched"
+    count: 6690
+
+results:
+  card_roles_coverage: "6,549 / 6,690 pairs (97.9%)"
+  substitutability_nonzero: 1177
+  upgrade_direction_labeled: 332
+  confidence_coverage: "6,690 / 6,690 (100%)"
+
+conclusion: >
+  All 6,690 pairs now have extended fields. Enables contextual endpoint eval
+  (upgrade/downgrade recall) and substitutability nDCG metric. Coverage gaps
+  in substitutability (17.6%) and upgrade_direction (5.0%) reflect pairs where
+  those concepts don't apply (e.g., synergy-only pairs).
+
+artifacts:
+  - data/test_sets/annotated_magic_v2.json
+  - data/test_sets/annotated_pokemon_v2.json
+  - data/test_sets/annotated_yugioh_v2.json

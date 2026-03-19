@@ -1,0 +1,69 @@
+id: "0002"
+date: "2026-03-17"
+title: "v5 fused embeddings (enriched edges + ns=-0.5 + attribute fusion)"
+game: all
+
+hypothesis: >
+  Enriched edges (ppmi, oracle_text, propagated) + negative sampling
+  exponent -0.5 (Caselles-Dupre 2018) + card attribute fusion (alpha=0.7)
+  should improve both synergy and substitution nDCG over raw co-occurrence.
+
+method:
+  type: embedding
+  script: scripts/training/train_blended_embeddings.py + fuse_embeddings.py
+  args: "--ns-exponent -0.5 --alpha 0.7"
+  model: PecanPy + Word2Vec + PCA attribute fusion (128D)
+  details: >
+    5-weight edgelist: ppmi x1, enriched x5, propagated x3, oracle_text x5.
+    Train PecanPy walks -> Word2Vec with ns=-0.5.
+    Fuse with card attributes (type, mana cost, rarity) via PCA to 128D.
+
+data:
+  training:
+    source: data/graphs/{game}_merged_all.edg
+    description: "Enriched edgelist with multiple signal sources"
+    count:
+      magic: 7111569
+      pokemon: 16676
+      yugioh: 1841618
+  card_attributes: data/processed/card_attributes_{game}_enriched.csv
+
+results:
+  magic:
+    overall_ndcg: 0.156
+    sub_ndcg: 0.150
+    syn_ndcg: 0.133
+    meta_ndcg: 0.143
+    sub_score_ndcg: 0.079
+    vocab: 21151
+    deck_quality: "good (Eidolon, Skullcrack in burn)"
+    contextual_recall: 0.079
+  pokemon:
+    overall_ndcg: 0.247
+    sub_ndcg: 0.251
+    syn_ndcg: 0.201
+    meta_ndcg: 0.230
+    sub_score_ndcg: 0.050
+    vocab: 4384
+    deck_quality: "ok (Iono, Prime Catcher)"
+    contextual_recall: 0.080
+  yugioh:
+    overall_ndcg: 0.554
+    sub_ndcg: 0.529
+    syn_ndcg: 0.523
+    meta_ndcg: 0.530
+    sub_score_ndcg: 0.585
+    vocab: 13745
+    contextual_recall: 0.600
+
+conclusion: >
+  Magic: marginal overall improvement (+3%) but deck completion quality
+  dramatically better (burn cards correct). Pokemon: 5x improvement from
+  v4 due to enriched edges expanding the sparse graph. YuGiOh: flat (already
+  strong). Substitution nDCG remains low for Magic (0.079) -- co-occurrence
+  anti-correlates functional substitutes. Need text_embed signal.
+
+artifacts:
+  - data/embeddings/magic_v5_fused.wv
+  - data/embeddings/pokemon_v5_fused.wv
+  - data/embeddings/yugioh_cleaned_v5.wv  # yugioh unfused was better

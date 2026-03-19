@@ -1,0 +1,54 @@
+id: "0001"
+date: "2026-03-17"
+title: "v4 co-occurrence baseline (all games)"
+game: all
+
+hypothesis: >
+  PecanPy random walk embeddings on raw co-occurrence pairs capture deck
+  synergy signal. Establishes baseline nDCG before enrichment or fusion.
+
+method:
+  type: embedding
+  script: scripts/training/train_all_embeddings.py
+  args: "--game {magic,pokemon,yugioh}"
+  model: PecanPy + Word2Vec (128D)
+
+data:
+  training:
+    source: data/processed/pairs_{game}.csv
+    description: "Raw co-occurrence pairs from deck exports"
+    count:
+      magic: 7111569
+      pokemon: 16676
+      yugioh: 1841618
+
+results:
+  magic:
+    overall_ndcg: 0.151
+    sub_ndcg: 0.130
+    syn_ndcg: 0.125
+    meta_ndcg: 0.131
+    vocab: 25417
+    deck_quality: "bad (Goblin Balloon Brigade in burn)"
+  pokemon:
+    overall_ndcg: 0.049
+    sub_ndcg: 0.042
+    syn_ndcg: 0.057
+    meta_ndcg: 0.049
+    vocab: 2237
+  yugioh:
+    overall_ndcg: 0.554
+    sub_ndcg: 0.529
+    syn_ndcg: 0.523
+    meta_ndcg: 0.530
+    vocab: 13745
+
+conclusion: >
+  YuGiOh nDCG far exceeds Magic/Pokemon due to larger, denser co-occurrence
+  graph (1.8M pairs). Magic deck completion picks wrong cards. Pokemon
+  nearly random (tiny 16K pairs). Need enriched edges + attribute fusion.
+
+artifacts:
+  - data/embeddings/magic_cleaned_v4.wv
+  - data/embeddings/pokemon_cleaned_v4.wv
+  - data/embeddings/yugioh_cleaned_v5.wv
