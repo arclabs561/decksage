@@ -1,0 +1,83 @@
+id: "0019"
+date: "2026-03-19"
+title: "Evaluation metrics audit and recommendations"
+game: all
+
+hypothesis: >
+  Our current metrics (nDCG, Recall, MRR, Hit@K, Functional AUC) may be
+  incomplete or suboptimal for the three DeckSage tasks. Academic literature
+  on RecSys evaluation should reveal gaps.
+
+method:
+  type: eval
+  details: >
+    Literature review of RecSys evaluation metrics. Sources: Chapelle et al.
+    2009 (ERR), Kaminskas & Bridge 2016 (beyond-accuracy), Penha et al. 2025
+    (LLM judge bias), Li et al. 2021 (NBR evaluation), Chen et al. 2018
+    (Q-DeckRec), Duricic et al. 2023 (GNN beyond-accuracy).
+
+results:
+  current_metrics_assessment:
+    nDCG: "Appropriate for exploratory tasks (synergy, meta). For substitution (navigational), ERR may be better."
+    recall_at_k: "Appropriate for all tasks."
+    mrr: "Secondary -- measures first-hit speed, not list quality."
+    hit_at_k: "Standard for deck completion (next-basket)."
+    functional_auc: "Diagnostic only -- measures embedding space separation, not ranking quality."
+    map: "Redundant with nDCG when graded relevance available. Drop or demote."
+
+  missing_metrics_to_add:
+    catalog_coverage:
+      effort: trivial
+      value: high
+      description: "Fraction of card catalog ever recommended. Detects popularity bias."
+    novelty:
+      effort: trivial
+      value: high
+      description: "Mean self-information of recommendations. Rewards surfacing uncommon cards."
+    err_at_10:
+      effort: moderate
+      value: high
+      description: "Expected Reciprocal Rank. Better than nDCG for substitution (navigational) queries."
+    intra_list_diversity:
+      effort: moderate
+      value: medium
+      description: "Average pairwise distance in recommendation list. Critical for deck completion."
+    f1_at_k:
+      effort: trivial
+      value: medium
+      description: "Balances precision and recall for set-based deck completion."
+    serendipity:
+      effort: moderate
+      value: medium
+      description: "Fraction of relevant recommendations not predicted by popularity baseline."
+    archetype_precision:
+      effort: trivial
+      value: medium
+      description: "Fraction of deck completion suggestions matching seed archetype."
+    format_legality_rate:
+      effort: trivial
+      value: high
+      description: "Fraction of recommendations legal in target format."
+
+  annotation_bias_risks:
+    central_tendency: "LLMs avoid extreme scores, compressing nDCG sensitivity."
+    popularity_bias: "Popular cards get higher relevance AND better embeddings, self-reinforcing."
+    verbosity_bias: "Longer oracle text -> higher LLM relevance scores."
+    mitigation_1: "Compute Krippendorff's alpha on 4-model IAA pool (target >= 0.67)."
+    mitigation_2: "Stratified nDCG by card popularity (high vs low frequency)."
+    mitigation_3: "Human spot-check 50-100 pairs, compute Kendall's tau vs LLM labels."
+
+  task_specific_recommendations:
+    substitution: "Primary: ERR@10. Secondary: nDCG@10, Recall@K, Coverage, Novelty."
+    deck_completion: "Primary: Hit@K, F1@K, Recall@K. Secondary: ILD, Archetype Precision, Format Legality."
+    contextual_discovery: "Primary: nDCG per mode, MRR. Secondary: Serendipity, Novelty, Coverage."
+    system_comparison: "Kendall's tau, Spearman's rho between embedding versions."
+
+conclusion: >
+  Current metrics cover accuracy but entirely lack beyond-accuracy metrics.
+  Highest-value additions: Catalog Coverage (trivial), Novelty (trivial),
+  ERR for substitution (moderate). LLM annotation bias is a real risk --
+  stratified nDCG by card popularity is the most actionable mitigation.
+  Implement Coverage + Novelty first (one-pass over existing data).
+
+artifacts: []

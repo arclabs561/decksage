@@ -357,6 +357,63 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
         "k": k,
     }
 
+    # Beyond-accuracy metrics (from experiment 0019 metrics audit)
+
+    # Catalog Coverage: fraction of vocabulary ever recommended across all queries
+    all_recommended: set[str] = set()
+    for qname in queries:
+        if qname not in wv:
+            continue
+        try:
+            neighbors = wv.most_similar(qname, topn=k)
+            all_recommended.update(card for card, _ in neighbors)
+        except KeyError:
+            continue
+    catalog_size = len(wv)
+    results["catalog_coverage"] = {
+        "recommended_cards": len(all_recommended),
+        "catalog_size": catalog_size,
+        "coverage": len(all_recommended) / catalog_size if catalog_size > 0 else 0.0,
+    }
+
+    # Novelty: mean self-information of recommended cards
+    # Uses embedding vocabulary frequency as proxy for popularity
+    # (cards that appear as neighbors of many queries are "popular")
+    neighbor_freq: dict[str, int] = {}
+    n_queries_with_neighbors = 0
+    for qname in queries:
+        if qname not in wv:
+            continue
+        try:
+            neighbors = wv.most_similar(qname, topn=k)
+            n_queries_with_neighbors += 1
+            for card, _ in neighbors:
+                neighbor_freq[card] = neighbor_freq.get(card, 0) + 1
+        except KeyError:
+            continue
+
+    if n_queries_with_neighbors > 0 and neighbor_freq:
+        novelty_scores = []
+        for qname in queries:
+            if qname not in wv:
+                continue
+            try:
+                neighbors = wv.most_similar(qname, topn=k)
+            except KeyError:
+                continue
+            q_novelty = []
+            for card, _ in neighbors:
+                pop = neighbor_freq.get(card, 1) / n_queries_with_neighbors
+                q_novelty.append(-np.log2(max(pop, 1e-10)))
+            if q_novelty:
+                novelty_scores.append(float(np.mean(q_novelty)))
+        results["novelty"] = {
+            "mean_self_info": float(np.mean(novelty_scores)) if novelty_scores else 0.0,
+            "n_evaluated": len(novelty_scores),
+        }
+    else:
+        results["novelty"] = {"mean_self_info": 0.0, "n_evaluated": 0}
+
     return results
 
 
@@ -425,6 +482,17 @@ def main():
             if ud["distribution"]:
                 for d, c in sorted(ud["distribution"].items(), key=lambda x: -x[1]):
                     print(f"    {d}: {c}")
+
+            cc = r.get("catalog_coverage", {})
+            if cc:
+                print(
+                    f"\n  Catalog coverage: {cc['recommended_cards']}/{cc['catalog_size']} "
+                    f"({cc['coverage']:.1%})"
+                )
+
+            nov = r.get("novelty", {})
+            if nov.get("n_evaluated", 0) > 0:
+                print(f"  Novelty (mean self-info): {nov['mean_self_info']:.2f} bits")
 
 
 if __name__ == "__main__":
