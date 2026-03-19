@@ -178,11 +178,26 @@ def suggest_additions(
     scores: dict[str, float] = {}
     score_reasons: dict[str, str] = {}  # Track why each card scored well
 
+    # Track how many seed cards each candidate is a neighbor of (consensus)
+    cand_seed_count: dict[str, int] = {}
     for s in seeds:
         for cand, score in candidate_fn(s, top_k):
             if any(resolver.equals(cand, h) for h in have):
                 continue
             scores[cand] = max(scores.get(cand, 0.0), float(score))
+            cand_seed_count[cand] = cand_seed_count.get(cand, 0) + 1
+
+    # Consensus boost: cards that appear as neighbors of multiple seed cards
+    # are more likely to be on-archetype. Penalize single-seed-only candidates.
+    if len(seeds) >= 2:
+        for cand in list(scores):
+            n_seeds = cand_seed_count.get(cand, 1)
+            if n_seeds >= 2:
+                # Boost by consensus: 20% per additional seed
+                scores[cand] *= 1.0 + (n_seeds - 1) * 0.2
+            else:
+                # Mild penalty for single-seed candidates (may be off-archetype)
+                scores[cand] *= 0.8
 
     # Pairwise synergy bonus: cards that co-occur with many existing deck cards
     # get a boost, capturing combo/synergy interactions that independent scoring
