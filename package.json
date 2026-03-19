@@ -13,7 +13,7 @@
     "vlm-critique:clear": "node scripts/vlm_critique.mjs --clear"
   },
   "devDependencies": {
-    "@arclabs561/ai-visual-test": "^0.7.5",
+    "@arclabs561/ai-visual-test": "^0.9.0",
     "@playwright/test": "^1.58.2"
   }
 }
