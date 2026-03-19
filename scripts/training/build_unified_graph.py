@@ -28,6 +28,7 @@ Usage:
     # Dry run
     PYTHONPATH=src python scripts/training/build_unified_graph.py --game pokemon --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -50,7 +51,13 @@ from ml.utils.data_loading import load_edgelist
 
 
 # Game name -> internal game code mapping
-GAME_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO", "digimon": "DGM", "riftbound": "RFB"}
+GAME_CODE = {
+    "magic": "MTG",
+    "pokemon": "PKM",
+    "yugioh": "YGO",
+    "digimon": "DGM",
+    "riftbound": "RFB",
+}
 
 # ── Game configurations ──
 # Mirrors GAME_CONFIGS from train_all_embeddings.py but adds all source paths.
@@ -68,6 +75,7 @@ GAME_CONFIGS = {
         "annotations": [
             "data/annotations/magic_500_v3.json",
             "data/annotations/magic_500_hub_v3.json",
+            "data/annotations/magic_2000_v4.json",
         ],
         "enriched_edgelist": "data/graphs/pairs_enriched_magic_v3b.edg",
         "card_attributes": "data/processed/card_attributes_enriched.csv",
@@ -84,6 +92,7 @@ GAME_CONFIGS = {
         ],
         "annotations": [
             "data/annotations/pokemon_500_v3.json",
+            "data/annotations/pokemon_2000_v4.json",
         ],
         "enriched_edgelist": "data/graphs/pairs_enriched_pokemon_v3b.edg",
         "card_attributes": "data/processed/card_attributes_pokemon_enriched.csv",
@@ -98,6 +107,7 @@ GAME_CONFIGS = {
         ],
         "annotations": [
             "data/annotations/yugioh_500_v3.json",
+            "data/annotations/yugioh_2000_v4.json",
         ],
         "enriched_edgelist": "data/graphs/pairs_enriched_yugioh_v4.edg",
         "card_attributes": "data/processed/card_attributes_yugioh_enriched.csv",
@@ -509,7 +519,6 @@ def enrich_nodes(
                     if name in graph.nodes:
                         graph.nodes[name].oracle_text = oracle_text
                     else:
-
                         from ml.data.incremental_graph import CardNode
 
                         graph.nodes[name] = CardNode(
@@ -542,14 +551,12 @@ def build_game(
     base_edgelist = PROJECT_ROOT / config["base_edgelist"] if config["base_edgelist"] else None
     csv_path = PROJECT_ROOT / config["card_attributes"] if config["card_attributes"] else None
     annotation_paths = [PROJECT_ROOT / p for p in config["annotations"]]
-    image_urls_path = (
-        PROJECT_ROOT / config["image_urls"] if config.get("image_urls") else None
-    )
+    image_urls_path = PROJECT_ROOT / config["image_urls"] if config.get("image_urls") else None
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Building unified graph: {game.upper()}")
     print(f"  Output: {output_db}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     deck_jsonl_paths = [PROJECT_ROOT / p for p in config.get("deck_jsonl", [])]
 
@@ -591,7 +598,8 @@ def build_game(
         # Build co-occurrence from deck JSONL when no base edgelist exists
         if not base_edgelist or not base_edgelist.exists():
             deck_cooccurrence = compute_temporally_weighted_cooccurrence(
-                decks, halflife_days=999999,  # effectively no decay
+                decks,
+                halflife_days=999999,  # effectively no decay
             )
             raw_edges = deck_cooccurrence
             print(f"  {len(raw_edges):,} co-occurrence edges from deck JSONL")
@@ -600,28 +608,36 @@ def build_game(
         has_placement = sum(1 for d in decks if d.get("placement"))
         has_format = sum(1 for d in decks if d.get("format"))
         has_archetype = sum(1 for d in decks if d.get("archetype"))
-        print(f"  {len(decks):,} decks from JSONL ({has_placement:,} with placement, "
-              f"{has_format:,} with format, {has_archetype:,} with archetype)")
-        print(f"  {len(card_formats):,} cards with format tags, "
-              f"{len(card_archetypes):,} with archetype tags")
+        print(
+            f"  {len(decks):,} decks from JSONL ({has_placement:,} with placement, "
+            f"{has_format:,} with format, {has_archetype:,} with archetype)"
+        )
+        print(
+            f"  {len(card_formats):,} cards with format tags, "
+            f"{len(card_archetypes):,} with archetype tags"
+        )
 
         # Temporal decay: recompute co-occurrence with exponential decay
         if halflife_days > 0:
             has_timestamps = sum(1 for d in decks if d.get("created_at"))
-            print(f"\n  [temporal decay] halflife={halflife_days} days, "
-                  f"{has_timestamps:,}/{len(decks):,} decks with timestamps")
+            print(
+                f"\n  [temporal decay] halflife={halflife_days} days, "
+                f"{has_timestamps:,}/{len(decks):,} decks with timestamps"
+            )
             if has_timestamps > 0:
                 temporal_edges = compute_temporally_weighted_cooccurrence(
-                    decks, halflife_days=halflife_days,
+                    decks,
+                    halflife_days=halflife_days,
                 )
-                print(f"  [temporal decay] {len(temporal_edges):,} temporally-weighted edges "
-                      f"(replacing base co-occurrence)")
+                print(
+                    f"  [temporal decay] {len(temporal_edges):,} temporally-weighted edges "
+                    f"(replacing base co-occurrence)"
+                )
                 # Replace base edges with temporally-weighted ones
                 raw_edges = temporal_edges
                 # Re-add to graph (clear old co_occurrence edges first)
                 graph_edges_to_remove = [
-                    k for k, e in graph.edges.items()
-                    if e.source_type == "co_occurrence"
+                    k for k, e in graph.edges.items() if e.source_type == "co_occurrence"
                 ]
                 for k in graph_edges_to_remove:
                     del graph.edges[k]
@@ -765,8 +781,8 @@ def main() -> int:
         type=float,
         default=0,
         help="Enable temporal decay on co-occurrence edges. Weight decays by "
-             "half every N days. 0 = disabled (default). Suggested: 180 for "
-             "mixed formats, 90 for Standard-heavy data.",
+        "half every N days. 0 = disabled (default). Suggested: 180 for "
+        "mixed formats, 90 for Standard-heavy data.",
     )
     args = parser.parse_args()
 
@@ -777,9 +793,9 @@ def main() -> int:
         output_db = args.output_dir / f"{game}_unified.db"
         build_game(game, config, output_db, args.dry_run, args.halflife_days)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  Unified graph build complete.")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     return 0
 
 
