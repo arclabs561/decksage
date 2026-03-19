@@ -286,3 +286,4 @@ scripts/data/_debug_*
 .env.*
 !.env.example
 src/backend/games/magic/dataset/scryfall/.cache/
+/data/test_sets/annotated_*.json
