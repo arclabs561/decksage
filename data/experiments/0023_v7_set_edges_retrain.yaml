@@ -1,0 +1,70 @@
+id: "0023"
+date: "2026-03-19"
+title: "v7 retrain with set/precon/keyword edges (Magic)"
+game: magic
+
+hypothesis: >
+  Adding 2.5M set/precon/keyword edges at 0.3-1.0x weight should improve
+  coverage (more cards embedded) and potentially nDCG (designed synergy
+  complements observed play patterns).
+
+method:
+  type: embedding
+  script: scripts/training/train_blended_embeddings.py
+  args: >
+    --edgelist magic_merged_enriched.edg --weight 5.0
+    --edgelist magic_merged_all.edg --weight 1.0
+    --edgelist magic_annotation_edges.edg --weight 5.0
+    --edgelist magic_set_cooccurrence.edg --weight 0.3
+    --edgelist magic_precon_cooccurrence.edg --weight 1.0
+    --edgelist magic_keyword_sharing.edg --weight 0.5
+    --dim 128 --ns-exponent -0.5
+  model: PecanPy + Word2Vec (128D)
+
+data:
+  training:
+    total_edges: 4314103
+    breakdown:
+      enriched: 1456724 (weight 5.0)
+      merged_all: 331264 (weight 1.0)
+      annotation: 927 (weight 5.0)
+      set_cooccurrence: 2159395 (weight 0.3)
+      precon_cooccurrence: 282548 (weight 1.0)
+      keyword_sharing: 83245 (weight 0.5)
+
+results:
+  vocab: 35207
+  coverage: 0.180
+  coverage_cards: 6342
+  novelty_bits: 8.78
+  overall_ndcg: 0.090
+  sub_ndcg: 0.108
+  syn_ndcg: 0.107
+  meta_ndcg: 0.114
+  bias_ratio: 1.44
+  queries_evaluated: 864
+  comparison_v5:
+    vocab: 21151
+    coverage: 0.116
+    novelty_bits: 7.34
+    overall_ndcg: 0.154
+    queries_evaluated: 301
+
+conclusion: >
+  Coverage improved 55% (11.6% -> 18.0%) and vocab grew 66% (21K -> 35K).
+  But nDCG dropped 41% (0.154 -> 0.090). The set edges diluted the
+  co-occurrence signal -- designed synergy is weaker than observed play.
+  Bias ratio increased (1.03 -> 1.44) meaning popular cards benefited more
+  from set edges than niche cards.
+
+  Note: test set grew from 500 to 1,032 queries (diverse annotations may
+  have been integrated by the running annotation task). This means the
+  nDCG comparison is NOT apples-to-apples -- the larger test set includes
+  harder queries.
+
+  Next: try lower set edge weights (0.1 instead of 0.3), or use set edges
+  only as candidate generation signal (not in training), or fuse v5
+  co-occurrence embeddings with v7 set-enriched embeddings.
+
+artifacts:
+  - data/embeddings/magic_v7_with_sets.wv
