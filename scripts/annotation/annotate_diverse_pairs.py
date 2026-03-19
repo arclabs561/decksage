@@ -237,27 +237,35 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     agent = make_agent(model_name, CardSimilarityAnnotation, prompt_base)
     sem = asyncio.Semaphore(concurrency)
 
-    # Annotate all pairs
+    # Annotate all pairs concurrently (semaphore limits parallelism)
     annotations_by_query: dict[str, list[dict]] = {}
     n_done = 0
     n_failed = 0
     t0 = time.monotonic()
 
-    for i, pair in enumerate(pairs):
+    async def _annotate_one(i: int, pair: dict) -> tuple[int, dict | None]:
         card1 = pair["card1"]
         card2 = pair["card2"]
-
         result = await annotate_pair(agent, card1, card2, pair, game, card_data, sem)
+        return i, result
+
+    # Launch all tasks concurrently, semaphore controls actual parallelism
+    tasks = [_annotate_one(i, pair) for i, pair in enumerate(pairs)]
+    for coro in asyncio.as_completed(tasks):
+        i, result = await coro
         if result:
-            annotations_by_query.setdefault(card1, []).append(result)
+            annotations_by_query.setdefault(result["query"], []).append(result)
             n_done += 1
         else:
             n_failed += 1
 
-        if (i + 1) % 50 == 0:
+        total_processed = n_done + n_failed
+        if total_processed % 50 == 0:
             elapsed = time.monotonic() - t0
-            rate = (i + 1) / elapsed if elapsed > 0 else 0
-            logger.info(f"  Progress: {i + 1}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)")
+            rate = total_processed / elapsed if elapsed > 0 else 0
+            logger.info(
+                f"  Progress: {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
+            )
 
     logger.info(f"Annotated {n_done} pairs ({n_failed} failed)")
 

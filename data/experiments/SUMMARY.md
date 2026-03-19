@@ -9,7 +9,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0001 | 2026-03-17 | v4 co-occurrence baseline | all | overall nDCG | M:0.151 P:0.049 Y:0.554 | [0001](0001_v4_baseline.yaml) |
 | 0002 | 2026-03-17 | v5 fused (enriched + ns=-0.5 + attr) | all | overall nDCG | M:0.156 P:0.247 Y:0.554 | [0002](0002_v5_fused.yaml) |
 | 0003 | 2026-03-18 | Pokemon pairs expansion 16K->179K | pokemon | overall nDCG | 0.294 (+19% rel, plateau) | [0003](0003_pokemon_expanded_pairs.yaml) |
-| 0004 | 2026-03-19 | LightGCN hyperparameter sweep | magic | overall nDCG | **0.545** (3.5x over v5) | [0004](0004_lightgcn_sweep.yaml) |
+| 0004 | 2026-03-19 | LightGCN hyperparameter sweep | magic | overall nDCG | sweep: 0.545 (inflated), canonical: 0.095 (WORSE than v5 0.154) | [0004](0004_lightgcn_sweep.yaml) |
 | 0005 | 2026-03-19 | E5 multi-task fine-tuning | magic | train loss | 0.027 (converged) | [0005](0005_e5_multitask_finetune.yaml) |
 | 0006 | 2026-03-19 | Flow-based deck completion | magic | hit@10 | 0.031 (first pass) | [0006](0006_flow_completion.yaml) |
 | 0007 | 2026-03-19 | Fusion weight switching fix | all | recall@10 | M:0.38 P:0.38 Y:0.62 | [0007](0007_fusion_weight_fix.yaml) |
@@ -33,6 +33,6 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 
 4. **BPR wrong for dense graphs.** Random negatives are mostly connected nodes. Reconstruction loss (weighted MSE) is correct. (0012)
 
-5. **LightGCN dramatically outperforms PecanPy.** 0.545 vs 0.156 nDCG on Magic. Pure neighborhood aggregation > random walk + Word2Vec. (0004 vs 0001)
+5. **LightGCN sweep eval was inflated.** Inline eval showed 0.545 but canonical eval shows 0.095 (worse than v5 fused 0.154). Inline eval ranked within annotation set (biased); canonical eval checks if ground-truth cards appear in top-10. Always verify with canonical eval. (0004)
 
 6. **Mode-aware training is critical.** Using substitution instruction for synergy pairs poisons the objective. Route pairs by mode to correct instruction prefixes. (0005)
