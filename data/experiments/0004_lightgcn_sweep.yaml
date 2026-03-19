@@ -51,15 +51,36 @@ results:
     improvement: "3.5x"
   all_configs: data/experiments/lightgcn_sweep_magic.tsv
 
+canonical_eval:
+  magic:
+    overall_ndcg: 0.095
+    sub_ndcg: 0.078
+    syn_ndcg: 0.072
+    meta_ndcg: 0.077
+    sub_score_ndcg: 0.053
+  comparison_v5_fused_canonical:
+    overall_ndcg: 0.154
+    sub_ndcg: 0.147
+  pokemon:
+    overall_ndcg: 0.030
+    sub_ndcg: 0.023
+  comparison_pokemon_v5_fused:
+    overall_ndcg: 0.259
+
 conclusion: >
-  LightGCN dramatically outperforms PecanPy (0.545 vs 0.156 nDCG). Best
-  config: dim=128, layers=2, lr=5e-4. Lower l2_reg (1e-4) beats higher
-  (1e-3). 2 layers beats 3 layers at dim=128 (simpler aggregation is better
-  for this graph density). CAVEAT: the sweep eval function was written
-  inline -- need to verify with canonical eval_per_mode.py to confirm
-  numbers aren't inflated by evaluation methodology differences. The vocab
-  is smaller (15,697 vs 21,151) because LightGCN only embeds nodes present
-  in the edgelist.
+  SWEEP EVAL WAS INFLATED. The inline sweep evaluator ranked within the
+  annotation candidate set (biased), while canonical eval_per_mode.py checks
+  if annotated cards appear in the embedding's top-10 (absolute recall).
+  Canonical results: LightGCN 0.095 vs v5 fused 0.154 -- LightGCN is WORSE.
+
+  Root cause: (1) smaller vocab (15,697 vs 21,151 for Magic) means LightGCN
+  misses cards not in the edgelist, (2) annotations were created from v5 fused
+  neighbors so ground truth is biased toward what v5 retrieves, (3) LightGCN
+  learns dense graph structure but the test set measures semantic relevance.
+
+  Lesson: always verify with canonical eval before reporting. Inline sweep
+  eval is useful for relative config comparison but absolute numbers are
+  meaningless. Updated CLAUDE.md eval rules accordingly.
 
 artifacts:
   - data/embeddings/magic_lightgcn_best.wv

@@ -1,0 +1,53 @@
+id: "0018"
+date: "2026-03-19"
+title: "LightGCN canonical eval (correcting inflated sweep numbers)"
+game: magic
+
+hypothesis: >
+  The LightGCN sweep (experiment 0004) reported nDCG 0.545 but used an
+  inline evaluator. Canonical eval_per_mode.py should give the true number.
+
+method:
+  type: eval
+  script: scripts/evaluation/eval_per_mode.py
+  args: "--game magic --embedding magic_lightgcn_best"
+  commit: pending
+
+data:
+  eval:
+    source: data/test_sets/annotated_magic_v2.json
+  embeddings:
+    lightgcn: data/embeddings/magic_lightgcn_best.wv (15,697 cards)
+    v5_fused: data/embeddings/magic_v5_fused.wv (21,151 cards)
+
+results:
+  lightgcn:
+    overall_ndcg: 0.095
+    sub_ndcg: 0.078
+    syn_ndcg: 0.072
+    meta_ndcg: 0.077
+    sub_score_ndcg: 0.053
+    queries_evaluated: 291
+  v5_fused:
+    overall_ndcg: 0.154
+    sub_ndcg: 0.147
+    syn_ndcg: 0.131
+    meta_ndcg: 0.139
+    sub_score_ndcg: 0.168
+    queries_evaluated: 301
+  pokemon_lightgcn:
+    overall_ndcg: 0.030
+  pokemon_v5_fused:
+    overall_ndcg: 0.259
+
+conclusion: >
+  LightGCN is WORSE than v5 fused by canonical eval (0.095 vs 0.154 for
+  Magic, 0.030 vs 0.259 for Pokemon). The sweep's inline eval was inflated
+  because it ranked within the annotation candidate set, not against full
+  vocabulary. LightGCN's smaller vocab (15,697 vs 21,151) also hurts --
+  5,454 cards have no embedding. Additionally, annotations were created
+  from v5 fused neighbors, biasing ground truth toward v5's retrieval.
+
+  LightGCN may still be useful as a fusion signal (providing graph-structural
+  information to complement text embeddings) rather than as a standalone
+  embedding. Next: test as a fusion component, not a replacement.

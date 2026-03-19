@@ -1,0 +1,48 @@
+id: "0017"
+date: "2026-03-19"
+title: "E5 fine-tuned vs zero-shot evaluation (within-annotation ranking)"
+game: magic
+
+hypothesis: >
+  Fine-tuned E5 (multi-task, mode-aware) should rank substitution pairs
+  better than zero-shot E5-base-v2 when used as the text_embed signal.
+
+method:
+  type: eval
+  script: scripts/evaluation/eval_e5_finetuned.py
+  args: "--game magic"
+  commit: pending
+  details: >
+    Ranks annotation candidates by E5 cosine similarity per query.
+    Computes per-mode nDCG and substitution recall within the annotation
+    candidate set. CAVEAT: same within-set bias as LightGCN sweep eval.
+
+data:
+  eval:
+    source: data/test_sets/annotated_magic_v2.json
+    description: "500 queries, 3,290 annotations"
+
+results:
+  zero_shot:
+    substitution_ndcg: 0.799
+    synergy_ndcg: 0.769
+    meta_ndcg: 0.793
+    recall: 1.000
+  fine_tuned:
+    substitution_ndcg: 0.780
+    synergy_ndcg: 0.779
+    meta_ndcg: 0.806
+    recall: 1.000
+  delta:
+    substitution_ndcg: -0.019
+    synergy_ndcg: +0.011
+    meta_ndcg: +0.013
+
+conclusion: >
+  Fine-tuning barely moves the needle on within-annotation ranking. Both
+  models achieve ~0.79 nDCG and perfect recall because the candidate set
+  is small (10 annotated candidates per query). This eval has the same
+  within-set bias as the LightGCN sweep (experiment 0004). The real test
+  is whether fine-tuned E5 improves FULL VOCABULARY ranking when used as
+  text_embed in the fusion pipeline -- that requires integration testing
+  with the live API, not standalone eval.

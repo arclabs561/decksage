@@ -158,6 +158,33 @@ class InstructionTunedCardEmbedder:
 
         return embedding
 
+    def embed_cards_batch(
+        self,
+        cards: list[dict[str, Any] | str],
+        instruction_type: str | None = None,
+        batch_size: int = 64,
+    ) -> np.ndarray:
+        """Batch-embed multiple cards. Much faster than embed_card in a loop.
+
+        Args:
+            cards: List of card dicts or name strings
+            instruction_type: Predefined instruction type
+            batch_size: Encoding batch size (64+ recommended for M3 Max)
+
+        Returns:
+            [N, D] embedding matrix
+        """
+        instruction = self.DEFAULT_INSTRUCTIONS.get(
+            instruction_type or self.default_instruction,
+            self.DEFAULT_INSTRUCTIONS[self.default_instruction],
+        )
+
+        texts = [f"{instruction} {self._card_to_text(c)}" for c in cards]
+        embeddings = self.model.encode(
+            texts, convert_to_numpy=True, batch_size=batch_size, show_progress_bar=False
+        )
+        return embeddings
+
     def similarity(
         self,
         card1: dict[str, Any] | str,
