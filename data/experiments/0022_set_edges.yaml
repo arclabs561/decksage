@@ -1,0 +1,50 @@
+id: "0022"
+date: "2026-03-19"
+title: "Set co-membership + keyword sharing edges (Magic)"
+game: magic
+
+hypothesis: >
+  Cards released in the same set were designed to synergize. Preconstructed
+  decks (Commander precons, duel decks) are expert-curated. Adding these as
+  graph edges provides "designed synergy" signal distinct from emergent deck
+  co-occurrence. Should improve coverage (set edges cover cards not in player
+  decks) and potentially nDCG (especially for niche/new cards).
+
+method:
+  type: embedding
+  script: scripts/training/extract_set_edges.py
+  args: "--game magic --max-set-size 300 --min-keywords 2"
+  details: >
+    From Scryfall oracle-cards.json (36,923 cards):
+    1. Set co-membership: cards in same expansion (skipping sets > 300 cards).
+       Weight inversely proportional to set size (smaller set = stronger signal).
+    2. Precon co-membership: Commander precons, duel decks, starter decks,
+       planechase, archenemy sets. Same weighting.
+    3. Keyword sharing: cards sharing 2+ keyword abilities. Weight = Jaccard
+       similarity of keyword sets.
+
+data:
+  source: data/raw/scryfall/oracle-cards.json
+  description: "36,923 Magic cards from Scryfall bulk API"
+  sets: 492
+  cards_with_keywords: 15805
+
+results:
+  set_cooccurrence_edges: 2159740
+  precon_cooccurrence_edges: 282548
+  keyword_sharing_edges: 83245
+  total_new_edges: 2525533
+  existing_deck_edges: 7111569
+  increase_pct: "35%"
+
+conclusion: >
+  2.5M new edges extracted (35% increase over deck-only graph). These cover
+  cards that may never appear in player decks but were designed to synergize.
+  Next: merge into the edgelist (with lower weight than deck co-occurrence,
+  since designed synergy is weaker signal than observed play patterns),
+  retrain PecanPy, measure nDCG and coverage impact.
+
+artifacts:
+  - data/graphs/magic_set_cooccurrence.edg
+  - data/graphs/magic_precon_cooccurrence.edg
+  - data/graphs/magic_keyword_sharing.edg
