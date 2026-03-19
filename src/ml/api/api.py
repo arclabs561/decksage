@@ -1506,15 +1506,15 @@ def get_contextual_suggestions(
     # Build fusion instance for similarity with task-specific instructions
     from ..similarity.fusion import FusionWeights, WeightedLateFusion
 
-    # Contextual discovery uses different task types per category
-    # We'll use "synergy" as default, but each method can override
-    # Fast-only weights: skip per-candidate neural inference (text_embed, visual_embed, gnn)
-    # to keep contextual discovery <5s. Pre-computed signals suffice here.
+    # Contextual discovery uses different task types per category.
+    # Include text_embed for better functional similarity (alternatives/upgrades)
+    # at the cost of ~200ms latency per query.
+    has_text = getattr(state, "text_embedder", None) is not None
     fast_weights = FusionWeights(
-        embed=0.5,
-        jaccard=0.4,
+        embed=0.4,
+        jaccard=0.3,
         functional=0.1,
-        text_embed=0.0,
+        text_embed=0.2 if has_text else 0.0,
         visual_embed=0.0,
     )
     fusion = WeightedLateFusion(
