@@ -662,10 +662,21 @@ async def run_pipeline(
 
     # 3. Load output file for resume (may already have queries from prior runs)
     output_data = _load_output_file(output_path)
-    already_done = set(output_data.get("queries", {}).keys())
+    # Only count queries with actual per-pair annotations as "done".
+    # Bucket-only queries (from seed data) need LLM annotation.
+    already_done = set()
+    for qname, qdata in output_data.get("queries", {}).items():
+        if qdata.get("annotations"):
+            already_done.add(qname)
     all_existing = seed_queries | already_done
     n_existing = len(all_existing)
-    logger.info(f"Total existing queries (seed + prior runs): {n_existing}")
+    n_bucket_only = len(seed_queries - already_done)
+    if n_bucket_only > 0:
+        logger.info(
+            f"Total existing queries: {n_existing} ({n_bucket_only} bucket-only need annotation)"
+        )
+    else:
+        logger.info(f"Total existing queries (seed + prior runs): {n_existing}")
 
     # 4. Load embeddings
     kv, embedding_version = load_embeddings(game, embedding_name)
@@ -836,6 +847,27 @@ async def run_pipeline(
     else:
         logger.info("Building annotations from cosine similarity (no LLM)")
         model_name = "cosine_fallback"
+
+    # 8b. Re-annotate bucket-only queries (seed data without per-pair annotations)
+    bucket_only_queries: dict[str, list[tuple[str, float]]] = {}
+    for qname, qdata in merged_queries.items():
+        if not qdata.get("annotations") and qname in kv:
+            neighbors = get_top_k_neighbors(kv, qname, k=k)
+            if neighbors:
+                bucket_only_queries[qname] = neighbors
+
+    if bucket_only_queries:
+        logger.info(f"Found {len(bucket_only_queries)} bucket-only queries to annotate with LLM")
+        if batch_size is not None and batch_size > 0:
+            # Limit bucket-only re-annotation to remaining batch budget
+            remaining = batch_size - len(query_neighbors)
+            if remaining > 0:
+                items = list(bucket_only_queries.items())[:remaining]
+                bucket_only_queries = dict(items)
+            else:
+                bucket_only_queries = {}
+        # Merge into query_neighbors for unified processing
+        query_neighbors.update(bucket_only_queries)
 
     # 9. Annotate queries incrementally
     sem = asyncio.Semaphore(batch_concurrency)
