@@ -1,0 +1,45 @@
+id: "0014"
+date: "2026-03-18"
+title: "IAA model rotation and calibration anchors"
+game: all
+
+hypothesis: >
+  Rotating across multiple LLM annotators and adding calibration anchors to
+  the prompt will improve annotation consistency and enable inter-annotator
+  agreement (IAA) measurement.
+
+method:
+  type: annotation
+  script: scripts/annotation/scale_annotations.py
+  commit: 008fc82
+  details: >
+    Added model rotation: ANNOTATOR_MODEL_SIMILARITY env var accepts
+    comma-separated model names. Each query is annotated by a different model
+    (round-robin). Added calibration anchors to prompt: 1.0=functional
+    reprint, 0.8=same role minor diff, 0.6=related function diff power,
+    0.4=same archetype diff role, 0.2=tangential connection, 0.0=unrelated.
+    Default model changed to anthropic/claude-haiku-4-5-20251001.
+
+data:
+  training:
+    source: scripts/annotation/scale_annotations.py
+    description: "Scale annotations script with model rotation"
+  model_pool:
+    - anthropic/claude-haiku-4-5-20251001
+    - google/gemini-flash-lite
+    - openai/gpt-4.1-nano
+    - deepseek/deepseek-chat
+
+results:
+  models_in_pool: 4
+  rotation_strategy: "per-query round-robin"
+  calibration_anchors: 6
+
+conclusion: >
+  Model rotation enables IAA measurement across 4 diverse LLMs. Calibration
+  anchors provide concrete reference points to reduce score drift between
+  annotators. Per-query rotation means each query's neighbors are consistently
+  scored by one model, while cross-query comparison reveals model biases.
+
+artifacts:
+  - scripts/annotation/scale_annotations.py

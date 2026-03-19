@@ -1,0 +1,45 @@
+id: "0008"
+date: "2026-03-17"
+title: "LLM-annotated test sets v2 with mode labels"
+game: all
+
+hypothesis: >
+  LLM-annotated test sets with mode labels (synergy/substitution/meta) enable
+  per-mode evaluation of embedding quality, replacing single-score nDCG with
+  mode-specific metrics.
+
+method:
+  type: annotation
+  script: scripts/annotation/scale_annotations.py
+  commit: 3f416ab
+  details: >
+    Generated v2 test sets for all 3 games using scale_annotations.py with
+    card context (oracle text, type, mana cost). Each annotation includes
+    mode labels (synergy/substitution/meta) and annotator version for future
+    IAA computation. Queries sampled from embedding neighborhoods.
+
+data:
+  training:
+    source: data/embeddings/*_v5_fused.wv
+    description: "v5 fused embeddings used to generate query-neighbor pairs"
+  output:
+    source: data/test_sets/annotated_{game}_v2.json
+    description: "Annotated test sets with mode labels"
+    count:
+      magic: 250 queries
+      pokemon: 198 queries
+      yugioh: 140 queries
+
+results:
+  total_queries: 588
+  modes: "synergy, substitution, meta per annotation"
+  annotator_versioned: true
+
+conclusion: >
+  v2 test sets triple the evaluation coverage vs v1 and enable per-mode nDCG.
+  Annotator versioning supports future inter-annotator agreement measurement.
+
+artifacts:
+  - data/test_sets/annotated_magic_v2.json
+  - data/test_sets/annotated_pokemon_v2.json
+  - data/test_sets/annotated_yugioh_v2.json
