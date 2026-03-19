@@ -1,0 +1,42 @@
+id: "0020"
+date: "2026-03-19"
+title: "Catalog coverage improvement via text embedding candidate generation"
+game: magic
+
+hypothesis: >
+  Catalog coverage is 11.6% because candidate generation only uses
+  co-occurrence graph neighbors + embedding top-50 (same popular cards).
+  Pre-encoding all cards with E5 and using text similarity for candidate
+  generation should surface cards the co-occurrence graph doesn't know
+  about, increasing coverage to 30%+.
+
+method:
+  type: eval
+  script: scripts/training/build_text_embedding_index.py
+  details: >
+    1. Pre-encode all 21K+ Magic cards with E5-base-v2 (batch_size=64, MPS)
+    2. Build numpy index for fast nearest-neighbor lookup
+    3. Add text embedding candidates to fusion._get_candidates()
+    4. Re-measure catalog coverage with text candidates included
+
+    Sutton lens: this is NOT incremental tuning -- it's changing the
+    candidate generation pipeline (the bottleneck identified by coverage
+    analysis). Hamilton lens: text embeddings provide degree-independent
+    signal that can surface low-degree (niche) cards.
+
+data:
+  card_catalog: data/processed/card_attributes_magic_enriched.csv
+  embeddings: data/embeddings/magic_v5_fused.wv
+  text_model: intfloat/e5-base-v2
+
+results:
+  baseline_coverage: 0.116
+  target_coverage: ">0.30"
+  text_index_build_time: pending
+  new_coverage: pending
+
+conclusion: pending
+
+artifacts:
+  - data/cache/text_embeddings/magic_embeddings.npy
+  - data/cache/text_embeddings/magic_names.txt

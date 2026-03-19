@@ -209,8 +209,43 @@ class WeightedLateFusion:
         self.candidate_topn = candidate_topn
         self.task_type = task_type
 
+        # Text embedding index for candidate generation (breaks co-occurrence echo chamber)
+        # Load precomputed numpy index from data/cache/text_embeddings/
+        self._text_index_matrix = None  # [N, D] L2-normalized
+        self._text_index_names: list[str] = []
+        self._text_name_to_idx: dict[str, int] = {}
+        if text_embedder is not None or (card_data and self.weights.text_embed > 0):
+            self._try_load_text_index(card_data)
+
         # Pre-compute the weights dict for use in aggregation hot path.
         self._weights_dict = self.weights.to_dict()
+
+    def _try_load_text_index(self, card_data: dict | None) -> None:
+        """Load precomputed text embedding index if available."""
+        import os
+
+        # Determine game from card_data or environment
+        game = os.environ.get("DECKSAGE_GAME", "magic")
+        data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
+        idx_path = data_dir / "cache" / "text_embeddings" / f"{game}_embeddings.npy"
+        names_path = data_dir / "cache" / "text_embeddings" / f"{game}_names.txt"
+
+        if not idx_path.exists():
+            return
+
+        try:
+            import numpy as np
+
+            self._text_index_matrix = np.load(str(idx_path))
+            with open(names_path) as f:
+                self._text_index_names = [line.strip() for line in f]
+            self._text_name_to_idx = {n: i for i, n in enumerate(self._text_index_names)}
+            logger.info(
+                f"Loaded text embedding index: {len(self._text_index_names)} cards, "
+                f"{self._text_index_matrix.shape[1]}D"
+            )
+        except Exception as e:
+            logger.debug(f"Failed to load text index: {e}")
 
     def _get_embedding_similarity(self, query: str, candidate: str) -> float:
         """Get embedding similarity between query and candidate."""
@@ -380,7 +415,18 @@ class WeightedLateFusion:
             except (KeyError, RuntimeError, ValueError):
                 pass
 
-        # Text embeddings skipped in candidate generation (too slow).
+        # Text embedding candidates (from precomputed index, fast)
+        if self._text_index_matrix is not None and query in self._text_name_to_idx:
+            import numpy as np
+
+            q_idx = self._text_name_to_idx[query]
+            q_vec = self._text_index_matrix[q_idx : q_idx + 1]  # [1, D]
+            sims = (q_vec @ self._text_index_matrix.T).flatten()  # [N]
+            # Get top candidates by text similarity
+            n_text_candidates = min(30, self.candidate_topn)
+            top_indices = np.argpartition(-sims, n_text_candidates)[:n_text_candidates]
+            for idx in top_indices:
+                candidates.add(self._text_index_names[idx])
 
         # Remove query itself
         candidates.discard(query)
