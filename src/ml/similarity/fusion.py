@@ -536,18 +536,40 @@ class WeightedLateFusion:
             query: Card name to find similarities for
             k: Number of results to return
             task_type: Optional task type override (e.g., "substitution", "completion", "synergy")
-                      If provided, temporarily overrides instance task_type for this call
+                      If provided, temporarily switches weights AND text instruction for this call
 
         Returns:
             List of (card_name, similarity_score) tuples, sorted by score descending
         """
         effective_task_type = task_type or self.task_type
 
+        # If task_type override differs from construction default, temporarily
+        # switch to task-specific weights so that e.g. "substitution" zeroes out
+        # co-occurrence signals even when the fusion was built for "synergy".
+        # Only do this when the instance was constructed with a task_type
+        # (self.task_type is not None), meaning task-aware switching was intended.
+        # When self.task_type is None, the caller provided explicit weights
+        # that should not be overridden.
+        saved_weights_dict = None
+        if task_type and self.task_type and task_type != self.task_type:
+            try:
+                from .fusion_improvements import create_task_specific_weights
+
+                task_weights = create_task_specific_weights(task_type, FusionWeights()).normalized()
+                saved_weights_dict = self._weights_dict
+                self._weights_dict = task_weights.to_dict()
+            except ImportError:
+                pass
+
         if query not in self.adj and (not self.embeddings or query not in self.embeddings):
+            if saved_weights_dict is not None:
+                self._weights_dict = saved_weights_dict
             return []
 
         candidates = self._get_candidates(query)
         if not candidates:
+            if saved_weights_dict is not None:
+                self._weights_dict = saved_weights_dict
             return []
 
         # Compute similarity scores for all modalities
@@ -602,6 +624,10 @@ class WeightedLateFusion:
             results = self._apply_mmr(sorted_candidates, fused_scores, k)
         else:
             results = [(c, fused_scores[c]) for c in sorted_candidates[:k]]
+
+        # Restore original weights if they were temporarily overridden
+        if saved_weights_dict is not None:
+            self._weights_dict = saved_weights_dict
 
         return results
 
