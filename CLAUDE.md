@@ -49,7 +49,7 @@ When consuming annotation data for training:
 
 ## Evaluation
 
-- `eval_per_mode.py` is the canonical nDCG evaluator. When a sweep script has its own eval, verify results against `eval_per_mode.py` before reporting.
+- `eval_per_mode.py` is the canonical nDCG evaluator. When a sweep script has its own eval, verify results against `eval_per_mode.py` before reporting. Inline sweep eval inflated LightGCN nDCG from 0.095 to 0.545 (experiment 0004) because it ranked within the annotation candidate set instead of checking absolute top-10 recall. Never trust sweep-internal eval for absolute numbers.
 - Always report per-game metrics. A single "overall" number hides that YuGiOh nDCG is 0.554 while Magic is 0.156.
 - Contextual recall: measure at both embedding level (`sweep_contextual_weights.py`) and API level (`eval_contextual.py`). They differ significantly (38% vs 8% historically).
 

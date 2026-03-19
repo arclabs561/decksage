@@ -65,7 +65,9 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--walk-length", type=int, default=80, help="Length of each random walk.")
     parser.add_argument("--p", type=float, default=1.0, help="Node2Vec return parameter.")
     parser.add_argument("--q", type=float, default=1.0, help="Node2Vec in-out parameter.")
-    parser.add_argument("--workers", type=int, default=4, help="Parallel workers.")
+    parser.add_argument(
+        "--workers", type=int, default=0, help="Parallel workers (0=auto-detect CPU count)."
+    )
     parser.add_argument("--seed", type=int, default=42, help="Random seed.")
     # Negative sampling exponent for Word2Vec. Default 0.75 matches gensim/NLP convention.
     # Caselles-Dupre et al. 2018 ("Word2Vec applied to Recommendation: Hyperparameters Matter")
@@ -230,12 +232,15 @@ def main() -> int:
     write_merged_edgelist(merged, tmp_edg)
     print(f"  Wrote merged edgelist to {tmp_edg}")
 
+    import os
+
+    n_workers = args.workers if args.workers > 0 else os.cpu_count() or 4
     print(
         f"\n[2/3] Training PecanPy (dim={args.dim}, walks={args.walks}, "
-        f"walk_length={args.walk_length}, p={args.p}, q={args.q})..."
+        f"walk_length={args.walk_length}, p={args.p}, q={args.q}, workers={n_workers})..."
     )
     t0 = time.time()
-    g = SparseOTF(p=args.p, q=args.q, workers=args.workers, verbose=True, extend=True)
+    g = SparseOTF(p=args.p, q=args.q, workers=n_workers, verbose=True, extend=True)
     g.read_edg(tmp_edg, weighted=True, directed=False)
     walks = g.simulate_walks(num_walks=args.walks, walk_length=args.walk_length)
     model = Word2Vec(
@@ -244,7 +249,7 @@ def main() -> int:
         window=10,
         min_count=0,
         sg=1,
-        workers=args.workers,
+        workers=n_workers,
         epochs=1,
         seed=args.seed,
         ns_exponent=args.ns_exponent,
