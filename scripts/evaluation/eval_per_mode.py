@@ -240,6 +240,35 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
     for mode in ["substitute", "synergy", "meta"]:
         results[f"mode_{mode}"] = eval_mode(wv, queries, mode, k)
 
+    # Substitutability-weighted nDCG (uses continuous substitutability scores)
+    sub_ndcg_scores = []
+    for qname, qdata in queries.items():
+        annotations = qdata.get("annotations", [])
+        if not annotations or qname not in wv:
+            continue
+        gt = {}
+        for ann in annotations:
+            c = ann.get("candidate", "")
+            s = ann.get("substitutability")
+            if s is not None and c and float(s) > 0:
+                gt[c] = float(s)
+        if not gt:
+            continue
+        try:
+            neighbors = wv.most_similar(qname, topn=k)
+        except KeyError:
+            continue
+        relevances = [gt.get(card, 0.0) for card, _ in neighbors]
+        ideal = sorted(gt.values(), reverse=True)
+        if max(ideal[:k]) > 0:
+            sub_ndcg_scores.append(ndcg(relevances, ideal, k))
+
+    results["substitutability_ndcg"] = {
+        "ndcg_at_k": float(np.mean(sub_ndcg_scores)) if sub_ndcg_scores else 0.0,
+        "n_evaluated": len(sub_ndcg_scores),
+        "k": k,
+    }
+
     # Upgrade direction coverage
     results["upgrade_direction"] = eval_upgrade_direction(queries)
 
@@ -326,6 +355,12 @@ def main():
                     )
                 else:
                     print(f"    {mode:12s}: -- (no evaluable queries)")
+
+            sn = r.get("substitutability_ndcg", {})
+            if sn.get("n_evaluated", 0) > 0:
+                print(
+                    f"\n  Substitutability nDCG@{r['k']}: {sn['ndcg_at_k']:.4f} (n={sn['n_evaluated']})"
+                )
 
             ud = r["upgrade_direction"]
             print(
