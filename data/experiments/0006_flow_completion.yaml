@@ -1,0 +1,54 @@
+id: "0006"
+date: "2026-03-19"
+title: "Flow-based deck completion (Magic, first pass)"
+game: magic
+
+hypothesis: >
+  Conditional flow matching (OT-CFM) can learn to generate card embeddings
+  for deck completion. A small MLP conditioned on seed deck centroid should
+  learn the velocity field that maps noise to in-deck card embeddings,
+  providing a learned alternative to the handcrafted OT completion pipeline.
+
+method:
+  type: completion
+  script: scripts/training/train_flow_completion.py
+  args: "--game magic --epochs 50 --max-decks 5000"
+  commit: 9431b6a
+  model: FlowNetwork (3-layer MLP, 256 hidden, sinusoidal time embedding)
+  details: >
+    OT-CFM: x_t = (1-t)*x_0 + t*x_1, train v(x_t, t | c) to predict x_1 - x_0.
+    Condition c = mean of seed card embeddings (centroid). 20-step Euler ODE
+    integration at inference. Nearest-neighbor decoding with copy limit
+    enforcement. Temperature=0.5 for sampling diversity.
+
+data:
+  training:
+    source: data/decks/decks_magic_goldfish.jsonl
+    description: "MTGGoldfish constructed decks, filtered to cards in v5 embedding vocab"
+    count: 4500
+    split: "4500 train / 500 test"
+  embeddings: data/embeddings/magic_v5_fused.wv (21,151 cards, 128D)
+
+results:
+  training_loss_final: 0.098
+  training_time_s: 207.6
+  hit_at_10: 0.031
+  hit_at_30: 0.015
+  decks_evaluated: 500
+  sample_completion: >
+    Seed: mono-black (Archfiend's Vessel, Thieves' Guild Enforcer, ...).
+    Suggestions: Sovereign's Bite, Graf Rats, Demon's Disciple, Ayara,
+    Castle Locthwain. All mono-black -- learns correct color/archetype
+    neighborhood but not precise card selection.
+
+conclusion: >
+  Model learns correct neighborhoods (mono-black seed -> mono-black
+  suggestions) but Hit@10 is low (3.1%). Known issues: (1) centroid
+  conditioning is too lossy -- should use attention over seed card
+  embeddings, (2) 50 epochs on 4,500 decks is light training, (3) need
+  contrastive loss or curriculum to sharpen selection beyond neighborhood.
+  The OT baseline (handcrafted) is likely still better for now. Worth
+  iterating with attention conditioning and more training data.
+
+artifacts:
+  - data/models/magic_flow_completion.pt

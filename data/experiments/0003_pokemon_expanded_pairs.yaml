@@ -1,0 +1,42 @@
+id: "0003"
+date: "2026-03-18"
+title: "Pokemon pairs expansion 16K -> 179K"
+game: pokemon
+
+hypothesis: >
+  10.8x more co-occurrence pairs from expanded Limitless decks should
+  improve Pokemon nDCG by densifying the graph.
+
+method:
+  type: embedding
+  script: scripts/training/train_blended_embeddings.py + fuse_embeddings.py
+  args: "--ns-exponent -0.5 --alpha 0.9"
+  model: PecanPy + Word2Vec + PCA fusion (128D)
+
+data:
+  training:
+    source: data/processed/pairs_pokemon_limitless_expanded.csv
+    description: "Expanded pairs from Limitless + Limitless-Web expanded decks"
+    count: 179914
+    previous_count: 16676
+    expansion_factor: "10.8x"
+  card_attributes: data/processed/card_attributes_pokemon_enriched.csv
+
+results:
+  pokemon:
+    overall_ndcg: 0.2937
+    sub_ndcg: 0.2721
+    syn_ndcg: 0.2455
+    meta_ndcg: 0.2739
+    sub_score_ndcg: 0.2784
+    vocab: 4384
+
+conclusion: >
+  nDCG barely moved (0.247 -> 0.294, +19% relative). Data QUALITY matters
+  more than quantity. All 24K source decks are from Limitless (tournament
+  meta, top 10 archetypes cover ~40%). Adding more tournament duplicates
+  doesn't diversify the signal. Need non-Limitless sources (RK9, casual
+  deck builders) or different training approach (LightGCN, fine-tuned E5).
+
+artifacts:
+  - data/embeddings/pokemon_v6_fused_a09.wv

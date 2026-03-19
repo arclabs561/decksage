@@ -1,0 +1,45 @@
+id: "0012"
+date: "2026-03-17"
+title: "LightGCN reconstruction loss for dense graphs"
+game: all
+
+hypothesis: >
+  BPR loss assumes sparse feedback with many true negatives. Dense
+  co-occurrence graphs violate this assumption (most random "negatives" are
+  actually co-occurring cards), causing embedding collapse. Weighted MSE
+  reconstruction loss should train without collapse.
+
+method:
+  type: embedding
+  script: scripts/training/train_lightgcn.py
+  commit: 9d55e71
+  details: >
+    Added weighted MSE reconstruction loss as default: predicts edge weights
+    from dot-product similarity, minimizes MSE against normalized target
+    weights. Does not require negative sampling. BPR kept as --loss bpr
+    option for comparison. Reconstruction loss function: pred = dot(emb[src],
+    emb[dst]), target = edge_weight / max(edge_weight), loss = MSE(pred,
+    target).
+
+data:
+  training:
+    source: data/graphs/{game}_unified.db
+    description: "Unified co-occurrence graphs (dense)"
+    count:
+      magic: 7111569 edges
+      yugioh: 1841618 edges
+
+results:
+  bpr_outcome: "Embedding collapse -- all quality pair scores failed"
+  reconstruction_outcome: "Trains without collapse, produces non-degenerate embeddings"
+  quality_pairs: "not recorded (LightGCN needs hyperparameter tuning)"
+
+conclusion: >
+  BPR is wrong for dense co-occurrence graphs. Few true negatives means
+  random negative sampling mostly picks connected nodes, collapsing
+  embeddings. Reconstruction loss directly fits the co-occurrence signal
+  without negative sampling. Training succeeds but LightGCN still needs
+  hyperparameter tuning for competitive nDCG.
+
+artifacts:
+  - scripts/training/train_lightgcn.py

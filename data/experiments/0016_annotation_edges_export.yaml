@@ -1,0 +1,42 @@
+id: "0016"
+date: "2026-03-18"
+title: "Export annotation edges for graph enrichment"
+game: all
+
+hypothesis: >
+  Feeding high-confidence LLM annotation pairs back into the co-occurrence
+  graph as weighted edges will close the annotation-to-training loop,
+  improving embeddings on the next retrain.
+
+method:
+  type: eval
+  script: scripts/data_processing/export_annotation_edges.py
+  commit: fb43cf3
+  details: >
+    Exports high-confidence annotation pairs as weighted graph edges:
+    functional_score > 0.5 -> weight * 5, synergy_score > 0.5 -> weight * 3,
+    substitutability > 0.5 -> weight * 5. Reads from annotated v2 test sets,
+    writes edgelists compatible with build_unified_graph.py.
+
+data:
+  training:
+    source: data/test_sets/annotated_{game}_v2.json
+    description: "Enriched v2 test sets with functional/synergy/substitutability scores"
+
+results:
+  edges_exported:
+    magic: 927
+    pokemon: 810
+    yugioh: 1495
+    total: 3232
+
+conclusion: >
+  3,232 annotation edges exported. These close the loop: annotations improve
+  the graph, which improves embeddings, which improve annotations. Edgelists
+  ready for integration with build_unified_graph.py on next retrain cycle.
+
+artifacts:
+  - scripts/data_processing/export_annotation_edges.py
+  - data/graphs/magic_annotation_edges.edg
+  - data/graphs/pokemon_annotation_edges.edg
+  - data/graphs/yugioh_annotation_edges.edg

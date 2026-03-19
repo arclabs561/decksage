@@ -1,0 +1,40 @@
+id: "0009"
+date: "2026-03-17"
+title: "Card context in LLM annotation prompts"
+game: all
+
+hypothesis: >
+  Including card text (oracle text, type line, mana cost, P/T) in the LLM
+  annotation prompt will reduce hallucinated card facts and improve annotation
+  accuracy.
+
+method:
+  type: annotation
+  script: scripts/annotation/scale_annotations.py
+  commit: 5946ffc
+  details: >
+    Added card_attributes CSV loading to scale_annotations.py. Prompt now
+    includes type line, mana cost, oracle text, and P/T for both query and
+    candidate cards. Added explicit instruction to base judgment on card text,
+    not cosine similarity score. Without card data, gpt-4o-mini hallucinated
+    card facts (e.g., called Ebon Stronghold a "blue mana" card when it's
+    black).
+
+data:
+  training:
+    source: data/processed/card_attributes_{game}.csv
+    description: "Card attributes CSV with oracle text, type, mana cost"
+
+results:
+  error_rate_before: 0.16
+  error_rate_after: 0.01
+  hallucination_type: "LLM fabricated card effects without card text context"
+
+conclusion: >
+  Card context is essential for LLM annotations. Error rate dropped from 16%
+  to 1%. The LLM cannot reliably judge card similarity from names alone --
+  it hallucinates card effects. This is a prerequisite for all subsequent
+  annotation work.
+
+artifacts:
+  - scripts/annotation/scale_annotations.py

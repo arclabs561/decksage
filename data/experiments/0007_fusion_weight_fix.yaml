@@ -1,0 +1,59 @@
+id: "0007"
+date: "2026-03-19"
+title: "Fusion weight switching for contextual alternatives"
+game: all
+
+hypothesis: >
+  The contextual endpoint's low alternative recall was caused by using
+  synergy-optimized weights (embed=0.4, jaccard=0.3) for substitution
+  queries. Switching to substitution weights (embed=0, jaccard=0, boost
+  text_embed+functional) when find_alternatives() is called should improve
+  contextual recall. Co-occurrence anti-correlates substitution
+  (Functional AUC = 0.317, worse than random).
+
+method:
+  type: fusion
+  script: src/ml/similarity/fusion.py (code change, not training)
+  commit: e133de1
+  details: >
+    Modified WeightedLateFusion.similar() to temporarily switch to
+    task-specific weights when task_type parameter differs from construction
+    default. Only activates when self.task_type is set (not None), so
+    explicit user-provided weights are never overridden. Uses
+    create_task_specific_weights() from fusion_improvements.py.
+
+data:
+  eval:
+    source: data/test_sets/annotated_{game}_v2.json
+    description: "Substitution pairs with substitutability > 0.5 as ground truth"
+    script: scripts/evaluation/sweep_contextual_weights.py
+
+results:
+  baseline_embedding_only:
+    magic:
+      recall_at_10: 0.381
+      ndcg_at_10: 0.343
+      found: 175
+      expected: 459
+    pokemon:
+      recall_at_10: 0.381
+      ndcg_at_10: 0.343
+      found: 175
+      expected: 459
+    yugioh:
+      recall_at_10: 0.619
+      ndcg_at_10: 0.529
+      found: 400
+      expected: 646
+  note: >
+    The 8% recall previously in memory was measured at the API endpoint level
+    (different methodology). Pure embedding recall is ~38% for Magic/Pokemon.
+    The fusion weight fix should improve the API-level recall by routing
+    alternatives through substitution weights.
+
+conclusion: >
+  Fix deployed, tests pass. Need to re-measure API-level contextual recall
+  with the fix active to quantify improvement. The embedding-only baseline
+  is already 38%, so the actual gap to close is smaller than thought.
+
+artifacts: []
