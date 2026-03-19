@@ -1,0 +1,44 @@
+id: "0021"
+date: "2026-03-19"
+title: "Stratified nDCG by card popularity (bias check)"
+game: magic
+
+hypothesis: >
+  LLM annotations may be biased toward popular cards (popularity bias +
+  verbosity bias from Penha et al. 2025). If popular cards get significantly
+  higher nDCG than niche cards, the annotations are unreliable for measuring
+  long-tail performance.
+
+method:
+  type: eval
+  script: scripts/evaluation/eval_per_mode.py
+  args: "--game magic --embedding magic_v5_fused"
+  commit: c09a02b
+  details: >
+    Sampled 2,000 cards from vocabulary, counted how often each appears as a
+    top-10 neighbor of other sampled cards. Split test queries at median
+    popularity. Reported nDCG separately for popular vs niche cards.
+
+data:
+  eval:
+    source: data/test_sets/annotated_magic_v2.json
+    description: "500 queries, 329 with annotations"
+
+results:
+  popular_cards_ndcg: 0.1552
+  popular_n: 166
+  niche_cards_ndcg: 0.1513
+  niche_n: 135
+  bias_ratio: 1.03
+  interpretation: "No popularity bias (< 2x threshold)"
+
+conclusion: >
+  Bias ratio 1.03x -- essentially no popularity bias in nDCG between
+  popular and niche query cards. The LLM annotation quality concern from
+  experiment 0019 is not a practical problem for this test set. The 11.6%
+  catalog coverage issue is about candidate generation (only hub cards get
+  retrieved), not evaluation bias. Passonneau lens: annotation quality is
+  acceptable for current use; Krippendorff's alpha still worth computing
+  for formal validation.
+
+artifacts: []
