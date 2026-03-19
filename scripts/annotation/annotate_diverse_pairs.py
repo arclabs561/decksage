@@ -140,6 +140,27 @@ Rate similarity, classify mode, and fill all extended fields."""
         try:
             result = await agent.run(prompt)
             ann = result.output
+
+            # Extract token usage from pydantic-ai result
+            input_tokens = 0
+            output_tokens = 0
+            try:
+                usage = getattr(result, "usage", None) or getattr(result, "_usage", None)
+                if usage:
+                    if isinstance(usage, dict):
+                        input_tokens = usage.get("input_tokens", usage.get("prompt_tokens", 0))
+                        output_tokens = usage.get(
+                            "output_tokens", usage.get("completion_tokens", 0)
+                        )
+                    elif hasattr(usage, "input_tokens"):
+                        input_tokens = usage.input_tokens or 0
+                        output_tokens = usage.output_tokens or 0
+                    elif hasattr(usage, "request_tokens"):
+                        input_tokens = usage.request_tokens or 0
+                        output_tokens = usage.response_tokens or 0
+            except Exception:
+                pass
+
             return {
                 "query": card1,
                 "candidate": card2,
@@ -169,6 +190,8 @@ Rate similarity, classify mode, and fill all extended fields."""
                 ).split(",")[0],
                 "game": game,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
+                "input_tokens": input_tokens,
+                "output_tokens": output_tokens,
             }
         except Exception as e:
             logger.warning(f"Annotation failed for {card1} <-> {card2}: {e}")
@@ -267,7 +290,25 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                 f"  Progress: {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
             )
 
-    logger.info(f"Annotated {n_done} pairs ({n_failed} failed)")
+    # Compute token/cost totals
+    total_input_tokens = 0
+    total_output_tokens = 0
+    for anns_list in annotations_by_query.values():
+        for ann in anns_list:
+            total_input_tokens += ann.get("input_tokens", 0)
+            total_output_tokens += ann.get("output_tokens", 0)
+    total_tokens = total_input_tokens + total_output_tokens
+
+    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5").split(",")[0]
+    # Rough cost estimate (Haiku 4.5: $0.25/1M in, $1.25/1M out)
+    cost_usd = (total_input_tokens * 0.25 + total_output_tokens * 1.25) / 1_000_000
+    elapsed = time.monotonic() - t0
+
+    logger.info(f"Annotated {n_done} pairs ({n_failed} failed) in {elapsed:.0f}s")
+    logger.info(
+        f"Tokens: {total_input_tokens:,} in + {total_output_tokens:,} out = {total_tokens:,} total"
+    )
+    logger.info(f"Cost: ~${cost_usd:.4f} ({model_name})")
 
     # Integrate into test set
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
@@ -325,6 +366,12 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         "new_queries": n_new_queries,
         "augmented_pairs": n_augmented,
         "total_queries": len(queries),
+        "input_tokens": total_input_tokens,
+        "output_tokens": total_output_tokens,
+        "total_tokens": total_tokens,
+        "cost_usd": round(cost_usd, 4),
+        "model": model_name,
+        "elapsed_s": round(elapsed, 1),
     }
 
 
