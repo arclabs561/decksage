@@ -32,10 +32,19 @@ data:
 results:
   baseline_coverage: 0.116
   target_coverage: ">0.30"
-  text_index_build_time: pending
-  new_coverage: pending
+  text_index_build_time: "173.3s (210 cards/s on M3 Max MPS)"
+  cards_encoded: 36453
+  embedding_dim: 768
+  index_size_mb: 106.8
+  new_coverage: "pending -- requires live API test (eval_per_mode uses embedding-only, not fusion pipeline)"
 
-conclusion: pending
+conclusion: >
+  Text index built successfully (36K cards, 173s on MPS). Coverage improvement
+  can only be measured through the fusion pipeline (live API), not through
+  eval_per_mode.py which uses embedding-only retrieval. The 30 text-similar
+  candidates per query are added to the fusion candidate pool in
+  fusion._get_candidates(), diversifying beyond co-occurrence neighbors.
+  Next: start API and measure coverage via the /v1/similar endpoint.
 
 artifacts:
   - data/cache/text_embeddings/magic_embeddings.npy
