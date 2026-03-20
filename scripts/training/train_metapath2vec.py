@@ -191,10 +191,10 @@ def main() -> int:
     available = list(edge_types.keys())
     print(f"\n[3/4] Available edge types: {available}")
 
-    # Build metapath: walk through different edge types
-    # e.g., card -[deck]-> card -[set]-> card -[deck]-> card
+    # Build metapath: cycle through all edge types
+    # Longer metapaths capture cross-type relationships
     metapath = []
-    for etype in available[:3]:  # use up to 3 edge types in the path
+    for etype in available:
         metapath.append(("card", etype, "card"))
 
     print(f"  Metapath: {' -> '.join(f'({s},{e},{t})' for s, e, t in metapath)}")
