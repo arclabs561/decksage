@@ -434,7 +434,7 @@ class WeightedLateFusion:
                 q_idx = self._text_name_to_idx[query]
                 q_vec = self._text_index_matrix[q_idx : q_idx + 1]  # [1, D]
                 sims = (q_vec @ self._text_index_matrix.T).flatten()  # [N]
-                n_text_candidates = min(30, self.candidate_topn)
+                n_text_candidates = min(100, self.candidate_topn)
                 top_indices = np.argpartition(-sims, n_text_candidates)[:n_text_candidates]
                 for idx in top_indices:
                     candidates.add(self._text_index_names[idx])
