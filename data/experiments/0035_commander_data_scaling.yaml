@@ -1,0 +1,54 @@
+id: "0035"
+date: "2026-03-20"
+title: "Commander data scaling: 3.8M pairs from 2,615 Archidekt decks"
+game: magic
+
+hypothesis: >
+  Scraping Commander decks from Archidekt and adding as a typed edge
+  in MetaPath2Vec should improve Commander card embeddings without
+  diluting competitive format signal (unlike PecanPy which mixes all edges).
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py + scrape_archidekt.py
+  details: >
+    1. Scraped 2,615 Commander decks via Archidekt v3 search API
+    2. Generated 3.8M co-occurrence pairs (17,340 unique cards)
+    3. Added as "commander" edge type in MetaPath2Vec heterogeneous graph
+    4. Trained 20 epochs, 20 walks/node, same config as v2 winner
+
+data:
+  archidekt_decks: 2615
+  commander_pairs: 3814176
+  unique_commander_cards: 17340
+  commander_only_cards: 12042
+  scrape_rate: "~20 decks/min via v3 search API"
+  scrape_time: "~2.5h for 2,615 decks"
+
+results:
+  sub_ndcg: 0.178
+  syn_ndcg: 0.172
+  meta_ndcg: 0.170
+  overall_ndcg: 0.116
+  vocab: 35265
+  sol_ring_arcane_signet: 0.765
+  previous_sol_ring_arcane_signet: 0.556
+
+  vs_v2_no_commander:
+    sub_ndcg_delta: "+0.6%"
+    sol_ring_arcane_signet_delta: "+37%"
+
+conclusion: >
+  Commander data dramatically improves Commander-specific card relationships
+  (Sol Ring<->Arcane Signet +37%) while maintaining competitive format nDCG.
+  MetaPath2Vec's typed walks prevent the dilution that PecanPy suffered.
+  More Commander decks (scraper targeting 5,000) should improve further.
+
+  Go extractor (archidekt/dataset.go) also built and registered for
+  proper limpet-based extraction with caching.
+
+artifacts:
+  - data/decks/decks_magic_archidekt_commander.jsonl
+  - data/graphs/magic_archidekt_commander.edg
+  - data/embeddings/magic_metapath2vec.wv
+  - src/backend/games/magic/dataset/archidekt/dataset.go
