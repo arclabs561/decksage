@@ -128,6 +128,7 @@ class WeightedLateFusion:
         adj: dict[str, set[str]] | None = None,
         tagger: Any | None = None,
         weights: FusionWeights | None = None,
+        secondary_embeddings: Any | None = None,  # MetaPath2Vec or other complementary embedding
         aggregator: str = "rrf",  # RRF recommended for heterogeneous signals (more robust than weighted)
         rrf_k: int = 60,
         mmr_lambda: float = 0.0,
@@ -177,6 +178,7 @@ class WeightedLateFusion:
             self.weights = base_weights.normalized()
 
         self.embeddings = embeddings
+        self.secondary_embeddings = secondary_embeddings
         self.adj = adj or {}
         self.tagger = tagger
         self.text_embedder = text_embedder
@@ -403,6 +405,17 @@ class WeightedLateFusion:
                     if neighbor in self.adj:
                         for n2 in list(self.adj[neighbor])[: self.candidate_topn]:
                             candidates.add(n2)
+
+        # From secondary embeddings (MetaPath2Vec -- complementary candidates)
+        # Experiment 0032: adds 411 unique GT cards v5 misses, +16% fused nDCG
+        if self.secondary_embeddings and query in self.secondary_embeddings:
+            try:
+                sec_similar = self.secondary_embeddings.most_similar(
+                    query, topn=min(50, self.candidate_topn)
+                )
+                candidates.update(card for card, _ in sec_similar)
+            except (KeyError, RuntimeError, ValueError):
+                pass
 
         # From embeddings -- use candidate_topn (default 100, was hardcoded to 50).
         # Ceiling analysis showed 75% GT recall at top-100 vs 51% at top-50.

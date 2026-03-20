@@ -1,0 +1,57 @@
+id: "0032"
+date: "2026-03-20"
+title: "Deep dive: v5 + MetaPath2Vec fusion analysis"
+game: magic
+
+hypothesis: >
+  v5 fused and MetaPath2Vec retrieve different cards. Combining them
+  as dual candidate sources in fusion should improve nDCG.
+
+method:
+  type: eval
+  details: >
+    Per-query comparison of v5 vs MetaPath2Vec. Simulated fusion by
+    union of top-10 candidates, scored by average embedding similarity.
+    Error taxonomy of joint failures.
+
+results:
+  per_query_comparison:
+    mp_wins: 219 (25%)
+    v5_wins: 154 (18%)
+    ties: 502 (57%)
+
+  gt_card_retrieval:
+    both_find: 130
+    only_mp_finds: 411
+    only_v5_finds: 183
+    combined_recall: "29% (1,099/3,819)"
+    single_model_recall: "14%"
+
+  simulated_fusion:
+    v5_ndcg: 0.121
+    mp_ndcg: 0.110
+    fused_ndcg: 0.138
+    improvement_over_v5: "+16%"
+
+  error_taxonomy:
+    gt_not_in_vocab: 0
+    gt_in_vocab_not_retrieved: 876
+    interpretation: "All GT cards have embeddings. Pure retrieval problem."
+
+  joint_failure:
+    both_fail: 99 (32%)
+    at_least_one_works: 210
+
+conclusion: >
+  v5 and MetaPath2Vec are COMPLEMENTARY: they retrieve different relevant
+  cards (411 unique to MP, 183 unique to v5). Simple fusion gives +16% nDCG.
+  Combined candidate recall doubles from 14% to 29%.
+
+  Action: add MetaPath2Vec as a second embedding source in the fusion
+  candidate generation pipeline (alongside v5 + text index). This is
+  a free lunch -- no model changes needed, just wider candidate pool.
+
+  876 GT cards are in vocab but not in either top-10. These require either
+  larger topn, text-based retrieval, or a learned candidate retrieval model.
+
+artifacts: []
