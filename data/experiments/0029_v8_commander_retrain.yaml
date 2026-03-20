@@ -1,0 +1,54 @@
+id: "0029"
+date: "2026-03-20"
+title: "v8 retrain with Commander pairs: coverage up, nDCG down"
+game: magic
+
+hypothesis: >
+  Adding 1.59M Commander co-occurrence pairs to the training graph should
+  improve coverage and potentially nDCG by providing more diverse card
+  relationships.
+
+method:
+  type: embedding
+  script: scripts/training/train_blended_embeddings.py
+  args: >
+    --edgelist magic_merged_enriched.edg --weight 5.0
+    --edgelist magic_merged_all.edg --weight 1.0
+    --edgelist magic_annotation_edges.edg --weight 5.0
+    --edgelist magic_archidekt_commander.edg --weight 1.0
+    --dim 128 --ns-exponent -0.5
+
+data:
+  training:
+    total_pairs: "331K existing + 1.59M Commander = 1.92M"
+    commander_decks: 507
+
+results:
+  vocab: 28640
+  overall_ndcg: 0.088
+  sub_ndcg: 0.107
+  syn_ndcg: 0.103
+  meta_ndcg: 0.108
+  coverage: 0.210
+  bias_ratio: 1.02
+  comparison_v5_fused:
+    vocab: 21151
+    overall_ndcg: 0.113
+
+conclusion: >
+  Commander pairs expand vocab (+7,489 cards) and eliminate popularity
+  bias (1.02x) but reduce nDCG by 22% (0.113 -> 0.088). Same pattern as
+  set edges (experiment 0023): diverse edges dilute the co-occurrence
+  signal for PecanPy random walks.
+
+  Root cause: the test set was built from v5 fused neighbors (Standard/
+  Modern competitive cards). Commander cards are a different population.
+  To properly evaluate Commander-enriched embeddings, we need Commander-
+  specific test queries.
+
+  The weight=1.0 for Commander edges may be too high. Try 0.3 or 0.1,
+  or use metapath2vec (PyG) which can walk typed paths without diluting
+  the base co-occurrence signal.
+
+artifacts:
+  - data/embeddings/magic_v8_with_commander.wv
