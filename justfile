@@ -462,6 +462,19 @@ etl-all:
 # Runctl Commands (Full Implementation with All Improvements)
 # ============================================================================
 
+# MetaPath2Vec training (best performing embedding method)
+train-metapath2vec game="magic":
+    #!/usr/bin/env bash
+    GAME={{game}} ./scripts/training/runctl_metapath2vec.sh local
+
+train-metapath2vec-aws instance game="magic":
+    #!/usr/bin/env bash
+    GAME={{game}} ./scripts/training/runctl_metapath2vec.sh aws {{instance}}
+
+train-metapath2vec-sweep:
+    #!/usr/bin/env bash
+    ./scripts/training/runctl_metapath2vec.sh sweep
+
 # Runctl-based training with all improvements
 train-runctl-local:
     #!/usr/bin/env bash
