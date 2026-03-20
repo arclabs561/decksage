@@ -1,0 +1,41 @@
+id: "0034"
+date: "2026-03-20"
+title: "rankops fusion method comparison: CombMNZ > RRF for dual embeddings"
+game: magic
+
+hypothesis: >
+  Different fusion methods may perform better than RRF for combining
+  v5 fused + MetaPath2Vec embeddings. rankops provides multiple methods.
+
+method:
+  type: eval
+  script: inline (rankops.rrf, rankops.combmnz, rankops.combsum)
+  details: >
+    For 200 queries, retrieved top-50 from both v5 and MetaPath2Vec,
+    fused with RRF, CombMNZ, and CombSum via rankops, measured nDCG.
+
+results:
+  v5_only: 0.169
+  metapath2vec_only: 0.239
+  rrf: 0.203
+  combmnz: 0.223
+  combsum: 0.218
+
+  best_fusion: "CombMNZ (+32% over v5, +10% over RRF)"
+  current_default: "RRF (used in fusion.py)"
+
+conclusion: >
+  CombMNZ outperforms RRF by 10% for dual-embedding fusion. CombMNZ
+  rewards cards that appear in BOTH ranked lists (overlap count * score
+  sum), which is exactly right for complementary embeddings -- cards
+  found by both v5 and MetaPath2Vec are likely genuinely relevant.
+
+  However, MetaPath2Vec alone (0.239) beats all fusion methods. This
+  suggests MetaPath2Vec captures enough signal that v5 adds noise to
+  the fused ranking. Consider using MetaPath2Vec as PRIMARY embedding
+  with v5 as a fallback for cards not in MetaPath2Vec's vocab.
+
+  Action: switch fusion default from RRF to CombMNZ. Consider promoting
+  MetaPath2Vec to primary embedding.
+
+artifacts: []
