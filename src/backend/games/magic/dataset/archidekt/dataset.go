@@ -4,12 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
 	"collections/blob"
+	"collections/games"
 	"collections/games/magic/dataset"
 	"collections/games/magic/game"
 	"collections/logger"
@@ -28,8 +28,9 @@ func init() {
 	base = u
 }
 
-// Dataset extracts Commander (and other format) decks from Archidekt's public API.
-// Limpet caches raw HTTP responses, so extraction logic can be iterated without re-fetching.
+// Dataset extracts Commander decks from Archidekt's public API via limpet.
+// Limpet caches raw HTTP responses so extraction logic can be iterated
+// without re-fetching. Rate limit: ~40 req/min per Archidekt staff.
 type Dataset struct {
 	log  *logger.Logger
 	blob *blob.Bucket
@@ -50,21 +51,18 @@ type searchResponse struct {
 }
 
 type deckSummary struct {
-	ID         int    `json:"id"`
-	Name       string `json:"name"`
-	DeckFormat int    `json:"deckFormat"`
+	ID   int    `json:"id"`
+	Name string `json:"name"`
 }
 
 type deckDetail struct {
-	ID         int    `json:"id"`
-	Name       string `json:"name"`
-	DeckFormat int    `json:"deckFormat"`
-	ViewCount  int    `json:"viewCount"`
-	Owner      struct {
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	ViewCount int    `json:"viewCount"`
+	Owner     struct {
 		Username string `json:"username"`
 	} `json:"owner"`
 	CreatedAt string `json:"createdAt"`
-	UpdatedAt string `json:"updatedAt"`
 	Cards     []struct {
 		Quantity   int      `json:"quantity"`
 		Categories []string `json:"categories"`
@@ -85,16 +83,15 @@ func (d *Dataset) Extract(
 	if err != nil {
 		return err
 	}
+	_ = opts // used for ItemOnlyURLs if needed
 
 	maxDecks := 5000
 	formatCode := 3 // Commander
 
-	d.log.Infof(ctx, "archidekt: starting extraction (max %d decks, format %d)", maxDecks, formatCode)
+	d.log.Infof(ctx, "archidekt: starting (max %d, format %d)", maxDecks, formatCode)
 
 	saved := 0
-
 	for page := 1; saved < maxDecks; page++ {
-		// Phase 1: Search
 		searchURL := base.JoinPath("api/decks/v3/")
 		q := searchURL.Query()
 		q.Set("deckFormat", strconv.Itoa(formatCode))
@@ -105,28 +102,22 @@ func (d *Dataset) Extract(
 
 		searchPage, err := sc.Get(ctx, searchURL.String())
 		if err != nil {
-			d.log.Warnf(ctx, "archidekt: search page %d failed: %v", page, err)
+			d.log.Warnf(ctx, "archidekt: search page %d: %v", page, err)
 			break
 		}
 
 		var sr searchResponse
 		if err := json.Unmarshal(searchPage.Response.Body, &sr); err != nil {
-			d.log.Warnf(ctx, "archidekt: search decode failed: %v", err)
+			d.log.Warnf(ctx, "archidekt: decode page %d: %v", page, err)
 			break
 		}
-
 		if len(sr.Results) == 0 {
-			d.log.Infof(ctx, "archidekt: no more results at page %d", page)
 			break
 		}
 
-		// Phase 2: Fetch each deck
 		for _, summary := range sr.Results {
-			if saved >= maxDecks {
+			if saved >= maxDecks || ctx.Err() != nil {
 				break
-			}
-			if err := ctx.Err(); err != nil {
-				return err
 			}
 
 			deckURL := base.JoinPath(fmt.Sprintf("api/decks/%d/", summary.ID))
@@ -144,27 +135,29 @@ func (d *Dataset) Extract(
 			if col == nil {
 				continue
 			}
+			if err := col.Canonicalize(); err != nil {
+				continue
+			}
 
 			data, _ := json.Marshal(col)
 			key := fmt.Sprintf("%s%d.json", prefix, dd.ID)
-			if err := d.blob.WriteAll(ctx, key, data, nil); err != nil {
-				d.log.Warnf(ctx, "archidekt: blob write failed for %s: %v", key, err)
+			if err := d.blob.Write(ctx, key, data); err != nil {
 				continue
 			}
 
 			saved++
 			if saved%100 == 0 {
-				d.log.Infof(ctx, "archidekt: %d decks saved (page %d)", saved, page)
+				d.log.Infof(ctx, "archidekt: %d saved (page %d)", saved, page)
+				if stats := games.ExtractStatsFromContext(ctx); stats != nil {
+					stats.RecordSuccess()
+				}
 			}
 		}
 
-		if len(opts.ItemOnlyURLs) > 0 {
-			break // Single-item mode
-		}
 		time.Sleep(1500 * time.Millisecond)
 	}
 
-	d.log.Infof(ctx, "archidekt: extraction complete (%d decks)", saved)
+	d.log.Infof(ctx, "archidekt: done (%d decks)", saved)
 	return nil
 }
 
@@ -183,11 +176,11 @@ func (d *Dataset) IterItems(
 }
 
 func toCollection(dd deckDetail) *game.Collection {
-	if len(dd.Cards) == 0 {
+	if len(dd.Cards) < 20 {
 		return nil
 	}
 
-	partitions := make(map[string][]game.Card)
+	partitions := make(map[string][]game.CardDesc)
 	for _, entry := range dd.Cards {
 		name := entry.Card.OracleCard.Name
 		if name == "" {
@@ -201,7 +194,7 @@ func toCollection(dd deckDetail) *game.Collection {
 				partition = "Commander"
 			}
 		}
-		partitions[partition] = append(partitions[partition], game.Card{
+		partitions[partition] = append(partitions[partition], game.CardDesc{
 			Name:  name,
 			Count: entry.Quantity,
 		})
@@ -219,15 +212,22 @@ func toCollection(dd deckDetail) *game.Collection {
 		return nil
 	}
 
+	deckType := &game.CollectionTypeDeck{
+		Name:   dd.Name,
+		Format: "commander",
+		Player: dd.Owner.Username,
+	}
+
+	createdAt, _ := time.Parse(time.RFC3339, dd.CreatedAt)
+	if createdAt.IsZero() {
+		createdAt = time.Now().UTC()
+	}
+
 	return &game.Collection{
-		DeckID:     fmt.Sprintf("archidekt:%d", dd.ID),
-		Name:       dd.Name,
-		Format:     "commander",
-		Source:     "archidekt",
-		URL:        fmt.Sprintf("https://archidekt.com/decks/%d", dd.ID),
-		Player:     dd.Owner.Username,
-		Partitions: parts,
-		CreatedAt:  dd.CreatedAt,
-		ScrapedAt:  time.Now().UTC().Format(time.RFC3339),
+		ID:          fmt.Sprintf("archidekt:%d", dd.ID),
+		URL:         fmt.Sprintf("https://archidekt.com/decks/%d", dd.ID),
+		Type:        game.CollectionTypeWrapper{Type: deckType.Type(), Inner: deckType},
+		ReleaseDate: createdAt,
+		Partitions:  parts,
 	}
 }
