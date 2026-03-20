@@ -1,0 +1,43 @@
+id: "0036"
+date: "2026-03-20"
+title: "MetaPath2Vec tuning: attribute fusion hurts, more epochs in progress"
+game: magic
+
+hypothesis: >
+  Two improvements to try: (A) fuse MetaPath2Vec with card attributes
+  via PCA (like v5 did with PecanPy), (B) train longer (40 epochs, 30
+  walks/node) since loss was still decreasing at epoch 20.
+
+method:
+  type: embedding
+  details: >
+    A: Concat MP2V (128D) + attributes (9D: cmc, power, toughness, WUBRG,
+       rarity), PCA to 128D, alpha=0.7. Same recipe as v5 fused.
+    B: MetaPath2Vec 40 epochs, 30 walks/node, lr=0.005 (in progress).
+
+results:
+  attribute_fusion:
+    sub_ndcg: 0.160
+    syn_ndcg: 0.145
+    meta_ndcg: 0.149
+    overall_ndcg: 0.104
+    pca_explained_variance: 0.978
+    verdict: "WORSE than unfused (0.178 sub). Attribute PCA adds noise."
+
+  forty_epochs:
+    status: "in progress"
+
+conclusion: >
+  Attribute fusion that helped PecanPy HURTS MetaPath2Vec. MetaPath2Vec
+  already captures richer structure through typed walks -- coarse features
+  (CMC, color, rarity) add noise rather than signal. The PCA compression
+  discards the fine-grained graph structure that makes MetaPath2Vec work.
+
+  This is consistent with the Hamilton lens finding: MetaPath2Vec learns
+  structure from the graph, not from node features. Adding features via
+  concat+PCA is the wrong fusion method for this embedding type. If
+  features are needed, they should be inputs to a GNN (HGT, R-GCN)
+  not concatenated post-hoc.
+
+artifacts:
+  - data/embeddings/magic_metapath2vec_fused.wv
