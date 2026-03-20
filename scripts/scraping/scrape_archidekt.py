@@ -178,7 +178,6 @@ def main() -> int:
     n_saved = 0
     n_skipped = 0
     n_errors = 0
-    deck_id = args.start_page  # reuse as start ID
     t0 = time.time()
 
     # Resume support: skip already-scraped IDs
@@ -195,38 +194,58 @@ def main() -> int:
             print(f"Resuming: {len(existing_ids)} decks already scraped")
 
     with open(out_path, "a") as f:
+        page = args.start_page
+
         while n_saved < args.max_decks:
+            # Use v3 search API to get Commander deck IDs (pre-filtered, no waste)
             time.sleep(args.rate_limit)
-            deck = get_deck_detail(client, deck_id)
-            deck_id += 1
+            search_result = search_decks(
+                client,
+                format_code=target_format,
+                page=page,
+                page_size=50,
+                order_by="-createdAt",
+            )
 
-            if not deck:
-                n_errors += 1
-                if n_errors > 200 and n_saved == 0:
-                    print("Too many errors, stopping")
+            if not search_result:
+                print(f"  Search failed at page {page}, stopping")
+                break
+
+            deck_summaries = search_result.get("results", [])
+            if not deck_summaries:
+                print(f"  No results at page {page}, stopping")
+                break
+
+            for summary in deck_summaries:
+                if n_saved >= args.max_decks:
                     break
-                continue
 
-            if deck.get("deckFormat") != target_format:
-                n_skipped += 1
-                continue
+                deck_id = summary.get("id")
+                if not deck_id:
+                    continue
 
-            full_id = f"archidekt:{deck.get('id', '')}"
-            if full_id in existing_ids:
-                continue
+                full_id = f"archidekt:{deck_id}"
+                if full_id in existing_ids:
+                    continue
 
-            jsonl = deck_to_jsonl(deck)
-            if not jsonl or len(jsonl.get("cards", [])) < 20:
-                n_skipped += 1
-                continue
+                time.sleep(args.rate_limit)
+                deck = get_deck_detail(client, deck_id)
+                if not deck:
+                    n_errors += 1
+                    continue
 
-            f.write(json.dumps(jsonl) + "\n")
-            f.flush()
-            n_saved += 1
+                jsonl = deck_to_jsonl(deck)
+                if not jsonl or len(jsonl.get("cards", [])) < 20:
+                    n_skipped += 1
+                    continue
 
-            if n_saved % 50 == 0:
-                elapsed = time.time() - t0
-                rate = n_saved / elapsed if elapsed > 0 else 0
+                f.write(json.dumps(jsonl) + "\n")
+                f.flush()
+                n_saved += 1
+
+                if n_saved % 50 == 0:
+                    elapsed = time.time() - t0
+                    rate = n_saved / elapsed if elapsed > 0 else 0
                 print(
                     f"  {n_saved}/{args.max_decks} saved "
                     f"(ID ~{deck_id}, {rate:.2f}/s, {n_skipped} skip, {n_errors} err)"
