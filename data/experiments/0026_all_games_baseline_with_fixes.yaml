@@ -1,0 +1,59 @@
+id: "0026"
+date: "2026-03-20"
+title: "All-games baseline after session fixes"
+game: all
+
+hypothesis: >
+  Comprehensive baseline with all session fixes applied: expanded test sets
+  (diverse annotations), text embedding indices for all 3 games, candidate
+  pool expansion (100), deduped graphs, deduped annotations.
+
+method:
+  type: eval
+  script: scripts/evaluation/eval_per_mode.py
+  args: "--game {magic,pokemon,yugioh} --embedding {v5_fused,v5_fused,cleaned_v5}"
+
+results:
+  magic:
+    overall_ndcg: 0.113
+    sub_ndcg: 0.124
+    syn_ndcg: 0.121
+    meta_ndcg: 0.127
+    sub_score_ndcg: 0.131
+    coverage: 0.290
+    novelty_bits: 8.87
+    bias_ratio: 1.14
+    queries: 836
+  pokemon:
+    overall_ndcg: 0.110
+    sub_ndcg: 0.159
+    syn_ndcg: 0.121
+    meta_ndcg: 0.125
+    sub_score_ndcg: 0.147
+    coverage: 0.700
+    novelty_bits: 7.90
+    bias_ratio: 0.98
+    queries: 639
+  yugioh:
+    overall_ndcg: 0.282
+    sub_ndcg: 0.362
+    syn_ndcg: 0.324
+    meta_ndcg: 0.336
+    sub_score_ndcg: 0.353
+    coverage: 0.327
+    novelty_bits: 8.43
+    bias_ratio: 1.34
+    queries: 689
+
+conclusion: >
+  Clean baseline with all fixes. Key observations:
+  1. YuGiOh still far ahead (0.282 vs 0.113/0.110) -- more deck data = better.
+  2. Pokemon coverage 70% (small vocab) vs Magic 29% vs YuGiOh 33%.
+  3. No popularity bias in any game (all under 2x).
+  4. nDCG numbers are lower than pre-diverse-annotation baselines because
+     the test set now includes harder non-neighbor queries (1,032 vs 500
+     for Magic, 767 vs 373 for Pokemon, 781 vs 382 for YuGiOh).
+  5. The bitter lesson confirmed: more deck data (YuGiOh 1.8M pairs) >>
+     better models (LightGCN, E5 fine-tune all failed).
+
+artifacts: []
