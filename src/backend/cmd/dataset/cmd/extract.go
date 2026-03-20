@@ -13,6 +13,7 @@ import (
 	"collections/games/digimon/dataset/digimoncard"
 	digimonlimitless "collections/games/digimon/dataset/limitless"
 	digimonlimitlessweb "collections/games/digimon/dataset/limitless-web"
+	"collections/games/magic/dataset/archidekt"
 	"collections/games/magic/dataset/deckbox"
 	"collections/games/magic/dataset/goldfish"
 	"collections/games/magic/dataset/mtgtop8"
@@ -107,6 +108,8 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		d = wrapMTGDataset(goldfish.NewDataset(config.Log, gamesBlob))
 	case "mtgtop8":
 		d = wrapMTGDataset(mtgtop8.NewDataset(config.Log, gamesBlob))
+	case "archidekt":
+		d = wrapMTGDataset(archidekt.NewDataset(config.Log, gamesBlob))
 	case "digimoncard", "digimon-card":
 		d = digimoncard.NewDataset(config.Log, gamesBlob)
 	case "digimon-limitless", "digimonlimitless":
@@ -155,7 +158,7 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf(
 			"unsupported dataset %q, allowed (%+v)",
 			datasetName,
-			[]string{"deckbox", "scryfall", "goldfish", "mtgtop8", "digimoncard", "digimon-limitless", "digimon-limitless-web", "onepiecetcg", "onepiece-limitless", "onepiece-limitless-web", "pokemontcg-data", "pokemontcg", "pokemon-limitless", "pokemon-limitless-web", "pokestats", "pokemoncard-io", "pokemon-tcg-price-api", "ygoprodeck", "yugiohmeta", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
+			[]string{"archidekt", "deckbox", "scryfall", "goldfish", "mtgtop8", "digimoncard", "digimon-limitless", "digimon-limitless-web", "onepiecetcg", "onepiece-limitless", "onepiece-limitless-web", "pokemontcg-data", "pokemontcg", "pokemon-limitless", "pokemon-limitless-web", "pokestats", "pokemoncard-io", "pokemon-tcg-price-api", "ygoprodeck", "yugiohmeta", "riftbound-riftmana", "riftbound-riftcodex", "riftbound-riftboundgg"},
 		)
 	}
 	opts := parseOptions(config.Ctx, config.Log, cmd.Flags())
