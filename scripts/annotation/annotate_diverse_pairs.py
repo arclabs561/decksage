@@ -115,7 +115,8 @@ async def annotate_pair(
     c2_ctx = _card_context(card2, card_data)
     source = pair_meta.get("source", "unknown")
 
-    prompt = f"""Judge the similarity between these two {game.upper()} cards.
+    prompt = f"""Judge the relationship between these two {game.upper()} cards.
+Base your judgment ONLY on the card text below. Do not rely on prior knowledge.
 
 Card A:
 {c1_ctx}
@@ -123,18 +124,30 @@ Card A:
 Card B:
 {c2_ctx}
 
-Context: This pair was selected via {source} analysis (NOT from embedding neighbors).
-The embedding cosine similarity is {pair_meta.get("emb_sim", "unknown")}.
+**SCORING GUIDE** (rate each dimension independently):
 
-**CALIBRATION ANCHORS**:
-- 1.0: Functional reprint
-- 0.8: Same role, minor differences
-- 0.6: Related function, different power level
-- 0.4: Same archetype, different role
-- 0.2: Tangential connection
-- 0.0: Unrelated
+similarity_score (overall, 0-1):
+  1.0 = Functional reprint (e.g., Lightning Bolt vs Lightning Strike minus the extra mana)
+  0.7 = Same role with meaningful differences (e.g., Swords to Plowshares vs Path to Exile)
+  0.4 = Related function, different power/context (e.g., Lightning Bolt vs Fireball)
+  0.1 = Tangential connection only (e.g., Lightning Bolt vs Furnace of Rath)
+  0.0 = Unrelated (e.g., Lightning Bolt vs Island)
 
-Rate similarity, classify mode, and fill all extended fields."""
+functional_score (can one replace the other in a deck? 0-1):
+  High = same mana cost, same effect, same deck slot
+  Low = different cost, different effect, different role
+
+synergy_score (do they work well together? 0-1):
+  High = direct combo or strong synergy
+  Low = no interaction
+
+substitutability (how interchangeable are they? 0-1):
+  High = swapping A for B barely changes the deck
+  Low = completely different cards
+
+**CLASSIFY** the primary relationship mode as one of: substitution, synergy, meta
+
+Fill ALL output fields including card roles, power levels, and relationship types."""
 
     async with sem:
         try:
