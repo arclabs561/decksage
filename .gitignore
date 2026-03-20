@@ -287,3 +287,7 @@ scripts/data/_debug_*
 !.env.example
 src/backend/games/magic/dataset/scryfall/.cache/
 /data/test_sets/annotated_*.json
+
+# Model weights and large processed data
+data/models/
+data/processed/*.pkl
