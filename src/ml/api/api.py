@@ -81,6 +81,8 @@ from .deck_routes import router as deck_router
 from .models import (
     SUPPORTED_GAMES,
     ApiState,
+    BatchSimilarityRequest,
+    BatchSimilarityResponse,
     CardsResponse,
     CardSuggestion,
     ContextualResponse,
@@ -828,6 +830,7 @@ def root(request: Request):
         "api_prefix": "/v1",
         "endpoints": {
             "similarity": "/v1/similar",
+            "similarity_batch": "/v1/similar/batch",
             "cards": "/v1/cards",
             "search": "/v1/search",
             "deck_complete": "/v1/deck/complete",
@@ -1409,6 +1412,123 @@ def find_similar_v1(request: SimilarityRequest):
             ]
 
     return resp
+
+
+@router.post("/similar/batch", response_model=BatchSimilarityResponse)
+def find_similar_batch_v1(request: BatchSimilarityRequest):
+    """Find similar cards for multiple queries in one call.
+
+    More efficient than N individual /v1/similar calls: resolves game/state once
+    and reuses the fusion instance across queries when mode=fusion.
+    """
+    game = _require_game(request.game)
+    state = get_state(game)
+
+    # Build a shared SimilarityRequest template (everything except query)
+    base_kwargs: dict[str, Any] = {
+        "game": request.game,
+        "query": "",  # placeholder
+        "top_k": request.top_k,
+        "use_case": request.use_case,
+        "mode": request.mode,
+        "weights": request.weights,
+        "aggregator": request.aggregator,
+        "rrf_k": request.rrf_k,
+        "mmr_lambda": request.mmr_lambda,
+        "format": request.format,
+    }
+
+    results: dict[str, list[SimilarCard]] = {}
+    errors: dict[str, str] = {}
+
+    # For fusion mode, build the fusion instance once and reuse it
+    method = _resolve_method(SimilarityRequest(**base_kwargs | {"query": "probe"}))
+    if method == "fusion":
+        # Build fusion object once (the expensive part)
+        probe_req = SimilarityRequest(**base_kwargs | {"query": request.queries[0]})
+        w = probe_req.weights or {}
+        base_fw = state.fusion_default_weights or FusionWeights()
+        if state.text_embedder is None:
+            base_fw = dataclasses.replace(base_fw, text_embed=0.0)
+        if state.visual_embedder is None:
+            base_fw = dataclasses.replace(base_fw, visual_embed=0.0)
+        fw = FusionWeights(
+            embed=float(w.get("embed", base_fw.embed)),
+            jaccard=float(w.get("jaccard", base_fw.jaccard)),
+            functional=float(w.get("functional", base_fw.functional)),
+            text_embed=float(w.get("text_embed", base_fw.text_embed)),
+            visual_embed=float(w.get("visual_embed", base_fw.visual_embed)),
+            archetype=float(w.get("archetype", base_fw.archetype)),
+        ).normalized()
+
+        use_case_to_task = {
+            UseCaseEnum.substitute: "substitution",
+            UseCaseEnum.synergy: "synergy",
+            UseCaseEnum.meta: "similar",
+        }
+        task_type = use_case_to_task.get(probe_req.use_case, "substitution")
+        effective_task_type = task_type if not w else None
+
+        fusion = WeightedLateFusion(
+            state.embeddings,
+            state.graph_data["adj"],
+            None,
+            fw,
+            aggregator=probe_req.aggregator or "rrf",
+            rrf_k=int(probe_req.rrf_k or 60),
+            mmr_lambda=float(probe_req.mmr_lambda or 0.0),
+            text_embedder=state.text_embedder,
+            visual_embedder=state.visual_embedder,
+            card_data=state.card_attrs,
+            archetype_staples=state.archetype_staples,
+            archetype_cooccurrence=state.archetype_cooccurrence,
+            task_type=effective_task_type,
+            graph_weights=state.graph_data.get("weights") if state.graph_data else None,
+            game=game,
+        )
+
+        for query in request.queries:
+            try:
+                similar = fusion.similar(query, request.top_k, task_type=task_type)
+                cards = [_enrich_similar_card(c, s, state, game=game) for c, s in similar]
+                if request.format and state.legality_data:
+                    cards = [
+                        r
+                        for r in cards
+                        if state.legality_data.get(r.card, {}).get(request.format) == "legal"
+                    ]
+                results[query] = cards
+            except HTTPException as e:
+                errors[query] = e.detail
+            except Exception as e:
+                errors[query] = str(e)
+    else:
+        # Non-fusion modes: delegate to _similar_impl per query
+        for query in request.queries:
+            try:
+                req = SimilarityRequest(**base_kwargs | {"query": query})
+                resp = _similar_impl(req)
+                cards = resp.results
+                if request.format:
+                    resolved_game = _require_game(request.game)
+                    st = get_state(resolved_game)
+                    if st.legality_data:
+                        cards = [
+                            r
+                            for r in cards
+                            if st.legality_data.get(r.card, {}).get(request.format) == "legal"
+                        ]
+                results[query] = cards
+            except HTTPException as e:
+                errors[query] = e.detail
+            except Exception as e:
+                errors[query] = str(e)
+
+    return BatchSimilarityResponse(
+        results=results,
+        model_info={**state.model_info, "method_used": method, "game": game},
+        errors=errors,
+    )
 
 
 @router.get("/cards/{name}/similar", response_model=SimilarityResponse)
