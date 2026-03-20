@@ -1,0 +1,45 @@
+id: "0037"
+date: "2026-03-20"
+title: "MetaPath2Vec 40 epochs: sub nDCG 0.186 (+50% over v5 fused)"
+game: magic
+
+hypothesis: >
+  Loss was still decreasing at epoch 20 (0.735). More training should
+  improve quality. Also increased walks per node (30 vs 20) and reduced
+  learning rate (0.005 vs 0.01).
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game magic --dim 128 --epochs 40 --walks-per-node 30 --lr 0.005"
+
+results:
+  training_loss: "0.725 (vs 0.735 at 20 epochs, 0.86 at 5 epochs)"
+  training_time: "~20 min"
+  vocab: 35265
+  overall_ndcg: 0.122
+  sub_ndcg: 0.186
+  syn_ndcg: 0.186
+  meta_ndcg: 0.183
+  sol_ring_arcane_signet: 0.816
+  lightning_bolt_lava_spike: 0.235
+
+  vs_v5_fused:
+    sub_delta: "+50%"
+    syn_delta: "+54%"
+    meta_delta: "+44%"
+    overall_delta: "+8%"
+
+  vs_20_epochs:
+    sub_delta: "+4.5%"
+    syn_delta: "+8.1%"
+    meta_delta: "+7.6%"
+
+conclusion: >
+  NEW SESSION BEST. 40 epochs with more walks and lower LR gives consistent
+  improvement. Loss still dropping at 0.725 -- could benefit from 60-80
+  epochs. The MetaPath2Vec architecture is not at ceiling yet (unlike
+  PecanPy which plateaued). This is the model to deploy.
+
+artifacts:
+  - data/embeddings/magic_metapath2vec.wv
