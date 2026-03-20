@@ -1,0 +1,61 @@
+id: "0030"
+date: "2026-03-20"
+title: "MetaPath2Vec first pass: heterogeneous graph embeddings"
+game: magic
+
+hypothesis: >
+  MetaPath2Vec on heterogeneous graph (deck + enriched + annotation edges)
+  should avoid the dilution problem that PecanPy has with mixed edge types.
+  Typed walks preserve per-edge-type signal.
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game magic --dim 128 --epochs 5"
+  model: "PyG MetaPath2Vec"
+  details: >
+    Metapath: (card,deck,card) -> (card,enriched,card) -> (card,annotation,card).
+    Walk length 20, 10 walks/node, context 7, Adam optimizer.
+    Only 3 of 8 available edge types used (deck, enriched, annotation).
+    Set/precon/keyword/commander edges available but not in metapath yet.
+
+data:
+  edge_types_used: ["deck (331K)", "enriched (1.46M)", "annotation (927)"]
+  edge_types_available: ["set (2.16M)", "precon (283K)", "keyword (83K)", "commander (1.61M)"]
+
+results:
+  training_loss: "3.98 -> 0.86 (5 epochs, 66s)"
+  vocab: 35243
+  overall_ndcg: 0.071
+  sub_ndcg: 0.114
+  syn_ndcg: 0.118
+  meta_ndcg: 0.109
+  coverage: 0.196
+  novelty_bits: 9.03
+  bias_ratio: 1.92
+  quality_pairs:
+    lightning_bolt_lava_spike: 0.118
+    sol_ring_arcane_signet: 0.062
+
+  comparison_v5_fused:
+    overall_ndcg: 0.113
+    sub_ndcg: 0.124
+    syn_ndcg: 0.121
+    coverage: 0.290
+
+conclusion: >
+  First pass: per-mode nDCG (0.114 sub, 0.118 syn) is within 8% of v5
+  fused despite using only 3/8 edge types and 5 epochs. Overall nDCG lower
+  (0.071 vs 0.113) because large vocab (35K vs 21K) includes many low-quality
+  embeddings. Novelty is highest yet (9.03 bits).
+
+  The metapath approach works -- typed walks don't dilute signals like
+  PecanPy does. Next steps to improve:
+  1. More epochs (10-20) -- loss was still decreasing at epoch 5
+  2. Include Commander + set edges in metapath
+  3. Attribute fusion (PCA with card attributes, same as v5)
+  4. Try multiple metapaths and average embeddings
+  5. Fuse with v5 (metapath2vec as a fusion signal, not replacement)
+
+artifacts:
+  - data/embeddings/magic_metapath2vec.wv
