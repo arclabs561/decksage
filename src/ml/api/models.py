@@ -108,6 +108,33 @@ class SimilarityResponse(BaseModel):
     feedback_url: str | None = Field(None, description="URL for submitting feedback on results")
 
 
+class BatchSimilarityRequest(BaseModel):
+    queries: list[str] = Field(..., min_length=1, max_length=100, description="Card names to query")
+    top_k: int = Field(10, ge=1, le=100, description="Number of results per query")
+    game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
+    mode: str | None = Field(
+        None,
+        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', or 'fusion'",
+    )
+    use_case: UseCaseEnum = Field(UseCaseEnum.substitute, description="Use case preset")
+    weights: dict[str, float] | None = Field(None, description="Optional fusion weights")
+    aggregator: str | None = Field(None, description="Fusion aggregator")
+    rrf_k: int | None = Field(None, ge=1, description="RRF constant k0")
+    mmr_lambda: float | None = Field(None, ge=0.0, le=1.0, description="MMR diversification")
+    format: str | None = Field(None, description="Filter by format legality (Magic-only)")
+
+
+class BatchSimilarityResponse(BaseModel):
+    results: dict[str, list[SimilarCard]] = Field(
+        ..., description="Map of query card name to similar cards"
+    )
+    model_info: dict[str, Any] = Field(default_factory=dict)
+    errors: dict[str, str] = Field(
+        default_factory=dict,
+        description="Map of query card name to error message (for cards that failed)",
+    )
+
+
 class HealthResponse(BaseModel):
     status: str
     game: str
