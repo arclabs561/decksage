@@ -834,7 +834,6 @@ dependencies = [
     { name = "python-dotenv" },
     { name = "qdrant-client", version = "1.12.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.13'" },
     { name = "qdrant-client", version = "1.16.2", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.13'" },
-    { name = "rankops" },
     { name = "requests" },
     { name = "scikit-learn" },
     { name = "sentence-transformers" },
@@ -939,7 +938,6 @@ requires-dist = [
     { name = "pytest-xdist", marker = "extra == 'dev'", specifier = ">=3.6.1" },
     { name = "python-dotenv", specifier = ">=1.0.0" },
     { name = "qdrant-client", specifier = ">=1.7.0" },
-    { name = "rankops", specifier = ">=0.1.20" },
     { name = "requests", specifier = ">=2.31.0" },
     { name = "ruff", marker = "extra == 'dev'", specifier = ">=0.14.0" },
     { name = "scikit-learn", specifier = ">=1.3.0" },
@@ -4101,38 +4099,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/ca/7d/3cd10e26ae97b35cf856ca1dc67576e42414ae39502c51165bb36bb1dff8/qdrant_client-1.16.2.tar.gz", hash = "sha256:ca4ef5f9be7b5eadeec89a085d96d5c723585a391eb8b2be8192919ab63185f0", size = 331112, upload-time = "2025-12-12T10:58:30.866Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/08/13/8ce16f808297e16968269de44a14f4fef19b64d9766be1d6ba5ba78b579d/qdrant_client-1.16.2-py3-none-any.whl", hash = "sha256:442c7ef32ae0f005e88b5d3c0783c63d4912b97ae756eb5e052523be682f17d3", size = 377186, upload-time = "2025-12-12T10:58:29.282Z" },
-]
-
-[[package]]
-name = "rankops"
-version = "0.1.20"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/21/ff/41277d73874a68e6f11640432019cb79d19e70190a85c7461a9df0963a50/rankops-0.1.20.tar.gz", hash = "sha256:511dafa25b5cf7f9f7c69b7b05ab63f350cda9ed56854d4b8db7bf837f7a1219", size = 164115, upload-time = "2026-03-20T18:00:47.641Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/b4/fe/d7ef5d8306c418598cb171d61e0a187cd2095f652e243f419b49afe2782a/rankops-0.1.20-cp311-cp311-macosx_10_12_x86_64.whl", hash = "sha256:89ebc9d026ac55f34eba30e66c20d838bb504a5fc44b845f65ed055a029c1514", size = 364265, upload-time = "2026-03-20T18:00:01.592Z" },
-    { url = "https://files.pythonhosted.org/packages/27/34/51bd8fa25a1ba45c6d1569c031d7143d8da16c4b71240751e3e56bed7dfb/rankops-0.1.20-cp311-cp311-macosx_11_0_arm64.whl", hash = "sha256:df8b8fb9c51503ed8cc157c3dbe5605049e951e17059a42c2421ab3c73f382c8", size = 349572, upload-time = "2026-03-20T18:00:03.451Z" },
-    { url = "https://files.pythonhosted.org/packages/15/ce/bbdd75820647122500d3bd0da64dac03030a25cfc6fbdeed8bdaf3e64ea7/rankops-0.1.20-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:68eda5b9df434547e4f6aca300a30449870a6ae017c04e136111d356e636aaaf", size = 382287, upload-time = "2026-03-20T18:00:04.927Z" },
-    { url = "https://files.pythonhosted.org/packages/25/19/c56482d6dbaa080a9e254765a10a5c2191d544c227e9182224d04bbb5ecd/rankops-0.1.20-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:b202ff28a2e5171edd1f5030b9ae2267364a47b9d022a59b0736c5080604fdca", size = 394802, upload-time = "2026-03-20T18:00:06.664Z" },
-    { url = "https://files.pythonhosted.org/packages/21/94/87d67b74f46da444fc960a46320e23dc421f3dfa405e821105777e2974ee/rankops-0.1.20-cp311-cp311-win_amd64.whl", hash = "sha256:ad6ca892bfd28ca361853a92673d3881f49f637c7e3679ea00af42a3acfc994c", size = 245298, upload-time = "2026-03-20T18:00:08.38Z" },
-    { url = "https://files.pythonhosted.org/packages/cd/e0/31c0bf790fd6e9f243dac50a24515ad985b8c017433f283460e8c2244b60/rankops-0.1.20-cp312-cp312-macosx_10_12_x86_64.whl", hash = "sha256:3ef5182e20b0d53c8c89bbe34e5ea3e67054d1f6fc033513b9f19017888a4f85", size = 361109, upload-time = "2026-03-20T18:00:10.074Z" },
-    { url = "https://files.pythonhosted.org/packages/b6/82/37643ddb82370761bd63fdc27ba3d28843d05e6c634b80154a7b75d8f129/rankops-0.1.20-cp312-cp312-macosx_11_0_arm64.whl", hash = "sha256:9d739a629eaa46850e28e6cd0fc8bfc666bbfe89a74c3902ccc764fcd91a8946", size = 347153, upload-time = "2026-03-20T18:00:11.621Z" },
-    { url = "https://files.pythonhosted.org/packages/82/dc/baedd051b87319d0b43cd9d995b03f536178e1525475673ecdef13368618/rankops-0.1.20-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:730c7a8d45cbe761910abc561bcbe170f7534adf2348ee0e5429bf2fbc60a40a", size = 380476, upload-time = "2026-03-20T18:00:13.413Z" },
-    { url = "https://files.pythonhosted.org/packages/1c/9e/9637b0b903bfe7a0cdc25dabf104f51f8558714c79dde74120d720c7753f/rankops-0.1.20-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:28ffa618a69b566f3a0a2eafd82b7dcb46d3b4fe8eb9c662ab8c884b56fb1af7", size = 391316, upload-time = "2026-03-20T18:00:15.03Z" },
-    { url = "https://files.pythonhosted.org/packages/a5/db/4232bfd9a698d92e65d298da07d676cd188eb87fbce81969eb5addf33e13/rankops-0.1.20-cp312-cp312-win_amd64.whl", hash = "sha256:6dff7c4686f895068f487e66c3ae5e7a66508414ab445f76db2bf690b6501205", size = 243747, upload-time = "2026-03-20T18:00:16.474Z" },
-    { url = "https://files.pythonhosted.org/packages/7f/e7/29e5faebbe4fd422c6626398cdc8a3ec2127dce7a61d9d2bc5cec9897e1c/rankops-0.1.20-cp313-cp313-macosx_10_12_x86_64.whl", hash = "sha256:036915656e6d96e4926b32aa7782c7d516e6cfde472c6ab65fc600ae3d3c1f56", size = 360668, upload-time = "2026-03-20T18:00:18.178Z" },
-    { url = "https://files.pythonhosted.org/packages/56/98/b6f21d471ccfdf770d903e9757042439bc2d8535af995e506b5d1901b4b2/rankops-0.1.20-cp313-cp313-macosx_11_0_arm64.whl", hash = "sha256:3bfe1f9f0b21556896b4c369fea151268f39fe76e38bddbed2ae2496feaa577e", size = 346849, upload-time = "2026-03-20T18:00:19.777Z" },
-    { url = "https://files.pythonhosted.org/packages/97/77/558fafb0da7792d4c668add271e02d086ffa8d2636720beb55e5ab635da6/rankops-0.1.20-cp313-cp313-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:a33c0427726b8689b5bb18edb69a38c316a34239325959bf935f6208278f8326", size = 380141, upload-time = "2026-03-20T18:00:21.251Z" },
-    { url = "https://files.pythonhosted.org/packages/79/11/99264949f0c3e6f66ec5ab94069efcd3e2452f3197dac0a7117c3c6d995a/rankops-0.1.20-cp313-cp313-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:820e0d40ada3e3e643dbd6cf490acc988f405a39531ea5516f3cca6010953376", size = 391602, upload-time = "2026-03-20T18:00:23.104Z" },
-    { url = "https://files.pythonhosted.org/packages/f6/3b/8576bc4cb31730ce4a3a16692cf18e9f3266f972c77da4d88f8b0a9e262e/rankops-0.1.20-cp313-cp313-win_amd64.whl", hash = "sha256:52fc2607572b69179dcc5509c17decc8d36288a2e33938dfcc9f54df7a98e9d0", size = 243538, upload-time = "2026-03-20T18:00:24.472Z" },
-    { url = "https://files.pythonhosted.org/packages/6f/14/d2b0cc653f864407c724817733970a487d15c86f3e70b4ce30d4aedee834/rankops-0.1.20-cp313-cp313t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:23a826348bb8be759e82474276a7042cb3dfd82dcb20adc10fde4e16d78d358d", size = 379045, upload-time = "2026-03-20T18:00:25.9Z" },
-    { url = "https://files.pythonhosted.org/packages/d0/a4/f48474786201e10ecfa9ab9ba3b8d2d0172d7889c33032b26229788b5dfb/rankops-0.1.20-cp314-cp314-macosx_10_12_x86_64.whl", hash = "sha256:24478eeeff1493febd2f7e61ada254cdd89f77e018448f8e025383a9c52f63a0", size = 361005, upload-time = "2026-03-20T18:00:27.551Z" },
-    { url = "https://files.pythonhosted.org/packages/7e/8c/b15b92b915078282bef3832456c05dc09b07df3ca78d661ea772360ed0b8/rankops-0.1.20-cp314-cp314-macosx_11_0_arm64.whl", hash = "sha256:338e154d1dc0653b7c341d1938646f35111780815dcfa6b5a37d8a207573ce0d", size = 346605, upload-time = "2026-03-20T18:00:29.482Z" },
-    { url = "https://files.pythonhosted.org/packages/70/45/85ffa6870f300d61aa8fdd40f73b718362aa6b52e6ada3b9cc15194544aa/rankops-0.1.20-cp314-cp314-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:36d44421e0ef06e2c7d160a0e5c7a9004afae9b5276ff0ab2f22ac2ff14a1852", size = 381058, upload-time = "2026-03-20T18:00:30.873Z" },
-    { url = "https://files.pythonhosted.org/packages/cb/d7/0e23f7f66724f4b98db5b951939e6b64666b273f2080e06c36bc1ba7d81d/rankops-0.1.20-cp314-cp314-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:195472946071785896d8afccd39408a7c1229e44f4e970aaa531075169ffd755", size = 391728, upload-time = "2026-03-20T18:00:32.472Z" },
-    { url = "https://files.pythonhosted.org/packages/e6/ed/00d0d5b4aecbc2f355412c43c83eddc2394fc8c6af1696f17f9be7c3c384/rankops-0.1.20-cp314-cp314-win_amd64.whl", hash = "sha256:29340958ad7b410bf81fe954b49f855801823fff32488fd9a7ecc95d33ddca2f", size = 244000, upload-time = "2026-03-20T18:00:33.853Z" },
-    { url = "https://files.pythonhosted.org/packages/3a/c8/c88a111077fb84a7c5e1a27d8f46a733963c859b5fd5ea354dc47ac7e45c/rankops-0.1.20-cp314-cp314t-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:0f66d7229dc7eaeedfc06def79da9d206102bf696dd1fde6c3cc38b115bdb9e1", size = 379209, upload-time = "2026-03-20T18:00:35.296Z" },
-    { url = "https://files.pythonhosted.org/packages/fb/50/089d8ef1768ab5ad302216ec4912b9f3f54c83851528bb76da879ec67c41/rankops-0.1.20-pp311-pypy311_pp73-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:f4fe40d67fa0be3bfff9c44ae81145bf5e72145c915f82d39b9c7e480ddcf5b3", size = 384447, upload-time = "2026-03-20T18:00:44.616Z" },
-    { url = "https://files.pythonhosted.org/packages/63/05/fe675b6f8d385d1c2cacd9f01e969f00c8300db41a5eb98a33715eba77b9/rankops-0.1.20-pp311-pypy311_pp73-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:3615151899cab2fc58a5ae3d957753a7ccf0069b2817c251b9e216eeb2f93281", size = 396068, upload-time = "2026-03-20T18:00:46.197Z" },
 ]
 
 [[package]]
