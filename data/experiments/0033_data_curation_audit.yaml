@@ -1,0 +1,59 @@
+id: "0033"
+date: "2026-03-20"
+title: "Data curation audit: deck dedup, land noise, annotation gaps"
+game: magic
+
+hypothesis: >
+  Data quality issues may be limiting embedding quality more than
+  architecture changes. Systematic audit of training data.
+
+method:
+  type: eval
+  details: >
+    Analyzed deck quality, card frequency distribution, pair weights,
+    cross-format contamination, and annotation coverage gaps.
+
+results:
+  deck_quality:
+    total_decks: 83611
+    near_duplicates: "23% (4,559 redundant copies in 20K sample)"
+    most_copied_deck: "154 copies"
+    format_balance: "Standard 68K (82%), Modern 10K (12%), Commander 5K (6%)"
+
+  card_frequency:
+    unique_cards: 15697
+    top_5_by_pairs: "Mountain, Plains, Island, Forest, Swamp (basic lands)"
+    cards_under_5_pairs: "2,651 (17%)"
+    power_law: "mild (top 1% = 4% of pairs)"
+
+  cross_format:
+    commander_only_cards: 12042
+    competitive_only_cards: 633
+    overlap: "8% of Commander cards appear in competitive formats"
+    impact: "12K cards get no embedding from competitive-only training"
+
+  annotation_gaps:
+    split_dfc_cards: "2,071 at 0% annotation coverage"
+    common_rarity: "5% annotated vs mythic 14%"
+    cards_not_in_graph: "730/2,791 annotated cards (26%) not in co-occurrence graph"
+
+  curation_priorities:
+    1: "Dedup decks (23% copies, inflate meta pair weights)"
+    2: "Cap basic land pair weights (lands dominate neighbor lists)"
+    3: "Annotate split/DFC cards (2,071 at 0%)"
+    4: "Balance annotation rarity (commons under-represented)"
+
+conclusion: >
+  Three high-impact data issues:
+  1. 23% deck duplication inflates staple pair weights (noise)
+  2. Basic lands dominate pair frequency (5 lands = top 5 cards)
+  3. 12,042 Commander-only cards have no competitive embedding
+
+  The 26% annotation-graph gap (730 cards) explains part of the low
+  nDCG: we're evaluating cards the graph doesn't know about.
+  Text embeddings partially compensate.
+
+  Fix #1 (dedup) and #2 (land cap) are low-effort, high-impact.
+  Fix #3 (Commander data) is already in progress via Archidekt scraper.
+
+artifacts: []
