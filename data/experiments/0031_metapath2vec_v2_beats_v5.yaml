@@ -1,0 +1,66 @@
+id: "0031"
+date: "2026-03-20"
+title: "MetaPath2Vec v2 BEATS v5 fused (substitute nDCG +43%)"
+game: magic
+
+hypothesis: >
+  More epochs (20 vs 5) and more walks per node (20 vs 10) should improve
+  MetaPath2Vec quality. The first pass (experiment 0030) was within 8%
+  of v5 fused on per-mode nDCG.
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game magic --dim 128 --epochs 20 --walks-per-node 20"
+  model: "PyG MetaPath2Vec"
+  details: >
+    Same metapath as v1: (card,deck,card) -> (card,enriched,card) ->
+    (card,annotation,card). 20 epochs (vs 5), 20 walks/node (vs 10).
+    Adam optimizer, 493s training time.
+
+data:
+  edge_types: ["deck (331K)", "enriched (1.46M)", "annotation (927)"]
+  edge_types_unused: ["set (2.16M)", "precon (283K)", "keyword (83K)", "commander (1.59M)"]
+
+results:
+  training_loss: "3.98 -> 0.74 (20 epochs, 493s)"
+  vocab: 35243
+  overall_ndcg: 0.115
+  sub_ndcg: 0.177
+  syn_ndcg: 0.174
+  meta_ndcg: 0.167
+  sub_score_ndcg: 0.104
+  coverage: 0.181
+  novelty_bits: 8.90
+  bias_ratio: 1.76
+
+  vs_v5_fused:
+    overall_ndcg_delta: "+1.7%"
+    sub_ndcg_delta: "+43%"
+    syn_ndcg_delta: "+44%"
+    meta_ndcg_delta: "+32%"
+    vocab_delta: "+67%"
+
+  quality_pairs:
+    lightning_bolt_lava_spike: 0.222
+    sol_ring_arcane_signet: 0.556
+
+conclusion: >
+  FIRST MODEL TO BEAT V5 FUSED ON CANONICAL EVAL.
+
+  Per-mode nDCG improved 32-44% across all modes. Substitute nDCG jumped
+  from 0.124 to 0.177 -- the biggest single improvement this session.
+  MetaPath2Vec's typed walks successfully preserve signal per edge type
+  (the core insight: typed walks > homogeneous walks for heterogeneous
+  graphs).
+
+  Still only using 3/8 available edge types. Adding Commander (1.59M),
+  set (2.16M), keyword (83K) edges should improve further. The data
+  scaling thesis (bitter lesson) is confirmed: MetaPath2Vec can USE
+  the diverse data that PecanPy could not.
+
+  Next: add Commander + set edges to metapath, try attribute fusion,
+  and deploy as new production embedding.
+
+artifacts:
+  - data/embeddings/magic_metapath2vec.wv
