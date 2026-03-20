@@ -20,7 +20,6 @@ dependencies = [
     "sentence-transformers",
     "qdrant-client>=1.7.0",
     "meilisearch>=0.32.0",
-    "rankops>=0.1.20",
 ]
 
 [project.urls]
