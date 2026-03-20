@@ -1,0 +1,46 @@
+id: "0028"
+date: "2026-03-20"
+title: "Archidekt Commander deck scrape: 1.59M new pairs from 507 decks"
+game: magic
+
+hypothesis: >
+  Commander decks (100 cards each) generate far more co-occurrence pairs per
+  deck than Standard/Modern (60 cards). Scraping even a small number of
+  Commander decks should dramatically expand the graph, especially with cards
+  that don't appear in competitive formats.
+
+method:
+  type: embedding
+  script: scripts/scraping/scrape_archidekt.py
+  args: "--format commander --max-decks 500 --rate-limit 0.3 --start-page 5000000"
+  details: >
+    ID-based scraping of Archidekt public API (/api/decks/{id}/).
+    Filter for deckFormat=3 (Commander). Rate limit 0.3s. Resume support
+    via existing ID dedup. 507 decks scraped in 588s.
+
+data:
+  source: "Archidekt public API (archidekt.com/api/decks/)"
+  decks_scraped: 507
+  unique_cards: 10403
+  unique_pairs: 1609556
+  new_pairs_not_in_graph: 1591608
+  existing_graph_pairs: 331264
+  expansion_factor: "4.8x"
+  top_commanders: "Zhulodok (9), Sauron (8), Commodore Guff (7), Henzie (6)"
+
+results:
+  pairs_generated: 1609556
+  new_vs_existing: "1.59M new / 331K existing = 4.8x graph expansion"
+  card_coverage: "10,403 unique cards (many Commander-only staples)"
+
+conclusion: >
+  507 Commander decks produced 4.8x more pairs than the entire existing
+  Magic graph. Commander's 100-card singleton format creates C(100,2)=4,950
+  pairs per deck vs C(60,2)*avg_overlap for Standard/Modern. This confirms
+  the bitter lesson: scaling data >> tuning models. Next: retrain with
+  Commander pairs and measure nDCG + coverage impact. At scale (10K+
+  Commander decks from Archidekt), this could 50x the graph.
+
+artifacts:
+  - data/decks/decks_magic_archidekt_commander.jsonl
+  - data/graphs/magic_archidekt_commander.edg
