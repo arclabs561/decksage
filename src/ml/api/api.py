@@ -402,6 +402,10 @@ async def lifespan(app: FastAPI):
         tuned_weights_path = os.getenv(weights_key)
         signals_dir = os.getenv(signals_key) or None
 
+        # Secondary embeddings (MetaPath2Vec) for dual-candidate fusion
+        sec_key = f"SECONDARY_EMBEDDINGS_PATH_{suffix}"
+        sec_path = os.getenv(sec_key)
+
         if emb_path:
             if not HAS_GENSIM:
                 logger.error(
@@ -417,6 +421,16 @@ async def lifespan(app: FastAPI):
                         pairs_path,
                         tuned_weights_path=tuned_weights_path,
                     )
+                    # Load secondary embeddings if configured
+                    if sec_path and Path(sec_path).exists():
+                        state = get_state(game)
+                        state.secondary_embeddings = KeyedVectors.load(sec_path)
+                        logger.info(
+                            "Loaded secondary embeddings for %s: %s (%d cards)",
+                            game,
+                            sec_path,
+                            len(state.secondary_embeddings),
+                        )
                 except (OSError, ValueError, RuntimeError):
                     logger.exception(
                         "Failed to load embeddings/graph during startup for game=%s", game
@@ -1250,6 +1264,7 @@ def _similar_fusion(
         task_type=effective_task_type,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
         game=game,
+        secondary_embeddings=getattr(state, "secondary_embeddings", None),
     )
 
     if request.also_like:
@@ -1485,6 +1500,7 @@ def find_similar_batch_v1(request: BatchSimilarityRequest):
             task_type=effective_task_type,
             graph_weights=state.graph_data.get("weights") if state.graph_data else None,
             game=game,
+            secondary_embeddings=getattr(state, "secondary_embeddings", None),
         )
 
         for query in request.queries:
@@ -1646,6 +1662,7 @@ def get_contextual_suggestions(
         card_data=state.card_attrs,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
         game=game,
+        secondary_embeddings=getattr(state, "secondary_embeddings", None),
     )
 
     price_fn, tag_set_fn, _ = _build_deck_hooks(state)
