@@ -170,6 +170,8 @@ def main() -> int:
     parser.add_argument("--walks-per-node", type=int, default=10)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--batch-size", type=int, default=256)
+    parser.add_argument("--output-suffix", type=str, default="",
+                        help="Suffix for output filename (for parallel runs)")
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
@@ -227,7 +229,8 @@ def main() -> int:
     kv = KeyedVectors(vector_size=args.dim)
     kv.add_vectors(card_list, embeddings)
 
-    out_path = DATA_DIR / "embeddings" / f"{args.game}_metapath2vec.wv"
+    suffix = f"_{args.output_suffix}" if args.output_suffix else ""
+    out_path = DATA_DIR / "embeddings" / f"{args.game}_metapath2vec{suffix}.wv"
     kv.save(str(out_path))
     print(f"  Saved {len(kv):,} embeddings to {out_path}")
 
