@@ -1,0 +1,50 @@
+id: "0027"
+date: "2026-03-20"
+title: "Inter-annotator agreement: Krippendorff's alpha = 0.43 (REVISE)"
+game: magic
+
+hypothesis: >
+  The 4-model LLM annotation pool should produce reliable graded similarity
+  scores (alpha >= 0.67 for tentative conclusions per Krippendorff 2011).
+
+method:
+  type: eval
+  details: >
+    Computed Krippendorff's alpha on 100 card pairs each annotated by up to
+    4 LLM judges (claude_sonnet_4_6, deepseek_v3_2, gemini_3_1_pro, gpt_5_2).
+    373 total ratings (27 missing out of 400).
+
+data:
+  source: data/annotations/magic_multi_judge_100.json
+  pairs: 100
+  judges: 4
+  total_ratings: 373
+
+results:
+  similarity_score_alpha: 0.434
+  similarity_type_alpha: 0.225
+  is_substitute_alpha: 0.000
+  observed_disagreement: 0.0165
+  expected_disagreement: 0.0292
+  unanimous_type_agreement: "50/100 (50%)"
+  interpretation: "REVISE (alpha < 0.667)"
+
+conclusion: >
+  LLM judges do NOT reliably agree on continuous similarity scores (alpha
+  0.43). They agree on binary decisions (99% unanimous on is_substitute)
+  but diverge on the magnitude. Score distribution is compressed (mean 0.12,
+  max 0.75) so even small absolute differences produce low alpha.
+
+  Passonneau lens recommendations:
+  1. Switch to ordinal scale (4 bins) instead of continuous 0-1 scores
+  2. Add concrete anchor examples per bin to calibrate LLM judgments
+  3. Use rank-based agreement (Kendall's W) -- ordinal ranking may be
+     more stable than absolute scores
+  4. Consider MACE/Dawid-Skene probabilistic aggregation instead of
+     averaging
+
+  Impact on nDCG: graded nDCG with unreliable grades is noisy. Consider
+  switching to binary relevance metrics (MAP, Recall) for primary eval,
+  using nDCG only as a secondary signal.
+
+artifacts: []
