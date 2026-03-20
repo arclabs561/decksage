@@ -291,3 +291,4 @@ src/backend/games/magic/dataset/scryfall/.cache/
 # Model weights and large processed data
 data/models/
 data/processed/*.pkl
+runctl.toml
