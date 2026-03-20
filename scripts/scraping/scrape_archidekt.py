@@ -56,17 +56,17 @@ def get_client(use_proxy: bool = False, rate_limit: float = 1.0) -> httpx.Client
 
 def search_decks(
     client: httpx.Client,
-    format_name: str = "commander",
+    format_code: int = 3,
     page: int = 1,
     page_size: int = 50,
-    order_by: str = "-viewCount",
+    order_by: str = "-createdAt",
 ) -> dict | None:
-    """Search for decks by format."""
+    """Search for decks by format using v3 API."""
     try:
         r = client.get(
-            "/api/decks/cards/",
+            "/api/decks/v3/",
             params={
-                "formats": format_name,
+                "deckFormat": format_code,
                 "orderBy": order_by,
                 "page": page,
                 "pageSize": page_size,
