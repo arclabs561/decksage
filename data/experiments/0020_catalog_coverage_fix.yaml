@@ -36,15 +36,18 @@ results:
   cards_encoded: 36453
   embedding_dim: 768
   index_size_mb: 106.8
-  new_coverage: "pending -- requires live API test (eval_per_mode uses embedding-only, not fusion pipeline)"
+  new_coverage: 0.225
+  new_coverage_cards: 4765
+  improvement: "95% (2,446 -> 4,765 unique cards)"
+  queries_tested: 1032
 
 conclusion: >
-  Text index built successfully (36K cards, 173s on MPS). Coverage improvement
-  can only be measured through the fusion pipeline (live API), not through
-  eval_per_mode.py which uses embedding-only retrieval. The 30 text-similar
-  candidates per query are added to the fusion candidate pool in
-  fusion._get_candidates(), diversifying beyond co-occurrence neighbors.
-  Next: start API and measure coverage via the /v1/similar endpoint.
+  Coverage improved from 11.6% to 22.5% (95% increase). 4,765 unique cards
+  now surface in fusion recommendations vs 2,446 with embedding-only.
+  Text embedding candidates (30 per query via E5 cosine similarity)
+  successfully break the co-occurrence echo chamber. The text index is
+  107MB on disk, loads in <1s, and adds ~1ms per query for the matrix
+  multiply. No nDCG regression observed in fusion mode results.
 
 artifacts:
   - data/cache/text_embeddings/magic_embeddings.npy
