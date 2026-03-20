@@ -108,7 +108,7 @@ def deck_to_jsonl(deck: dict) -> dict | None:
             continue
 
         quantity = card_entry.get("quantity", 1)
-        categories = card_entry.get("categories", [])
+        categories = card_entry.get("categories") or []
 
         # Map Archidekt categories to partitions
         partition = "Main"
