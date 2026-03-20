@@ -252,7 +252,7 @@ def _load_checkpoint(game: str) -> set[tuple[str, str]]:
         for line in f:
             if line.strip():
                 d = json.loads(line)
-                done.add((d.get("query", ""), d.get("candidate", "")))
+                done.add((d.get("query", ""), d.get("candidate", ""), d.get("llm_model", "")))
     return done
 
 
@@ -270,10 +270,12 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         return {"game": game, "error": "no diverse pairs"}
 
     # Resume support: skip already-annotated pairs
-    done_pairs = _load_checkpoint(game)
+    done_pairs = _load_checkpoint(game)  # keys include model name
     if done_pairs:
         before = len(pairs)
-        pairs = [p for p in pairs if (p["card1"], p["card2"]) not in done_pairs]
+        # Filter pairs per model -- allow same pair with different model
+        model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "").split(",")[0]
+        pairs = [p for p in pairs if (p["card1"], p["card2"], model_name) not in done_pairs]
         logger.info(
             f"{game}: resuming -- {before - len(pairs)} already done, {len(pairs)} remaining"
         )
