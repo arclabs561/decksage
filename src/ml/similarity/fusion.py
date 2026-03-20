@@ -404,12 +404,11 @@ class WeightedLateFusion:
                         for n2 in list(self.adj[neighbor])[: self.candidate_topn]:
                             candidates.add(n2)
 
-        # From embeddings (fast, always include)
+        # From embeddings -- use candidate_topn (default 100, was hardcoded to 50).
+        # Ceiling analysis showed 75% GT recall at top-100 vs 51% at top-50.
         if self.embeddings and query in self.embeddings:
             try:
-                similar = self.embeddings.most_similar(
-                    query, topn=min(self.candidate_topn, 50)
-                )  # Limit to 50
+                similar = self.embeddings.most_similar(query, topn=self.candidate_topn)
                 candidates.update(card for card, _ in similar)
             except (KeyError, RuntimeError, ValueError):
                 pass
