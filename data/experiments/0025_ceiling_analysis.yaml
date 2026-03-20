@@ -1,0 +1,69 @@
+id: "0025"
+date: "2026-03-19"
+title: "Ceiling analysis: candidate retrieval is the bottleneck"
+game: magic
+
+hypothesis: >
+  Models aren't improving because we're tuning the wrong component.
+  Ceiling analysis (Ng/Sutton method) replaces each component with
+  ground truth to identify the actual bottleneck.
+
+method:
+  type: eval
+  details: >
+    For each query with annotations:
+    1. Baseline: embedding retrieves top-10, embedding ranks them
+    2. Rerank ceiling: embedding retrieves top-50, oracle re-ranks
+    3. Candidate ceiling: oracle provides candidates, embedding ranks
+    4. Oracle: perfect retrieval and ranking
+
+data:
+  eval:
+    source: data/test_sets/annotated_magic_v2.json
+    queries_evaluated: 836
+
+results:
+  baseline_ndcg: 0.113
+  rerank_ceiling_ndcg: 0.351
+  candidate_ceiling_ndcg: 0.956
+  oracle_ndcg: 1.000
+
+  bottleneck_decomposition:
+    retrieval_gap: "+0.238 (27% of total gap)"
+    candidate_gap: "+0.844 (95% of total gap)"
+    total_gap: 0.887
+
+  candidate_recall_by_topn:
+    top_10: "14% of GT cards"
+    top_50: "51% of GT cards"
+    top_100: "75% of GT cards"
+    top_200: "81% of GT cards"
+    top_500: "84% of GT cards"
+
+  gt_cards_in_vocab: "3,444/3,508 (98%)"
+  gt_in_top50: "1,749/3,444 (51%)"
+  gt_retrievable_but_missed: 1695
+
+conclusion: >
+  THE BOTTLENECK IS CANDIDATE RETRIEVAL, NOT RANKING.
+
+  When given the right candidates, the embedding ranks them at 0.956 nDCG
+  (near-perfect). But only 51% of ground truth cards appear in the
+  embedding's top-50. The embedding KNOWS which cards are similar -- it
+  just can't FIND them in its candidate pool.
+
+  This explains every result this session:
+  - LightGCN failed: worse candidates (smaller vocab, collapsed embeddings)
+  - E5 fine-tune marginal: ranking is already 95.6% optimal
+  - Coverage fix worked: text candidates expand the pool
+  - Set edges hurt nDCG: diluted ranking signal without helping retrieval
+
+  Fix: increase candidate_topn from 50 to 100 (75% GT recall, +50%).
+  Already implemented. Combined with text embedding candidates (30 more),
+  the candidate pool is now ~130 per query vs ~50 before.
+
+  Sutton: this is NOT a model ceiling -- it's an engineering ceiling in
+  candidate generation. The model is fine. The pipeline around it was
+  limiting its potential.
+
+artifacts: []
