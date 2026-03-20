@@ -133,7 +133,8 @@ def train_metapath2vec(
 
     device = "cpu"  # MetaPath2Vec training is CPU-based in PyG
     model = model.to(device)
-    optimizer = torch.optim.SparseAdam(list(model.parameters()), lr=lr)
+    # SparseAdam fails with dense gradients in some PyG versions; use Adam
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
 
     loader = model.loader(batch_size=batch_size, shuffle=True)
 
