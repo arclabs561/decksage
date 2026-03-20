@@ -246,10 +246,10 @@ def main() -> int:
                 if n_saved % 50 == 0:
                     elapsed = time.time() - t0
                     rate = n_saved / elapsed if elapsed > 0 else 0
-                print(
-                    f"  {n_saved}/{args.max_decks} saved "
-                    f"(ID ~{deck_id}, {rate:.2f}/s, {n_skipped} skip, {n_errors} err)"
-                )
+                    print(
+                        f"  {n_saved}/{args.max_decks} saved "
+                        f"(page {page}, {rate:.2f}/s, {n_skipped} skip, {n_errors} err)"
+                    )
 
     elapsed = time.time() - t0
     print(f"\nDone: {n_saved} decks, {n_skipped} skipped, {n_errors} errors, {elapsed:.0f}s")
