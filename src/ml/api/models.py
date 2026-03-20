@@ -322,6 +322,7 @@ class ApiState:
         self.visual_embedder: object | None = None
         self.archetype_staples: dict[str, dict[str, float]] | None = None
         self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
+        self.secondary_embeddings: Any = None  # MetaPath2Vec or other complementary embedding
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
         self.card_metadata: dict[str, dict[str, Any]] | None = None  # Full card attrs w/ image_url
         # Enrichment data (loaded from data/ assets)
