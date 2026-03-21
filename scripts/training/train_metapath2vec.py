@@ -27,10 +27,17 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import subprocess
 import sys
 import time
+import traceback
 from pathlib import Path
+
+# Force unbuffered stdout so logs appear immediately in redirected files
+if not sys.stdout.isatty():
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
 
 import numpy as np
 import torch
@@ -504,6 +511,7 @@ def main() -> int:
             "walks_per_node": args.walks_per_node,
             "lr": args.lr,
             "batch_size": args.batch_size,
+            "edge_types_filter": args.edge_types if args.edge_types else "all",
         },
         "data": {
             "edge_types": {k: len(v) for k, v in edge_types.items()},
@@ -536,4 +544,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except Exception:
+        traceback.print_exc()
+        sys.exit(1)
