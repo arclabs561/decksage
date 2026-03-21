@@ -25,6 +25,9 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import csv
+import json
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -116,7 +119,8 @@ def train_metapath2vec(
     epochs: int = 5,
     batch_size: int = 128,
     lr: float = 0.01,
-) -> torch.Tensor:
+    loss_log_path: Path | None = None,
+) -> tuple[np.ndarray, list[dict]]:
     """Train MetaPath2Vec and return embeddings."""
     from torch_geometric.nn import MetaPath2Vec
 
@@ -143,17 +147,34 @@ def train_metapath2vec(
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     ckpt_path = ckpt_dir / f"metapath2vec_{num_nodes}n_{dim}d.pt"
 
+    # Loss log (CSV: epoch, loss, wall_time_s)
+    loss_history: list[dict] = []
+    loss_csv = None
+    loss_writer = None
+    if loss_log_path:
+        loss_log_path.parent.mkdir(parents=True, exist_ok=True)
+        loss_csv = open(loss_log_path, "w", newline="")
+        loss_writer = csv.DictWriter(loss_csv, fieldnames=["epoch", "loss", "wall_s"])
+        loss_writer.writeheader()
+
+    train_start = time.monotonic()
+
     # Resume from checkpoint if exists
     start_epoch = 0
+    avg_loss = float("nan")
     if ckpt_path.exists():
         try:
             ckpt = torch.load(str(ckpt_path), weights_only=False)
             model.load_state_dict(ckpt["model"])
             optimizer.load_state_dict(ckpt["optimizer"])
             start_epoch = ckpt["epoch"] + 1
-            print(f"    Resumed from checkpoint: epoch {start_epoch} (loss {ckpt['loss']:.4f})")
+            avg_loss = ckpt["loss"]
+            print(f"    Resumed from checkpoint: epoch {start_epoch} (loss {avg_loss:.4f})")
         except Exception as e:
             print(f"    Checkpoint load failed ({e}), starting fresh")
+
+    if start_epoch >= epochs:
+        print(f"    Already trained to epoch {start_epoch}, skipping (requested {epochs})")
 
     for epoch in range(start_epoch, epochs):
         model.train()
@@ -168,7 +189,14 @@ def train_metapath2vec(
             n_batches += 1
 
         avg_loss = total_loss / max(n_batches, 1)
-        print(f"    Epoch {epoch + 1}/{epochs}: loss={avg_loss:.4f}")
+        wall_s = time.monotonic() - train_start
+        print(f"    Epoch {epoch + 1}/{epochs}: loss={avg_loss:.4f} ({wall_s:.0f}s)")
+
+        row = {"epoch": epoch + 1, "loss": round(avg_loss, 6), "wall_s": round(wall_s, 1)}
+        loss_history.append(row)
+        if loss_writer:
+            loss_writer.writerow(row)
+            loss_csv.flush()
 
         # Checkpoint every 10 epochs
         if (epoch + 1) % 10 == 0:
@@ -193,12 +221,15 @@ def train_metapath2vec(
         str(ckpt_path),
     )
 
+    if loss_csv:
+        loss_csv.close()
+
     # Extract embeddings
     model.eval()
     with torch.no_grad():
         embeddings = model("card").cpu().numpy()
 
-    return embeddings
+    return embeddings, loss_history
 
 
 def main() -> int:
@@ -245,11 +276,17 @@ def main() -> int:
 
     print(f"  Metapath: {' -> '.join(f'({s},{e},{t})' for s, e, t in metapath)}")
 
+    # Prepare log paths
+    suffix = f"_{args.output_suffix}" if args.output_suffix else ""
+    logs_dir = DATA_DIR / "logs"
+    logs_dir.mkdir(parents=True, exist_ok=True)
+    loss_log_path = logs_dir / f"{args.game}_metapath2vec{suffix}_loss.csv"
+
     # Train
     print(f"\n[4/4] Training MetaPath2Vec (dim={args.dim}, epochs={args.epochs})...")
     t0 = time.monotonic()
 
-    embeddings = train_metapath2vec(
+    embeddings, loss_history = train_metapath2vec(
         edge_index_dict,
         num_nodes=len(card_list),
         metapaths=[metapath],
@@ -259,10 +296,12 @@ def main() -> int:
         epochs=args.epochs,
         batch_size=args.batch_size,
         lr=args.lr,
+        loss_log_path=loss_log_path,
     )
 
     elapsed = time.monotonic() - t0
     print(f"\n  Training complete in {elapsed:.1f}s")
+    print(f"  Loss log: {loss_log_path}")
 
     # L2 normalize
     norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
@@ -284,6 +323,7 @@ def main() -> int:
         "pokemon": [("Ultra Ball", "Nest Ball")],
         "yugioh": [("Ash Blossom & Joyous Spring", 'Maxx "C"')],
     }
+    quality_pairs = {}
     pairs = test_cards.get(args.game, [])
     if pairs:
         print(f"\n  Quality pairs:")
@@ -291,6 +331,79 @@ def main() -> int:
             if c1 in kv and c2 in kv:
                 sim = float(kv.similarity(c1, c2))
                 print(f"    {c1} <-> {c2}: {sim:.4f}")
+                quality_pairs[f"{c1} <-> {c2}"] = round(sim, 4)
+
+    # Auto-eval if eval script exists
+    eval_results = None
+    eval_script = PROJECT_ROOT / "scripts" / "evaluation" / "eval_per_mode.py"
+    if eval_script.exists():
+        print(f"\n  Running evaluation...")
+        try:
+            result = subprocess.run(
+                ["uv", "run", str(eval_script), "--game", args.game,
+                 "--embedding", f"{args.game}_metapath2vec{suffix}", "--json"],
+                capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
+            )
+            if result.returncode == 0 and result.stdout.strip():
+                eval_results = json.loads(result.stdout)
+                # Print key metrics
+                if args.game in eval_results:
+                    m = eval_results[args.game]
+                    print(f"    sub nDCG:  {m.get('sub_ndcg', 'N/A')}")
+                    print(f"    syn nDCG:  {m.get('syn_ndcg', 'N/A')}")
+                    print(f"    meta nDCG: {m.get('meta_ndcg', 'N/A')}")
+        except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
+            print(f"    Eval failed: {e}")
+
+    # Git SHA
+    git_sha = "unknown"
+    try:
+        result = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT),
+        )
+        if result.returncode == 0:
+            git_sha = result.stdout.strip()
+    except FileNotFoundError:
+        pass
+
+    # Write JSON run summary
+    run_summary = {
+        "game": args.game,
+        "model": "metapath2vec",
+        "git_sha": git_sha,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+        "params": {
+            "dim": args.dim,
+            "epochs": args.epochs,
+            "walk_length": args.walk_length,
+            "walks_per_node": args.walks_per_node,
+            "lr": args.lr,
+            "batch_size": args.batch_size,
+        },
+        "data": {
+            "edge_types": {k: len(v) for k, v in edge_types.items()},
+            "num_cards": len(card_list),
+            "metapath": [f"{s}-{e}-{t}" for s, e, t in metapath],
+        },
+        "training": {
+            "duration_s": round(elapsed, 1),
+            "final_loss": loss_history[-1]["loss"] if loss_history else None,
+            "loss_log": str(loss_log_path),
+        },
+        "quality_pairs": quality_pairs,
+        "eval": eval_results.get(args.game) if eval_results and args.game in eval_results else None,
+        "artifacts": {
+            "embeddings": str(out_path),
+            "checkpoint": str(DATA_DIR / "checkpoints" / f"metapath2vec_{len(card_list)}n_{args.dim}d.pt"),
+            "loss_log": str(loss_log_path),
+        },
+    }
+
+    summary_path = logs_dir / f"{args.game}_metapath2vec{suffix}_run.json"
+    with open(summary_path, "w") as f:
+        json.dump(run_summary, f, indent=2)
+    print(f"\n  Run summary: {summary_path}")
 
     return 0
 
