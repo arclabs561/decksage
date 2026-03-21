@@ -1,0 +1,34 @@
+id: "0039"
+date: "2026-03-21"
+title: "MetaPath2Vec 160 epochs: testing ceiling"
+game: magic
+
+hypothesis: >
+  Loss was still decreasing at 80 epochs (0.717). 160 epochs with lr=0.003
+  should continue improving sub nDCG beyond 0.198. If it plateaus, we know the
+  MetaPath2Vec ceiling for this graph structure.
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game magic --epochs 160 --walks-per-node 30 --lr 0.003 --batch-size 256"
+  commit: pending
+
+results:
+  training_loss: pending
+  overall_ndcg: pending
+  sub_ndcg: pending
+  syn_ndcg: pending
+  meta_ndcg: pending
+
+  progression:
+    5_epochs: "sub 0.114 (from 0038)"
+    20_epochs: "sub 0.177 (from 0038)"
+    40_epochs: "sub 0.186 (from 0038)"
+    80_epochs: "sub 0.198 (from 0038)"
+    160_epochs: pending
+
+conclusion: pending
+
+artifacts:
+  - data/embeddings/magic_metapath2vec.wv
