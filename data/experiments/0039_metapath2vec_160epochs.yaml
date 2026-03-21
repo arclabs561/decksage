@@ -1,34 +1,36 @@
 id: "0039"
 date: "2026-03-21"
-title: "MetaPath2Vec 160 epochs: testing ceiling"
+title: "MetaPath2Vec 160 epochs: sub nDCG 0.228 (+15% over 80ep)"
 game: magic
-
 hypothesis: >
-  Loss was still decreasing at 80 epochs (0.717). 160 epochs with lr=0.003
-  should continue improving sub nDCG beyond 0.198. If it plateaus, we know the
-  MetaPath2Vec ceiling for this graph structure.
+  Loss was still decreasing at 80 epochs (0.717). 160 epochs with lr=0.003 should continue improving sub nDCG beyond 0.198. If it plateaus, we know the MetaPath2Vec ceiling for this graph structure.
 
 method:
   type: embedding
   script: scripts/training/train_metapath2vec.py
   args: "--game magic --epochs 160 --walks-per-node 30 --lr 0.003 --batch-size 256"
-  commit: pending
-
+  commit: f181de0
 results:
-  training_loss: pending
-  overall_ndcg: pending
-  sub_ndcg: pending
-  syn_ndcg: pending
-  meta_ndcg: pending
-
+  sub_ndcg: 0.228
+  syn_ndcg: 0.228
+  meta_ndcg: 0.222
+  substitutability_ndcg: 0.145
+  catalog_coverage: "18.5% (6535/35272)"
+  novelty: "8.87 bits"
+  bias_ratio: "1.94x popular/niche"
   progression:
     5_epochs: "sub 0.114 (from 0038)"
     20_epochs: "sub 0.177 (from 0038)"
     40_epochs: "sub 0.186 (from 0038)"
     80_epochs: "sub 0.198 (from 0038)"
-    160_epochs: pending
-
-conclusion: pending
+    160_epochs: "sub 0.228"
+  vs_v5_fused:
+    sub_delta: "+84% (0.228 vs 0.124)"
+    syn_delta: "+88% (0.228 vs 0.121)"
+    meta_delta: "+75% (0.222 vs 0.127)"
+conclusion: >
+  Hypothesis confirmed: 160 epochs improves significantly over 80 (+15%). No overfitting observed. Progression is sublinear but not plateauing. All three modes (sub/syn/meta) improve roughly equally. Coverage expanded to 18.5% (was ~11% at 80ep baseline). AWS training running for pokemon + yugioh at 160ep. Next: try 320ep to find ceiling, or focus on coverage (candidate retrieval).
 
 artifacts:
   - data/embeddings/magic_metapath2vec.wv
+  - data/checkpoints/metapath2vec_35272n_128d.pt
