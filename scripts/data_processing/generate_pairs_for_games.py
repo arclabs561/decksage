@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = []
+# dependencies = ["pandas>=2.0.0", "gensim>=4.3.0"]
 # ///
 """
 Generate co-occurrence pairs from exported deck files.
