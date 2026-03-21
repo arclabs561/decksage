@@ -68,6 +68,7 @@ func init() {
 	flags.StringArrayP("only", "o", nil, "update only the given urls, if provided")
 	flags.StringP("section", "S", "", "which section to parse")
 	flags.Bool("cat", false, "whether to print out json lines of extracted items")
+	flags.StringP("cache", "c", "", "dir to use for local blob cache (avoids default Badger lock)")
 }
 
 func runExtract(cmd *cobra.Command, args []string) error {
@@ -81,7 +82,16 @@ func runExtract(cmd *cobra.Command, args []string) error {
 		gamesBlob.Close(config.Ctx)
 	}()
 
-	scraperBucket, err := limpetblob.NewBucket(config.Ctx, config.BucketURL+"/scraper", nil)
+	// For file:// buckets, skip Badger cache (reads are local, no S3 round-trips to cache).
+	// For s3:// buckets, use the --cache dir if provided, else default.
+	var blobCfg *limpetblob.BucketConfig
+	if strings.HasPrefix(config.BucketURL, "file://") {
+		blobCfg = &limpetblob.BucketConfig{NoCache: true}
+	} else if cmd.Flags().Changed("cache") {
+		cacheDir, _ := cmd.Flags().GetString("cache")
+		blobCfg = &limpetblob.BucketConfig{CacheDir: cacheDir}
+	}
+	scraperBucket, err := limpetblob.NewBucket(config.Ctx, config.BucketURL+"/scraper", blobCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create limpet bucket: %w", err)
 	}
