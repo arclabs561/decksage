@@ -1,0 +1,41 @@
+id: "0041"
+date: "2026-03-21"
+title: "MetaPath2Vec v2: expanded edges (Commander + diverse annotations)"
+game: magic
+
+hypothesis: >
+  Adding 8.1M Commander edges and 555 diverse annotation edges to
+  MetaPath2Vec training will improve sub nDCG beyond 0.228 (v1 at 160ep).
+  Commander edges cover 12K+ cards that had no competitive embedding.
+  Diverse annotation edges correct specific gaps the model misses.
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game magic --epochs 80 --walks-per-node 30 --lr 0.003 --output-suffix _v2"
+  commit: pending
+
+data:
+  training:
+    edge_types:
+      deck: "magic_merged_all.edg (331K edges)"
+      enriched: "magic_merged_enriched.edg (1.46M edges)"
+      annotation: "magic_annotation_edges.edg (29 edges, eval-excluded)"
+      set: "magic_set_cooccurrence.edg (2.16M edges)"
+      precon: "magic_precon_cooccurrence.edg (283K edges)"
+      keyword: "magic_keyword_sharing.edg (83K edges)"
+      commander: "magic_archidekt_commander.edg (8.1M edges)"
+      diverse: "magic_diverse_annotation_edges.edg (555 edges, eval-excluded)"
+
+results:
+  sub_ndcg: pending
+  syn_ndcg: pending
+  meta_ndcg: pending
+  overall_ndcg: pending
+  n_cards_with_embedding: pending
+  training_loss: pending
+
+conclusion: pending
+
+artifacts:
+  - data/embeddings/magic_metapath2vec_v2.wv
