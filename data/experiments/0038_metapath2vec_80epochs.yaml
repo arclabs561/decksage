@@ -1,0 +1,42 @@
+id: "0038"
+date: "2026-03-20"
+title: "MetaPath2Vec 80 epochs: sub nDCG 0.198 (+60% over v5 fused)"
+game: magic
+
+hypothesis: >
+  Loss was still decreasing at 40 epochs (0.725). 80 epochs with lr=0.003
+  should continue improving.
+
+method:
+  type: embedding
+  script: scripts/training/runctl_metapath2vec.sh local
+  args: "EPOCHS=80 WALKS=30 LR=0.003"
+
+results:
+  training_loss: "0.717 (vs 0.725 at 40ep, 0.735 at 20ep)"
+  overall_ndcg: 0.128
+  sub_ndcg: 0.198
+  syn_ndcg: 0.200
+  meta_ndcg: 0.194
+  sol_ring_arcane_signet: 0.801
+  lightning_bolt_lava_spike: 0.278
+
+  vs_v5_fused:
+    sub_delta: "+60%"
+    syn_delta: "+65%"
+    meta_delta: "+53%"
+
+  progression:
+    5_epochs: "sub 0.114"
+    20_epochs: "sub 0.177"
+    40_epochs: "sub 0.186"
+    80_epochs: "sub 0.198"
+
+conclusion: >
+  More epochs consistently improve MetaPath2Vec. No sign of overfitting.
+  Loss trajectory: 0.86 -> 0.74 -> 0.72 -> 0.72 (still decreasing).
+  The model is NOT at ceiling. Next: try 160 epochs on AWS GPU.
+  Also trying AWS g5.xlarge for faster iteration.
+
+artifacts:
+  - data/embeddings/magic_metapath2vec.wv
