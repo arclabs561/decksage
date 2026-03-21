@@ -216,6 +216,8 @@ def main() -> int:
                 print(f"  No results at page {page}, stopping")
                 break
 
+            page += 1
+
             for summary in deck_summaries:
                 if n_saved >= args.max_decks:
                     break
