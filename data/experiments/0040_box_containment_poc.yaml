@@ -1,0 +1,39 @@
+id: "0040"
+date: "2026-03-21"
+title: "Box containment POC: deck-contains-card via subsumer"
+game: magic
+
+hypothesis: >
+  Box embeddings trained on (deck, contains, card) triples via subsumer
+  will produce containment_prob > 0.8 for held-out in-deck cards and < 0.2
+  for random cards. This geometric representation captures "card belongs to
+  deck" better than cosine similarity and enables compositional queries.
+
+method:
+  type: embedding
+  script: scripts/training/train_box_containment.py
+  args: "--game magic --dim 32 --epochs 100 --lr 0.02"
+  commit: pending
+
+data:
+  training:
+    source: data/decks/decks_magic_archidekt_commander.jsonl + goldfish
+    count: pending
+    description: "Deck JSONL -> (deck_id, contains, card_id) triples"
+  validation:
+    source: "20% held-out cards from each deck"
+    description: "For each deck, hold out 20% of cards, test containment_prob"
+
+results:
+  held_out_containment_prob: pending
+  random_card_containment_prob: pending
+  auc_in_vs_random: pending
+  training_loss: pending
+  n_decks: pending
+  n_cards: pending
+  n_triples: pending
+
+conclusion: pending
+
+artifacts:
+  - data/embeddings/magic_box_containment.json
