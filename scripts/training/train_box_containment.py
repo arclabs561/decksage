@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "subsumer>=0.7.0",
+#     "subsumer>=0.7.1",
 #     "numpy>=1.24.0",
 # ]
 # ///
@@ -272,13 +272,33 @@ def main():
 
     # Train
     print(f"\nTraining {args.dim}D box embeddings (lr={args.lr}, epochs={args.epochs})...")
-    trainer = subsumer.BoxEmbeddingTrainer(args.lr, args.dim)
+    config = subsumer.TrainingConfig(
+        dim=args.dim,
+        learning_rate=args.lr,
+        negative_samples=10,
+        negative_weight=3.0,
+        margin=2.0,
+        gumbel_beta=5.0,
+        gumbel_beta_final=30.0,
+        warmup_epochs=5,
+        regularization=0.001,
+    )
+    trainer = subsumer.BoxEmbeddingTrainer.from_config(config)
 
     # Register all entities by doing an initial pass
     # subsumer auto-creates entities on first use in train_step
 
     t0 = time.monotonic()
     rng = random.Random(42)
+
+    # Build per-deck card sets for hard negative sampling
+    deck_card_sets: dict[int, set[int]] = {}
+    for d, _, c in train_triples:
+        deck_card_sets.setdefault(d, set()).add(c)
+
+    # Use relation 1 for "does NOT contain" (negative relation)
+    # subsumer trains on relation 0 as positive; we use separate batches
+    # with corrupted tails as explicit negatives
 
     for epoch in range(args.epochs):
         # Shuffle and batch
