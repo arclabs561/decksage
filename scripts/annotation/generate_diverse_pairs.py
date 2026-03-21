@@ -55,6 +55,13 @@ DATA_DIR = PROJECT_ROOT / "data"
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 EMBEDDING_FILES = {
+    "magic": "magic_metapath2vec",
+    "pokemon": "pokemon_metapath2vec",
+    "yugioh": "yugioh_metapath2vec",
+}
+
+# Fallbacks if MetaPath2Vec not available
+EMBEDDING_FALLBACKS = {
     "magic": "magic_v5_fused",
     "pokemon": "pokemon_v6_fused_a09",
     "yugioh": "yugioh_v5_fused_a09",
@@ -89,6 +96,12 @@ def load_embeddings(game: str) -> KeyedVectors | None:
     name = EMBEDDING_FILES.get(game, "")
     path = DATA_DIR / "embeddings" / f"{name}.wv"
     if path.exists():
+        return KeyedVectors.load(str(path))
+    # Fallback to older embeddings
+    fallback = EMBEDDING_FALLBACKS.get(game, "")
+    path = DATA_DIR / "embeddings" / f"{fallback}.wv"
+    if path.exists():
+        print(f"  Using fallback embeddings: {fallback}")
         return KeyedVectors.load(str(path))
     return None
 
@@ -334,7 +347,16 @@ def generate_budget_pairs(
     return pairs[:n_pairs]
 
 
-def generate_all(game: str, output_path: Path | None = None) -> dict:
+def generate_all(
+    game: str,
+    output_path: Path | None = None,
+    n_text: int = 200,
+    n_role: int = 200,
+    n_hard_neg: int = 100,
+    n_budget: int = 100,
+    seed: int = 42,
+    append: bool = False,
+) -> dict:
     """Generate diverse pairs for one game."""
     df = load_card_data(game)
     if df.empty:
@@ -345,19 +367,19 @@ def generate_all(game: str, output_path: Path | None = None) -> dict:
         return {"game": game, "error": "no embeddings"}
 
     print(f"\n{'=' * 60}")
-    print(f"{game.upper()} diverse pair generation")
+    print(f"{game.upper()} diverse pair generation (seed={seed})")
     print(f"  Cards: {len(df)}, Embeddings: {len(wv)}")
 
-    text_pairs = generate_text_similarity_pairs(df, wv)
+    text_pairs = generate_text_similarity_pairs(df, wv, n_pairs=n_text, seed=seed)
     print(f"  Text similarity pairs: {len(text_pairs)}")
 
-    role_pairs = generate_role_matched_pairs(df, wv)
+    role_pairs = generate_role_matched_pairs(df, wv, n_pairs=n_role, seed=seed)
     print(f"  Role-matched pairs: {len(role_pairs)}")
 
-    hard_negs = generate_hard_negatives(df, wv)
+    hard_negs = generate_hard_negatives(df, wv, n_pairs=n_hard_neg, seed=seed)
     print(f"  Hard negatives: {len(hard_negs)}")
 
-    budget_pairs = generate_budget_pairs(df, wv)
+    budget_pairs = generate_budget_pairs(df, wv, n_pairs=n_budget, seed=seed)
     print(f"  Budget pairs: {len(budget_pairs)}")
 
     all_pairs = text_pairs + role_pairs + hard_negs + budget_pairs
@@ -367,11 +389,27 @@ def generate_all(game: str, output_path: Path | None = None) -> dict:
     if output_path is None:
         output_path = DATA_DIR / "annotations" / f"diverse_pairs_{game}.jsonl"
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(output_path, "w") as f:
+
+    # Dedup against existing pairs if appending
+    existing_keys = set()
+    if append and output_path.exists():
+        with open(output_path) as f:
+            for line in f:
+                if line.strip():
+                    p = json.loads(line)
+                    existing_keys.add((p.get("card1", ""), p.get("card2", "")))
+        new_pairs = [p for p in all_pairs if (p["card1"], p["card2"]) not in existing_keys]
+        print(
+            f"  Deduped: {len(all_pairs)} -> {len(new_pairs)} new pairs ({len(existing_keys)} existing)"
+        )
+        all_pairs = new_pairs
+
+    mode = "a" if append else "w"
+    with open(output_path, mode) as f:
         for p in all_pairs:
             p["game"] = game
             f.write(json.dumps(p) + "\n")
-    print(f"  Saved to {output_path}")
+    print(f"  {'Appended to' if append else 'Saved to'} {output_path}")
 
     return {
         "game": game,
@@ -388,11 +426,26 @@ def main():
     parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--output", type=Path, default=None)
+    parser.add_argument("--n-text", type=int, default=200, help="Text similarity pairs per game")
+    parser.add_argument("--n-role", type=int, default=200, help="Role-matched pairs per game")
+    parser.add_argument("--n-hard-neg", type=int, default=100, help="Hard negative pairs per game")
+    parser.add_argument("--n-budget", type=int, default=100, help="Budget pairs per game")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--append", action="store_true", help="Append to existing file (dedup)")
     args = parser.parse_args()
 
     games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game]
     for game in games:
-        result = generate_all(game, args.output)
+        result = generate_all(
+            game,
+            args.output,
+            n_text=args.n_text,
+            n_role=args.n_role,
+            n_hard_neg=args.n_hard_neg,
+            n_budget=args.n_budget,
+            seed=args.seed,
+            append=args.append,
+        )
         print(json.dumps(result, indent=2))
 
 
