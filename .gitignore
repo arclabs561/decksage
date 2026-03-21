@@ -293,3 +293,4 @@ src/backend/games/magic/dataset/scryfall/.cache/
 data/models/
 data/processed/*.pkl
 runctl.toml
+data/checkpoints/
