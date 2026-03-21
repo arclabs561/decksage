@@ -22,6 +22,29 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0014 | 2026-03-16 | IAA model rotation | all | models | 4-model pool | [0014](0014_iaa_model_rotation.yaml) |
 | 0015 | 2026-03-18 | Diverse pair generation | all | pairs | 1,600 (4 sources) | [0015](0015_diverse_pair_generation.yaml) |
 | 0016 | 2026-03-18 | Annotation edges export | all | edges | 3,232 exported | [0016](0016_annotation_edges_export.yaml) |
+| 0017 | 2026-03-19 | E5 fine-tuned eval | magic | nDCG | within-annotation ranking | [0017](0017_e5_finetuned_eval.yaml) |
+| 0018 | 2026-03-19 | LightGCN canonical eval | magic | nDCG | 0.095 (inflated sweep: 0.545) | [0018](0018_lightgcn_canonical_eval.yaml) |
+| 0019 | 2026-03-19 | Eval metrics audit | all | -- | recommendations | [0019](0019_metrics_audit.yaml) |
+| 0020 | 2026-03-19 | Coverage fix via text embeddings | magic | coverage | 11.6% -> 29% | [0020](0020_catalog_coverage_fix.yaml) |
+| 0021 | 2026-03-19 | Stratified nDCG bias check | magic | bias ratio | popular/niche split | [0021](0021_stratified_ndcg.yaml) |
+| 0022 | 2026-03-19 | Set/keyword/precon edges | magic | edges | new edge types added | [0022](0022_set_edges.yaml) |
+| 0023 | 2026-03-19 | v7 retrain w/ set edges | magic | nDCG | coverage up, nDCG down | [0023](0023_v7_set_edges_retrain.yaml) |
+| 0024 | 2026-03-19 | LightGCN collapse root cause | all | -- | trivial solution on sparse graphs | [0024](0024_lightgcn_collapse_diagnosis.yaml) |
+| 0025 | 2026-03-19 | Ceiling analysis | magic | ranking | 95.6% optimal, retrieval is bottleneck | [0025](0025_ceiling_analysis.yaml) |
+| 0026 | 2026-03-20 | All-games baseline post-fixes | all | nDCG | M:0.156 P:0.294 Y:0.554 | [0026](0026_all_games_baseline_with_fixes.yaml) |
+| 0027 | 2026-03-20 | IAA Krippendorff alpha | magic | alpha | 0.43 (judges disagree) | [0027](0027_iaa_krippendorff.yaml) |
+| 0028 | 2026-03-20 | Archidekt Commander scrape | magic | pairs | 1.59M from 507 decks | [0028](0028_archidekt_commander_scrape.yaml) |
+| 0029 | 2026-03-20 | v8 Commander retrain | magic | nDCG | coverage up, nDCG down | [0029](0029_v8_commander_retrain.yaml) |
+| 0030 | 2026-03-20 | MetaPath2Vec first pass | magic | sub nDCG | 0.114 (5ep baseline) | [0030](0030_metapath2vec_first_pass.yaml) |
+| 0031 | 2026-03-20 | MetaPath2Vec v2 beats v5 | magic | sub nDCG | 0.177 (+43% over v5) | [0031](0031_metapath2vec_v2_beats_v5.yaml) |
+| 0032 | 2026-03-20 | Dual-embedding fusion analysis | magic | nDCG | v5+MP2V = +16% | [0032](0032_fusion_analysis.yaml) |
+| 0033 | 2026-03-20 | Data curation audit | magic | -- | dedup, land noise, gaps | [0033](0033_data_curation_audit.yaml) |
+| 0034 | 2026-03-20 | rankops CombMNZ vs RRF | magic | nDCG | CombMNZ +10% over RRF | [0034](0034_rankops_fusion_comparison.yaml) |
+| 0035 | 2026-03-20 | Commander data scaling | magic | pairs | 3.8M from 2,615 decks | [0035](0035_commander_data_scaling.yaml) |
+| 0036 | 2026-03-20 | MetaPath2Vec tuning | magic | sub nDCG | attr fusion hurts | [0036](0036_metapath2vec_tuning.yaml) |
+| 0037 | 2026-03-20 | MetaPath2Vec 40ep | magic | sub nDCG | 0.186 (+50% over v5) | [0037](0037_metapath2vec_40epochs.yaml) |
+| 0038 | 2026-03-20 | MetaPath2Vec 80ep | magic | sub nDCG | 0.198 (+60% over v5) | [0038](0038_metapath2vec_80epochs.yaml) |
+| 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | sub nDCG | 0.228 (+84% over v5) | [0039](0039_metapath2vec_160epochs.yaml) |
 
 ## Key Insights (cross-cutting)
 
