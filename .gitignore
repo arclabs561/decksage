@@ -33,6 +33,7 @@
 /data/embeddings/*.kv
 /data/graphs/*.edg
 /data/archive/
+/data/checkpoints/
 /integration_test_tmp/
 ## Large data samples (track elsewhere)
 /src/backend/decks_hetero.jsonl
