@@ -1,123 +1,144 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = [
-#     "numpy>=1.24.0",
-#     "gensim>=4.3.0",
-# ]
+# dependencies = ["pyyaml>=6.0"]
 # ///
 """
-Log an experiment result to the experiment ledger.
+Generate experiment YAML from a training run summary JSON.
 
-Runs eval_per_mode.py metrics and appends a row to the TSV ledger.
+Reads the JSON produced by train_metapath2vec.py (or any training script that
+writes the same format) and produces a properly structured experiment YAML.
 
 Usage:
-    uv run scripts/evaluation/log_experiment.py --game magic --embedding magic_v5_fused --notes "v5 fused alpha=0.7"
-    uv run scripts/evaluation/log_experiment.py --all-games --notes "baseline after retrain"
+    uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json
+    uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json --hypothesis "Testing 320 epochs"
+    uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json --dry-run
 """
-
 from __future__ import annotations
 
 import argparse
-import csv
 import json
-import os
 import sys
-from datetime import datetime
 from pathlib import Path
 
-import numpy as np
-from gensim.models import KeyedVectors
-
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
-DATA_DIR = PROJECT_ROOT / "data"
-LEDGER_PATH = DATA_DIR / "experiments" / "experiment_log.tsv"
-
-# Import eval functions
-sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "evaluation"))
-from eval_per_mode import eval_game, load_test_set
+import yaml
 
 
-def count_pairs(game: str) -> int:
-    """Count pairs in the active pairs file."""
-    env_key = f"PAIRS_PATH_{game.upper()}"
-    pairs_path = os.getenv(env_key, "")
-    if pairs_path:
-        p = Path(pairs_path.lstrip("./"))
-        if p.exists():
-            return sum(1 for _ in open(p)) - 1  # subtract header
+def next_experiment_id(experiments_dir: Path) -> str:
+    existing = sorted(experiments_dir.glob("*.yaml"))
+    if not existing:
+        return "0001"
+    last = existing[-1].stem.split("_")[0]
+    return f"{int(last) + 1:04d}"
+
+
+def build_experiment(run: dict, exp_id: str, hypothesis: str | None = None) -> dict:
+    game = run["game"]
+    params = run["params"]
+    ev = run.get("eval") or {}
+
+    sub = ev.get("sub_ndcg")
+    title_metric = f"sub nDCG {sub}" if sub else "results pending"
+    title = f"{run['model']} {params['epochs']}ep: {title_metric}"
+
+    exp = {
+        "id": exp_id,
+        "date": run["timestamp"][:10],
+        "title": title,
+        "game": game,
+        "hypothesis": hypothesis or "TODO: fill in before committing",
+        "method": {
+            "type": "embedding",
+            "script": f"scripts/training/train_{run['model']}.py",
+            "args": " ".join(f"--{k.replace('_', '-')} {v}" for k, v in params.items()),
+            "commit": run.get("git_sha", "unknown"),
+        },
+        "data": {
+            "edge_types": run["data"]["edge_types"],
+            "num_cards": run["data"]["num_cards"],
+            "metapath": run["data"]["metapath"],
+        },
+        "results": {},
+        "conclusion": "TODO: fill in after reviewing results",
+        "artifacts": list(run.get("artifacts", {}).values()),
+    }
+
+    if ev:
+        for key in ["sub_ndcg", "syn_ndcg", "meta_ndcg", "substitutability_ndcg",
+                     "catalog_coverage", "novelty", "bias_ratio"]:
+            if key in ev:
+                exp["results"][key] = ev[key]
+
+    tr = run.get("training", {})
+    if tr.get("final_loss") is not None:
+        exp["results"]["final_loss"] = tr["final_loss"]
+    if tr.get("duration_s") is not None:
+        exp["results"]["duration_s"] = tr["duration_s"]
+
+    if run.get("quality_pairs"):
+        exp["results"]["quality_pairs"] = run["quality_pairs"]
+
+    return exp
+
+
+def append_to_summary(experiments_dir: Path, exp_id: str, exp: dict, filename: str) -> None:
+    summary_path = experiments_dir / "SUMMARY.md"
+    if not summary_path.exists():
+        return
+
+    game = exp["game"]
+    sub = exp["results"].get("sub_ndcg", "--")
+    title_short = exp["title"][:45]
+
+    row = f"| {exp_id} | {exp['date']} | {title_short} | {game} | sub nDCG | {sub} | [{exp_id}]({filename}) |"
+
+    content = summary_path.read_text()
+    marker = "## Key Insights"
+    if marker in content:
+        content = content.replace(marker, f"{row}\n\n{marker}")
+    else:
+        content += f"\n{row}\n"
+    summary_path.write_text(content)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description="Generate experiment YAML from run summary")
+    parser.add_argument("run_json", type=Path, help="Path to run summary JSON")
+    parser.add_argument("--hypothesis", type=str, help="Experiment hypothesis")
+    parser.add_argument("--dry-run", action="store_true", help="Print YAML without writing")
+    parser.add_argument("--no-summary", action="store_true", help="Don't update SUMMARY.md")
+    args = parser.parse_args()
+
+    if not args.run_json.exists():
+        print(f"Run summary not found: {args.run_json}", file=sys.stderr)
+        return 1
+
+    with open(args.run_json) as f:
+        run = json.load(f)
+
+    experiments_dir = Path(__file__).resolve().parent.parent.parent / "data" / "experiments"
+    exp_id = next_experiment_id(experiments_dir)
+    exp = build_experiment(run, exp_id, args.hypothesis)
+
+    yaml_str = yaml.dump(exp, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+    if args.dry_run:
+        print(yaml_str)
+        return 0
+
+    slug = run["model"] + "_" + str(run["params"]["epochs"]) + "ep"
+    filename = f"{exp_id}_{slug}.yaml"
+    out_path = experiments_dir / filename
+    with open(out_path, "w") as f:
+        f.write(yaml_str)
+    print(f"Wrote {out_path}")
+
+    if not args.no_summary:
+        append_to_summary(experiments_dir, exp_id, exp, filename)
+        print(f"Updated {experiments_dir / 'SUMMARY.md'}")
+
     return 0
 
 
-def log_experiment(
-    game: str,
-    embedding_name: str | None,
-    notes: str = "",
-    alpha: str = "n/a",
-) -> dict:
-    """Run eval and log results."""
-    result = eval_game(game, embedding_name)
-    if "error" in result:
-        print(f"{game}: {result['error']}")
-        return result
-
-    # Extract metrics
-    overall = result.get("overall_ndcg", {}).get("ndcg_at_k", 0)
-    sub = result.get("mode_substitute", {}).get("ndcg_at_k", 0)
-    syn = result.get("mode_synergy", {}).get("ndcg_at_k", 0)
-    meta = result.get("mode_meta", {}).get("ndcg_at_k", 0)
-    sub_score = result.get("substitutability_ndcg", {}).get("ndcg_at_k", 0)
-
-    pairs = count_pairs(game)
-    emb_name = embedding_name or result.get("embedding", "?")
-
-    row = {
-        "date": datetime.now().strftime("%Y-%m-%d"),
-        "game": game,
-        "experiment": emb_name,
-        "embedding": emb_name,
-        "alpha": alpha,
-        "pairs_count": pairs,
-        "vocab": result.get("vocab_size", 0),
-        "overall_ndcg": f"{overall:.4f}",
-        "sub_ndcg": f"{sub:.4f}",
-        "syn_ndcg": f"{syn:.4f}",
-        "meta_ndcg": f"{meta:.4f}",
-        "sub_score_ndcg": f"{sub_score:.4f}" if sub_score > 0 else "n/a",
-        "deck_quality": "pending",
-        "contextual_alt_recall": "pending",
-        "notes": notes,
-    }
-
-    # Append to ledger
-    LEDGER_PATH.parent.mkdir(parents=True, exist_ok=True)
-    write_header = not LEDGER_PATH.exists()
-    with open(LEDGER_PATH, "a", newline="") as f:
-        writer = csv.DictWriter(f, fieldnames=row.keys(), delimiter="\t")
-        if write_header:
-            writer.writeheader()
-        writer.writerow(row)
-
-    print(f"Logged: {game}/{emb_name} overall={overall:.4f} sub={sub:.4f} syn={syn:.4f}")
-    return row
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Log experiment to ledger")
-    parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
-    parser.add_argument("--all-games", action="store_true")
-    parser.add_argument("--embedding", default=None)
-    parser.add_argument("--alpha", default="n/a")
-    parser.add_argument("--notes", default="", required=True)
-    args = parser.parse_args()
-
-    games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game]
-    for game in games:
-        log_experiment(game, args.embedding, args.notes, args.alpha)
-
-    print(f"\nLedger: {LEDGER_PATH}")
-
-
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
