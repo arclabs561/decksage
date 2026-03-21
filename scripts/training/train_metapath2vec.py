@@ -57,6 +57,7 @@ def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
         "keyword": graph_dir / f"{game}_keyword_sharing.edg",
         "archetype": graph_dir / f"{game}_archetype_cooccurrence.edg",
         "commander": graph_dir / f"{game}_archidekt_commander.edg",
+        "diverse": graph_dir / f"{game}_diverse_annotation_edges.edg",
     }
 
     for etype, path in edge_files.items():
