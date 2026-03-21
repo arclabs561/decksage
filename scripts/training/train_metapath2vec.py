@@ -55,10 +55,11 @@ def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
     edge_types = {}
 
     # Map file patterns to edge type names
+    # NOTE: annotation edges excluded by default to prevent eval leakage
+    # (annotation pairs are used for nDCG evaluation)
     edge_files = {
         "deck": graph_dir / f"{game}_merged_all.edg",
         "enriched": graph_dir / f"{game}_merged_enriched.edg",
-        "annotation": graph_dir / f"{game}_annotation_edges.edg",
         "set": graph_dir / f"{game}_set_cooccurrence.edg",
         "precon": graph_dir / f"{game}_precon_cooccurrence.edg",
         "keyword": graph_dir / f"{game}_keyword_sharing.edg",
