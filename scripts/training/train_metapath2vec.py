@@ -333,7 +333,7 @@ def main() -> int:
                 print(f"    {c1} <-> {c2}: {sim:.4f}")
                 quality_pairs[f"{c1} <-> {c2}"] = round(sim, 4)
 
-    # Auto-eval if eval script exists
+    # Auto-eval: run eval_per_mode (offline, embedding-only)
     eval_results = None
     eval_script = PROJECT_ROOT / "scripts" / "evaluation" / "eval_per_mode.py"
     if eval_script.exists():
@@ -345,15 +345,93 @@ def main() -> int:
                 capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
             )
             if result.returncode == 0 and result.stdout.strip():
-                eval_results = json.loads(result.stdout)
-                # Print key metrics
-                if args.game in eval_results:
-                    m = eval_results[args.game]
-                    print(f"    sub nDCG:  {m.get('sub_ndcg', 'N/A')}")
-                    print(f"    syn nDCG:  {m.get('syn_ndcg', 'N/A')}")
-                    print(f"    meta nDCG: {m.get('meta_ndcg', 'N/A')}")
+                raw = json.loads(result.stdout)
+                if isinstance(raw, list):
+                    raw = raw[0] if raw else {}
+                eval_results = {
+                    args.game: {
+                        "sub_ndcg": raw.get("mode_substitute", {}).get("ndcg_at_k"),
+                        "syn_ndcg": raw.get("mode_synergy", {}).get("ndcg_at_k"),
+                        "meta_ndcg": raw.get("mode_meta", {}).get("ndcg_at_k"),
+                        "substitutability_ndcg": raw.get("substitutability_ndcg"),
+                        "catalog_coverage": raw.get("catalog_coverage", {}).get("coverage_pct")
+                            if isinstance(raw.get("catalog_coverage"), dict) else raw.get("catalog_coverage"),
+                        "novelty": raw.get("novelty", {}).get("mean_self_info")
+                            if isinstance(raw.get("novelty"), dict) else None,
+                        "bias_ratio": raw.get("stratified_ndcg", {}).get("bias_ratio")
+                            if isinstance(raw.get("stratified_ndcg"), dict) else None,
+                    }
+                }
+                m = eval_results[args.game]
+                print(f"    sub nDCG:  {m['sub_ndcg']:.4f}" if m["sub_ndcg"] else "    sub nDCG:  N/A")
+                print(f"    syn nDCG:  {m['syn_ndcg']:.4f}" if m["syn_ndcg"] else "    syn nDCG:  N/A")
+                print(f"    meta nDCG: {m['meta_ndcg']:.4f}" if m["meta_ndcg"] else "    meta nDCG: N/A")
         except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
             print(f"    Eval failed: {e}")
+
+    # Downstream task evals (offline, from embeddings + annotations)
+    downstream = {}
+    print(f"\n  Downstream evals...")
+
+    # Contextual: for each annotated query, check if graded buckets rank correctly
+    test_set_path = DATA_DIR / "test_sets" / f"annotated_{args.game}_v2.json"
+    if test_set_path.exists():
+        try:
+            with open(test_set_path) as f:
+                test_data = json.load(f)
+            test_queries = test_data.get("queries", {})
+
+            # Contextual recall: what fraction of highly/relevant cards appear in top-K?
+            ctx_hits, ctx_total = 0, 0
+            for qname, qdata in test_queries.items():
+                hr = qdata.get("highly_relevant", []) + qdata.get("relevant", [])
+                if not hr or qname not in kv:
+                    continue
+                try:
+                    top_k_names = {c for c, _ in kv.most_similar(qname, topn=20)}
+                    hits = sum(1 for c in hr if c in top_k_names)
+                    ctx_hits += hits
+                    ctx_total += len(hr)
+                except KeyError:
+                    pass
+
+            if ctx_total > 0:
+                ctx_recall = ctx_hits / ctx_total
+                downstream["contextual_recall_at_20"] = round(ctx_recall, 4)
+                print(f"    contextual recall@20: {ctx_recall:.3f} ({ctx_hits}/{ctx_total})")
+
+            # Deck completion proxy: for queries with 5+ relevant cards,
+            # use first 3 as seed, check if remaining appear in top-K
+            comp_hits, comp_total = 0, 0
+            for qname, qdata in test_queries.items():
+                all_rel = (qdata.get("highly_relevant", []) + qdata.get("relevant", [])
+                           + qdata.get("somewhat_relevant", []))
+                in_vocab = [c for c in all_rel if c in kv]
+                if len(in_vocab) < 5:
+                    continue
+                seed = in_vocab[:3]
+                targets = set(in_vocab[3:])
+                # Average seed vectors, find similar
+                try:
+                    seed_vec = sum(kv[c] for c in seed) / len(seed)
+                    norms = np.linalg.norm(seed_vec)
+                    if norms > 0:
+                        seed_vec /= norms
+                    sims = kv.similar_by_vector(seed_vec, topn=30)
+                    top_names = {c for c, _ in sims}
+                    hits = sum(1 for c in targets if c in top_names)
+                    comp_hits += hits
+                    comp_total += len(targets)
+                except Exception:
+                    pass
+
+            if comp_total > 0:
+                comp_recall = comp_hits / comp_total
+                downstream["completion_recall_at_30"] = round(comp_recall, 4)
+                print(f"    completion recall@30: {comp_recall:.3f} ({comp_hits}/{comp_total})")
+
+        except Exception as e:
+            print(f"    Downstream eval failed: {e}")
 
     # Git SHA
     git_sha = "unknown"
@@ -393,6 +471,7 @@ def main() -> int:
         },
         "quality_pairs": quality_pairs,
         "eval": eval_results.get(args.game) if eval_results and args.game in eval_results else None,
+        "downstream": downstream if downstream else None,
         "artifacts": {
             "embeddings": str(out_path),
             "checkpoint": str(DATA_DIR / "checkpoints" / f"metapath2vec_{len(card_list)}n_{args.dim}d.pt"),
