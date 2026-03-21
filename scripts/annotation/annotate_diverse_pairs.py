@@ -264,33 +264,41 @@ def _save_to_checkpoint(game: str, result: dict) -> None:
 
 
 async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10) -> dict:
-    """Annotate diverse pairs and integrate into test set."""
-    pairs = load_diverse_pairs(game)
-    if not pairs:
+    """Annotate diverse pairs and integrate into test set.
+
+    Runs all models from ANNOTATOR_MODEL_SIMILARITY (comma-separated) for IAA.
+    Each model pass is checkpointed separately so resume skips completed models.
+    """
+    all_pairs = load_diverse_pairs(game)
+    if not all_pairs:
         return {"game": game, "error": "no diverse pairs"}
 
-    # Resume support: skip already-annotated pairs
-    done_pairs = _load_checkpoint(game)  # keys include model name
-    if done_pairs:
-        before = len(pairs)
-        # Filter pairs per model -- allow same pair with different model
-        model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "").split(",")[0]
-        pairs = [p for p in pairs if (p["card1"], p["card2"], model_name) not in done_pairs]
-        logger.info(
-            f"{game}: resuming -- {before - len(pairs)} already done, {len(pairs)} remaining"
-        )
+    # Parse model list for multi-judge IAA
+    model_env = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5")
+    model_names = [m.strip() for m in model_env.split(",") if m.strip()]
 
-    logger.info(f"{game}: {len(pairs)} diverse pairs to annotate")
+    # Resume support: load checkpoint (keys include model name)
+    done_pairs = _load_checkpoint(game)
 
     if dry_run:
         sources = {}
-        for p in pairs:
+        for p in all_pairs:
             s = p.get("source", "unknown")
             sources[s] = sources.get(s, 0) + 1
-        cost = len(pairs) * 700 * 0.001 / 1000  # ~$0.001/pair for Haiku
+        per_model = {}
+        for model_name in model_names:
+            remaining = [
+                p for p in all_pairs if (p["card1"], p["card2"], model_name) not in done_pairs
+            ]
+            per_model[model_name] = len(remaining)
+        total_calls = sum(per_model.values())
+        cost = total_calls * 700 * 0.001 / 1000
         return {
             "game": game,
-            "pairs": len(pairs),
+            "total_pairs": len(all_pairs),
+            "models": model_names,
+            "per_model_remaining": per_model,
+            "total_calls": total_calls,
             "sources": sources,
             "cost_usd": round(cost, 2),
             "dry_run": True,
@@ -300,59 +308,72 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     card_data = load_card_metadata(game)
     logger.info(f"Loaded {len(card_data)} card metadata entries")
 
-    # Set up LLM
-    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5").split(",")[0]
     from ml.annotation.llm_annotator import CardSimilarityAnnotation
     from ml.utils.pydantic_ai_helpers import make_agent
 
     prompt_base = "You are an expert TCG judge. Judge card similarity and fill ALL fields."
-    agent = make_agent(model_name, CardSimilarityAnnotation, prompt_base)
-    sem = asyncio.Semaphore(concurrency)
 
-    # Annotate all pairs concurrently (semaphore limits parallelism)
     annotations_by_query: dict[str, list[dict]] = {}
-    n_done = 0
-    n_failed = 0
-    t0 = time.monotonic()
-
-    async def _annotate_one(i: int, pair: dict) -> tuple[int, dict | None]:
-        card1 = pair["card1"]
-        card2 = pair["card2"]
-        result = await annotate_pair(agent, card1, card2, pair, game, card_data, sem)
-        return i, result
-
-    # Launch all tasks concurrently, semaphore controls actual parallelism
-    tasks = [_annotate_one(i, pair) for i, pair in enumerate(pairs)]
-    for coro in asyncio.as_completed(tasks):
-        i, result = await coro
-        if result:
-            annotations_by_query.setdefault(result["query"], []).append(result)
-            _save_to_checkpoint(game, result)
-            n_done += 1
-        else:
-            n_failed += 1
-
-        total_processed = n_done + n_failed
-        if total_processed % 50 == 0:
-            elapsed = time.monotonic() - t0
-            rate = total_processed / elapsed if elapsed > 0 else 0
-            logger.info(
-                f"  Progress: {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
-            )
-
-    # Compute token/cost totals
+    total_done = 0
+    total_failed = 0
     total_input_tokens = 0
     total_output_tokens = 0
-    for anns_list in annotations_by_query.values():
-        for ann in anns_list:
-            total_input_tokens += ann.get("input_tokens", 0)
-            total_output_tokens += ann.get("output_tokens", 0)
-    total_tokens = total_input_tokens + total_output_tokens
+    t0 = time.monotonic()
 
-    model_name = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5").split(",")[0]
-    # Rough cost estimate (Haiku 4.5: $0.25/1M in, $1.25/1M out)
+    for model_idx, model_name in enumerate(model_names):
+        # Filter to pairs not yet done by this model
+        pairs = [p for p in all_pairs if (p["card1"], p["card2"], model_name) not in done_pairs]
+        if not pairs:
+            logger.info(
+                f"[{model_idx + 1}/{len(model_names)}] {model_name}: all {len(all_pairs)} pairs done, skipping"
+            )
+            continue
+
+        logger.info(
+            f"[{model_idx + 1}/{len(model_names)}] {model_name}: {len(pairs)} pairs to annotate"
+        )
+
+        agent = make_agent(model_name, CardSimilarityAnnotation, prompt_base)
+        sem = asyncio.Semaphore(concurrency)
+        n_done = 0
+        n_failed = 0
+
+        async def _annotate_one(i: int, pair: dict) -> tuple[int, dict | None]:
+            card1 = pair["card1"]
+            card2 = pair["card2"]
+            result = await annotate_pair(agent, card1, card2, pair, game, card_data, sem)
+            return i, result
+
+        tasks = [_annotate_one(i, pair) for i, pair in enumerate(pairs)]
+        for coro in asyncio.as_completed(tasks):
+            i, result = await coro
+            if result:
+                result["llm_model"] = model_name
+                annotations_by_query.setdefault(result["query"], []).append(result)
+                _save_to_checkpoint(game, result)
+                n_done += 1
+                total_input_tokens += result.get("input_tokens", 0)
+                total_output_tokens += result.get("output_tokens", 0)
+            else:
+                n_failed += 1
+
+            total_processed = n_done + n_failed
+            if total_processed % 50 == 0:
+                elapsed = time.monotonic() - t0
+                rate = total_processed / elapsed if elapsed > 0 else 0
+                logger.info(
+                    f"  [{model_name}] {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
+                )
+
+        total_done += n_done
+        total_failed += n_failed
+        logger.info(f"  [{model_name}] done: {n_done} annotated, {n_failed} failed")
+
+    total_tokens = total_input_tokens + total_output_tokens
     cost_usd = (total_input_tokens * 0.25 + total_output_tokens * 1.25) / 1_000_000
     elapsed = time.monotonic() - t0
+    n_done = total_done
+    n_failed = total_failed
 
     # Merge any previously checkpointed results (from interrupted runs)
     checkpoint_path = _checkpoint_path(game)

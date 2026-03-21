@@ -8,6 +8,7 @@
 #     "pydantic>=2.0",
 #     "pydantic-ai>=0.1.0",
 #     "python-dotenv>=1.0.0",
+#     "evoc>=0.1.0",
 # ]
 # ///
 """

@@ -344,13 +344,21 @@ async def run_pipeline(
     n_done = 0
     t0 = time.monotonic()
 
-    for name in todo:
-        info = card_metadata.get(name, {})
-        result = await annotate_card(agent, name, info, game, sem, model_name)
-        cards_data[name] = result
-        n_done += 1
+    # Process in concurrent batches for throughput
+    batch_chunk = concurrency * 3  # 3x concurrency for good pipelining
+    for batch_start in range(0, len(todo), batch_chunk):
+        batch = todo[batch_start : batch_start + batch_chunk]
+        tasks = [
+            annotate_card(agent, name, card_metadata.get(name, {}), game, sem, model_name)
+            for name in batch
+        ]
+        results = await asyncio.gather(*tasks)
 
-        # Incremental save
+        for name, result in zip(batch, results):
+            cards_data[name] = result
+            n_done += 1
+
+        # Incremental save after each batch
         doc = {
             "version": "1.0",
             "game": game,
@@ -361,12 +369,11 @@ async def run_pipeline(
         }
         _flush(output_path, doc)
 
-        if n_done % 25 == 0 or n_done == len(todo):
-            elapsed = time.monotonic() - t0
-            rate = n_done / elapsed if elapsed > 0 else 0
-            logger.info(
-                f"  Progress: {n_done}/{len(todo)} ({rate:.1f} cards/s, {len(cards_data)} total)"
-            )
+        elapsed = time.monotonic() - t0
+        rate = n_done / elapsed if elapsed > 0 else 0
+        logger.info(
+            f"  Progress: {n_done}/{len(todo)} ({rate:.1f} cards/s, {len(cards_data)} total)"
+        )
 
     remaining = len(card_metadata) - len(cards_data)
     print(f"\n--- Card Annotation Summary ---")
