@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # /// script
-# requires-python = ">=3.11"
+# requires-python = ">=3.11,<3.14"
 # dependencies = [
 #     "torch>=2.0.0",
 #     "torch-geometric>=2.4.0",
@@ -172,20 +172,26 @@ def train_metapath2vec(
 
         # Checkpoint every 10 epochs
         if (epoch + 1) % 10 == 0:
-            torch.save({
-                "epoch": epoch,
-                "model": model.state_dict(),
-                "optimizer": optimizer.state_dict(),
-                "loss": avg_loss,
-            }, str(ckpt_path))
+            torch.save(
+                {
+                    "epoch": epoch,
+                    "model": model.state_dict(),
+                    "optimizer": optimizer.state_dict(),
+                    "loss": avg_loss,
+                },
+                str(ckpt_path),
+            )
 
     # Final checkpoint
-    torch.save({
-        "epoch": epochs - 1,
-        "model": model.state_dict(),
-        "optimizer": optimizer.state_dict(),
-        "loss": avg_loss,
-    }, str(ckpt_path))
+    torch.save(
+        {
+            "epoch": epochs - 1,
+            "model": model.state_dict(),
+            "optimizer": optimizer.state_dict(),
+            "loss": avg_loss,
+        },
+        str(ckpt_path),
+    )
 
     # Extract embeddings
     model.eval()
@@ -204,8 +210,12 @@ def main() -> int:
     parser.add_argument("--walks-per-node", type=int, default=10)
     parser.add_argument("--lr", type=float, default=0.01)
     parser.add_argument("--batch-size", type=int, default=256)
-    parser.add_argument("--output-suffix", type=str, default="",
-                        help="Suffix for output filename (for parallel runs)")
+    parser.add_argument(
+        "--output-suffix",
+        type=str,
+        default="",
+        help="Suffix for output filename (for parallel runs)",
+    )
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
