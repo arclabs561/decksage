@@ -2,6 +2,28 @@
 
 Each experiment gets a YAML file: `NNNN_short_name.yaml`.
 
+## Workflow
+
+### Automatic (preferred)
+
+Training scripts write a JSON run summary to `data/logs/`. To create an experiment:
+
+```bash
+# 1. Train (writes run summary + loss CSV automatically)
+uv run scripts/training/train_metapath2vec.py --game magic --epochs 160
+
+# 2. Generate experiment YAML from the run summary
+uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json \
+    --hypothesis "160 epochs should improve over 80ep baseline"
+
+# 3. Review the YAML, fill in conclusion, commit with the code
+```
+
+### Manual
+
+Create the YAML by hand following the schema below. Use for non-training experiments
+(annotation work, data curation, architecture analysis).
+
 ## File format
 
 ```yaml
@@ -10,49 +32,66 @@ date: "2026-03-17"
 title: "Short descriptive title"
 game: magic | pokemon | yugioh | all
 
-# WHY: hypothesis or goal
+# WHY: write BEFORE running
 hypothesis: >
   One sentence: what do you expect to happen and why?
 
-# WHAT: method
+# HOW: exact reproduction
 method:
   type: embedding | fine-tune | fusion | completion | annotation | sweep
-  script: scripts/training/foo.py  # path relative to repo root
-  args: "--game magic --epochs 50"  # CLI args used
+  script: scripts/training/foo.py
+  args: "--game magic --epochs 50"
   commit: abc1234  # git SHA at time of run
-  model: intfloat/e5-base-v2  # base model if applicable
 
 # WITH WHAT: data provenance
 data:
+  edge_types:          # {type: count} from graph
+    deck: 500000
+    enriched: 120000
+  num_cards: 21151     # total unique cards in graph
   training:
     source: data/test_sets/annotated_magic_v2.json
-    description: "481 annotated pairs, mode-labeled (sub/syn/meta)"
-    count: 3290  # number of examples
+    count: 3290
     split: "90/10 train/val"
-  graph: data/graphs/magic_unified.db  # if used
-  embeddings: data/embeddings/magic_v5_fused.wv  # if used
 
-# RESULTS: metrics
+# WHAT HAPPENED: measured metrics only
 results:
-  overall_ndcg: 0.156
-  sub_ndcg: 0.150
-  syn_ndcg: 0.133
-  meta_ndcg: 0.143
-  contextual_recall: 0.38
-  # add any metric that matters
+  sub_ndcg: 0.228
+  syn_ndcg: 0.228
+  meta_ndcg: 0.222
+  final_loss: 0.705
+  duration_s: 4800
+  quality_pairs:
+    "Lightning Bolt <-> Lava Spike": 0.28
+    "Sol Ring <-> Arcane Signet": 0.80
 
-# SO WHAT: interpretation
+# SO WHAT: write AFTER reviewing results
 conclusion: >
-  One sentence: what did we learn? Did the hypothesis hold?
-  What should we try next?
+  One sentence: did the hypothesis hold? What did we learn? What next?
 
-# artifacts produced
+# PRODUCED
 artifacts:
-  - data/embeddings/magic_v5_fused.wv
-  - data/experiments/lightgcn_sweep_magic.tsv
+  - data/embeddings/magic_metapath2vec.wv
+  - data/logs/magic_metapath2vec_loss.csv
 ```
+
+## Artifacts produced by training scripts
+
+| File | Content | Format |
+|------|---------|--------|
+| `data/logs/{game}_{model}_loss.csv` | Per-epoch loss curve | CSV: epoch, loss, wall_s |
+| `data/logs/{game}_{model}_run.json` | Full run summary | JSON (params, data, results, artifacts) |
+| `data/checkpoints/{model}_{nodes}n_{dim}d.pt` | Training checkpoint | PyTorch state dict |
+| `data/embeddings/{game}_{model}.wv` | Trained embeddings | gensim KeyedVectors |
+
+## Rules
+
+- Write hypothesis BEFORE running. If you can't state what you expect, you don't understand the experiment.
+- Never backfill metrics you didn't measure. "not recorded" is honest; guessing is not.
+- Record negative results. "This didn't work because X" is as valuable as "this improved Y by Z%."
+- Commit experiment files WITH the code changes, not separately.
+- Per-game metrics always. A single "overall" number hides domain-specific results.
 
 ## Index
 
-See `SUMMARY.md` for a chronological table of all experiments and key metrics.
-The TSV `experiment_log.tsv` is the legacy flat format (kept for backward compat).
+See `SUMMARY.md` for a chronological table of all experiments.
