@@ -248,6 +248,13 @@ def main() -> int:
         default="",
         help="Suffix for output filename (for parallel runs)",
     )
+    parser.add_argument(
+        "--edge-types",
+        type=str,
+        default="",
+        help="Comma-separated edge types to use (default: all available). "
+        "E.g. --edge-types deck,enriched,annotation",
+    )
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
@@ -257,6 +264,16 @@ def main() -> int:
     # Load edges
     print(f"\n[1/4] Loading typed edges...")
     edge_types = load_typed_edges(args.game)
+
+    # Filter to requested edge types
+    if args.edge_types:
+        requested = [e.strip() for e in args.edge_types.split(",")]
+        missing = [e for e in requested if e not in edge_types]
+        if missing:
+            print(f"  WARNING: requested edge types not found: {missing}")
+        edge_types = {k: v for k, v in edge_types.items() if k in requested}
+        print(f"  Filtered to: {list(edge_types.keys())}")
+
     if len(edge_types) < 2:
         print(f"Need at least 2 edge types for metapath. Found: {list(edge_types.keys())}")
         return 1
@@ -341,9 +358,20 @@ def main() -> int:
         print(f"\n  Running evaluation...")
         try:
             result = subprocess.run(
-                ["uv", "run", str(eval_script), "--game", args.game,
-                 "--embedding", f"{args.game}_metapath2vec{suffix}", "--json"],
-                capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
+                [
+                    "uv",
+                    "run",
+                    str(eval_script),
+                    "--game",
+                    args.game,
+                    "--embedding",
+                    f"{args.game}_metapath2vec{suffix}",
+                    "--json",
+                ],
+                capture_output=True,
+                text=True,
+                timeout=300,
+                cwd=str(PROJECT_ROOT),
             )
             if result.returncode == 0 and result.stdout.strip():
                 raw = json.loads(result.stdout)
@@ -356,17 +384,28 @@ def main() -> int:
                         "meta_ndcg": raw.get("mode_meta", {}).get("ndcg_at_k"),
                         "substitutability_ndcg": raw.get("substitutability_ndcg"),
                         "catalog_coverage": raw.get("catalog_coverage", {}).get("coverage_pct")
-                            if isinstance(raw.get("catalog_coverage"), dict) else raw.get("catalog_coverage"),
+                        if isinstance(raw.get("catalog_coverage"), dict)
+                        else raw.get("catalog_coverage"),
                         "novelty": raw.get("novelty", {}).get("mean_self_info")
-                            if isinstance(raw.get("novelty"), dict) else None,
+                        if isinstance(raw.get("novelty"), dict)
+                        else None,
                         "bias_ratio": raw.get("stratified_ndcg", {}).get("bias_ratio")
-                            if isinstance(raw.get("stratified_ndcg"), dict) else None,
+                        if isinstance(raw.get("stratified_ndcg"), dict)
+                        else None,
                     }
                 }
                 m = eval_results[args.game]
-                print(f"    sub nDCG:  {m['sub_ndcg']:.4f}" if m["sub_ndcg"] else "    sub nDCG:  N/A")
-                print(f"    syn nDCG:  {m['syn_ndcg']:.4f}" if m["syn_ndcg"] else "    syn nDCG:  N/A")
-                print(f"    meta nDCG: {m['meta_ndcg']:.4f}" if m["meta_ndcg"] else "    meta nDCG: N/A")
+                print(
+                    f"    sub nDCG:  {m['sub_ndcg']:.4f}" if m["sub_ndcg"] else "    sub nDCG:  N/A"
+                )
+                print(
+                    f"    syn nDCG:  {m['syn_ndcg']:.4f}" if m["syn_ndcg"] else "    syn nDCG:  N/A"
+                )
+                print(
+                    f"    meta nDCG: {m['meta_ndcg']:.4f}"
+                    if m["meta_ndcg"]
+                    else "    meta nDCG: N/A"
+                )
         except (subprocess.TimeoutExpired, json.JSONDecodeError, FileNotFoundError) as e:
             print(f"    Eval failed: {e}")
 
@@ -405,8 +444,11 @@ def main() -> int:
             # use first 3 as seed, check if remaining appear in top-K
             comp_hits, comp_total = 0, 0
             for qname, qdata in test_queries.items():
-                all_rel = (qdata.get("highly_relevant", []) + qdata.get("relevant", [])
-                           + qdata.get("somewhat_relevant", []))
+                all_rel = (
+                    qdata.get("highly_relevant", [])
+                    + qdata.get("relevant", [])
+                    + qdata.get("somewhat_relevant", [])
+                )
                 in_vocab = [c for c in all_rel if c in kv]
                 if len(in_vocab) < 5:
                     continue
@@ -439,7 +481,10 @@ def main() -> int:
     try:
         result = subprocess.run(
             ["git", "rev-parse", "--short", "HEAD"],
-            capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT),
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(PROJECT_ROOT),
         )
         if result.returncode == 0:
             git_sha = result.stdout.strip()
@@ -475,7 +520,9 @@ def main() -> int:
         "downstream": downstream if downstream else None,
         "artifacts": {
             "embeddings": str(out_path),
-            "checkpoint": str(DATA_DIR / "checkpoints" / f"metapath2vec_{len(card_list)}n_{args.dim}d.pt"),
+            "checkpoint": str(
+                DATA_DIR / "checkpoints" / f"metapath2vec_{len(card_list)}n_{args.dim}d.pt"
+            ),
             "loss_log": str(loss_log_path),
         },
     }
