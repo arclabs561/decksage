@@ -34,47 +34,109 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 
-def export_edges(game: str) -> dict:
-    """Export annotation edges for one game."""
-    test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    if not test_path.exists():
-        return {"game": game, "error": "no test set"}
+def export_edges(game: str, exclude_eval: bool = True) -> dict:
+    """Export annotation edges for one game.
 
-    with open(test_path) as f:
-        data = json.load(f)
+    If exclude_eval=True, only uses non-test-set annotation sources
+    (v4 annotations, dialogue pairs) to avoid train/eval leakage.
+    The v2 test set pairs are reserved for evaluation only.
+    """
+    # Primary source: v4 multi-judge annotations (separate from v2 test set)
+    annotation_sources = [
+        DATA_DIR / "annotations" / f"{game}_2000_v4.json",
+        DATA_DIR / "annotations" / f"{game}_500_v3.json",
+        DATA_DIR / "annotations" / f"{game}_500_hub_v3.json",
+        DATA_DIR / "annotations" / f"dialogue_{game}_50.json",
+    ]
+
+    # Build eval pair set for exclusion
+    eval_pairs: set[tuple[str, str]] = set()
+    if exclude_eval:
+        test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
+        if test_path.exists():
+            with open(test_path) as f:
+                test_data = json.load(f)
+            for q, qdata in test_data.get("queries", {}).items():
+                for ann in qdata.get("annotations", []):
+                    c = ann.get("candidate", "")
+                    if c:
+                        eval_pairs.add((min(q, c), max(q, c)))
+
+    # Collect annotations from non-eval sources
+    all_annotations = []
+
+    for src_path in annotation_sources:
+        if not src_path.exists():
+            continue
+        with open(src_path) as f:
+            src_data = json.load(f)
+
+        # Handle different annotation file formats
+        if isinstance(src_data, list):
+            all_annotations.extend(src_data)
+        elif isinstance(src_data, dict):
+            # v4 format: {"labels": [...]}
+            if "labels" in src_data:
+                all_annotations.extend(src_data["labels"])
+            # v3/v2 format: {"queries": {name: {annotations: [...]}}}
+            elif "queries" in src_data:
+                for qdata in src_data["queries"].values():
+                    if isinstance(qdata, dict):
+                        all_annotations.extend(qdata.get("annotations", []))
+            # dialogue format: {"pairs": [...]}
+            elif "pairs" in src_data:
+                all_annotations.extend(src_data["pairs"])
+
+    # Also include test set annotations but ONLY from training-safe queries
+    # (bucket-only queries that don't have per-pair LLM annotations)
+    if not exclude_eval:
+        test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
+        if test_path.exists():
+            with open(test_path) as f:
+                data = json.load(f)
+            for qdata in data.get("queries", {}).values():
+                all_annotations.extend(qdata.get("annotations", []))
 
     edges: dict[tuple[str, str], float] = {}
     n_functional = 0
     n_synergy = 0
     n_substitutability = 0
+    n_excluded = 0
 
-    for qdata in data.get("queries", {}).values():
-        for ann in qdata.get("annotations", []):
-            card1 = ann.get("query", "")
-            card2 = ann.get("candidate", "")
-            if not card1 or not card2 or card1 == card2:
-                continue
+    for ann in all_annotations:
+        card1 = ann.get("query", ann.get("card1", ann.get("card_a", "")))
+        card2 = ann.get("candidate", ann.get("card2", ann.get("card_b", "")))
+        if not card1 or not card2 or card1 == card2:
+            continue
 
-            # Normalize edge direction (alphabetical)
-            key = (min(card1, card2), max(card1, card2))
-            weight = 0.0
+        # Normalize edge direction (alphabetical)
+        key = (min(card1, card2), max(card1, card2))
 
-            func = ann.get("functional_score") or 0
-            syn = ann.get("synergy_score") or 0
-            sub = ann.get("substitutability") or 0
+        # Exclude eval pairs to prevent train/eval leakage
+        if exclude_eval and key in eval_pairs:
+            n_excluded += 1
+            continue
 
-            if float(func) > 0.5:
-                weight = max(weight, float(func) * 5)
-                n_functional += 1
-            if float(syn) > 0.5:
-                weight = max(weight, float(syn) * 3)
-                n_synergy += 1
-            if float(sub) > 0.5:
-                weight = max(weight, float(sub) * 5)
-                n_substitutability += 1
+        weight = 0.0
 
-            if weight > 0:
-                edges[key] = max(edges.get(key, 0), weight)
+        # Handle both v4 (consensus nested) and v2/v3 (flat) formats
+        consensus = ann.get("consensus", ann)
+        func = float(consensus.get("functional_score") or consensus.get("similarity_score") or 0)
+        syn = float(consensus.get("synergy_score") or 0)
+        sub = float(consensus.get("substitutability") or ann.get("substitutability") or 0)
+
+        if func > 0.5:
+            weight = max(weight, func * 5)
+            n_functional += 1
+        if syn > 0.5:
+            weight = max(weight, syn * 3)
+            n_synergy += 1
+        if sub > 0.5:
+            weight = max(weight, sub * 5)
+            n_substitutability += 1
+
+        if weight > 0:
+            edges[key] = max(edges.get(key, 0), weight)
 
     # Write edgelist
     out_path = DATA_DIR / "graphs" / f"{game}_annotation_edges.edg"
@@ -83,8 +145,10 @@ def export_edges(game: str) -> dict:
         for (c1, c2), w in sorted(edges.items()):
             f.write(f"{c1}\t{c2}\t{w:.4f}\n")
 
+    excluded_msg = f", {n_excluded} excluded (eval)" if exclude_eval else ""
     print(
-        f"{game}: {len(edges)} edges ({n_functional} functional, {n_synergy} synergy, {n_substitutability} substitutability)"
+        f"{game}: {len(edges)} edges ({n_functional} functional, {n_synergy} synergy, "
+        f"{n_substitutability} substitutability{excluded_msg})"
     )
     print(f"  Saved to {out_path}")
 
@@ -94,6 +158,7 @@ def export_edges(game: str) -> dict:
         "functional": n_functional,
         "synergy": n_synergy,
         "substitutability": n_substitutability,
+        "excluded_eval": n_excluded,
         "path": str(out_path),
     }
 
