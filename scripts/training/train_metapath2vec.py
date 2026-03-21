@@ -138,7 +138,24 @@ def train_metapath2vec(
 
     loader = model.loader(batch_size=batch_size, shuffle=True)
 
-    for epoch in range(epochs):
+    # Checkpoint dir
+    ckpt_dir = Path(__file__).resolve().parent.parent.parent / "data" / "checkpoints"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    ckpt_path = ckpt_dir / f"metapath2vec_{num_nodes}n_{dim}d.pt"
+
+    # Resume from checkpoint if exists
+    start_epoch = 0
+    if ckpt_path.exists():
+        try:
+            ckpt = torch.load(str(ckpt_path), weights_only=False)
+            model.load_state_dict(ckpt["model"])
+            optimizer.load_state_dict(ckpt["optimizer"])
+            start_epoch = ckpt["epoch"] + 1
+            print(f"    Resumed from checkpoint: epoch {start_epoch} (loss {ckpt['loss']:.4f})")
+        except Exception as e:
+            print(f"    Checkpoint load failed ({e}), starting fresh")
+
+    for epoch in range(start_epoch, epochs):
         model.train()
         total_loss = 0
         n_batches = 0
@@ -152,6 +169,23 @@ def train_metapath2vec(
 
         avg_loss = total_loss / max(n_batches, 1)
         print(f"    Epoch {epoch + 1}/{epochs}: loss={avg_loss:.4f}")
+
+        # Checkpoint every 10 epochs
+        if (epoch + 1) % 10 == 0:
+            torch.save({
+                "epoch": epoch,
+                "model": model.state_dict(),
+                "optimizer": optimizer.state_dict(),
+                "loss": avg_loss,
+            }, str(ckpt_path))
+
+    # Final checkpoint
+    torch.save({
+        "epoch": epochs - 1,
+        "model": model.state_dict(),
+        "optimizer": optimizer.state_dict(),
+        "loss": avg_loss,
+    }, str(ckpt_path))
 
     # Extract embeddings
     model.eval()
