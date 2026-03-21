@@ -1,39 +1,54 @@
 id: "0040"
 date: "2026-03-21"
-title: "Box containment POC: deck-contains-card via subsumer"
+title: "Box containment POC: deck-contains-card -- FAILED (no separation)"
 game: magic
 
 hypothesis: >
   Box embeddings trained on (deck, contains, card) triples via subsumer
   will produce containment_prob > 0.8 for held-out in-deck cards and < 0.2
-  for random cards. This geometric representation captures "card belongs to
-  deck" better than cosine similarity and enables compositional queries.
+  for random cards.
 
 method:
   type: embedding
   script: scripts/training/train_box_containment.py
-  args: "--game magic --dim 32 --epochs 100 --lr 0.02"
+  args: "--game magic --dim 32 --epochs 50 --max-decks 2000 --lr 0.005"
   commit: pending
+  configs_tried:
+    - "lr=0.02, dim=32, neg_samples=1 (default), 10K decks -> AUC 0.498"
+    - "lr=0.005, dim=32, neg_samples=1, 2K decks -> AUC 0.493"
+    - "lr=0.005, dim=32, neg_samples=10, neg_weight=3, margin=2, 2K decks -> AUC 0.504"
 
 data:
   training:
     source: data/decks/decks_magic_archidekt_commander.jsonl + goldfish
-    count: pending
+    count: "2,001 decks, 18,739 cards, 127,994 train triples"
     description: "Deck JSONL -> (deck_id, contains, card_id) triples"
   validation:
-    source: "20% held-out cards from each deck"
-    description: "For each deck, hold out 20% of cards, test containment_prob"
+    source: "20% held-out cards from each deck (31,045 triples)"
 
 results:
-  held_out_containment_prob: pending
-  random_card_containment_prob: pending
-  auc_in_vs_random: pending
-  training_loss: pending
-  n_decks: pending
-  n_cards: pending
-  n_triples: pending
+  held_out_containment_prob: 0.778
+  random_card_containment_prob: 0.772
+  auc_in_vs_random: 0.504
+  training_loss: 1.747
+  n_decks: 2001
+  n_cards: 18739
+  n_triples: 127994
 
-conclusion: pending
+conclusion: >
+  FAILED. No meaningful separation between held-out and random cards
+  (AUC 0.504, effectively random). Root cause: TCG decks share many cards
+  (popular staples appear in thousands of decks), so the optimal solution
+  is "expand all boxes to contain everything." This is the same degenerate
+  solution as basic lands in word2vec. Deck-level containment is the wrong
+  formulation for box embeddings.
+
+  Better approaches for box embeddings in DeckSage:
+  1. Card-card substitution containment (A's use-cases subset of B's),
+     using 128 upgrade_direction annotations as training signal
+  2. Archetype-level containment (archetype box > member card points)
+  3. Set2Box for deck-deck Jaccard similarity (different formulation)
 
 artifacts:
   - data/embeddings/magic_box_containment.json
+  - data/embeddings/magic_box_containment.meta.json
