@@ -386,8 +386,11 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                     q = ann.get("query", "")
                     if not q:
                         continue
-                    existing_cands = {a.get("candidate") for a in annotations_by_query.get(q, [])}
-                    if ann.get("candidate") not in existing_cands:
+                    existing_keys = {
+                        (a.get("candidate"), a.get("llm_model", ""))
+                        for a in annotations_by_query.get(q, [])
+                    }
+                    if (ann.get("candidate"), ann.get("llm_model", "")) not in existing_keys:
                         annotations_by_query.setdefault(q, []).append(ann)
                         n_from_checkpoint += 1
         if n_from_checkpoint > 0:
@@ -397,7 +400,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     logger.info(
         f"Tokens: {total_input_tokens:,} in + {total_output_tokens:,} out = {total_tokens:,} total"
     )
-    logger.info(f"Cost: ~${cost_usd:.4f} ({model_name})")
+    logger.info(f"Cost: ~${cost_usd:.4f} ({', '.join(model_names)})")
 
     # Integrate into test set
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
