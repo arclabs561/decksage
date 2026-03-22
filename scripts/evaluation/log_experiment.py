@@ -38,8 +38,10 @@ def build_experiment(run: dict, exp_id: str, hypothesis: str | None = None) -> d
     ev = run.get("eval") or {}
 
     sub = ev.get("sub_ndcg")
-    title_metric = f"sub nDCG {sub}" if sub else "results pending"
-    title = f"{run['model']} {params['epochs']}ep: {title_metric}"
+    title_metric = f"sub nDCG {sub:.4f}" if sub else "results pending"
+    # Handle different param keys (epochs for MetaPath2Vec, iterations for Cleora)
+    epoch_str = str(params.get("epochs", params.get("iterations", "?")))
+    title = f"{run['model']} {epoch_str}ep: {title_metric}"
 
     exp = {
         "id": exp_id,
@@ -53,14 +55,12 @@ def build_experiment(run: dict, exp_id: str, hypothesis: str | None = None) -> d
             "args": " ".join(f"--{k.replace('_', '-')} {v}" for k, v in params.items()),
             "commit": run.get("git_sha", "unknown"),
         },
-        "data": {
-            "edge_types": run["data"]["edge_types"],
-            "num_cards": run["data"]["num_cards"],
-            "metapath": run["data"]["metapath"],
-        },
+        "data": {k: v for k, v in run.get("data", {}).items()},
         "results": {},
         "conclusion": "TODO: fill in after reviewing results",
-        "artifacts": list(run.get("artifacts", {}).values()),
+        "artifacts": list(run.get("artifacts", {}).values())
+                     if isinstance(run.get("artifacts"), dict)
+                     else run.get("artifacts", []),
     }
 
     if ev:
