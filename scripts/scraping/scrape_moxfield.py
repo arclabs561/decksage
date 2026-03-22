@@ -2,7 +2,7 @@
 # /// script
 # requires-python = ">=3.11"
 # dependencies = [
-#     "httpx>=0.27.0",
+#     "cloudscraper>=1.2.0",
 # ]
 # ///
 """
@@ -30,31 +30,37 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 
-import httpx
+import cloudscraper
+
+if not sys.stdout.isatty():
+    sys.stdout.reconfigure(line_buffering=True)
+    sys.stderr.reconfigure(line_buffering=True)
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
+API_BASE = "https://api2.moxfield.com"
 
-def get_client(use_proxy: bool = False) -> httpx.Client:
-    """Create HTTP client with optional proxy."""
-    proxy_url = os.environ.get("PROXY_URL") or os.environ.get("HTTP_PROXY")
-    proxies = proxy_url if (use_proxy and proxy_url) else None
 
-    return httpx.Client(
-        base_url="https://api2.moxfield.com",
-        headers={
-            "User-Agent": "DeckSage/1.0 (deck-research)",
-            "Accept": "application/json",
-        },
-        proxy=proxies,
-        timeout=30.0,
-        follow_redirects=True,
+def get_client(use_proxy: bool = False) -> cloudscraper.CloudScraper:
+    """Create cloudscraper client (bypasses Cloudflare JS challenge)."""
+    scraper = cloudscraper.create_scraper(
+        browser={"browser": "chrome", "platform": "darwin", "mobile": False},
     )
+    scraper.headers.update({
+        "Accept": "application/json",
+    })
+
+    if use_proxy:
+        proxy_url = os.environ.get("PROXY_URL") or os.environ.get("HTTP_PROXY")
+        if proxy_url:
+            scraper.proxies = {"http": proxy_url, "https": proxy_url}
+
+    return scraper
 
 
 def search_decks(
-    client: httpx.Client,
+    client: cloudscraper.CloudScraper,
     fmt: str = "commander",
     page: int = 1,
     page_size: int = 50,
@@ -64,7 +70,7 @@ def search_decks(
     """Search for public decks by format."""
     try:
         r = client.get(
-            "/v2/decks/search",
+            f"{API_BASE}/v2/decks/search",
             params={
                 "fmt": fmt,
                 "pageNumber": page,
@@ -73,6 +79,7 @@ def search_decks(
                 "sortDirection": sort_direction,
                 "board": "mainboard",
             },
+            timeout=30,
         )
         if r.status_code == 200:
             return r.json()
@@ -84,10 +91,10 @@ def search_decks(
         return None
 
 
-def get_deck_detail(client: httpx.Client, public_id: str) -> dict | None:
+def get_deck_detail(client: cloudscraper.CloudScraper, public_id: str) -> dict | None:
     """Get full deck details including card list."""
     try:
-        r = client.get(f"/v2/decks/all/{public_id}")
+        r = client.get(f"{API_BASE}/v2/decks/all/{public_id}", timeout=30)
         if r.status_code == 200:
             return r.json()
         else:
@@ -98,32 +105,24 @@ def get_deck_detail(client: httpx.Client, public_id: str) -> dict | None:
 
 def deck_to_jsonl(deck: dict, fmt: str) -> dict | None:
     """Convert Moxfield deck to DeckSage JSONL format."""
-    boards = deck.get("boards", {})
-    if not boards:
-        return None
-
     cards = []
     board_map = {
         "mainboard": "Main",
         "sideboard": "Sideboard",
         "commanders": "Commander",
         "companions": "Companion",
-        "maybeboard": None,  # Skip maybeboard
     }
 
     for board_name, partition_name in board_map.items():
-        if partition_name is None:
+        board = deck.get(board_name, {})
+        if not isinstance(board, dict):
             continue
-        board = boards.get(board_name, {})
-        board_cards = board.get("cards", {})
-        for card_id, card_data in board_cards.items():
-            card_obj = card_data.get("card", {})
-            name = card_obj.get("name", "")
-            if not name:
+        for card_name, card_data in board.items():
+            if not card_name or not isinstance(card_data, dict):
                 continue
             quantity = card_data.get("quantity", 1)
             cards.append({
-                "name": name,
+                "name": card_name,
                 "count": quantity,
                 "partition": partition_name,
             })
