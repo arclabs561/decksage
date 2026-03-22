@@ -25,6 +25,7 @@ Usage:
     uv run scripts/training/train_cleora.py --game magic --iterations 1,3,5,7
     uv run scripts/training/train_cleora.py --game magic --iterations 6 --eval
 """
+
 from __future__ import annotations
 
 import argparse
@@ -49,34 +50,17 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 
 def load_edges(game: str) -> list[tuple[str, str, float]]:
-    """Load all non-annotation edge files for a game."""
+    """Load all training-safe edge files for a game via shared registry."""
+    sys.path.insert(0, str(Path(__file__).parent))
+    from edge_registry import get_edge_files, load_edges_from_files
+
     graph_dir = DATA_DIR / "graphs"
-    edge_files = {
-        "deck": graph_dir / f"{game}_merged_all.edg",
-        "enriched": graph_dir / f"{game}_merged_enriched.edg",
-        "set": graph_dir / f"{game}_set_cooccurrence.edg",
-        "precon": graph_dir / f"{game}_precon_cooccurrence.edg",
-        "keyword": graph_dir / f"{game}_keyword_sharing.edg",
-        "archetype": graph_dir / f"{game}_archetype_cooccurrence.edg",
-        "commander": graph_dir / f"{game}_archidekt_commander.edg",
-    }
+    edge_files = get_edge_files(game, graph_dir)
+    typed_edges = load_edges_from_files(edge_files)
 
     all_edges = []
-    for etype, path in edge_files.items():
-        if not path.exists():
-            continue
-        count = 0
-        with open(path) as f:
-            for line in f:
-                parts = line.strip().split("\t")
-                if len(parts) >= 3:
-                    try:
-                        all_edges.append((parts[0], parts[1], float(parts[2])))
-                        count += 1
-                    except ValueError:
-                        continue
-        if count > 0:
-            print(f"  {etype}: {count:,} edges")
+    for edges in typed_edges.values():
+        all_edges.extend(edges)
 
     return all_edges
 
@@ -153,8 +137,10 @@ def main() -> int:
     parser.add_argument("--game", default="magic")
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument(
-        "--iterations", type=str, default="1,3,5,7",
-        help="Comma-separated iteration counts to train"
+        "--iterations",
+        type=str,
+        default="1,3,5,7",
+        help="Comma-separated iteration counts to train",
     )
     parser.add_argument("--eval", action="store_true", help="Run eval after each")
     args = parser.parse_args()
@@ -198,14 +184,10 @@ def main() -> int:
         print(f"  Saved {len(kv):,} embeddings to {out_path}")
 
         # Quality pairs
-        test_cards = {
-            "magic": [("Lightning Bolt", "Lava Spike"), ("Sol Ring", "Arcane Signet"),
-                       ("Counterspell", "Mana Leak")],
-            "pokemon": [("Ultra Ball", "Nest Ball")],
-            "yugioh": [("Ash Blossom & Joyous Spring", 'Maxx "C"')],
-        }
+        from edge_registry import QUALITY_PAIRS
+
         quality = {}
-        for c1, c2 in test_cards.get(args.game, []):
+        for c1, c2 in QUALITY_PAIRS.get(args.game, []):
             if c1 in kv and c2 in kv:
                 sim = float(kv.similarity(c1, c2))
                 quality[f"{c1} <-> {c2}"] = round(sim, 4)
@@ -218,9 +200,20 @@ def main() -> int:
             if eval_script.exists():
                 try:
                     result = subprocess.run(
-                        ["uv", "run", str(eval_script), "--game", args.game,
-                         "--embedding", f"{args.game}_{suffix}", "--json"],
-                        capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
+                        [
+                            "uv",
+                            "run",
+                            str(eval_script),
+                            "--game",
+                            args.game,
+                            "--embedding",
+                            f"{args.game}_{suffix}",
+                            "--json",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=300,
+                        cwd=str(PROJECT_ROOT),
                     )
                     if result.returncode == 0 and result.stdout.strip():
                         raw = json.loads(result.stdout)
@@ -236,18 +229,25 @@ def main() -> int:
                 except Exception as e:
                     print(f"    Eval failed: {e}")
 
-        results.append({
-            "iterations": n_iter,
-            "duration_s": round(elapsed, 1),
-            "quality_pairs": quality,
-            "eval": eval_metrics,
-        })
+        results.append(
+            {
+                "iterations": n_iter,
+                "duration_s": round(elapsed, 1),
+                "quality_pairs": quality,
+                "eval": eval_metrics,
+            }
+        )
 
     # Write summary
     git_sha = "unknown"
     try:
-        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                           capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT))
+        r = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(PROJECT_ROOT),
+        )
         if r.returncode == 0:
             git_sha = r.stdout.strip()
     except FileNotFoundError:
