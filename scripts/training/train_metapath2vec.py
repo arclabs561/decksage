@@ -157,7 +157,8 @@ def train_metapath2vec(
     # Checkpoint dir
     ckpt_dir = Path(__file__).resolve().parent.parent.parent / "data" / "checkpoints"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
-    ckpt_path = ckpt_dir / f"metapath2vec_{num_nodes}n_{dim}d.pt"
+    suffix_tag = f"_{suffix}" if suffix else ""
+    ckpt_path = ckpt_dir / f"metapath2vec_{num_nodes}n_{dim}d{suffix_tag}.pt"
 
     # Loss log (CSV: epoch, loss, wall_time_s)
     loss_history: list[dict] = []
