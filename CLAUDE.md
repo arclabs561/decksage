@@ -37,9 +37,31 @@ See `data/experiments/README.md` for the full YAML schema.
 
 ---
 
+## Train/Eval Separation (hard rule)
+
+**Annotations are for evaluation only. Training uses self-supervised data only.**
+
+Training sources (OK for embedding training):
+- Co-occurrence pairs from deck JSONL files (self-supervised)
+- Enriched edges (PPMI, oracle text similarity, propagated)
+- Commander/Archidekt deck co-occurrence
+- Set, precon, keyword co-occurrence
+- Card attribute features (type, mana cost, colors)
+
+Evaluation sources (NEVER in training):
+- `data/test_sets/annotated_*_v2.json` -- nDCG evaluation
+- `data/annotations/*_v4.json` -- IAA quality measurement
+- `data/annotations/diverse_checkpoint_*.jsonl` -- multi-model IAA
+- `data/annotations/diverse_pairs_*.jsonl` -- diverse pair judgments
+- `data/graphs/*_annotation_edges.edg` -- DO NOT feed to MetaPath2Vec
+- `data/graphs/*_diverse_annotation_edges.edg` -- DO NOT feed to MetaPath2Vec
+
+Why: any annotation-to-training feedback loop makes the evaluation less independent. The model should improve from better self-supervised signal (more decks, richer edge types, better negative sampling), not from memorizing annotated pairs.
+
+The `export_annotation_edges.py` script exists for potential future use but its output must NOT be connected to `train_metapath2vec.py` or any other training script.
+
 ## Training Data Provenance
 
-When consuming annotation data for training:
 - **Mode-aware routing**: substitution pairs get substitution instructions, synergy pairs get synergy instructions. Never mix modes under a single instruction prefix.
 - **Graded labels**: use continuous similarity scores (0.0-1.0) from annotations, not binary 1.0/0.0.
 - **Graph edges are synergy signal**: co-occurrence edges must never be used as substitution training data. Route to synergy/completion instructions only.
