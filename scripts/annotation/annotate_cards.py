@@ -304,8 +304,14 @@ async def run_pipeline(
     already_done = set(existing.get("cards", {}).keys())
     logger.info(f"Cards in metadata: {len(card_metadata)}, already annotated: {len(already_done)}")
 
-    # Select cards to annotate
-    todo = [name for name in card_metadata if name not in already_done]
+    # Select cards to annotate (skip errored cards only if they have valid annotations)
+    todo = []
+    for name in card_metadata:
+        if name not in already_done:
+            todo.append(name)
+        elif "error" in existing.get("cards", {}).get(name, {}):
+            # Retry previously errored cards
+            todo.append(name)
     if batch_size is not None and batch_size > 0:
         todo = todo[:batch_size]
 
