@@ -91,3 +91,10 @@ def load_edges_from_files(
             edge_types[etype] = edges
             print(f"  {etype}: {len(edges):,} edges")
     return edge_types
+
+# Per-format edge files (from build_format_edges.py)
+FORMAT_EDGE_FILES = {
+    "standard": "{game}_standard_cooccurrence.edg",
+    "modern": "{game}_modern_cooccurrence.edg",
+    "commander": "{game}_archidekt_commander.edg",
+}
