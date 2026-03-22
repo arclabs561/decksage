@@ -231,6 +231,11 @@ def main() -> int:
         type=str,
         default="",
         help="Comma-separated edge types to use (default: all available). "
+    )
+    parser.add_argument(
+        "--skip-preflight",
+        action="store_true",
+        help="Skip pre-flight diagnostics (edge duplication, imbalance checks)",
         "E.g. --edge-types deck,enriched,annotation",
     )
     args = parser.parse_args()
@@ -257,6 +262,15 @@ def main() -> int:
     # Build heterogeneous graph
     print(f"\n[2/4] Building heterogeneous graph...")
     edge_index_dict, card_list, card_to_idx = build_hetero_data(edge_types)
+
+    # Pre-flight diagnostics
+    try:
+        from preflight import preflight_check
+        if not preflight_check(args.game, edge_types, skip=getattr(args, 'skip_preflight', False)):
+            print("  Use --skip-preflight to override.")
+            return 1
+    except ImportError:
+        pass  # preflight module not available, skip
 
     # Define metapaths based on available edge types
     available = list(edge_types.keys())
