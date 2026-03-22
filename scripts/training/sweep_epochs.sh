@@ -38,8 +38,8 @@ for game in $GAMES; do
         echo ""
         echo "--- $game @ $epochs epochs ---"
 
-        # Clear checkpoint to train fresh
-        rm -f data/checkpoints/metapath2vec_*n_128d.pt 2>/dev/null
+        # Clear checkpoint for THIS game only (game name now in checkpoint filename)
+        rm -f "data/checkpoints/metapath2vec_${game}_"*".pt" 2>/dev/null
 
         suffix="sweep_${epochs}ep"
         uv run scripts/training/train_metapath2vec.py \
