@@ -68,21 +68,35 @@ else
     echo "[2-4] Skipped (no --api flag)"
 fi
 
-# Combine results
+# Combine results via temp files (avoids fragile shell JSON interpolation)
+TMPDIR=$(mktemp -d)
+echo "$PERMODE" > "$TMPDIR/permode.json"
+echo "$CONTEXTUAL" > "$TMPDIR/contextual.json"
+echo "$SEARCH" > "$TMPDIR/search.json"
+echo "$COMPLETION" > "$TMPDIR/completion.json"
+
 python3 -c "
-import json, sys
+import json, sys, pathlib
+tmpdir = pathlib.Path('$TMPDIR')
+def safe_load(p):
+    try:
+        text = p.read_text().strip()
+        return json.loads(text) if text else {}
+    except (json.JSONDecodeError, FileNotFoundError):
+        return {}
 result = {
     'game': '$GAME',
     'embedding': '$EMBEDDING',
-    'per_mode': json.loads('''$PERMODE''') if '''$PERMODE'''.strip() else {},
-    'contextual': json.loads('''$CONTEXTUAL''') if '''$CONTEXTUAL'''.strip() else {},
-    'search': json.loads('''$SEARCH''') if '''$SEARCH'''.strip() else {},
-    'deck_completion': json.loads('''$COMPLETION''') if '''$COMPLETION'''.strip() else {},
+    'per_mode': safe_load(tmpdir / 'permode.json'),
+    'contextual': safe_load(tmpdir / 'contextual.json'),
+    'search': safe_load(tmpdir / 'search.json'),
+    'deck_completion': safe_load(tmpdir / 'completion.json'),
 }
 with open('$OUT', 'w') as f:
     json.dump(result, f, indent=2)
 print(f'Wrote $OUT')
 "
+rm -rf "$TMPDIR"
 
 echo ""
 echo "=== Summary ==="
