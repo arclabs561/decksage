@@ -479,6 +479,106 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
     else:
         results["novelty"] = {"mean_self_info": 0.0, "n_evaluated": 0}
 
+    # --- Downstream task evals (offline) ---
+
+    # Contextual recall@20: what fraction of graded-relevant cards appear in top-20?
+    ctx_hits, ctx_total = 0, 0
+    for qname, qdata in queries.items():
+        hr = qdata.get("highly_relevant", []) + qdata.get("relevant", [])
+        if not hr or qname not in wv:
+            continue
+        try:
+            top_names = {c for c, _ in wv.most_similar(qname, topn=20)}
+            ctx_hits += sum(1 for c in hr if c in top_names)
+            ctx_total += len(hr)
+        except KeyError:
+            pass
+    results["contextual_recall_at_20"] = {
+        "recall": round(ctx_hits / max(ctx_total, 1), 4),
+        "hits": ctx_hits,
+        "total": ctx_total,
+    }
+
+    # Completion recall@30: seed 3 related cards, check if remaining appear in top-30
+    comp_hits, comp_total = 0, 0
+    for qname, qdata in queries.items():
+        all_rel = (qdata.get("highly_relevant", []) + qdata.get("relevant", [])
+                   + qdata.get("somewhat_relevant", []))
+        in_vocab = [c for c in all_rel if c in wv]
+        if len(in_vocab) < 5:
+            continue
+        seed = in_vocab[:3]
+        targets = set(in_vocab[3:])
+        try:
+            seed_vec = sum(wv[c] for c in seed) / len(seed)
+            n = np.linalg.norm(seed_vec)
+            if n > 0:
+                seed_vec /= n
+            sims = wv.similar_by_vector(seed_vec, topn=30)
+            top_names = {c for c, _ in sims}
+            comp_hits += sum(1 for c in targets if c in top_names)
+            comp_total += len(targets)
+        except Exception:
+            pass
+    results["completion_recall_at_30"] = {
+        "recall": round(comp_hits / max(comp_total, 1), 4),
+        "hits": comp_hits,
+        "total": comp_total,
+    }
+
+    # Text search eval: curated queries matched against oracle text in embeddings
+    # (offline proxy for semantic search quality)
+    search_queries = {
+        "magic": [
+            ("deal 3 damage", ["Lightning Bolt", "Lava Spike", "Rift Bolt", "Chain Lightning"]),
+            ("draw two cards", ["Divination", "Chart a Course", "Night's Whisper"]),
+            ("destroy target creature", ["Murder", "Hero's Downfall", "Doom Blade"]),
+            ("counter target spell", ["Counterspell", "Mana Leak", "Negate"]),
+        ],
+        "pokemon": [
+            ("search deck pokemon", ["Ultra Ball", "Nest Ball", "Level Ball"]),
+            ("draw cards", ["Professor's Research", "Cynthia"]),
+        ],
+        "yugioh": [
+            ("negate effect", ["Ash Blossom & Joyous Spring", "Effect Veiler"]),
+            ("special summon", ["Monster Reborn", "Soul Charge"]),
+        ],
+    }
+    game_sq = search_queries.get(game, [])
+    if game_sq:
+        search_mrr = []
+        for query_text, expected_cards in game_sq:
+            # Find which expected cards are in vocab and get their avg rank
+            expected_in_vocab = [c for c in expected_cards if c in wv]
+            if not expected_in_vocab:
+                continue
+            # Use first expected card as query proxy (find cards similar to it)
+            proxy = expected_in_vocab[0]
+            try:
+                neighbors = [c for c, _ in wv.most_similar(proxy, topn=50)]
+                # Check rank of other expected cards
+                for target in expected_in_vocab[1:]:
+                    if target in neighbors:
+                        rank = neighbors.index(target) + 1
+                        search_mrr.append(1.0 / rank)
+                    else:
+                        search_mrr.append(0.0)
+            except KeyError:
+                pass
+        results["search_proxy_mrr"] = {
+            "mrr": round(float(np.mean(search_mrr)), 4) if search_mrr else 0.0,
+            "n_queries": len(search_mrr),
+        }
+
+    # Dataset fingerprint: capture data shape at eval time
+    results["dataset_fingerprint"] = {
+        "test_set_queries": len(queries),
+        "test_set_annotations": sum(len(q.get("annotations", [])) for q in queries.values()),
+        "embedding_vocab": len(wv),
+        "test_set_version": test_set.get("version", "unknown"),
+        "test_set_updated": test_set.get("updated", "unknown"),
+    }
+
     return results
 
 
@@ -488,6 +588,10 @@ def main():
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--embedding", default=None, help="Embedding file name (without .wv)")
     parser.add_argument("--compare-v5", action="store_true", help="Also eval v5 embeddings")
+    parser.add_argument(
+        "--compare", type=str, default="",
+        help="Comma-separated embedding names to compare (e.g. cleora_1iter,text_e5,metapath2vec)"
+    )
     parser.add_argument("-k", type=int, default=10)
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
@@ -496,16 +600,24 @@ def main():
     all_results = []
 
     for game in games:
-        result = eval_game(game, args.embedding, args.k)
-        all_results.append(result)
+        if args.compare:
+            # Compare multiple embeddings for this game
+            for emb_name in args.compare.split(","):
+                emb_name = emb_name.strip()
+                full_name = f"{game}_{emb_name}" if not emb_name.startswith(game) else emb_name
+                result = eval_game(game, full_name, args.k)
+                all_results.append(result)
+        else:
+            result = eval_game(game, args.embedding, args.k)
+            all_results.append(result)
 
-        if args.compare_v5 and not args.embedding:
-            v5_name = V5_EMBEDDINGS.get(game)
-            if v5_name:
-                v5_path = DATA_DIR / "embeddings" / f"{v5_name}.wv"
-                if v5_path.exists():
-                    v5_result = eval_game(game, v5_name, args.k)
-                    all_results.append(v5_result)
+            if args.compare_v5 and not args.embedding:
+                v5_name = V5_EMBEDDINGS.get(game)
+                if v5_name:
+                    v5_path = DATA_DIR / "embeddings" / f"{v5_name}.wv"
+                    if v5_path.exists():
+                        v5_result = eval_game(game, v5_name, args.k)
+                        all_results.append(v5_result)
 
     if args.json:
         print(json.dumps(all_results, indent=2))
@@ -569,6 +681,45 @@ def main():
             nov = r.get("novelty", {})
             if nov.get("n_evaluated", 0) > 0:
                 print(f"  Novelty (mean self-info): {nov['mean_self_info']:.2f} bits")
+
+            # Downstream metrics
+            ctx = r.get("contextual_recall_at_20", {})
+            if ctx.get("total", 0) > 0:
+                print(f"\n  Contextual recall@20: {ctx['recall']:.3f} ({ctx['hits']}/{ctx['total']})")
+
+            comp = r.get("completion_recall_at_30", {})
+            if comp.get("total", 0) > 0:
+                print(f"  Completion recall@30: {comp['recall']:.3f} ({comp['hits']}/{comp['total']})")
+
+            srch = r.get("search_proxy_mrr", {})
+            if srch.get("n_queries", 0) > 0:
+                print(f"  Search proxy MRR: {srch['mrr']:.3f} ({srch['n_queries']} queries)")
+
+            fp = r.get("dataset_fingerprint", {})
+            if fp:
+                print(f"\n  Dataset: {fp.get('test_set_annotations', '?')} annotations, "
+                      f"vocab={fp.get('embedding_vocab', '?')}, "
+                      f"v={fp.get('test_set_version', '?')}")
+
+        # Comparison table if multiple results for same game
+        if len(all_results) > 1:
+            games_seen = set()
+            for r in all_results:
+                if "error" in r or r["game"] in games_seen:
+                    continue
+                games_seen.add(r["game"])
+                game_results = [x for x in all_results if x.get("game") == r["game"] and "error" not in x]
+                if len(game_results) > 1:
+                    print(f"\n{'=' * 60}")
+                    print(f"COMPARISON: {r['game'].upper()}")
+                    print(f"{'Embedding':<30} {'sub':>8} {'syn':>8} {'ctx':>8} {'comp':>8}")
+                    print("-" * 70)
+                    for gr in game_results:
+                        sub = gr.get("mode_substitute", {}).get("ndcg_at_k", 0)
+                        syn = gr.get("mode_synergy", {}).get("ndcg_at_k", 0)
+                        ctx_r = gr.get("contextual_recall_at_20", {}).get("recall", 0)
+                        comp_r = gr.get("completion_recall_at_30", {}).get("recall", 0)
+                        print(f"{gr['embedding']:<30} {sub:>8.4f} {syn:>8.4f} {ctx_r:>8.4f} {comp_r:>8.4f}")
 
 
 if __name__ == "__main__":
