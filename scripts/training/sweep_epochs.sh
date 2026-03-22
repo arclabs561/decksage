@@ -23,7 +23,10 @@ BATCH="${BATCH:-256}"
 OUT="data/logs/epoch_sweep_results.tsv"
 mkdir -p data/logs
 
-echo -e "game\tepochs\tnum_cards\tsub_ndcg\tsyn_ndcg\tmeta_ndcg\tctx_recall\tcomp_recall\tduration_s\tfinal_loss" > "$OUT"
+# Only write header if file doesn't exist (avoids overwriting previous game results)
+if [ ! -f "$OUT" ]; then
+    echo -e "game\tepochs\tnum_cards\tsub_ndcg\tsyn_ndcg\tmeta_ndcg\tctx_recall\tcomp_recall\tduration_s\tfinal_loss" > "$OUT"
+fi
 
 for game in $GAMES; do
     echo ""
