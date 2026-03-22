@@ -1,0 +1,51 @@
+id: "0045"
+date: "2026-03-21"
+title: "Cone + TC + hard negatives: Magic AUC 0.857 (+22% over baseline)"
+game: all
+
+hypothesis: >
+  Adding transitive closure AND same-role hard negatives to cone training
+  will further improve AUC beyond 0.76 (TC only). Hard negatives address
+  the signal-to-noise problem: 116 positives vs ~79K trivial negatives.
+
+method:
+  type: embedding
+  script: scripts/training/train_cone_upgrades.py
+  args: "--all-games --augment-tc --hard-neg --dim 16 --epochs 300 --lr 0.005"
+
+results:
+  magic:
+    auc: 0.857
+    pairs: 146
+    hard_negatives: 408
+    pos_mean: 0.348
+    neg_mean: 0.000
+  pokemon:
+    auc: 0.603
+    pairs: 398
+    hard_negatives: 1153
+    pos_mean: 0.119
+    neg_mean: 0.000
+  yugioh:
+    auc: 0.553
+    pairs: 249
+    hard_negatives: 712
+    pos_mean: 0.103
+    neg_mean: 0.000
+
+  progression:
+    baseline: "AUC 0.70 (no TC, no HN)"
+    tc_only: "AUC 0.76 (+9%)"
+    tc_plus_hn: "AUC 0.86 (+22%)"
+
+conclusion: >
+  Hard negatives doubled the improvement over TC alone for Magic (0.76->0.86).
+  Pokemon and YuGiOh still weak (0.60, 0.55) -- their upgrade annotations
+  may be lower quality or the upgrade concept differs across games.
+  Active learning candidates identified for next annotation batch.
+  Magic is now at production-viable AUC for upgrade recommendation.
+
+artifacts:
+  - data/embeddings/magic_cone_upgrades.json
+  - data/embeddings/pokemon_cone_upgrades.json
+  - data/embeddings/yugioh_cone_upgrades.json
