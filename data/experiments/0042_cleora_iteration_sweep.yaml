@@ -1,0 +1,68 @@
+id: "0042"
+date: "2026-03-21"
+title: "Cleora iteration sweep: 5-iter beats MetaPath2Vec in seconds"
+game: all
+
+hypothesis: >
+  Cleora embeddings at higher iteration counts capture structural equivalence
+  (substitute signal) while 1 iteration captures co-occurrence (complement).
+  Based on Tkachuk et al. 2022, 5-7 iterations should maximize sub nDCG.
+
+method:
+  type: embedding
+  script: scripts/training/train_cleora.py
+  args: "--iterations 1,3,5,7,10 --eval"
+  commit: 871e532
+
+data:
+  training:
+    source: "Self-supervised only: deck, enriched, set, precon, keyword, archetype, commander"
+    description: "Same edge files as MetaPath2Vec, no annotation leakage"
+  evaluation:
+    source: data/test_sets/annotated_*_v2.json
+
+results:
+  magic:
+    num_cards: 35280
+    best_iter: 1
+    best_sub_ndcg: 0.103
+    note: "Over-smoothing at higher iterations (35K nodes)"
+    by_iter: {1: 0.103, 3: 0.099, 5: 0.096, 7: 0.089, 10: 0.081}
+
+  pokemon:
+    num_cards: 4420
+    best_iter: 5
+    best_sub_ndcg: 0.103
+    note: "Clear peak at 5 iterations"
+    by_iter: {1: 0.094, 3: 0.101, 5: 0.103, 7: 0.098, 10: 0.093}
+
+  yugioh:
+    num_cards: 15439
+    best_iter: 3
+    best_sub_ndcg: 0.284
+    note: "Strong substitute signal, peaks at 3-5 iterations"
+    by_iter: {1: 0.236, 3: 0.284, 5: 0.284, 7: 0.280, 10: 0.275}
+
+  comparison:
+    cleora_5iter_vs_mp2v_80ep: "2-6x better nDCG, 100x faster (seconds vs minutes)"
+    text_e5_sub: {magic: 0.049, pokemon: 0.065, yugioh: 0.224}
+    cleora_best_sub: {magic: 0.103, pokemon: 0.103, yugioh: 0.284}
+
+conclusion: >
+  Cleora iteration sweep confirms the complement/substitute hypothesis for
+  yugioh (0.236 at 1-iter vs 0.284 at 5-iter) but not for magic (peaks at
+  1-iter, over-smoothing at higher). Pokemon shows mild peak at 5 iter.
+
+  Cleora is the best self-supervised substitute embedding method so far:
+  2-6x better than MetaPath2Vec 80ep, runs in seconds vs 20+ minutes.
+  Text E5 is competitive but Cleora wins on YuGiOh (0.284 vs 0.224).
+
+  Next: fuse Cleora + Text E5 (complementary signal sources), per-format
+  Cleora (separate Commander/Modern/Standard graphs), and E5 contrastive
+  fine-tuning without annotation leakage.
+
+artifacts:
+  - data/embeddings/magic_cleora_*iter.wv
+  - data/embeddings/pokemon_cleora_*iter.wv
+  - data/embeddings/yugioh_cleora_*iter.wv
+  - data/logs/*_cleora_run.json
