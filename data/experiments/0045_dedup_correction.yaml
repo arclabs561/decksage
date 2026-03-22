@@ -1,0 +1,61 @@
+id: "0045"
+date: "2026-03-22"
+title: "Annotation dedup correction: all prior nDCG was inflated 50-90%"
+game: all
+
+hypothesis: >
+  Test set annotation duplication (multiple LLM judges producing separate
+  entries for the same query-candidate pair) inflated nDCG by counting
+  the same pair multiple times in the ideal ranking.
+
+method:
+  type: evaluation
+  script: scripts/evaluation/dataset_diagnostics.py
+  args: "--all-games"
+
+data:
+  before_dedup:
+    magic_annotations: "~9,799 pair annotations (with duplicates)"
+    pokemon_annotations: "~12,789"
+    yugioh_annotations: "~31,130"
+  after_dedup:
+    magic_annotations: 11490
+    pokemon_annotations: 7316
+    yugioh_annotations: 7494
+    note: "Numbers changed because dedup merges multi-judge scores per pair"
+
+results:
+  before_dedup:
+    magic_mp2v_80ep: 0.127
+    pokemon_cleora_5iter: 0.103
+    yugioh_mp2v_80ep: 0.308
+  after_dedup:
+    magic_mp2v_80ep: 0.069
+    pokemon_cleora_5iter: 0.058
+    yugioh_mp2v_80ep: 0.153
+  inflation_factor:
+    magic: "84% (0.127 -> 0.069)"
+    pokemon: "78% (0.103 -> 0.058)"
+    yugioh: "101% (0.308 -> 0.153)"
+
+  additional_issue: >
+    YuGiOh deck and enriched edge files are 100% identical (743K/743K).
+    MetaPath2Vec was double-counting the same co-occurrence data.
+
+conclusion: >
+  ALL prior nDCG numbers in experiments 0039-0044 were inflated by
+  annotation duplication in the test set. The true performance is roughly
+  half of what was reported. This does not invalidate the relative comparisons
+  (Cleora vs MetaPath2Vec ordering is preserved) but the absolute numbers
+  are significantly worse than we thought.
+
+  Corrected baselines (post-dedup, honest):
+    Magic: 0.069 (MetaPath2Vec 80ep)
+    Pokemon: 0.058 (Cleora 5-iter)
+    YuGiOh: 0.153 (MetaPath2Vec 80ep)
+
+  This underscores the need for text embeddings and contrastive learning
+  to improve substitution quality. Graph co-occurrence alone is not enough.
+
+artifacts:
+  - scripts/evaluation/dataset_diagnostics.py
