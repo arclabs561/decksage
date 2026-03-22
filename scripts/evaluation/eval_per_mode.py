@@ -584,7 +584,8 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
 
 def main():
     parser = argparse.ArgumentParser(description="Per-mode nDCG evaluation")
-    parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
+    parser.add_argument("--game", default="magic",
+                        help="Game name (auto-discovers from data/test_sets/)")
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--embedding", default=None, help="Embedding file name (without .wv)")
     parser.add_argument("--compare-v5", action="store_true", help="Also eval v5 embeddings")
@@ -596,7 +597,16 @@ def main():
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     args = parser.parse_args()
 
-    games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game]
+    if args.all_games:
+        # Auto-discover games from test set files
+        games = sorted(
+            p.stem.replace("annotated_", "").replace("_v2", "")
+            for p in (DATA_DIR / "test_sets").glob("annotated_*_v2.json")
+        )
+        if not games:
+            games = ["magic", "pokemon", "yugioh"]  # fallback
+    else:
+        games = [args.game]
     all_results = []
 
     for game in games:
