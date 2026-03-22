@@ -334,6 +334,32 @@ class ApiState:
         self.price_data: dict[str, dict[str, str | None]] | None = (
             None  # {card: {usd: "1.23", ...}}
         )
+        # Reranker: multi-source embedding reranking with learned weights
+        self.reranker: "RerankerConfig | None" = None
+        self.reranker_embeddings: dict[str, Any] | None = None  # {source_name: KeyedVectors}
+
+
+class RerankerConfig:
+    """Learned linear combination weights for multi-source embedding reranking."""
+
+    __slots__ = ("features", "weights", "intercept")
+
+    def __init__(self, features: list[str], weights: dict[str, float], intercept: float) -> None:
+        self.features = features
+        self.weights = weights
+        self.intercept = intercept
+
+    @classmethod
+    def from_json(cls, path: str | os.PathLike) -> "RerankerConfig":
+        import json as _json
+
+        with open(path) as f:
+            data = _json.load(f)
+        return cls(
+            features=data["features"],
+            weights=data["weights"],
+            intercept=float(data["intercept"]),
+        )
 
 
 # ---------------------------------------------------------------------------
