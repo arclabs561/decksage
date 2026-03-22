@@ -502,8 +502,11 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
     # Completion recall@30: seed 3 related cards, check if remaining appear in top-30
     comp_hits, comp_total = 0, 0
     for qname, qdata in queries.items():
-        all_rel = (qdata.get("highly_relevant", []) + qdata.get("relevant", [])
-                   + qdata.get("somewhat_relevant", []))
+        all_rel = (
+            qdata.get("highly_relevant", [])
+            + qdata.get("relevant", [])
+            + qdata.get("somewhat_relevant", [])
+        )
         in_vocab = [c for c in all_rel if c in wv]
         if len(in_vocab) < 5:
             continue
@@ -584,14 +587,17 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
 
 def main():
     parser = argparse.ArgumentParser(description="Per-mode nDCG evaluation")
-    parser.add_argument("--game", default="magic",
-                        help="Game name (auto-discovers from data/test_sets/)")
+    parser.add_argument(
+        "--game", default="magic", help="Game name (auto-discovers from data/test_sets/)"
+    )
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--embedding", default=None, help="Embedding file name (without .wv)")
     parser.add_argument("--compare-v5", action="store_true", help="Also eval v5 embeddings")
     parser.add_argument(
-        "--compare", type=str, default="",
-        help="Comma-separated embedding names to compare (e.g. cleora_1iter,text_e5,metapath2vec)"
+        "--compare",
+        type=str,
+        default="",
+        help="Comma-separated embedding names to compare (e.g. cleora_1iter,text_e5,metapath2vec)",
     )
     parser.add_argument("-k", type=int, default=10)
     parser.add_argument("--json", action="store_true", help="Output as JSON")
@@ -695,11 +701,15 @@ def main():
             # Downstream metrics
             ctx = r.get("contextual_recall_at_20", {})
             if ctx.get("total", 0) > 0:
-                print(f"\n  Contextual recall@20: {ctx['recall']:.3f} ({ctx['hits']}/{ctx['total']})")
+                print(
+                    f"\n  Contextual recall@20: {ctx['recall']:.3f} ({ctx['hits']}/{ctx['total']})"
+                )
 
             comp = r.get("completion_recall_at_30", {})
             if comp.get("total", 0) > 0:
-                print(f"  Completion recall@30: {comp['recall']:.3f} ({comp['hits']}/{comp['total']})")
+                print(
+                    f"  Completion recall@30: {comp['recall']:.3f} ({comp['hits']}/{comp['total']})"
+                )
 
             srch = r.get("search_proxy_mrr", {})
             if srch.get("n_queries", 0) > 0:
@@ -707,9 +717,11 @@ def main():
 
             fp = r.get("dataset_fingerprint", {})
             if fp:
-                print(f"\n  Dataset: {fp.get('test_set_annotations', '?')} annotations, "
-                      f"vocab={fp.get('embedding_vocab', '?')}, "
-                      f"v={fp.get('test_set_version', '?')}")
+                print(
+                    f"\n  Dataset: {fp.get('test_set_annotations', '?')} annotations, "
+                    f"vocab={fp.get('embedding_vocab', '?')}, "
+                    f"v={fp.get('test_set_version', '?')}"
+                )
 
         # Comparison table if multiple results for same game
         if len(all_results) > 1:
@@ -718,7 +730,9 @@ def main():
                 if "error" in r or r["game"] in games_seen:
                     continue
                 games_seen.add(r["game"])
-                game_results = [x for x in all_results if x.get("game") == r["game"] and "error" not in x]
+                game_results = [
+                    x for x in all_results if x.get("game") == r["game"] and "error" not in x
+                ]
                 if len(game_results) > 1:
                     print(f"\n{'=' * 60}")
                     print(f"COMPARISON: {r['game'].upper()}")
@@ -729,7 +743,9 @@ def main():
                         syn = gr.get("mode_synergy", {}).get("ndcg_at_k", 0)
                         ctx_r = gr.get("contextual_recall_at_20", {}).get("recall", 0)
                         comp_r = gr.get("completion_recall_at_30", {}).get("recall", 0)
-                        print(f"{gr['embedding']:<30} {sub:>8.4f} {syn:>8.4f} {ctx_r:>8.4f} {comp_r:>8.4f}")
+                        print(
+                            f"{gr['embedding']:<30} {sub:>8.4f} {syn:>8.4f} {ctx_r:>8.4f} {comp_r:>8.4f}"
+                        )
 
 
 if __name__ == "__main__":
