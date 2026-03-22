@@ -1,0 +1,37 @@
+id: "0044"
+date: "2026-03-21"
+title: "Cone + transitive closure: Magic AUC 0.76 (+9% over no-TC)"
+game: all
+
+hypothesis: >
+  Adding transitive closure edges (A>B, B>C => A>C) to cone training
+  will improve AUC by providing more training signal. Ganea 2018 showed
+  +16% F1 for cones with 10% TC edges on WordNet.
+
+method:
+  type: embedding
+  script: inline (cone + TC test)
+  args: "dim=16, epochs=300, lr=0.005, TC augmentation"
+
+results:
+  magic:
+    original_edges: 145
+    tc_edges: 146
+    auc: 0.762
+    auc_without_tc: 0.700
+  pokemon:
+    original_edges: 344
+    tc_edges: 389
+    auc: 0.547
+  yugioh:
+    original_edges: 225
+    tc_edges: 240
+    auc: 0.649
+
+conclusion: >
+  Magic improved from 0.700 to 0.762 (+9%). YuGiOh 0.649, Pokemon 0.547.
+  The upgrade graph is very flat (mostly depth-1 pairs) so TC only adds
+  1-54 edges. Next: hard negative sampling (same-archetype non-upgrades)
+  per MixKG (2022) and active learning for next annotation batch per
+  Liang et al. (2018). Also need 2K+ upgrade annotations for meaningful
+  training -- currently only 145-344 per game.
