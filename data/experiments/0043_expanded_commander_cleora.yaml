@@ -1,0 +1,52 @@
+id: "0043"
+date: "2026-03-22"
+title: "Expanded Commander data (51K decks): Cleora sub nDCG unchanged"
+game: magic
+
+hypothesis: >
+  Tripling Commander deck data (18K -> 51K Archidekt decks) should improve
+  co-occurrence signal and Cleora sub nDCG for Magic.
+
+method:
+  type: embedding
+  script: scripts/training/train_cleora.py
+  args: "--game magic --iterations 1,3,5 --eval"
+  commit: a553ecc
+
+data:
+  training:
+    source: "51,083 Archidekt Commander decks + existing sources"
+    commander_edges: "25.2M edges (up from ~10M)"
+    total_decks: "57,430 (Commander sources combined)"
+    edge_file: "data/graphs/magic_archidekt_commander.edg (914MB)"
+  evaluation:
+    source: data/test_sets/annotated_magic_v2.json
+
+results:
+  cleora_1iter: {sub: 0.100, syn: 0.093, meta: 0.093}
+  cleora_3iter: {sub: 0.082, syn: 0.074, meta: 0.078}
+  cleora_5iter: {sub: 0.069, syn: 0.060, meta: 0.065}
+
+  vs_previous_18k:
+    cleora_1iter_before: 0.103
+    cleora_1iter_after: 0.100
+    delta: "-3% (within noise)"
+
+  quality_pairs:
+    "Sol Ring <-> Arcane Signet": 1.000
+    "Counterspell <-> Mana Leak": 0.998
+    "Lightning Bolt <-> Lava Spike": 0.953
+
+conclusion: >
+  More Commander data didn't improve substitution nDCG. The eval set tests
+  cross-format substitution, but Commander has a unique card pool and
+  deckbuilding constraints (singleton format). Commander co-occurrence is
+  good for Commander synergy, not for cross-format substitution.
+
+  Implication: per-format graphs would be more valuable than more Commander
+  data. Need Standard/Modern/Pioneer deck sources for those formats'
+  substitution signal.
+
+artifacts:
+  - data/embeddings/magic_cleora_*iter.wv
+  - data/graphs/magic_archidekt_commander.edg
