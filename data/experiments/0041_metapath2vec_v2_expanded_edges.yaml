@@ -1,41 +1,36 @@
 id: "0041"
 date: "2026-03-21"
-title: "MetaPath2Vec v2: expanded edges (Commander + diverse annotations)"
+title: "MetaPath2Vec v2: 8 edge types -- coverage up, nDCG down"
 game: magic
 
 hypothesis: >
-  Adding 8.1M Commander edges and 555 diverse annotation edges to
-  MetaPath2Vec training will improve sub nDCG beyond 0.228 (v1 at 160ep).
-  Commander edges cover 12K+ cards that had no competitive embedding.
-  Diverse annotation edges correct specific gaps the model misses.
+  Adding Commander (8.1M) and other edge types will improve nDCG beyond 0.228.
 
 method:
   type: embedding
   script: scripts/training/train_metapath2vec.py
   args: "--game magic --epochs 80 --walks-per-node 30 --lr 0.003 --output-suffix _v2"
-  commit: pending
 
 data:
   training:
-    edge_types:
-      deck: "magic_merged_all.edg (331K edges)"
-      enriched: "magic_merged_enriched.edg (1.46M edges)"
-      annotation: "magic_annotation_edges.edg (29 edges, eval-excluded)"
-      set: "magic_set_cooccurrence.edg (2.16M edges)"
-      precon: "magic_precon_cooccurrence.edg (283K edges)"
-      keyword: "magic_keyword_sharing.edg (83K edges)"
-      commander: "magic_archidekt_commander.edg (8.1M edges)"
-      diverse: "magic_diverse_annotation_edges.edg (555 edges, eval-excluded)"
+    edge_types: "deck (331K), enriched (1.46M), annotation (29), set (2.16M), precon (283K), keyword (83K), commander (8.1M), diverse (555)"
+    note: "annotation + diverse edges included in THIS run (pre train/eval separation fix)"
 
 results:
-  sub_ndcg: pending
-  syn_ndcg: pending
-  meta_ndcg: pending
-  overall_ndcg: pending
-  n_cards_with_embedding: pending
-  training_loss: pending
+  training_loss: 0.7174
+  sub_ndcg: 0.114
+  syn_ndcg: 0.107
+  meta_ndcg: 0.115
+  contextual_recall_20: 0.348
+  completion_recall_30: 0.411
+  n_cards: 35280
 
-conclusion: pending
+conclusion: >
+  REGRESSED on nDCG (0.114 vs 0.228 v1). Commander edges (16.2M directed,
+  dominant signal) diluted substitution signal from enriched edges.
+  Coverage improved: contextual recall 0.348 (was 0.29).
+  Confirms prior finding: mixed edge types dilute signal in MetaPath2Vec.
+  Need selective edge type combinations or per-type walk weighting.
 
 artifacts:
   - data/embeddings/magic_metapath2vec_v2.wv
