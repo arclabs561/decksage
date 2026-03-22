@@ -231,12 +231,7 @@ def main() -> int:
         type=str,
         default="",
         help="Comma-separated edge types to use (default: all available). "
-    )
-    parser.add_argument(
-        "--skip-preflight",
-        action="store_true",
-        help="Skip pre-flight diagnostics (edge duplication, imbalance checks)",
-        "E.g. --edge-types deck,enriched,annotation",
+        "E.g. --edge-types deck,enriched",
     )
     args = parser.parse_args()
 
@@ -266,7 +261,8 @@ def main() -> int:
     # Pre-flight diagnostics
     try:
         from preflight import preflight_check
-        if not preflight_check(args.game, edge_types, skip=getattr(args, 'skip_preflight', False)):
+
+        if not preflight_check(args.game, edge_types, skip=getattr(args, "skip_preflight", False)):
             print("  Use --skip-preflight to override.")
             return 1
     except ImportError:
