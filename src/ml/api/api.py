@@ -87,6 +87,7 @@ from .models import (
     CardSuggestion,
     ContextualResponse,
     HealthResponse,
+    RerankerConfig,
     SearchRequest,
     SearchResponse,
     SearchResultItem,
@@ -687,6 +688,55 @@ async def lifespan(app: FastAPI):
             )
 
     # ------------------------------------------------------------------
+    # Load reranker weights + auxiliary embedding sources per game
+    # ------------------------------------------------------------------
+    _emb_dir = PATHS.project_root / "data" / "embeddings"
+    _logs_dir = PATHS.project_root / "data" / "logs"
+    for game in games:
+        reranker_path = _logs_dir / f"{game}_reranker_run.json"
+        if not reranker_path.exists():
+            continue
+        try:
+            rc = RerankerConfig.from_json(reranker_path)
+            state = get_state(game)
+
+            # Load each embedding source referenced in the reranker config.
+            # "v5_fused" maps to the already-loaded primary embeddings.
+            reranker_embs: dict[str, Any] = {}
+            for feat in rc.features:
+                if feat == "v5_fused":
+                    if state.embeddings is not None:
+                        reranker_embs[feat] = state.embeddings
+                    continue
+                wv_path = _emb_dir / f"{game}_{feat}.wv"
+                if wv_path.exists() and HAS_GENSIM:
+                    _t0 = _time.monotonic()
+                    reranker_embs[feat] = KeyedVectors.load(str(wv_path))
+                    logger.info(
+                        "Loaded reranker source %s/%s: %d cards in %.1fs",
+                        game,
+                        feat,
+                        len(reranker_embs[feat]),
+                        _time.monotonic() - _t0,
+                    )
+                else:
+                    logger.debug("Reranker source %s/%s not found at %s", game, feat, wv_path)
+
+            if reranker_embs:
+                state.reranker = rc
+                state.reranker_embeddings = reranker_embs
+                logger.info(
+                    "Reranker enabled for %s: %d/%d sources, weights=%s, intercept=%.3f",
+                    game,
+                    len(reranker_embs),
+                    len(rc.features),
+                    {k: round(v, 3) for k, v in rc.weights.items()},
+                    rc.intercept,
+                )
+        except (OSError, json.JSONDecodeError, KeyError, ValueError):
+            logger.debug("Failed to load reranker for game=%s", game, exc_info=True)
+
+    # ------------------------------------------------------------------
     # Startup summary with data provenance
     # ------------------------------------------------------------------
     def _file_provenance(p: Path | str) -> str:
@@ -730,6 +780,9 @@ async def lifespan(app: FastAPI):
             _parts.append(f"legality={len(state.legality_data)}")
         if state.price_data:
             _parts.append(f"prices={len(state.price_data)}")
+        if state.reranker:
+            _n_src = len(state.reranker_embeddings) if state.reranker_embeddings else 0
+            _parts.append(f"reranker={_n_src}src")
         logger.info("Ready: %s", " ".join(_parts))
     _elapsed = _time.monotonic() - _t_start
     logger.info(
@@ -759,6 +812,8 @@ async def lifespan(app: FastAPI):
             state.archetypes = None
             state.archetype_templates = None
             state.deck_frequency = None
+            state.reranker = None
+            state.reranker_embeddings = None
         # Remove entire api_by_game dict so next lifespan creates fresh ApiState objects
         with suppress(Exception):
             delattr(app.state, "api_by_game")
@@ -1190,11 +1245,62 @@ def _similar_embedding(
         raise HTTPException(
             status_code=404, detail=f"Card '{query}' not found. Suggestions: {suggestions}"
         )
+    # Use reranker if configured (multi-source learned weights)
+    if state.reranker is not None and state.reranker_embeddings:
+        return _similar_reranker(state, query, k, game=game)
     try:
         similar = state.embeddings.most_similar(query, topn=k)
         return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
     except (KeyError, RuntimeError, ValueError) as e:  # pragma: no cover - defensive
         raise HTTPException(status_code=500, detail=str(e)) from e
+
+
+def _similar_reranker(
+    state: ApiState, query: str, k: int, *, game: str = "magic"
+) -> list[SimilarCard]:
+    """Multi-source embedding reranker: collect candidates from each source, score with learned weights."""
+    rc = state.reranker
+    embs = state.reranker_embeddings
+    assert rc is not None and embs is not None  # caller checks
+
+    # Gather top-N candidates from each source (over-fetch to get good coverage)
+    fetch_k = min(k * 3, 100)
+    # {card_name: {source: similarity}}
+    candidate_sims: dict[str, dict[str, float]] = {}
+    for feat, kv in embs.items():
+        if query not in kv:
+            continue
+        try:
+            results = kv.most_similar(query, topn=fetch_k)
+        except (KeyError, RuntimeError, ValueError):
+            continue
+        for card, sim in results:
+            candidate_sims.setdefault(card, {})[feat] = float(sim)
+
+    if not candidate_sims:
+        # Fall back to primary embeddings only
+        similar = state.embeddings.most_similar(query, topn=k)
+        return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
+
+    # Score each candidate: sum(weight_i * sim_i) + intercept
+    scored: list[tuple[str, float]] = []
+    for card, sims in candidate_sims.items():
+        score = rc.intercept
+        for feat, weight in rc.weights.items():
+            score += weight * sims.get(feat, 0.0)
+        scored.append((card, score))
+
+    scored.sort(key=lambda x: x[1], reverse=True)
+    scored = scored[:k]
+
+    # Normalize scores to [0, 1] range for the response
+    if scored:
+        max_score = scored[0][1]
+        min_score = scored[-1][1] if len(scored) > 1 else scored[0][1] - 1.0
+        denom = max_score - min_score if max_score > min_score else 1.0
+        scored = [(card, (s - min_score) / denom) for card, s in scored]
+
+    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in scored]
 
 
 def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[SimilarCard]:
@@ -1384,7 +1490,16 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         query=query,
         query_metadata=query_meta,
         results=results,
-        model_info={**state.model_info, "method_used": method, "game": game},
+        model_info={
+            **state.model_info,
+            "method_used": method,
+            "game": game,
+            **(
+                {"reranker": True, "reranker_sources": list(state.reranker_embeddings.keys())}
+                if method == "embedding" and state.reranker and state.reranker_embeddings
+                else {}
+            ),
+        },
         feedback_url="/v1/feedback",  # Endpoint for submitting feedback
     )
 
