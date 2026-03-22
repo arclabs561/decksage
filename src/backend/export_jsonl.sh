@@ -24,9 +24,17 @@ for entry in "${datasets[@]}"; do
     dataset="${entry%%:*}"
     outfile="${entry#*:}"
     echo "Exporting $dataset -> $outfile.jsonl"
-    "$BINARY" cat "$dataset" --bucket file://./data-local --limit 200000 --log error > "$DECKS_DIR/$outfile.jsonl" 2>/dev/null || true
-    count=$(wc -l < "$DECKS_DIR/$outfile.jsonl")
-    echo "  -> $count lines"
+    if "$BINARY" cat "$dataset" --bucket file://./data-local --limit 200000 --log error > "$DECKS_DIR/$outfile.jsonl" 2>/dev/null; then
+        count=$(wc -l < "$DECKS_DIR/$outfile.jsonl")
+        if [ "$count" -eq 0 ]; then
+            echo "  WARNING: export produced empty file"
+        else
+            echo "  -> $count lines"
+        fi
+    else
+        echo "  ERROR: export failed for $dataset (exit $?)"
+        rm -f "$DECKS_DIR/$outfile.jsonl"  # don't leave empty file
+    fi
 done
 
 rm -f "$BINARY"
