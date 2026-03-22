@@ -82,9 +82,10 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 ### True Baselines (post-dedup, 2026-03-22)
 
 These are the honest numbers after fixing the 43-76% annotation duplication:
-- Magic v5_fused: sub nDCG **0.045**, contextual recall 0.274
-- Pokemon v5_fused: sub nDCG **0.024**, coverage 96.4%
-- YuGiOh MetaPath2Vec: sub nDCG **0.157**, contextual recall 0.711
+- Magic v5_fused: sub nDCG **0.099**, contextual recall 0.325, coverage 52.7%
+- Pokemon v5_fused: sub nDCG **0.075**, contextual recall 0.356, coverage 93.3%
+- YuGiOh v5_fused: sub nDCG **0.157**, contextual recall 0.684, coverage 64.4%
+- v5_fused REMAINS the best embedding for Magic and Pokemon (MetaPath2Vec regresses).
 - All prior session nDCG numbers were inflated by test set duplication.
 
 ---

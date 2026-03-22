@@ -61,3 +61,18 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 5. **LightGCN sweep eval was inflated.** Inline eval showed 0.545 but canonical eval shows 0.095 (worse than v5 fused 0.154). Inline eval ranked within annotation set (biased); canonical eval checks if ground-truth cards appear in top-10. Always verify with canonical eval. (0004)
 
 6. **Mode-aware training is critical.** Using substitution instruction for synergy pairs poisons the objective. Route pairs by mode to correct instruction prefixes. (0005)
+
+## CORRECTION (2026-03-22): All nDCG numbers prior to this date were inflated
+
+Test set annotations contained 43-76% duplicates from multi-model IAA.
+All nDCG numbers in experiments 0031-0046 were inflated.
+
+### True baselines (deduped test sets):
+| Embedding | Magic sub | Pokemon sub | YuGiOh sub |
+|-----------|-----------|-------------|------------|
+| v5_fused (deployed) | 0.099 | 0.075 | 0.157 |
+| MetaPath2Vec selective 160ep | 0.045 | 0.024 | 0.157 |
+| MetaPath2Vec v2 all-types | 0.045 | 0.025 | 0.157 |
+
+v5_fused REMAINS the best embedding for Magic and Pokemon.
+MetaPath2Vec ties YuGiOh but loses on Magic/Pokemon.
