@@ -502,17 +502,37 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     n_augmented = 0
 
     for query_card, anns in annotations_by_query.items():
+        # Deduplicate by candidate: aggregate multi-model scores into consensus
+        deduped_anns: dict[str, dict] = {}
+        for ann in anns:
+            cand = ann.get("candidate", "")
+            if cand in deduped_anns:
+                existing = deduped_anns[cand]
+                for field in ["similarity_score", "functional_score", "synergy_score",
+                              "substitutability", "meta_relevance", "confidence"]:
+                    old_val = existing.get(field)
+                    new_val = ann.get(field)
+                    if old_val is not None and new_val is not None:
+                        n = existing.get("n_annotators", 1)
+                        existing[field] = round((float(old_val) * n + float(new_val)) / (n + 1), 4)
+                existing["n_annotators"] = existing.get("n_annotators", 1) + 1
+            else:
+                deduped_anns[cand] = dict(ann)
+                deduped_anns[cand]["n_annotators"] = 1
+
+        consensus_anns = list(deduped_anns.values())
+
         if query_card in queries:
-            # Augment existing query with diverse pairs
+            # Merge with existing query -- update consensus for known candidates
             existing_anns = queries[query_card].get("annotations", [])
-            existing_candidates = {a.get("candidate") for a in existing_anns}
-            for ann in anns:
-                if ann["candidate"] not in existing_candidates:
+            existing_by_cand = {a.get("candidate"): a for a in existing_anns}
+            for ann in consensus_anns:
+                cand = ann.get("candidate", "")
+                if cand not in existing_by_cand:
                     existing_anns.append(ann)
                     n_augmented += 1
             queries[query_card]["annotations"] = existing_anns
         else:
-            # New query from diverse pairs
             queries[query_card] = {
                 "highly_relevant": [],
                 "relevant": [],
@@ -520,13 +540,25 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                 "marginally_relevant": [],
                 "irrelevant": [],
                 "use_case": "diverse",
-                "annotations": anns,
+                "annotations": consensus_anns,
             }
-            # Fill relevance buckets
-            for ann in anns:
-                bucket = ann.get("relevance", "irrelevant")
-                queries[query_card][bucket].append(ann["candidate"])
             n_new_queries += 1
+
+        # Rebuild relevance buckets from consensus scores
+        for bucket in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+            queries[query_card][bucket] = []
+        for ann in queries[query_card]["annotations"]:
+            score = ann.get("similarity_score", 0) or 0
+            if float(score) >= 0.70:
+                queries[query_card]["highly_relevant"].append(ann["candidate"])
+            elif float(score) >= 0.50:
+                queries[query_card]["relevant"].append(ann["candidate"])
+            elif float(score) >= 0.30:
+                queries[query_card]["somewhat_relevant"].append(ann["candidate"])
+            elif float(score) >= 0.15:
+                queries[query_card]["marginally_relevant"].append(ann["candidate"])
+            else:
+                queries[query_card]["irrelevant"].append(ann["candidate"])
 
     test_data["queries"] = queries
     test_data["num_queries"] = len(queries)
