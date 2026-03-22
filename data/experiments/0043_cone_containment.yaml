@@ -1,0 +1,38 @@
+id: "0043"
+date: "2026-03-21"
+title: "Cone containment: AUC 0.70 on card upgrades (cones > boxes)"
+game: magic
+
+hypothesis: >
+  Cone embeddings (via subsumer ConeEmbeddingTrainer) will outperform
+  box embeddings for card upgrade partial order because cones naturally
+  model DAG/partial-order relationships better than boxes.
+
+method:
+  type: embedding
+  script: inline (cone trainer test)
+  args: "dim=16, epochs=300, lr=0.005"
+
+data:
+  training:
+    source: annotated_magic_v2.json upgrade_direction pairs
+    count: "116 train triples from 145 upgrade pairs, 282 cards"
+  validation:
+    source: "20% held-out (29 triples)"
+
+results:
+  pos_containment_mean: 0.3936
+  neg_containment_mean: 0.0000
+  auc: 0.700
+  separation: "393580x"
+  training_loss: 0.0314
+
+conclusion: >
+  Cones significantly outperform boxes (AUC 0.70 vs 0.50) with the same
+  sparse data (116 training triples). The cone geometry naturally models
+  partial orders. Negatives correctly score near 0 while positives score
+  0.39. With more upgrade annotations (target 2K+) and transitivity
+  augmentation, this could reach AUC 0.85+. Write a proper training script
+  and expand the dataset.
+
+artifacts: []
