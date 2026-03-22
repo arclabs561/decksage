@@ -1,0 +1,45 @@
+id: "0044"
+date: "2026-03-22"
+title: "Magic epoch sweep (no leakage): sub nDCG 0.127 at 80ep"
+game: magic
+
+hypothesis: >
+  Magic (35K cards) should need more epochs than smaller games to converge.
+  80 epochs should produce a reasonable baseline on self-supervised data only.
+
+method:
+  type: sweep
+  script: scripts/training/sweep_epochs.sh
+  args: "GAMES='magic' EPOCHS_LIST='5 20 80'"
+  commit: 548742c
+
+data:
+  training:
+    source: "Self-supervised only (no annotation edges)"
+    num_cards: 35321
+    edge_types: "deck, enriched, set, precon, keyword, archetype, commander"
+    commander_decks: "51K Archidekt (rebuilt)"
+  evaluation:
+    source: data/test_sets/annotated_magic_v2.json
+
+results:
+  5ep: {sub: 0.000, ctx: 0.000, comp: 0.001, loss: 1.61}
+  20ep: {sub: 0.072, ctx: 0.241, comp: 0.331, loss: 0.787}
+  80ep: {sub: 0.127, ctx: 0.340, comp: 0.389, loss: 0.721}
+
+  comparison:
+    cleora_1iter: 0.100
+    cleora_5iter: 0.069
+    text_e5: 0.049
+    metapath2vec_80ep: 0.127
+    note: "MetaPath2Vec 80ep is the best Magic method (+27% over Cleora)"
+
+conclusion: >
+  Magic MetaPath2Vec 80ep produces sub nDCG 0.127 on honest (leak-free) eval.
+  This is the best Magic result and 27% better than Cleora 1-iter (0.100).
+  Loss still decreasing at 80ep (0.721) -- 160ep may improve further.
+  Convergence is slower than YuGiOh (Magic has 2.3x more cards).
+
+artifacts:
+  - data/logs/magic_metapath2vec_sweep_*_run.json
+  - data/logs/epoch_sweep_results.tsv
