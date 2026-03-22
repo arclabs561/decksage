@@ -83,13 +83,30 @@ def ndcg(relevances: list[float], ideal: list[float], k: int) -> float:
 
 
 def load_test_set(game: str) -> dict:
-    """Load annotated test set."""
+    """Load annotated test set with deduplication check."""
     path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     if not path.exists():
         print(f"Test set not found: {path}")
         return {}
     with open(path) as f:
-        return json.load(f)
+        data = json.load(f)
+
+    # Pre-eval dedup check: detect inflated test sets
+    total_anns = 0
+    unique_pairs = set()
+    for q, qd in data.get("queries", {}).items():
+        for a in qd.get("annotations", []):
+            total_anns += 1
+            unique_pairs.add((q, a.get("candidate", "")))
+    if total_anns > 0:
+        dup_rate = 1 - len(unique_pairs) / total_anns
+        if dup_rate > 0.05:
+            print(
+                f"  WARNING: {dup_rate:.0%} duplicate annotations in test set "
+                f"({total_anns} total, {len(unique_pairs)} unique pairs). "
+                f"nDCG will be INFLATED. Run dedup first."
+            )
+    return data
 
 
 def load_embeddings(game: str, name: str | None = None) -> KeyedVectors | None:
