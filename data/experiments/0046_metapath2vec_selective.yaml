@@ -1,0 +1,37 @@
+id: "0046"
+date: "2026-03-22"
+title: "MetaPath2Vec selective edge types (deck+enriched+keyword)"
+game: all
+
+hypothesis: >
+  Using only deck, enriched, and keyword edge types (excluding Commander's
+  16M edges that diluted signal in exp 0041) will restore sub nDCG to v1
+  levels (0.228) or better, while keyword edges add functional similarity.
+
+method:
+  type: embedding
+  script: scripts/training/train_metapath2vec.py
+  args: "--game {game} --epochs 80 --walks-per-node 30 --lr 0.003 --edge-types deck,enriched,keyword --output-suffix _selective"
+
+data:
+  training:
+    edge_types:
+      deck: "331K edges (Magic)"
+      enriched: "1.46M edges (Magic)"
+      keyword: "83K edges (Magic)"
+    note: "No Commander, no set, no precon -- these diluted signal in exp 0041"
+
+results:
+  magic:
+    sub_ndcg: pending
+    contextual_recall: pending
+  pokemon:
+    sub_ndcg: pending
+  yugioh:
+    sub_ndcg: pending
+  comparison:
+    v1_3_types: "sub nDCG 0.228 (deck+enriched+annotation, 160ep)"
+    v2_8_types: "sub nDCG 0.114 (all types, 80ep)"
+    selective: pending
+
+conclusion: pending
