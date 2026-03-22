@@ -4,8 +4,8 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 
 ## Experiments
 
-| ID | Date | Title | Game | Key Metric | Result | File |
-|----|------|-------|------|------------|--------|------|
+| ID | Date | Title | Game | Data | Key Metric | Result | File |
+|----|------|-------|------|------|------------|--------|------|
 | 0001 | 2026-03-17 | v4 co-occurrence baseline | all | overall nDCG | M:0.151 P:0.049 Y:0.554 | [0001](0001_v4_baseline.yaml) |
 | 0002 | 2026-03-17 | v5 fused (enriched + ns=-0.5 + attr) | all | overall nDCG | M:0.156 P:0.247 Y:0.554 | [0002](0002_v5_fused.yaml) |
 | 0003 | 2026-03-18 | Pokemon pairs expansion 16K->179K | pokemon | overall nDCG | 0.294 (+19% rel, plateau) | [0003](0003_pokemon_expanded_pairs.yaml) |
@@ -44,7 +44,9 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0036 | 2026-03-20 | MetaPath2Vec tuning | magic | sub nDCG | attr fusion hurts | [0036](0036_metapath2vec_tuning.yaml) |
 | 0037 | 2026-03-20 | MetaPath2Vec 40ep | magic | sub nDCG | 0.186 (+50% over v5) | [0037](0037_metapath2vec_40epochs.yaml) |
 | 0038 | 2026-03-20 | MetaPath2Vec 80ep | magic | sub nDCG | 0.198 (+60% over v5) | [0038](0038_metapath2vec_80epochs.yaml) |
-| 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | sub nDCG | 0.228 (+84% over v5) | [0039](0039_metapath2vec_160epochs.yaml) |
+| 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [0039](0039_metapath2vec_160epochs.yaml) |
+| 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:pending | [0041](0041_epoch_sweep_leak_fix.yaml) |
+| 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [0042](0042_cleora_iteration_sweep.yaml) |
 
 ## Key Insights (cross-cutting)
 
