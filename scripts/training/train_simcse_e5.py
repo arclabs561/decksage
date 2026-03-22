@@ -46,9 +46,14 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 def load_card_texts(game: str) -> dict[str, str]:
     """Load card name -> oracle text mapping from Scryfall data."""
-    # Try processed card attributes first
-    attrs_path = DATA_DIR / "processed" / f"card_attributes_{game}.csv"
-    if attrs_path.exists():
+    # Try processed card attributes (multiple naming conventions)
+    candidates = [
+        DATA_DIR / "processed" / f"card_attributes_{game}.csv",
+        DATA_DIR / "processed" / f"card_attributes_{game}_enriched.csv",
+        DATA_DIR / "processed" / f"card_attributes_{game}_bulk.csv",
+    ]
+    attrs_path = next((p for p in candidates if p.exists()), None)
+    if attrs_path:
         import csv
         cards = {}
         with open(attrs_path, newline="", encoding="utf-8") as f:
