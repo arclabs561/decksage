@@ -132,6 +132,7 @@ def train_metapath2vec(
     batch_size: int = 128,
     lr: float = 0.01,
     loss_log_path: Path | None = None,
+    suffix: str = "",
 ) -> tuple[np.ndarray, list[dict]]:
     """Train MetaPath2Vec and return embeddings."""
     from torch_geometric.nn import MetaPath2Vec
@@ -327,6 +328,7 @@ def main() -> int:
         batch_size=args.batch_size,
         lr=args.lr,
         loss_log_path=loss_log_path,
+        suffix=suffix,
     )
 
     elapsed = time.monotonic() - t0
