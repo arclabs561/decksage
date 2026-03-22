@@ -1,0 +1,36 @@
+id: "0047"
+date: "2026-03-22"
+title: "v6 blended: PecanPy + oracle text similarity + game-specific edges"
+game: all
+
+hypothesis: >
+  Adding oracle text similarity edges (TF-IDF cosine > 0.3) to the
+  PecanPy+Word2Vec pipeline will improve sub nDCG beyond v5_fused
+  baselines. Oracle text captures functional similarity that co-occurrence
+  misses. ns_exponent=-0.5 retained from v5.
+
+method:
+  type: embedding
+  script: scripts/training/train_blended_embeddings.py
+  args_pokemon: "--edgelist pokemon_merged_all (x1) + oracle_text (x5) + set (x3) --ns-exponent -0.5"
+  args_yugioh: "--edgelist yugioh_merged_all (x1) + oracle_text (x5) + archetype (x3) --ns-exponent -0.5"
+  args_magic: "pending (oracle text edges generating)"
+
+data:
+  pokemon:
+    edges: "merged_all 180K + oracle_text 66K + set 137K"
+  yugioh:
+    edges: "merged_all 744K + oracle_text 186K + archetype 112K"
+  magic:
+    edges: "merged_all 331K + oracle_text (generating) + enriched 1.46M"
+
+results:
+  pokemon_sub_ndcg: pending
+  yugioh_sub_ndcg: pending
+  magic_sub_ndcg: pending
+  comparison:
+    v5_fused_magic: 0.099
+    v5_fused_pokemon: 0.075
+    v5_fused_yugioh: 0.157
+
+conclusion: pending
