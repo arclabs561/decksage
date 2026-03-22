@@ -238,6 +238,15 @@ def main() -> int:
         action="store_true",
         help="Skip pre-flight diagnostics",
     )
+    parser.add_argument(
+        "--metapath",
+        type=str,
+        default="",
+        help="Explicit metapath as comma-separated edge types. "
+             "E.g. --metapath deck,deck (2-hop co-occurrence for substitution). "
+             "Repeating a type creates multi-hop walks through that edge type. "
+             "Default: chain all available types once.",
+    )
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
@@ -273,15 +282,22 @@ def main() -> int:
     except ImportError:
         pass  # preflight module not available, skip
 
-    # Define metapaths based on available edge types
+    # Define metapaths
     available = list(edge_types.keys())
     print(f"\n[3/4] Available edge types: {available}")
 
-    # Build metapath: cycle through all edge types
-    # Longer metapaths capture cross-type relationships
-    metapath = []
-    for etype in available:
-        metapath.append(("card", etype, "card"))
+    if args.metapath:
+        # Explicit metapath: e.g. "deck,deck" -> card-deck-card-deck-card
+        mp_types = [t.strip() for t in args.metapath.split(",")]
+        missing = [t for t in mp_types if t not in edge_types]
+        if missing:
+            print(f"  ERROR: metapath edge types not available: {missing}")
+            return 1
+        metapath = [("card", t, "card") for t in mp_types]
+        print(f"  Custom metapath: {' -> '.join(t for t in mp_types)}")
+    else:
+        # Default: chain all available types (one hop each)
+        metapath = [("card", etype, "card") for etype in available]
 
     print(f"  Metapath: {' -> '.join(f'({s},{e},{t})' for s, e, t in metapath)}")
 
