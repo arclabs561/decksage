@@ -48,46 +48,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-
-def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
-    """Load all edge types for a game."""
-    graph_dir = DATA_DIR / "graphs"
-    edge_types = {}
-
-    # Map file patterns to edge type names
-    # NOTE: annotation edges excluded by default to prevent eval leakage
-    # (annotation pairs are used for nDCG evaluation)
-    edge_files = {
-        "deck": graph_dir / f"{game}_merged_all.edg",
-        "enriched": graph_dir / f"{game}_merged_enriched.edg",
-        "set": graph_dir / f"{game}_set_cooccurrence.edg",
-        "precon": graph_dir / f"{game}_precon_cooccurrence.edg",
-        "keyword": graph_dir / f"{game}_keyword_sharing.edg",
-        "archetype": graph_dir / f"{game}_archetype_cooccurrence.edg",
-        "commander": graph_dir / f"{game}_archidekt_commander.edg",
-        # NOTE: annotation and diverse_annotation edges are EXCLUDED from training.
-        # All annotation data is reserved for evaluation (nDCG, IAA) only.
-        # Training signal comes from self-supervised sources: co-occurrence,
-        # enrichment, set/precon/keyword co-occurrence, Commander decks.
-    }
-
-    for etype, path in edge_files.items():
-        if not path.exists():
-            continue
-        edges = []
-        with open(path) as f:
-            for line in f:
-                parts = line.strip().split("\t")
-                if len(parts) >= 3:
-                    try:
-                        edges.append((parts[0], parts[1], float(parts[2])))
-                    except ValueError:
-                        continue
-        if edges:
-            edge_types[etype] = edges
-            print(f"  {etype}: {len(edges):,} edges")
-
-    return edge_types
+    # Edge loading is now done inline in main() via edge_registry
 
 
 def build_hetero_data(
@@ -133,6 +94,7 @@ def train_metapath2vec(
     lr: float = 0.01,
     loss_log_path: Path | None = None,
     suffix: str = "",
+    game: str = "unknown",
 ) -> tuple[np.ndarray, list[dict]]:
     """Train MetaPath2Vec and return embeddings."""
     from torch_geometric.nn import MetaPath2Vec
@@ -159,7 +121,7 @@ def train_metapath2vec(
     ckpt_dir = Path(__file__).resolve().parent.parent.parent / "data" / "checkpoints"
     ckpt_dir.mkdir(parents=True, exist_ok=True)
     suffix_tag = f"_{suffix}" if suffix else ""
-    ckpt_path = ckpt_dir / f"metapath2vec_{num_nodes}n_{dim}d{suffix_tag}.pt"
+    ckpt_path = ckpt_dir / f"metapath2vec_{game}_{num_nodes}n_{dim}d{suffix_tag}.pt"
 
     # Loss log (CSV: epoch, loss, wall_time_s)
     loss_history: list[dict] = []
@@ -167,9 +129,12 @@ def train_metapath2vec(
     loss_writer = None
     if loss_log_path:
         loss_log_path.parent.mkdir(parents=True, exist_ok=True)
-        loss_csv = open(loss_log_path, "w", newline="")
+        # Append mode so resume doesn't lose prior epoch history
+        file_exists = loss_log_path.exists() and loss_log_path.stat().st_size > 0
+        loss_csv = open(loss_log_path, "a", newline="")
         loss_writer = csv.DictWriter(loss_csv, fieldnames=["epoch", "loss", "wall_s"])
-        loss_writer.writeheader()
+        if not file_exists:
+            loss_writer.writeheader()
 
     train_start = time.monotonic()
 
@@ -274,17 +239,15 @@ def main() -> int:
     print(f"MetaPath2Vec Training [{args.game}]")
     print(f"{'=' * 60}")
 
-    # Load edges
+    # Load edges (via shared registry with leakage guard)
     print(f"\n[1/4] Loading typed edges...")
-    edge_types = load_typed_edges(args.game)
+    from edge_registry import get_edge_files, load_edges_from_files
 
-    # Filter to requested edge types
-    if args.edge_types:
-        requested = [e.strip() for e in args.edge_types.split(",")]
-        missing = [e for e in requested if e not in edge_types]
-        if missing:
-            print(f"  WARNING: requested edge types not found: {missing}")
-        edge_types = {k: v for k, v in edge_types.items() if k in requested}
+    graph_dir = DATA_DIR / "graphs"
+    include = [e.strip() for e in args.edge_types.split(",")] if args.edge_types else None
+    edge_file_map = get_edge_files(args.game, graph_dir, include_types=include)
+    edge_types = load_edges_from_files(edge_file_map)
+    if include:
         print(f"  Filtered to: {list(edge_types.keys())}")
 
     if len(edge_types) < 2:
@@ -329,6 +292,7 @@ def main() -> int:
         lr=args.lr,
         loss_log_path=loss_log_path,
         suffix=suffix,
+        game=args.game,
     )
 
     elapsed = time.monotonic() - t0
@@ -350,13 +314,10 @@ def main() -> int:
     print(f"  Saved {len(kv):,} embeddings to {out_path}")
 
     # Quick quality check
-    test_cards = {
-        "magic": [("Lightning Bolt", "Lava Spike"), ("Sol Ring", "Arcane Signet")],
-        "pokemon": [("Ultra Ball", "Nest Ball")],
-        "yugioh": [("Ash Blossom & Joyous Spring", 'Maxx "C"')],
-    }
+    from edge_registry import QUALITY_PAIRS
+
     quality_pairs = {}
-    pairs = test_cards.get(args.game, [])
+    pairs = QUALITY_PAIRS.get(args.game, [])
     if pairs:
         print(f"\n  Quality pairs:")
         for c1, c2 in pairs:
@@ -536,7 +497,9 @@ def main() -> int:
         "artifacts": {
             "embeddings": str(out_path),
             "checkpoint": str(
-                DATA_DIR / "checkpoints" / f"metapath2vec_{len(card_list)}n_{args.dim}d.pt"
+                DATA_DIR
+                / "checkpoints"
+                / f"metapath2vec_{args.game}_{len(card_list)}n_{args.dim}d{suffix}.pt"
             ),
             "loss_log": str(loss_log_path),
         },
