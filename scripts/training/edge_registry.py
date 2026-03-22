@@ -18,6 +18,13 @@ TRAINING_EDGE_FILES = {
     "archetype": "{game}_archetype_cooccurrence.edg",
     "commander": "{game}_archidekt_commander.edg",
     "oracle_text": "{game}_oracle_text_similarity.edg",
+}
+
+# Attribute-based edge files (available but NOT in default training set).
+# These create massive cliques (all 4-mana creatures connected) that dilute
+# co-occurrence signal. Use as GNN node features, not Cleora/MetaPath2Vec edges.
+# Available via --edge-types same_cmc,same_type etc. if experimenting.
+ATTRIBUTE_EDGE_FILES = {
     "same_cmc": "{game}_same_cmc.edg",
     "same_type": "{game}_same_type.edg",
     "same_creature_type": "{game}_same_creature_type.edg",
