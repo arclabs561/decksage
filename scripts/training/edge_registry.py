@@ -17,6 +17,7 @@ TRAINING_EDGE_FILES = {
     "keyword": "{game}_keyword_sharing.edg",
     "archetype": "{game}_archetype_cooccurrence.edg",
     "commander": "{game}_archidekt_commander.edg",
+    "oracle_text": "{game}_oracle_text_similarity.edg",
 }
 
 # Edge types reserved for evaluation only -- NEVER use for training
