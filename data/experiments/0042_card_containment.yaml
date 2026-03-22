@@ -1,0 +1,38 @@
+id: "0042"
+date: "2026-03-21"
+title: "Card-card containment via subsumer -- too sparse, needs more data"
+game: all
+
+hypothesis: >
+  Box embeddings trained on 712 upgrade_direction pairs (A upgrades B = A's
+  box contains B's box) will produce AUC > 0.7 for held-out upgrade pairs
+  vs random card pairs.
+
+method:
+  type: embedding
+  script: scripts/training/train_card_containment.py
+  args: "--all-games --dim 16 --epochs 200 --lr 0.01"
+
+data:
+  training:
+    magic: "168 train triples from 209 pairs (143 upgrades, 66 sidegrades)"
+    pokemon: "292 train triples from 365 pairs (344 upgrades, 21 sidegrades)"
+    yugioh: "263 train triples from 328 pairs (225 upgrades, 103 sidegrades)"
+
+results:
+  magic_auc: 0.500
+  pokemon_auc: 0.583
+  yugioh_auc: 0.500
+  note: "All degenerate -- boxes expand to contain everything"
+
+conclusion: >
+  FAILED. Same degenerate behavior as experiment 0040 (deck-level).
+  168-365 training triples are too sparse for subsumer's BoxEmbeddingTrainer
+  (designed for KGs with 10K+ triples). Needs either 2K+ upgrade pairs,
+  transitivity augmentation (A>B, B>C => A>C), or a simpler model
+  (order embeddings / pointwise partial order).
+
+artifacts:
+  - data/embeddings/magic_card_containment.json
+  - data/embeddings/pokemon_card_containment.json
+  - data/embeddings/yugioh_card_containment.json
