@@ -101,28 +101,57 @@ def _card_context(name: str, card_data: dict[str, dict]) -> str:
     return "\n".join(parts)
 
 
-async def annotate_pair(
-    agent,
-    card1: str,
-    card2: str,
-    pair_meta: dict,
-    game: str,
-    card_data: dict,
-    sem: asyncio.Semaphore,
-) -> dict:
-    """Annotate a single diverse pair."""
-    c1_ctx = _card_context(card1, card_data)
-    c2_ctx = _card_context(card2, card_data)
-    source = pair_meta.get("source", "unknown")
+# ---------------------------------------------------------------------------
+# Prompt variants for multi-perspective annotation (reduces single-prompt bias)
+# ---------------------------------------------------------------------------
 
-    prompt = f"""Judge the relationship between these two {game.upper()} cards.
+GAME_EXPERTISE = {
+    "magic": {
+        "competitive": "You are a competitive Magic: The Gathering tournament player who has top-8'd multiple GPs. You evaluate cards by their constructed viability and metagame positioning.",
+        "commander": "You are a veteran Commander/EDH player who builds decks across all power levels. You evaluate cards by their multiplayer politics, synergy potential, and fun factor.",
+        "budget": "You are a budget-conscious deckbuilder who helps players find affordable alternatives. You evaluate cards primarily by their functional similarity and price-to-performance ratio.",
+    },
+    "pokemon": {
+        "competitive": "You are a Pokemon TCG tournament player who follows the Standard and Expanded metagame closely. You evaluate cards by their competitive viability and consistency.",
+        "casual": "You are a Pokemon TCG collector and casual player. You evaluate cards by their thematic connections, artwork appeal, and fun gameplay patterns.",
+        "budget": "You are a budget Pokemon TCG player who helps newcomers find affordable deck options. You focus on functional substitutes and entry-level alternatives.",
+    },
+    "yugioh": {
+        "competitive": "You are a competitive Yu-Gi-Oh! player who follows the OCG and TCG banlist closely. You evaluate cards by their combo potential, consistency, and meta relevance.",
+        "casual": "You are a casual Yu-Gi-Oh! player who enjoys building thematic archetype decks. You evaluate cards by their in-archetype synergy and lore connections.",
+        "budget": "You are a budget Yu-Gi-Oh! player who helps others find affordable alternatives to expensive staples. You focus on functional substitutes across price tiers.",
+    },
+}
+
+# Default variant used when prompt_variants are not enabled
+DEFAULT_PROMPT_VARIANT = "default"
+
+
+def _build_annotation_prompt(
+    card1_ctx: str,
+    card2_ctx: str,
+    game: str,
+    variant: str = DEFAULT_PROMPT_VARIANT,
+) -> str:
+    """Build the annotation prompt, optionally with a persona/expertise variant."""
+    persona = ""
+    if variant != DEFAULT_PROMPT_VARIANT:
+        game_personas = GAME_EXPERTISE.get(game, {})
+        persona = game_personas.get(variant, "")
+
+    if persona:
+        preamble = f"{persona}\n\n"
+    else:
+        preamble = ""
+
+    return f"""{preamble}Judge the relationship between these two {game.upper()} cards.
 Base your judgment ONLY on the card text below. Do not rely on prior knowledge.
 
 Card A:
-{c1_ctx}
+{card1_ctx}
 
 Card B:
-{c2_ctx}
+{card2_ctx}
 
 **SCORING GUIDE** (rate each dimension independently):
 
@@ -148,6 +177,24 @@ substitutability (how interchangeable are they? 0-1):
 **CLASSIFY** the primary relationship mode as one of: substitution, synergy, meta
 
 Fill ALL output fields including card roles, power levels, and relationship types."""
+
+
+async def annotate_pair(
+    agent,
+    card1: str,
+    card2: str,
+    pair_meta: dict,
+    game: str,
+    card_data: dict,
+    sem: asyncio.Semaphore,
+    prompt_variant: str = DEFAULT_PROMPT_VARIANT,
+) -> dict:
+    """Annotate a single diverse pair."""
+    c1_ctx = _card_context(card1, card_data)
+    c2_ctx = _card_context(card2, card_data)
+    source = pair_meta.get("source", "unknown")
+
+    prompt = _build_annotation_prompt(c1_ctx, c2_ctx, game, variant=prompt_variant)
 
     async with sem:
         try:
@@ -201,6 +248,7 @@ Fill ALL output fields including card roles, power levels, and relationship type
                 "llm_model": os.getenv(
                     "ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5"
                 ).split(",")[0],
+                "prompt_variant": prompt_variant,
                 "game": game,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "input_tokens": input_tokens,
@@ -242,8 +290,12 @@ def _checkpoint_path(game: str) -> Path:
     return DATA_DIR / "annotations" / f"diverse_checkpoint_{game}.jsonl"
 
 
-def _load_checkpoint(game: str) -> set[tuple[str, str]]:
-    """Load already-annotated pairs from checkpoint."""
+def _load_checkpoint(game: str) -> set[tuple[str, str, str, str]]:
+    """Load already-annotated pairs from checkpoint.
+
+    Keys are (query, candidate, llm_model, prompt_variant) 4-tuples
+    to support multi-model x multi-prompt IAA without duplicates.
+    """
     path = _checkpoint_path(game)
     if not path.exists():
         return set()
@@ -252,7 +304,12 @@ def _load_checkpoint(game: str) -> set[tuple[str, str]]:
         for line in f:
             if line.strip():
                 d = json.loads(line)
-                done.add((d.get("query", ""), d.get("candidate", ""), d.get("llm_model", "")))
+                done.add((
+                    d.get("query", ""),
+                    d.get("candidate", ""),
+                    d.get("llm_model", ""),
+                    d.get("prompt_variant", DEFAULT_PROMPT_VARIANT),
+                ))
     return done
 
 
@@ -280,24 +337,33 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     # Resume support: load checkpoint (keys include model name)
     done_pairs = _load_checkpoint(game)
 
+    # Parse prompt variants (env or default)
+    # Set ANNOTATOR_PROMPT_VARIANTS=competitive,commander,budget to enable
+    # Default: just "default" (no persona) for backward compat
+    variant_env = os.getenv("ANNOTATOR_PROMPT_VARIANTS", DEFAULT_PROMPT_VARIANT)
+    prompt_variants = [v.strip() for v in variant_env.split(",") if v.strip()]
+
     if dry_run:
         sources = {}
         for p in all_pairs:
             s = p.get("source", "unknown")
             sources[s] = sources.get(s, 0) + 1
-        per_model = {}
+        per_combo = {}
         for model_name in model_names:
-            remaining = [
-                p for p in all_pairs if (p["card1"], p["card2"], model_name) not in done_pairs
-            ]
-            per_model[model_name] = len(remaining)
-        total_calls = sum(per_model.values())
+            for variant in prompt_variants:
+                remaining = [
+                    p for p in all_pairs
+                    if (p["card1"], p["card2"], model_name, variant) not in done_pairs
+                ]
+                per_combo[f"{model_name}+{variant}"] = len(remaining)
+        total_calls = sum(per_combo.values())
         cost = total_calls * 700 * 0.001 / 1000
         return {
             "game": game,
             "total_pairs": len(all_pairs),
             "models": model_names,
-            "per_model_remaining": per_model,
+            "prompt_variants": prompt_variants,
+            "per_combo_remaining": per_combo,
             "total_calls": total_calls,
             "sources": sources,
             "cost_usd": round(cost, 2),
@@ -320,28 +386,47 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     total_output_tokens = 0
     t0 = time.monotonic()
 
-    for model_idx, model_name in enumerate(model_names):
-        # Filter to pairs not yet done by this model
-        pairs = [p for p in all_pairs if (p["card1"], p["card2"], model_name) not in done_pairs]
+    # Build list of (model, variant) combos to iterate
+    combos = [(m, v) for m in model_names for v in prompt_variants]
+    n_combos = len(combos)
+
+    for combo_idx, (model_name, variant) in enumerate(combos):
+        # Filter to pairs not yet done by this (model, variant) combo
+        pairs = [
+            p for p in all_pairs
+            if (p["card1"], p["card2"], model_name, variant) not in done_pairs
+        ]
+        combo_label = f"{model_name}+{variant}" if variant != DEFAULT_PROMPT_VARIANT else model_name
         if not pairs:
             logger.info(
-                f"[{model_idx + 1}/{len(model_names)}] {model_name}: all {len(all_pairs)} pairs done, skipping"
+                f"[{combo_idx + 1}/{n_combos}] {combo_label}: all {len(all_pairs)} pairs done, skipping"
             )
             continue
 
         logger.info(
-            f"[{model_idx + 1}/{len(model_names)}] {model_name}: {len(pairs)} pairs to annotate"
+            f"[{combo_idx + 1}/{n_combos}] {combo_label}: {len(pairs)} pairs to annotate"
         )
 
-        agent = make_agent(model_name, CardSimilarityAnnotation, prompt_base)
+        # Build system prompt with variant persona
+        game_personas = GAME_EXPERTISE.get(game, {})
+        persona = game_personas.get(variant, "")
+        if persona:
+            system_prompt = f"{persona} Judge card similarity and fill ALL fields."
+        else:
+            system_prompt = "You are an expert TCG judge. Judge card similarity and fill ALL fields."
+
+        agent = make_agent(model_name, CardSimilarityAnnotation, system_prompt)
         sem = asyncio.Semaphore(concurrency)
         n_done = 0
         n_failed = 0
 
-        async def _annotate_one(i: int, pair: dict) -> tuple[int, dict | None]:
+        async def _annotate_one(i: int, pair: dict, _variant=variant) -> tuple[int, dict | None]:
             card1 = pair["card1"]
             card2 = pair["card2"]
-            result = await annotate_pair(agent, card1, card2, pair, game, card_data, sem)
+            result = await annotate_pair(
+                agent, card1, card2, pair, game, card_data, sem,
+                prompt_variant=_variant,
+            )
             return i, result
 
         tasks = [_annotate_one(i, pair) for i, pair in enumerate(pairs)]
@@ -349,6 +434,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             i, result = await coro
             if result:
                 result["llm_model"] = model_name
+                result["prompt_variant"] = variant
                 annotations_by_query.setdefault(result["query"], []).append(result)
                 _save_to_checkpoint(game, result)
                 n_done += 1
@@ -362,12 +448,12 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                 elapsed = time.monotonic() - t0
                 rate = total_processed / elapsed if elapsed > 0 else 0
                 logger.info(
-                    f"  [{model_name}] {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
+                    f"  [{combo_label}] {total_processed}/{len(pairs)} ({rate:.1f} p/s, {n_failed} failed)"
                 )
 
         total_done += n_done
         total_failed += n_failed
-        logger.info(f"  [{model_name}] done: {n_done} annotated, {n_failed} failed")
+        logger.info(f"  [{combo_label}] done: {n_done} annotated, {n_failed} failed")
 
     total_tokens = total_input_tokens + total_output_tokens
     cost_usd = (total_input_tokens * 0.25 + total_output_tokens * 1.25) / 1_000_000
@@ -387,10 +473,11 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                     if not q:
                         continue
                     existing_keys = {
-                        (a.get("candidate"), a.get("llm_model", ""))
+                        (a.get("candidate"), a.get("llm_model", ""), a.get("prompt_variant", DEFAULT_PROMPT_VARIANT))
                         for a in annotations_by_query.get(q, [])
                     }
-                    if (ann.get("candidate"), ann.get("llm_model", "")) not in existing_keys:
+                    ann_key = (ann.get("candidate"), ann.get("llm_model", ""), ann.get("prompt_variant", DEFAULT_PROMPT_VARIANT))
+                    if ann_key not in existing_keys:
                         annotations_by_query.setdefault(q, []).append(ann)
                         n_from_checkpoint += 1
         if n_from_checkpoint > 0:
