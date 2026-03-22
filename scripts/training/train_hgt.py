@@ -59,44 +59,16 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 
 
 # ---------------------------------------------------------------------------
-# Data loading (same as train_metapath2vec.py)
+# Data loading (via shared edge_registry)
 # ---------------------------------------------------------------------------
 
 def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
-    """Load all edge types for a game.
+    """Load all training-safe edge types for a game via edge_registry."""
+    from edge_registry import get_edge_files, load_edges_from_files
 
-    NOTE: annotation edges excluded to prevent eval leakage.
-    """
     graph_dir = DATA_DIR / "graphs"
-    edge_files = {
-        "deck": graph_dir / f"{game}_merged_all.edg",
-        "enriched": graph_dir / f"{game}_merged_enriched.edg",
-        "set": graph_dir / f"{game}_set_cooccurrence.edg",
-        "precon": graph_dir / f"{game}_precon_cooccurrence.edg",
-        "keyword": graph_dir / f"{game}_keyword_sharing.edg",
-        "archetype": graph_dir / f"{game}_archetype_cooccurrence.edg",
-        "commander": graph_dir / f"{game}_archidekt_commander.edg",
-        # NOTE: annotation and diverse_annotation edges are EXCLUDED from training.
-        # All annotation data is reserved for evaluation (nDCG, IAA) only.
-        # Training signal comes from self-supervised sources: co-occurrence,
-        # enrichment, set/precon/keyword co-occurrence, Commander decks.
-    }
-
-    edge_types = {}
-    for etype, path in edge_files.items():
-        if not path.exists():
-            continue
-        edges = []
-        with open(path) as f:
-            for line in f:
-                parts = line.strip().split("\t")
-                if len(parts) >= 3:
-                    try:
-                        edges.append((parts[0], parts[1], float(parts[2])))
-                    except ValueError:
-                        continue
-        if edges:
-            edge_types[etype] = edges
+    edge_file_map = get_edge_files(game, graph_dir)
+    edge_types = load_edges_from_files(edge_file_map)
             print(f"  {etype}: {len(edges):,} edges")
 
     return edge_types
