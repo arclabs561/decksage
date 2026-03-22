@@ -58,13 +58,16 @@ EMBEDDING_FILES = {
     "magic": "magic_metapath2vec",
     "pokemon": "pokemon_metapath2vec",
     "yugioh": "yugioh_metapath2vec",
+    "digimon": "digimon_pecanpy_v1",
+    "onepiece": "onepiece_pecanpy_v1",
 }
 
-# Fallbacks if MetaPath2Vec not available
+# Fallbacks if primary not available
 EMBEDDING_FALLBACKS = {
     "magic": "magic_v5_fused",
     "pokemon": "pokemon_v6_fused_a09",
     "yugioh": "yugioh_v5_fused_a09",
+    "digimon": "digimon_unified_v1",
 }
 
 # Role keywords to detect from oracle text
@@ -423,7 +426,7 @@ def generate_all(
 
 def main():
     parser = argparse.ArgumentParser(description="Generate diverse annotation pairs")
-    parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
+    parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh", "digimon", "onepiece"])
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--n-text", type=int, default=200, help="Text similarity pairs per game")
