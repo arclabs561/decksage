@@ -18,6 +18,10 @@ TRAINING_EDGE_FILES = {
     "archetype": "{game}_archetype_cooccurrence.edg",
     "commander": "{game}_archidekt_commander.edg",
     "oracle_text": "{game}_oracle_text_similarity.edg",
+    "same_cmc": "{game}_same_cmc.edg",
+    "same_type": "{game}_same_type.edg",
+    "same_creature_type": "{game}_same_creature_type.edg",
+    "same_archetype": "{game}_same_archetype.edg",
 }
 
 # Edge types reserved for evaluation only -- NEVER use for training
