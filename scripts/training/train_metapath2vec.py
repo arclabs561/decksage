@@ -233,6 +233,11 @@ def main() -> int:
         help="Comma-separated edge types to use (default: all available). "
         "E.g. --edge-types deck,enriched",
     )
+    parser.add_argument(
+        "--skip-preflight",
+        action="store_true",
+        help="Skip pre-flight diagnostics",
+    )
     args = parser.parse_args()
 
     print(f"{'=' * 60}")
