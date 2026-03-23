@@ -300,10 +300,13 @@ def compute_temporally_weighted_cooccurrence(
             except (ValueError, TypeError):
                 pass  # unparseable timestamp -> weight 1.0
 
-        # Pairwise co-occurrence (deduplicated names within deck, filtered)
-        unique = sorted(set(cards) - filter_cards)
+        # Pairwise co-occurrence (deduplicated names within deck)
+        # Only skip noise-to-noise pairs; keep noise-to-real for color signal
+        unique = sorted(set(cards))
         for i in range(len(unique)):
             for j in range(i + 1, len(unique)):
+                if filter_cards and unique[i] in filter_cards and unique[j] in filter_cards:
+                    continue
                 key = (unique[i], unique[j])  # already sorted
                 edge_weights[key] += decay_w
 
@@ -643,14 +646,17 @@ def build_game(
         raw_edges = load_edgelist(base_edgelist)
         pre_filter = len(raw_edges)
         if noise_cards:
+            # Only remove noise-to-noise pairs (e.g., Forest<->Island).
+            # Keep noise-to-real edges (e.g., Forest<->Llanowar Elves) -- these
+            # carry useful signal about which cards appear in which color decks.
             raw_edges = [
                 (c1, c2, w)
                 for c1, c2, w in raw_edges
-                if c1 not in noise_cards and c2 not in noise_cards
+                if not (c1 in noise_cards and c2 in noise_cards)
             ]
             print(
-                f"  {pre_filter:,} edges, {pre_filter - len(raw_edges):,} removed "
-                f"(noise cards: {', '.join(sorted(noise_cards)[:5])}...)"
+                f"  {pre_filter:,} edges, {pre_filter - len(raw_edges):,} noise-to-noise removed "
+                f"({', '.join(sorted(noise_cards)[:5])}...)"
             )
         print(f"  {len(raw_edges):,} co-occurrence edges")
         for c1, c2, w in raw_edges:
