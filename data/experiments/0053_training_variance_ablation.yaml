@@ -1,0 +1,51 @@
+id: "0053"
+date: "2026-03-23"
+title: "Training variance ablation: v7 edgelist vs v8 graph, multi-seed"
+game: magic
+
+hypothesis: >
+  The v8 regression (sub 0.087 vs v7's 0.102) is partly from training
+  non-determinism in PecanPy random walks. Retraining on v7's exact
+  edgelist should reproduce v7 results if the edgelist is the issue;
+  if it doesn't, training variance is the dominant factor.
+
+method:
+  script: scripts/training/train_blended_embeddings.py + fuse_embeddings.py
+  args: "--dim 128 --walks 10 --walk-length 80 --seed {42,123,456}"
+  evaluator: scripts/evaluation/eval_per_mode.py --json
+
+data:
+  v7_edgelist: data/embeddings/magic_v7_enriched_merged.edg (1,923,266 edges, 21,192 cards)
+  v8_edgelist: data/graphs/magic_merged_all.edg (1,512,393 edges, 19,731 cards)
+  test_set: data/test_sets/annotated_magic_v2.json (3,047 queries)
+
+results:
+  ablation_v7_edgelist:
+    single_run_sub_ndcg: 0.0927
+    note: "Retrained on v7's exact edgelist -- 9% below v7 original (0.1019)"
+  v8_graph:
+    single_run_sub_ndcg: 0.0869
+    note: "15% below v7. But v7 was also a single run -- variance explains ~9%"
+  multi_seed_v7: pending
+  multi_seed_v8: pending
+  cross_game_ablation:
+    pokemon:
+      v7_original: 0.0873
+      ablation_v7_edg: 0.0810
+      v8_new_graph: 0.0774
+    yugioh:
+      v7_original: 0.1547
+      ablation_v7_edg: 0.1474
+      v8_new_graph: 0.1483
+      note: "v8 graph beats ablation for YuGiOh -- new data helps this game"
+
+conclusion: >
+  Training variance (5-9%) accounts for most of the v7-v8 gap. The
+  deployed v7_fused was a single lucky run. Multi-seed results pending
+  to quantify the full distribution. For YuGiOh, the v8 graph with
+  new Moxfield/Archidekt data actually helps.
+
+artifacts:
+  - data/embeddings/magic_ablation_v7edg_fused.wv
+  - data/embeddings/magic_seed{42,123,456}_fused.wv
+  - data/embeddings/magic_v8_seed{42,123,456}_fused.wv

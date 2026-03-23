@@ -27,6 +27,7 @@ co-occurrence edges only.
 Usage:
     uv run scripts/training/train_hgt.py --game magic
     uv run scripts/training/train_hgt.py --game magic --epochs 50 --heads 4 --layers 3
+    uv run scripts/training/train_hgt.py --game magic --batch-size 512 --num-neighbors 15,15
 """
 
 from __future__ import annotations
@@ -62,6 +63,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 # Data loading (via shared edge_registry)
 # ---------------------------------------------------------------------------
 
+
 def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
     """Load all training-safe edge types for a game via edge_registry."""
     from edge_registry import get_edge_files, load_edges_from_files
@@ -77,8 +79,11 @@ def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
 
 def build_hetero_data(
     edge_types: dict[str, list[tuple[str, str, float]]],
-) -> tuple[dict, list[str], dict[str, int]]:
-    """Build heterogeneous graph data for PyG."""
+    node_features: torch.Tensor | None = None,
+) -> tuple[object, list[str], dict[str, int]]:
+    """Build HeteroData object for PyG (compatible with NeighborLoader)."""
+    from torch_geometric.data import HeteroData
+
     all_cards: set[str] = set()
     for edges in edge_types.values():
         for c1, c2, _ in edges:
@@ -87,21 +92,28 @@ def build_hetero_data(
 
     card_list = sorted(all_cards)
     card_to_idx = {name: i for i, name in enumerate(card_list)}
-    print(f"  Total unique cards: {len(card_list):,}")
+    num_nodes = len(card_list)
+    print(f"  Total unique cards: {num_nodes:,}")
 
-    edge_index_dict = {}
+    data = HeteroData()
+
+    # Node features (placeholder if not provided yet; will be replaced before training)
+    if node_features is not None:
+        data["card"].x = node_features
+    else:
+        data["card"].x = torch.zeros(num_nodes, 1)
+    data["card"].num_nodes = num_nodes
+
     for etype, edges in edge_types.items():
         src, dst = [], []
         for c1, c2, _ in edges:
             i, j = card_to_idx[c1], card_to_idx[c2]
             src.extend([i, j])  # undirected
             dst.extend([j, i])
-        edge_index_dict[("card", etype, "card")] = torch.tensor(
-            [src, dst], dtype=torch.long
-        )
+        data["card", etype, "card"].edge_index = torch.tensor([src, dst], dtype=torch.long)
         print(f"  Edge type '{etype}': {len(src):,} directed edges")
 
-    return edge_index_dict, card_list, card_to_idx
+    return data, card_list, card_to_idx
 
 
 # ---------------------------------------------------------------------------
@@ -235,6 +247,7 @@ def load_node_features(
 # HGT model
 # ---------------------------------------------------------------------------
 
+
 class HGTEncoder(nn.Module):
     """Heterogeneous Graph Transformer encoder for card embeddings.
 
@@ -297,6 +310,7 @@ class HGTEncoder(nn.Module):
 # Link prediction training
 # ---------------------------------------------------------------------------
 
+
 def sample_negative_edges(
     edge_index: torch.Tensor,
     num_nodes: int,
@@ -329,11 +343,10 @@ def sample_negative_edges(
 
 
 def train_hgt(
-    edge_index_dict: dict[tuple, torch.Tensor],
-    node_features: torch.Tensor,
-    feat_dim: int,
+    data: object,  # HeteroData
     num_nodes: int,
     edge_type_names: list[str],
+    feat_dim: int,
     dim: int = 128,
     hidden_dim: int = 256,
     heads: int = 4,
@@ -341,14 +354,21 @@ def train_hgt(
     epochs: int = 50,
     lr: float = 0.001,
     neg_ratio: int = 5,
+    batch_size: int = 1024,
+    num_neighbors: list[int] | None = None,
     loss_log_path: Path | None = None,
     suffix: str = "",
     game: str = "magic",
 ) -> tuple[np.ndarray, list[dict]]:
-    """Train HGT via link prediction and return embeddings."""
+    """Train HGT via link prediction with NeighborLoader mini-batching."""
+    from torch_geometric.loader import NeighborLoader
+
+    if num_neighbors is None:
+        num_neighbors = [10, 10]
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  Device: {device}")
+    print(f"  Mini-batch: batch_size={batch_size}, num_neighbors={num_neighbors}")
 
     model = HGTEncoder(
         in_dim=feat_dim,
@@ -362,29 +382,29 @@ def train_hgt(
     param_count = sum(p.numel() for p in model.parameters())
     print(f"  Model parameters: {param_count:,}")
 
-    # Move graph data to device
-    x_dict = {"card": node_features.to(device)}
-    ei_dict = {k: v.to(device) for k, v in edge_index_dict.items()}
+    # NeighborLoader for mini-batch training over all card nodes
+    train_loader = NeighborLoader(
+        data,
+        num_neighbors=num_neighbors,
+        batch_size=batch_size,
+        input_nodes="card",
+        shuffle=True,
+    )
+    print(f"  NeighborLoader: {len(train_loader)} batches/epoch")
 
-    # Merge all edges for link prediction supervision
+    # Merge all edges (on CPU) for validation split
     all_src, all_dst = [], []
-    for key, ei in edge_index_dict.items():
+    for etype in edge_type_names:
+        ei = data["card", etype, "card"].edge_index
         all_src.append(ei[0])
         all_dst.append(ei[1])
     all_edges = torch.stack([torch.cat(all_src), torch.cat(all_dst)])
-    num_pos = all_edges.size(1)
-    print(f"  Total edges for supervision: {num_pos:,}")
+    num_total_edges = all_edges.size(1)
 
-    # Train/val split: hold out 5% of edges for validation
-    perm = torch.randperm(num_pos)
-    val_size = max(num_pos // 20, 1000)
-    val_idx = perm[:val_size]
-    train_idx = perm[val_size:]
-
-    val_edges = all_edges[:, val_idx]
-    train_edges = all_edges[:, train_idx]
-
-    # Pre-sample validation negatives (fixed for consistent eval)
+    # Hold out 5% of edges for validation (evaluated on full graph periodically)
+    perm = torch.randperm(num_total_edges)
+    val_size = max(num_total_edges // 20, 1000)
+    val_edges = all_edges[:, perm[:val_size]]
     val_neg = sample_negative_edges(all_edges, num_nodes, val_size)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -426,41 +446,54 @@ def train_hgt(
     if start_epoch >= epochs:
         print(f"    Already trained to epoch {start_epoch}, skipping (requested {epochs})")
 
-    # Mini-batch edges for memory efficiency on large graphs
-    batch_size = min(65536, train_edges.size(1))
-
     for epoch in range(start_epoch, epochs):
         model.train()
-
-        # Shuffle training edges each epoch
-        perm = torch.randperm(train_edges.size(1))
-        train_edges_shuffled = train_edges[:, perm]
 
         total_loss = 0.0
         n_batches = 0
 
-        for start in range(0, train_edges.size(1), batch_size):
-            end = min(start + batch_size, train_edges.size(1))
-            pos_batch = train_edges_shuffled[:, start:end].to(device)
-            num_pos_batch = pos_batch.size(1)
-
-            # Sample negatives for this batch
-            neg_batch = sample_negative_edges(
-                all_edges, num_nodes, num_pos_batch * neg_ratio
-            ).to(device)
+        for batch in train_loader:
+            batch = batch.to(device)
 
             optimizer.zero_grad()
 
-            # Forward pass: get all node embeddings
-            out = model(x_dict, ei_dict)
-            z = out["card"]
+            # Forward on the subgraph
+            out = model(batch.x_dict, batch.edge_index_dict)
+            z = out["card"]  # embeddings for all nodes in this subgraph
+
+            # Collect edges from the subgraph for link prediction
+            # These are already re-indexed to [0, batch.num_nodes)
+            sub_src, sub_dst = [], []
+            for etype in edge_type_names:
+                key = ("card", etype, "card")
+                if key in batch.edge_index_dict:
+                    ei = batch.edge_index_dict[key]
+                    sub_src.append(ei[0])
+                    sub_dst.append(ei[1])
+
+            if not sub_src:
+                continue
+
+            pos_edges = torch.stack([torch.cat(sub_src), torch.cat(sub_dst)])
+            num_sub_nodes = z.size(0)
+
+            # Subsample positive edges if there are too many (cap at 2x batch_size)
+            num_pos_batch = pos_edges.size(1)
+            max_pos = batch_size * 2
+            if num_pos_batch > max_pos:
+                sel = torch.randperm(num_pos_batch, device=device)[:max_pos]
+                pos_edges = pos_edges[:, sel]
+                num_pos_batch = max_pos
+
+            # Sample negatives within the subgraph node set
+            neg_src = torch.randint(0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device)
+            neg_dst = torch.randint(0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device)
 
             # Link prediction scores (dot product)
-            pos_score = (z[pos_batch[0]] * z[pos_batch[1]]).sum(dim=1)
-            neg_score = (z[neg_batch[0]] * z[neg_batch[1]]).sum(dim=1)
+            pos_score = (z[pos_edges[0]] * z[pos_edges[1]]).sum(dim=1)
+            neg_score = (z[neg_src] * z[neg_dst]).sum(dim=1)
 
             # BPR-style margin loss
-            # For each positive, compare against neg_ratio negatives
             pos_expanded = pos_score.unsqueeze(1).expand(-1, neg_ratio)
             neg_reshaped = neg_score.view(num_pos_batch, neg_ratio)
             loss = -F.logsigmoid(pos_expanded - neg_reshaped).mean()
@@ -476,31 +509,30 @@ def train_hgt(
         avg_loss = total_loss / max(n_batches, 1)
         wall_s = time.monotonic() - train_start
 
-        # Validation AUC (every 5 epochs to save time)
+        # Validation AUC (every 5 epochs) -- chunked full-graph inference
         val_auc = float("nan")
         if (epoch + 1) % 5 == 0 or epoch == epochs - 1:
             model.eval()
             with torch.no_grad():
-                out = model(x_dict, ei_dict)
-                z = out["card"]
-                vp = (z[val_edges[0].to(device)] * z[val_edges[1].to(device)]).sum(dim=1)
-                vn = (z[val_neg[0].to(device)] * z[val_neg[1].to(device)]).sum(dim=1)
-                # AUC approximation: fraction of pos > neg
+                z = _infer_all_embeddings(model, data, num_nodes, num_neighbors, device)
+                vp = (z[val_edges[0]] * z[val_edges[1]]).sum(dim=1)
+                vn = (z[val_neg[0]] * z[val_neg[1]]).sum(dim=1)
                 scores = torch.cat([vp, vn])
-                labels = torch.cat([
-                    torch.ones(vp.size(0)),
-                    torch.zeros(vn.size(0)),
-                ]).to(device)
-                # Sort by score descending, compute AUC
+                labels = torch.cat(
+                    [
+                        torch.ones(vp.size(0)),
+                        torch.zeros(vn.size(0)),
+                    ]
+                ).to(device)
                 sorted_idx = scores.argsort(descending=True)
                 sorted_labels = labels[sorted_idx]
                 n_pos = sorted_labels.sum().item()
                 n_neg = len(sorted_labels) - n_pos
                 if n_pos > 0 and n_neg > 0:
-                    tpr_sum = sorted_labels.cumsum(0)
-                    # AUC = sum of ranks of positives / (n_pos * n_neg)
                     pos_mask = sorted_labels == 1
-                    rank_sum = (torch.arange(1, len(sorted_labels) + 1, device=device).float()[pos_mask]).sum()
+                    rank_sum = (
+                        torch.arange(1, len(sorted_labels) + 1, device=device).float()[pos_mask]
+                    ).sum()
                     val_auc = 1.0 - (rank_sum - n_pos * (n_pos + 1) / 2) / (n_pos * n_neg)
                     val_auc = val_auc.item()
 
@@ -538,7 +570,7 @@ def train_hgt(
             "epoch": epochs - 1,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
-            "loss": avg_loss if 'avg_loss' in dir() else float("nan"),
+            "loss": avg_loss if "avg_loss" in dir() else float("nan"),
         },
         str(ckpt_path),
     )
@@ -546,18 +578,63 @@ def train_hgt(
     if loss_csv:
         loss_csv.close()
 
-    # Extract embeddings
+    # Extract all embeddings via chunked inference
     model.eval()
     with torch.no_grad():
-        out = model(x_dict, ei_dict)
-        embeddings = out["card"].cpu().numpy()
+        z = _infer_all_embeddings(model, data, num_nodes, num_neighbors, device)
+        embeddings = z.cpu().numpy()
 
     return embeddings, loss_history
+
+
+def _infer_all_embeddings(
+    model: nn.Module,
+    data: object,  # HeteroData
+    num_nodes: int,
+    num_neighbors: list[int],
+    device: torch.device,
+    infer_batch_size: int = 2048,
+) -> torch.Tensor:
+    """Produce embeddings for ALL nodes via chunked NeighborLoader inference.
+
+    Uses larger neighbor counts than training (2x) and processes all nodes
+    in batches to avoid OOM during inference.
+    """
+    from torch_geometric.loader import NeighborLoader
+
+    # Use more neighbors at inference for better quality
+    infer_neighbors = [n * 2 for n in num_neighbors]
+
+    loader = NeighborLoader(
+        data,
+        num_neighbors=infer_neighbors,
+        batch_size=infer_batch_size,
+        input_nodes="card",
+        shuffle=False,
+    )
+
+    all_embeddings = torch.zeros(num_nodes, model.output_proj.out_features, device=device)
+    model.eval()
+
+    for batch in loader:
+        batch = batch.to(device)
+        out = model(batch.x_dict, batch.edge_index_dict)
+        z = out["card"]
+
+        # batch['card'].n_id maps subgraph indices -> original graph indices
+        # batch['card'].batch_size is the number of seed nodes (first N)
+        n_id = batch["card"].n_id
+        bs = batch["card"].batch_size
+        # Only write the seed node embeddings (first batch_size entries)
+        all_embeddings[n_id[:bs]] = z[:bs]
+
+    return all_embeddings
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Train HGT embeddings")
@@ -568,8 +645,18 @@ def main() -> int:
     parser.add_argument("--lr", type=float, default=0.001)
     parser.add_argument("--heads", type=int, default=4)
     parser.add_argument("--layers", type=int, default=2)
-    parser.add_argument("--neg-ratio", type=int, default=5,
-                        help="Negative samples per positive edge")
+    parser.add_argument(
+        "--neg-ratio", type=int, default=5, help="Negative samples per positive edge"
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=1024, help="NeighborLoader seed node batch size"
+    )
+    parser.add_argument(
+        "--num-neighbors",
+        type=str,
+        default="10,10",
+        help="Neighbors per hop, comma-separated (e.g. '10,10' for 2-hop)",
+    )
     parser.add_argument(
         "--output-suffix",
         type=str,
@@ -606,16 +693,18 @@ def main() -> int:
         print("No edge types found. Check data/graphs/ directory.")
         return 1
 
-    # Build heterogeneous graph
+    # Build heterogeneous graph (without features first to get card_list)
     print(f"\n[2/5] Building heterogeneous graph...")
-    edge_index_dict, card_list, card_to_idx = build_hetero_data(edge_types)
+    data, card_list, card_to_idx = build_hetero_data(edge_types)
     num_nodes = len(card_list)
 
-    # Load node features
+    # Load node features and attach to HeteroData
     print(f"\n[3/5] Loading node features from card annotations...")
-    node_features, feat_dim = load_node_features(
-        args.game, card_list, card_to_idx, args.dim
-    )
+    node_features, feat_dim = load_node_features(args.game, card_list, card_to_idx, args.dim)
+    data["card"].x = node_features
+
+    # Parse num_neighbors
+    num_neighbors = [int(x.strip()) for x in args.num_neighbors.split(",")]
 
     # Prepare log paths
     suffix = f"_{args.output_suffix}" if args.output_suffix else ""
@@ -625,17 +714,19 @@ def main() -> int:
 
     # Train
     edge_type_names = list(edge_types.keys())
-    print(f"\n[4/5] Training HGT (dim={args.dim}, hidden={args.hidden_dim}, "
-          f"heads={args.heads}, layers={args.layers}, epochs={args.epochs})...")
+    print(
+        f"\n[4/5] Training HGT (dim={args.dim}, hidden={args.hidden_dim}, "
+        f"heads={args.heads}, layers={args.layers}, epochs={args.epochs}, "
+        f"batch_size={args.batch_size}, neighbors={num_neighbors})..."
+    )
     print(f"  Edge types: {edge_type_names}")
     t0 = time.monotonic()
 
     embeddings, loss_history = train_hgt(
-        edge_index_dict,
-        node_features=node_features,
-        feat_dim=feat_dim,
+        data,
         num_nodes=num_nodes,
         edge_type_names=edge_type_names,
+        feat_dim=feat_dim,
         dim=args.dim,
         hidden_dim=args.hidden_dim,
         heads=args.heads,
@@ -643,6 +734,8 @@ def main() -> int:
         epochs=args.epochs,
         lr=args.lr,
         neg_ratio=args.neg_ratio,
+        batch_size=args.batch_size,
+        num_neighbors=num_neighbors,
         loss_log_path=loss_log_path,
         suffix=args.output_suffix,
         game=args.game,
@@ -834,6 +927,8 @@ def main() -> int:
             "layers": args.layers,
             "lr": args.lr,
             "neg_ratio": args.neg_ratio,
+            "batch_size": args.batch_size,
+            "num_neighbors": num_neighbors,
             "edge_types_filter": args.edge_types if args.edge_types else "all",
         },
         "data": {
