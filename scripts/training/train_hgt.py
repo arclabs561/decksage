@@ -4,6 +4,7 @@
 # dependencies = [
 #     "torch>=2.0.0",
 #     "torch-geometric>=2.4.0",
+#     "torch-sparse",
 #     "gensim>=4.3.0",
 #     "numpy>=1.24.0",
 # ]
