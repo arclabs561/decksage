@@ -19,7 +19,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import math
 import subprocess
 import sys
 from pathlib import Path
@@ -41,78 +40,54 @@ GAME_ATTRS = {
     "yugioh": "data/processed/card_attributes_yugioh.csv",
 }
 
-GRADES = {
-    "highly_relevant": 3,
-    "relevant": 2,
-    "somewhat_relevant": 1,
-    "marginally_relevant": 0.5,
-    "irrelevant": 0,
-}
-
-
-def dcg(scores: list[float], k: int) -> float:
-    return sum(s / math.log2(i + 2) for i, s in enumerate(scores[:k]))
-
-
-def ndcg(rels: list[float], k: int) -> float:
-    d = dcg(rels, k)
-    ideal = dcg(sorted(rels, reverse=True), k)
-    return d / ideal if ideal > 0 else 0.0
-
 
 def evaluate_embedding(emb_path: str, game: str) -> dict[str, float]:
-    """Evaluate an embedding file, returning per-mode nDCG@10."""
-    from gensim.models import KeyedVectors
-
-    test_set = PROJECT_ROOT / f"data/test_sets/annotated_{game}_v2.json"
-    if not test_set.exists():
+    """Evaluate via canonical eval_per_mode.py, returning per-mode nDCG@10."""
+    ret = subprocess.run(
+        [
+            VENV_PYTHON,
+            "scripts/evaluation/eval_per_mode.py",
+            "--game", game,
+            "--embedding", emb_path,
+            "--json",
+        ],
+        cwd=str(PROJECT_ROOT),
+        capture_output=True,
+    )
+    if ret.returncode != 0:
+        print(f"  ERROR evaluating: {ret.stderr.decode()[-200:]}")
         return {}
 
-    kv = KeyedVectors.load(str(emb_path))
-    data = json.load(open(test_set))
-    queries_raw = data.get("queries", data)
+    # Parse JSON output from eval_per_mode.py
+    stdout = ret.stdout.decode()
+    for line in stdout.strip().splitlines():
+        line = line.strip()
+        if line.startswith("{"):
+            try:
+                data = json.loads(line)
+                results = {}
+                for key, val in data.items():
+                    if isinstance(val, dict) and "ndcg@10" in val:
+                        results[key] = val["ndcg@10"]
+                    elif isinstance(val, (int, float)):
+                        results[key] = val
+                return results
+            except json.JSONDecodeError:
+                continue
 
-    # Queries can be dict (card_name -> {buckets}) or list of dicts
-    if isinstance(queries_raw, dict):
-        queries = [
-            {"query": card_name, **card_data} for card_name, card_data in queries_raw.items()
-        ]
-    else:
-        queries = queries_raw
-
-    mode_scores: dict[str, list[float]] = {}
-    for q in queries:
-        query_card = q.get("query") or q.get("card1")
-        if not query_card or query_card not in kv:
-            continue
-
-        # Mode from "modes" list or "mode" field
-        modes = q.get("modes", [q.get("mode", "substitute")])
-        mode = modes[0] if isinstance(modes, list) and modes else "substitute"
-
-        # Relevance buckets: either nested under "relevance_buckets" or top-level
-        buckets = q.get("relevance_buckets", {})
-        if not buckets:
-            buckets = {k: v for k, v in q.items() if k in GRADES and isinstance(v, list)}
-
-        # Rank by cosine similarity
-        candidates = []
-        for bucket_name, cards in buckets.items():
-            grade = GRADES.get(bucket_name, 0)
-            for c in cards:
-                if c in kv:
-                    sim = kv.similarity(query_card, c)
-                    candidates.append((c, sim, grade))
-
-        if not candidates:
-            continue
-
-        candidates.sort(key=lambda x: -x[1])
-        ranked_rels = [c[2] for c in candidates]
-        score = ndcg(ranked_rels, 10)
-        mode_scores.setdefault(mode, []).append(score)
-
-    return {mode: sum(s) / len(s) for mode, s in mode_scores.items() if s}
+    # Fallback: parse text output
+    results = {}
+    for line in stdout.splitlines():
+        for mode in ("substitute", "substitution", "synergy", "meta", "overall"):
+            if mode in line.lower() and "ndcg" in line.lower():
+                parts = line.split()
+                for p in parts:
+                    try:
+                        results[mode] = float(p)
+                        break
+                    except ValueError:
+                        continue
+    return results
 
 
 def run_sweep(game: str, oracle_weights: list[float]) -> list[dict]:
