@@ -1,0 +1,22 @@
+[
+  {
+    "game": "magic",
+    "oracle_text_weight": 1.0
+  },
+  {
+    "game": "magic",
+    "oracle_text_weight": 3.0
+  },
+  {
+    "game": "magic",
+    "oracle_text_weight": 5.0
+  },
+  {
+    "game": "magic",
+    "oracle_text_weight": 7.0
+  },
+  {
+    "game": "magic",
+    "oracle_text_weight": 10.0
+  }
+]
