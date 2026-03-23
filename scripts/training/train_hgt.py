@@ -69,7 +69,8 @@ def load_typed_edges(game: str) -> dict[str, list[tuple[str, str, float]]]:
     graph_dir = DATA_DIR / "graphs"
     edge_file_map = get_edge_files(game, graph_dir)
     edge_types = load_edges_from_files(edge_file_map)
-            print(f"  {etype}: {len(edges):,} edges")
+    for etype, edges in edge_types.items():
+        print(f"  {etype}: {len(edges):,} edges")
 
     return edge_types
 
