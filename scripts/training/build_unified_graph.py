@@ -462,8 +462,13 @@ def compute_oracle_text_edges(
     name_col: str = "name",
     text_col: str = "oracle_text",
     type_col: str = "type",
+    cache_dir: Path | None = None,
 ) -> list[tuple[str, str, float]]:
-    """Compute oracle text similarity edges using sentence-transformers."""
+    """Compute oracle text similarity edges using sentence-transformers.
+
+    If cache_dir is provided, caches embeddings to disk (names.txt + embeddings.npy).
+    Cache is invalidated when the card count changes.
+    """
     from sentence_transformers import SentenceTransformer
 
     # Load cards
@@ -493,15 +498,37 @@ def compute_oracle_text_edges(
     names = [c[0] for c in cards]
     texts = [c[1] for c in cards]
 
-    print(f"  Embedding {len(texts)} cards for oracle text similarity...")
-    model = SentenceTransformer("all-MiniLM-L6-v2")
-    embeddings = model.encode(
-        texts,
-        batch_size=256,
-        show_progress_bar=False,
-        convert_to_numpy=True,
-        normalize_embeddings=True,
-    )
+    # Try loading from cache
+    embeddings = None
+    if cache_dir:
+        cache_dir.mkdir(parents=True, exist_ok=True)
+        # Derive game from csv_path name
+        game_tag = csv_path.stem.replace("card_attributes_", "").replace("_enriched", "")
+        if not game_tag or game_tag == "card_attributes":
+            game_tag = "magic"
+        names_file = cache_dir / f"{game_tag}_names.txt"
+        emb_file = cache_dir / f"{game_tag}_embeddings.npy"
+        if names_file.exists() and emb_file.exists():
+            cached_names = names_file.read_text().strip().split("\n")
+            if cached_names == names:
+                embeddings = np.load(emb_file)
+                print(f"  Loaded cached embeddings ({len(names)} cards)")
+
+    if embeddings is None:
+        print(f"  Embedding {len(texts)} cards for oracle text similarity...")
+        model = SentenceTransformer("all-MiniLM-L6-v2")
+        embeddings = model.encode(
+            texts,
+            batch_size=256,
+            show_progress_bar=False,
+            convert_to_numpy=True,
+            normalize_embeddings=True,
+        )
+        # Save to cache
+        if cache_dir:
+            np.save(emb_file, embeddings)
+            names_file.write_text("\n".join(names))
+            print(f"  Cached embeddings to {cache_dir}")
 
     # Chunked pairwise similarity
     n = len(names)
@@ -707,7 +734,8 @@ def build_game(
     print("\n[3/8] Computing oracle text similarity edges...")
     if csv_path and csv_path.exists():
         oracle_edges = compute_oracle_text_edges(
-            csv_path, threshold=0.70, top_k=30, weight_scale=3.0
+            csv_path, threshold=0.70, top_k=30, weight_scale=3.0,
+            cache_dir=PROJECT_ROOT / "data" / "cache" / "text_embeddings",
         )
         print(f"  {len(oracle_edges):,} oracle text edges")
         for c1, c2, w in oracle_edges:
