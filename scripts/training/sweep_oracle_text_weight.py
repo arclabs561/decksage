@@ -43,12 +43,15 @@ GAME_ATTRS = {
 
 def evaluate_embedding(emb_path: str, game: str) -> dict[str, float]:
     """Evaluate via canonical eval_per_mode.py, returning per-mode nDCG@10."""
+    # eval_per_mode expects just the stem name, not a full path
+    emb_name = Path(emb_path).stem  # e.g. "magic_sweep_ot5_fused"
+
     ret = subprocess.run(
         [
             VENV_PYTHON,
             "scripts/evaluation/eval_per_mode.py",
             "--game", game,
-            "--embedding", emb_path,
+            "--embedding", emb_name,
             "--json",
         ],
         cwd=str(PROJECT_ROOT),
@@ -58,36 +61,23 @@ def evaluate_embedding(emb_path: str, game: str) -> dict[str, float]:
         print(f"  ERROR evaluating: {ret.stderr.decode()[-200:]}")
         return {}
 
-    # Parse JSON output from eval_per_mode.py
-    stdout = ret.stdout.decode()
-    for line in stdout.strip().splitlines():
-        line = line.strip()
-        if line.startswith("{"):
-            try:
-                data = json.loads(line)
-                results = {}
-                for key, val in data.items():
-                    if isinstance(val, dict) and "ndcg@10" in val:
-                        results[key] = val["ndcg@10"]
-                    elif isinstance(val, (int, float)):
-                        results[key] = val
-                return results
-            except json.JSONDecodeError:
-                continue
+    # Parse JSON array output from eval_per_mode.py
+    try:
+        data = json.loads(ret.stdout.decode())
+        if isinstance(data, list) and data:
+            r = data[0]
+            results = {}
+            for mode in ("substitute", "synergy", "meta"):
+                mode_key = f"mode_{mode}"
+                if mode_key in r and isinstance(r[mode_key], dict):
+                    results[mode] = r[mode_key].get("ndcg_at_k", 0.0)
+            if "overall_ndcg" in r:
+                results["overall"] = r["overall_ndcg"].get("ndcg_at_k", 0.0)
+            return results
+    except (json.JSONDecodeError, KeyError, IndexError) as e:
+        print(f"  ERROR parsing eval output: {e}")
 
-    # Fallback: parse text output
-    results = {}
-    for line in stdout.splitlines():
-        for mode in ("substitute", "substitution", "synergy", "meta", "overall"):
-            if mode in line.lower() and "ndcg" in line.lower():
-                parts = line.split()
-                for p in parts:
-                    try:
-                        results[mode] = float(p)
-                        break
-                    except ValueError:
-                        continue
-    return results
+    return {}
 
 
 def run_sweep(game: str, oracle_weights: list[float]) -> list[dict]:
