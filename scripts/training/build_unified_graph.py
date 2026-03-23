@@ -707,7 +707,7 @@ def build_game(
     print("\n[3/8] Computing oracle text similarity edges...")
     if csv_path and csv_path.exists():
         oracle_edges = compute_oracle_text_edges(
-            csv_path, threshold=0.85, top_k=15, weight_scale=3.0
+            csv_path, threshold=0.70, top_k=30, weight_scale=3.0
         )
         print(f"  {len(oracle_edges):,} oracle text edges")
         for c1, c2, w in oracle_edges:
