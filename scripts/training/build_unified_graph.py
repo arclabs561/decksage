@@ -47,6 +47,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from ml.data.incremental_graph import IncrementalCardGraph
+from ml.utils.constants import get_filter_set
 from ml.utils.data_loading import load_edgelist
 
 
@@ -71,6 +72,12 @@ GAME_CONFIGS = {
             "data/decks/decks_magic_commander_extended.jsonl",
             "data/decks/decks_magic_commander_seq.jsonl",
             "data/decks/decks_magic_mtgtop8.jsonl",
+            "data/decks/decks_magic_moxfield_commander.jsonl",
+            "data/decks/decks_magic_moxfield_modern.jsonl",
+            "data/decks/decks_magic_moxfield_pioneer.jsonl",
+            "data/decks/decks_magic_moxfield_standard.jsonl",
+            "data/decks/decks_magic_archidekt_commander.jsonl",
+            "data/decks/decks_magic_archidekt_modern.jsonl",
         ],
         "annotations": [
             "data/annotations/magic_500_v3.json",
@@ -222,6 +229,8 @@ def compute_temporally_weighted_cooccurrence(
     decks: list[dict],
     halflife_days: float,
     reference_date: datetime | None = None,
+    filter_cards: set[str] | None = None,
+    dedup_decks: bool = True,
 ) -> list[tuple[str, str, float]]:
     """Compute co-occurrence edges with exponential temporal decay.
 
@@ -234,17 +243,46 @@ def compute_temporally_weighted_cooccurrence(
         halflife_days: Base halflife in days. Per-format overrides are applied
             when the deck has a recognized format.
         reference_date: "Now" for age computation (default: actual now).
+        filter_cards: Card names to exclude from co-occurrence (lands, energy).
+        dedup_decks: If True, skip decks with identical card signatures.
 
     Returns:
         List of (card1, card2, weight) tuples.
     """
     if reference_date is None:
         reference_date = datetime.now()
+    if filter_cards is None:
+        filter_cards = set()
 
     ln2 = math.log(2)
     edge_weights: dict[tuple[str, str], float] = defaultdict(float)
+    seen_signatures: set[tuple[str, ...]] = set()
+    dedup_count = 0
 
     for deck in decks:
+        # Extract card names
+        cards: list[str] = []
+        for card in deck.get("cards", []):
+            name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
+            if name:
+                cards.append(name)
+        for partition in deck.get("partitions", []):
+            for card in partition.get("cards", []):
+                name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
+                if name:
+                    cards.append(name)
+
+        # Deduplicate decks by card signature (multiset -- counts matter)
+        if dedup_decks:
+            card_counts: dict[str, int] = defaultdict(int)
+            for c in cards:
+                card_counts[c] += 1
+            sig = tuple(sorted(card_counts.items()))
+            if sig in seen_signatures:
+                dedup_count += 1
+                continue
+            seen_signatures.add(sig)
+
         # Determine decay weight
         decay_w = 1.0
         ts_str = (deck.get("created_at") or "").strip()
@@ -262,24 +300,18 @@ def compute_temporally_weighted_cooccurrence(
             except (ValueError, TypeError):
                 pass  # unparseable timestamp -> weight 1.0
 
-        # Extract card names
-        cards: list[str] = []
-        for card in deck.get("cards", []):
-            name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
-            if name:
-                cards.append(name)
-        for partition in deck.get("partitions", []):
-            for card in partition.get("cards", []):
-                name = (card.get("name", "") if isinstance(card, dict) else str(card)).strip()
-                if name:
-                    cards.append(name)
-
-        # Pairwise co-occurrence (deduplicated names within deck)
-        unique = sorted(set(cards))
+        # Pairwise co-occurrence (deduplicated names within deck, filtered)
+        unique = sorted(set(cards) - filter_cards)
         for i in range(len(unique)):
             for j in range(i + 1, len(unique)):
                 key = (unique[i], unique[j])  # already sorted
                 edge_weights[key] += decay_w
+
+    if dedup_count > 0:
+        print(
+            f"  [dedup] Skipped {dedup_count:,} duplicate decks "
+            f"({dedup_count / (len(seen_signatures) + dedup_count):.1%} duplication rate)"
+        )
 
     return [(c1, c2, w) for (c1, c2), w in edge_weights.items() if w > 0]
 
@@ -574,11 +606,25 @@ def build_game(
     # Initialize graph
     graph = IncrementalCardGraph(graph_path=output_db, use_sqlite=True)
 
+    # Noise card filter for this game (basic lands, energy, etc.)
+    noise_cards = get_filter_set(game, level="common")
+
     # 1. Co-occurrence edges from base edgelist
     raw_edges: list[tuple[str, str, float]] = []
     if base_edgelist and base_edgelist.exists():
         print(f"\n[1/8] Loading co-occurrence edges from {base_edgelist.name}...")
         raw_edges = load_edgelist(base_edgelist)
+        pre_filter = len(raw_edges)
+        if noise_cards:
+            raw_edges = [
+                (c1, c2, w)
+                for c1, c2, w in raw_edges
+                if c1 not in noise_cards and c2 not in noise_cards
+            ]
+            print(
+                f"  {pre_filter:,} edges, {pre_filter - len(raw_edges):,} removed "
+                f"(noise cards: {', '.join(sorted(noise_cards)[:5])}...)"
+            )
         print(f"  {len(raw_edges):,} co-occurrence edges")
         for c1, c2, w in raw_edges:
             graph.add_edge(c1, c2, w, source_type="co_occurrence", game=game_code)
@@ -600,6 +646,7 @@ def build_game(
             deck_cooccurrence = compute_temporally_weighted_cooccurrence(
                 decks,
                 halflife_days=999999,  # effectively no decay
+                filter_cards=noise_cards,
             )
             raw_edges = deck_cooccurrence
             print(f"  {len(raw_edges):,} co-occurrence edges from deck JSONL")
@@ -628,6 +675,7 @@ def build_game(
                 temporal_edges = compute_temporally_weighted_cooccurrence(
                     decks,
                     halflife_days=halflife_days,
+                    filter_cards=noise_cards,
                 )
                 print(
                     f"  [temporal decay] {len(temporal_edges):,} temporally-weighted edges "

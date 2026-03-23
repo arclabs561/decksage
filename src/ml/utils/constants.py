@@ -70,7 +70,7 @@ def get_filter_set(game: str, level: str = "basic") -> set:
             return GAME_FILTERS["magic"]["common_lands"] | GAME_FILTERS["magic"]["staples"]
 
     elif game_lower == "pokemon":
-        if level in ("basic", "energy"):
+        if level in ("basic", "energy", "common"):
             return GAME_FILTERS["pokemon"]["basic_energy"]
         elif level == "all":
             return (
