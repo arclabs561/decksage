@@ -14,6 +14,7 @@ Usage:
     uv run scripts/training/sweep_oracle_text_weight.py  # all games
     uv run scripts/training/sweep_oracle_text_weight.py --weights 1,3,5,7,10
 """
+
 from __future__ import annotations
 
 import argparse
@@ -69,27 +70,39 @@ def evaluate_embedding(emb_path: str, game: str) -> dict[str, float]:
 
     kv = KeyedVectors.load(str(emb_path))
     data = json.load(open(test_set))
-    queries = data.get("queries", data)
+    queries_raw = data.get("queries", data)
+
+    # Queries can be dict (card_name -> {buckets}) or list of dicts
+    if isinstance(queries_raw, dict):
+        queries = [
+            {"query": card_name, **card_data} for card_name, card_data in queries_raw.items()
+        ]
+    else:
+        queries = queries_raw
 
     mode_scores: dict[str, list[float]] = {}
     for q in queries:
         query_card = q.get("query") or q.get("card1")
-        if query_card not in kv:
+        if not query_card or query_card not in kv:
             continue
-        mode = q.get("mode", "substitute")
-        rels = []
-        for bucket_name, cards in q.get("relevance_buckets", {}).items():
-            grade = GRADES.get(bucket_name, 0)
-            for _ in cards:
-                rels.append(grade)
+
+        # Mode from "modes" list or "mode" field
+        modes = q.get("modes", [q.get("mode", "substitute")])
+        mode = modes[0] if isinstance(modes, list) and modes else "substitute"
+
+        # Relevance buckets: either nested under "relevance_buckets" or top-level
+        buckets = q.get("relevance_buckets", {})
+        if not buckets:
+            buckets = {k: v for k, v in q.items() if k in GRADES and isinstance(v, list)}
 
         # Rank by cosine similarity
         candidates = []
-        for bucket_name, cards in q.get("relevance_buckets", {}).items():
+        for bucket_name, cards in buckets.items():
+            grade = GRADES.get(bucket_name, 0)
             for c in cards:
                 if c in kv:
                     sim = kv.similarity(query_card, c)
-                    candidates.append((c, sim, GRADES.get(bucket_name, 0)))
+                    candidates.append((c, sim, grade))
 
         if not candidates:
             continue
@@ -138,12 +151,18 @@ def run_sweep(game: str, oracle_weights: list[float]) -> list[dict]:
             [
                 VENV_PYTHON,
                 "scripts/training/train_blended_embeddings.py",
-                "--edgelist", str(edgelist_path),
-                "--weight", "1.0",
-                "--output", str(emb_path),
-                "--dim", "128",
-                "--walks", "10",
-                "--walk-length", "80",
+                "--edgelist",
+                str(edgelist_path),
+                "--weight",
+                "1.0",
+                "--output",
+                str(emb_path),
+                "--dim",
+                "128",
+                "--walks",
+                "10",
+                "--walk-length",
+                "80",
             ],
             cwd=str(PROJECT_ROOT),
             capture_output=True,
@@ -160,11 +179,16 @@ def run_sweep(game: str, oracle_weights: list[float]) -> list[dict]:
                 [
                     VENV_PYTHON,
                     "scripts/training/fuse_embeddings.py",
-                    "--embeddings", str(emb_path),
-                    "--card-attrs", card_attrs,
-                    "--output", str(fused_path),
-                    "--alpha", "0.7",
-                    "--dim", "128",
+                    "--embeddings",
+                    str(emb_path),
+                    "--card-attrs",
+                    card_attrs,
+                    "--output",
+                    str(fused_path),
+                    "--alpha",
+                    "0.7",
+                    "--dim",
+                    "128",
                 ],
                 cwd=str(PROJECT_ROOT),
                 capture_output=True,
@@ -189,8 +213,9 @@ def run_sweep(game: str, oracle_weights: list[float]) -> list[dict]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sweep oracle_text edge weight")
     parser.add_argument("--game", choices=["magic", "pokemon", "yugioh", "all"], default="all")
-    parser.add_argument("--weights", default="1,3,5,7,10",
-                        help="Comma-separated oracle_text weight multipliers")
+    parser.add_argument(
+        "--weights", default="1,3,5,7,10", help="Comma-separated oracle_text weight multipliers"
+    )
     args = parser.parse_args()
 
     oracle_weights = [float(w) for w in args.weights.split(",")]
@@ -214,7 +239,9 @@ def main() -> int:
             sub = r.get("substitute", 0)
             syn = r.get("synergy", 0)
             meta = r.get("meta", 0)
-            print(f"{r['game']:<10} {r['oracle_text_weight']:>6.0f} {sub:>8.4f} {syn:>8.4f} {meta:>8.4f}")
+            print(
+                f"{r['game']:<10} {r['oracle_text_weight']:>6.0f} {sub:>8.4f} {syn:>8.4f} {meta:>8.4f}"
+            )
 
     # Save results
     out_path = PROJECT_ROOT / "data" / "experiments" / "sweep_oracle_text_results.json"
