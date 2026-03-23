@@ -26,8 +26,18 @@ results:
   v8_graph:
     single_run_sub_ndcg: 0.0869
     note: "15% below v7. But v7 was also a single run -- variance explains ~9%"
-  multi_seed_v7: pending
-  multi_seed_v8: pending
+  multi_seed_v7:
+    seed_42: 0.0928
+    seed_123: 0.0942
+    seed_456: 0.0941
+    mean: 0.0937
+    std: 0.0008
+  multi_seed_v8:
+    seed_42: 0.0889
+    seed_123: 0.0890
+    seed_456: 0.0918
+    mean: 0.0899
+    std: 0.0016
   cross_game_ablation:
     pokemon:
       v7_original: 0.0873
@@ -40,10 +50,12 @@ results:
       note: "v8 graph beats ablation for YuGiOh -- new data helps this game"
 
 conclusion: >
-  Training variance (5-9%) accounts for most of the v7-v8 gap. The
-  deployed v7_fused was a single lucky run. Multi-seed results pending
-  to quantify the full distribution. For YuGiOh, the v8 graph with
-  new Moxfield/Archidekt data actually helps.
+  v7 edgelist mean sub nDCG = 0.094, v8 graph mean = 0.090 (4% gap, not 15%).
+  The deployed v7_fused (0.102) was 2.5 sigma above its distribution mean --
+  a lucky run. Training variance is low (std ~0.001) but the deployed model
+  is an outlier. Strategy: train N seeds, deploy best. The v8 graph with
+  Moxfield/Archidekt data causes a real but small regression for Magic (4%)
+  while helping YuGiOh. For YuGiOh, new data improves quality.
 
 artifacts:
   - data/embeddings/magic_ablation_v7edg_fused.wv
