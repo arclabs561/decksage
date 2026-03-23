@@ -28,8 +28,10 @@ GAME_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
 # Minimum thresholds -- fail if below these
 MIN_EDGE_FRACTION = {
     # Each source type should contribute at least this fraction of total edges
-    # to be worth including. Below this, it's noise.
-    "oracle_text": 0.01,   # 1% -- below this, weight sweeps are meaningless
+    # to be worth including. Below this, weight sweeps are meaningless.
+    # Exception: oracle_text works best as small, high-precision signal (0.85 cosine).
+    # Lowering threshold to get more edges degrades quality (tested 0.70-0.85).
+    "oracle_text": 0.001,  # 0.1% -- small but high-precision is fine
     "enriched": 0.001,     # 0.1%
     "propagated": 0.001,   # 0.1%
 }
