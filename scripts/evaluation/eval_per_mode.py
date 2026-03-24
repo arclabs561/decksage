@@ -292,15 +292,48 @@ def eval_upgrade_direction(queries: dict) -> dict:
 def _precompute_neighbors(
     wv: KeyedVectors, query_names: list[str], max_k: int = 30
 ) -> dict[str, list[tuple[str, float]]]:
-    """Precompute top-N neighbors for all queries once. Avoids redundant calls."""
+    """Precompute top-N neighbors for all queries via batch matrix multiply.
+
+    Instead of 3K individual most_similar() calls (each doing a full 21K dot product),
+    batch all queries into a single matrix multiply: (Q x D) @ (V x D).T -> (Q x V).
+    Then argpartition each row for top-K. ~10x faster than the loop.
+    """
+    # Filter to queries in vocabulary
+    valid_queries = [q for q in query_names if q in wv.key_to_index]
+    if not valid_queries:
+        return {}
+
+    # Get all vocabulary vectors (normalized by gensim)
+    all_vectors = wv.vectors  # (V, D), already L2-normalized by gensim
+    all_keys = list(wv.key_to_index.keys())
+
+    # Build query matrix
+    query_indices = [wv.key_to_index[q] for q in valid_queries]
+    query_matrix = all_vectors[query_indices]  # (Q, D)
+
+    # Batch similarity: (Q, D) @ (V, D).T -> (Q, V)
+    sims = query_matrix @ all_vectors.T  # cosine similarity (vectors are normalized)
+
     cache: dict[str, list[tuple[str, float]]] = {}
-    for qname in query_names:
-        if qname not in wv:
-            continue
-        try:
-            cache[qname] = wv.most_similar(qname, topn=max_k)
-        except KeyError:
-            pass
+    k_fetch = min(max_k + 1, len(all_keys))  # +1 to exclude self
+
+    for i, qname in enumerate(valid_queries):
+        row = sims[i]
+        # Zero out self-similarity
+        row[query_indices[i]] = -2.0
+
+        # Partial sort for top-K
+        if k_fetch < len(row):
+            top_idx = np.argpartition(row, -k_fetch)[-k_fetch:]
+            top_idx = top_idx[np.argsort(-row[top_idx])]
+        else:
+            top_idx = np.argsort(-row)
+
+        neighbors = []
+        for j in top_idx[:max_k]:
+            neighbors.append((all_keys[j], float(row[j])))
+        cache[qname] = neighbors
+
     return cache
 
 
