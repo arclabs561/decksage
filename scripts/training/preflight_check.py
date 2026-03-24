@@ -23,8 +23,6 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-GAME_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
-
 # Minimum thresholds -- fail if below these
 MIN_EDGE_FRACTION = {
     # Each source type should contribute at least this fraction of total edges
@@ -100,19 +98,11 @@ def check_game(game: str) -> list[str]:
 
         print(f"    {src:20s}: {count:>10,} ({frac:6.2%}){marker}")
 
-    # Check for noise cards in edges (basic lands, energy)
+    # Check for noise cards in graph nodes (basic lands, energy)
     from ml.utils.constants import get_filter_set
 
     noise_cards = get_filter_set(game, level="common")
     if noise_cards:
-        noise_edge_count = 0
-        for edge in graph.edges.values():
-            if edge.source_type == "co_occurrence":
-                # Edge key is (card1, card2)
-                key = list(graph.edges.keys())[0]  # check format
-                break
-
-        # Check a sample of node names
         noise_nodes = set()
         for name in graph.nodes:
             if name in noise_cards:
