@@ -22,13 +22,16 @@ Node features: card annotations (role, power_level, archetype) when available,
 otherwise random init. Annotations are used as features only -- no annotation
 edges are created (train/eval separation).
 
-Training: self-supervised link prediction with negative sampling on
-co-occurrence edges only.
+Training: self-supervised link prediction (default) or contrastive (InfoNCE)
+loss on co-occurrence edges. Contrastive mode directly optimizes embedding
+similarity between connected cards, which better aligns with downstream
+similarity search tasks.
 
 Usage:
     uv run scripts/training/train_hgt.py --game magic
     uv run scripts/training/train_hgt.py --game magic --epochs 50 --heads 4 --layers 3
     uv run scripts/training/train_hgt.py --game magic --batch-size 512 --num-neighbors 15,15
+    uv run scripts/training/train_hgt.py --game magic --loss contrastive --temperature 0.07
 """
 
 from __future__ import annotations
@@ -343,6 +346,55 @@ def sample_negative_edges(
     return torch.tensor([neg_src[:n], neg_dst[:n]], dtype=torch.long)
 
 
+def compute_contrastive_loss(
+    z: torch.Tensor,
+    pos_edges: torch.Tensor,
+    num_sub_nodes: int,
+    neg_ratio: int,
+    temperature: float,
+) -> torch.Tensor:
+    """InfoNCE / NT-Xent loss on mini-batch embeddings.
+
+    For each positive pair (anchor, positive), samples `neg_ratio` random
+    non-neighbor nodes as negatives. The loss pushes connected nodes together
+    and unconnected nodes apart in embedding space.
+
+    Args:
+        z: L2-normalized node embeddings [num_sub_nodes, dim].
+        pos_edges: [2, num_pos] edge index within the subgraph.
+        num_sub_nodes: number of nodes in the subgraph.
+        neg_ratio: number of negatives per positive pair.
+        temperature: softmax temperature (lower = sharper).
+
+    Returns:
+        Scalar InfoNCE loss.
+    """
+    device = z.device
+    num_pos = pos_edges.size(1)
+    if num_pos == 0:
+        return torch.tensor(0.0, device=device, requires_grad=True)
+
+    anchors = z[pos_edges[0]]  # [num_pos, dim]
+    positives = z[pos_edges[1]]  # [num_pos, dim]
+
+    # Sample random negatives for each anchor
+    neg_idx = torch.randint(0, num_sub_nodes, (num_pos, neg_ratio), device=device)
+    negatives = z[neg_idx]  # [num_pos, neg_ratio, dim]
+
+    # Positive similarity: [num_pos, 1]
+    pos_sim = (anchors * positives).sum(dim=1, keepdim=True) / temperature
+
+    # Negative similarities: [num_pos, neg_ratio]
+    neg_sim = torch.bmm(negatives, anchors.unsqueeze(2)).squeeze(2) / temperature
+
+    # InfoNCE: -log(exp(pos) / (exp(pos) + sum(exp(neg))))
+    # = -pos + log(exp(pos) + sum(exp(neg)))
+    # Numerically stable via logsumexp over [pos, neg1, neg2, ...]
+    logits = torch.cat([pos_sim, neg_sim], dim=1)  # [num_pos, 1 + neg_ratio]
+    labels = torch.zeros(num_pos, dtype=torch.long, device=device)  # positive is index 0
+    return F.cross_entropy(logits, labels)
+
+
 def train_hgt(
     data: object,  # HeteroData
     num_nodes: int,
@@ -360,8 +412,15 @@ def train_hgt(
     loss_log_path: Path | None = None,
     suffix: str = "",
     game: str = "magic",
+    loss_mode: str = "link_prediction",
+    temperature: float = 0.07,
 ) -> tuple[np.ndarray, list[dict]]:
-    """Train HGT via link prediction with NeighborLoader mini-batching."""
+    """Train HGT with NeighborLoader mini-batching.
+
+    loss_mode:
+        'link_prediction' -- BPR margin loss on edge existence (default).
+        'contrastive' -- InfoNCE/NT-Xent on L2-normalized embeddings.
+    """
     from torch_geometric.loader import NeighborLoader
 
     if num_neighbors is None:
@@ -369,6 +428,10 @@ def train_hgt(
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"  Device: {device}")
+    print(
+        f"  Loss: {loss_mode}"
+        + (f" (temperature={temperature})" if loss_mode == "contrastive" else "")
+    )
     print(f"  Mini-batch: batch_size={batch_size}, num_neighbors={num_neighbors}")
 
     model = HGTEncoder(
@@ -486,18 +549,27 @@ def train_hgt(
                 pos_edges = pos_edges[:, sel]
                 num_pos_batch = max_pos
 
-            # Sample negatives within the subgraph node set
-            neg_src = torch.randint(0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device)
-            neg_dst = torch.randint(0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device)
+            if loss_mode == "contrastive":
+                # L2-normalize for cosine similarity in InfoNCE
+                z_norm = F.normalize(z, p=2, dim=1)
+                loss = compute_contrastive_loss(
+                    z_norm, pos_edges, num_sub_nodes, neg_ratio, temperature
+                )
+            else:
+                # Link prediction: BPR-style margin loss
+                neg_src = torch.randint(
+                    0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device
+                )
+                neg_dst = torch.randint(
+                    0, num_sub_nodes, (num_pos_batch * neg_ratio,), device=device
+                )
 
-            # Link prediction scores (dot product)
-            pos_score = (z[pos_edges[0]] * z[pos_edges[1]]).sum(dim=1)
-            neg_score = (z[neg_src] * z[neg_dst]).sum(dim=1)
+                pos_score = (z[pos_edges[0]] * z[pos_edges[1]]).sum(dim=1)
+                neg_score = (z[neg_src] * z[neg_dst]).sum(dim=1)
 
-            # BPR-style margin loss
-            pos_expanded = pos_score.unsqueeze(1).expand(-1, neg_ratio)
-            neg_reshaped = neg_score.view(num_pos_batch, neg_ratio)
-            loss = -F.logsigmoid(pos_expanded - neg_reshaped).mean()
+                pos_expanded = pos_score.unsqueeze(1).expand(-1, neg_ratio)
+                neg_reshaped = neg_score.view(num_pos_batch, neg_ratio)
+                loss = -F.logsigmoid(pos_expanded - neg_reshaped).mean()
 
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
@@ -665,6 +737,20 @@ def main() -> int:
         help="Suffix for output filename (for parallel runs)",
     )
     parser.add_argument(
+        "--loss",
+        type=str,
+        default="link_prediction",
+        choices=["link_prediction", "contrastive"],
+        help="Loss function: link_prediction (BPR margin, default) or "
+        "contrastive (InfoNCE/NT-Xent, better for similarity tasks)",
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.07,
+        help="Temperature for contrastive loss (default: 0.07, ignored for link_prediction)",
+    )
+    parser.add_argument(
         "--edge-types",
         type=str,
         default="",
@@ -715,10 +801,14 @@ def main() -> int:
 
     # Train
     edge_type_names = list(edge_types.keys())
+    loss_tag = args.loss
+    if args.loss == "contrastive":
+        loss_tag = f"contrastive(tau={args.temperature})"
     print(
         f"\n[4/5] Training HGT (dim={args.dim}, hidden={args.hidden_dim}, "
         f"heads={args.heads}, layers={args.layers}, epochs={args.epochs}, "
-        f"batch_size={args.batch_size}, neighbors={num_neighbors})..."
+        f"batch_size={args.batch_size}, neighbors={num_neighbors}, "
+        f"loss={loss_tag})..."
     )
     print(f"  Edge types: {edge_type_names}")
     t0 = time.monotonic()
@@ -740,6 +830,8 @@ def main() -> int:
         loss_log_path=loss_log_path,
         suffix=args.output_suffix,
         game=args.game,
+        loss_mode=args.loss,
+        temperature=args.temperature,
     )
 
     elapsed = time.monotonic() - t0
@@ -930,6 +1022,8 @@ def main() -> int:
             "neg_ratio": args.neg_ratio,
             "batch_size": args.batch_size,
             "num_neighbors": num_neighbors,
+            "loss": args.loss,
+            "temperature": args.temperature if args.loss == "contrastive" else None,
             "edge_types_filter": args.edge_types if args.edge_types else "all",
         },
         "data": {
