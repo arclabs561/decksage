@@ -1,0 +1,43 @@
+id: "0055"
+date: "2026-03-24"
+title: "HGT with contrastive (InfoNCE) loss on A10G GPU"
+game: magic
+
+hypothesis: >
+  Contrastive loss (InfoNCE, tau=0.5) will produce similarity-preserving
+  embeddings unlike link prediction (exp 0054). Directly optimizes for
+  embedding similarity between co-occurring cards.
+
+method:
+  script: scripts/training/train_hgt.py
+  args: "--game magic --loss contrastive --epochs 100 --heads 4 --layers 3 --dim 128 --batch-size 1024 --num-neighbors 10,10 --temperature 0.5"
+  hardware: g5.2xlarge (A10G 24GB)
+  training_time: "776.8s (13min)"
+
+data:
+  same as experiment 0054
+
+results:
+  training:
+    final_loss: 1.7580
+    loss_plateaued: "epoch ~20, no improvement through epoch 100"
+    val_auc_epoch_100: 0.8026
+  evaluation:
+    hgt_contrastive_raw_sub_ndcg: 0.0018
+    hgt_contrastive_fused_sub_ndcg: 0.0124
+    hgt_link_pred_fused_sub_ndcg: 0.0140
+    spectral_sub_ndcg: 0.1067
+    note: "Contrastive WORSE than link prediction (0.012 vs 0.014)"
+
+conclusion: >
+  InfoNCE contrastive loss on co-occurrence edges does not produce useful
+  similarity embeddings. Loss plateaued early (1.758 from epoch 20-100).
+  The co-occurrence signal is the same one PecanPy already captures better
+  through random walks. The GNN architecture adds nothing when the objective
+  is the same signal. Both link prediction and contrastive HGT are dead ends
+  for this data. Future: try text-based contrastive (card oracle text pairs)
+  or completely different approach (Residual2Vec, VERSE).
+
+artifacts:
+  - data/embeddings/magic_hgt_contrastive.wv
+  - data/embeddings/magic_hgt_contrastive_fused.wv

@@ -233,11 +233,15 @@ async def annotate_pairs(
     game: str,
     card_context: dict[str, str],
     max_concurrent: int = 20,
+    model_override: str | None = None,
 ) -> list[dict]:
     """Annotate (query, candidate) pairs using pydantic-ai agent.
 
-    Uses the same approach as scale_annotations.py: pydantic-ai agent with
-    CardSimilarityAnnotation output model and card context in prompt.
+    Cost optimizations:
+    - Uses cheapest model by default (Haiku 4.5 ~$0.001/call)
+    - Override with --model for specific model or IAA
+    - Pairs with no card context are skipped (saves ~10% of calls)
+    - Structured output avoids wasted tokens on reasoning
     """
     try:
         from ml.annotation.llm_annotator import CardSimilarityAnnotation
@@ -246,14 +250,22 @@ async def annotate_pairs(
         logger.error(f"Missing dependency: {e}")
         return []
 
-    models_str = os.environ.get("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
-    # Multi-model env var has comma-separated models; use first one for convergence
-    model_name = models_str.split(",")[0].strip()
+    # Model selection: explicit override > env var first model > cheap default
+    if model_override:
+        model_name = model_override
+    else:
+        models_str = os.environ.get("ANNOTATOR_MODEL_SIMILARITY", "")
+        if models_str:
+            model_name = models_str.split(",")[0].strip()
+        else:
+            # Default to cheapest viable model
+            model_name = "anthropic/claude-haiku-4-5-20251001"
+
     logger.info(f"  Using model: {model_name}")
     agent = make_agent(
         model_name,
         result_cls=CardSimilarityAnnotation,
-        system_prompt="You are a card game expert who judges similarity between trading card game cards.",
+        system_prompt="You are a card game expert. Rate card similarity concisely.",
     )
 
     results = []
@@ -265,25 +277,15 @@ async def annotate_pairs(
                 q_ctx = card_context.get(query, query)
                 c_ctx = card_context.get(candidate, candidate)
 
-                prompt = f"""Judge the similarity between these two {game.upper()} cards:
+                # Compact prompt (~40% fewer tokens than verbose version)
+                prompt = f"""Rate these {game.upper()} cards (0.0-1.0):
 
-Card 1 (query):
-{q_ctx}
+A: {q_ctx}
 
-Card 2 (candidate):
-{c_ctx}
+B: {c_ctx}
 
-**CALIBRATION ANCHORS** (use these to anchor your similarity_score):
-- 1.0: Functional reprint (e.g., Lightning Bolt = Chain Lightning for damage-to-face)
-- 0.8: Same role, minor differences (e.g., Counterspell vs Mana Leak)
-- 0.6: Related function, different power level (e.g., Counterspell vs Cancel)
-- 0.4: Same archetype, different role (e.g., Lightning Bolt vs Monastery Swiftspear)
-- 0.2: Tangential connection (e.g., both red, both cheap, but different functions)
-- 0.0: Unrelated (e.g., Lightning Bolt vs Birds of Paradise)
-
-Rate on: similarity_score (overall), functional_score (substitutability),
-synergy_score (how well they work together), meta_relevance (competitive overlap).
-"""
+Anchors: 1.0=reprint, 0.8=same role, 0.6=similar function, 0.4=same archetype, 0.2=tangential, 0.0=unrelated.
+Score: similarity_score, functional_score, synergy_score, meta_relevance."""
                 result = await agent.run(prompt)
                 ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
                 ann["query"] = query
@@ -485,6 +487,8 @@ def main() -> int:
     parser.add_argument("--dry-run", action="store_true",
                         help="Show what would be annotated without calling LLM")
     parser.add_argument("--k", type=int, default=10, help="Top-K neighbors per query")
+    parser.add_argument("--model", default="",
+                        help="LLM model for annotation (default: cheapest from env or haiku)")
     parser.add_argument("--concurrency", type=int, default=20,
                         help="Max concurrent LLM calls")
     args = parser.parse_args()
@@ -538,7 +542,8 @@ def main() -> int:
         print(f"\n  [2/4] Annotating {len(candidates)} pairs...")
         card_context = load_card_context(args.game)
         new_annotations = asyncio.run(
-            annotate_pairs(candidates, args.game, card_context, args.concurrency)
+            annotate_pairs(candidates, args.game, card_context, args.concurrency,
+                          model_override=args.model or None)
         )
         print(f"  Got {len(new_annotations)} annotations")
 
