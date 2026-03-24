@@ -47,6 +47,13 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [0039](0039_metapath2vec_160epochs.yaml) |
 | 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:pending | [0041](0041_epoch_sweep_leak_fix.yaml) |
 | 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [0042](0042_cleora_iteration_sweep.yaml) |
+| 0048 | 2026-03-21 | MetaPath2Vec v2: 8 edge types | magic | 35K cards, 12M edges (8 types) | sub nDCG | 0.114 INFLATED (Commander dilutes signal, regressed from 0.228) | [0048](0048_metapath2vec_v2_expanded_edges.yaml) |
+| 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [0049](0049_card_containment.yaml) |
+| 0050 | 2026-03-22 | Expanded Commander Cleora (51K decks) | magic | 25.2M Commander edges | sub nDCG | 0.100 (unchanged from 18K decks, Commander != cross-format sub) | [0050](0050_expanded_commander_cleora.yaml) |
+| 0051 | 2026-03-22 | Magic epoch sweep (no leakage) | magic | 35K cards, self-supervised only | sub nDCG | 0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora) | [0051](0051_magic_epoch_sweep.yaml) |
+| 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | **All prior nDCG inflated 50-101%**. True: M:0.069 P:0.058 Y:0.153 | [0052](0052_dedup_correction.yaml) |
+| 0053 | 2026-03-23 | **Training variance ablation** (key) | magic | v7 vs v8 edgelist, 3 seeds each | sub nDCG | v7 mean 0.094 (std 0.001), v8 mean 0.090. Deployed v7 (0.102) was 2.5-sigma outlier | [0053](0053_training_variance_ablation.yaml) |
+| 0054 | 2026-03-23 | **HGT mini-batch on A10G** (key) | magic | 12M edges, 36K nodes, 6 edge types | sub nDCG | 0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving) | [0054](0054_hgt_mini_batch.yaml) |
 
 ## Key Insights (cross-cutting)
 
@@ -76,3 +83,13 @@ All nDCG numbers in experiments 0031-0046 were inflated.
 
 v5_fused REMAINS the best embedding for Magic and Pokemon.
 MetaPath2Vec ties YuGiOh but loses on Magic/Pokemon.
+
+### 2026-03-22/23 session findings (experiments 0052-0054)
+
+- **0052**: annotation dedup revealed 50-101% nDCG inflation across all games. All absolute numbers before this date are unreliable.
+- **0053**: deployed v7_fused (0.102) is a 2.5-sigma outlier from its distribution mean (0.094). Strategy: train N seeds, deploy best.
+- **0054**: HGT fits on A10G (17GB/24GB) but link prediction objective does not produce similarity-preserving embeddings. Needs contrastive loss.
+
+### Spectral propagation (ProNE): new best deterministic result
+
+ProNE spectral propagation on the v7 edgelist produces Magic sub nDCG **0.1067** -- the new best single-model result and fully deterministic (no random walks, no seed sensitivity). This makes it a strong baseline and a candidate for replacing PecanPy in the production pipeline.
