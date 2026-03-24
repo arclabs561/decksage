@@ -258,18 +258,25 @@ async def annotate_pairs(
         if models_str:
             model_name = models_str.split(",")[0].strip()
         else:
-            # Default to cheapest viable model
             model_name = "anthropic/claude-haiku-4-5-20251001"
 
-    logger.info(f"  Using model: {model_name}")
-    agent = make_agent(
-        model_name,
-        result_cls=CardSimilarityAnnotation,
-        system_prompt="You are a card game expert. Rate card similarity concisely.",
-    )
+    use_ollama = model_name.startswith("ollama/")
+    ollama_model = model_name.removeprefix("ollama/") if use_ollama else None
+
+    if use_ollama:
+        import requests
+        logger.info(f"  Using ollama: {ollama_model} (FREE, local)")
+        agent = None  # not used for ollama
+    else:
+        logger.info(f"  Using model: {model_name}")
+        agent = make_agent(
+            model_name,
+            result_cls=CardSimilarityAnnotation,
+            system_prompt="You are a card game expert. Rate card similarity concisely.",
+        )
 
     results = []
-    semaphore = asyncio.Semaphore(max_concurrent)
+    semaphore = asyncio.Semaphore(max_concurrent if not use_ollama else 1)
 
     async def annotate_one(query: str, candidate: str, source: str) -> dict | None:
         async with semaphore:
@@ -277,7 +284,6 @@ async def annotate_pairs(
                 q_ctx = card_context.get(query, query)
                 c_ctx = card_context.get(candidate, candidate)
 
-                # Compact prompt (~40% fewer tokens than verbose version)
                 prompt = f"""Rate these {game.upper()} cards (0.0-1.0):
 
 A: {q_ctx}
@@ -285,9 +291,36 @@ A: {q_ctx}
 B: {c_ctx}
 
 Anchors: 1.0=reprint, 0.8=same role, 0.6=similar function, 0.4=same archetype, 0.2=tangential, 0.0=unrelated.
-Score: similarity_score, functional_score, synergy_score, meta_relevance."""
-                result = await agent.run(prompt)
-                ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
+Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}"""
+
+                if use_ollama:
+                    # Local ollama call (free)
+                    resp = await asyncio.to_thread(
+                        requests.post,
+                        "http://localhost:11434/api/chat",
+                        json={
+                            "model": ollama_model,
+                            "messages": [
+                                {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
+                                {"role": "user", "content": prompt},
+                            ],
+                            "stream": False,
+                            "options": {"temperature": 0.3},
+                        },
+                    )
+                    content = resp.json()["message"]["content"]
+                    # Parse JSON from response
+                    import re
+                    json_match = re.search(r'\{[^}]+\}', content)
+                    if json_match:
+                        ann = json.loads(json_match.group())
+                    else:
+                        logger.warning(f"No JSON in ollama response for {query} vs {candidate}")
+                        return None
+                else:
+                    result = await agent.run(prompt)
+                    ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
+
                 ann["query"] = query
                 ann["candidate"] = candidate
                 ann["discovery_source"] = source
