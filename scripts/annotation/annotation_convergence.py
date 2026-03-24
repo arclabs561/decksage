@@ -293,7 +293,7 @@ synergy_score (how well they work together), meta_relevance (competitive overlap
                 ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                 return ann
             except Exception as e:
-                logger.warning(f"Annotation failed for {query} vs {candidate}: {e}")
+                logger.error(f"Annotation failed for {query} vs {candidate}: {type(e).__name__}: {e}")
             return None
 
     tasks = [annotate_one(q, c, src) for q, c, src in pairs]
