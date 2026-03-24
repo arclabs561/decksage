@@ -435,22 +435,23 @@ def eval_game(
     # --- Secondary metrics (skipped in --quick mode) ---
     if not quick:
         # Stratified nDCG by card popularity (experiment 0019 recommendation)
+        # Batch-compute popularity: sample 2K cards, find their top-10 via matmul
         neighbor_count: dict[str, int] = {}
-        sample_keys = list(wv.key_to_index.keys())
+        all_keys = list(wv.key_to_index.keys())
         rng = np.random.default_rng(42)
-        sample_size = min(2000, len(sample_keys))
-        sampled = rng.choice(sample_keys, size=sample_size, replace=False)
-        for card in sampled:
-            if card in neighbor_cache:
-                for n, _ in neighbor_cache[card][:10]:
-                    neighbor_count[n] = neighbor_count.get(n, 0) + 1
-            else:
-                try:
-                    neighbors = wv.most_similar(card, topn=10)
-                    for n, _ in neighbors:
-                        neighbor_count[n] = neighbor_count.get(n, 0) + 1
-                except KeyError:
-                    continue
+        sample_size = min(2000, len(all_keys))
+        sample_indices = rng.choice(len(all_keys), size=sample_size, replace=False)
+        sample_matrix = wv.vectors[sample_indices]  # (2000, D)
+        pop_sims = sample_matrix @ wv.vectors.T  # (2000, V)
+        # Zero self-similarity
+        for i, idx in enumerate(sample_indices):
+            pop_sims[i, idx] = -2.0
+        # Top-10 per sampled card
+        top10_indices = np.argpartition(pop_sims, -10, axis=1)[:, -10:]
+        for row_idx in range(len(sample_indices)):
+            for j in top10_indices[row_idx]:
+                name = all_keys[j]
+                neighbor_count[name] = neighbor_count.get(name, 0) + 1
 
         query_popularity: dict[str, int] = {}
         for qname in queries:
