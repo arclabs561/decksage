@@ -234,31 +234,57 @@ async def annotate_pairs(
     card_context: dict[str, str],
     max_concurrent: int = 20,
 ) -> list[dict]:
-    """Annotate (query, candidate) pairs using the LLM annotator.
+    """Annotate (query, candidate) pairs using pydantic-ai agent.
 
-    Uses the existing annotation infrastructure with multi-model support.
+    Uses the same approach as scale_annotations.py: pydantic-ai agent with
+    CardSimilarityAnnotation output model and card context in prompt.
     """
-    from ml.annotation.llm_annotator import CardSimilarityAnnotator
+    try:
+        from ml.annotation.llm_annotator import CardSimilarityAnnotation
+        from ml.utils.pydantic_ai_helpers import make_agent
+    except ImportError as e:
+        logger.error(f"Missing dependency: {e}")
+        return []
 
-    annotator = CardSimilarityAnnotator(game=game)
+    model_name = os.environ.get("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
+    agent = make_agent(model_name, result_type=CardSimilarityAnnotation)
+
     results = []
     semaphore = asyncio.Semaphore(max_concurrent)
 
     async def annotate_one(query: str, candidate: str, source: str) -> dict | None:
         async with semaphore:
             try:
-                context_a = card_context.get(query, "")
-                context_b = card_context.get(candidate, "")
-                annotation = await annotator.annotate_pair(
-                    card_a=query,
-                    card_b=candidate,
-                    context_a=context_a,
-                    context_b=context_b,
-                )
-                if annotation:
-                    result = annotation.model_dump()
-                    result["discovery_source"] = source
-                    return result
+                q_ctx = card_context.get(query, query)
+                c_ctx = card_context.get(candidate, candidate)
+
+                prompt = f"""Judge the similarity between these two {game.upper()} cards:
+
+Card 1 (query):
+{q_ctx}
+
+Card 2 (candidate):
+{c_ctx}
+
+**CALIBRATION ANCHORS** (use these to anchor your similarity_score):
+- 1.0: Functional reprint (e.g., Lightning Bolt = Chain Lightning for damage-to-face)
+- 0.8: Same role, minor differences (e.g., Counterspell vs Mana Leak)
+- 0.6: Related function, different power level (e.g., Counterspell vs Cancel)
+- 0.4: Same archetype, different role (e.g., Lightning Bolt vs Monastery Swiftspear)
+- 0.2: Tangential connection (e.g., both red, both cheap, but different functions)
+- 0.0: Unrelated (e.g., Lightning Bolt vs Birds of Paradise)
+
+Rate on: similarity_score (overall), functional_score (substitutability),
+synergy_score (how well they work together), meta_relevance (competitive overlap).
+"""
+                result = await agent.run(prompt)
+                ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
+                ann["query"] = query
+                ann["candidate"] = candidate
+                ann["discovery_source"] = source
+                ann["model_name"] = model_name
+                ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                return ann
             except Exception as e:
                 logger.warning(f"Annotation failed for {query} vs {candidate}: {e}")
             return None
