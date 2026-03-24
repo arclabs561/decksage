@@ -1,0 +1,35 @@
+id: "0056"
+date: "2026-03-24"
+title: "Residual PPMI (SVD) and degree debiasing post-processing"
+game: magic
+
+hypothesis: >
+  Degree debiasing (Residual2Vec concept) will improve embeddings by removing
+  the land/staple dominance from co-occurrence signal. Either as full SVD
+  replacement or as post-processing on PecanPy.
+
+method:
+  approaches:
+    1: "PPMI SVD (full replacement): degree-corrected PPMI matrix, SVD to 128D"
+    2: "Degree debiasing post-processing: subtract degree-weighted mean from PecanPy embeddings"
+    3: "Spectral + debiasing: both applied to v7_fused"
+  note: "residual2vec library segfaults on macOS ARM, implemented manually"
+
+results:
+  residual_ppmi_fused: 0.0837
+  v7_debiased: 0.1031
+  spectral_debiased: 0.1069
+  spectral_only: 0.1071
+  v7_fused: 0.1022
+
+conclusion: >
+  PPMI SVD is worse than PecanPy (0.084 vs 0.102) -- random walks capture more
+  nuance than matrix factorization. Degree debiasing as post-processing gives +1%
+  on raw v7 but doesn't help on top of spectral. Spectral propagation already
+  subsumes the benefit of degree debiasing. Spectral mu=0.3 remains best (0.107).
+
+artifacts:
+  - data/embeddings/magic_residual_ppmi.wv
+  - data/embeddings/magic_residual_ppmi_fused.wv
+  - data/embeddings/magic_v7_debiased.wv
+  - data/embeddings/magic_v7_spectral_debiased.wv
