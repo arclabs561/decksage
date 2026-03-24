@@ -176,6 +176,7 @@ def eval_mode(
     mode: str,
     k: int = 10,
     use_normalized: bool = False,
+    neighbor_cache: dict[str, list[tuple[str, float]]] | None = None,
 ) -> dict:
     """Evaluate a single mode's nDCG using per-pair annotation scores.
 
@@ -208,16 +209,21 @@ def eval_mode(
             n_skipped += 1
             continue
 
-        # Get embedding ranking
-        if qname not in wv:
-            n_skipped += 1
-            continue
-
-        try:
-            neighbors = wv.most_similar(qname, topn=k)
-        except KeyError:
-            n_skipped += 1
-            continue
+        # Get embedding ranking (use cache if available)
+        if neighbor_cache is not None:
+            if qname not in neighbor_cache:
+                n_skipped += 1
+                continue
+            neighbors = neighbor_cache[qname][:k]
+        else:
+            if qname not in wv:
+                n_skipped += 1
+                continue
+            try:
+                neighbors = wv.most_similar(qname, topn=k)
+            except KeyError:
+                n_skipped += 1
+                continue
 
         # Score the embedding's ranking using ground truth
         relevances = []
@@ -283,8 +289,30 @@ def eval_upgrade_direction(queries: dict) -> dict:
     }
 
 
-def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict:
-    """Run full per-mode eval for one game."""
+def _precompute_neighbors(
+    wv: KeyedVectors, query_names: list[str], max_k: int = 30
+) -> dict[str, list[tuple[str, float]]]:
+    """Precompute top-N neighbors for all queries once. Avoids redundant calls."""
+    cache: dict[str, list[tuple[str, float]]] = {}
+    for qname in query_names:
+        if qname not in wv:
+            continue
+        try:
+            cache[qname] = wv.most_similar(qname, topn=max_k)
+        except KeyError:
+            pass
+    return cache
+
+
+def eval_game(
+    game: str, embedding_name: str | None = None, k: int = 10, quick: bool = False
+) -> dict:
+    """Run full per-mode eval for one game.
+
+    Args:
+        quick: If True, skip expensive secondary metrics (stratified, catalog,
+               novelty, contextual/completion recall, search proxy). ~4-5x faster.
+    """
     test_set = load_test_set(game)
     if not test_set:
         return {"game": game, "error": "no test set"}
@@ -300,6 +328,9 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
 
     emb_name = embedding_name or DEFAULT_EMBEDDINGS.get(game, "?")
 
+    # Precompute neighbors once for all metrics (biggest speedup)
+    neighbor_cache = _precompute_neighbors(wv, list(queries.keys()), max_k=max(k, 30))
+
     results = {
         "game": game,
         "embedding": emb_name,
@@ -311,13 +342,13 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
 
     # Per-mode nDCG
     for mode in ["substitute", "synergy", "meta"]:
-        results[f"mode_{mode}"] = eval_mode(wv, queries, mode, k)
+        results[f"mode_{mode}"] = eval_mode(wv, queries, mode, k, neighbor_cache=neighbor_cache)
 
     # Substitutability-weighted nDCG (uses continuous substitutability scores)
     sub_ndcg_scores = []
     for qname, qdata in queries.items():
         annotations = qdata.get("annotations", [])
-        if not annotations or qname not in wv:
+        if not annotations or qname not in neighbor_cache:
             continue
         gt = {}
         for ann in annotations:
@@ -327,10 +358,7 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
                 gt[c] = float(s)
         if not gt:
             continue
-        try:
-            neighbors = wv.most_similar(qname, topn=k)
-        except KeyError:
-            continue
+        neighbors = neighbor_cache[qname][:k]
         relevances = [gt.get(card, 0.0) for card, _ in neighbors]
         ideal = sorted(gt.values(), reverse=True)
         if max(ideal[:k]) > 0:
@@ -349,7 +377,7 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
     ndcg_scores = []
     for qname, qdata in queries.items():
         annotations = qdata.get("annotations", [])
-        if not annotations or qname not in wv:
+        if not annotations or qname not in neighbor_cache:
             continue
         gt = {}
         for ann in annotations:
@@ -359,10 +387,7 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
                 gt[c] = float(s)
         if not gt:
             continue
-        try:
-            neighbors = wv.most_similar(qname, topn=k)
-        except KeyError:
-            continue
+        neighbors = neighbor_cache[qname][:k]
         relevances = [gt.get(card, 0.0) for card, _ in neighbors]
         ideal = sorted(gt.values(), reverse=True)
         if max(ideal[:k]) > 0:
@@ -374,221 +399,192 @@ def eval_game(game: str, embedding_name: str | None = None, k: int = 10) -> dict
         "k": k,
     }
 
-    # Stratified nDCG by card popularity (experiment 0019 recommendation)
-    # Use embedding neighbor count as popularity proxy: popular cards appear
-    # as top-10 neighbors of many other cards. Computed efficiently by sampling.
-    neighbor_count: dict[str, int] = {}
-    sample_keys = list(wv.key_to_index.keys())
-    rng = np.random.default_rng(42)
-    sample_size = min(2000, len(sample_keys))
-    sampled = rng.choice(sample_keys, size=sample_size, replace=False)
-    for card in sampled:
-        try:
-            neighbors = wv.most_similar(card, topn=10)
-            for n, _ in neighbors:
-                neighbor_count[n] = neighbor_count.get(n, 0) + 1
-        except KeyError:
-            continue
+    # --- Secondary metrics (skipped in --quick mode) ---
+    if not quick:
+        # Stratified nDCG by card popularity (experiment 0019 recommendation)
+        neighbor_count: dict[str, int] = {}
+        sample_keys = list(wv.key_to_index.keys())
+        rng = np.random.default_rng(42)
+        sample_size = min(2000, len(sample_keys))
+        sampled = rng.choice(sample_keys, size=sample_size, replace=False)
+        for card in sampled:
+            if card in neighbor_cache:
+                for n, _ in neighbor_cache[card][:10]:
+                    neighbor_count[n] = neighbor_count.get(n, 0) + 1
+            else:
+                try:
+                    neighbors = wv.most_similar(card, topn=10)
+                    for n, _ in neighbors:
+                        neighbor_count[n] = neighbor_count.get(n, 0) + 1
+                except KeyError:
+                    continue
 
-    query_popularity: dict[str, int] = {}
-    for qname in queries:
-        if qname in neighbor_count:
-            query_popularity[qname] = neighbor_count[qname]
-        else:
-            query_popularity[qname] = 0
-
-    if query_popularity:
-        median_pop = float(np.median(list(query_popularity.values())))
-        pop_ndcg = []
-        niche_ndcg = []
-        for qname, qdata in queries.items():
-            if qname not in wv or qname not in query_popularity:
-                continue
-            annotations = qdata.get("annotations", [])
-            if not annotations:
-                continue
-            gt = {}
-            for ann in annotations:
-                c = ann.get("candidate", "")
-                s = ann.get("similarity_score")
-                if s is not None and c:
-                    gt[c] = float(s)
-            if not gt:
-                continue
-            try:
-                neighbors = wv.most_similar(qname, topn=k)
-            except KeyError:
-                continue
-            relevances = [gt.get(card, 0.0) for card, _ in neighbors]
-            ideal = sorted(gt.values(), reverse=True)
-            if max(ideal[:k]) > 0:
-                score = ndcg(relevances, ideal, k)
-                if query_popularity[qname] > median_pop:
-                    pop_ndcg.append(score)
-                else:
-                    niche_ndcg.append(score)
-
-        results["stratified_ndcg"] = {
-            "popular_ndcg": float(np.mean(pop_ndcg)) if pop_ndcg else 0.0,
-            "popular_n": len(pop_ndcg),
-            "niche_ndcg": float(np.mean(niche_ndcg)) if niche_ndcg else 0.0,
-            "niche_n": len(niche_ndcg),
-            "median_popularity": median_pop,
-            "bias_ratio": (float(np.mean(pop_ndcg)) / float(np.mean(niche_ndcg)))
-            if niche_ndcg and pop_ndcg and np.mean(niche_ndcg) > 0
-            else 0.0,
-        }
-
-    # Beyond-accuracy metrics (from experiment 0019 metrics audit)
-
-    # Catalog Coverage: fraction of vocabulary ever recommended across all queries
-    all_recommended: set[str] = set()
-    for qname in queries:
-        if qname not in wv:
-            continue
-        try:
-            neighbors = wv.most_similar(qname, topn=k)
-            all_recommended.update(card for card, _ in neighbors)
-        except KeyError:
-            continue
-    catalog_size = len(wv)
-    results["catalog_coverage"] = {
-        "recommended_cards": len(all_recommended),
-        "catalog_size": catalog_size,
-        "coverage": len(all_recommended) / catalog_size if catalog_size > 0 else 0.0,
-    }
-
-    # Novelty: mean self-information of recommended cards
-    # Uses embedding vocabulary frequency as proxy for popularity
-    # (cards that appear as neighbors of many queries are "popular")
-    neighbor_freq: dict[str, int] = {}
-    n_queries_with_neighbors = 0
-    for qname in queries:
-        if qname not in wv:
-            continue
-        try:
-            neighbors = wv.most_similar(qname, topn=k)
-            n_queries_with_neighbors += 1
-            for card, _ in neighbors:
-                neighbor_freq[card] = neighbor_freq.get(card, 0) + 1
-        except KeyError:
-            continue
-
-    if n_queries_with_neighbors > 0 and neighbor_freq:
-        novelty_scores = []
+        query_popularity: dict[str, int] = {}
         for qname in queries:
-            if qname not in wv:
-                continue
-            try:
-                neighbors = wv.most_similar(qname, topn=k)
-            except KeyError:
-                continue
-            q_novelty = []
-            for card, _ in neighbors:
-                pop = neighbor_freq.get(card, 1) / n_queries_with_neighbors
-                q_novelty.append(-np.log2(max(pop, 1e-10)))
-            if q_novelty:
-                novelty_scores.append(float(np.mean(q_novelty)))
-        results["novelty"] = {
-            "mean_self_info": float(np.mean(novelty_scores)) if novelty_scores else 0.0,
-            "n_evaluated": len(novelty_scores),
+            query_popularity[qname] = neighbor_count.get(qname, 0)
+
+        if query_popularity:
+            median_pop = float(np.median(list(query_popularity.values())))
+            pop_ndcg = []
+            niche_ndcg = []
+            for qname, qdata in queries.items():
+                if qname not in neighbor_cache or qname not in query_popularity:
+                    continue
+                annotations = qdata.get("annotations", [])
+                if not annotations:
+                    continue
+                gt = {}
+                for ann in annotations:
+                    c = ann.get("candidate", "")
+                    s = ann.get("similarity_score")
+                    if s is not None and c:
+                        gt[c] = float(s)
+                if not gt:
+                    continue
+                neighbors = neighbor_cache[qname][:k]
+                relevances = [gt.get(card, 0.0) for card, _ in neighbors]
+                ideal = sorted(gt.values(), reverse=True)
+                if max(ideal[:k]) > 0:
+                    score = ndcg(relevances, ideal, k)
+                    if query_popularity[qname] > median_pop:
+                        pop_ndcg.append(score)
+                    else:
+                        niche_ndcg.append(score)
+
+            results["stratified_ndcg"] = {
+                "popular_ndcg": float(np.mean(pop_ndcg)) if pop_ndcg else 0.0,
+                "popular_n": len(pop_ndcg),
+                "niche_ndcg": float(np.mean(niche_ndcg)) if niche_ndcg else 0.0,
+                "niche_n": len(niche_ndcg),
+                "median_popularity": median_pop,
+                "bias_ratio": (float(np.mean(pop_ndcg)) / float(np.mean(niche_ndcg)))
+                if niche_ndcg and pop_ndcg and np.mean(niche_ndcg) > 0
+                else 0.0,
+            }
+
+        # Catalog Coverage: fraction of vocabulary ever recommended
+        all_recommended: set[str] = set()
+        for qname in queries:
+            if qname in neighbor_cache:
+                all_recommended.update(card for card, _ in neighbor_cache[qname][:k])
+        catalog_size = len(wv)
+        results["catalog_coverage"] = {
+            "recommended_cards": len(all_recommended),
+            "catalog_size": catalog_size,
+            "coverage": len(all_recommended) / catalog_size if catalog_size > 0 else 0.0,
         }
-    else:
-        results["novelty"] = {"mean_self_info": 0.0, "n_evaluated": 0}
 
-    # --- Downstream task evals (offline) ---
+        # Novelty: mean self-information of recommended cards
+        neighbor_freq: dict[str, int] = {}
+        n_queries_with_neighbors = 0
+        for qname in queries:
+            if qname in neighbor_cache:
+                n_queries_with_neighbors += 1
+                for card, _ in neighbor_cache[qname][:k]:
+                    neighbor_freq[card] = neighbor_freq.get(card, 0) + 1
 
-    # Contextual recall@20: what fraction of graded-relevant cards appear in top-20?
-    ctx_hits, ctx_total = 0, 0
-    for qname, qdata in queries.items():
-        hr = qdata.get("highly_relevant", []) + qdata.get("relevant", [])
-        if not hr or qname not in wv:
-            continue
-        try:
-            top_names = {c for c, _ in wv.most_similar(qname, topn=20)}
+        if n_queries_with_neighbors > 0 and neighbor_freq:
+            novelty_scores = []
+            for qname in queries:
+                if qname not in neighbor_cache:
+                    continue
+                q_novelty = []
+                for card, _ in neighbor_cache[qname][:k]:
+                    pop = neighbor_freq.get(card, 1) / n_queries_with_neighbors
+                    q_novelty.append(-np.log2(max(pop, 1e-10)))
+                if q_novelty:
+                    novelty_scores.append(float(np.mean(q_novelty)))
+            results["novelty"] = {
+                "mean_self_info": float(np.mean(novelty_scores)) if novelty_scores else 0.0,
+                "n_evaluated": len(novelty_scores),
+            }
+        else:
+            results["novelty"] = {"mean_self_info": 0.0, "n_evaluated": 0}
+
+        # Contextual recall@20
+        ctx_hits, ctx_total = 0, 0
+        for qname, qdata in queries.items():
+            hr = qdata.get("highly_relevant", []) + qdata.get("relevant", [])
+            if not hr or qname not in neighbor_cache:
+                continue
+            top_names = {c for c, _ in neighbor_cache[qname][:20]}
             ctx_hits += sum(1 for c in hr if c in top_names)
             ctx_total += len(hr)
-        except KeyError:
-            pass
-    results["contextual_recall_at_20"] = {
-        "recall": round(ctx_hits / max(ctx_total, 1), 4),
-        "hits": ctx_hits,
-        "total": ctx_total,
-    }
-
-    # Completion recall@30: seed 3 related cards, check if remaining appear in top-30
-    comp_hits, comp_total = 0, 0
-    for qname, qdata in queries.items():
-        all_rel = (
-            qdata.get("highly_relevant", [])
-            + qdata.get("relevant", [])
-            + qdata.get("somewhat_relevant", [])
-        )
-        in_vocab = [c for c in all_rel if c in wv]
-        if len(in_vocab) < 5:
-            continue
-        seed = in_vocab[:3]
-        targets = set(in_vocab[3:])
-        try:
-            seed_vec = sum(wv[c] for c in seed) / len(seed)
-            n = np.linalg.norm(seed_vec)
-            if n > 0:
-                seed_vec /= n
-            sims = wv.similar_by_vector(seed_vec, topn=30)
-            top_names = {c for c, _ in sims}
-            comp_hits += sum(1 for c in targets if c in top_names)
-            comp_total += len(targets)
-        except Exception:
-            pass
-    results["completion_recall_at_30"] = {
-        "recall": round(comp_hits / max(comp_total, 1), 4),
-        "hits": comp_hits,
-        "total": comp_total,
-    }
-
-    # Text search eval: curated queries matched against oracle text in embeddings
-    # (offline proxy for semantic search quality)
-    search_queries = {
-        "magic": [
-            ("deal 3 damage", ["Lightning Bolt", "Lava Spike", "Rift Bolt", "Chain Lightning"]),
-            ("draw two cards", ["Divination", "Chart a Course", "Night's Whisper"]),
-            ("destroy target creature", ["Murder", "Hero's Downfall", "Doom Blade"]),
-            ("counter target spell", ["Counterspell", "Mana Leak", "Negate"]),
-        ],
-        "pokemon": [
-            ("search deck pokemon", ["Ultra Ball", "Nest Ball", "Level Ball"]),
-            ("draw cards", ["Professor's Research", "Cynthia"]),
-        ],
-        "yugioh": [
-            ("negate effect", ["Ash Blossom & Joyous Spring", "Effect Veiler"]),
-            ("special summon", ["Monster Reborn", "Soul Charge"]),
-        ],
-    }
-    game_sq = search_queries.get(game, [])
-    if game_sq:
-        search_mrr = []
-        for query_text, expected_cards in game_sq:
-            # Find which expected cards are in vocab and get their avg rank
-            expected_in_vocab = [c for c in expected_cards if c in wv]
-            if not expected_in_vocab:
-                continue
-            # Use first expected card as query proxy (find cards similar to it)
-            proxy = expected_in_vocab[0]
-            try:
-                neighbors = [c for c, _ in wv.most_similar(proxy, topn=50)]
-                # Check rank of other expected cards
-                for target in expected_in_vocab[1:]:
-                    if target in neighbors:
-                        rank = neighbors.index(target) + 1
-                        search_mrr.append(1.0 / rank)
-                    else:
-                        search_mrr.append(0.0)
-            except KeyError:
-                pass
-        results["search_proxy_mrr"] = {
-            "mrr": round(float(np.mean(search_mrr)), 4) if search_mrr else 0.0,
-            "n_queries": len(search_mrr),
+        results["contextual_recall_at_20"] = {
+            "recall": round(ctx_hits / max(ctx_total, 1), 4),
+            "hits": ctx_hits,
+            "total": ctx_total,
         }
+
+        # Completion recall@30
+        comp_hits, comp_total = 0, 0
+        for qname, qdata in queries.items():
+            all_rel = (
+                qdata.get("highly_relevant", [])
+                + qdata.get("relevant", [])
+                + qdata.get("somewhat_relevant", [])
+            )
+            in_vocab = [c for c in all_rel if c in wv]
+            if len(in_vocab) < 5:
+                continue
+            seed = in_vocab[:3]
+            targets = set(in_vocab[3:])
+            try:
+                seed_vec = sum(wv[c] for c in seed) / len(seed)
+                n = np.linalg.norm(seed_vec)
+                if n > 0:
+                    seed_vec /= n
+                sims = wv.similar_by_vector(seed_vec, topn=30)
+                top_names = {c for c, _ in sims}
+                comp_hits += sum(1 for c in targets if c in top_names)
+                comp_total += len(targets)
+            except Exception:
+                pass
+        results["completion_recall_at_30"] = {
+            "recall": round(comp_hits / max(comp_total, 1), 4),
+            "hits": comp_hits,
+            "total": comp_total,
+        }
+
+        # Text search eval
+        search_queries = {
+            "magic": [
+                ("deal 3 damage", ["Lightning Bolt", "Lava Spike", "Rift Bolt", "Chain Lightning"]),
+                ("draw two cards", ["Divination", "Chart a Course", "Night's Whisper"]),
+                ("destroy target creature", ["Murder", "Hero's Downfall", "Doom Blade"]),
+                ("counter target spell", ["Counterspell", "Mana Leak", "Negate"]),
+            ],
+            "pokemon": [
+                ("search deck pokemon", ["Ultra Ball", "Nest Ball", "Level Ball"]),
+                ("draw cards", ["Professor's Research", "Cynthia"]),
+            ],
+            "yugioh": [
+                ("negate effect", ["Ash Blossom & Joyous Spring", "Effect Veiler"]),
+                ("special summon", ["Monster Reborn", "Soul Charge"]),
+            ],
+        }
+        game_sq = search_queries.get(game, [])
+        if game_sq:
+            search_mrr = []
+            for query_text, expected_cards in game_sq:
+                expected_in_vocab = [c for c in expected_cards if c in wv]
+                if not expected_in_vocab:
+                    continue
+                proxy = expected_in_vocab[0]
+                try:
+                    neighbors = [c for c, _ in wv.most_similar(proxy, topn=50)]
+                    for target in expected_in_vocab[1:]:
+                        if target in neighbors:
+                            rank = neighbors.index(target) + 1
+                            search_mrr.append(1.0 / rank)
+                        else:
+                            search_mrr.append(0.0)
+                except KeyError:
+                    pass
+            results["search_proxy_mrr"] = {
+                "mrr": round(float(np.mean(search_mrr)), 4) if search_mrr else 0.0,
+                "n_queries": len(search_mrr),
+            }
 
     # Dataset fingerprint: capture data shape at eval time
     results["dataset_fingerprint"] = {
@@ -618,6 +614,10 @@ def main():
     )
     parser.add_argument("-k", type=int, default=10)
     parser.add_argument("--json", action="store_true", help="Output as JSON")
+    parser.add_argument(
+        "--quick", action="store_true",
+        help="Skip expensive secondary metrics (stratified, coverage, novelty, recall). ~4x faster.",
+    )
     args = parser.parse_args()
 
     if args.all_games:
@@ -638,10 +638,10 @@ def main():
             for emb_name in args.compare.split(","):
                 emb_name = emb_name.strip()
                 full_name = f"{game}_{emb_name}" if not emb_name.startswith(game) else emb_name
-                result = eval_game(game, full_name, args.k)
+                result = eval_game(game, full_name, args.k, quick=args.quick)
                 all_results.append(result)
         else:
-            result = eval_game(game, args.embedding, args.k)
+            result = eval_game(game, args.embedding, args.k, quick=args.quick)
             all_results.append(result)
 
             if args.compare_v5 and not args.embedding:
@@ -649,7 +649,7 @@ def main():
                 if v5_name:
                     v5_path = DATA_DIR / "embeddings" / f"{v5_name}.wv"
                     if v5_path.exists():
-                        v5_result = eval_game(game, v5_name, args.k)
+                        v5_result = eval_game(game, v5_name, args.k, quick=args.quick)
                         all_results.append(v5_result)
 
     if args.json:
