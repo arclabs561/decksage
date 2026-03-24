@@ -246,8 +246,15 @@ async def annotate_pairs(
         logger.error(f"Missing dependency: {e}")
         return []
 
-    model_name = os.environ.get("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
-    agent = make_agent(model_name, result_type=CardSimilarityAnnotation)
+    models_str = os.environ.get("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
+    # Multi-model env var has comma-separated models; use first one for convergence
+    model_name = models_str.split(",")[0].strip()
+    logger.info(f"  Using model: {model_name}")
+    agent = make_agent(
+        model_name,
+        result_cls=CardSimilarityAnnotation,
+        system_prompt="You are a card game expert who judges similarity between trading card game cards.",
+    )
 
     results = []
     semaphore = asyncio.Semaphore(max_concurrent)
