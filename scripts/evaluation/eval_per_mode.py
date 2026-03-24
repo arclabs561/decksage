@@ -303,9 +303,9 @@ def _precompute_neighbors(
     if not valid_queries:
         return {}
 
-    # Get all vocabulary vectors (normalized by gensim)
-    all_vectors = wv.vectors  # (V, D), already L2-normalized by gensim
-    all_keys = list(wv.key_to_index.keys())
+    # Get L2-normalized vectors (gensim stores raw; get_normed_vectors() normalizes)
+    all_vectors = wv.get_normed_vectors()  # (V, D), L2-normalized for cosine similarity
+    all_keys = wv.index_to_key  # canonical index -> key mapping
 
     # Build query matrix
     query_indices = [wv.key_to_index[q] for q in valid_queries]
@@ -441,8 +441,9 @@ def eval_game(
         rng = np.random.default_rng(42)
         sample_size = min(2000, len(all_keys))
         sample_indices = rng.choice(len(all_keys), size=sample_size, replace=False)
-        sample_matrix = wv.vectors[sample_indices]  # (2000, D)
-        pop_sims = sample_matrix @ wv.vectors.T  # (2000, V)
+        normed = wv.get_normed_vectors()
+        sample_matrix = normed[sample_indices]  # (2000, D)
+        pop_sims = sample_matrix @ normed.T  # (2000, V)
         # Zero self-similarity
         for i, idx in enumerate(sample_indices):
             pop_sims[i, idx] = -2.0
