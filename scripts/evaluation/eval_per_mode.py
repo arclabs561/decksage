@@ -46,9 +46,9 @@ except ImportError:
     sys.exit(1)
 
 DEFAULT_EMBEDDINGS = {
-    "magic": "magic_cleaned_v4",
-    "pokemon": "pokemon_cleaned_v4",
-    "yugioh": "yugioh_cleaned_v5",
+    "magic": "magic_v7_spectral_mu35",
+    "pokemon": "pokemon_v7_fused",
+    "yugioh": "yugioh_v7_spectral_mu3",
 }
 
 V5_EMBEDDINGS = {
