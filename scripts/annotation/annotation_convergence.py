@@ -267,9 +267,22 @@ async def annotate_pairs(
     use_ollama = model_name.startswith("ollama/")
     ollama_model = model_name.removeprefix("ollama/") if use_ollama else None
 
+    # Local OpenAI-compatible server (mlx-lm serve, DMR, vLLM, SGLang)
+    # Detected via LOCAL_LLM_URL env var or local:// model prefix
+    use_local = model_name.startswith("local/")
+    local_url = os.environ.get("LOCAL_LLM_URL", "http://localhost:8085/v1")
+    local_model_name = model_name.removeprefix("local/") if use_local else None
+    if not use_local and os.environ.get("LOCAL_LLM_URL"):
+        # LOCAL_LLM_URL set but no local/ prefix -- auto-detect
+        use_local = True
+        local_model_name = model_name
+
     if use_ollama:
         logger.info(f"  Using ollama: {ollama_model} (FREE, local)")
-        agent = None  # not used for ollama
+        agent = None
+    elif use_local:
+        logger.info(f"  Using local server: {local_url} model={local_model_name} (FREE, local)")
+        agent = None
     else:
         logger.info(f"  Using model: {model_name}")
         agent = make_agent(
@@ -278,8 +291,69 @@ async def annotate_pairs(
             system_prompt="You are a card game expert. Rate card similarity concisely.",
         )
 
+    local_concurrency = int(os.environ.get("LOCAL_LLM_CONCURRENCY", "4"))
+    if use_ollama:
+        effective_concurrency = int(os.environ.get("OLLAMA_NUM_PARALLEL", "1"))
+    elif use_local:
+        effective_concurrency = local_concurrency
+    else:
+        effective_concurrency = max_concurrent
+
     results = []
-    semaphore = asyncio.Semaphore(max_concurrent if not use_ollama else 1)
+    semaphore = asyncio.Semaphore(effective_concurrency)
+
+    async def _call_local_openai(messages: list[dict], url: str, model: str) -> dict | None:
+        """Call any OpenAI-compatible local server (mlx-lm, DMR, vLLM, SGLang)."""
+        session = requests.Session()
+        session.trust_env = False  # bypass proxy for localhost
+        resp = await asyncio.to_thread(
+            session.post,
+            f"{url.rstrip('/')}/chat/completions",
+            json={
+                "model": model or "default",
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 1500,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=120,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        return _parse_json_response(content)
+
+    async def _call_ollama(messages: list[dict], model: str) -> dict | None:
+        """Call Ollama's native API."""
+        session = requests.Session()
+        session.trust_env = False
+        resp = await asyncio.to_thread(
+            session.post,
+            "http://localhost:11434/api/chat",
+            json={
+                "model": model,
+                "messages": messages,
+                "stream": False,
+                "format": "json",
+                "options": {"temperature": 0.3},
+            },
+            timeout=120,
+        )
+        content = resp.json()["message"]["content"]
+        return _parse_json_response(content)
+
+    def _parse_json_response(content: str) -> dict | None:
+        """Parse JSON from LLM response, handling markdown fences and extra text."""
+        content = content.strip()
+        if content.startswith("```"):
+            content = content.split("```")[1].lstrip("json\n")
+        try:
+            return json.loads(content)
+        except json.JSONDecodeError:
+            start = content.find("{")
+            end = content.rfind("}") + 1
+            if start >= 0 and end > start:
+                return json.loads(content[start:end])
+        return None
 
     async def annotate_one(query: str, candidate: str, source: str) -> dict | None:
         async with semaphore:
@@ -296,45 +370,22 @@ B: {c_ctx}
 Anchors: 1.0=reprint, 0.8=same role, 0.6=similar function, 0.4=same archetype, 0.2=tangential, 0.0=unrelated.
 Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}"""
 
+                messages = [
+                    {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
+                    {"role": "user", "content": prompt},
+                ]
+
                 if use_ollama:
-                    # Local ollama call (free)
-                    # Bypass proxy for local ollama
-                    session = requests.Session()
-                    session.trust_env = False
-                    resp = await asyncio.to_thread(
-                        session.post,
-                        "http://localhost:11434/api/chat",
-                        json={
-                            "model": ollama_model,
-                            "messages": [
-                                {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
-                                {"role": "user", "content": prompt},
-                            ],
-                            "stream": False,
-                            "options": {"temperature": 0.3},
-                        },
-                    )
-                    content = resp.json()["message"]["content"]
-                    # Parse JSON from response
-                    # Parse JSON from response (handle nested braces, markdown code blocks)
-                    content = content.strip()
-                    if content.startswith("```"):
-                        content = content.split("```")[1].lstrip("json\n")
-                    # Try direct parse first, then regex fallback
-                    try:
-                        ann = json.loads(content)
-                    except json.JSONDecodeError:
-                        # Find first { ... } block
-                        start = content.find("{")
-                        end = content.rfind("}") + 1
-                        if start >= 0 and end > start:
-                            ann = json.loads(content[start:end])
-                        else:
-                            logger.warning(f"No JSON in ollama response for {query} vs {candidate}: {content[:100]}")
-                            return None
+                    ann = await _call_ollama(messages, ollama_model)
+                elif use_local:
+                    ann = await _call_local_openai(messages, local_url, local_model_name)
                 else:
                     result = await agent.run(prompt)
                     ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
+
+                if ann is None:
+                    logger.warning(f"No JSON parsed for {query} vs {candidate}")
+                    return None
 
                 ann["query"] = query
                 ann["candidate"] = candidate
