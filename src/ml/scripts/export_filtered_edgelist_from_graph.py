@@ -84,9 +84,9 @@ def export_filtered_edgelist(
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:
-        for (card1, card2), edge in train_val_edges.items():
+        for key, edge in train_val_edges.items():
             if edge.weight >= min_weight:
-                f.write(f"{card1}\t{card2}\t{edge.weight}\n")
+                f.write(f"{edge.card1}\t{edge.card2}\t{edge.weight}\n")
                 exported += 1
 
                 if exported % 100000 == 0:
