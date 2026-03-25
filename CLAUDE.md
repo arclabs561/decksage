@@ -80,22 +80,23 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 - **Test set deduplication is mandatory**: multi-model/multi-variant IAA produces multiple annotations per (query, candidate) pair. These MUST be consensus-averaged (not stored as separate entries) before nDCG evaluation. Duplicate annotations inflate nDCG by 50-90%. The `annotate_diverse_pairs.py` now deduplicates at write time; run `dataset_diagnostics.py` to verify.
 - **Run diagnostics before trusting any eval number**: `uv run scripts/evaluation/dataset_diagnostics.py --all-games` checks for duplicate edges, annotation duplication, edge imbalance, and metadata gaps.
 - **Run annotation QC after adding annotations from a new model**: `uv run scripts/annotation/multi_model_annotate.py qc --game <game>` catches zero-score deflation and score inflation.
-- **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG is systematically biased downward at <1% annotation density -- it measures annotation coverage, not ranking quality. Report condensed nDCG alongside standard nDCG. Our condensed sub nDCG = 0.62-0.67 (vs standard 0.12-0.15).
-- **Prioritize eval-time hole filling** (`fill_eval_holes.py`) over random pair annotation. Filling top-K holes has 5-10x the nDCG impact per annotation dollar (2000 holes: +23% nDCG for $0.80).
+- **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG is systematically biased downward when annotation coverage is sparse -- it measures coverage, not ranking quality. When standard nDCG converges to condensed nDCG (gap < 0.05), annotation coverage is saturated *for the current embedding* and the metric reflects true ranking quality.
+- **Saturation is embedding-specific**: new embeddings reshuffle top-K, surfacing unjudged cards that may be better matches. "Saturated" means the current embedding's top-K is fully judged, not that the test set is complete for all embeddings. The outer loop is: fill holes -> get true quality -> train better embedding -> fill new holes -> repeat.
+- **Prioritize eval-time hole filling** (`fill_eval_holes.py`) over random pair annotation. Filling top-K holes has 5-10x the nDCG impact per annotation dollar. Monitor the standard-vs-condensed gap: when it closes for the current embedding, train a new one and re-fill.
 - **Use `--model multi`** (multi_model_annotate.py cascade) as default annotation backend. Groq 70B + Cerebras 235B at $0.40/1000 pairs. Ollama only as offline fallback (54% zero scores with llama3.2). OpenRouter budget-limited.
 - **Annotation provenance is mandatory**: every annotation must include `_provenance` dict (backend, model, prompt_version, temperature). The merge step must preserve `_provenance` -- verify with `repair_annotations.py audit`. Annotations without provenance are untrustworthy.
 - **Never use 8B models for calibrated scoring** (corr=-0.076 vs IAA ground truth). Minimum viable: 70B. Enriched prompt with calibration anchors is mandatory for models < frontier.
 - **Background batch race condition**: do not start annotation batches while test set cleanup is pending. Batches started before cleanup overwrite cleaned files. Always commit cleanup before launching new batches.
 - Contextual recall: measure at both embedding level (eval_per_mode.py offline) and API level (eval_contextual.py). They differ significantly.
 
-### True Baselines (post-dedup, 2026-03-23)
+### True Baselines (SATURATED, 2026-03-25)
 
-Best embeddings per game (canonical eval_per_mode.py, post hole-fill round 1, 2026-03-25):
-- Magic: **v7_spectral_mu35 sub nDCG 0.233, condensed 0.561** (spectral mu=0.35)
-- Pokemon: **v7_fused sub nDCG 0.190, condensed 0.527** (spectral hurts small graphs)
-- YuGiOh: **v7_spectral_mu3 sub nDCG 0.240, condensed 0.627**
-- Total annotations: Magic 20K, Pokemon 13K, YuGiOh 13K (~47K total)
-- nDCG increase from annotation hole-filling, not embedding changes (exp 0058)
+Best embeddings per game (canonical eval_per_mode.py, all top-10 holes filled, exp 0058-0059):
+- Magic: **v7_spectral_mu35 sub nDCG 0.525** (condensed 0.527, gap 0.002) [SATURATED]
+- Pokemon: **v7_fused sub nDCG 0.437** (condensed 0.438, gap 0.001) [SATURATED]
+- YuGiOh: **v7_spectral_mu3 sub nDCG 0.478** (condensed 0.482, gap 0.004) [SATURATED]
+- Total annotations: Magic 36K / Pokemon 25K / YuGiOh 27K (~89K total, ~$23)
+- Saturation is embedding-specific: new embeddings will create new holes to fill
 - All nDCG numbers before 2026-03-22 were inflated by test set duplication.
 
 ---
