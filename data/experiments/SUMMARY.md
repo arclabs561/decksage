@@ -62,6 +62,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0055 | 2026-03-24 | HGT contrastive (InfoNCE) on A10G | magic | same as 0054 | sub nDCG | 0.002 raw, 0.012 fused (worse than link pred 0.014; loss plateaued epoch 20) | [0055](0055_hgt_contrastive.yaml) |
 | 0056 | 2026-03-24 | Residual PPMI (SVD) + degree debiasing | magic | v7 edgelist | sub nDCG | PPMI 0.084, v7_debiased 0.103, spectral_debiased 0.107, spectral 0.107 | [0056](0056_residual_ppmi_and_debiasing.yaml) |
 | 0057 | 2026-03-25 | **Multi-model cascade annotation** (key) | all | Groq 70B + Cerebras 235B cascade | corr vs IAA | **0.639 calibrated** (vs $2-15 IAA at $0.40/1K). Cleanup of 3,349 bad annotations: Magic nDCG +21.6% | [0057](0057_multi_model_cascade_annotation.yaml) |
+| 0058 | 2026-03-25 | **Fill eval holes round 1** (key) | all | 5K holes per game, multi cascade | sub nDCG | Magic 0.104->**0.233**, Pokemon 0.088->**0.190**, YuGiOh 0.160->**0.240**. ~$6 total. 42K holes remain | [0058](0058_fill_eval_holes_round1.yaml) |
 
 ## Key Insights (cross-cutting)
 
