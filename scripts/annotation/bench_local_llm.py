@@ -14,6 +14,7 @@ Usage:
     uv run scripts/annotation/bench_local_llm.py --url http://localhost:8085/v1  # specific server
     uv run scripts/annotation/bench_local_llm.py --concurrency 8    # test at higher concurrency
 """
+
 from __future__ import annotations
 
 import argparse
@@ -56,14 +57,44 @@ ANNOTATION_PROMPT = {
 
 # Card pairs for concurrent testing (diverse enough to avoid trivial caching)
 CARD_PAIRS = [
-    ("Lightning Bolt", "Chain Lightning", "Instant, {R}, 3 damage to any target", "Sorcery, {R}, 3 damage, copyable"),
-    ("Counterspell", "Mana Drain", "Instant, {U}{U}, counter target spell", "Instant, {U}{U}, counter + mana"),
-    ("Swords to Plowshares", "Path to Exile", "Instant, {W}, exile creature, life", "Instant, {W}, exile creature, land"),
-    ("Dark Ritual", "Cabal Ritual", "Instant, {B}, add BBB", "Instant, {1}{B}, add BBB if threshold"),
+    (
+        "Lightning Bolt",
+        "Chain Lightning",
+        "Instant, {R}, 3 damage to any target",
+        "Sorcery, {R}, 3 damage, copyable",
+    ),
+    (
+        "Counterspell",
+        "Mana Drain",
+        "Instant, {U}{U}, counter target spell",
+        "Instant, {U}{U}, counter + mana",
+    ),
+    (
+        "Swords to Plowshares",
+        "Path to Exile",
+        "Instant, {W}, exile creature, life",
+        "Instant, {W}, exile creature, land",
+    ),
+    (
+        "Dark Ritual",
+        "Cabal Ritual",
+        "Instant, {B}, add BBB",
+        "Instant, {1}{B}, add BBB if threshold",
+    ),
     ("Brainstorm", "Ponder", "Instant, {U}, draw 3 put 2 back", "Sorcery, {U}, look at top 3"),
-    ("Wrath of God", "Damnation", "Sorcery, {2}{W}{W}, destroy all", "Sorcery, {2}{B}{B}, destroy all"),
+    (
+        "Wrath of God",
+        "Damnation",
+        "Sorcery, {2}{W}{W}, destroy all",
+        "Sorcery, {2}{B}{B}, destroy all",
+    ),
     ("Sol Ring", "Mana Crypt", "Artifact, {1}, tap add 2", "Artifact, {0}, tap add 2, flip damage"),
-    ("Thoughtseize", "Inquisition of Kozilek", "Sorcery, {B}, discard any nonland", "Sorcery, {B}, discard CMC<=3"),
+    (
+        "Thoughtseize",
+        "Inquisition of Kozilek",
+        "Sorcery, {B}, discard any nonland",
+        "Sorcery, {B}, discard CMC<=3",
+    ),
 ]
 
 
@@ -141,9 +172,14 @@ def single_request(url: str, model: str) -> dict:
         data = resp.json()
         if "choices" not in data:
             return {
-                "ttft_ms": 0, "total_ms": total_time * 1000, "tokens": 0,
-                "tok_per_sec": 0, "json_valid": False, "scores": None,
-                "raw": str(data)[:200], "error": data.get("error", str(data)[:100]),
+                "ttft_ms": 0,
+                "total_ms": total_time * 1000,
+                "tokens": 0,
+                "tok_per_sec": 0,
+                "json_valid": False,
+                "scores": None,
+                "raw": str(data)[:200],
+                "error": data.get("error", str(data)[:100]),
             }
         full_content = data["choices"][0]["message"]["content"]
         usage = data.get("usage", {})
@@ -194,15 +230,21 @@ async def concurrent_test(url: str, model: str, concurrency: int = 4, n_requests
             payload = {
                 "model": model,
                 "messages": [
-                    {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
-                    {"role": "user", "content": (
-                        f"Rate these MAGIC cards (0.0-1.0):\n\n"
-                        f"A: {card_a} -- {desc_a}\n\n"
-                        f"B: {card_b} -- {desc_b}\n\n"
-                        'Respond with JSON: {"similarity_score": 0.0, '
-                        '"functional_score": 0.0, "synergy_score": 0.0, '
-                        '"meta_relevance": 0.0}'
-                    )},
+                    {
+                        "role": "system",
+                        "content": "You are a card game expert. Respond with JSON only.",
+                    },
+                    {
+                        "role": "user",
+                        "content": (
+                            f"Rate these MAGIC cards (0.0-1.0):\n\n"
+                            f"A: {card_a} -- {desc_a}\n\n"
+                            f"B: {card_b} -- {desc_b}\n\n"
+                            'Respond with JSON: {"similarity_score": 0.0, '
+                            '"functional_score": 0.0, "synergy_score": 0.0, '
+                            '"meta_relevance": 0.0}'
+                        ),
+                    },
                 ],
                 "temperature": 0.3,
                 "max_tokens": 300,
@@ -236,7 +278,13 @@ async def concurrent_test(url: str, model: str, concurrency: int = 4, n_requests
                 return {"ok": True, "ms": elapsed * 1000, "tokens": tokens, "json_valid": valid}
             except Exception as e:
                 elapsed = time.perf_counter() - t0
-                return {"ok": False, "ms": elapsed * 1000, "tokens": 0, "json_valid": False, "error": str(e)}
+                return {
+                    "ok": False,
+                    "ms": elapsed * 1000,
+                    "tokens": 0,
+                    "json_valid": False,
+                    "error": str(e),
+                }
 
     t_start = time.perf_counter()
     tasks = [one_request(i) for i in range(n_requests)]
@@ -257,7 +305,9 @@ async def concurrent_test(url: str, model: str, concurrency: int = 4, n_requests
         "aggregate_tok_per_sec": total_tokens / wall_time if wall_time > 0 else 0,
         "mean_latency_ms": statistics.mean(r["ms"] for r in ok_results) if ok_results else 0,
         "p50_latency_ms": statistics.median(r["ms"] for r in ok_results) if ok_results else 0,
-        "p99_latency_ms": sorted(r["ms"] for r in ok_results)[int(len(ok_results) * 0.99)] if ok_results else 0,
+        "p99_latency_ms": sorted(r["ms"] for r in ok_results)[int(len(ok_results) * 0.99)]
+        if ok_results
+        else 0,
         "requests_per_sec": len(ok_results) / wall_time if wall_time > 0 else 0,
     }
 
@@ -297,7 +347,9 @@ def main():
     parser.add_argument("--url", help="Server URL (e.g., http://localhost:8085/v1)")
     parser.add_argument("--model", help="Model name override")
     parser.add_argument("--concurrency", type=int, default=4, help="Concurrent requests")
-    parser.add_argument("--requests", type=int, default=8, help="Total requests for concurrent test")
+    parser.add_argument(
+        "--requests", type=int, default=8, help="Total requests for concurrent test"
+    )
     args = parser.parse_args()
 
     if args.url:
@@ -316,7 +368,9 @@ def main():
         servers = detect_servers()
         if not servers:
             print("No local LLM servers detected. Start one of:")
-            print("  ./scripts/start_mlx_server.sh              # mlx-lm (fastest on Apple Silicon)")
+            print(
+                "  ./scripts/start_mlx_server.sh              # mlx-lm (fastest on Apple Silicon)"
+            )
             print("  docker model run ai/qwen2.5:7B-Q4_K_M -d   # Docker Model Runner")
             print("  ollama serve                                # Ollama")
             return 1
