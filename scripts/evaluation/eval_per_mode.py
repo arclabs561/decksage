@@ -262,11 +262,17 @@ def eval_mode(
             "k": k,
         }
 
+    standard = float(np.mean(ndcg_scores))
+    condensed = float(np.mean(condensed_ndcg_scores)) if condensed_ndcg_scores else 0.0
+    convergence_gap = condensed - standard  # >0.05 means coverage is sparse
+
     return {
         "mode": mode,
         "score_field": score_field,
-        "ndcg_at_k": float(np.mean(ndcg_scores)),
-        "condensed_ndcg": float(np.mean(condensed_ndcg_scores)) if condensed_ndcg_scores else 0.0,
+        "ndcg_at_k": standard,
+        "condensed_ndcg": condensed,
+        "convergence_gap": convergence_gap,
+        "coverage_saturated": convergence_gap < 0.05,
         "ndcg_std": float(np.std(ndcg_scores)),
         "ndcg_median": float(np.median(ndcg_scores)),
         "n_evaluated": n_evaluated,
@@ -802,8 +808,10 @@ def main():
             for mode in ["substitute", "synergy", "meta"]:
                 m = r[f"mode_{mode}"]
                 if m["n_evaluated"] > 0:
+                    gap = m.get("convergence_gap", 0)
+                    sat = " [SATURATED]" if m.get("coverage_saturated") else f" [gap={gap:.3f}]"
                     print(
-                        f"    {mode:12s}: {m['ndcg_at_k']:.4f} (std={m.get('ndcg_std', 0):.3f}, n={m['n_evaluated']}, skipped={m['n_skipped']})"
+                        f"    {mode:12s}: {m['ndcg_at_k']:.4f} condensed={m['condensed_ndcg']:.4f}{sat} (n={m['n_evaluated']})"
                     )
                 else:
                     print(f"    {mode:12s}: -- (no evaluable queries)")
