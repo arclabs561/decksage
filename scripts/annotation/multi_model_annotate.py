@@ -290,6 +290,38 @@ async def tier2_annotate(
 # ---------------------------------------------------------------------------
 
 
+def _load_isotonic(game: str):
+    """Load isotonic calibration if available."""
+    cal_path = CALIBRATION_DIR / f"{game}_calibration.json"
+    if not cal_path.exists():
+        return None
+    try:
+        with open(cal_path) as f:
+            cal = json.load(f)
+        from sklearn.isotonic import IsotonicRegression
+
+        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
+        iso.X_thresholds_ = np.array(cal["iso_x"])
+        iso.y_thresholds_ = np.array(cal["iso_y"])
+        iso.X_min_ = iso.X_thresholds_[0]
+        iso.X_max_ = iso.X_thresholds_[-1]
+        iso.f_ = None  # will use thresholds directly
+        iso.increasing_ = True
+        return iso
+    except Exception:
+        return None
+
+
+_isotonic_cache: dict = {}
+
+
+def get_isotonic(game: str):
+    """Get cached isotonic calibrator for a game."""
+    if game not in _isotonic_cache:
+        _isotonic_cache[game] = _load_isotonic(game)
+    return _isotonic_cache[game]
+
+
 async def annotate_pair(
     card_a: str,
     card_b: str,
@@ -314,6 +346,19 @@ async def annotate_pair(
                 t2_val = t2_scores.get(dim, 0)
                 final_scores[dim] = 0.4 * t1_val + 0.6 * t2_val
             tier_used = "tier1+tier2"
+
+    # Apply isotonic calibration to similarity_score if available
+    calibrated = False
+    iso = get_isotonic(game)
+    if iso is not None and "similarity_score" in final_scores:
+        raw_sim = final_scores["similarity_score"]
+        try:
+            cal_sim = float(iso.predict([raw_sim])[0])
+            final_scores["similarity_score_raw"] = raw_sim
+            final_scores["similarity_score"] = cal_sim
+            calibrated = True
+        except Exception:
+            pass
 
     return {
         "query": card_a,
@@ -340,6 +385,7 @@ async def annotate_pair(
             "temperature_tier1": 0.5,
             "temperature_tier2": 0.3,
             "game": game,
+            "calibrated": calibrated,
             "script": "multi_model_annotate.py",
         },
     }
