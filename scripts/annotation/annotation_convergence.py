@@ -220,6 +220,55 @@ def discover_candidates(
                             break
                 break
 
+    # Source 4: embedding disagreement (active learning)
+    # Pairs ranked very differently by different embeddings are most informative
+    if len(embedding_names) >= 2:
+        disagree_budget = min(int(budget * 0.2), budget - len(candidates))
+        if disagree_budget > 0:
+            try:
+                from gensim.models import KeyedVectors
+
+                kvs = {}
+                for emb_name in embedding_names[:2]:
+                    emb_path = DATA_DIR / "embeddings" / f"{emb_name}.wv"
+                    if emb_path.exists():
+                        kvs[emb_name] = KeyedVectors.load(str(emb_path))
+
+                if len(kvs) == 2:
+                    emb_a_name, emb_b_name = list(kvs.keys())
+                    kv_a, kv_b = kvs[emb_a_name], kvs[emb_b_name]
+                    shared_vocab = set(kv_a.key_to_index) & set(kv_b.key_to_index)
+
+                    disagreements = []
+                    for qname in list(queries.keys())[:200]:  # cap for speed
+                        if qname not in shared_vocab:
+                            continue
+                        try:
+                            nn_a = {c for c, _ in kv_a.most_similar(qname, topn=k)}
+                            nn_b = {c for c, _ in kv_b.most_similar(qname, topn=k)}
+                            # Cards in one top-K but not the other
+                            only_a = nn_a - nn_b
+                            only_b = nn_b - nn_a
+                            for card in only_a | only_b:
+                                if (qname, card) not in annotated and (
+                                    qname,
+                                    card,
+                                ) not in candidates:
+                                    disagreements.append((qname, card))
+                        except KeyError:
+                            continue
+
+                    rng = np.random.default_rng(123)
+                    rng.shuffle(disagreements)
+                    for q, c in disagreements[:disagree_budget]:
+                        candidates[(q, c)] = "embedding_disagreement"
+                    logger.info(
+                        f"  Embedding disagreement: {min(disagree_budget, len(disagreements))} pairs "
+                        f"from {len(disagreements)} total disagreements"
+                    )
+            except Exception as e:
+                logger.warning(f"Embedding disagreement source failed: {e}")
+
     result = [(q, c, src) for (q, c), src in candidates.items()]
     logger.info(
         f"Discovered {len(result)} unannotated pairs "
