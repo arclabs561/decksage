@@ -112,9 +112,9 @@ def sweep_fusion_weights(game: str) -> list[dict]:
     """Sweep weight combinations for contextual alternatives."""
     # Load embeddings
     emb_map = {
-        "magic": "magic_v5_fused",
-        "pokemon": "pokemon_v5_fused",
-        "yugioh": "yugioh_cleaned_v5",
+        "magic": "magic_v7_spectral_mu35",
+        "pokemon": "pokemon_v7_fused",
+        "yugioh": "yugioh_v7_spectral_mu3",
     }
     emb_path = DATA_DIR / "embeddings" / f"{emb_map[game]}.wv"
     print(f"Loading {emb_path}...")

@@ -144,11 +144,11 @@ def main() -> int:
 
     # Load embeddings
     emb_map = {
-        "magic": "magic_v5_fused",
-        "pokemon": "pokemon_v5_fused",
-        "yugioh": "yugioh_cleaned_v5",
+        "magic": "magic_v7_spectral_mu35",
+        "pokemon": "pokemon_v7_fused",
+        "yugioh": "yugioh_v7_spectral_mu3",
     }
-    emb_name = emb_map.get(args.game, f"{args.game}_v5_fused")
+    emb_name = emb_map.get(args.game, f"{args.game}_v7_fused")
     emb_path = DATA_DIR / "embeddings" / f"{emb_name}.wv"
 
     print(f"Loading embeddings from {emb_path}...")
