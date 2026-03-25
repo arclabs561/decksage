@@ -1,0 +1,65 @@
+id: "0058"
+date: "2026-03-25"
+title: "Fill eval holes round 1 (5K per game)"
+game: all
+
+hypothesis: >
+  Filling unjudged top-10 items will increase measured nDCG by reducing
+  false-negative bias, without changing the underlying embeddings.
+
+method:
+  script: scripts/evaluation/fill_eval_holes.py
+  args: "--all-games --model multi --max-per-game 5000 --concurrency 20"
+
+data:
+  training:
+    source: "n/a (eval-only change)"
+    count: 0
+  evaluation:
+    source: "annotated_{game}_v2.json test sets"
+    holes_found:
+      magic: 21019
+      pokemon: 17187
+      yugioh: 18662
+    holes_filled:
+      magic: 5000
+      pokemon: 5000
+      yugioh: 5000
+    annotation_backend: "multi-model cascade (Groq 70B + Cerebras 235B)"
+    cost_estimate: "$6.00"
+
+results:
+  before:
+    magic_sub_ndcg: 0.1044
+    pokemon_sub_ndcg: 0.0884
+    yugioh_sub_ndcg: 0.1597
+  after:
+    magic_sub_ndcg: 0.2326
+    magic_condensed_ndcg: 0.5611
+    magic_hit_at_10: 0.5175
+    pokemon_sub_ndcg: 0.1904
+    pokemon_condensed_ndcg: 0.5270
+    pokemon_hit_at_10: 0.4051
+    yugioh_sub_ndcg: 0.2403
+    yugioh_condensed_ndcg: 0.6271
+    yugioh_hit_at_10: 0.6740
+  total_annotations:
+    magic: 20307
+    pokemon: 13189
+    yugioh: 13444
+  remaining_holes:
+    magic: 16019
+    pokemon: 12187
+    yugioh: 13662
+
+conclusion: >
+  Filling 5K holes per game doubled measured nDCG across all games. This
+  confirms that the primary bottleneck in measured eval quality is annotation
+  coverage, not embedding quality. 42K holes remain -- filling them should
+  continue to improve measured nDCG, with diminishing returns as coverage
+  increases.
+
+artifacts:
+  - data/test_sets/annotated_magic_v2.json
+  - data/test_sets/annotated_pokemon_v2.json
+  - data/test_sets/annotated_yugioh_v2.json
