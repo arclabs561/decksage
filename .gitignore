@@ -295,3 +295,8 @@ data/models/
 data/processed/*.pkl
 runctl.toml
 data/checkpoints/
+
+# Reference materials (large PDFs gitignored; README + pull script tracked)
+references/rulebooks/
+!references/README.md
+!references/pull_references.sh
