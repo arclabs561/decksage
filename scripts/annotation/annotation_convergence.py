@@ -479,6 +479,18 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                 ann["discovery_source"] = source
                 ann["model_name"] = model_name
                 ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
+                # Provenance metadata
+                backend = "groq" if use_groq else "ollama" if use_ollama else "local" if use_local else "openrouter"
+                ann["_provenance"] = {
+                    "backend": backend,
+                    "model": model_name,
+                    "temperature": 0.3,
+                    "prompt_version": "enriched_v1" if (use_groq or use_ollama or use_local) else "compact_v1",
+                    "concurrency": effective_concurrency,
+                    "game": game,
+                    "has_card_context": bool(card_context.get(query)),
+                    "script": "annotation_convergence.py",
+                }
                 return ann
             except Exception as e:
                 logger.error(
