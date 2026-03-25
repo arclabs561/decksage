@@ -79,16 +79,20 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 - **Every eval result must include dataset fingerprint**: card count, edge count, annotation count, test set version. The dataset grows concurrently with experiments -- results are only comparable at the same data snapshot.
 - **Test set deduplication is mandatory**: multi-model/multi-variant IAA produces multiple annotations per (query, candidate) pair. These MUST be consensus-averaged (not stored as separate entries) before nDCG evaluation. Duplicate annotations inflate nDCG by 50-90%. The `annotate_diverse_pairs.py` now deduplicates at write time; run `dataset_diagnostics.py` to verify.
 - **Run diagnostics before trusting any eval number**: `uv run scripts/evaluation/dataset_diagnostics.py --all-games` checks for duplicate edges, annotation duplication, edge imbalance, and metadata gaps.
+- **Run annotation QC after adding annotations from a new model**: `uv run scripts/annotation/multi_model_annotate.py qc --game <game>` catches zero-score deflation and score inflation.
+- **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG is systematically biased downward at <1% annotation density -- it measures annotation coverage, not ranking quality. Report condensed nDCG alongside standard nDCG. Our condensed sub nDCG = 0.62-0.67 (vs standard 0.12-0.15).
+- **Prioritize eval-time hole filling** (`fill_eval_holes.py`) over random pair annotation. Filling top-K holes has 5-10x the nDCG impact per annotation dollar (2000 holes: +23% nDCG for $0.80).
+- **Use `--model multi`** (multi_model_annotate.py cascade) as default annotation backend. Groq 70B + Cerebras 235B at $0.40/1000 pairs. Ollama only as offline fallback (54% zero scores with llama3.2). OpenRouter budget-limited.
 - Contextual recall: measure at both embedding level (eval_per_mode.py offline) and API level (eval_contextual.py). They differ significantly.
 
 ### True Baselines (post-dedup, 2026-03-23)
 
-Best embeddings per game (canonical eval_per_mode.py, post-dedup):
-- Magic: **v7_spectral_mu3 sub nDCG 0.1067** (spectral propagation on v7_fused, deterministic)
-- Pokemon: **v7_fused sub nDCG 0.0882** (spectral hurts small graphs)
-- YuGiOh: **v7_spectral_mu3 sub nDCG 0.1577** (spectral +3%)
-- v7_fused mean across 10 seeds: 0.093 (deployed v7 0.102 was >4 sigma outlier)
-- All prior session nDCG numbers before 2026-03-22 were inflated by test set duplication.
+Best embeddings per game (canonical eval_per_mode.py, post hole-fill, 2026-03-25):
+- Magic: **v7_spectral_mu35 sub nDCG 0.154, condensed 0.620** (spectral mu=0.35)
+- Pokemon: **v7_fused sub nDCG 0.090** (spectral hurts small graphs)
+- YuGiOh: **v7_spectral_mu3 sub nDCG 0.159, condensed 0.636**
+- Total annotations: Magic 16K, Pokemon 9K, YuGiOh 8K (~33K total)
+- All nDCG numbers before 2026-03-22 were inflated by test set duplication.
 
 ---
 
