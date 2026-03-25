@@ -291,23 +291,22 @@ async def tier2_annotate(
 
 
 def _load_isotonic(game: str):
-    """Load isotonic calibration if available."""
+    """Load isotonic calibration as an interpolation function."""
     cal_path = CALIBRATION_DIR / f"{game}_calibration.json"
     if not cal_path.exists():
         return None
     try:
         with open(cal_path) as f:
             cal = json.load(f)
-        from sklearn.isotonic import IsotonicRegression
+        from scipy.interpolate import interp1d
 
-        iso = IsotonicRegression(y_min=0.0, y_max=1.0, out_of_bounds="clip")
-        iso.X_thresholds_ = np.array(cal["iso_x"])
-        iso.y_thresholds_ = np.array(cal["iso_y"])
-        iso.X_min_ = iso.X_thresholds_[0]
-        iso.X_max_ = iso.X_thresholds_[-1]
-        iso.f_ = None  # will use thresholds directly
-        iso.increasing_ = True
-        return iso
+        f_cal = interp1d(
+            cal["iso_x"],
+            cal["iso_y"],
+            bounds_error=False,
+            fill_value=(cal["iso_y"][0], cal["iso_y"][-1]),
+        )
+        return f_cal
     except Exception:
         return None
 
@@ -353,7 +352,7 @@ async def annotate_pair(
     if iso is not None and "similarity_score" in final_scores:
         raw_sim = final_scores["similarity_score"]
         try:
-            cal_sim = float(iso.predict([raw_sim])[0])
+            cal_sim = float(np.clip(iso(raw_sim), 0.0, 1.0))
             final_scores["similarity_score_raw"] = raw_sim
             final_scores["similarity_score"] = cal_sim
             calibrated = True
@@ -568,7 +567,7 @@ def run_sentinel_check(game: str):
 
     results = asyncio.run(run_all())
 
-    print(f"\nSentinel check results:")
+    print("\nSentinel check results:")
     print(f"{'Card A':25s} {'Card B':25s} {'Expected':>8s} {'Got':>8s} {'Error':>8s} {'Std':>6s}")
     print("-" * 80)
 

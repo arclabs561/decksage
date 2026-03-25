@@ -61,6 +61,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0054 | 2026-03-23 | **HGT mini-batch on A10G** (key) | magic | 12M edges, 36K nodes, 6 edge types | sub nDCG | 0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving) | [0054](0054_hgt_mini_batch.yaml) |
 | 0055 | 2026-03-24 | HGT contrastive (InfoNCE) on A10G | magic | same as 0054 | sub nDCG | 0.002 raw, 0.012 fused (worse than link pred 0.014; loss plateaued epoch 20) | [0055](0055_hgt_contrastive.yaml) |
 | 0056 | 2026-03-24 | Residual PPMI (SVD) + degree debiasing | magic | v7 edgelist | sub nDCG | PPMI 0.084, v7_debiased 0.103, spectral_debiased 0.107, spectral 0.107 | [0056](0056_residual_ppmi_and_debiasing.yaml) |
+| 0057 | 2026-03-25 | **Multi-model cascade annotation** (key) | all | Groq 70B + Cerebras 235B cascade | corr vs IAA | **0.639 calibrated** (vs $2-15 IAA at $0.40/1K). Cleanup of 3,349 bad annotations: Magic nDCG +21.6% | [0057](0057_multi_model_cascade_annotation.yaml) |
 
 ## Key Insights (cross-cutting)
 
