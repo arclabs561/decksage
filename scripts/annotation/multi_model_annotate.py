@@ -531,6 +531,72 @@ def run_calibration(game: str, n_pairs: int = 100):
 # ---------------------------------------------------------------------------
 
 
+def run_sentinel_check(game: str):
+    """Run sentinel pairs through Tier 1 and check calibration."""
+    sentinel_path = CALIBRATION_DIR / f"{game}_sentinels.json"
+    if not sentinel_path.exists():
+        print(f"No sentinels at {sentinel_path}. Run calibrate first to generate.")
+        return
+
+    with open(sentinel_path) as f:
+        sentinels = json.load(f)
+
+    from annotation_convergence import load_card_context
+
+    card_context = load_card_context(game)
+
+    print(f"Running {len(sentinels)} sentinel pairs through Tier 1...")
+
+    async def run_all():
+        sem = asyncio.Semaphore(5)
+
+        async def one(s):
+            async with sem:
+                ctx_a = card_context.get(s["card1"], s["card1"])
+                ctx_b = card_context.get(s["card2"], s["card2"])
+                result = await tier1_annotate(s["card1"], s["card2"], ctx_a, ctx_b, game)
+                return {
+                    "card1": s["card1"],
+                    "card2": s["card2"],
+                    "expected": s["consensus_sim"],
+                    "predicted": result["scores"].get("similarity_score", 0),
+                    "n_samples": result["n_samples"],
+                    "std": result.get("per_dim_std", {}).get("similarity_score", 0),
+                }
+
+        return await asyncio.gather(*[one(s) for s in sentinels])
+
+    results = asyncio.run(run_all())
+
+    print(f"\nSentinel check results:")
+    print(f"{'Card A':25s} {'Card B':25s} {'Expected':>8s} {'Got':>8s} {'Error':>8s} {'Std':>6s}")
+    print("-" * 80)
+
+    errors = []
+    for r in results:
+        err = abs(r["predicted"] - r["expected"])
+        errors.append(err)
+        flag = " FAIL" if err > 0.20 else ""
+        print(
+            f"{r['card1']:25s} {r['card2']:25s} "
+            f"{r['expected']:8.3f} {r['predicted']:8.3f} {err:8.3f} {r['std']:6.3f}{flag}"
+        )
+
+    mae = np.mean(errors)
+    max_err = max(errors)
+    n_fail = sum(1 for e in errors if e > 0.20)
+    print(
+        f"\nSentinel MAE: {mae:.3f}, Max error: {max_err:.3f}, Failures (>0.20): {n_fail}/{len(sentinels)}"
+    )
+
+    if n_fail > len(sentinels) * 0.3:
+        print("WARNING: >30% sentinel failures. Model calibration may have drifted.")
+    elif mae > 0.15:
+        print("WARNING: Sentinel MAE > 0.15. Consider re-calibrating.")
+    else:
+        print("PASS: Sentinel check within tolerance.")
+
+
 def run_qc(game: str):
     """Run quality checks on existing annotations."""
     test_set_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
@@ -577,7 +643,7 @@ def run_qc(game: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Multi-model annotation pipeline")
-    parser.add_argument("command", choices=["calibrate", "annotate", "qc"])
+    parser.add_argument("command", choices=["calibrate", "annotate", "qc", "sentinel"])
     parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--budget", type=int, default=100)
     parser.add_argument("--n-cal", type=int, default=100, help="Calibration pairs count")
@@ -589,9 +655,11 @@ def main():
         run_calibration(args.game, n_pairs=args.n_cal)
     elif args.command == "qc":
         run_qc(args.game)
+    elif args.command == "sentinel":
+        run_sentinel_check(args.game)
     elif args.command == "annotate":
-        print("Multi-model annotation not yet wired to convergence loop.")
-        print("Use: --model multi to activate in annotation_convergence.py")
+        print("Multi-model annotation is wired into annotation_convergence.py.")
+        print("Use: uv run scripts/annotation/annotation_convergence.py --model multi")
 
 
 if __name__ == "__main__":
