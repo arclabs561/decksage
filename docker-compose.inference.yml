@@ -1,0 +1,29 @@
+# Local LLM inference via Docker Model Runner.
+#
+# Requires: Docker Desktop 4.40+ with Model Runner enabled
+#   (Settings > AI > Enable Docker Model Runner)
+#
+# Pull models first:
+#   docker model pull ai/qwen2.5:7B-Q4_K_M
+#   docker model pull ai/qwen2.5:32B-Q4_K_M   # needs ~20GB RAM
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.inference.yml up
+#
+# The DMR endpoint is available at http://localhost:12434/v1 (OpenAI-compatible).
+# Annotation scripts use it via:
+#   export LOCAL_LLM_URL=http://localhost:12434/v1
+#
+# For faster inference on Apple Silicon, use mlx-lm natively instead:
+#   ./scripts/start_mlx_server.sh
+
+services:
+  api:
+    models:
+      llm:
+        endpoint_var: LOCAL_LLM_URL
+
+models:
+  llm:
+    model: ${DMR_MODEL:-ai/qwen2.5:7B-Q4_K_M}
+    context_size: 4096
