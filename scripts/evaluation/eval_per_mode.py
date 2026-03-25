@@ -188,6 +188,7 @@ def eval_mode(
     base_field = MODE_SCORE_FIELD[mode]
     score_field = f"{base_field}_normalized" if use_normalized else base_field
     ndcg_scores = []
+    condensed_ndcg_scores = []  # Sakai 2007: ignores unjudged docs
     n_skipped = 0
     n_evaluated = 0
 
@@ -230,6 +231,9 @@ def eval_mode(
         for card, _ in neighbors:
             relevances.append(gt.get(card, 0.0))
 
+        # Condensed list: only judged cards, preserving rank order (Sakai 2007)
+        condensed_rels = [gt[card] for card, _ in neighbors if card in gt]
+
         # Ideal ranking: sort all ground truth scores descending
         ideal = sorted(gt.values(), reverse=True)
 
@@ -240,6 +244,12 @@ def eval_mode(
 
         score = ndcg(relevances, ideal, k)
         ndcg_scores.append(score)
+
+        # Condensed nDCG: ignores unjudged documents (no 0-score penalty)
+        if condensed_rels:
+            condensed_score = ndcg(condensed_rels, ideal, min(k, len(condensed_rels)))
+            condensed_ndcg_scores.append(condensed_score)
+
         n_evaluated += 1
 
     if not ndcg_scores:
@@ -256,6 +266,7 @@ def eval_mode(
         "mode": mode,
         "score_field": score_field,
         "ndcg_at_k": float(np.mean(ndcg_scores)),
+        "condensed_ndcg": float(np.mean(condensed_ndcg_scores)) if condensed_ndcg_scores else 0.0,
         "ndcg_std": float(np.std(ndcg_scores)),
         "ndcg_median": float(np.median(ndcg_scores)),
         "n_evaluated": n_evaluated,
