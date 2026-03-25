@@ -214,7 +214,11 @@ def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
                 sub = r["mode_substitute"]["ndcg_at_k"]
                 syn = r["mode_synergy"]["ndcg_at_k"]
                 overall = r["overall_ndcg"]["ndcg_at_k"]
-                print(f"  {name}: sub={sub:.4f} syn={syn:.4f} overall={overall:.4f}")
+                hit10 = r.get("hit_at_k", {}).get("10", {}).get("rate", "?")
+                mrr = r.get("mrr_relevant", {}).get("mrr", "?")
+                ann_density = r.get("annotation_density", {}).get("mean_annotated_per_query", "?")
+                print(f"  {name}: sub={sub:.4f} syn={syn:.4f} overall={overall:.4f} "
+                      f"Hit@10={hit10} MRR={mrr} ann/q={ann_density}")
             except (json.JSONDecodeError, KeyError, IndexError):
                 print(f"  {name}: eval parse error")
         else:
@@ -259,7 +263,9 @@ def run_game(game: str, args: argparse.Namespace) -> None:
 
         # Spectral post-processing
         edg_path = f"data/graphs/{game}_merged_all.edg"
-        spectral_path = stage_spectral(game, emb_path, edg_path, args.dry_run)
+        spectral_path = None
+        if emb_path:
+            spectral_path = stage_spectral(game, emb_path, edg_path, args.dry_run)
 
         # Evaluate all variants
         eval_embs = []
