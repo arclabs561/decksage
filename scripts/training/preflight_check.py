@@ -13,6 +13,7 @@ Usage:
     uv run python scripts/training/preflight_check.py --game magic
     uv run python scripts/training/preflight_check.py  # all games
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,8 +31,8 @@ MIN_EDGE_FRACTION = {
     # Exception: oracle_text works best as small, high-precision signal (0.85 cosine).
     # Lowering threshold to get more edges degrades quality (tested 0.70-0.85).
     "oracle_text": 0.001,  # 0.1% -- small but high-precision is fine
-    "enriched": 0.001,     # 0.1%
-    "propagated": 0.001,   # 0.1%
+    "enriched": 0.001,  # 0.1%
+    "propagated": 0.001,  # 0.1%
 }
 
 MIN_EDGES_ABSOLUTE = {
@@ -111,7 +112,7 @@ def check_game(game: str) -> list[str]:
         total_eff = sum(effective.values())
         print(f"\n  Effective weight after export multipliers:")
         for src, ew in sorted(effective.items(), key=lambda x: -x[1]):
-            print(f"    {src:20s}: {ew:>12,.0f} ({ew/total_eff:6.2%})")
+            print(f"    {src:20s}: {ew:>12,.0f} ({ew / total_eff:6.2%})")
 
     # Check for noise cards in graph nodes (basic lands, energy)
     from ml.utils.constants import get_filter_set
@@ -129,23 +130,24 @@ def check_game(game: str) -> list[str]:
 
         if noise_nodes:
             print(f"\n  Noise cards in graph: {len(noise_nodes)}")
-            issues.append(
-                f"INFO: {game} has {len(noise_nodes)} noise card nodes (lands/energy)."
-            )
+            issues.append(f"INFO: {game} has {len(noise_nodes)} noise card nodes (lands/energy).")
 
     # Check deck JSONL availability
     deck_dir = PROJECT_ROOT / "data" / "decks"
     deck_files = list(deck_dir.glob(f"decks_{game}_*.jsonl"))
     total_decks = 0
-    for f in deck_files:
-        total_decks += sum(1 for _ in open(f))
+    for df in deck_files:
+        with open(df) as fh:
+            total_decks += sum(1 for _ in fh)
     print(f"\n  Deck sources: {len(deck_files)} files, {total_decks:,} decks")
 
     # Check test set exists and has queries
     test_set = PROJECT_ROOT / "data" / "test_sets" / f"annotated_{game}_v2.json"
     if test_set.exists():
         import json
-        data = json.load(open(test_set))
+
+        with open(test_set) as fh:
+            data = json.load(fh)
         n_queries = len(data.get("queries", {}))
         print(f"  Test set: {n_queries:,} queries")
     else:
@@ -153,9 +155,12 @@ def check_game(game: str) -> list[str]:
 
     # Check embedding vocab coverage
     emb_dir = PROJECT_ROOT / "data" / "embeddings"
-    latest_emb = sorted(emb_dir.glob(f"{game}_*_fused.wv")) + sorted(emb_dir.glob(f"{game}_*spectral*.wv"))
+    latest_emb = sorted(emb_dir.glob(f"{game}_*_fused.wv")) + sorted(
+        emb_dir.glob(f"{game}_*spectral*.wv")
+    )
     if latest_emb:
         from gensim.models import KeyedVectors
+
         kv = KeyedVectors.load(str(latest_emb[-1]))
         vocab_size = len(kv)
         coverage = vocab_size / total_nodes if total_nodes else 0

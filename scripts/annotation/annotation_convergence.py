@@ -37,6 +37,7 @@ Usage:
     # Multiple cycles
     uv run python scripts/annotation/annotation_convergence.py --game magic --budget 200 --cycles 3
 """
+
 from __future__ import annotations
 
 import argparse
@@ -172,8 +173,10 @@ def discover_candidates(
                     model = SentenceTransformer("all-MiniLM-L6-v2")
                     text_embs = model.encode(
                         [cards[c] for c in query_cards],
-                        batch_size=256, normalize_embeddings=True,
-                        show_progress_bar=False, convert_to_numpy=True,
+                        batch_size=256,
+                        normalize_embeddings=True,
+                        show_progress_bar=False,
+                        convert_to_numpy=True,
                     )
 
                 # For each query, find text-similar cards not yet annotated
@@ -185,7 +188,7 @@ def discover_candidates(
                     qi = name_to_idx[qname]
                     sims = text_embs[qi] @ text_embs.T
                     sims[qi] = -2  # exclude self
-                    top_idx = np.argsort(-sims)[:k * 2]
+                    top_idx = np.argsort(-sims)[: k * 2]
                     for j in top_idx:
                         card = text_names[j]
                         if (qname, card) not in annotated and (qname, card) not in candidates:
@@ -267,17 +270,25 @@ async def annotate_pairs(
     use_ollama = model_name.startswith("ollama/")
     ollama_model = model_name.removeprefix("ollama/") if use_ollama else None
 
+    # Groq: fast cloud inference (developer tier: 500K RPM)
+    use_groq = model_name.startswith("groq/")
+    groq_model = model_name.removeprefix("groq/") if use_groq else None
+    groq_key = os.environ.get("GROQ_API_KEY", "")
+
     # Local OpenAI-compatible server (mlx-lm serve, DMR, vLLM, SGLang)
     # Detected via LOCAL_LLM_URL env var or local:// model prefix
     use_local = model_name.startswith("local/")
     local_url = os.environ.get("LOCAL_LLM_URL", "http://localhost:8085/v1")
     local_model_name = model_name.removeprefix("local/") if use_local else None
-    if not use_local and os.environ.get("LOCAL_LLM_URL"):
+    if not use_local and not use_groq and os.environ.get("LOCAL_LLM_URL"):
         # LOCAL_LLM_URL set but no local/ prefix -- auto-detect
         use_local = True
         local_model_name = model_name
 
-    if use_ollama:
+    if use_groq:
+        logger.info(f"  Using Groq: {groq_model} (fast cloud, ~$0.024/1000 pairs)")
+        agent = None
+    elif use_ollama:
         logger.info(f"  Using ollama: {ollama_model} (FREE, local)")
         agent = None
     elif use_local:
@@ -292,15 +303,56 @@ async def annotate_pairs(
         )
 
     local_concurrency = int(os.environ.get("LOCAL_LLM_CONCURRENCY", "4"))
-    if use_ollama:
+    if use_groq:
+        effective_concurrency = min(max_concurrent, 50)  # Groq handles 50+ easily
+    elif use_ollama:
         effective_concurrency = int(os.environ.get("OLLAMA_NUM_PARALLEL", "1"))
     elif use_local:
         effective_concurrency = local_concurrency
     else:
         effective_concurrency = max_concurrent
 
+    # Cost estimation
+    est_tokens = len(pairs) * 400  # ~300 input + 100 output per pair
+    cost_estimates = {
+        "groq/llama-3.1-8b-instant": est_tokens * 0.065 / 1_000_000,  # $0.05 in + $0.08 out avg
+        "groq/llama-3.3-70b-versatile": est_tokens * 0.69 / 1_000_000,
+        "openrouter": est_tokens * 1.0 / 1_000_000,  # varies by model
+        "local": 0.0,
+    }
+    if use_groq:
+        est_cost = cost_estimates.get(f"groq/{groq_model}", est_tokens * 0.1 / 1_000_000)
+        logger.info(
+            f"  Estimated cost: ${est_cost:.4f} for {len(pairs)} pairs (~{est_tokens} tokens)"
+        )
+    elif use_ollama or use_local:
+        logger.info(f"  Estimated cost: $0.00 (local inference)")
+    else:
+        est_cost = est_tokens * 1.0 / 1_000_000  # rough OpenRouter average
+        logger.info(f"  Estimated cost: ~${est_cost:.4f} for {len(pairs)} pairs (varies by model)")
+
     results = []
     semaphore = asyncio.Semaphore(effective_concurrency)
+
+    async def _call_groq(messages: list[dict], model: str, api_key: str) -> dict | None:
+        """Call Groq API (fast cloud inference)."""
+        session = requests.Session()
+        resp = await asyncio.to_thread(
+            session.post,
+            "https://api.groq.com/openai/v1/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 500,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        return _parse_json_response(content)
 
     async def _call_local_openai(messages: list[dict], url: str, model: str) -> dict | None:
         """Call any OpenAI-compatible local server (mlx-lm, DMR, vLLM, SGLang)."""
@@ -361,7 +413,33 @@ async def annotate_pairs(
                 q_ctx = card_context.get(query, query)
                 c_ctx = card_context.get(candidate, candidate)
 
-                prompt = f"""Rate these {game.upper()} cards (0.0-1.0):
+                # Richer prompt for smaller/faster models; compact for frontier
+                if use_groq or use_ollama or use_local:
+                    prompt = f"""Rate these {game.upper()} cards on similarity (0.0-1.0).
+
+Card A: {q_ctx}
+
+Card B: {c_ctx}
+
+SCORING SCALE:
+- 0.0-0.10: Unrelated. Different functions, different archetypes.
+- 0.11-0.25: Tangential. Same broad category but different targets/timing/cost.
+- 0.26-0.50: Moderate. Same function AND similar cost, or strong co-occurrence.
+- 0.51-0.75: Strong similarity. Competitive alternatives, similar efficiency.
+- 0.76-0.90: Near-substitute. Functionally interchangeable, minor differences.
+- 0.91-1.0: Functional reprint or strictly-better/worse pair.
+
+CALIBRATION: Lightning Bolt vs Shock = 0.70. Path to Exile vs Swords = 0.80. Sol Ring vs Wrath of God = 0.05. Most random pairs = 0.05-0.15.
+
+Respond ONLY with JSON:
+{{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}
+
+- similarity_score: overall similarity
+- functional_score: how well one replaces the other
+- synergy_score: how well they work together in a deck
+- meta_relevance: co-occurrence in competitive decks"""
+                else:
+                    prompt = f"""Rate these {game.upper()} cards (0.0-1.0):
 
 A: {q_ctx}
 
@@ -371,17 +449,26 @@ Anchors: 1.0=reprint, 0.8=same role, 0.6=similar function, 0.4=same archetype, 0
 Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}"""
 
                 messages = [
-                    {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
+                    {
+                        "role": "system",
+                        "content": "You are a card game expert. Respond with JSON only.",
+                    },
                     {"role": "user", "content": prompt},
                 ]
 
-                if use_ollama:
+                if use_groq:
+                    ann = await _call_groq(messages, groq_model, groq_key)
+                elif use_ollama:
                     ann = await _call_ollama(messages, ollama_model)
                 elif use_local:
                     ann = await _call_local_openai(messages, local_url, local_model_name)
                 else:
                     result = await agent.run(prompt)
-                    ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
+                    ann = (
+                        result.output.model_dump()
+                        if hasattr(result.output, "model_dump")
+                        else dict(result.output)
+                    )
 
                 if ann is None:
                     logger.warning(f"No JSON parsed for {query} vs {candidate}")
@@ -394,7 +481,9 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                 ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                 return ann
             except Exception as e:
-                logger.error(f"Annotation failed for {query} vs {candidate}: {type(e).__name__}: {e}")
+                logger.error(
+                    f"Annotation failed for {query} vs {candidate}: {type(e).__name__}: {e}"
+                )
             return None
 
     tasks = [annotate_one(q, c, src) for q, c, src in pairs]
@@ -444,17 +533,18 @@ def merge_annotations(
         qdata = queries[query]
 
         # Check for duplicate (same query+candidate pair)
-        existing_candidates = {
-            a.get("candidate", "") for a in qdata.get("annotations", [])
-        }
+        existing_candidates = {a.get("candidate", "") for a in qdata.get("annotations", [])}
         if candidate in existing_candidates:
             # Average with existing annotation
             for existing_ann in qdata["annotations"]:
                 if existing_ann.get("candidate") == candidate:
                     n = existing_ann.get("n_annotators", 1)
                     for field in [
-                        "similarity_score", "functional_score", "synergy_score",
-                        "meta_relevance", "substitutability",
+                        "similarity_score",
+                        "functional_score",
+                        "synergy_score",
+                        "meta_relevance",
+                        "substitutability",
                     ]:
                         old_val = existing_ann.get(field)
                         new_val = ann.get(field)
@@ -483,9 +573,16 @@ def merge_annotations(
 
         # Copy extended fields if present
         for field in [
-            "reasoning", "is_substitute", "combo_potential", "same_archetype",
-            "upgrade_direction", "card_a_role", "card_b_role",
-            "card_a_power_level", "card_b_power_level", "relationship_types",
+            "reasoning",
+            "is_substitute",
+            "combo_potential",
+            "same_archetype",
+            "upgrade_direction",
+            "card_a_role",
+            "card_b_role",
+            "card_a_power_level",
+            "card_b_power_level",
+            "relationship_types",
         ]:
             if field in ann:
                 merged_ann[field] = ann[field]
@@ -573,23 +670,25 @@ def load_card_context(game: str) -> dict[str, str]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Annotation-eval convergence loop"
-    )
+    parser = argparse.ArgumentParser(description="Annotation-eval convergence loop")
     parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
-    parser.add_argument("--budget", type=int, default=200,
-                        help="Max new pairs to annotate per cycle")
-    parser.add_argument("--cycles", type=int, default=1,
-                        help="Number of discover-annotate-eval cycles")
-    parser.add_argument("--embeddings", default="",
-                        help="Comma-separated embedding names for candidate discovery")
-    parser.add_argument("--dry-run", action="store_true",
-                        help="Show what would be annotated without calling LLM")
+    parser.add_argument(
+        "--budget", type=int, default=200, help="Max new pairs to annotate per cycle"
+    )
+    parser.add_argument(
+        "--cycles", type=int, default=1, help="Number of discover-annotate-eval cycles"
+    )
+    parser.add_argument(
+        "--embeddings", default="", help="Comma-separated embedding names for candidate discovery"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would be annotated without calling LLM"
+    )
     parser.add_argument("--k", type=int, default=10, help="Top-K neighbors per query")
-    parser.add_argument("--model", default="",
-                        help="LLM model for annotation (default: cheapest from env or haiku)")
-    parser.add_argument("--concurrency", type=int, default=20,
-                        help="Max concurrent LLM calls")
+    parser.add_argument(
+        "--model", default="", help="LLM model for annotation (default: cheapest from env or haiku)"
+    )
+    parser.add_argument("--concurrency", type=int, default=20, help="Max concurrent LLM calls")
     args = parser.parse_args()
 
     logging.basicConfig(level=logging.INFO, format="%(message)s")
@@ -600,7 +699,7 @@ def main() -> int:
     else:
         embedding_names = [
             f"{args.game}_v7_spectral_mu3",  # current best
-            f"{args.game}_v7_fused",          # deployed (different ranking)
+            f"{args.game}_v7_fused",  # deployed (different ranking)
         ]
 
     for cycle in range(1, args.cycles + 1):
@@ -613,13 +712,19 @@ def main() -> int:
         queries = test_set.get("queries", {})
         annotated = get_annotated_pairs(queries)
         total_annotations = sum(len(q.get("annotations", [])) for q in queries.values())
-        print(f"  Current: {len(queries)} queries, {total_annotations} annotations, "
-              f"{len(annotated)} unique pairs")
+        print(
+            f"  Current: {len(queries)} queries, {total_annotations} annotations, "
+            f"{len(annotated)} unique pairs"
+        )
 
         # Step 1: Discover unannotated candidates
         print(f"\n  [1/4] Discovering unannotated candidates (budget={args.budget})...")
         candidates = discover_candidates(
-            args.game, queries, embedding_names, budget=args.budget, k=args.k,
+            args.game,
+            queries,
+            embedding_names,
+            budget=args.budget,
+            k=args.k,
         )
 
         if not candidates:
@@ -641,8 +746,13 @@ def main() -> int:
         print(f"\n  [2/4] Annotating {len(candidates)} pairs...")
         card_context = load_card_context(args.game)
         new_annotations = asyncio.run(
-            annotate_pairs(candidates, args.game, card_context, args.concurrency,
-                          model_override=args.model or None)
+            annotate_pairs(
+                candidates,
+                args.game,
+                card_context,
+                args.concurrency,
+                model_override=args.model or None,
+            )
         )
         print(f"  Got {len(new_annotations)} annotations")
 
@@ -663,15 +773,21 @@ def main() -> int:
         # Step 4: Evaluate
         print(f"\n  [4/4] Evaluating on enriched test set...")
         import subprocess
+
         for emb_name in embedding_names:
             result = subprocess.run(
                 [
-                    sys.executable, str(PROJECT_ROOT / "scripts/evaluation/eval_per_mode.py"),
-                    "--game", args.game,
-                    "--embedding", emb_name,
-                    "--quick", "--json",
+                    sys.executable,
+                    str(PROJECT_ROOT / "scripts/evaluation/eval_per_mode.py"),
+                    "--game",
+                    args.game,
+                    "--embedding",
+                    emb_name,
+                    "--quick",
+                    "--json",
                 ],
-                capture_output=True, cwd=str(PROJECT_ROOT),
+                capture_output=True,
+                cwd=str(PROJECT_ROOT),
             )
             if result.returncode == 0:
                 try:
