@@ -83,6 +83,9 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 - **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG is systematically biased downward at <1% annotation density -- it measures annotation coverage, not ranking quality. Report condensed nDCG alongside standard nDCG. Our condensed sub nDCG = 0.62-0.67 (vs standard 0.12-0.15).
 - **Prioritize eval-time hole filling** (`fill_eval_holes.py`) over random pair annotation. Filling top-K holes has 5-10x the nDCG impact per annotation dollar (2000 holes: +23% nDCG for $0.80).
 - **Use `--model multi`** (multi_model_annotate.py cascade) as default annotation backend. Groq 70B + Cerebras 235B at $0.40/1000 pairs. Ollama only as offline fallback (54% zero scores with llama3.2). OpenRouter budget-limited.
+- **Annotation provenance is mandatory**: every annotation must include `_provenance` dict (backend, model, prompt_version, temperature). The merge step must preserve `_provenance` -- verify with `repair_annotations.py audit`. Annotations without provenance are untrustworthy.
+- **Never use 8B models for calibrated scoring** (corr=-0.076 vs IAA ground truth). Minimum viable: 70B. Enriched prompt with calibration anchors is mandatory for models < frontier.
+- **Background batch race condition**: do not start annotation batches while test set cleanup is pending. Batches started before cleanup overwrite cleaned files. Always commit cleanup before launching new batches.
 - Contextual recall: measure at both embedding level (eval_per_mode.py offline) and API level (eval_contextual.py). They differ significantly.
 
 ### True Baselines (post-dedup, 2026-03-23)
