@@ -7,6 +7,7 @@
 #     "pydantic>=2.0",
 #     "pydantic-ai>=0.1.0",
 #     "python-dotenv>=1.0.0",
+#     "requests>=2.28.0",
 #     "sentence-transformers>=2.2.0",
 # ]
 # ///
@@ -43,10 +44,13 @@ import asyncio
 import json
 import logging
 import os
+import re
 import sys
 import time
 from collections import Counter, defaultdict
 from pathlib import Path
+
+import requests
 
 import numpy as np
 from dotenv import load_dotenv
@@ -264,7 +268,6 @@ async def annotate_pairs(
     ollama_model = model_name.removeprefix("ollama/") if use_ollama else None
 
     if use_ollama:
-        import requests
         logger.info(f"  Using ollama: {ollama_model} (FREE, local)")
         agent = None  # not used for ollama
     else:
@@ -295,8 +298,11 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
 
                 if use_ollama:
                     # Local ollama call (free)
+                    # Bypass proxy for local ollama
+                    session = requests.Session()
+                    session.trust_env = False
                     resp = await asyncio.to_thread(
-                        requests.post,
+                        session.post,
                         "http://localhost:11434/api/chat",
                         json={
                             "model": ollama_model,
@@ -310,13 +316,22 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     )
                     content = resp.json()["message"]["content"]
                     # Parse JSON from response
-                    import re
-                    json_match = re.search(r'\{[^}]+\}', content)
-                    if json_match:
-                        ann = json.loads(json_match.group())
-                    else:
-                        logger.warning(f"No JSON in ollama response for {query} vs {candidate}")
-                        return None
+                    # Parse JSON from response (handle nested braces, markdown code blocks)
+                    content = content.strip()
+                    if content.startswith("```"):
+                        content = content.split("```")[1].lstrip("json\n")
+                    # Try direct parse first, then regex fallback
+                    try:
+                        ann = json.loads(content)
+                    except json.JSONDecodeError:
+                        # Find first { ... } block
+                        start = content.find("{")
+                        end = content.rfind("}") + 1
+                        if start >= 0 and end > start:
+                            ann = json.loads(content[start:end])
+                        else:
+                            logger.warning(f"No JSON in ollama response for {query} vs {candidate}: {content[:100]}")
+                            return None
                 else:
                     result = await agent.run(prompt)
                     ann = result.output.model_dump() if hasattr(result.output, "model_dump") else dict(result.output)
