@@ -45,16 +45,15 @@ import asyncio
 import json
 import logging
 import os
-import re
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import Counter
 from pathlib import Path
 
-import requests
-
 import numpy as np
+import requests
 from dotenv import load_dotenv
+
 
 load_dotenv()
 
@@ -138,8 +137,9 @@ def discover_candidates(
     text_budget = int(budget * text_fraction)
     if text_budget > 0:
         try:
-            from sentence_transformers import SentenceTransformer
             import csv
+
+            from sentence_transformers import SentenceTransformer
 
             # Load card texts
             game_attrs = {
@@ -336,7 +336,7 @@ async def annotate_pairs(
             f"  Estimated cost: ${est_cost:.4f} for {len(pairs)} pairs (~{est_tokens} tokens)"
         )
     elif use_ollama or use_local:
-        logger.info(f"  Estimated cost: $0.00 (local inference)")
+        logger.info("  Estimated cost: $0.00 (local inference)")
     else:
         est_cost = est_tokens * 1.0 / 1_000_000  # rough OpenRouter average
         logger.info(f"  Estimated cost: ~${est_cost:.4f} for {len(pairs)} pairs (varies by model)")
@@ -345,7 +345,10 @@ async def annotate_pairs(
     semaphore = asyncio.Semaphore(effective_concurrency)
 
     async def _call_openai_compatible(
-        messages: list[dict], model: str, api_key: str, base_url: str,
+        messages: list[dict],
+        model: str,
+        api_key: str,
+        base_url: str,
     ) -> dict | None:
         """Call any OpenAI-compatible cloud API (Groq, Cerebras, etc.)."""
         session = requests.Session()
@@ -492,7 +495,9 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     ann = await _call_groq(messages, groq_model, groq_key)
                 elif use_cerebras:
                     ann = await _call_openai_compatible(
-                        messages, cerebras_model, cerebras_key,
+                        messages,
+                        cerebras_model,
+                        cerebras_key,
                         "https://api.cerebras.ai/v1",
                     )
                 elif use_ollama:
@@ -517,12 +522,22 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                 ann["model_name"] = model_name
                 ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
                 # Provenance metadata
-                backend = "groq" if use_groq else "ollama" if use_ollama else "local" if use_local else "openrouter"
+                backend = (
+                    "groq"
+                    if use_groq
+                    else "ollama"
+                    if use_ollama
+                    else "local"
+                    if use_local
+                    else "openrouter"
+                )
                 ann["_provenance"] = {
                     "backend": backend,
                     "model": model_name,
                     "temperature": 0.3,
-                    "prompt_version": "enriched_v1" if (use_groq or use_ollama or use_local) else "compact_v1",
+                    "prompt_version": "enriched_v1"
+                    if (use_groq or use_ollama or use_local)
+                    else "compact_v1",
                     "concurrency": effective_concurrency,
                     "game": game,
                     "has_card_context": bool(card_context.get(query)),
@@ -810,7 +825,7 @@ def main() -> int:
             continue
 
         # Step 3: Merge
-        print(f"\n  [3/4] Merging into test set...")
+        print("\n  [3/4] Merging into test set...")
         test_set, added, deduped = merge_annotations(test_set, new_annotations)
         print(f"  Added {added} new, averaged {deduped} duplicates")
 
@@ -820,7 +835,7 @@ def main() -> int:
         print(f"  Saved to {out_path} ({new_total} total annotations)")
 
         # Step 4: Evaluate
-        print(f"\n  [4/4] Evaluating on enriched test set...")
+        print("\n  [4/4] Evaluating on enriched test set...")
         import subprocess
 
         for emb_name in embedding_names:
