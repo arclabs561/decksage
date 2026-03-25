@@ -90,11 +90,12 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 
 ### True Baselines (post-dedup, 2026-03-23)
 
-Best embeddings per game (canonical eval_per_mode.py, post hole-fill, 2026-03-25):
-- Magic: **v7_spectral_mu35 sub nDCG 0.154, condensed 0.620** (spectral mu=0.35)
-- Pokemon: **v7_fused sub nDCG 0.090** (spectral hurts small graphs)
-- YuGiOh: **v7_spectral_mu3 sub nDCG 0.159, condensed 0.636**
-- Total annotations: Magic 16K, Pokemon 9K, YuGiOh 8K (~33K total)
+Best embeddings per game (canonical eval_per_mode.py, post hole-fill round 1, 2026-03-25):
+- Magic: **v7_spectral_mu35 sub nDCG 0.233, condensed 0.561** (spectral mu=0.35)
+- Pokemon: **v7_fused sub nDCG 0.190, condensed 0.527** (spectral hurts small graphs)
+- YuGiOh: **v7_spectral_mu3 sub nDCG 0.240, condensed 0.627**
+- Total annotations: Magic 20K, Pokemon 13K, YuGiOh 13K (~47K total)
+- nDCG increase from annotation hole-filling, not embedding changes (exp 0058)
 - All nDCG numbers before 2026-03-22 were inflated by test set duplication.
 
 ---
