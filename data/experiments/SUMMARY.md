@@ -47,6 +47,11 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [0039](0039_metapath2vec_160epochs.yaml) |
 | 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:pending | [0041](0041_epoch_sweep_leak_fix.yaml) |
 | 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [0042](0042_cleora_iteration_sweep.yaml) |
+| 0043 | 2026-03-21 | Cone containment (cones > boxes) | magic | 116 train triples, 282 cards | AUC | 0.700 (vs box 0.500) | [0043](0043_cone_containment.yaml) |
+| 0044 | 2026-03-21 | Cone + transitive closure | all | 145-344 upgrade pairs + TC | AUC | M:0.762 P:0.547 Y:0.649 | [0044](0044_cone_transitive_closure.yaml) |
+| 0045 | 2026-03-21 | Cone + TC + hard negatives | all | 146-398 pairs + hard negs | AUC | M:0.857 P:0.603 Y:0.553 | [0045](0045_cone_tc_hardneg.yaml) |
+| 0046 | 2026-03-22 | MetaPath2Vec selective (deck+enriched+keyword) | all | 331K+1.46M+83K edges (Magic) | sub nDCG | pending | [0046](0046_metapath2vec_selective.yaml) |
+| 0047 | 2026-03-22 | v6 blended: PecanPy + oracle text edges | all | merged + oracle_text + game edges | sub nDCG | pending | [0047](0047_v6_blended_oracle_text.yaml) |
 | 0048 | 2026-03-21 | MetaPath2Vec v2: 8 edge types | magic | 35K cards, 12M edges (8 types) | sub nDCG | 0.114 INFLATED (Commander dilutes signal, regressed from 0.228) | [0048](0048_metapath2vec_v2_expanded_edges.yaml) |
 | 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [0049](0049_card_containment.yaml) |
 | 0050 | 2026-03-22 | Expanded Commander Cleora (51K decks) | magic | 25.2M Commander edges | sub nDCG | 0.100 (unchanged from 18K decks, Commander != cross-format sub) | [0050](0050_expanded_commander_cleora.yaml) |
@@ -54,6 +59,8 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | **All prior nDCG inflated 50-101%**. True: M:0.069 P:0.058 Y:0.153 | [0052](0052_dedup_correction.yaml) |
 | 0053 | 2026-03-23 | **Training variance ablation** (key) | magic | v7 vs v8 edgelist, 3 seeds each | sub nDCG | v7 mean 0.094 (std 0.001), v8 mean 0.090. Deployed v7 (0.102) was 2.5-sigma outlier | [0053](0053_training_variance_ablation.yaml) |
 | 0054 | 2026-03-23 | **HGT mini-batch on A10G** (key) | magic | 12M edges, 36K nodes, 6 edge types | sub nDCG | 0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving) | [0054](0054_hgt_mini_batch.yaml) |
+| 0055 | 2026-03-24 | HGT contrastive (InfoNCE) on A10G | magic | same as 0054 | sub nDCG | 0.002 raw, 0.012 fused (worse than link pred 0.014; loss plateaued epoch 20) | [0055](0055_hgt_contrastive.yaml) |
+| 0056 | 2026-03-24 | Residual PPMI (SVD) + degree debiasing | magic | v7 edgelist | sub nDCG | PPMI 0.084, v7_debiased 0.103, spectral_debiased 0.107, spectral 0.107 | [0056](0056_residual_ppmi_and_debiasing.yaml) |
 
 ## Key Insights (cross-cutting)
 
