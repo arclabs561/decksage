@@ -55,9 +55,8 @@ import requests
 from dotenv import load_dotenv
 
 
-load_dotenv()
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)  # explicit project .env, not parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -267,6 +266,9 @@ async def annotate_pairs(
         else:
             model_name = "anthropic/claude-haiku-4-5-20251001"
 
+    # Multi-model cascade (Groq 70B + Cerebras 235B, calibrated)
+    use_multi = model_name == "multi"
+
     use_ollama = model_name.startswith("ollama/")
     ollama_model = model_name.removeprefix("ollama/") if use_ollama else None
 
@@ -290,7 +292,12 @@ async def annotate_pairs(
         use_local = True
         local_model_name = model_name
 
-    if use_groq:
+    if use_multi:
+        logger.info(
+            "  Using multi-model cascade: Groq 70B + Cerebras 235B (calibrated, ~$0.28/1000 pairs)"
+        )
+        agent = None
+    elif use_groq:
         logger.info(f"  Using Groq: {groq_model} (fast cloud, ~$0.024/1000 pairs)")
         agent = None
     elif use_cerebras:
@@ -311,7 +318,9 @@ async def annotate_pairs(
         )
 
     local_concurrency = int(os.environ.get("LOCAL_LLM_CONCURRENCY", "4"))
-    if use_groq:
+    if use_multi:
+        effective_concurrency = min(max_concurrent, 10)  # multi-model: 4 API calls per pair
+    elif use_groq:
         effective_concurrency = min(max_concurrent, 50)  # Groq handles 50+ easily
     elif use_cerebras:
         effective_concurrency = min(max_concurrent, 30)  # Cerebras: 30 RPM free tier
@@ -491,7 +500,23 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     {"role": "user", "content": prompt},
                 ]
 
-                if use_groq:
+                if use_multi:
+                    from multi_model_annotate import annotate_pair
+
+                    result = await annotate_pair(query, candidate, q_ctx, c_ctx, game)
+                    ann = {
+                        dim: result.get(dim, 0)
+                        for dim in [
+                            "similarity_score",
+                            "functional_score",
+                            "synergy_score",
+                            "meta_relevance",
+                        ]
+                    }
+                    ann["_provenance"] = result.get("_provenance", {})
+                    ann["confidence"] = result.get("confidence", 0)
+                    ann["tier_used"] = result.get("tier_used", "unknown")
+                elif use_groq:
                     ann = await _call_groq(messages, groq_model, groq_key)
                 elif use_cerebras:
                     ann = await _call_openai_compatible(
@@ -521,28 +546,31 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                 ann["discovery_source"] = source
                 ann["model_name"] = model_name
                 ann["timestamp"] = time.strftime("%Y-%m-%dT%H:%M:%S+00:00")
-                # Provenance metadata
-                backend = (
-                    "groq"
-                    if use_groq
-                    else "ollama"
-                    if use_ollama
-                    else "local"
-                    if use_local
-                    else "openrouter"
-                )
-                ann["_provenance"] = {
-                    "backend": backend,
-                    "model": model_name,
-                    "temperature": 0.3,
-                    "prompt_version": "enriched_v1"
-                    if (use_groq or use_ollama or use_local)
-                    else "compact_v1",
-                    "concurrency": effective_concurrency,
-                    "game": game,
-                    "has_card_context": bool(card_context.get(query)),
-                    "script": "annotation_convergence.py",
-                }
+                # Provenance metadata (multi-model sets its own)
+                if "_provenance" not in ann:
+                    backend = (
+                        "groq"
+                        if use_groq
+                        else "cerebras"
+                        if use_cerebras
+                        else "ollama"
+                        if use_ollama
+                        else "local"
+                        if use_local
+                        else "openrouter"
+                    )
+                    ann["_provenance"] = {
+                        "backend": backend,
+                        "model": model_name,
+                        "temperature": 0.3,
+                        "prompt_version": "enriched_v1"
+                        if (use_groq or use_cerebras or use_ollama or use_local)
+                        else "compact_v1",
+                        "concurrency": effective_concurrency,
+                        "game": game,
+                        "has_card_context": bool(card_context.get(query)),
+                        "script": "annotation_convergence.py",
+                    }
                 return ann
             except Exception as e:
                 logger.error(
@@ -647,6 +675,8 @@ def merge_annotations(
             "card_a_power_level",
             "card_b_power_level",
             "relationship_types",
+            "_provenance",
+            "tier_used",
         ]:
             if field in ann:
                 merged_ann[field] = ann[field]

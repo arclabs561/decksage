@@ -29,6 +29,7 @@ Usage:
     # QC check on existing annotations
     uv run scripts/annotation/multi_model_annotate.py qc --game magic
 """
+
 from __future__ import annotations
 
 import argparse
@@ -45,9 +46,9 @@ import numpy as np
 import requests
 from dotenv import load_dotenv
 
-load_dotenv()
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+load_dotenv(PROJECT_ROOT / ".env", override=True)  # explicit project .env, not parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 DATA_DIR = PROJECT_ROOT / "data"
 CALIBRATION_DIR = DATA_DIR / "calibration"
@@ -163,7 +164,10 @@ async def call_model(
             json={
                 "model": model_cfg["model"],
                 "messages": [
-                    {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
+                    {
+                        "role": "system",
+                        "content": "You are a card game expert. Respond with JSON only.",
+                    },
                     {"role": "user", "content": prompt},
                 ],
                 "temperature": temperature,
@@ -276,7 +280,9 @@ async def tier2_annotate(
     if not TIER2_MODELS:
         return None
     model_cfg = TIER2_MODELS[0]
-    return await call_model(model_cfg, card_a, card_b, card_a_ctx, card_b_ctx, game, temperature=0.3)
+    return await call_model(
+        model_cfg, card_a, card_b, card_a_ctx, card_b_ctx, game, temperature=0.3
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -357,14 +363,14 @@ def run_calibration(game: str, n_pairs: int = 100):
 
     labels = iaa_data.get("labels", [])
     # Filter to high-agreement pairs
-    high_agreement = [l for l in labels if l.get("agreement_level") == "high"]
+    high_agreement = [lab for lab in labels if lab.get("agreement_level") == "high"]
     print(f"High-agreement pairs: {len(high_agreement)} / {len(labels)}")
 
     # Sample across score range for calibration
     # Sort by consensus similarity score
-    for l in high_agreement:
-        consensus = l.get("consensus", {})
-        l["_consensus_sim"] = float(consensus.get("similarity_score", 0))
+    for item in high_agreement:
+        consensus = item.get("consensus", {})
+        item["_consensus_sim"] = float(consensus.get("similarity_score", 0))
 
     high_agreement.sort(key=lambda x: x["_consensus_sim"])
 
@@ -385,7 +391,7 @@ def run_calibration(game: str, n_pairs: int = 100):
     card_context = load_card_context(game)
 
     # Run Tier 1 on calibration set
-    print(f"\nRunning Tier 1 on calibration set...")
+    print("\nRunning Tier 1 on calibration set...")
     t1_results = []
 
     async def run_all():
@@ -403,7 +409,7 @@ def run_calibration(game: str, n_pairs: int = 100):
                 result["_card_b"] = card_b
                 return result
 
-        return await asyncio.gather(*[one(l) for l in calibration_set])
+        return await asyncio.gather(*[one(item) for item in calibration_set])
 
     t1_results = asyncio.run(run_all())
     valid = [r for r in t1_results if r["n_samples"] > 0]
@@ -428,17 +434,17 @@ def run_calibration(game: str, n_pairs: int = 100):
     mae_after = np.mean(np.abs(calibrated - truth_arr))
     corr_before = np.corrcoef(pred_arr, truth_arr)[0, 1] if len(pred_arr) > 2 else 0
 
-    print(f"\nCalibration results:")
+    print("\nCalibration results:")
     print(f"  MAE before: {mae_before:.4f}")
     print(f"  MAE after:  {mae_after:.4f}")
     print(f"  Correlation: {corr_before:.4f}")
 
     # Escalation analysis
     escalated = sum(1 for r in valid if r["needs_escalation"])
-    print(f"\n  Escalation rate: {escalated}/{len(valid)} ({escalated/len(valid)*100:.0f}%)")
+    print(f"\n  Escalation rate: {escalated}/{len(valid)} ({escalated / len(valid) * 100:.0f}%)")
 
     # Per-model breakdown
-    print(f"\n  Per-model scores on calibration set:")
+    print("\n  Per-model scores on calibration set:")
     model_scores = {}
     for r in valid:
         for breakdown in r.get("model_breakdown", []):
@@ -448,8 +454,8 @@ def run_calibration(game: str, n_pairs: int = 100):
                 model_scores.setdefault(model, []).append(sim)
 
     for model, scores in sorted(model_scores.items()):
-        pred = np.array(scores[:len(truth)])
-        gt = truth_arr[:len(pred)]
+        pred = np.array(scores[: len(truth)])
+        gt = truth_arr[: len(pred)]
         if len(pred) == len(gt) and len(pred) > 2:
             corr = np.corrcoef(pred, gt)[0, 1]
             mae = np.mean(np.abs(pred - gt))
@@ -505,17 +511,17 @@ def run_qc(game: str):
         std_s = statistics.stdev(sim_scores) if len(sim_scores) > 1 else 0
         zero_frac = sum(1 for s in sim_scores if s == 0.0) / len(sim_scores)
         print(f"\n  {model} (n={len(sim_scores)})")
-        print(f"    sim: mean={mean_s:.3f} std={std_s:.3f} zero%={zero_frac*100:.0f}%")
+        print(f"    sim: mean={mean_s:.3f} std={std_s:.3f} zero%={zero_frac * 100:.0f}%")
 
         # Flag issues
         if std_s < 0.05:
-            print(f"    WARNING: score compression (std < 0.05)")
+            print("    WARNING: score compression (std < 0.05)")
         if zero_frac > 0.5:
-            print(f"    WARNING: >50% zero scores -- prompt issue or model failure")
+            print("    WARNING: >50% zero scores -- prompt issue or model failure")
         if mean_s > 0.6:
-            print(f"    WARNING: high mean score (>0.6) -- possible inflation")
+            print("    WARNING: high mean score (>0.6) -- possible inflation")
         if mean_s < 0.1:
-            print(f"    WARNING: very low mean score (<0.1) -- possible deflation")
+            print("    WARNING: very low mean score (<0.1) -- possible deflation")
 
 
 # ---------------------------------------------------------------------------
