@@ -621,6 +621,89 @@ def eval_game(
                 "n_queries": len(search_mrr),
             }
 
+    # --- Practical metrics (always computed, use neighbor_cache) ---
+
+    # Hit@K: does any relevant (GT > 0.5) card appear in top-K?
+    # More interpretable than nDCG for sparse annotations.
+    hit_at_k: dict[int, dict[str, int]] = {k_val: {"hits": 0, "total": 0} for k_val in [10, 20, 50]}
+    # MRR of relevant cards: mean reciprocal rank of cards with GT > 0.5
+    mrr_scores: list[float] = []
+    # Annotation density diagnostics
+    ann_per_query: list[int] = []
+    hits_in_top10: list[int] = []
+
+    normed_vecs = wv.get_normed_vectors()
+    idx_to_key = wv.index_to_key
+
+    for qname, qdata in queries.items():
+        anns = qdata.get("annotations", [])
+        if not anns or qname not in wv.key_to_index:
+            continue
+        gt_relevant = {}  # cards with GT > 0.5
+        gt_any = {}  # all annotated cards
+        for ann in anns:
+            c = ann.get("candidate", "")
+            s = ann.get("similarity_score")
+            if s is not None and c and c in wv.key_to_index:
+                gt_any[c] = float(s)
+                if float(s) > 0.5:
+                    gt_relevant[c] = float(s)
+        if not gt_any:
+            continue
+
+        ann_per_query.append(len(gt_any))
+
+        # Full ranking for MRR (use precomputed normed vectors)
+        qi = wv.key_to_index[qname]
+        sims = normed_vecs[qi] @ normed_vecs.T
+        sims[qi] = -2.0
+
+        # Hit@K
+        for k_val in [10, 20, 50]:
+            if gt_relevant:
+                hit_at_k[k_val]["total"] += 1
+                topK_idx = np.argpartition(sims, -k_val)[-k_val:]
+                topK_names = {idx_to_key[j] for j in topK_idx}
+                if any(c in topK_names for c in gt_relevant):
+                    hit_at_k[k_val]["hits"] += 1
+
+        # MRR (only for queries with relevant cards)
+        if gt_relevant:
+            ranking = np.argsort(-sims)
+            best_rr = 0.0
+            for c in gt_relevant:
+                ci = wv.key_to_index[c]
+                rank = int(np.where(ranking == ci)[0][0]) + 1
+                best_rr = max(best_rr, 1.0 / rank)
+            mrr_scores.append(best_rr)
+
+        # Hits in top-10 (annotation density diagnostic)
+        if qname in neighbor_cache:
+            top10_names = {c for c, _ in neighbor_cache[qname][:10]}
+            hits_in_top10.append(sum(1 for c in gt_any if c in top10_names))
+
+    results["hit_at_k"] = {
+        str(k_val): {
+            "rate": round(d["hits"] / max(d["total"], 1), 4),
+            "hits": d["hits"],
+            "total": d["total"],
+        }
+        for k_val, d in hit_at_k.items()
+    }
+    results["mrr_relevant"] = {
+        "mrr": round(float(np.mean(mrr_scores)), 4) if mrr_scores else 0.0,
+        "mean_rank": round(1.0 / np.mean(mrr_scores), 1) if mrr_scores and np.mean(mrr_scores) > 0 else 0,
+        "n_queries": len(mrr_scores),
+    }
+    results["annotation_density"] = {
+        "mean_annotated_per_query": round(float(np.mean(ann_per_query)), 1) if ann_per_query else 0,
+        "median_annotated_per_query": int(np.median(ann_per_query)) if ann_per_query else 0,
+        "mean_hits_in_top10": round(float(np.mean(hits_in_top10)), 2) if hits_in_top10 else 0,
+        "embedding_is_Nx_better_than_random": round(
+            np.mean(hits_in_top10) / max(10 * np.mean(ann_per_query) / len(wv), 1e-10), 0
+        ) if ann_per_query and hits_in_top10 else 0,
+    }
+
     # Dataset fingerprint: capture data shape at eval time
     results["dataset_fingerprint"] = {
         "test_set_queries": len(queries),
@@ -766,6 +849,25 @@ def main():
             srch = r.get("search_proxy_mrr", {})
             if srch.get("n_queries", 0) > 0:
                 print(f"  Search proxy MRR: {srch['mrr']:.3f} ({srch['n_queries']} queries)")
+
+            # Hit@K and MRR (practical metrics)
+            hk = r.get("hit_at_k", {})
+            if hk:
+                parts = [f"Hit@{k}: {v['rate']:.3f}" for k, v in sorted(hk.items())]
+                print(f"\n  Practical metrics: {', '.join(parts)}")
+            mrr = r.get("mrr_relevant", {})
+            if mrr.get("n_queries", 0) > 0:
+                print(f"  MRR (GT>0.5): {mrr['mrr']:.4f} (mean rank={mrr['mean_rank']}, n={mrr['n_queries']})")
+
+            # Annotation density diagnostics
+            ad = r.get("annotation_density", {})
+            if ad:
+                print(
+                    f"  Annotation density: {ad['mean_annotated_per_query']:.1f} ann/query "
+                    f"(median={ad['median_annotated_per_query']}), "
+                    f"{ad['mean_hits_in_top10']:.1f} hits/top-10, "
+                    f"{int(ad['embedding_is_Nx_better_than_random'])}x vs random"
+                )
 
             fp = r.get("dataset_fingerprint", {})
             if fp:

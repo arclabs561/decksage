@@ -129,11 +129,53 @@ def diagnose_annotations(game: str) -> dict:
             data = json.load(f)
         queries = data.get("queries", {})
         n_with_ann = sum(1 for q in queries.values() if q.get("annotations"))
+        # Annotation density and quality
+        ann_counts = [len(q.get("annotations", [])) for q in queries.values()]
+        all_scores = []
+        source_counts: dict[str, int] = defaultdict(int)
+        model_counts: dict[str, int] = defaultdict(int)
+        dup_count = 0
+        for q in queries.values():
+            seen_candidates = set()
+            for ann in q.get("annotations", []):
+                s = ann.get("similarity_score")
+                if s is not None:
+                    all_scores.append(float(s))
+                src = ann.get("discovery_source", "unknown")
+                source_counts[src] += 1
+                model_counts[ann.get("llm_model", ann.get("model_name", "unknown"))] += 1
+                c = ann.get("candidate", "")
+                if c in seen_candidates:
+                    dup_count += 1
+                seen_candidates.add(c)
+
         results["test_set"] = {
             "queries": len(queries),
             "with_annotations": n_with_ann,
             "bucket_only": len(queries) - n_with_ann,
+            "total_annotations": sum(ann_counts),
+            "mean_ann_per_query": round(np.mean(ann_counts), 1) if ann_counts else 0,
+            "median_ann_per_query": int(np.median(ann_counts)) if ann_counts else 0,
+            "queries_with_0_ann": sum(1 for c in ann_counts if c == 0),
+            "queries_with_10plus_ann": sum(1 for c in ann_counts if c >= 10),
+            "score_mean": round(np.mean(all_scores), 3) if all_scores else 0,
+            "score_std": round(np.std(all_scores), 3) if all_scores else 0,
+            "duplicate_annotations": dup_count,
+            "sources": dict(source_counts),
+            "models": dict(model_counts),
         }
+
+        if dup_count > 0:
+            dup_rate = dup_count / max(sum(ann_counts), 1)
+            results["warnings"].append(
+                f"DUPLICATE ANNOTATIONS: {dup_count} ({dup_rate:.1%}). "
+                f"Same (query, candidate) pair annotated multiple times."
+            )
+        if np.mean(ann_counts) < 3:
+            results["warnings"].append(
+                f"LOW ANNOTATION DENSITY: mean {np.mean(ann_counts):.1f} ann/query. "
+                f"nDCG@10 is unreliable below 5 ann/query. Run annotation convergence."
+            )
 
     # Card annotations
     ann_path = DATA_DIR / "test_sets" / f"card_annotations_{game}.json"
