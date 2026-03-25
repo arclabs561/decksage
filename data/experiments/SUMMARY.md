@@ -63,6 +63,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0056 | 2026-03-24 | Residual PPMI (SVD) + degree debiasing | magic | v7 edgelist | sub nDCG | PPMI 0.084, v7_debiased 0.103, spectral_debiased 0.107, spectral 0.107 | [0056](0056_residual_ppmi_and_debiasing.yaml) |
 | 0057 | 2026-03-25 | **Multi-model cascade annotation** (key) | all | Groq 70B + Cerebras 235B cascade | corr vs IAA | **0.639 calibrated** (vs $2-15 IAA at $0.40/1K). Cleanup of 3,349 bad annotations: Magic nDCG +21.6% | [0057](0057_multi_model_cascade_annotation.yaml) |
 | 0058 | 2026-03-25 | **Fill eval holes round 1** (key) | all | 5K holes per game, multi cascade | sub nDCG | Magic 0.104->**0.233**, Pokemon 0.088->**0.190**, YuGiOh 0.160->**0.240**. ~$6 total. 42K holes remain | [0058](0058_fill_eval_holes_round1.yaml) |
+| 0059 | 2026-03-25 | **Fill eval holes round 2 -- SATURATED** (key) | all | remaining holes, multi cascade | sub nDCG | Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations | [0059](0059_fill_eval_holes_round2.yaml) |
 
 ## Key Insights (cross-cutting)
 
@@ -107,6 +108,8 @@ ProNE spectral propagation on the v7 edgelist produces Magic sub nDCG **0.1067**
 
 After filling 15K top-10 eval holes (~$6), standard nDCG doubled across all games. Pokemon and YuGiOh reached **standard ~= condensed nDCG** (gap < 0.05), meaning annotation coverage is saturated and the metric now reflects true ranking quality. This is a phase transition: before saturation, nDCG measures annotation coverage; after, it measures embedding quality.
 
-**Implication**: further hole-filling for Pokemon/YuGiOh has diminishing returns. Embedding improvements are now the binding constraint. Magic may still benefit from more annotation coverage (gap TBD after round 2 completes).
+**Implication**: further hole-filling for Pokemon/YuGiOh has diminishing returns *for the current embedding*. Embedding improvements are now the binding constraint. But new embeddings will reshuffle top-K, surfacing unjudged candidates -- saturation is embedding-specific, not absolute.
 
-**Decision rule**: monitor the convergence gap (`eval_per_mode.py` now reports `[SATURATED]` or `[gap=X]` per mode). When gap < 0.05, stop filling and focus on embeddings.
+**Outer loop**: fill holes -> get true quality -> train better embedding -> fill new holes from reshuffled top-K -> repeat. Convergence of this outer loop is when new-embedding holes don't change the ranking.
+
+**Decision rule**: monitor the convergence gap (`eval_per_mode.py` now reports `[SATURATED]` or `[gap=X]` per mode). When gap < 0.05 for current embedding, train a new one and re-fill.
