@@ -43,9 +43,9 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 # Structural (PecanPy) embeddings -- trained on co-occurrence graph
 STRUCTURAL_EMBEDDINGS = {
-    "magic": "magic_v5_ns-0.5",
-    "pokemon": "pokemon_v5_ns-0.5",
-    "yugioh": "yugioh_cleaned_v5",
+    "magic": "magic_v7_spectral_mu35",
+    "pokemon": "pokemon_v7_fused",
+    "yugioh": "yugioh_v7_spectral_mu3",
 }
 
 # Card attribute CSVs (one-hot/multi-hot features)

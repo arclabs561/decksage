@@ -125,6 +125,11 @@ GAME_CONFIGS = {
         "deck_jsonl": [
             "data/decks/decks_digimon.jsonl",
             "data/decks/decks_digimon_limitless.jsonl",
+            "data/decks/decks_digimon_limitless-web.jsonl",
+            # Mislabeled files -- actually Digimon, not Magic:
+            "data/decks/decks_magic_scryfall_sets.jsonl",
+            "data/decks/decks_magic_mtgtop8_new.jsonl",
+            "data/decks/decks_magic_goldfish_new.jsonl",
         ],
         "annotations": [],
         "enriched_edgelist": None,

@@ -48,9 +48,9 @@ DECKS_DIR = DATA_DIR / "decks"
 TEST_SETS_DIR = DATA_DIR / "test_sets"
 
 DEFAULT_EMBEDDINGS = {
-    "magic": "magic_cleaned_v4",
-    "pokemon": "pokemon_cleaned_v4",
-    "yugioh": "yugioh_cleaned_v4",
+    "magic": "magic_v7_spectral_mu35",
+    "pokemon": "pokemon_v7_fused",
+    "yugioh": "yugioh_v7_spectral_mu3",
 }
 
 # Deck files per game, ordered by preference (largest/richest first)

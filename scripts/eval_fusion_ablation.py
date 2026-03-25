@@ -69,9 +69,9 @@ QUERIES: dict[str, list[str]] = {
 # Default embedding/pairs paths per game
 # ---------------------------------------------------------------------------
 DEFAULT_EMBEDDINGS: dict[str, str] = {
-    "magic": "data/embeddings/magic_cleaned_v4.wv",
-    "pokemon": "data/embeddings/pokemon_cleaned_v4.wv",
-    "yugioh": "data/embeddings/yugioh_cleaned_v5.wv",
+    "magic": "data/embeddings/magic_v7_spectral_mu35.wv",
+    "pokemon": "data/embeddings/pokemon_v7_fused.wv",
+    "yugioh": "data/embeddings/yugioh_v7_spectral_mu3.wv",
 }
 
 DEFAULT_PAIRS: dict[str, str] = {
