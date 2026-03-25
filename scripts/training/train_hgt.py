@@ -509,6 +509,9 @@ def train_hgt(
 
     if start_epoch >= epochs:
         print(f"    Already trained to epoch {start_epoch}, skipping (requested {epochs})")
+        # Early return: extract embeddings from loaded checkpoint
+        all_embs = _infer_all_embeddings(model, data, num_nodes, num_neighbors, device)
+        return all_embs, []
 
     for epoch in range(start_epoch, epochs):
         model.train()
@@ -643,7 +646,7 @@ def train_hgt(
             "epoch": epochs - 1,
             "model": model.state_dict(),
             "optimizer": optimizer.state_dict(),
-            "loss": avg_loss if "avg_loss" in dir() else float("nan"),
+            "loss": avg_loss if "avg_loss" in locals() else float("nan"),
         },
         str(ckpt_path),
     )
