@@ -102,3 +102,11 @@ MetaPath2Vec ties YuGiOh but loses on Magic/Pokemon.
 ### Spectral propagation (ProNE): new best deterministic result
 
 ProNE spectral propagation on the v7 edgelist produces Magic sub nDCG **0.1067** -- the new best single-model result and fully deterministic (no random walks, no seed sensitivity). This makes it a strong baseline and a candidate for replacing PecanPy in the production pipeline.
+
+### nDCG convergence: annotation coverage was the bottleneck (exp 0058)
+
+After filling 15K top-10 eval holes (~$6), standard nDCG doubled across all games. Pokemon and YuGiOh reached **standard ~= condensed nDCG** (gap < 0.05), meaning annotation coverage is saturated and the metric now reflects true ranking quality. This is a phase transition: before saturation, nDCG measures annotation coverage; after, it measures embedding quality.
+
+**Implication**: further hole-filling for Pokemon/YuGiOh has diminishing returns. Embedding improvements are now the binding constraint. Magic may still benefit from more annotation coverage (gap TBD after round 2 completes).
+
+**Decision rule**: monitor the convergence gap (`eval_per_mode.py` now reports `[SATURATED]` or `[gap=X]` per mode). When gap < 0.05, stop filling and focus on embeddings.
