@@ -320,6 +320,7 @@ def main() -> int:
     if not games:
         parser.error("Specify --game or --all-games")
 
+    all_saturated = True
     for game in games:
         print(f"\n{'=' * 60}")
         print(f"  FILL EVAL HOLES: {game.upper()}")
@@ -363,14 +364,23 @@ def main() -> int:
                     r = json.loads(result.stdout)[0]
                     sub = r["mode_substitute"]["ndcg_at_k"]
                     condensed = r["mode_substitute"]["condensed_ndcg"]
+                    gap = r["mode_substitute"].get("convergence_gap", condensed - sub)
+                    saturated = gap < 0.05
                     hit10 = r.get("hit_at_k", {}).get("10", {}).get("rate", "?")
-                    print(f"  {emb}: sub={sub:.4f} condensed={condensed:.4f} Hit@10={hit10}")
+                    status = "SATURATED" if saturated else f"gap={gap:.3f}"
+                    print(f"  {emb}: sub={sub:.4f} condensed={condensed:.4f} [{status}] Hit@10={hit10}")
+                    if not saturated:
+                        all_saturated = False
                 except (json.JSONDecodeError, KeyError):
-                    pass
+                    all_saturated = False
 
     print(f"\n{'=' * 60}")
     print("  Hole filling complete.")
     print(f"{'=' * 60}")
+    if all_saturated:
+        print("\n  All games have converged (standard ~= condensed nDCG).")
+        print("  Further hole-filling has diminishing returns.")
+        print("  Focus on embedding improvements instead.")
     return 0
 
 
