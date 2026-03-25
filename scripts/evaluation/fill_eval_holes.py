@@ -343,13 +343,20 @@ def main() -> int:
             print(f"  Capping to {args.max_per_game} (of {len(holes)})")
 
         card_context = load_card_context(game)
-        annotations = asyncio.run(
-            annotate_holes(to_fill, game, card_context, model=args.model, concurrency=args.concurrency)
-        )
-        print(f"  Got {len(annotations)} annotations")
 
-        added = merge_into_test_set(game, annotations)
-        print(f"  Merged {added} new annotations")
+        # Process in chunks with incremental checkpointing
+        CHUNK_SIZE = 1000
+        total_added = 0
+        for chunk_start in range(0, len(to_fill), CHUNK_SIZE):
+            chunk = to_fill[chunk_start : chunk_start + CHUNK_SIZE]
+            annotations = asyncio.run(
+                annotate_holes(chunk, game, card_context, model=args.model, concurrency=args.concurrency)
+            )
+            added = merge_into_test_set(game, annotations)
+            total_added += added
+            print(f"  Checkpoint: {chunk_start + len(chunk)}/{len(to_fill)} holes, {total_added} merged")
+
+        print(f"  Total: {total_added} new annotations")
 
         # Quick eval
         import subprocess

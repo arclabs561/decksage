@@ -3,6 +3,8 @@
 # requires-python = ">=3.11"
 # dependencies = ["numpy>=1.24.0", "sentence-transformers>=2.2.0"]
 # ///
+# NOTE: PEP 723 deps are incomplete (missing pandas, gensim via ml.utils import chain).
+# Run from project env: PYTHONPATH=src uv run --project . python scripts/training/build_unified_graph.py
 """
 Build the unified SQLite graph from all edge sources.
 
