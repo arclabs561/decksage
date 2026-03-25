@@ -1,0 +1,62 @@
+id: "0059"
+date: "2026-03-25"
+title: "Fill eval holes round 2 -- saturation reached"
+game: all
+
+hypothesis: >
+  Filling all remaining top-10 holes will bring standard nDCG to within
+  0.05 of condensed nDCG (saturation), revealing the true embedding quality.
+
+method:
+  script: scripts/evaluation/fill_eval_holes.py
+  args: "--game {magic,pokemon,yugioh} --model multi --max-per-game {16000,13000,14000} --concurrency 20"
+
+data:
+  training:
+    source: "n/a (eval-only change)"
+    count: 0
+  evaluation:
+    source: "annotated_{game}_v2.json test sets"
+    holes_filled:
+      magic: 16000
+      pokemon: 12187
+      yugioh: 13662
+    annotation_backend: "multi-model cascade (Groq 70B + Cerebras 235B)"
+    cost_estimate: "$17.00 (round 2), $23 total (rounds 1+2)"
+
+results:
+  round1_baseline:
+    magic_sub_ndcg: 0.2326
+    pokemon_sub_ndcg: 0.1904
+    yugioh_sub_ndcg: 0.2403
+  final:
+    magic_sub_ndcg: 0.5251
+    magic_condensed_ndcg: 0.5273
+    magic_convergence_gap: 0.002
+    magic_hit_at_10: 0.5175
+    pokemon_sub_ndcg: 0.4367
+    pokemon_condensed_ndcg: 0.4381
+    pokemon_convergence_gap: 0.001
+    pokemon_hit_at_10: 0.4051
+    yugioh_sub_ndcg: 0.4781
+    yugioh_condensed_ndcg: 0.4820
+    yugioh_convergence_gap: 0.004
+    yugioh_hit_at_10: 0.6740
+  total_annotations:
+    magic: 36307
+    pokemon: 25376
+    yugioh: 27106
+  all_saturated: true
+
+conclusion: >
+  All three games reached nDCG saturation (standard ~= condensed, gap < 0.005).
+  These are the true embedding quality numbers: Magic 0.525, Pokemon 0.437,
+  YuGiOh 0.478. Further annotation filling has diminishing returns for the
+  current embeddings. However, saturation is embedding-specific -- new
+  embeddings will reshuffle top-K, creating new holes that need filling.
+  The outer loop is: fill holes -> true quality -> better embedding -> re-fill.
+
+artifacts:
+  - data/test_sets/annotated_magic_v2.json
+  - data/test_sets/annotated_pokemon_v2.json
+  - data/test_sets/annotated_yugioh_v2.json
