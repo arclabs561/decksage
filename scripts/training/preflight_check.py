@@ -48,23 +48,25 @@ MAX_EDGE_FRACTION = {
 
 def check_game(game: str) -> list[str]:
     """Run preflight checks for one game. Returns list of issues."""
-    from ml.data.incremental_graph import IncrementalCardGraph
+    import sqlite3
 
     db_path = PROJECT_ROOT / "data" / "graphs" / f"{game}_unified.db"
     if not db_path.exists():
         return [f"FAIL: No unified graph at {db_path}"]
 
-    graph = IncrementalCardGraph(graph_path=db_path, use_sqlite=True)
+    # Use direct SQL for speed (avoids loading full graph into memory)
+    conn = sqlite3.connect(str(db_path))
+    rows = conn.execute(
+        "SELECT source_type, COUNT(*) FROM edges GROUP BY source_type ORDER BY COUNT(*) DESC"
+    ).fetchall()
+    total_nodes = conn.execute("SELECT COUNT(*) FROM nodes").fetchone()[0]
+    conn.close()
 
     issues = []
-    total_edges = len(graph.edges)
+    source_counts: Counter[str] = Counter({row[0]: row[1] for row in rows})
+    total_edges = sum(source_counts.values())
     if total_edges == 0:
         return [f"FAIL: Graph has 0 edges"]
-
-    # Count edges by source type
-    source_counts: Counter[str] = Counter()
-    for edge in graph.edges.values():
-        source_counts[edge.source_type] += 1
 
     print(f"\n  Edge distribution ({total_edges:,} total):")
     for src, count in source_counts.most_common():
@@ -98,22 +100,37 @@ def check_game(game: str) -> list[str]:
 
         print(f"    {src:20s}: {count:>10,} ({frac:6.2%}){marker}")
 
+    # Show effective weight after export multipliers
+    export_weights = {"ppmi": 1.0, "enriched": 5.0, "propagated": 3.0, "oracle_text": 5.0}
+    effective = {}
+    for src, count in source_counts.items():
+        w = export_weights.get(src, 0)
+        if w > 0:
+            effective[src] = count * w
+    if effective:
+        total_eff = sum(effective.values())
+        print(f"\n  Effective weight after export multipliers:")
+        for src, ew in sorted(effective.items(), key=lambda x: -x[1]):
+            print(f"    {src:20s}: {ew:>12,.0f} ({ew/total_eff:6.2%})")
+
     # Check for noise cards in graph nodes (basic lands, energy)
     from ml.utils.constants import get_filter_set
+    import sqlite3 as _sqlite3
 
     noise_cards = get_filter_set(game, level="common")
     if noise_cards:
-        noise_nodes = set()
-        for name in graph.nodes:
-            if name in noise_cards:
-                noise_nodes.add(name)
+        conn = _sqlite3.connect(str(db_path))
+        placeholders = ",".join("?" for _ in noise_cards)
+        cursor = conn.execute(
+            f"SELECT name FROM nodes WHERE name IN ({placeholders})", list(noise_cards)
+        )
+        noise_nodes = [row[0] for row in cursor]
+        conn.close()
 
         if noise_nodes:
-            print(f"\n  Noise cards still in graph nodes: {len(noise_nodes)}")
-            print(f"    {sorted(noise_nodes)[:5]}...")
+            print(f"\n  Noise cards in graph: {len(noise_nodes)}")
             issues.append(
-                f"INFO: {game} has {len(noise_nodes)} noise card nodes "
-                f"(lands/energy). These should be filtered from co-occurrence edges."
+                f"INFO: {game} has {len(noise_nodes)} noise card nodes (lands/energy)."
             )
 
     # Check deck JSONL availability
@@ -136,14 +153,13 @@ def check_game(game: str) -> list[str]:
 
     # Check embedding vocab coverage
     emb_dir = PROJECT_ROOT / "data" / "embeddings"
-    latest_emb = sorted(emb_dir.glob(f"{game}_*_fused.wv"))
+    latest_emb = sorted(emb_dir.glob(f"{game}_*_fused.wv")) + sorted(emb_dir.glob(f"{game}_*spectral*.wv"))
     if latest_emb:
         from gensim.models import KeyedVectors
         kv = KeyedVectors.load(str(latest_emb[-1]))
-        vocab = set(kv.key_to_index.keys())
-        graph_nodes = set(graph.nodes.keys())
-        coverage = len(vocab & graph_nodes) / len(graph_nodes) if graph_nodes else 0
-        print(f"  Embedding coverage: {coverage:.1%} ({len(vocab & graph_nodes):,}/{len(graph_nodes):,})")
+        vocab_size = len(kv)
+        coverage = vocab_size / total_nodes if total_nodes else 0
+        print(f"  Embedding coverage: {coverage:.1%} ({vocab_size:,}/{total_nodes:,} graph nodes)")
         if coverage < 0.5:
             issues.append(
                 f"WARN: {game} embedding covers only {coverage:.1%} of graph nodes. "
