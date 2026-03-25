@@ -275,6 +275,11 @@ async def annotate_pairs(
     groq_model = model_name.removeprefix("groq/") if use_groq else None
     groq_key = os.environ.get("GROQ_API_KEY", "")
 
+    # Cerebras: fast cloud inference (867 tok/s, 235B MoE)
+    use_cerebras = model_name.startswith("cerebras/")
+    cerebras_model = model_name.removeprefix("cerebras/") if use_cerebras else None
+    cerebras_key = os.environ.get("CEREBRAS_API_KEY", "")
+
     # Local OpenAI-compatible server (mlx-lm serve, DMR, vLLM, SGLang)
     # Detected via LOCAL_LLM_URL env var or local:// model prefix
     use_local = model_name.startswith("local/")
@@ -287,6 +292,9 @@ async def annotate_pairs(
 
     if use_groq:
         logger.info(f"  Using Groq: {groq_model} (fast cloud, ~$0.024/1000 pairs)")
+        agent = None
+    elif use_cerebras:
+        logger.info(f"  Using Cerebras: {cerebras_model} (fast cloud, 867 tok/s)")
         agent = None
     elif use_ollama:
         logger.info(f"  Using ollama: {ollama_model} (FREE, local)")
@@ -305,6 +313,8 @@ async def annotate_pairs(
     local_concurrency = int(os.environ.get("LOCAL_LLM_CONCURRENCY", "4"))
     if use_groq:
         effective_concurrency = min(max_concurrent, 50)  # Groq handles 50+ easily
+    elif use_cerebras:
+        effective_concurrency = min(max_concurrent, 30)  # Cerebras: 30 RPM free tier
     elif use_ollama:
         effective_concurrency = int(os.environ.get("OLLAMA_NUM_PARALLEL", "1"))
     elif use_local:
@@ -333,6 +343,28 @@ async def annotate_pairs(
 
     results = []
     semaphore = asyncio.Semaphore(effective_concurrency)
+
+    async def _call_openai_compatible(
+        messages: list[dict], model: str, api_key: str, base_url: str,
+    ) -> dict | None:
+        """Call any OpenAI-compatible cloud API (Groq, Cerebras, etc.)."""
+        session = requests.Session()
+        resp = await asyncio.to_thread(
+            session.post,
+            f"{base_url.rstrip('/')}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": model,
+                "messages": messages,
+                "temperature": 0.3,
+                "max_tokens": 500,
+                "response_format": {"type": "json_object"},
+            },
+            timeout=30,
+        )
+        resp.raise_for_status()
+        content = resp.json()["choices"][0]["message"]["content"]
+        return _parse_json_response(content)
 
     async def _call_groq(messages: list[dict], model: str, api_key: str) -> dict | None:
         """Call Groq API (fast cloud inference)."""
@@ -458,6 +490,11 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
 
                 if use_groq:
                     ann = await _call_groq(messages, groq_model, groq_key)
+                elif use_cerebras:
+                    ann = await _call_openai_compatible(
+                        messages, cerebras_model, cerebras_key,
+                        "https://api.cerebras.ai/v1",
+                    )
                 elif use_ollama:
                     ann = await _call_ollama(messages, ollama_model)
                 elif use_local:
