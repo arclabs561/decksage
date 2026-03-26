@@ -110,10 +110,9 @@ def test_api_embedding_unknown_name_returns_suggestions(api_client):
     state.embeddings = _StubEmbeddings(["Lightning Bolt", "Chain Lightning", "Rift Bolt"])
     state.graph_data = {"adj": {}, "weights": {}}
 
-    # Force an embedding call with a partial name to trigger suggestions.
-    # Use mode="embedding" to bypass fusion (which handles unknown queries gracefully).
+    # Force an embedding call with a partial name to trigger suggestions
     req = api_mod.SimilarityRequest(
-        query="Lightning", top_k=5, mode="embedding"
+        query="Lightning", top_k=5, use_case=api_mod.UseCaseEnum.substitute
     )
     with pytest.raises(HTTPException) as exc:
         api_mod._similar_impl(req)

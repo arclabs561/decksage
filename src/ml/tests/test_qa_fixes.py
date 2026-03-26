@@ -79,9 +79,9 @@ class TestResolveMethod:
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.meta)
         assert _resolve_method(req) == "meta"
 
-    def test_substitute_uses_fusion(self):
+    def test_substitute_uses_embedding(self):
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.substitute)
-        assert _resolve_method(req) == "fusion"
+        assert _resolve_method(req) == "embedding"
 
     def test_synergy_uses_jaccard(self):
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.synergy)
@@ -91,9 +91,9 @@ class TestResolveMethod:
         req = SimilarityRequest(query="X", game="magic", use_case=UseCaseEnum.meta, mode="fusion")
         assert _resolve_method(req) == "fusion"
 
-    def test_default_is_fusion(self):
+    def test_default_is_embedding(self):
         req = SimilarityRequest(query="X", game="magic")
-        assert _resolve_method(req) == "fusion"
+        assert _resolve_method(req) == "embedding"
 
 
 # ---------------------------------------------------------------------------
