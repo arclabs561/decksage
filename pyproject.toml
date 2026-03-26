@@ -12,12 +12,10 @@ dependencies = [
     # pecanpy moved to [training] -- only used by training scripts
     "python-dotenv>=1.0.0",
     "pydantic>=2.0.0",
-    "pydantic-ai>=0.1.0",
     "requests>=2.31.0",
     "fastapi>=0.100.0",
     "uvicorn>=0.23.0",
     "httpx>=0.27.0",
-    "sentence-transformers",
     "qdrant-client>=1.7.0",
     "meilisearch>=0.32.0",
 ]
@@ -58,15 +56,15 @@ viz = [
     "umap-learn>=0.5.4",
     "plotly>=5.17.0",
 ]
-fast = [
-    # fastnode2vec removed -- last release 2021, PecanPy used instead
-    "numba>=0.57.0",
-]
 enrichment = [
     "pillow>=10.0.0",  # Image processing for vision models
     "openai>=1.0.0",   # For OpenRouter compatibility
     "transformers>=4.0.0", # For SigLIP and other vision models
     "sentencepiece>=0.1.99", # Required for SigLIP tokenizer
+    "sentence-transformers",  # Text embeddings (E5/MiniLM)
+]
+llm = [
+    "pydantic-ai>=0.1.0",  # LLM annotation, QA agents, chat router
 ]
 gnn = [
     "torch>=2.0.0",
@@ -78,8 +76,6 @@ stats = [
 extras = [
     "diskcache>=5.6.3",
     "zstandard>=0.22.0",
-    # evoc removed -- zero imports in codebase
-    "lightgbm>=4.6.0",
 ]
 ot = [
     "pot>=0.9.0",  # Python Optimal Transport (Sinkhorn, etc.)

@@ -25,7 +25,7 @@ uv sync --extra dev --extra embeddings
 
 ### Start the API
 
-DeckSage requires pre-built embedding files (`.wv`). See `scripts/training/` for the training pipeline, or use the pre-built v5 files referenced in `.env`.
+DeckSage requires pre-built embedding files (`.wv`). See `scripts/training/` for the training pipeline, or use the pre-built v7 files referenced in `.env`.
 
 ```bash
 # Copy and edit .env (set embedding paths, API keys)
@@ -79,7 +79,7 @@ Interactive docs at `/docs` when the server is running.
 
 | Signal | Source | Status |
 |---|---|---|
-| Co-occurrence embedding | PecanPy + Word2Vec on 184K decks, 128D, attribute-fused (v5) | Active |
+| Co-occurrence embedding | PecanPy + Word2Vec on 184K decks, 128D, spectral propagation + attribute fusion (v7) | Active |
 | Text embedding | E5-base-instruct (instruction-tuned) | Active |
 | Jaccard co-occurrence | Deck pair overlap from pairs CSVs | Active |
 | Visual embedding | SigLIP card image embeddings | Optional |
@@ -89,21 +89,21 @@ Interactive docs at `/docs` when the server is running.
 
 | Game | Decks | Embedding vocab | Pairs |
 |---|---|---|---|
-| Magic | 82,739 | 21,151 (v5 fused) | 7.1M |
-| Pokemon | 24,483 | 4,384 (v5 fused) | 16.7K |
-| Yu-Gi-Oh | 77,016 | 13,745 (v5 cleaned) | 1.8M |
+| Magic | 82,739 | 21,151 (v7 spectral) | 7.1M |
+| Pokemon | 24,483 | 4,384 (v7 fused) | 179K |
+| Yu-Gi-Oh | 77,016 | 13,745 (v7 spectral) | 1.8M |
 
 Sources: MTGGoldfish, MTGTop8, Limitless TCG, MasterDuelMeta, YGOProDeck.
 
 ## Evaluation
 
-Per-mode nDCG@10 (v5 embeddings, 1,082 annotated queries):
+Per-mode substitute nDCG@10 (v7 embeddings, ~7,025 annotated queries, ~89K annotations, all games saturated):
 
-| Game | Substitute | Synergy | Meta | Overall |
-|---|---|---|---|---|
-| Magic | 0.150 | 0.133 | 0.143 | 0.156 |
-| Pokemon | 0.251 | 0.201 | 0.230 | 0.247 |
-| Yu-Gi-Oh | 0.529 | 0.523 | 0.530 | 0.554 |
+| Game | Substitute | Condensed | Gap |
+|---|---|---|---|
+| Magic | 0.525 | 0.527 | 0.002 |
+| Pokemon | 0.437 | 0.438 | 0.001 |
+| Yu-Gi-Oh | 0.478 | 0.482 | 0.004 |
 
 Eval scripts in `scripts/evaluation/`: `eval_per_mode.py`, `eval_search_relevance.py`, `eval_deck_completion.py`, `intrinsic_eval.py`.
 
