@@ -378,6 +378,9 @@ def _precompute_neighbors_fusion(
         return _precompute_neighbors(wv, query_names, max_k)
 
     # Load graph for Jaccard signal
+    # Map game names to DB game codes (DB uses short codes: MTG, PKM, YGO)
+    _GAME_TO_DB_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
+    db_game = _GAME_TO_DB_CODE.get(game, game)
     graph_db = DATA_DIR / "graphs" / f"{game}_unified.db"
     pairs_csv = None
     for candidate in sorted(
@@ -388,7 +391,7 @@ def _precompute_neighbors_fusion(
         pairs_csv = candidate
         break
 
-    adj = load_graph_for_jaccard(pairs_csv=pairs_csv, graph_db=graph_db, game=game)
+    adj = load_graph_for_jaccard(pairs_csv=pairs_csv, graph_db=graph_db, game=db_game)
 
     fusion = WeightedLateFusion(
         embeddings=wv,
