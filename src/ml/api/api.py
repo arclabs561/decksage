@@ -62,9 +62,7 @@ from ..similarity.fusion import FusionWeights, WeightedLateFusion
 from ..similarity.similarity_methods import (
     jaccard_similarity as sm_jaccard,
 )
-from ..similarity.similarity_methods import (
-    load_graph as sm_load_graph,
-)
+from ..utils.graph_loading import load_graph as unified_load_graph
 from ..utils.paths import PATHS
 
 # Deck operation endpoints (extracted router)
@@ -196,8 +194,8 @@ def load_embeddings_to_state(
             ", cached" if _cached else "",
         )
         _t0 = _time.monotonic()
-        adj, weights = sm_load_graph(pairs_csv, filter_lands=(game == "magic"))
-        state.graph_data = {"adj": adj, "weights": weights}
+        _graph = unified_load_graph(pairs_csv, filter_lands=(game == "magic"))
+        state.graph_data = {"adj": _graph.adjacency, "weights": _graph.weights}
         state.model_info["methods"].append("jaccard")
         state.model_info["pairs_path"] = pairs_csv
         logger.info(

@@ -104,130 +104,22 @@ def load_graph_for_jaccard(
     """
     Load graph adjacency for Jaccard similarity.
 
+    Delegates to graph_loading.load_graph (unified implementation).
+
     Args:
         pairs_csv: Path to pairs CSV file (columns: NAME_1, NAME_2) - legacy option
         graph_db: Path to incremental graph SQLite database - preferred option
         game: Filter by game ("MTG", "PKM", "YGO") - only used with graph_db
-        max_rows: Optional limit on number of rows to read (for testing) - only used with pairs_csv
+        max_rows: Ignored (kept for backward compat signature)
 
     Returns:
         Dictionary mapping card names to sets of neighbor card names
     """
-    # Try incremental graph first if provided
-    if graph_db and graph_db.exists():
-        print(f"Loading graph from incremental graph database: {graph_db}...")
-        try:
-            import sys
-            from pathlib import Path as PathType
+    from .graph_loading import load_graph
 
-            script_dir = PathType(__file__).parent
-            src_dir = script_dir.parent.parent
-            if str(src_dir) not in sys.path:
-                sys.path.insert(0, str(src_dir))
-
-            from ml.data.incremental_graph import IncrementalCardGraph
-
-            graph = IncrementalCardGraph(graph_path=graph_db, use_sqlite=True)
-
-            # Query edges (optionally filtered by game)
-            # OPTIMIZATION: Use query_edges with game filter to reduce data transfer
-            edges = graph.query_edges(game=game, min_weight=1)
-
-            # OPTIMIZATION: Pre-allocate adj dict and batch process edges
-            # Use defaultdict for cleaner code and better performance
-            from collections import defaultdict
-
-            adj: dict[str, set[str]] = defaultdict(set)
-
-            # Process edges in batch (vectorized where possible)
-            for edge in edges:
-                card1 = edge.card1
-                card2 = edge.card2
-                adj[card1].add(card2)
-                adj[card2].add(card1)
-
-            # Convert defaultdict to regular dict for consistency
-            adj = dict(adj)
-
-            print(f"  Loaded {len(adj):,} cards from graph database")
-            if game:
-                print(f"  Filtered by game: {game}")
-            return adj
-        except Exception as e:
-            print(f"  Warning: Could not load from graph database: {e}")
-            print("  Falling back to pairs CSV...")
-
-    # Fallback to pairs CSV
-    if pairs_csv is None:
-        from ml.utils.paths import PATHS
-
-        pairs_csv = PATHS.pairs_large
-
-    if not pairs_csv.exists():
-        raise FileNotFoundError(f"Graph source not found: {pairs_csv} or {graph_db}")
-
-    print(f"Loading graph from {pairs_csv}...")
-
-    # OPTIMIZATION: Use chunked reading with C engine for faster CSV parsing
-    chunk_size = 1000000  # Larger chunks for better performance
-    adj: dict[str, set[str]] = {}
-
-    # OPTIMIZATION: Use defaultdict and vectorized operations
-    from collections import defaultdict
-
-    adj = defaultdict(set)
-
-    if max_rows:
-        # For limited rows, read all at once (faster for small datasets)
-        df = pd.read_csv(
-            pairs_csv,
-            nrows=max_rows,
-            engine="c",  # C parser is faster
-            usecols=["NAME_1", "NAME_2"],  # Only read needed columns
-            dtype={"NAME_1": "string", "NAME_2": "string"},
-        )
-        chunks = [df]
-    else:
-        # Process in chunks for very large files
-        # OPTIMIZATION: Only read needed columns, use C engine, pre-specify types
-        chunks = pd.read_csv(
-            pairs_csv,
-            chunksize=chunk_size,
-            engine="c",  # C parser is faster than Python
-            usecols=["NAME_1", "NAME_2"],  # Only read needed columns (faster I/O)
-            dtype={"NAME_1": "string", "NAME_2": "string"},  # Pre-specify types (faster parsing)
-            low_memory=False,  # Disable low_memory mode for faster parsing (uses more memory but faster)
-        )
-
-    # OPTIMIZATION: Process chunks with vectorized operations
-    for chunk_df in chunks:
-        # OPTIMIZATION: Filter by game if specified (before processing)
-        if game:
-            # If game column exists, filter it
-            if "GAME" in chunk_df.columns:
-                chunk_df = chunk_df[chunk_df["GAME"] == game]
-            elif "game" in chunk_df.columns:
-                chunk_df = chunk_df[chunk_df["game"] == game]
-
-        # OPTIMIZATION: Vectorized processing - convert to string once, drop NaN
-        card1_col = chunk_df["NAME_1"].astype(str)
-        card2_col = chunk_df["NAME_2"].astype(str)
-
-        # OPTIMIZATION: Filter out NaN and empty strings before iteration
-        mask = (card1_col != "nan") & (card2_col != "nan") & (card1_col != "") & (card2_col != "")
-        card1_col = card1_col[mask]
-        card2_col = card2_col[mask]
-
-        # OPTIMIZATION: Use zip for faster iteration (avoids iterrows overhead)
-        for card1, card2 in zip(card1_col, card2_col):
-            adj[card1].add(card2)
-            adj[card2].add(card1)
-
-    # Convert defaultdict to regular dict for consistency
-    adj = dict(adj)
-
-    print(f"  Loaded {len(adj):,} cards")
-    return adj
+    source = graph_db if (graph_db and graph_db.exists()) else pairs_csv
+    result = load_graph(source, game=game, include_weights=False)
+    return result.adjacency
 
 
 # Alias for backward compatibility

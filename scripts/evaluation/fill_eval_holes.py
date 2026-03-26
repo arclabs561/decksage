@@ -64,8 +64,13 @@ EMBEDDING_PATHS = {
 }
 
 
-def find_holes(game: str, k: int = 10) -> list[tuple[str, str]]:
-    """Find (query, candidate) pairs in top-K that aren't annotated."""
+def find_holes(game: str, k: int = 10, method: str = "cosine") -> list[tuple[str, str]]:
+    """Find (query, candidate) pairs in top-K that aren't annotated.
+
+    Args:
+        method: "cosine" (batch matmul, fast) or "fusion" (WeightedLateFusion,
+                retrieves different candidates using text+functional signals).
+    """
     from gensim.models import KeyedVectors
 
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
@@ -76,6 +81,10 @@ def find_holes(game: str, k: int = 10) -> list[tuple[str, str]]:
     emb_name = EMBEDDING_PATHS.get(game, f"{game}_v7_fused")
     emb_path = DATA_DIR / "embeddings" / f"{emb_name}.wv"
     kv = KeyedVectors.load(str(emb_path))
+
+    if method == "fusion":
+        return _find_holes_fusion(kv, queries, game, k)
+
     normed = kv.get_normed_vectors()
     idx_to_key = kv.index_to_key
 
@@ -101,6 +110,46 @@ def find_holes(game: str, k: int = 10) -> list[tuple[str, str]]:
             if card not in annotated:
                 holes.append((qname, card))
 
+    return holes
+
+
+def _find_holes_fusion(
+    kv, queries: dict, game: str, k: int = 10
+) -> list[tuple[str, str]]:
+    """Find holes using fusion-path candidates (substitution weights)."""
+    import sys
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+    from ml.similarity.fusion import WeightedLateFusion
+    from ml.utils.shared_operations import load_graph_for_jaccard
+
+    _GAME_TO_DB_CODE = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
+    db_game = _GAME_TO_DB_CODE.get(game, game)
+    graph_db = DATA_DIR / "graphs" / f"{game}_unified.db"
+
+    adj = load_graph_for_jaccard(graph_db=graph_db, game=db_game)
+    print(f"  Loaded graph: {len(adj):,} cards")
+
+    fusion = WeightedLateFusion(
+        embeddings=kv, adj=adj, task_type="substitution", game=game,
+    )
+
+    valid_queries = [(qn, qd) for qn, qd in queries.items() if qn in kv.key_to_index]
+    total = len(valid_queries)
+    holes = []
+
+    for i, (qname, qdata) in enumerate(valid_queries):
+        annotated = {ann.get("candidate", "") for ann in qdata.get("annotations", [])}
+        try:
+            neighbors = fusion.similar(qname, k, task_type="substitution")
+            for card, _ in neighbors:
+                if card not in annotated:
+                    holes.append((qname, card))
+        except (KeyError, RuntimeError, ValueError):
+            pass
+        if (i + 1) % 500 == 0:
+            print(f"    fusion holes: {i + 1}/{total}, found {len(holes)} so far")
+
+    print(f"    fusion holes: {total}/{total}, total {len(holes)}")
     return holes
 
 
@@ -311,6 +360,10 @@ def main() -> int:
     parser.add_argument("--k", type=int, default=10, help="Top-K depth to fill")
     parser.add_argument("--max-per-game", type=int, default=5000, help="Max holes to fill per game")
     parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--method", default="cosine", choices=["cosine", "fusion"],
+        help="Candidate retrieval: 'cosine' (embedding) or 'fusion' (text+functional for substitution)",
+    )
     parser.add_argument("--concurrency", type=int, default=20)
     args = parser.parse_args()
 
@@ -326,7 +379,7 @@ def main() -> int:
         print(f"  FILL EVAL HOLES: {game.upper()}")
         print(f"{'=' * 60}")
 
-        holes = find_holes(game, k=args.k)
+        holes = find_holes(game, k=args.k, method=args.method)
         print(f"  Found {len(holes)} unjudged items in top-{args.k}")
 
         if args.dry_run:
