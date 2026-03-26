@@ -215,7 +215,7 @@ def _build_deck_hooks(
             p = _pm.get_price(card)
             return float(p.usd) if p and p.usd else None
 
-    except Exception:
+    except (ImportError, OSError):
         # Fallback: Scryfall price data (loaded from JSON)
         if state.price_data:
             _prices = state.price_data
@@ -410,7 +410,7 @@ def suggest_actions(req: SuggestActionsRequest):
             session_id=session_id,
             metadata={"game": req.game, "action_type": req.action_type, "top_k": req.top_k},
         )
-    except Exception:
+    except (ImportError, OSError):
         pass  # Non-fatal
 
     game = _require_game(req.game)
@@ -629,7 +629,7 @@ def complete_deck(req: CompleteRequest):
                 "method": req.method,
             },
         )
-    except Exception:
+    except (ImportError, OSError):
         pass  # Non-fatal
 
     game = _require_game(req.game)
@@ -818,9 +818,9 @@ def complete_deck(req: CompleteRequest):
             )
             if not _strict.is_valid:
                 strict_errors = _strict.errors
-        except (ValueError, KeyError, AttributeError, TypeError):
-            # Do not fail response; record as error
-            strict_errors = ["strict_validation_exception"]
+        except (ValueError, KeyError) as exc:
+            # Do not fail response; record as error with details
+            strict_errors = [f"strict_validation_exception: {exc}"]
 
     elapsed_ms = int((time.time() - t0) * 1000)
 
