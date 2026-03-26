@@ -68,12 +68,7 @@ from ..similarity.similarity_methods import (
 from ..utils.paths import PATHS
 
 # Deck operation endpoints (extracted router)
-from .deck_routes import (  # noqa: F401 -- re-exported for backward compat
-    _build_deck_hooks,
-    _extract_deck_colors,
-    _normalize_deck_format,
-    _wrap_cand_fn_color_filter,
-)
+from .deck_routes import _build_deck_hooks
 from .deck_routes import router as deck_router
 
 # Local application imports
@@ -239,37 +234,20 @@ def load_embeddings_to_state(
                     jaccard=float(rec.get("jaccard", 0.75)),
                     functional=float(rec.get("functional", 0.0)),
                     text_embed=float(rec.get("text_embed", 0.0)),
-                    sideboard=float(rec.get("sideboard", 0.0)),
-                    temporal=float(rec.get("temporal", 0.0)),
-                    gnn=float(rec.get("gnn", 0.0)),
+                    visual_embed=float(rec.get("visual_embed", 0.0)),
                     archetype=float(rec.get("archetype", 0.0)),
-                    format=float(rec.get("format", 0.0)),
                 ).normalized()
             else:
                 # Legacy format - include all weight fields for hybrid system compatibility
                 # Use recommended defaults if legacy format missing fields
                 bw = data.get("best_weights", {})
                 fw = FusionWeights(
-                    embed=float(
-                        bw.get("embed", 0.20)
-                    ),  # Co-occurrence (default from recommended weights)
-                    jaccard=float(
-                        bw.get("jaccard", 0.15)
-                    ),  # Jaccard (default from recommended weights)
-                    functional=float(
-                        bw.get("functional", 0.10)
-                    ),  # Functional (default from recommended weights)
-                    text_embed=float(
-                        bw.get("text_embed", 0.25)
-                    ),  # Instruction-tuned (default from recommended weights)
-                    visual_embed=float(
-                        bw.get("visual_embed", 0.20)
-                    ),  # Visual (default from recommended weights)
-                    sideboard=float(bw.get("sideboard", 0.0)),
-                    temporal=float(bw.get("temporal", 0.0)),
-                    gnn=float(bw.get("gnn", 0.30)),  # GNN (default from recommended weights)
+                    embed=float(bw.get("embed", 0.20)),
+                    jaccard=float(bw.get("jaccard", 0.15)),
+                    functional=float(bw.get("functional", 0.10)),
+                    text_embed=float(bw.get("text_embed", 0.25)),
+                    visual_embed=float(bw.get("visual_embed", 0.20)),
                     archetype=float(bw.get("archetype", 0.0)),
-                    format=float(bw.get("format", 0.0)),
                 ).normalized()
 
             state.fusion_default_weights = fw
@@ -687,10 +665,10 @@ async def lifespan(app: FastAPI):
             state = get_state(game)
 
             # Load each embedding source referenced in the reranker config.
-            # "v5_fused" maps to the already-loaded primary embeddings.
+            # "primary" (or legacy "v5_fused") maps to the already-loaded embeddings.
             reranker_embs: dict[str, Any] = {}
             for feat in rc.features:
-                if feat == "v5_fused":
+                if feat in ("primary", "v5_fused"):
                     if state.embeddings is not None:
                         reranker_embs[feat] = state.embeddings
                     continue
