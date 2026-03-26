@@ -90,11 +90,8 @@ from .models import (
     SimilarityRequest,
     SimilarityResponse,
     UseCaseEnum,
-    _configured_games,
-    _default_game,
-    _require_game,
-    get_state,
 )
+from .state import _configured_games, _default_game, _require_game, get_state
 
 
 # Search integration
