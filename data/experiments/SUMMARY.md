@@ -64,6 +64,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0057 | 2026-03-25 | **Multi-model cascade annotation** (key) | all | Groq 70B + Cerebras 235B cascade | corr vs IAA | **0.639 calibrated** (vs $2-15 IAA at $0.40/1K). Cleanup of 3,349 bad annotations: Magic nDCG +21.6% | [0057](0057_multi_model_cascade_annotation.yaml) |
 | 0058 | 2026-03-25 | **Fill eval holes round 1** (key) | all | 5K holes per game, multi cascade | sub nDCG | Magic 0.104->**0.233**, Pokemon 0.088->**0.190**, YuGiOh 0.160->**0.240**. ~$6 total. 42K holes remain | [0058](0058_fill_eval_holes_round1.yaml) |
 | 0059 | 2026-03-25 | **Fill eval holes round 2 -- SATURATED** (key) | all | remaining holes, multi cascade | sub nDCG | Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations | [0059](0059_fill_eval_holes_round2.yaml) |
+| 0060 | 2026-03-26 | Fusion-path substitute eval | magic | v7_spectral, 36K annotations | sub nDCG | Cosine: **0.525**, Fusion: **0.031** (gap=0.256). Test set is cosine-specific; fusion candidates unjudged. Need fusion-specific annotation filling | [0060](0060_fusion_path_eval.yaml) |
 
 ## Key Insights (cross-cutting)
 
