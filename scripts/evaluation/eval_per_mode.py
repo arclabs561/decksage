@@ -354,8 +354,69 @@ def _precompute_neighbors(
     return cache
 
 
+def _precompute_neighbors_fusion(
+    wv: KeyedVectors,
+    query_names: list[str],
+    game: str,
+    max_k: int = 30,
+    task_type: str = "substitution",
+) -> dict[str, list[tuple[str, float]]]:
+    """Precompute neighbors via WeightedLateFusion (text+functional for substitution).
+
+    This evaluates through the same path the API uses when mode=substitute,
+    giving the true substitute quality metric rather than raw cosine ranking.
+    Slower than batch matmul (~1s per query vs ~1s total), but essential for
+    measuring actual serving quality.
+    """
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+    try:
+        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+        from ml.utils.shared_operations import load_graph_for_jaccard
+    except ImportError as e:
+        print(f"  Cannot load fusion modules: {e}")
+        print("  Falling back to raw cosine neighbors")
+        return _precompute_neighbors(wv, query_names, max_k)
+
+    # Load graph for Jaccard signal
+    graph_db = DATA_DIR / "graphs" / f"{game}_unified.db"
+    pairs_csv = None
+    for candidate in sorted(
+        (DATA_DIR / "processed").glob(f"pairs_{game}_*.csv"),
+        key=lambda p: p.stat().st_size,
+        reverse=True,
+    ):
+        pairs_csv = candidate
+        break
+
+    adj = load_graph_for_jaccard(pairs_csv=pairs_csv, graph_db=graph_db, game=game)
+
+    fusion = WeightedLateFusion(
+        embeddings=wv,
+        adj=adj,
+        task_type=task_type,
+        game=game,
+    )
+
+    cache: dict[str, list[tuple[str, float]]] = {}
+    valid_queries = [q for q in query_names if q in wv.key_to_index]
+    total = len(valid_queries)
+
+    for i, qname in enumerate(valid_queries):
+        try:
+            neighbors = fusion.similar(qname, max_k, task_type=task_type)
+            cache[qname] = neighbors
+        except (KeyError, RuntimeError, ValueError):
+            pass
+        if (i + 1) % 500 == 0:
+            print(f"    fusion neighbors: {i + 1}/{total}")
+
+    print(f"    fusion neighbors computed for {len(cache)}/{total} queries")
+    return cache
+
+
 def eval_game(
-    game: str, embedding_name: str | None = None, k: int = 10, quick: bool = False
+    game: str, embedding_name: str | None = None, k: int = 10, quick: bool = False,
+    method: str = "cosine"
 ) -> dict:
     """Run full per-mode eval for one game.
 
@@ -379,11 +440,18 @@ def eval_game(
     emb_name = embedding_name or DEFAULT_EMBEDDINGS.get(game, "?")
 
     # Precompute neighbors once for all metrics (biggest speedup)
-    neighbor_cache = _precompute_neighbors(wv, list(queries.keys()), max_k=max(k, 30))
+    if method == "fusion":
+        print(f"  Using fusion-path neighbors (task_type per mode)")
+        neighbor_cache = _precompute_neighbors_fusion(
+            wv, list(queries.keys()), game, max_k=max(k, 30), task_type="substitution"
+        )
+    else:
+        neighbor_cache = _precompute_neighbors(wv, list(queries.keys()), max_k=max(k, 30))
 
     results = {
         "game": game,
         "embedding": emb_name,
+        "method": method,
         "vocab_size": len(wv),
         "total_queries": len(queries),
         "queries_with_annotations": sum(1 for q in queries.values() if q.get("annotations")),
@@ -753,6 +821,10 @@ def main():
         "--quick", action="store_true",
         help="Skip expensive secondary metrics (stratified, coverage, novelty, recall). ~4x faster.",
     )
+    parser.add_argument(
+        "--method", default="cosine", choices=["cosine", "fusion"],
+        help="Neighbor retrieval method: 'cosine' (raw embedding) or 'fusion' (WeightedLateFusion with task-specific weights)",
+    )
     args = parser.parse_args()
 
     if args.all_games:
@@ -773,10 +845,10 @@ def main():
             for emb_name in args.compare.split(","):
                 emb_name = emb_name.strip()
                 full_name = f"{game}_{emb_name}" if not emb_name.startswith(game) else emb_name
-                result = eval_game(game, full_name, args.k, quick=args.quick)
+                result = eval_game(game, full_name, args.k, quick=args.quick, method=args.method)
                 all_results.append(result)
         else:
-            result = eval_game(game, args.embedding, args.k, quick=args.quick)
+            result = eval_game(game, args.embedding, args.k, quick=args.quick, method=args.method)
             all_results.append(result)
 
             if args.compare_v5 and not args.embedding:
