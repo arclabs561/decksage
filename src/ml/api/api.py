@@ -365,7 +365,7 @@ async def lifespan(app: FastAPI):
                 model_name=instruction_embedder_model
             )
             logger.info("Loaded shared text embedder: %s", instruction_embedder_model)
-    except Exception:
+    except (ImportError, OSError, RuntimeError):
         logger.warning("Failed to load shared text embedder", exc_info=True)
 
     try:
@@ -374,7 +374,7 @@ async def lifespan(app: FastAPI):
         if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
             _shared_visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
             logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
-    except Exception:
+    except (ImportError, OSError, RuntimeError):
         logger.warning("Failed to load shared visual embedder", exc_info=True)
 
     # Load resources per game
@@ -403,10 +403,6 @@ async def lifespan(app: FastAPI):
         tuned_weights_path = os.getenv(weights_key)
         signals_dir = os.getenv(signals_key) or None
 
-        # Secondary embeddings (MetaPath2Vec) for dual-candidate fusion
-        sec_key = f"SECONDARY_EMBEDDINGS_PATH_{suffix}"
-        sec_path = os.getenv(sec_key)
-
         if emb_path:
             if not HAS_GENSIM:
                 logger.error(
@@ -422,16 +418,6 @@ async def lifespan(app: FastAPI):
                         pairs_path,
                         tuned_weights_path=tuned_weights_path,
                     )
-                    # Load secondary embeddings if configured
-                    if sec_path and Path(sec_path).exists():
-                        state = get_state(game)
-                        state.secondary_embeddings = KeyedVectors.load(sec_path)
-                        logger.info(
-                            "Loaded secondary embeddings for %s: %s (%d cards)",
-                            game,
-                            sec_path,
-                            len(state.secondary_embeddings),
-                        )
                 except (OSError, ValueError, RuntimeError):
                     logger.exception(
                         "Failed to load embeddings/graph during startup for game=%s", game
@@ -527,7 +513,7 @@ async def lifespan(app: FastAPI):
                             idx_name,
                             _stats.number_of_documents,
                         )
-            except Exception:
+            except (ConnectionError, OSError, TimeoutError, RuntimeError):
                 logger.warning(
                     "MeiliSearch auto-index failed for %s (non-fatal)", game, exc_info=True
                 )
@@ -536,7 +522,7 @@ async def lifespan(app: FastAPI):
             try:
                 if _hs.qdrant and state.embeddings:
                     _hs.batch_index_qdrant(card_metadata=state.card_metadata)
-            except Exception:
+            except (ConnectionError, OSError, TimeoutError, RuntimeError):
                 logger.warning("Qdrant auto-index failed for %s (non-fatal)", game, exc_info=True)
 
         # ------------------------------------------------------------------
@@ -1035,7 +1021,7 @@ def _resolve_method(request: SimilarityRequest) -> str:
     if forced_mode in {"embedding", "jaccard", "jaccard_faceted", "fusion", "meta"}:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
-        return "embedding"
+        return "fusion"  # Route through fusion with task_type="substitution" weights
     if request.use_case is UseCaseEnum.synergy:
         return "jaccard"
     if request.use_case is UseCaseEnum.meta:
@@ -1370,7 +1356,6 @@ def _similar_fusion(
         task_type=effective_task_type,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
         game=game,
-        secondary_embeddings=getattr(state, "secondary_embeddings", None),
     )
 
     if request.also_like:
@@ -1526,7 +1511,7 @@ def find_similar_v1(request: SimilarityRequest):
                 else str(request.use_case),
             },
         )
-    except Exception:
+    except (ImportError, OSError):
         pass  # Non-fatal - don't break API if logging fails
     resp = _similar_impl(request)
 
@@ -1615,8 +1600,7 @@ def find_similar_batch_v1(request: BatchSimilarityRequest):
             task_type=effective_task_type,
             graph_weights=state.graph_data.get("weights") if state.graph_data else None,
             game=game,
-            secondary_embeddings=getattr(state, "secondary_embeddings", None),
-        )
+            )
 
         for query in request.queries:
             try:
@@ -1690,7 +1674,7 @@ def get_similar_v1(
                 "top_k": k,
             },
         )
-    except Exception:
+    except (ImportError, OSError):
         pass  # Non-fatal - don't break API if logging fails
     # Raw method modes (embedding/jaccard/fusion) bypass use-case weight presets
     _RAW_METHODS = {UseCaseEnum.embedding, UseCaseEnum.jaccard, UseCaseEnum.fusion}
@@ -1744,7 +1728,7 @@ def get_contextual_suggestions(
             session_id=None,
             metadata={"game": game, "format": format, "archetype": archetype, "top_k": top_k},
         )
-    except Exception:
+    except (ImportError, OSError):
         pass  # Non-fatal
 
     game_lower = _require_game(game)
@@ -1777,7 +1761,6 @@ def get_contextual_suggestions(
         card_data=state.card_attrs,
         graph_weights=state.graph_data.get("weights") if state.graph_data else None,
         game=game,
-        secondary_embeddings=getattr(state, "secondary_embeddings", None),
     )
 
     price_fn, tag_set_fn, _ = _build_deck_hooks(state)

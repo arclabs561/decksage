@@ -7,7 +7,7 @@ endpoint handlers remain in api.py.
 
 import os
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import HTTPException
 from pydantic import BaseModel, Field, computed_field
@@ -25,6 +25,10 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 SUPPORTED_GAMES: set[str] = {"magic", "pokemon", "yugioh"}
+GameName = Literal["magic", "pokemon", "yugioh"]
+SimilarityMode = Literal["embedding", "jaccard", "jaccard_faceted", "fusion", "meta"]
+ActionType = Literal["add", "remove", "replace", "suggest"]
+CompletionMethod = Literal["greedy", "beam", "ot"]
 
 
 # ---------------------------------------------------------------------------
@@ -58,9 +62,9 @@ class SimilarityRequest(BaseModel):
         UseCaseEnum.substitute,
         description="Use case: 'substitute' (functional replacements), 'synergy' (co-occurrence partners), 'meta' (popular pairings; currently maps to co-occurrence)",
     )
-    mode: str | None = Field(
+    mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', or 'fusion'",
+        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     weights: dict[str, float] | None = Field(
         None,
@@ -112,9 +116,9 @@ class BatchSimilarityRequest(BaseModel):
     queries: list[str] = Field(..., min_length=1, max_length=100, description="Card names to query")
     top_k: int = Field(10, ge=1, le=100, description="Number of results per query")
     game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
-    mode: str | None = Field(
+    mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', or 'fusion'",
+        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     use_case: UseCaseEnum = Field(UseCaseEnum.substitute, description="Use case preset")
     weights: dict[str, float] | None = Field(None, description="Optional fusion weights")
@@ -209,7 +213,7 @@ class SearchResponse(BaseModel):
 
 
 class PatchRequest(BaseModel):
-    game: str = Field(..., description="magic|yugioh|pokemon")
+    game: GameName = Field(..., description="magic|yugioh|pokemon")
     deck: dict = Field(..., description="Deck object matching validators schema")
     patch: DeckPatch
     strict_size: bool | None = Field(None, description="If true, enforce size constraints")
@@ -217,7 +221,7 @@ class PatchRequest(BaseModel):
 
 
 class SuggestActionsRequest(BaseModel):
-    game: str
+    game: GameName
     deck: dict
     seed_card: str | None = None
     top_k: int = 20
@@ -228,7 +232,7 @@ class SuggestActionsRequest(BaseModel):
     curve_weight: float | None = None
     curve_target: dict[int, float] | None = None  # desired CMC distribution
     archetype: str | None = None  # Archetype name for context-aware suggestions
-    action_type: str = "add"  # add|remove|replace|suggest (suggest = all)
+    action_type: ActionType = "add"  # add|remove|replace|suggest (suggest = all)
 
 
 class SuggestedAction(BaseModel):
@@ -259,7 +263,7 @@ class SuggestActionsResponse(BaseModel):
 
 
 class CompleteRequest(BaseModel):
-    game: str
+    game: GameName
     deck: dict
     target_main_size: int | None = None
     mode: str | None = None
@@ -268,7 +272,7 @@ class CompleteRequest(BaseModel):
     coverage_weight: float | None = None
     strict_size: bool | None = None
     check_legality: bool | None = None
-    method: str = "greedy"  # "greedy", "beam", or "ot"
+    method: CompletionMethod = "greedy"  # "greedy", "beam", or "ot"
     beam_width: int = Field(5, ge=1, le=50)  # For beam search
     # Format-aware constraints (OT method)
     format: str | None = Field(
@@ -322,7 +326,6 @@ class ApiState:
         self.visual_embedder: object | None = None
         self.archetype_staples: dict[str, dict[str, float]] | None = None
         self.archetype_cooccurrence: dict[str, dict[str, float]] | None = None
-        self.secondary_embeddings: Any = None  # MetaPath2Vec or other complementary embedding
         self.signal_status: dict[str, bool] | None = None  # Signal loading status
         self.card_metadata: dict[str, dict[str, Any]] | None = None  # Full card attrs w/ image_url
         # Enrichment data (loaded from data/ assets)

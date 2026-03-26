@@ -74,10 +74,10 @@ def test_embedding_synergy_faceted_endpoints():
         "B": {"cmc": 2, "types": {"Creature"}},
     }
 
-    # Embedding substitute
+    # Substitute (routes through fusion with task_type="substitution")
     r1 = client.post("/v1/similar", json={"query": "Bolt", "use_case": "substitute", "top_k": 2})
     assert r1.status_code == 200
-    assert r1.json()["model_info"]["method_used"] == "embedding"
+    assert r1.json()["model_info"]["method_used"] == "fusion"
 
     # Synergy
     r2 = client.get("/v1/cards/Bolt/similar", params={"mode": "synergy", "k": 2})

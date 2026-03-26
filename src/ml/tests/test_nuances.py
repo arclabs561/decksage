@@ -105,14 +105,15 @@ def test_api_embedding_unknown_name_returns_suggestions(api_client):
             # Return a simple, deterministic ordering
             return [(k, 0.5) for k in self.index_to_key[:topn] if k != query]
 
-    # Inject stub embeddings into app state and clear graph
+    # Inject stub embeddings into app state with minimal graph
     state = api_mod.get_state()
     state.embeddings = _StubEmbeddings(["Lightning Bolt", "Chain Lightning", "Rift Bolt"])
-    state.graph_data = None
+    state.graph_data = {"adj": {}, "weights": {}}
 
-    # Force an embedding call with a partial name to trigger suggestions
+    # Force an embedding call with a partial name to trigger suggestions.
+    # Use mode="embedding" to bypass fusion (which handles unknown queries gracefully).
     req = api_mod.SimilarityRequest(
-        query="Lightning", top_k=5, use_case=api_mod.UseCaseEnum.substitute
+        query="Lightning", top_k=5, mode="embedding"
     )
     with pytest.raises(HTTPException) as exc:
         api_mod._similar_impl(req)
