@@ -996,7 +996,7 @@ def _resolve_method(request: SimilarityRequest) -> str:
     if forced_mode in {"embedding", "jaccard", "jaccard_faceted", "fusion", "meta"}:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
-        return "fusion"  # Route through fusion with task_type="substitution" weights
+        return "embedding"  # Cosine until fusion-specific annotations exist (exp 0060)
     if request.use_case is UseCaseEnum.synergy:
         return "jaccard"
     if request.use_case is UseCaseEnum.meta:
