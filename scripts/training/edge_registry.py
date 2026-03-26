@@ -38,6 +38,15 @@ EVAL_ONLY_EDGE_FILES = {
     "diverse_annotation": "{game}_diverse_annotation_edges.edg",
 }
 
+# Source types in the unified SQLite graph that are eval-only.
+# Training scripts reading from IncrementalCardGraph must filter these out.
+# Use TRAINING_SAFE_SOURCE_TYPES with export_edgelist_filtered(source_types=...).
+EVAL_ONLY_SOURCE_TYPES = {"annotation", "diverse_annotation"}
+TRAINING_SAFE_SOURCE_TYPES = [
+    "co_occurrence", "ppmi", "oracle_text", "propagated",
+    "set", "precon", "keyword", "archetype", "commander",
+]
+
 # Quality check pairs per game (for quick sanity checks after training)
 QUALITY_PAIRS = {
     "magic": [
