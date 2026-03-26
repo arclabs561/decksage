@@ -789,7 +789,11 @@ def complete_deck(req: CompleteRequest):
             beam_width=req.beam_width,
             tag_set_fn=tag_set_fn,
             cmc_fn=cmc_fn,
-            curve_target=None,  # TODO: Load from archetype
+            curve_target=(
+                {int(k): v for k, v in matched_template["cmc_histogram"].items()}
+                if matched_template and "cmc_histogram" in matched_template
+                else req.curve_target
+            ),
         )
         # Extract steps from beam search (simplified - beam search doesn't track steps the same way)
         steps: list[dict] = []  # Beam search doesn't return steps in same format
@@ -836,7 +840,11 @@ def complete_deck(req: CompleteRequest):
                 game=game,
                 tag_set_fn=tag_set_fn,
                 cmc_fn=cmc_fn,
-                reference_decks=None,  # TODO: Load reference decks from archetype
+                reference_decks=(
+                    [matched_template["core_cards"]]
+                    if matched_template and "core_cards" in matched_template
+                    else None
+                ),
             )
             quality_metrics = {
                 "mana_curve_score": quality.mana_curve_score,
