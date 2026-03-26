@@ -19,7 +19,8 @@ from ml.utils.path_setup import setup_project_paths
 
 setup_project_paths()
 
-from ml.api.api import SimilarityRequest, UseCaseEnum, _normalize_deck_format, _resolve_method
+from ml.api.api import SimilarityRequest, UseCaseEnum, _resolve_method
+from ml.api.deck_routes import _normalize_deck_format
 from ml.deck_building.contextual_discovery import ContextualCardDiscovery
 
 
@@ -146,7 +147,7 @@ class TestZeroScoreSynergyFiltering:
 
 class TestColorIdentityFiltering:
     def test_extract_deck_colors_magic(self):
-        from ml.api.api import _extract_deck_colors
+        from ml.api.deck_routes import _extract_deck_colors
 
         deck = {
             "partitions": [
@@ -167,7 +168,7 @@ class TestColorIdentityFiltering:
         assert colors == {"R"}
 
     def test_extract_deck_colors_multicolor(self):
-        from ml.api.api import _extract_deck_colors
+        from ml.api.deck_routes import _extract_deck_colors
 
         deck = {
             "partitions": [
@@ -188,13 +189,13 @@ class TestColorIdentityFiltering:
         assert colors == {"R", "U"}
 
     def test_extract_deck_colors_non_magic(self):
-        from ml.api.api import _extract_deck_colors
+        from ml.api.deck_routes import _extract_deck_colors
 
         deck = {"partitions": [{"name": "Main Deck", "cards": [{"name": "X", "count": 1}]}]}
         assert _extract_deck_colors(deck, "yugioh", {}) is None
 
     def test_wrap_cand_fn_filters_offcolor(self):
-        from ml.api.api import _wrap_cand_fn_color_filter
+        from ml.api.deck_routes import _wrap_cand_fn_color_filter
 
         def cand_fn(card, k):
             return [("Red Card", 0.9), ("Green Card", 0.8), ("Red Card 2", 0.7)]
@@ -212,7 +213,7 @@ class TestColorIdentityFiltering:
         assert "Red Card 2" in cards
 
     def test_wrap_cand_fn_allows_colorless(self):
-        from ml.api.api import _wrap_cand_fn_color_filter
+        from ml.api.deck_routes import _wrap_cand_fn_color_filter
 
         def cand_fn(card, k):
             return [("Sol Ring", 0.9), ("Green Card", 0.8)]
@@ -229,7 +230,7 @@ class TestColorIdentityFiltering:
         assert "Green Card" not in cards
 
     def test_wrap_cand_fn_allows_unknown_cards(self):
-        from ml.api.api import _wrap_cand_fn_color_filter
+        from ml.api.deck_routes import _wrap_cand_fn_color_filter
 
         def cand_fn(card, k):
             return [("Unknown Card", 0.9)]
