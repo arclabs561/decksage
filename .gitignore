@@ -246,6 +246,9 @@ experiments/model_registry.lock
 annotations/
 archive/
 
+# Test sets and annotations (derived data, lives on S3)
+data/test_sets/
+
 # Derived data containing scraped card names/metadata (licensing risk)
 # All derived data lives on S3 (s3://games-collections/), not in git.
 data/processed/*.jsonl
