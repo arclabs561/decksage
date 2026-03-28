@@ -291,10 +291,12 @@ src/backend/games/magic/dataset/scryfall/.cache/
 /data/test_sets/annotated_*.json
 
 # Model weights and large processed data
+models/*.pkl
 data/models/
 data/processed/*.pkl
 runctl.toml
 data/checkpoints/
+src/ml/experimental/*.jsonl
 
 # Reference materials (large PDFs gitignored; README + pull script tracked)
 references/rulebooks/
