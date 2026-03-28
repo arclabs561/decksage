@@ -75,25 +75,9 @@ Interactive docs at `/docs` when the server is running.
 | `embedding` | Raw embedding cosine | Direct embedding similarity |
 | `jaccard` | Jaccard index | Direct co-occurrence overlap |
 
-## Similarity Signals
-
-| Signal | Source | Status |
-|---|---|---|
-| Co-occurrence embedding | PecanPy + Word2Vec on 184K decks, 128D, spectral propagation + attribute fusion (v7) | Active |
-| Text embedding | E5-base-instruct (instruction-tuned) | Active |
-| Jaccard co-occurrence | Deck pair overlap from pairs CSVs | Active |
-| Visual embedding | SigLIP card image embeddings | Optional |
-| Functional tags | Card type, mana cost, keyword matching | Active |
-
 ## Data
 
-| Game | Decks | Embedding vocab | Pairs |
-|---|---|---|---|
-| Magic | 82,739 | 21,151 (v7 spectral) | 7.1M |
-| Pokemon | 24,483 | 4,384 (v7 fused) | 179K |
-| Yu-Gi-Oh | 77,016 | 13,745 (v7 spectral) | 1.8M |
-
-Sources: MTGGoldfish, MTGTop8, Limitless TCG, MasterDuelMeta, YGOProDeck.
+Trained on 184K tournament deck lists (Magic 83K, Yu-Gi-Oh 77K, Pokemon 24K) from MTGGoldfish, MTGTop8, Limitless TCG, MasterDuelMeta, YGOProDeck. Similarity signals: co-occurrence embeddings (PecanPy + Word2Vec, 128D), text embeddings (E5-base-instruct), Jaccard co-occurrence, optional visual embeddings (SigLIP), and functional tag matching.
 
 ## Evaluation
 
