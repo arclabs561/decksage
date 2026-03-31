@@ -204,6 +204,8 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
+    "accelerate>=1.13.0",
+    "datasets>=4.8.4",
     "filelock>=3.20.2",
     "hypothesis>=6.147.0",
     "pytest>=9.0.0",
