@@ -245,7 +245,31 @@ The multi-model cascade ($0.40/1K pairs, correlation 0.639) enabled 89K annotati
 
 Production pipeline: PecanPy (ns=-0.5) -> spectral propagation (ProNE, mu=0.3-0.35) -> card attribute fusion (alpha=0.7, PCA 128D).
 
+---
+
+## Phase 10: The Evaluation Blind Spot (2026-03-30, this session)
+
+Systematic comparison of the "highly_relevant" annotations against text similarity (E5) top-5 revealed **100% divergence for Magic and Pokemon** -- zero overlap between what the eval considers ground truth and what text similarity identifies as functional substitutes. Yu-Gi-Oh showed only 17% divergence (archetype naming aligns co-occurrence with text similarity).
+
+Examples:
+- Mirror Box (ignores legend rule) -> eval says The Wandering Emperor. Text says Mirror Gallery (same effect).
+- Chandra's Ignition (board damage) -> eval says Lead Golem. Text says Alpha Brawl, Solar Blaze (board damage).
+- Memory Lapse (counterspell) -> eval says Greater Werewolf, Serra Paladin as "highly relevant."
+
+**Root cause**: annotations were generated from co-occurrence embedding top-K. The LLM annotators were only shown co-occurrence neighbors, never text-similarity candidates. 9.2 out of 10 text_e5 top-10 candidates per query have no annotation at all.
+
+**Fix implemented**: text-similarity-boosted substitute mode. When `use_case=substitute`, the reranker boosts text_e5 weight to 0.5 and dampens co-occurrence sources by 70%. Result:
+
+| Query | Before (co-occurrence) | After (text-boosted) |
+|-------|----------------------|---------------------|
+| Wrath of God | Sacred Ground (wrong) | Damnation (correct) |
+| Lightning Bolt | Skullcrack (acceptable) | Lightning Strike (better) |
+| Counterspell | Spell Snare (good) | Negate (good) |
+| Mirror Force | Storming Mirror Force | Storming Mirror Force |
+
+The text_e5 embeddings (E5-base-v2 on card oracle text) already had the right answers. They just weren't being surfaced.
+
 **Open questions**:
-1. Can fusion routing improve substitution quality once fusion-specific annotations exist?
-2. What is the ceiling for co-occurrence-based embeddings? (Ceiling analysis in exp 0025 suggests 95.6% of annotated ground truth IS in the top-K -- retrieval is good, ranking is the problem.)
-3. Can contrastive fine-tuning on the annotation data close the gap between complement and substitute signal?
+1. The evaluation nDCG numbers (0.525 for Magic) measure ranking quality for co-occurrence candidates only. What is the true substitute nDCG after adding text_e5 annotations?
+2. Can a unified embedding (contrastive fine-tuning on both co-occurrence and text similarity) outperform the signal-switching approach?
+3. Yu-Gi-Oh's low divergence suggests archetype-heavy games don't need text boosting. Is this generalizable?
