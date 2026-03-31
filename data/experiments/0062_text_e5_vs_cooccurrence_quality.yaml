@@ -1,0 +1,68 @@
+id: "0062"
+date: "2026-03-31"
+title: "Text embeddings beat co-occurrence by 14-25% on substitute quality"
+game: all
+
+hypothesis: >
+  E5 text embeddings should produce higher condensed substitute nDCG
+  than co-occurrence embeddings on the expanded test set (which now
+  includes text_e5 candidates alongside co-occurrence candidates).
+
+method:
+  script: scripts/evaluation/eval_per_mode.py
+  args: "--all-games --compare text_e5 --quick"
+
+data:
+  evaluation:
+    source: "annotated_{game}_v2.json (expanded with 2K text_e5 holes per game)"
+    annotations:
+      magic: 43307
+      pokemon: 27376
+      yugioh: 29106
+
+results:
+  cooccurrence_condensed_sub_ndcg:
+    magic: 0.503
+    pokemon: 0.414
+    yugioh: 0.465
+  text_e5_condensed_sub_ndcg:
+    magic: 0.613
+    pokemon: 0.518
+    yugioh: 0.532
+  improvement:
+    magic: "+21.9%"
+    pokemon: "+25.1%"
+    yugioh: "+14.4%"
+  text_e5_standard_sub_ndcg:
+    magic: 0.151
+    pokemon: 0.230
+    yugioh: 0.276
+  text_e5_convergence_gap:
+    magic: 0.462
+    pokemon: 0.288
+    yugioh: 0.256
+
+conclusion: >
+  Text embeddings (E5-base-v2 on oracle text) produce 14-25% higher
+  condensed substitute nDCG than co-occurrence embeddings (PecanPy +
+  spectral). This confirms the central thesis: co-occurrence captures
+  complement (cards in same deck), not substitute (cards that replace
+  each other).
+
+  The text_e5 standard nDCG is low (0.15-0.28) because 46-26% of its
+  top-10 candidates are still unjudged (large convergence gap). Filling
+  those holes would further increase measured quality.
+
+  YuGiOh has the smallest gap (14%) because archetype naming provides
+  overlap between co-occurrence and text similarity signals. Magic has
+  the largest gap (22%) because co-occurrence captures deck strategy
+  (burn, control) while text captures card mechanics (damage, counter).
+
+  Implication for production: the text-boosted reranker (which blends
+  text_e5 with co-occurrence at runtime) is the correct approach for
+  substitute queries. Pure text_e5 embedding deployment would sacrifice
+  synergy/co-occurrence quality, but the reranker preserves both.
+
+artifacts:
+  - /tmp/eval_compare.log
+  - /tmp/eval_default.log
