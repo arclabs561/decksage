@@ -85,6 +85,28 @@ def find_holes(game: str, k: int = 10, method: str = "cosine") -> list[tuple[str
     if method == "fusion":
         return _find_holes_fusion(kv, queries, game, k)
 
+    if method == "text_e5":
+        text_path = DATA_DIR / "embeddings" / f"{game}_text_e5.wv"
+        text_kv = KeyedVectors.load(str(text_path))
+        normed = text_kv.get_normed_vectors()
+        idx_to_key = text_kv.index_to_key
+        valid_queries = [(qn, qd) for qn, qd in queries.items() if qn in text_kv.key_to_index]
+        query_indices = [text_kv.key_to_index[qn] for qn, _ in valid_queries]
+        query_matrix = normed[query_indices]
+        all_sims = query_matrix @ normed.T
+        for i, qi in enumerate(query_indices):
+            all_sims[i, qi] = -2.0
+        holes = []
+        for i, (qname, qdata) in enumerate(valid_queries):
+            annotated = {ann.get("candidate", "") for ann in qdata.get("annotations", [])}
+            top_k_idx = np.argpartition(all_sims[i], -k)[-k:]
+            top_k_idx = top_k_idx[np.argsort(-all_sims[i][top_k_idx])]
+            for j in top_k_idx:
+                card = idx_to_key[j]
+                if card not in annotated:
+                    holes.append((qname, card))
+        return holes
+
     normed = kv.get_normed_vectors()
     idx_to_key = kv.index_to_key
 
@@ -361,8 +383,8 @@ def main() -> int:
     parser.add_argument("--max-per-game", type=int, default=5000, help="Max holes to fill per game")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
-        "--method", default="cosine", choices=["cosine", "fusion"],
-        help="Candidate retrieval: 'cosine' (embedding) or 'fusion' (text+functional for substitution)",
+        "--method", default="cosine", choices=["cosine", "fusion", "text_e5"],
+        help="Candidate retrieval: 'cosine' (embedding), 'fusion' (text+functional), 'text_e5' (text similarity holes)",
     )
     parser.add_argument("--concurrency", type=int, default=20)
     args = parser.parse_args()
