@@ -173,10 +173,13 @@ def _add_symmetric_pairs(pairs: list[dict]) -> list[dict]:
 
 
 def _balance_scores(pairs: list[dict], zero_ratio: float = 0.20) -> list[dict]:
-    """Downsample zero-score pairs to target ratio.
+    """Downsample zero-score pairs, preferring hard negatives.
 
-    Raw annotations are 36-51% exactly 0.0. Downsample zeros to ~20%
-    so the model learns graded similarity, not just zero/nonzero.
+    Raw annotations are 36-51% exactly 0.0. Downsample to ~20%, but
+    prioritize same-type zeros (hard negatives: Creature vs Creature=0)
+    over cross-type zeros (easy negatives: Creature vs Sorcery=0).
+    Hard negatives provide more gradient signal because the model
+    can't trivially distinguish them by type alone.
     """
     zeros = [p for p in pairs if p["score"] < 0.01]
     nonzeros = [p for p in pairs if p["score"] >= 0.01]
@@ -188,12 +191,29 @@ def _balance_scores(pairs: list[dict], zero_ratio: float = 0.20) -> list[dict]:
     if target_zeros >= len(zeros):
         return pairs
 
-    rng = np.random.RandomState(42)
-    sampled_zeros = [zeros[i] for i in rng.choice(len(zeros), size=target_zeros, replace=False)]
+    # Classify zeros as hard (same base type) or easy (different type)
+    hard_zeros = []
+    easy_zeros = []
+    for p in zeros:
+        q_type = p["query_text"].split("|")[1].strip().split(" — ")[0].strip() if "|" in p["query_text"] else ""
+        c_type = p["candidate_text"].split("|")[1].strip().split(" — ")[0].strip() if "|" in p["candidate_text"] else ""
+        if q_type and c_type and q_type == c_type:
+            hard_zeros.append(p)
+        else:
+            easy_zeros.append(p)
 
-    log.info(f"  Downsampled zeros: {len(zeros)} -> {len(sampled_zeros)} "
-             f"({len(sampled_zeros)/(len(sampled_zeros)+len(nonzeros))*100:.0f}% of total)")
-    return nonzeros + sampled_zeros
+    rng = np.random.RandomState(42)
+    # Take all hard negatives first, fill remainder with easy ones
+    if len(hard_zeros) >= target_zeros:
+        sampled = [hard_zeros[i] for i in rng.choice(len(hard_zeros), size=target_zeros, replace=False)]
+    else:
+        remainder = target_zeros - len(hard_zeros)
+        easy_sample = [easy_zeros[i] for i in rng.choice(len(easy_zeros), size=min(remainder, len(easy_zeros)), replace=False)]
+        sampled = hard_zeros + easy_sample
+
+    log.info(f"  Downsampled zeros: {len(zeros)} -> {len(sampled)} "
+             f"(hard: {min(len(hard_zeros), target_zeros)}, easy: {len(sampled) - min(len(hard_zeros), target_zeros)})")
+    return nonzeros + sampled
 
 
 def _add_hard_negatives(pairs: list[dict], ratio: float = 0.10) -> list[dict]:
