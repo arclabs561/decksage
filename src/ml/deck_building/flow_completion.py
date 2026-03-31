@@ -33,6 +33,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+
 try:
     import torch
     import torch.nn as nn
@@ -42,8 +43,6 @@ try:
 except ImportError:
     HAS_TORCH = False
 
-from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
-from .deck_completion import _legal_add, _main_partition_name
 
 logger = logging.getLogger("decksage.flow_completion")
 

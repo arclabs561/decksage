@@ -5,7 +5,6 @@ Consolidates common patterns used across multiple scripts.
 
 from pathlib import Path
 
-import pandas as pd
 from gensim.models import KeyedVectors
 
 

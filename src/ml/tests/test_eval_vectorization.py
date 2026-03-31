@@ -12,6 +12,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+
 # Add scripts dir so we can import eval_per_mode
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 SCRIPTS_DIR = PROJECT_ROOT / "scripts" / "evaluation"
@@ -51,9 +52,7 @@ def sample_queries(wv: KeyedVectors) -> list[str]:
 
 
 @needs_embedding
-def test_batch_neighbors_match_gensim_names(
-    wv: KeyedVectors, sample_queries: list[str]
-) -> None:
+def test_batch_neighbors_match_gensim_names(wv: KeyedVectors, sample_queries: list[str]) -> None:
     """Top-K neighbor names from batch must equal gensim most_similar."""
     k = 20
     cache = _precompute_neighbors(wv, sample_queries, max_k=k)
@@ -76,9 +75,7 @@ def test_batch_neighbors_match_gensim_names(
 
 
 @needs_embedding
-def test_batch_neighbors_ordering_is_identical(
-    wv: KeyedVectors, sample_queries: list[str]
-) -> None:
+def test_batch_neighbors_ordering_is_identical(wv: KeyedVectors, sample_queries: list[str]) -> None:
     """Verify strict position-by-position ordering matches gensim."""
     k = 30
     cache = _precompute_neighbors(wv, sample_queries, max_k=k)
@@ -87,12 +84,9 @@ def test_batch_neighbors_ordering_is_identical(
         gensim_neighbors = wv.most_similar(q, topn=k)
         batch_neighbors = cache[q]
 
-        for rank, (g_pair, b_pair) in enumerate(
-            zip(gensim_neighbors, batch_neighbors)
-        ):
+        for rank, (g_pair, b_pair) in enumerate(zip(gensim_neighbors, batch_neighbors)):
             assert g_pair[0] == b_pair[0], (
-                f"Rank {rank} mismatch for '{q}': "
-                f"gensim='{g_pair[0]}' vs batch='{b_pair[0]}'"
+                f"Rank {rank} mismatch for '{q}': gensim='{g_pair[0]}' vs batch='{b_pair[0]}'"
             )
 
 
@@ -100,9 +94,7 @@ def test_batch_neighbors_ordering_is_identical(
 
 
 @needs_embedding
-def test_batch_neighbors_scores_match(
-    wv: KeyedVectors, sample_queries: list[str]
-) -> None:
+def test_batch_neighbors_scores_match(wv: KeyedVectors, sample_queries: list[str]) -> None:
     """Similarity scores must match gensim within 1e-4."""
     k = 20
     cache = _precompute_neighbors(wv, sample_queries, max_k=k)
@@ -137,9 +129,7 @@ def test_query_not_in_vocab_returns_empty(wv: KeyedVectors) -> None:
 @needs_embedding
 def test_all_queries_missing_returns_empty_dict(wv: KeyedVectors) -> None:
     """All-missing query list must return an empty dict."""
-    cache = _precompute_neighbors(
-        wv, ["___MISSING_1___", "___MISSING_2___"], max_k=10
-    )
+    cache = _precompute_neighbors(wv, ["___MISSING_1___", "___MISSING_2___"], max_k=10)
     assert cache == {}
 
 
@@ -214,8 +204,7 @@ def test_eval_game_deterministic() -> None:
     for mode in ["substitute", "synergy", "meta"]:
         key = f"mode_{mode}"
         assert run1[key]["ndcg_at_k"] == run2[key]["ndcg_at_k"], (
-            f"Non-deterministic {mode} nDCG: "
-            f"{run1[key]['ndcg_at_k']} vs {run2[key]['ndcg_at_k']}"
+            f"Non-deterministic {mode} nDCG: {run1[key]['ndcg_at_k']} vs {run2[key]['ndcg_at_k']}"
         )
 
     assert run1["substitutability_ndcg"]["ndcg_at_k"] == run2["substitutability_ndcg"]["ndcg_at_k"]
