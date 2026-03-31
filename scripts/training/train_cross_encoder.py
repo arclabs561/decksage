@@ -167,7 +167,10 @@ def train(games: list[str], epochs: int = 3, batch_size: int = 32, model_name: s
 
     # Final evaluation
     val_score = evaluator(model)
-    log.info(f"Val correlation: {val_score:.4f}")
+    if isinstance(val_score, dict):
+        log.info(f"Val correlation: {val_score}")
+    else:
+        log.info(f"Val correlation: {val_score:.4f}")
 
     # Quick qualitative check
     log.info("\nQualitative check:")
