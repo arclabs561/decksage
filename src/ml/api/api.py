@@ -1520,18 +1520,9 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
             **(
                 {
                     "fusion_signals": [
-                        s
-                        for s in [
-                            "embed",
-                            "jaccard",
-                            "functional",
-                            "text_embed",
-                            "visual_embed",
-                            "archetype",
-                        ]
-                        if getattr(state, "text_embedder", None) is not None or s != "text_embed"
-                        if getattr(state, "visual_embedder", None) is not None
-                        or s != "visual_embed"
+                        s for s in ["embed", "jaccard", "functional", "text_embed", "visual_embed", "archetype"]
+                        if not (s == "text_embed" and getattr(state, "text_embedder", None) is None)
+                        if not (s == "visual_embed" and getattr(state, "visual_embedder", None) is None)
                     ],
                 }
                 if method == "fusion"
