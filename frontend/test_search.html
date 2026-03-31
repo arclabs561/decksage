@@ -70,34 +70,7 @@
             z-index: 1000;
         }
 
-        /* === MAGIC: THE GATHERING === */
-        /* Light hybrid: white canvas, purple + gold accents, serif card names */
-        body.game-magic {
-            --color-bg-primary:      #fafafc;
-            --color-bg-secondary:    #f3f1f8;
-            --color-bg-tertiary:     #eae6f2;
-            --color-bg-elevated:     #ffffff;
-            --color-border-default:  #e0dce8;
-            --color-border-focus:    #7c5cbf;
-            --color-text-primary:    #1d1d1f;
-            --color-text-secondary:  #6e6e73;
-            --color-text-muted:      #86868b;
-            --color-text-link:       #7c5cbf;
-            --color-accent-primary:  #7c5cbf;
-            --color-accent-secondary:#b8993e;
-            --btn-bg:                #7c5cbf;
-            --btn-bg-hover:          #8d6dd0;
-            --btn-text:              #fff;
-            --search-bg:             #f3f1f8;
-            --search-border:         #e0dce8;
-            --search-focus-shadow:   0 0 0 4px rgba(124, 92, 191, 0.12);
-            --card-bg:               #ffffff;
-            --card-border-accent:    #e0dce8;
-            --card-hover-bg:         #f8f6fc;
-            --card-hover-border:     #7c5cbf;
-            --card-hover-shadow:     0 4px 20px rgba(124, 92, 191, 0.12);
-            --tab-active-color:      #7c5cbf;
-            --tab-active-border:     #7c5cbf;
+        /* === Per-game themes removed: unified minimal design ===
             --skeleton-bg:           #eae6f2;
             --match-color:           #7c5cbf;
             --similarity-fill:       #7c5cbf;
@@ -367,23 +340,23 @@
         body.game-yugioh .result-item:hover .result-image-wrapper {
             box-shadow: 0 4px 16px rgba(184, 153, 62, 0.12);
         }
-        body.game-yugioh .similarity-percent {
-            color: #b8993e;
-        }
+        === end per-game themes */
 
         /* Skip link for accessibility */
         .skip-link {
             position: absolute;
-            top: -40px;
+            top: -100px;
             left: 0;
             background: var(--color-accent-primary);
             color: #fff;
             padding: 8px;
             text-decoration: none;
             z-index: 100;
+            opacity: 0;
         }
         .skip-link:focus {
-            top: 0;
+            top: 8px;
+            opacity: 1;
         }
         .container {
             max-width: 900px;
@@ -1837,6 +1810,50 @@
             border-radius: 3px;
             transition: width 0.4s ease;
         }
+        /* Score breakdown mini-bars */
+        .score-breakdown {
+            margin-top: 8px;
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .breakdown-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            line-height: 1;
+        }
+        .breakdown-label {
+            width: 90px;
+            flex-shrink: 0;
+            color: var(--color-text-muted);
+            text-align: right;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .breakdown-bar-bg {
+            flex: 1;
+            height: 4px;
+            background: var(--color-bg-tertiary);
+            border-radius: 2px;
+            overflow: hidden;
+            max-width: 120px;
+        }
+        .breakdown-bar-fill {
+            height: 100%;
+            background: var(--color-accent-primary);
+            border-radius: 2px;
+            opacity: 0.7;
+        }
+        .breakdown-val {
+            width: 32px;
+            flex-shrink: 0;
+            color: var(--color-text-secondary);
+            font-variant-numeric: tabular-nums;
+        }
+
         /* Deck completion UI */
         .deck-input {
             width: 100%;
@@ -2020,6 +2037,118 @@
             .nav-tabs {
                 flex-wrap: wrap;
             }
+        }
+        /* === Unified theme override: neutralize all per-game styles === */
+        body.game-magic,
+        body.game-pokemon,
+        body.game-yugioh {
+            /* Reset to base theme variables */
+            --color-bg-primary:      #ffffff;
+            --color-bg-secondary:    #f5f5f7;
+            --color-bg-tertiary:     #e8e8ed;
+            --color-bg-elevated:     #ffffff;
+            --color-border-default:  #d2d2d7;
+            --color-border-focus:    #0071e3;
+            --color-text-primary:    #1d1d1f;
+            --color-text-secondary:  #6e6e73;
+            --color-text-muted:      #86868b;
+            --color-text-link:       #0071e3;
+            --color-accent-primary:  #0071e3;
+            --color-accent-secondary:#1d1d1f;
+            --btn-bg:                #0071e3;
+            --btn-bg-hover:          #0077ed;
+            --btn-text:              #fff;
+            --search-bg:             #f5f5f7;
+            --search-border:         #d2d2d7;
+            --search-focus-shadow:   0 0 0 4px rgba(0, 113, 227, 0.15);
+            --card-bg:               #ffffff;
+            --card-border-accent:    #d2d2d7;
+            --card-hover-bg:         #f5f5f7;
+            --card-hover-border:     #0071e3;
+            --card-hover-shadow:     0 4px 16px rgba(0, 0, 0, 0.08);
+            --tab-active-color:      #1d1d1f;
+            --tab-active-border:     #1d1d1f;
+            --skeleton-bg:           #e8e8ed;
+            --match-color:           #1d1d1f;
+            --similarity-fill:       #0071e3;
+            --section-gradient:      linear-gradient(90deg, #0071e3, #1d1d1f);
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            background: #ffffff !important;
+        }
+        body.game-magic::before,
+        body.game-pokemon::before,
+        body.game-yugioh::before {
+            background: linear-gradient(90deg, #0071e3, #5856d6) !important;
+            height: 3px !important;
+        }
+        body.game-magic h1,
+        body.game-pokemon h1,
+        body.game-yugioh h1 {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
+            color: var(--color-text-primary) !important;
+            text-transform: none !important;
+            letter-spacing: -0.01em !important;
+            font-size: 32px !important;
+        }
+        body.game-magic .result-name,
+        body.game-pokemon .result-name,
+        body.game-yugioh .result-name {
+            font-family: inherit !important;
+            color: var(--color-text-primary) !important;
+            font-size: 18px !important;
+            font-weight: 600 !important;
+            letter-spacing: -0.01em !important;
+        }
+        body.game-magic .result-item,
+        body.game-pokemon .result-item,
+        body.game-yugioh .result-item {
+            background: var(--card-bg) !important;
+            border: 1px solid var(--card-border-accent) !important;
+            border-left: none !important;
+            border-radius: 12px !important;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06) !important;
+        }
+        body.game-magic .result-item:hover,
+        body.game-pokemon .result-item:hover,
+        body.game-yugioh .result-item:hover {
+            background: var(--card-hover-bg) !important;
+            border-color: var(--card-hover-border) !important;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 20px rgba(0,0,0,0.06) !important;
+            transform: translateY(-2px) !important;
+        }
+        body.game-magic .similarity-percent,
+        body.game-pokemon .similarity-percent,
+        body.game-yugioh .similarity-percent {
+            color: var(--color-accent-primary) !important;
+            font-family: inherit !important;
+        }
+        body.game-magic .search-button,
+        body.game-pokemon .search-button,
+        body.game-yugioh .search-button {
+            font-family: inherit !important;
+            text-transform: none !important;
+        }
+        body.game-magic .nav-tab,
+        body.game-pokemon .nav-tab,
+        body.game-yugioh .nav-tab {
+            font-family: inherit !important;
+            text-transform: none !important;
+        }
+        body.game-magic .search-input,
+        body.game-pokemon .search-input,
+        body.game-yugioh .search-input {
+            font-family: inherit !important;
+        }
+        body.game-pokemon .result-item[data-energy-type] {
+            border-left: none !important;
+        }
+        /* Move oracle text up and make it readable */
+        .result-oracle {
+            margin-top: 8px !important;
+            font-style: normal !important;
+            font-size: 13px !important;
+            color: var(--color-text-secondary) !important;
+            line-height: 1.5 !important;
         }
     </style>
 </head>
@@ -3486,6 +3615,26 @@
 
                 const meta = result.metadata || {};
                 const game = (data?.model_info?.game || 'magic').toLowerCase();
+
+                // Score breakdown mini-bars (from reranker per-source signals)
+                let breakdownHtml = '';
+                if (meta.score_breakdown && typeof meta.score_breakdown === 'object') {
+                    const entries = Object.entries(meta.score_breakdown);
+                    if (entries.length > 0) {
+                        const maxVal = Math.max(...entries.map(([, v]) => Math.abs(v)), 0.01);
+                        const bars = entries.map(([src, val]) => {
+                            const pct = Math.min(Math.abs(val) / maxVal * 100, 100);
+                            const label = src.replace(/_/g, ' ').replace(/v\d+/, m => m.toUpperCase());
+                            return `<div class="breakdown-row">
+                                <span class="breakdown-label">${escapeHtml(label)}</span>
+                                <div class="breakdown-bar-bg"><div class="breakdown-bar-fill" style="width:${pct.toFixed(0)}%"></div></div>
+                                <span class="breakdown-val">${(val * 100).toFixed(0)}%</span>
+                            </div>`;
+                        }).join('');
+                        breakdownHtml = `<div class="score-breakdown">${bars}</div>`;
+                    }
+                }
+
                 const metaParts = [];
                 if (meta.type) metaParts.push(meta.type);
                 if (game === 'magic' && meta.mana_cost) metaParts.push(meta.mana_cost);
@@ -3674,7 +3823,7 @@
                             <div class="result-image-wrapper" ondblclick="event.stopPropagation();openCardDrawer(${index})">${cardImage}</div>
                             <div class="result-content">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
-                                    <div class="result-name ${attrClass}">${rarityDotHtml}${cardNameEscaped}</div>
+                                    <div class="result-name">${rarityDotHtml}${cardNameEscaped}</div>
                                     <svg class="expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                                 </div>
                                 <div class="result-similarity">
@@ -3686,22 +3835,10 @@
                                         <div class="similarity-fill" style="width: ${result.similarity * 100}%"></div>
                                     </div>
                                 </div>
+                                ${breakdownHtml}
                                 ${metaText ? `<div class="result-meta">${escapeHtml(metaText)}</div>` : ''}
                                 ${statBadgesHtml}
-                                ${keywordHtml}
                                 ${archetypeBadgeHtml}
-                                ${formatLegalityHtml}
-                                ${deckPopularityHtml}
-                                ${cooccurrenceChipsHtml}
-                                ${setInfoHtml}
-                                ${functionalTags ? `<div class="result-tags"><span class="tag-label">Function:</span> ${escapeHtml(functionalTags)}</div>` : ''}
-                                ${formatLegal ? `<div class="result-format"><span class="tag-label">Legal in:</span> ${escapeHtml(formatLegal)}</div>` : ''}
-                                ${cooccurNote ? `<div class="result-cooccur"><span class="tag-label">Co-occurrence:</span> ${escapeHtml(cooccurNote)}</div>` : ''}
-                                ${archetypeCooccur ? `<div class="result-archetype-cooccur"><span class="tag-label">Shared archetypes:</span> ${escapeHtml(archetypeCooccur)}</div>` : ''}
-                                ${formatCooccur ? `<div class="result-format-cooccur"><span class="tag-label">Format:</span> ${escapeHtml(formatCooccur)}</div>` : ''}
-                                ${substitutabilityText ? `<div class="result-substitutability ${escapeHtml(substitutabilityClass)}">${escapeHtml(substitutabilityText)}</div>` : ''}
-                                ${relevanceSnippetHtml}
-                                ${summonReqHtml}
                                 ${oraclePreview ? `<div class="result-oracle">${escapeHtml(oraclePreview)}</div>` : ''}
                                 <div class="result-explanation" data-card="${escapeHtml(result.card)}" style="display:none;"></div>
                             </div>
@@ -3709,6 +3846,10 @@
                         <!-- Expandable detail panel -->
                         <div class="result-expand-panel">
                             ${oracleFull ? `<div class="expand-full-text">${escapeHtml(oracleFull)}</div>` : ''}
+                            ${keywordHtml}
+                            ${formatLegalityHtml}
+                            ${deckPopularityHtml}
+                            ${cooccurrenceChipsHtml}
                             ${expandStatsHtml}
                             <div class="expand-actions">
                                 <button class="expand-action-btn primary" onclick="event.stopPropagation();findSimilarFromCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Find Similar</button>

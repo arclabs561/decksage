@@ -1259,7 +1259,17 @@ def _similar_reranker(
         denom = max_score - min_score if max_score > min_score else 1.0
         scored = [(card, (s - min_score) / denom) for card, s in scored]
 
-    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in scored]
+    results = []
+    for card, sim in scored:
+        sc = _enrich_similar_card(card, sim, state, game=game)
+        # Inject per-source signal breakdown into metadata
+        raw_sims = candidate_sims.get(card, {})
+        if raw_sims and sc.metadata is not None:
+            sc.metadata["score_breakdown"] = {
+                src: round(v, 4) for src, v in sorted(raw_sims.items(), key=lambda x: -x[1])
+            }
+        results.append(sc)
+    return results
 
 
 def _similar_jaccard(state: ApiState, query: str, k: int, *, game: str) -> list[SimilarCard]:
