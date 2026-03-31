@@ -1,0 +1,51 @@
+id: "0064"
+date: "2026-03-31"
+title: "E5 bi-encoder fine-tuning on TCG pairs"
+game: magic
+hypothesis: >
+  Fine-tuning E5-base-v2 on TCG card similarity pairs should improve
+  embedding quality over zero-shot. Faster and higher leverage than
+  cross-encoder reranking (improves all lookups, not just reranked ones).
+method:
+  script: scripts/training/finetune_e5.py
+  args: "--source annotations --epochs 1 --batch-size 64 --max-pairs 5000"
+  notes: |
+    5K high-signal pairs (score > 0.4 or < 0.05), query-level split,
+    CosineSimilarityLoss, default learning rate (2e-5).
+    Training time: 145s (2.5 min) on MPS.
+data:
+  training:
+    source: annotated_magic_v2.json (5K filtered pairs)
+    count: 5000
+  validation:
+    source: held-out 300 queries from same file
+    count: 2079
+results:
+  baseline_e5_zero_shot:
+    pearson: 0.438
+    spearman: 0.377
+    notes: "E5-base-v2 without fine-tuning, on query-level held-out val"
+  after_1_epoch:
+    pearson: 0.293
+    spearman: 0.198
+    notes: "WORSE -- catastrophic forgetting. Model collapsed similarity scale."
+  qualitative:
+    wrath_damnation: 0.467  # was 0.970 zero-shot
+    wrath_counterspell: 0.231  # was 0.839 zero-shot
+    bolt_strike: 0.842  # was 0.986 zero-shot
+    bolt_cultivate: 0.254  # was 0.771 zero-shot
+conclusion: >
+  Fine-tuning E5 on 5K TCG pairs with default LR caused catastrophic
+  forgetting. The model lost general language understanding to fit domain
+  pairs. Correlation dropped from 0.438 to 0.293 (Pearson).
+
+  E5 zero-shot is already good. The text-boosted reranker (signal routing)
+  is the right architecture -- it uses E5's existing quality without
+  risking catastrophic forgetting. Fine-tuning would require: much lower
+  LR (1e-6), frozen early layers, or LoRA adapters.
+
+  Key learning: for a 109M param model, 5K pairs is catastrophically few.
+  Domain adaptation needs either massive data or parameter-efficient methods.
+artifacts:
+  - scripts/training/finetune_e5.py
+  - data/models/e5_tcg_finetuned/ (degraded model, not for production)
