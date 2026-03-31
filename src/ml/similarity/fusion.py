@@ -625,6 +625,9 @@ class WeightedLateFusion:
             task_type=effective_task_type,
         )
 
+        # Store for external access (API breakdown)
+        self._last_modality_scores = modality_scores
+
         # Aggregate scores based on method
         if self.aggregator in ("rrf", "isr"):
             # For rank-based aggregators, convert scores to ranks per modality.
