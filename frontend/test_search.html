@@ -2628,6 +2628,15 @@
             });
             document.getElementById(`${tabName}-tab`).classList.add('active');
 
+            // Carry query to compare tab when switching
+            if (tabName === 'compare') {
+                const mainQuery = document.getElementById('unifiedInput')?.value?.trim();
+                const compareInput = document.getElementById('compareInput');
+                if (mainQuery && compareInput && !compareInput.value) {
+                    compareInput.value = mainQuery;
+                }
+            }
+
             if (pushHistory) pushURL(getCurrentURLState());
         }
 
@@ -4407,6 +4416,9 @@
                 targetInput.value = defaults[game] || 60;
                 targetInput.placeholder = String(defaults[game] || 60);
             }
+            // Sync compare tab game selector
+            const compareGame = document.getElementById('compareGameSelect');
+            if (compareGame) compareGame.value = game;
             // Persist selection
             localStorage.setItem('decksage_game', game);
 
