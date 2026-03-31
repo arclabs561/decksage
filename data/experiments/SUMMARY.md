@@ -65,6 +65,9 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0058 | 2026-03-25 | **Fill eval holes round 1** (key) | all | 5K holes per game, multi cascade | sub nDCG | Magic 0.104->**0.233**, Pokemon 0.088->**0.190**, YuGiOh 0.160->**0.240**. ~$6 total. 42K holes remain | [0058](0058_fill_eval_holes_round1.yaml) |
 | 0059 | 2026-03-25 | **Fill eval holes round 2 -- SATURATED** (key) | all | remaining holes, multi cascade | sub nDCG | Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations | [0059](0059_fill_eval_holes_round2.yaml) |
 | 0060 | 2026-03-26 | Fusion-path substitute eval | magic | v7_spectral, 36K annotations | sub nDCG | Cosine: **0.525**, Fusion: **0.031** (gap=0.256). Test set is cosine-specific; fusion candidates unjudged. Need fusion-specific annotation filling | [0060](0060_fusion_path_eval.yaml) |
+| 0061 | 2026-03-31 | Text_e5 annotation holes | all | 6K new annotations | sub nDCG | Co-occur nDCG drops 3-6% (expected: can't rank text-similar candidates) | [0061](0061_text_e5_annotation_holes.yaml) |
+| 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | Text_e5 wins: M:**0.613** (+22%), P:**0.518** (+25%), Y:**0.532** (+14%) | [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
+| 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** (honest, query-level split) | [0063](0063_cross_encoder_reranker.yaml) |
 
 ## Key Insights (cross-cutting)
 
