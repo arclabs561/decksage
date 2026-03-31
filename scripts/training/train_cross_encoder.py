@@ -445,6 +445,20 @@ def _eval_ranking(model, val_pairs: list[dict]) -> None:
         log.info("  No queries with 2+ candidates in val set")
 
 
+def load_selfsupervised_pairs() -> list[dict]:
+    """Load self-supervised pairs from attribute overlap generator."""
+    ss_path = DATA_DIR / "training" / "selfsupervised_pairs.json"
+    if not ss_path.exists():
+        log.warning(f"Self-supervised pairs not found at {ss_path}")
+        log.warning("Generate with: uv run scripts/training/generate_selfsupervised_pairs.py --all-games")
+        return []
+    with open(ss_path) as f:
+        data = json.load(f)
+    pairs = data.get("pairs", [])
+    log.info(f"Loaded {len(pairs)} self-supervised pairs from {ss_path}")
+    return pairs
+
+
 def main():
     parser = argparse.ArgumentParser(description="Train cross-encoder reranker")
     parser.add_argument("--game", choices=["magic", "pokemon", "yugioh"])
@@ -454,11 +468,117 @@ def main():
     parser.add_argument("--max-length", type=int, default=384)
     parser.add_argument("--model", default="cross-encoder/ms-marco-MiniLM-L-12-v2",
                         help="Base model (default: L-12 for deeper capacity)")
+    parser.add_argument("--selfsupervised", action="store_true",
+                        help="Use self-supervised pairs instead of annotations (no eval leakage)")
     args = parser.parse_args()
 
     games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game] if args.game else ["magic"]
-    train(games, epochs=args.epochs, batch_size=args.batch_size,
-          model_name=args.model, max_length=args.max_length)
+
+    if args.selfsupervised:
+        ss_pairs = load_selfsupervised_pairs()
+        if not ss_pairs:
+            return
+        # Override the annotation loading -- pass pairs directly
+        log.info("Using self-supervised pairs (no annotation leakage)")
+        train_selfsupervised(ss_pairs, epochs=args.epochs, batch_size=args.batch_size,
+                             model_name=args.model, max_length=args.max_length)
+    else:
+        train(games, epochs=args.epochs, batch_size=args.batch_size,
+              model_name=args.model, max_length=args.max_length)
+
+
+def train_selfsupervised(
+    pairs: list[dict],
+    epochs: int = 5,
+    batch_size: int = 32,
+    model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    max_length: int = 384,
+):
+    """Train cross-encoder on self-supervised pairs (no eval leakage)."""
+    from sentence_transformers import InputExample
+    from sentence_transformers.cross_encoder import CrossEncoder
+    try:
+        from sentence_transformers.cross_encoder.evaluation import CrossEncoderCorrelationEvaluator as CECorrelationEvaluator
+    except ImportError:
+        from sentence_transformers.cross_encoder.evaluation import CECorrelationEvaluator
+    from torch.utils.data import DataLoader
+
+    log.info("=" * 60)
+    log.info("Cross-encoder training (self-supervised, v4)")
+    log.info(f"Model: {model_name}, max_length: {max_length}")
+    log.info(f"NO eval leakage -- training on attribute-derived pairs")
+    log.info("=" * 60)
+
+    # Add symmetric pairs
+    pairs = _add_symmetric_pairs(pairs)
+
+    # Query-level split
+    train_idx, val_idx = _query_level_split(pairs, val_ratio=0.10)
+
+    train_examples = [
+        InputExample(texts=[pairs[i]["query_text"], pairs[i]["candidate_text"]],
+                     label=pairs[i]["score"])
+        for i in train_idx
+    ]
+    val_pairs = [pairs[i] for i in val_idx]
+
+    scores = np.array([p["score"] for p in pairs])
+    log.info(f"\nTotal: {len(pairs)} pairs, mean={scores.mean():.3f}, median={np.median(scores):.3f}")
+    log.info(f"Train: {len(train_examples)}, Val: {len(val_pairs)}")
+
+    model = CrossEncoder(model_name, num_labels=1, max_length=max_length)
+
+    evaluator = CECorrelationEvaluator(
+        sentence_pairs=[[p["query_text"], p["candidate_text"]] for p in val_pairs],
+        scores=[p["score"] for p in val_pairs],
+        name="val",
+    )
+
+    train_dataloader = DataLoader(train_examples, shuffle=True, batch_size=batch_size)
+    output_dir = str(DATA_DIR / "models" / "cross_encoder_selfsupervised")
+    os.makedirs(output_dir, exist_ok=True)
+
+    t0 = time.time()
+    model.fit(
+        train_dataloader=train_dataloader,
+        evaluator=evaluator,
+        epochs=epochs,
+        evaluation_steps=500,
+        warmup_steps=min(200, len(train_examples) // batch_size),
+        output_path=output_dir,
+        show_progress_bar=True,
+    )
+    elapsed = time.time() - t0
+
+    log.info(f"\nTraining complete in {elapsed:.0f}s")
+    log.info(f"Model saved to {output_dir}")
+
+    val_result = evaluator(model)
+    if isinstance(val_result, dict):
+        log.info(f"Val correlation: Pearson={val_result.get('pearson', '?')}, "
+                 f"Spearman={val_result.get('spearman', '?')}")
+    else:
+        log.info(f"Val correlation: {val_result}")
+
+    log.info("\nRanking evaluation (per-query nDCG on val):")
+    _eval_ranking(model, val_pairs)
+
+    log.info("\nQualitative check:")
+    test_pairs = [
+        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+         "Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated."),
+        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+         "Counterspell | Instant | UU | Counter target spell."),
+        ("Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+         "Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target."),
+    ]
+    for a, b in test_pairs:
+        score = model.predict([(a, b)])[0]
+        a_short = a.split("|")[0].strip()
+        b_short = b.split("|")[0].strip()
+        log.info(f"  {a_short} vs {b_short} = {score:.3f}")
+
+    return output_dir
 
 
 if __name__ == "__main__":
