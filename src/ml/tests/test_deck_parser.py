@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from ..utils.deck_parser import parse_deck_text
 
 

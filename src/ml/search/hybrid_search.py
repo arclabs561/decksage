@@ -132,7 +132,6 @@ def parse_query_filters(query: str) -> tuple[str, str | None]:
 
     Returns (cleaned_query, meilisearch_filter_string_or_None).
     """
-    import re
 
     query_lower = query.lower().strip()
     filters = []
