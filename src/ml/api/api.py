@@ -1367,7 +1367,29 @@ def _similar_fusion(
     else:
         similar = fusion.similar(query, k, task_type=task_type)
 
-    return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
+    results = [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
+
+    # Inject per-signal breakdown from fusion modality scores
+    modality_scores = getattr(fusion, "_last_modality_scores", None)
+    if modality_scores:
+        signal_labels = {
+            "embed": "Co-occurrence",
+            "jaccard": "Jaccard",
+            "functional": "Functional",
+            "text_embed": "Text similarity",
+            "visual_embed": "Visual (SigLIP)",
+            "archetype": "Archetype",
+        }
+        for sc in results:
+            raw = modality_scores.get(sc.card, {})
+            if raw and sc.metadata is not None:
+                sc.metadata["score_breakdown"] = {
+                    signal_labels.get(sig, sig): round(v, 4)
+                    for sig, v in sorted(raw.items(), key=lambda x: -x[1])
+                    if v > 0.0
+                }
+
+    return results
 
 
 def _similar_jaccard_faceted(
@@ -1493,6 +1515,26 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
             **(
                 {"reranker": True, "reranker_sources": list(state.reranker_embeddings.keys())}
                 if method == "embedding" and state.reranker and state.reranker_embeddings
+                else {}
+            ),
+            **(
+                {
+                    "fusion_signals": [
+                        s
+                        for s in [
+                            "embed",
+                            "jaccard",
+                            "functional",
+                            "text_embed",
+                            "visual_embed",
+                            "archetype",
+                        ]
+                        if getattr(state, "text_embedder", None) is not None or s != "text_embed"
+                        if getattr(state, "visual_embedder", None) is not None
+                        or s != "visual_embed"
+                    ],
+                }
+                if method == "fusion"
                 else {}
             ),
         },

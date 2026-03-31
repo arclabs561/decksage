@@ -1949,13 +1949,14 @@
                     <div class="advanced-toggle" style="display: none;">
                         <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Advanced options</button>
                     </div>
-                    <div class="advanced-options" id="advancedOptions" style="display: none;">
+                    <div class="advanced-options" id="advancedOptions">
                         <div class="options">
                             <div class="option-group">
                                 <label for="methodSelect">Method:</label>
                                 <select id="methodSelect" aria-label="Similarity search method">
-                                    <option value="embedding" selected>Embedding</option>
-                                    <option value="jaccard">Jaccard</option>
+                                    <option value="embedding" selected>Embedding (reranker)</option>
+                                    <option value="fusion">Fusion (all signals)</option>
+                                    <option value="jaccard">Jaccard (co-occurrence)</option>
                                 </select>
                             </div>
                             <div class="option-group">
@@ -2255,10 +2256,10 @@
 
         // Cache configuration
         const CACHE_CONFIG = {
-            CACHE_VERSION: 3,
+            CACHE_VERSION: 4,
             RESULTS_TTL: 300000, // 5 minutes (shorter for dev iteration)
             MAX_CACHE_SIZE: 50,
-            CACHE_KEY_PREFIX: 'decksage_cache_v3_',
+            CACHE_KEY_PREFIX: 'decksage_cache_v4_',
             CACHE_META_KEY: 'decksage_cache_meta_v3',
         };
 
@@ -3644,10 +3645,19 @@
                 const method = data.model_info.method_used || 'unknown';
                 const source = data.model_info.embedding_source || data.model_info.game || currentGame || 'unknown';
                 const numCards = data.model_info.num_cards?.toLocaleString() || 'N/A';
+                let methodDetail = escapeHtml(method);
+                if (data.model_info.reranker_sources) {
+                    methodDetail += ` (${data.model_info.reranker_sources.length} sources)`;
+                }
+                if (data.model_info.fusion_signals) {
+                    const sigNames = { embed: 'co-occur', jaccard: 'jaccard', functional: 'functional', text_embed: 'text', visual_embed: 'visual', archetype: 'archetype' };
+                    const active = data.model_info.fusion_signals.map(s => sigNames[s] || s).join(', ');
+                    methodDetail += ` [${active}]`;
+                }
                 modelInfo.innerHTML = `
                     ${escapeHtml(source)} ·
                     ${escapeHtml(numCards)} cards ·
-                    ${escapeHtml(method)}
+                    ${methodDetail}
                 `;
             } else {
                 modelInfo.innerHTML = '';
