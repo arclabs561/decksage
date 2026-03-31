@@ -948,7 +948,7 @@ requires-dist = [
     { name = "uvicorn", marker = "extra == 'api'", specifier = ">=0.23.0" },
     { name = "zstandard", marker = "extra == 'extras'", specifier = ">=0.22.0" },
 ]
-provides-extras = ["dev", "api", "embeddings", "training", "viz", "enrichment", "llm", "gnn", "stats", "extras", "ot", "discord"]
+provides-extras = ["dev", "api", "embeddings", "training", "viz", "enrichment", "llm", "gnn", "stats", "extras", "ot", "discord", "ml"]
 
 [package.metadata.requires-dev]
 dev = [
