@@ -269,7 +269,25 @@ Examples:
 
 The text_e5 embeddings (E5-base-v2 on card oracle text) already had the right answers. They just weren't being surfaced.
 
+---
+
+## Phase 11: Text Embeddings Win (exp 0061-0062)
+
+Filled 6K text_e5 annotation holes ($2.40). Co-occurrence embedding nDCG dropped 3-6% (expected -- it can't rank text-similar candidates). Then evaluated text_e5 embeddings on the expanded test set:
+
+| Game | Co-occurrence (condensed sub nDCG) | Text_e5 (condensed sub nDCG) | Gap |
+|------|-----------------------------------|-----------------------------|----|
+| Magic | 0.503 | **0.613** | +22% |
+| Pokemon | 0.414 | **0.518** | +25% |
+| YuGiOh | 0.465 | **0.532** | +14% |
+
+Text embeddings (E5-base-v2 on card oracle text, no training data, zero-shot) beat 60 experiments of co-occurrence embedding engineering by 14-25%.
+
+YuGiOh has the smallest gap because archetype naming provides natural overlap between co-occurrence and text signals. Magic has the largest gap because co-occurrence captures deck strategy while text captures card mechanics.
+
+**The implication**: for substitute queries, text similarity is the right primary signal. Co-occurrence is the right signal for synergy/complement queries. The text-boosted reranker (which switches weights by use case) is the correct production architecture.
+
 **Open questions**:
-1. The evaluation nDCG numbers (0.525 for Magic) measure ranking quality for co-occurrence candidates only. What is the true substitute nDCG after adding text_e5 annotations?
-2. Can a unified embedding (contrastive fine-tuning on both co-occurrence and text similarity) outperform the signal-switching approach?
-3. Yu-Gi-Oh's low divergence suggests archetype-heavy games don't need text boosting. Is this generalizable?
+1. Can a unified embedding (contrastive fine-tuning on both signals) outperform the signal-switching reranker?
+2. What is the ceiling for text_e5? Its convergence gap is still 0.25-0.46 (many candidates unjudged).
+3. Can we train a cross-encoder reranker on the 95K annotation pairs for fine-grained scoring?
