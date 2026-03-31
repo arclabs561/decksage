@@ -194,11 +194,21 @@ def main():
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--model", default="intfloat/e5-base-v2")
     parser.add_argument("--output", default=None)
+    parser.add_argument("--max-pairs", type=int, default=20000,
+                        help="Subsample to N pairs (default 20K, faster training)")
     args = parser.parse_args()
 
     pairs = load_pairs(args.source)
     if not pairs:
         return
+
+    # Subsample for speed (141K pairs at 2s/step = hours; 20K = ~20 min)
+    if len(pairs) > args.max_pairs:
+        rng = np.random.RandomState(42)
+        indices = rng.choice(len(pairs), size=args.max_pairs, replace=False)
+        pairs = [pairs[i] for i in indices]
+        log.info(f"Subsampled to {len(pairs)} pairs for faster training")
+
     train(pairs, epochs=args.epochs, batch_size=args.batch_size,
           model_name=args.model, output_dir=args.output)
 
