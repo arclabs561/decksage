@@ -1897,6 +1897,18 @@
             font-size: 13px !important;
             color: var(--color-text-secondary) !important;
         }
+        /* Neutralize per-game query card name styling */
+        body.game-magic .query-card-info .query-card-name,
+        body.game-pokemon .query-card-info .query-card-name,
+        body.game-yugioh .query-card-info .query-card-name {
+            font-family: inherit !important;
+            color: var(--color-text-primary) !important;
+        }
+        /* Tone down the top accent bar */
+        body::before {
+            height: 2px !important;
+            opacity: 0.6;
+        }
     </style>
 </head>
 <body>
@@ -1934,7 +1946,7 @@
                         <option value="yugioh">Yu-Gi-Oh!</option>
                         <option value="pokemon">Pokemon</option>
                     </select>
-                    <div class="advanced-toggle">
+                    <div class="advanced-toggle" style="display: none;">
                         <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Advanced options</button>
                     </div>
                     <div class="advanced-options" id="advancedOptions" style="display: none;">
@@ -1980,16 +1992,16 @@
                 <div id="searchModeIndicator" style="text-align: center; color: var(--color-text-muted); font-size: 12px; margin-top: 8px; min-height: 16px;"></div>
 
                 <div class="results-section" id="resultsSection" style="display: none;">
-                    <div class="section-accent-bar"></div>
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 12px;">
-                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Results</h2>
-                        <div style="display: flex; align-items: center; gap: 12px;">
-                            <button id="explainBtn" onclick="explainAllResults()" style="display:none; padding: 6px 14px; font-size: 13px; border-radius: 8px; border: 1px solid var(--color-border-default); background: var(--color-bg-secondary); color: var(--color-text-secondary); cursor: pointer; transition: all 0.2s ease;" onmouseover="this.style.borderColor='var(--color-accent-primary)';this.style.color='var(--color-accent-primary)'" onmouseout="this.style.borderColor='var(--color-border-default)';this.style.color='var(--color-text-secondary)'">Why similar?</button>
-                            <div class="feedback-toggle">
-                                <input type="checkbox" id="enableFeedback" onchange="toggleFeedbackMode()" aria-label="Enable feedback mode">
-                                <label for="enableFeedback">Feedback</label>
-                                <span class="help-icon" title="Rating scale: 4=Extremely similar (substitutes), 3=Very similar (similar role), 2=Somewhat similar (related function), 1=Marginally similar (loose connection), 0=Irrelevant">?</span>
-                            </div>
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.02em;">Results</h2>
+                    </div>
+                    <!-- Dev tools (Why similar / Feedback) hidden for presentation -->
+                    <div style="display: none;">
+                        <button id="explainBtn" onclick="explainAllResults()">Why similar?</button>
+                        <div class="feedback-toggle">
+                            <input type="checkbox" id="enableFeedback" onchange="toggleFeedbackMode()" aria-label="Enable feedback mode">
+                            <label for="enableFeedback">Feedback</label>
+                            <span class="help-icon" title="">?</span>
                         </div>
                     </div>
                     <div id="resultsContainer"></div>
@@ -3321,8 +3333,8 @@
             const maxScore = currentResults.length > 0
                 ? Math.max(...currentResults.map(r => r.similarity))
                 : 1;
-            const needsNormalization = maxScore > 0 && maxScore < 0.1;
-            const normalizeScore = (s) => needsNormalization ? (s / maxScore) * 0.95 : s;
+            // Display raw API scores (API handles normalization server-side)
+            const normalizeScore = (s) => s;
 
             currentResults.forEach((result, index) => {
                 const item = document.createElement('div');
