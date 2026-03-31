@@ -1267,12 +1267,17 @@ def _similar_reranker(
     scored.sort(key=lambda x: x[1], reverse=True)
     scored = scored[:k]
 
-    # Normalize scores to [0, 1] range for the response
+    # Normalize scores to [0, 1]. Use rank-based normalization that spreads
+    # results across the visual range while preserving order. Pure max-norm
+    # bunches everything at 95-100% when text_e5 dominates; pure min-max
+    # makes the bottom always 0%.  Blend: 70% rank-based + 30% max-ratio.
     if scored:
-        max_score = scored[0][1]
-        min_score = scored[-1][1] if len(scored) > 1 else scored[0][1] - 1.0
-        denom = max_score - min_score if max_score > min_score else 1.0
-        scored = [(card, (s - min_score) / denom) for card, s in scored]
+        n = len(scored)
+        max_score = max(abs(scored[0][1]), 1e-9)
+        scored = [
+            (card, 0.7 * (1.0 - i / max(n - 1, 1)) + 0.3 * max(0.0, s / max_score))
+            for i, (card, s) in enumerate(scored)
+        ]
 
     results = []
     for card, sim in scored:
