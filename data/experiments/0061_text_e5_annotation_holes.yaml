@@ -1,0 +1,69 @@
+id: "0061"
+date: "2026-03-31"
+title: "Fill text_e5 annotation holes: nDCG drops as expected"
+game: all
+
+hypothesis: >
+  Adding text-similarity (E5) candidates to the eval test set will change
+  measured nDCG. If the co-occurrence embedding can't rank text-similar
+  cards well, nDCG should drop. If the text-boosted reranker can, its
+  nDCG should improve.
+
+method:
+  script: scripts/evaluation/fill_eval_holes.py
+  args: "--all-games --method text_e5 --model multi --max-per-game 2000 --concurrency 20"
+
+data:
+  evaluation:
+    holes_found:
+      magic: 27882
+      pokemon: 15825
+      yugioh: 16462
+    holes_filled:
+      magic: 2000
+      pokemon: 2000
+      yugioh: 2000
+    annotation_backend: "multi-model cascade (Groq 70B + Cerebras 235B)"
+    cost_estimate: "$2.40"
+
+results:
+  before_text_holes:
+    magic_sub_ndcg: 0.525
+    pokemon_sub_ndcg: 0.437
+    yugioh_sub_ndcg: 0.478
+  after_text_holes:
+    magic_sub_ndcg: 0.501
+    pokemon_sub_ndcg: 0.412
+    yugioh_sub_ndcg: 0.461
+  change:
+    magic: "-4.6%"
+    pokemon: "-5.7%"
+    yugioh: "-3.6%"
+  total_annotations:
+    magic: 38307
+    pokemon: 27376
+    yugioh: 29106
+
+conclusion: >
+  nDCG dropped 3-6% across all games after adding text_e5 candidates.
+  This is expected and correct: the co-occurrence embedding ranks
+  text-similar cards poorly (they're not in the same decks), so adding
+  them as annotated candidates penalizes the embedding.
+
+  Key insight: the previous "saturated" nDCG of 0.525 was an
+  overestimate of true substitute quality because the test set only
+  contained co-occurrence candidates. The real quality for the
+  co-occurrence embedding is closer to 0.50.
+
+  Next: evaluate the text-boosted reranker on the expanded test set.
+  It should score higher because it surfaces text-similar candidates
+  that the raw embedding misses.
+
+  Also found: 100% divergence between eval "highly_relevant" and
+  text_e5 top-5 for Magic/Pokemon (0% overlap in 20 sampled queries).
+  The evaluation was blind to the best substitute candidates.
+
+artifacts:
+  - data/test_sets/annotated_magic_v2.json
+  - data/test_sets/annotated_pokemon_v2.json
+  - data/test_sets/annotated_yugioh_v2.json
