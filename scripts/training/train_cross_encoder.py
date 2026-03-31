@@ -97,6 +97,48 @@ def load_training_pairs(game: str) -> list[dict]:
     return pairs
 
 
+def _add_hard_negatives(pairs: list[dict], ratio: float = 0.15) -> list[dict]:
+    """Add hard negatives: random card pairings scored 0.0.
+
+    Cross-encoder needs to see truly dissimilar pairs, not just
+    low-scoring top-K candidates. Random pairs from different games
+    or unrelated cards provide this signal.
+    """
+    texts = list({p["query_text"] for p in pairs} | {p["candidate_text"] for p in pairs})
+    if len(texts) < 10:
+        return pairs
+
+    n_neg = int(len(pairs) * ratio)
+    rng = np.random.RandomState(123)
+    negatives = []
+    for _ in range(n_neg):
+        i, j = rng.choice(len(texts), size=2, replace=False)
+        negatives.append({
+            "query": "hard_neg",
+            "candidate": "hard_neg",
+            "query_text": texts[i],
+            "candidate_text": texts[j],
+            "score": 0.0,
+        })
+    log.info(f"  Added {len(negatives)} hard negatives ({ratio:.0%} of {len(pairs)})")
+    return pairs + negatives
+
+
+def _oversample_positives(pairs: list[dict], threshold: float = 0.5, factor: int = 3) -> list[dict]:
+    """Oversample high-score pairs to counteract skewed distribution.
+
+    Annotations are median ~0.0 (most pairs are dissimilar).
+    Without oversampling, the model learns to predict low scores.
+    """
+    positives = [p for p in pairs if p["score"] >= threshold]
+    if not positives:
+        return pairs
+    n_orig = len(pairs)
+    oversampled = pairs + positives * (factor - 1)
+    log.info(f"  Oversampled {len(positives)} positives (>={threshold}) {factor}x: {n_orig} -> {len(oversampled)}")
+    return oversampled
+
+
 def train(games: list[str], epochs: int = 3, batch_size: int = 32, model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"):
     """Train cross-encoder on annotation pairs."""
     from sentence_transformers import InputExample
@@ -111,16 +153,31 @@ def train(games: list[str], epochs: int = 3, batch_size: int = 32, model_name: s
     all_pairs = []
     for game in games:
         pairs = load_training_pairs(game)
-        log.info(f"{game}: {len(pairs)} training pairs")
-        all_pairs.extend(pairs)
+        # Filter pairs where text is just the card name (no oracle text found)
+        text_pairs = [p for p in pairs if p["query_text"] != p["query"] or p["candidate_text"] != p["candidate"]]
+        dropped = len(pairs) - len(text_pairs)
+        if dropped > 0:
+            log.info(f"{game}: {len(pairs)} raw pairs, dropped {dropped} without oracle text -> {len(text_pairs)}")
+        else:
+            log.info(f"{game}: {len(text_pairs)} training pairs (all have oracle text)")
+        all_pairs.extend(text_pairs)
 
-    log.info(f"Total: {len(all_pairs)} pairs")
+    log.info(f"Total pairs with oracle text: {len(all_pairs)}")
 
     if len(all_pairs) < 100:
         log.error("Too few pairs for training")
         return
 
-    # Split: 90% train, 10% val
+    # Score distribution analysis
+    scores = np.array([p["score"] for p in all_pairs])
+    log.info(f"Score distribution: mean={scores.mean():.3f}, median={np.median(scores):.3f}, "
+             f"std={scores.std():.3f}, >0.5: {(scores > 0.5).sum()}, >0.3: {(scores > 0.3).sum()}")
+
+    # Add hard negatives and oversample positives
+    all_pairs = _add_hard_negatives(all_pairs, ratio=0.15)
+    all_pairs = _oversample_positives(all_pairs, threshold=0.5, factor=3)
+
+    # Split: 90% train, 10% val (stratified by score bracket)
     np.random.seed(42)
     indices = np.random.permutation(len(all_pairs))
     split = int(0.9 * len(all_pairs))
