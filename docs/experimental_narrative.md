@@ -290,4 +290,51 @@ YuGiOh has the smallest gap because archetype naming provides natural overlap be
 **Open questions**:
 1. Can a unified embedding (contrastive fine-tuning on both signals) outperform the signal-switching reranker?
 2. What is the ceiling for text_e5? Its convergence gap is still 0.25-0.46 (many candidates unjudged).
-3. Can we train a cross-encoder reranker on the 95K annotation pairs for fine-grained scoring?
+
+---
+
+## Phase 12: Cross-Encoder Reranker Training
+
+Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three games to learn TCG-specific pairwise similarity scoring.
+
+### Three iterations, each fixing problems found in the previous
+
+**v1** (1 epoch, Magic only, MiniLM-L6, 256 tokens):
+- Pearson 0.461, Spearman 0.315
+- Missing deps (`datasets`, `accelerate`), evaluator API change
+
+**v2** (5 epochs, all games, L6, 256 tokens, hard negatives + positive oversampling):
+- Pearson **0.695**, Spearman **0.658**
+- But: pair-level random split (same query card in train+val), inflated metrics
+
+**v3** (5 epochs, all games, L12, 384 tokens, all methodology fixes):
+- Query-level split (unseen cards in val), zero downsampling to 20%, symmetric pairs, rich text (`name | type | cost | oracle_text`)
+- Per-query nDCG evaluation alongside correlation
+- Results pending
+
+### Methodology critique that drove v3
+
+| Issue | v1/v2 | v3 fix |
+|-------|-------|--------|
+| Train/eval leakage | Training on eval annotations | Documented as upper bound |
+| Pair-level split | Same card in train+val | Query-level split |
+| 51% zero scores | 3x positive oversampling | Downsample zeros to 20% |
+| No provenance | All annotations equal | Noted for future filtering |
+| Name-only fallback | Card name as text | Skip cards without oracle text |
+| 256 token truncation | Cuts Pokemon/YuGiOh | 384 tokens |
+| L6 model (22M) | Limited domain capacity | L12 (33M) |
+| No symmetry | (A,B) != (B,A) | Add reverse pairs |
+| Correlation only | Pearson/Spearman | Per-query nDCG added |
+
+**Key insight**: v2's Pearson 0.695 dropped to v3's ~0.56 at epoch 1 because query-level split is genuinely harder. The honest number is always lower than the convenient one. Evaluation methodology matters more than architecture or hyperparameters.
+
+### Failure mode taxonomy
+
+Qualitative analysis of 60 queries (20/game) identified five failure categories:
+1. Text token overlap / name matching (40% of failures)
+2. Type/tribe matching (25%)
+3. Co-occurrence dominance in substitute mode (20%)
+4. Stat/cost mismatch (10%)
+5. Format blindness (5%)
+
+See `docs/failure_taxonomy.md` for details and training implications.
