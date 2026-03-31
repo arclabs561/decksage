@@ -2142,13 +2142,31 @@
         body.game-pokemon .result-item[data-energy-type] {
             border-left: none !important;
         }
-        /* Move oracle text up and make it readable */
+        /* Typography refinements for result cards */
         .result-oracle {
             margin-top: 8px !important;
             font-style: normal !important;
             font-size: 13px !important;
             color: var(--color-text-secondary) !important;
-            line-height: 1.5 !important;
+            line-height: 1.55 !important;
+            max-width: 55ch !important;
+        }
+        .result-name {
+            font-size: 17px !important;
+            font-weight: 600 !important;
+            line-height: 1.25 !important;
+        }
+        .similarity-percent {
+            font-size: 15px !important;
+            font-weight: 700 !important;
+        }
+        .similarity-label {
+            font-size: 12px !important;
+            color: var(--color-text-muted) !important;
+        }
+        .result-meta {
+            font-size: 13px !important;
+            color: var(--color-text-secondary) !important;
         }
     </style>
 </head>
@@ -2496,11 +2514,11 @@
 
         // Cache configuration
         const CACHE_CONFIG = {
-            CACHE_VERSION: 2,
-            RESULTS_TTL: 3600000, // 1 hour in milliseconds
-            MAX_CACHE_SIZE: 50, // Maximum number of cached results
-            CACHE_KEY_PREFIX: 'decksage_cache_v2_',
-            CACHE_META_KEY: 'decksage_cache_meta_v2',
+            CACHE_VERSION: 3,
+            RESULTS_TTL: 300000, // 5 minutes (shorter for dev iteration)
+            MAX_CACHE_SIZE: 50,
+            CACHE_KEY_PREFIX: 'decksage_cache_v3_',
+            CACHE_META_KEY: 'decksage_cache_meta_v3',
         };
 
         // Purge old-version cache entries on load
@@ -2910,7 +2928,7 @@
                     useCase: useCase,
                     cached: true,
                 });
-                showStatus(`Found ${currentResults.length} results (cached)`, 'success');
+                // Silent on cache hit -- no status bar needed
                 return;
             }
 
@@ -2997,7 +3015,7 @@
                         </div>
                     `;
                 } else {
-                    showStatus(`Found ${currentResults.length} results`, 'success');
+                    // No green bar -- results speak for themselves
                 }
 
                 displayResults(data);
@@ -3102,7 +3120,7 @@
 
                 const data = await response.json();
                 if (data.results && data.results.length > 0) {
-                    showStatus(`Found ${data.results.length} results`, 'success', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
+                    // No status bar for result count
                     displayHybridResults(data);
                     pushURL({ tab: currentTab, game: document.getElementById('searchGame')?.value, q: query });
                 } else {

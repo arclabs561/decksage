@@ -1194,7 +1194,7 @@ def _enrich_similar_card(
 
 
 def _similar_embedding(
-    state: ApiState, query: str, k: int, *, game: str = "magic"
+    state: ApiState, query: str, k: int, *, game: str = "magic", use_case: str = "substitute"
 ) -> list[SimilarCard]:
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
@@ -1206,7 +1206,7 @@ def _similar_embedding(
         )
     # Use reranker if configured (multi-source learned weights)
     if state.reranker is not None and state.reranker_embeddings:
-        return _similar_reranker(state, query, k, game=game)
+        return _similar_reranker(state, query, k, game=game, use_case=use_case)
     try:
         similar = state.embeddings.most_similar(query, topn=k)
         return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
@@ -1215,22 +1215,29 @@ def _similar_embedding(
 
 
 def _similar_reranker(
-    state: ApiState, query: str, k: int, *, game: str = "magic"
+    state: ApiState, query: str, k: int, *, game: str = "magic", use_case: str = "substitute"
 ) -> list[SimilarCard]:
     """Multi-source embedding reranker: collect candidates from each source, score with learned weights."""
     rc = state.reranker
     embs = state.reranker_embeddings
     assert rc is not None and embs is not None  # caller checks
 
+    is_substitute = use_case in ("substitute", "substitution")
+
     # Gather top-N candidates from each source (over-fetch to get good coverage)
     fetch_k = min(k * 3, 100)
+    # For substitute mode, over-fetch from text_e5 (text similarity captures
+    # functional substitutes far better than co-occurrence -- exp 0056/0060)
+    text_fetch_k = min(k * 6, 200) if is_substitute else fetch_k
+
     # {card_name: {source: similarity}}
     candidate_sims: dict[str, dict[str, float]] = {}
     for feat, kv in embs.items():
         if query not in kv:
             continue
+        fk = text_fetch_k if feat == "text_e5" else fetch_k
         try:
-            results = kv.most_similar(query, topn=fetch_k)
+            results = kv.most_similar(query, topn=fk)
         except (KeyError, RuntimeError, ValueError):
             continue
         for card, sim in results:
@@ -1242,10 +1249,18 @@ def _similar_reranker(
         return [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
 
     # Score each candidate: sum(weight_i * sim_i) + intercept
+    # For substitute mode, boost text_e5 and dampen co-occurrence sources
+    weights = dict(rc.weights)
+    if is_substitute and "text_e5" in weights:
+        weights["text_e5"] = max(weights.get("text_e5", 0), 0.5)
+        for cooc_src in ("v5_fused", "v6_fused", "metapath2vec_sweep_80ep", "cleora_1iter"):
+            if cooc_src in weights:
+                weights[cooc_src] *= 0.3
+
     scored: list[tuple[str, float]] = []
     for card, sims in candidate_sims.items():
         score = rc.intercept
-        for feat, weight in rc.weights.items():
+        for feat, weight in weights.items():
             score += weight * sims.get(feat, 0.0)
         scored.append((card, score))
 
@@ -1419,7 +1434,15 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     k = request.top_k
     method = _resolve_method(request)
     if method == "embedding":
-        results = _similar_embedding(state, query, k, game=game)
+        results = _similar_embedding(
+            state,
+            query,
+            k,
+            game=game,
+            use_case=request.use_case.value
+            if hasattr(request.use_case, "value")
+            else str(request.use_case),
+        )
     elif method == "jaccard":
         results = _similar_jaccard(state, query, k, game=game)
     elif method == "jaccard_faceted":
