@@ -1766,6 +1766,9 @@
             .nav-tabs {
                 flex-wrap: wrap;
             }
+            #compareResults > div {
+                grid-template-columns: 1fr !important;
+            }
         }
         /* === Unified theme override: neutralize all per-game styles === */
         body.game-magic,
@@ -1920,6 +1923,7 @@
             <button class="nav-tab active" role="tab" aria-selected="true" aria-controls="unified-search-tab" id="unified-search-tab-btn" onclick="switchTab('unified-search')">Search</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="contextual-tab" id="contextual-tab-btn" onclick="switchTab('contextual')">Contextual</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Completion</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="compare-tab" id="compare-tab-btn" onclick="switchTab('compare')">Compare</button>
         </nav>
 
         <main id="main-content">
@@ -2146,6 +2150,75 @@
                         <span class="expand-chevron" id="savedDecksChevron">&#9662;</span>
                     </div>
                     <div id="savedDecksList" style="display: none;"></div>
+                </div>
+            </div>
+
+            <!-- Compare Tab -->
+            <div id="compare-tab" class="tab-content" role="tabpanel" aria-labelledby="compare-tab-btn">
+                <div class="search-section">
+                    <p style="text-align: center; color: var(--color-text-muted); font-size: 14px; margin-bottom: 16px; max-width: 600px; margin-left: auto; margin-right: auto;">
+                        Compare two methods side by side for the same query.
+                    </p>
+                    <form class="search-form" id="compareSearchForm" onsubmit="compareSearch(event)">
+                        <div class="search-input-wrapper">
+                            <input type="text" id="compareInput" placeholder="Card name..." required aria-label="Compare search query" autocomplete="off">
+                        </div>
+                        <button type="submit" class="search-button">Compare</button>
+                    </form>
+                    <div style="display: flex; gap: 16px; margin-top: 12px; justify-content: center; flex-wrap: wrap;">
+                        <div class="option-group">
+                            <label for="compareGameSelect">Game:</label>
+                            <select id="compareGameSelect">
+                                <option value="magic">Magic</option>
+                                <option value="pokemon">Pokemon</option>
+                                <option value="yugioh">Yu-Gi-Oh!</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="compareLeftMethod">Left:</label>
+                            <select id="compareLeftMethod">
+                                <option value="embedding" selected>Embedding (reranker)</option>
+                                <option value="fusion">Fusion (all signals)</option>
+                                <option value="jaccard">Jaccard</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="compareLeftUseCase">Use case:</label>
+                            <select id="compareLeftUseCase">
+                                <option value="substitute" selected>Substitute</option>
+                                <option value="synergy">Synergy</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="compareRightMethod">Right:</label>
+                            <select id="compareRightMethod">
+                                <option value="fusion" selected>Fusion (all signals)</option>
+                                <option value="embedding">Embedding (reranker)</option>
+                                <option value="jaccard">Jaccard</option>
+                            </select>
+                        </div>
+                        <div class="option-group">
+                            <label for="compareRightUseCase">Use case:</label>
+                            <select id="compareRightUseCase">
+                                <option value="substitute" selected>Substitute</option>
+                                <option value="synergy">Synergy</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div id="compareResults" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 16px;">
+                        <div>
+                            <h3 id="compareLeftTitle" style="font-size: 14px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 12px; text-align: center;"></h3>
+                            <div id="compareLeftResults"></div>
+                            <div class="model-info" id="compareLeftInfo"></div>
+                        </div>
+                        <div>
+                            <h3 id="compareRightTitle" style="font-size: 14px; font-weight: 600; color: var(--color-text-secondary); margin-bottom: 12px; text-align: center;"></h3>
+                            <div id="compareRightResults"></div>
+                            <div class="model-info" id="compareRightInfo"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
 
@@ -2784,6 +2857,104 @@
                 }
                 resultsContainer.innerHTML = `<div class="status error">${escapeHtml(friendlyError)}</div>`;
                 currentSearchController = null;
+            }
+        }
+
+        function renderCompactResults(data, containerId, infoId) {
+            const container = document.getElementById(containerId);
+            const info = document.getElementById(infoId);
+            if (!data || !data.results) {
+                container.innerHTML = '<div class="status error">No results</div>';
+                return;
+            }
+            const game = (data?.model_info?.game || 'magic').toLowerCase();
+            let html = '';
+            data.results.forEach((result, i) => {
+                const meta = result.metadata || {};
+                const pct = (result.similarity * 100).toFixed(0);
+                const imgUrl = meta.image_url;
+                const imgHtml = imgUrl
+                    ? `<img src="${escapeHtml(imgUrl)}" alt="" style="width:40px;height:56px;object-fit:cover;border-radius:4px;flex-shrink:0;" loading="lazy" onerror="this.style.display='none'">`
+                    : '';
+                const oracleText = meta.oracle_text || meta.text || meta.effect || '';
+                const truncText = oracleText.length > 80 ? oracleText.substring(0, 80) + '...' : oracleText;
+
+                // Breakdown bars (compact)
+                let breakdownHtml = '';
+                if (meta.score_breakdown && typeof meta.score_breakdown === 'object') {
+                    const entries = Object.entries(meta.score_breakdown);
+                    if (entries.length > 0) {
+                        const maxVal = Math.max(...entries.map(([, v]) => Math.abs(v)), 0.01);
+                        breakdownHtml = '<div style="display:flex;gap:3px;margin-top:4px;flex-wrap:wrap;">' +
+                            entries.slice(0, 4).map(([src, val]) => {
+                                const barPct = Math.min(Math.abs(val) / maxVal * 100, 100);
+                                const label = src.replace(/_/g, ' ');
+                                return `<span style="font-size:9px;color:var(--color-text-muted);" title="${escapeHtml(label)}: ${(val*100).toFixed(0)}%">${escapeHtml(label.substring(0,8))} ${barPct.toFixed(0)}%</span>`;
+                            }).join(' ') + '</div>';
+                    }
+                }
+
+                const highlight = i < 3 ? 'border-left: 3px solid var(--color-primary); padding-left: 8px;' : 'padding-left: 11px;';
+                html += `<div style="display:flex;gap:8px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--color-border);${highlight}">
+                    ${imgHtml}
+                    <div style="flex:1;min-width:0;">
+                        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+                            <span style="font-weight:600;font-size:13px;color:var(--color-text-primary);">${escapeHtml(result.card)}</span>
+                            <span style="font-size:12px;font-weight:500;color:var(--color-primary);flex-shrink:0;">${pct}%</span>
+                        </div>
+                        <div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;">${meta.type ? escapeHtml(meta.type) : ''}</div>
+                        ${truncText ? `<div style="font-size:11px;color:var(--color-text-muted);margin-top:2px;line-height:1.3;">${escapeHtml(truncText)}</div>` : ''}
+                        ${breakdownHtml}
+                    </div>
+                </div>`;
+            });
+            container.innerHTML = html || '<div style="color:var(--color-text-muted);text-align:center;padding:24px;">No results</div>';
+
+            // Info line
+            if (data.model_info) {
+                const method = data.model_info.method_used || 'unknown';
+                const numCards = data.model_info.num_cards?.toLocaleString() || 'N/A';
+                info.innerHTML = `${escapeHtml(numCards)} cards -- ${escapeHtml(method)}`;
+            }
+        }
+
+        async function compareSearch(event) {
+            if (event) event.preventDefault();
+            const query = document.getElementById('compareInput')?.value.trim();
+            if (!query) return;
+
+            const game = document.getElementById('compareGameSelect')?.value || 'magic';
+            const leftMethod = document.getElementById('compareLeftMethod')?.value || 'embedding';
+            const leftUseCase = document.getElementById('compareLeftUseCase')?.value || 'substitute';
+            const rightMethod = document.getElementById('compareRightMethod')?.value || 'fusion';
+            const rightUseCase = document.getElementById('compareRightUseCase')?.value || 'substitute';
+
+            document.getElementById('compareResults').style.display = 'block';
+            document.getElementById('compareLeftTitle').textContent = `${leftMethod} / ${leftUseCase}`;
+            document.getElementById('compareRightTitle').textContent = `${rightMethod} / ${rightUseCase}`;
+            document.getElementById('compareLeftResults').innerHTML = '<div style="text-align:center;color:var(--color-text-muted);padding:24px;">Loading...</div>';
+            document.getElementById('compareRightResults').innerHTML = '<div style="text-align:center;color:var(--color-text-muted);padding:24px;">Loading...</div>';
+
+            const fetchSide = async (method, useCase) => {
+                const resp = await fetch(`${API_BASE}/v1/similar`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ game, query, top_k: 10, mode: method, use_case: useCase }),
+                });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                return resp.json();
+            };
+
+            try {
+                const [leftData, rightData] = await Promise.all([
+                    fetchSide(leftMethod, leftUseCase),
+                    fetchSide(rightMethod, rightUseCase),
+                ]);
+                renderCompactResults(leftData, 'compareLeftResults', 'compareLeftInfo');
+                renderCompactResults(rightData, 'compareRightResults', 'compareRightInfo');
+            } catch (err) {
+                document.getElementById('compareLeftResults').innerHTML = `<div class="status error">${escapeHtml(err.message)}</div>`;
+                document.getElementById('compareRightResults').innerHTML = '';
             }
         }
 
