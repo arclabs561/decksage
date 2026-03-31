@@ -9,11 +9,11 @@ into one interface with consistent caching and return types.
 from __future__ import annotations
 
 import logging
-import os
 import pickle
 from collections import defaultdict
 from pathlib import Path
 from typing import NamedTuple
+
 
 logger = logging.getLogger(__name__)
 
@@ -21,10 +21,19 @@ logger = logging.getLogger(__name__)
 GAME_DB_CODES = {"magic": "MTG", "pokemon": "PKM", "yugioh": "YGO"}
 
 # Basic lands to optionally filter (Magic only)
-_BASIC_LANDS = {"Plains", "Island", "Swamp", "Mountain", "Forest",
-                "Snow-Covered Plains", "Snow-Covered Island",
-                "Snow-Covered Swamp", "Snow-Covered Mountain",
-                "Snow-Covered Forest", "Wastes"}
+_BASIC_LANDS = {
+    "Plains",
+    "Island",
+    "Swamp",
+    "Mountain",
+    "Forest",
+    "Snow-Covered Plains",
+    "Snow-Covered Island",
+    "Snow-Covered Swamp",
+    "Snow-Covered Mountain",
+    "Snow-Covered Forest",
+    "Wastes",
+}
 
 
 class GraphData(NamedTuple):
@@ -33,6 +42,7 @@ class GraphData(NamedTuple):
     adjacency: card -> set of neighbor cards (always present)
     weights: (card1, card2) -> edge weight (None if include_weights=False)
     """
+
     adjacency: dict[str, set[str]]
     weights: dict[tuple[str, str], float] | None = None
 
@@ -85,11 +95,13 @@ def load_graph(
     source = Path(source)
 
     if source.suffix == ".db":
-        return _load_from_db(source, game=game, filter_lands=filter_lands,
-                             include_weights=include_weights)
+        return _load_from_db(
+            source, game=game, filter_lands=filter_lands, include_weights=include_weights
+        )
     elif source.suffix == ".csv":
-        return _load_from_csv(source, filter_lands=filter_lands,
-                              include_weights=include_weights, use_cache=use_cache)
+        return _load_from_csv(
+            source, filter_lands=filter_lands, include_weights=include_weights, use_cache=use_cache
+        )
     else:
         raise ValueError(f"Unsupported graph source format: {source.suffix} (expected .db or .csv)")
 
@@ -121,9 +133,12 @@ def _load_from_db(
             weights[key] = max(weights.get(key, 0.0), edge.weight)
 
     result = GraphData(adjacency=dict(adj), weights=weights)
-    logger.info("Loaded graph from %s: %d cards, %s edges",
-                db_path.name, len(result.adjacency),
-                f"{len(weights):,}" if weights else "no weights")
+    logger.info(
+        "Loaded graph from %s: %d cards, %s edges",
+        db_path.name,
+        len(result.adjacency),
+        f"{len(weights):,}" if weights else "no weights",
+    )
     return result
 
 
@@ -146,8 +161,9 @@ def _load_from_csv(
             try:
                 with open(cache_path, "rb") as f:
                     cached = pickle.load(f)
-                logger.info("Loaded graph from cache: %s (%d cards)",
-                           cache_path.name, len(cached.adjacency))
+                logger.info(
+                    "Loaded graph from cache: %s (%d cards)", cache_path.name, len(cached.adjacency)
+                )
                 return cached
             except (pickle.UnpicklingError, EOFError, KeyError):
                 pass

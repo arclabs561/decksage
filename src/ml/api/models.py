@@ -9,7 +9,6 @@ import os
 from enum import Enum
 from typing import Any, Literal
 
-from fastapi import HTTPException
 from pydantic import BaseModel, Field, computed_field
 
 
@@ -338,14 +337,14 @@ class ApiState:
             None  # {card: {usd: "1.23", ...}}
         )
         # Reranker: multi-source embedding reranking with learned weights
-        self.reranker: "RerankerConfig | None" = None
+        self.reranker: RerankerConfig | None = None
         self.reranker_embeddings: dict[str, Any] | None = None  # {source_name: KeyedVectors}
 
 
 class RerankerConfig:
     """Learned linear combination weights for multi-source embedding reranking."""
 
-    __slots__ = ("features", "weights", "intercept")
+    __slots__ = ("features", "intercept", "weights")
 
     def __init__(self, features: list[str], weights: dict[str, float], intercept: float) -> None:
         self.features = features
@@ -369,14 +368,21 @@ class RerankerConfig:
 # get_state helper -- moved to state.py to break circular import with api.py.
 # Re-exported here for backward compat with existing callers.
 # ---------------------------------------------------------------------------
-from .state import _configured_games, _default_game, _normalize_game, _require_game, get_state
+from .state import (  # noqa: E402
+    _configured_games,
+    _default_game,
+    _normalize_game,
+    _require_game,
+    get_state,
+)
+
 
 __all__ = [
-    "ApiState",
     "SUPPORTED_GAMES",
-    "get_state",
-    "_require_game",
-    "_default_game",
+    "ApiState",
     "_configured_games",
+    "_default_game",
     "_normalize_game",
+    "_require_game",
+    "get_state",
 ]

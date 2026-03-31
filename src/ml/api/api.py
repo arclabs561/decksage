@@ -200,8 +200,8 @@ def load_embeddings_to_state(
         state.model_info["pairs_path"] = pairs_csv
         logger.info(
             "Loaded graph: %s cards, %s weights in %.1fs",
-            f"{len(adj):,}",
-            f"{len(weights):,}",
+            f"{len(_graph.adjacency):,}",
+            f"{len(_graph.weights) if _graph.weights else 0:,}",
             _time.monotonic() - _t0,
         )
 
@@ -1573,7 +1573,7 @@ def find_similar_batch_v1(request: BatchSimilarityRequest):
             task_type=effective_task_type,
             graph_weights=state.graph_data.get("weights") if state.graph_data else None,
             game=game,
-            )
+        )
 
         for query in request.queries:
             try:
