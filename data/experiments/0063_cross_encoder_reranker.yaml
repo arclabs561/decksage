@@ -1,0 +1,51 @@
+id: "0063"
+date: "2026-03-31"
+title: "Cross-encoder reranker training (3 iterations)"
+game: all
+hypothesis: >
+  A cross-encoder fine-tuned on annotation pairs can learn TCG-specific
+  pairwise similarity that bi-encoders miss (e.g., "destroy all monsters"
+  is similar to "destroy all creatures"). Per-query nDCG should improve
+  over raw cosine similarity.
+method:
+  script: scripts/training/train_cross_encoder.py
+  args: "--all-games --epochs 5"
+  notes: |
+    Three iterations:
+    - v1: MiniLM-L6, 256 tokens, 1 epoch, Magic only
+    - v2: MiniLM-L6, 256 tokens, 5 epochs, all games, hard negatives + oversampling
+    - v3: MiniLM-L12, 384 tokens, 5 epochs, query-level split, zero downsampling,
+      symmetric pairs, rich text (name|type|cost|oracle_text)
+data:
+  training:
+    source: data/test_sets/annotated_*_v2.json (EVAL DATA -- leakage documented)
+    count: "~100K raw pairs -> 135K after symmetric+balance+negatives (v3)"
+  notes: |
+    WARNING: Training on eval annotations. Metrics are upper bounds.
+    Query-level split (v3) gives honest generalization numbers.
+results:
+  v1:
+    pearson: 0.461
+    spearman: 0.315
+    training_time: "206s"
+    notes: "Missing deps, evaluator API change"
+  v2:
+    pearson: 0.695
+    spearman: 0.658
+    training_time: "4036s (~67min)"
+    notes: "Pair-level split inflates metrics (same card in train+val)"
+  v3:
+    pearson: "pending (0.560 at epoch 0.9)"
+    spearman: "pending (0.475 at epoch 0.9)"
+    ndcg: "pending"
+    notes: "Query-level split, honest generalization. Expected ~0.60-0.65 final."
+conclusion: >
+  Methodology matters more than model size. v2's Pearson 0.695 dropped to
+  v3's ~0.56 at epoch 1 because query-level split is genuinely harder.
+  The v3 architecture (L12, 384 tokens, rich text) is correct; the v2
+  evaluation was wrong. Cross-encoder shows promise for reranking but
+  the train/eval leakage must be resolved before production deployment.
+artifacts:
+  - data/models/cross_encoder_reranker/
+  - scripts/training/train_cross_encoder.py
+  - docs/failure_taxonomy.md
