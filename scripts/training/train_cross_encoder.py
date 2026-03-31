@@ -5,6 +5,7 @@
 #     "sentence-transformers>=3.0.0",
 #     "torch>=2.0.0",
 #     "numpy>=1.24.0",
+#     "datasets>=2.0.0",
 # ]
 # ///
 """
@@ -99,7 +100,10 @@ def train(games: list[str], epochs: int = 3, batch_size: int = 32, model_name: s
     """Train cross-encoder on annotation pairs."""
     from sentence_transformers import InputExample
     from sentence_transformers.cross_encoder import CrossEncoder
-    from sentence_transformers.cross_encoder.evaluation import CECorrelationEvaluator
+    try:
+        from sentence_transformers.cross_encoder.evaluation import CrossEncoderCorrelationEvaluator as CECorrelationEvaluator
+    except ImportError:
+        from sentence_transformers.cross_encoder.evaluation import CECorrelationEvaluator
     from torch.utils.data import DataLoader
 
     # Collect pairs from all games
