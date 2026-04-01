@@ -305,3 +305,4 @@ src/ml/experimental/*.jsonl
 references/rulebooks/
 !references/README.md
 !references/pull_references.sh
+.aider*
