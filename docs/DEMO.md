@@ -111,23 +111,90 @@ Key decisions:
 
 ---
 
-## 6. Evaluation and Experiment History (5 min, talk)
+## 6. Annotation Pipeline (5 min, talk + show prompt)
 
-Open `docs/experimental_narrative.md` -- 12 phases, 63 experiments.
+How we generated 100K annotations for $25.
 
-Highlight stories:
-- **Phase 2**: GNN approaches (LightGCN, HGT) all failed at similarity despite good link prediction
-- **Phase 3**: annotation dedup crisis invalidated a week of results
-- **Phase 7**: filling evaluation holes moved nDCG from 0.10 to 0.52 ($23 in LLM annotations)
-- **Phase 11**: text embeddings beat co-occurrence by 14-25% at substitute
+### The prompt (show `scripts/annotation/multi_model_annotate.py` lines 101-125)
 
-Show `docs/figures/experiment_progression.png` for the visual arc.
+```
+Rate these {GAME} cards on similarity (0.0-1.0).
 
-Eval method: ~100K LLM-generated annotations (Groq 70B + Cerebras 235B cascade, $25 total), condensed nDCG to correct for sparse annotation coverage (Sakai 2007).
+Card A: {full card text, type, cost, oracle text}
+Card B: {full card text, type, cost, oracle text}
+
+SCORING SCALE (use the FULL range):
+- 0.00: Unrelated. Different functions, different archetypes.
+- 0.15: Tangential. Same broad category but different targets/timing/cost.
+- 0.40: Moderate. Same function AND similar cost, or strong co-occurrence.
+- 0.65: Strong similarity. Competitive alternatives, similar efficiency.
+- 0.80: Near-substitute. Functionally interchangeable, minor differences.
+- 1.00: Functional reprint or strictly-better/worse pair.
+
+CALIBRATION ANCHORS:
+- Lightning Bolt vs Shock = 0.70
+- Path to Exile vs Swords to Plowshares = 0.80
+- Counterspell vs Mana Leak = 0.50
+- Lightning Bolt vs Counterspell = 0.10
+- Sol Ring vs Wrath of God = 0.05
+```
+
+### Key design decisions:
+
+1. **Card context is mandatory** (exp 0009). Without oracle text, LLMs hallucinate card effects from names. Error rate: 16% without context, 1% with.
+2. **Calibration anchors** in the prompt. Without them, models cluster scores around 0.5. Anchors spread the distribution.
+3. **Multi-model cascade**: Groq Llama 70B + Cerebras Llama 235B. Two independent models, consensus-averaged. Cost: $0.40/1K pairs.
+4. **4-dimensional scores**: similarity, functional, synergy, meta_relevance. Only `similarity_score` used for nDCG; others are diagnostic.
+5. **Provenance tracking**: every annotation records backend, model, prompt version, temperature.
+
+### What went wrong (and how we fixed it):
+
+- **Dedup crisis** (exp 0052): multi-model IAA produced duplicate annotations per pair. All nDCG numbers inflated 50-101%. Fix: consensus-average by (query, candidate) before eval.
+- **8B models don't work** (exp 0057): Ollama llama3.2 produced 54% zero scores, correlation -0.076 vs IAA. Minimum viable: 70B.
+- **IAA disagreement**: Krippendorff alpha 0.43 across 4 judges. Models disagree on fine-grained scores. We accept this and average.
+
+### The eval-annotation feedback loop:
+
+```
+Train embedding -> Retrieve top-K -> Find unjudged cards (holes)
+    -> Annotate holes -> Recompute nDCG -> (repeat)
+```
+
+"Filling holes" (annotating the top-K candidates the embedding actually retrieves) had 5-10x the impact of annotating random pairs. nDCG jumped from 0.10 to 0.52 in two rounds ($23 total).
 
 ---
 
-## 7. Deck Completion (3 min, show)
+## 7. Experiment History (5 min, talk)
+
+Open `docs/experimental_narrative.md` -- 12 phases, 63 experiments.
+
+Show `docs/figures/experiment_progression.png` for the visual arc.
+
+### The story in 5 beats:
+
+1. **Baseline** (exp 0001-0002): Co-occurrence embeddings work for synergy but not substitute. Functional AUC 0.317 -- barely better than random for substitution.
+
+2. **GNNs fail** (exp 0004, 0054-0055): LightGCN, HGT. Link prediction AUC 0.80 but similarity nDCG 0.003-0.014. The objective function matters more than the architecture. Reconstruction/link-prediction loss doesn't produce similarity-preserving embeddings.
+
+3. **Evaluation is harder than training** (exp 0052, 0057-0059): annotation dedup crisis invalidated a week of results. Then: filling evaluation holes (annotating what the model actually retrieves) moved nDCG from 0.10 to 0.52. We spent more time on evaluation methodology than on model architecture.
+
+4. **Text wins** (exp 0061-0062): E5-base-v2 text similarity (zero-shot, no training) beats 60 experiments of co-occurrence engineering by 14-25%. Co-occurrence captures what goes together; text captures what does the same thing.
+
+5. **Methodology > architecture** (exp 0063): Cross-encoder training. v2 showed Pearson 0.695; v3 with honest query-level split showed 0.56. The convenient number is always higher than the honest one.
+
+### Key failures worth mentioning:
+
+| What | Why it failed | What we learned |
+|------|--------------|-----------------|
+| LightGCN | Sweep eval inflated 0.095->0.545 | Never trust sweep-internal eval |
+| Data scaling | 10x Pokemon pairs barely moved nDCG | Tournament decks are homogeneous |
+| MetaPath2Vec | Deployed v7 was 4-sigma above mean | Multi-seed validation mandatory |
+| E5 fine-tuning | Catastrophic forgetting (0.44->0.29) | Frozen encoder + fusion > fine-tuning |
+| Commander data | 51K decks, no improvement | Commander != cross-format substitute |
+
+---
+
+## 8. Deck Completion (3 min, show)
 
 In the API docs (`/docs`), POST to `/v1/deck/complete`:
 
@@ -140,22 +207,23 @@ In the API docs (`/docs`), POST to `/v1/deck/complete`:
 }
 ```
 
-Shows beam search filling a burn deck with appropriate cards, respecting archetype curve targets.
+Shows beam search filling a burn deck with appropriate cards, respecting archetype curve targets (25 Magic archetypes, 15 YGO, 10 Pokemon).
 
 ---
 
-## 8. Q&A Prep
-
-Common questions and answers:
+## 9. Q&A Prep
 
 **"Why not fine-tune E5/BERT end-to-end?"**
-Tried (exp 0005, 0064). E5 fine-tuning caused catastrophic forgetting (Pearson 0.44->0.29). LoRA + multi-task was better but still below the fusion approach.
+Tried (exp 0005, 0064). E5 fine-tuning caused catastrophic forgetting (Pearson 0.44->0.29). LoRA + multi-task was better but still below the fusion approach. The frozen encoder + late fusion architecture is more robust.
 
 **"Why not GNNs?"**
-Tried LightGCN and HGT (exp 0004, 0054-0055). Link prediction AUC 0.80 but embedding similarity near-random (nDCG 0.003-0.014). Reconstruction/link-prediction objectives don't produce similarity-preserving embeddings.
+Tried LightGCN and HGT (exp 0004, 0054-0055). Link prediction AUC 0.80 but embedding similarity near-random. The objective function (reconstruction/link-prediction) doesn't produce similarity-preserving embeddings.
 
 **"How do you know the annotations are good?"**
-Multi-model IAA (Krippendorff alpha 0.43 -- judges disagree on fine-grained scores). Isotonic calibration on the cascade. Card context in prompts drops error rate from 16% to 1%.
+Multi-model IAA (Krippendorff alpha 0.43). Calibration anchors in the prompt. Card context mandatory (error rate 16% -> 1%). Minimum 70B model. Isotonic calibration on the cascade. We accept inter-judge disagreement and consensus-average.
+
+**"Why condensed nDCG?"**
+Standard nDCG is biased downward with sparse annotations -- it penalizes unjudged cards as irrelevant. Condensed nDCG (Sakai 2007) only ranks judged items, measuring ranking quality not annotation coverage. When the gap between standard and condensed closes (<0.005), annotations are saturated for that embedding.
 
 **"What's the cost?"**
-~$25 for 100K annotations. Infrastructure: MeiliSearch + Qdrant in Docker, CPU-only inference. No GPU needed for serving.
+~$25 for 100K annotations via Groq/Cerebras. Infrastructure: MeiliSearch + Qdrant in Docker, CPU-only inference. No GPU needed for serving. Total cloud spend: ~$30 (annotations + one A10G session for HGT experiments).
