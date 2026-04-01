@@ -8,17 +8,45 @@ Setup: ~10 min. Demo: ~30 min.
 
 ### Setup on demo machine
 
+Prerequisites: Python 3.11+, [uv](https://github.com/astral-sh/uv), Docker, ~8 GB disk.
+
 ```bash
+# 1. Clone and install Python deps (~2 min)
 git clone https://github.com/arclabs561/decksage.git && cd decksage
 uv sync --extra embeddings
+
+# 2. Download data assets (~2 min on fast connection, 1.8 GB)
+#    Get a presigned URL (valid 12 hours, email it to yourself).
+#    The tarball contains embeddings, graph DBs, pairs CSVs, text index.
 curl -Lo /tmp/decksage-demo-data.tar.gz "<PRESIGNED_URL>"
+
+# 3. Extract into repo root (~1 min). Creates files under data/.
+#    This preserves directory structure: data/embeddings/, data/graphs/,
+#    data/processed/, data/cache/. The .env.example defaults point to these paths.
 tar xzf /tmp/decksage-demo-data.tar.gz
+
+# 4. Create .env from template (defaults work with extracted data)
 cp .env.example .env
+
+# 5. Start search backends (MeiliSearch for text/typeahead, Qdrant for vectors)
 docker compose up -d meilisearch qdrant
+
+# 6. Verify backends are healthy before starting API
+curl -sf http://localhost:7700/health && echo "MeiliSearch OK"
+curl -sf http://localhost:6333/health && echo "Qdrant OK"
+
+# 7. Start the API (~40s startup: loads 3 games, indexes cards into MeiliSearch/Qdrant)
 uv run uvicorn src.ml.api.api:app --host 127.0.0.1 --port 8001
 ```
 
 Verify: `curl http://localhost:8001/live` returns `{"status":"live"}`.
+Open `http://localhost:8001` in a browser -- you should see the DeckSage UI with Magic/Pokemon/Yu-Gi-Oh game selector.
+
+**If something breaks:**
+- `uv sync` fails: check Python version (`python3 --version` must be 3.11+)
+- Docker health check fails: `docker compose logs meilisearch` / `docker compose logs qdrant`
+- API won't start: check `.env` exists and `data/embeddings/*.wv` files are present
+- "No module named gensim": re-run `uv sync --extra embeddings`
 
 ### Screenshots (pre-captured, use as backup if setup fails)
 
@@ -84,10 +112,10 @@ This is the clearest example. Do this one first.
 > "These are all counterspells. Different costs, different restrictions, but they all do the same thing: stop your opponent's spell."
 
 **Synergy** (switch to synergy): same card
-> Results: Swords to Plowshares, Disenchant, Dark Ritual, Brainstorm, Mishra's Factory
-> "Completely different cards. These are what you'd PUT IN THE SAME DECK as Counterspell -- removal, card draw, mana. They complement it, they don't replace it."
+> Results: Spell Snare (#1), then Day's Undoing, Narset, Mystic Gate, Hall of Storm Giants, Jace the Mind Sculptor, Isochron Scepter
+> "From result #2 onward these are completely different cards -- card draw, control finishers, utility lands. Cards you'd PUT IN THE SAME DECK as Counterspell, not replacements for it."
 
-Point out: the results share ZERO cards between modes. This is the complement-vs-substitute distinction made visible.
+Note: Spell Snare appears in both modes (#1 in each) because it's both a functional substitute (another counterspell) AND a frequent co-occurrence partner. That's the honest overlap. From #2 onward the lists diverge completely -- point this out: "One card overlaps, the rest are totally different."
 
 ### Second demo: Sol Ring
 
@@ -400,13 +428,42 @@ We also tried fine-tuning E5 on our annotation data (exp 0005 multi-task, exp 00
 | Limpet cache-first scraping | initial design | Residential proxy is the expensive resource | Parse bugs fixed without re-scraping |
 | Per-game models (not unified) | initial design | Game mechanics differ too much (mana vs energy vs levels) | Per-game nDCG always beats unified |
 
+### PecanPy: how the embeddings are trained
+
+PecanPy (Liu & Krishnan, Bioinformatics 2021) is a fast, parallelized node2vec implementation. Three modes for different graph sizes:
+
+- **PreComp**: precomputes all transition probabilities. Fast walks, high memory. Good for <10K nodes.
+- **SparseOTF**: computes transitions on-the-fly from sparse adjacency. We use this -- our graphs have 15-35K nodes but density <20%.
+- **DenseOTF**: on-the-fly for dense graphs.
+
+Why faster than standard node2vec (the `node2vec` pip package): SparseOTF avoids materializing the full transition matrix. For a 35K-node graph with 12M edges, standard node2vec needs ~10GB for transition probabilities; SparseOTF streams them.
+
+Our configuration:
+
+| Parameter | Value | Why |
+|---|---|---|
+| Mode | `SparseOTF` | Sparse graph (density <20%) |
+| `dim` | 128 | Fused to 128D after PCA with card attributes |
+| `walk_length` | 80 | Long walks to capture distant co-occurrence |
+| `num_walks` | 10 | 10 walks per node |
+| `p`, `q` | 1.0, 1.0 | Unbiased (DeepWalk-equivalent). BFS/DFS bias didn't help. |
+| `extend=True` | node2vec+ | Uses edge weights in walk probabilities (standard node2vec ignores weights) |
+| `ns_exponent` | -0.5 | Down-weights frequent cards in negative sampling (Caselles-Dupre 2018) |
+| `negative` | 20 | 20 negative samples per positive (high for recommendation) |
+| `sg` | 1 | Skip-gram, not CBOW |
+| `window` | 10 | Context window for Word2Vec layer |
+
+The `extend=True` flag is critical: it activates **node2vec+**, which uses edge weights (co-occurrence counts) in the biased random walk. Standard node2vec ignores edge weights entirely during walk generation.
+
+After training, embeddings are **mean-centered** to prevent positive-bias collapse in cosine similarity (all vectors share a large directional component without centering).
+
 ### "What about new cards with no deck history?"
 
 Three of six signals work without co-occurrence data: text embeddings, functional tags, and visual embeddings. New cards get text+functional+visual similarity immediately. Co-occurrence and Jaccard signals fill in as tournament data accumulates.
 
-### "Why Word2Vec and not something more modern?"
+### "Why Word2Vec / PecanPy and not something more modern?"
 
-PecanPy (node2vec variant) on the co-occurrence graph feeds into Word2Vec. It's the right tool for this: graph-walk embeddings on a co-occurrence matrix. We tried GNNs (LightGCN, HGT) and they performed worse because the objective function matters more than the architecture.
+We tried GNNs (LightGCN, HGT -- exp 0004, 0054-0055) and they performed worse. The objective function matters more than the architecture: graph reconstruction doesn't produce similarity-preserving embeddings. PecanPy + Word2Vec with the right negative sampling exponent is the right tool for co-occurrence graphs. We also tried ProNE (SVD-based, 10-100x faster) as a quick-iteration baseline, but PecanPy produces higher quality embeddings for the final deployment.
 
 ### "Why condensed nDCG?"
 
