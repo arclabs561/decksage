@@ -34,19 +34,19 @@ Single game (default):
 ```bash
 export DECKSAGE_DEFAULT_GAME=magic
 export EMBEDDINGS_PATH=/path/to/magic.wv
-uv run uvicorn ml.api.api:app --reload --port 8000
-curl http://localhost:8000/ready
+uv run uvicorn src.ml.api.api:app --reload --port 8001
+curl http://localhost:8001/ready
 ```
 
 Multi-game (one process):
 
 ```bash
 export DECKSAGE_GAMES=magic,pokemon,yugioh
-export EMBEDDINGS_PATH_MAGIC=/path/to/magic.wv
-export EMBEDDINGS_PATH_POKEMON=/path/to/pokemon.wv
-export EMBEDDINGS_PATH_YUGIOH=/path/to/yugioh.wv
+export EMBEDDINGS_PATH_MAGIC=./data/embeddings/magic_v7_spectral_mu35.wv
+export EMBEDDINGS_PATH_POKEMON=./data/embeddings/pokemon_v7_fused.wv
+export EMBEDDINGS_PATH_YUGIOH=./data/embeddings/yugioh_v7_spectral_mu3.wv
 
-uv run uvicorn ml.api.api:app --reload --port 8000
+uv run uvicorn src.ml.api.api:app --reload --port 8001
 curl http://localhost:8000/v1/games
 ```
 
