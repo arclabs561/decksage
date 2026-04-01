@@ -64,7 +64,16 @@ All in `docs/figures/`:
 4. **YuGiOh hand traps** (`demo_yugioh_ash_blossom.png`): Ash Blossom -> Effect Veiler, Ghost Ogre, Ghost Belle. Cross-game proof.
    ![yugioh](figures/demo_yugioh_ash_blossom.png)
 
-5. **Experiment progression** (`experiment_progression.png`): nDCG across 63 experiments (already exists)
+5. **Wrath of God breakdown bars** (`demo_wrath_embedding_breakdown.png`): text_e5 at 97%, shows signal architecture
+   ![wrath](figures/demo_wrath_embedding_breakdown.png)
+
+6. **Pokemon Ultra Ball** (`demo_pokemon_ultra_ball.png`): all Ball/search items. Third game.
+   ![pokemon](figures/demo_pokemon_ultra_ball.png)
+
+7. **Deck completion result** (`demo_deck_completion_result.png`): 16-card seed -> 60-card deck in 11 steps
+   ![deck](figures/demo_deck_completion_result.png)
+
+8. **Experiment progression** (`experiment_progression.png`): nDCG across 63 experiments (already exists)
 
 ### Pre-tested queries with known-good results
 
@@ -107,7 +116,7 @@ Open `http://localhost:8001`. This is the core demo moment. The whole point is s
 
 This is the clearest example. Do this one first.
 
-**Substitute** (mode dropdown -> substitute): search "Counterspell"
+**Substitute** (Use case dropdown -> Substitute): search "Counterspell"
 > Results: Spell Snare, Negate, Flash Counter, Dispel, Preemptive Strike
 > "These are all counterspells. Different costs, different restrictions, but they all do the same thing: stop your opponent's spell."
 
@@ -127,7 +136,9 @@ Note: Spell Snare appears in both modes (#1 in each) because it's both a functio
 
 ### Compare tab
 
-Switch to the Compare tab. Enter "Lightning Bolt". Left=substitute, right=synergy. Both panels render simultaneously with the same card, different results. Point at the difference.
+Switch to the Compare tab. The query carries over from Search (or type "Counterspell"). Set Left: Embedding/Substitute, Right: Fusion/Synergy. Hit Compare. Both panels render simultaneously -- same card, completely different results.
+
+![compare](figures/demo_compare_sub_vs_syn.png)
 
 ### Cross-game (quick, 1 min -- show all 3 games work)
 
@@ -299,9 +310,15 @@ Three completion methods (selectable in the UI Method dropdown):
 - **Beam search** (beam_width=3): maintains 3 partial decks in parallel, picks the best complete deck. Can follow archetype curve targets (25 Magic archetypes, 15 YGO, 10 Pokemon).
 - **OT (Optimal Transport)**: formulates completion as a Sinkhorn transport problem. Source = quality-weighted candidate pool, target = archetype mana curve distribution, cost matrix = embedding distance + role gaps. Uses ILP rounding for integer card counts. Most principled but slowest. Requires `pot` package.
 
-The system also auto-detects the deck's archetype from seed cards and adjusts curve targets.
+The system auto-detects the deck's archetype from seed cards and adjusts curve targets.
 
 ![deck completion tab](figures/demo_deck_completion_tab.png)
+
+After running, you see the step-by-step additions and completed deck JSON:
+
+![deck completion result](figures/demo_deck_completion_result.png)
+
+Note: the greedy completer uses co-occurrence embeddings, so it finds cards that appear in the same decks as the seed. With Goblin Guide in the seed, it pulls goblin tribal (Goblin Chieftain, Ringleader, Matron, etc.) -- that's the co-occurrence signal working. If you want burn-specific completion, the beam method with archetype detection would route toward the burn template instead. This is a good talking point: "the completion method uses the complement signal (same deck), which is where co-occurrence actually helps."
 
 ---
 
@@ -504,6 +521,40 @@ Data layer:
 | Limitless TCG | Pokemon | 24K | Standard |
 | MasterDuelMeta | Yu-Gi-Oh | 65K | Master Duel |
 | YGOProDeck | Yu-Gi-Oh | 12K | Tournament |
+
+### Every method we tried (and why each was kept or dropped)
+
+**Kept (in production):**
+
+| Method | What it does | Role in system |
+|--------|-------------|----------------|
+| **PecanPy** (node2vec+) | Biased random walks on co-occurrence graph -> Word2Vec | Primary co-occurrence embedding (128D). SparseOTF mode, ns_exponent=-0.5. |
+| **E5-base-v2** | Frozen text encoder on card oracle text | Text similarity signal. Best at substitute (14-25% over co-occurrence). |
+| **SigLIP2** | Visual encoder on card art images | Visual similarity signal. Catches art-style archetypes. |
+| **Spectral propagation** | Smooths embeddings over graph Laplacian (mu=0.3) | Post-processing on PecanPy. +0.5% nDCG, stabilizes variance. |
+| **Card attribute fusion** | PCA-project card attributes (type, cost, colors) to 128D, blend at alpha=0.7 | Without it, nDCG drops 30-50%. Essential. |
+| **RRF fusion** | Reciprocal Rank Fusion across 6 signals | Combines all signals. Use_case-aware weighting. |
+
+**Tried and dropped:**
+
+| Method | What it is | Experiment | Result | Why dropped |
+|--------|-----------|------------|--------|-------------|
+| **Cleora** | Iterated matrix multiply on transition matrix (Rychalska 2021). 1 iter = complement, 5+ iter = substitute. | exp 0042 | Magic 0.103 (1-iter best, over-smoothing at 5+) | Worse than PecanPy (0.102 raw). Theory (Tkachuk 2022) says high iterations = substitute, but our graph is too dense (35K nodes) -- over-smoothing kills signal. |
+| **ProNE** | Randomized SVD + spectral propagation (IJCAI 2019). 10-100x faster than node2vec. | used as baseline | Quick iteration baseline | Lower quality than PecanPy for final deployment. Used for fast sweeps. |
+| **Residual PPMI** | Degree-corrected PPMI matrix, SVD to 128D (Residual2Vec concept). | exp 0056 | 0.084 | Worse than PecanPy (0.102). Random walks capture more nuance than matrix factorization. |
+| **MetaPath2Vec** | Heterogeneous random walks following typed paths (deck->card->deck). PyTorch Geometric. | exp 0030-0039, 0046, 0048 | Best: 0.228 (but LEAKED annotation edges). Clean: regressed Magic/Pokemon. | Initially promising (+43% over v5) but gains came from annotation edge leakage. Clean eval: worse than PecanPy. Also: Commander edges diluted signal, attribute fusion hurt (wrong fusion method). |
+| **LightGCN** | Graph Convolutional Network for collaborative filtering (He et al. SIGIR 2020). | exp 0004, 0012, 0018, 0024 | Sweep: 0.545 (inflated). Canonical: 0.095 (worse than v5). | BPR loss collapses on dense co-occurrence graphs (random negatives are mostly connected nodes). Reconstruction loss works mechanically but embeddings aren't similarity-preserving. |
+| **HGT** | Heterogeneous Graph Transformer. Mini-batch training on A10G GPU. | exp 0054-0055 | Link pred AUC 0.80. Sub nDCG: 0.003 raw, 0.014 fused. | Link prediction objective doesn't produce similarity-preserving embeddings. Contrastive (InfoNCE) was even worse (0.002). |
+| **GraphSAGE** | Inductive GNN with neighbor sampling. | script exists | Not fully evaluated | Abandoned after LightGCN and HGT both failed -- the problem is the objective, not the architecture. |
+| **Box embeddings** | Learn axis-aligned boxes where containment = upgrade relationship (subsumer library). | exp 0049 | AUC: Magic 0.500, Pokemon 0.583 (degenerate) | Too few upgrade pairs (168-292 per game). Boxes collapsed to points. |
+| **Cone embeddings** | Learn cones in hyperbolic-like space for partial order (A upgrades B). | exp 0043-0045 | AUC: Magic 0.857 (with hard negatives + transitive closure) | Better than boxes but still limited data. Kept as experimental; not in production similarity. |
+| **E5 fine-tuning** | LoRA/full fine-tune on annotation pairs. Bi-encoder and cross-encoder variants. | exp 0005, 0064 | Catastrophic forgetting: Pearson 0.44 -> 0.29. | Frozen E5 as a fusion signal is more robust than fine-tuned E5 as the only signal. |
+| **SimCSE on E5** | Self-supervised contrastive fine-tuning on E5. | script exists | Not fully evaluated | Abandoned after E5 fine-tuning showed catastrophic forgetting. |
+| **Cross-encoder** | MiniLM pairwise reranker trained on annotation pairs. | exp 0063 | Pearson 0.56 (honest, query-level split). v2 was 0.695 (inflated, pair-level split). | Training works but methodology matters more than architecture. Still experimental. |
+| **Flow completion** | Normalizing flow for deck generation. | exp 0006 | hit@10: 0.031 | Too few training decks per archetype. Abandoned. |
+| **Degree debiasing** | Subtract degree-weighted mean from embeddings (Residual2Vec post-processing). | exp 0056 | +1% on raw, no help on top of spectral | Spectral propagation already subsumes the benefit. |
+
+**Key takeaway for Q&A**: "We tried 15+ methods across GNNs, matrix factorization, random walks, text encoders, visual encoders, containment embeddings, and generative models. The methods that worked share a property: they either directly measure the signal we want (text similarity for substitute, co-occurrence for synergy) or they post-process an existing signal (spectral, attribute fusion, reranker weighting). The methods that failed tried to learn the signal from an objective function that measures something else (edge reconstruction, link prediction)."
 
 ### Full experiment index
 
