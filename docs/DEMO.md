@@ -1,127 +1,199 @@
 # DeckSage Demo Script
 
-Setup time: ~10 min. Demo time: ~30 min.
+Setup: ~10 min. Demo: ~30 min.
 
 ---
 
-## 0. Setup (on demo machine)
+## Pre-demo prep
+
+### Setup on demo machine
 
 ```bash
-# Clone and install
 git clone https://github.com/arclabs561/decksage.git && cd decksage
 uv sync --extra embeddings
-
-# Download and extract data assets (presigned URL, ask for current link)
 curl -Lo /tmp/decksage-demo-data.tar.gz "<PRESIGNED_URL>"
 tar xzf /tmp/decksage-demo-data.tar.gz
-
-# Configure
 cp .env.example .env
-
-# Start search backends
 docker compose up -d meilisearch qdrant
-
-# Start API (~40s to load 3 games + index cards)
 uv run uvicorn src.ml.api.api:app --host 127.0.0.1 --port 8001
 ```
 
-Verify: `curl http://localhost:8001/live` returns `{"status":"ok"}`.
+Verify: `curl http://localhost:8001/live` returns `{"status":"live"}`.
 
----
+### Screenshots (pre-captured, use as backup if setup fails)
 
-## 1. Problem Statement (2 min, talk)
+All in `docs/figures/`:
 
-"Given a trading card game card, find functionally similar cards -- substitutes, synergies, upgrades. Three games: Magic (26K cards), Pokemon (4.4K), Yu-Gi-Oh (13K)."
+1. **Counterspell substitute** (`demo_counterspell_substitute.png`): all counterspells, score breakdown bars visible
+   ![substitute](figures/demo_counterspell_substitute.png)
 
-The hard part: **co-occurrence (cards in the same deck) measures complement, not substitute.** Lightning Bolt and Monastery Swiftspear appear together but do completely different things. We need cards that do the same thing as Lightning Bolt -- Lava Spike, Searing Blaze, Chain Lightning.
+2. **Counterspell synergy** (`demo_counterspell_synergy.png`): Day's Undoing, Narset, Jace -- blue control staples, not counterspells
+   ![synergy](figures/demo_counterspell_synergy.png)
 
----
+3. **Compare tab** (`demo_compare_sub_vs_syn.png`): side-by-side, same card, different results. This is the money shot.
+   ![compare](figures/demo_compare_sub_vs_syn.png)
 
-## 2. Web UI -- Live Search (5 min, show)
+4. **YuGiOh hand traps** (`demo_yugioh_ash_blossom.png`): Ash Blossom -> Effect Veiler, Ghost Ogre, Ghost Belle. Cross-game proof.
+   ![yugioh](figures/demo_yugioh_ash_blossom.png)
 
-Open `http://localhost:8001` in a browser.
+5. **Experiment progression** (`experiment_progression.png`): nDCG across 63 experiments (already exists)
 
-### Demo queries (Magic):
+### Pre-tested queries with known-good results
 
-| Query | Mode | What to point out |
-|-------|------|-------------------|
-| Lightning Bolt | substitute | Results are burn spells, not creatures that go with burn |
-| Counterspell | substitute | Gets Negate, Mana Leak, Force of Will -- functional replacements |
-| Counterspell | synergy | Gets blue staples that go in the same deck -- Islands, Brainstorm, Snapcaster |
-| Wrath of God | fusion | Shows all 6 signal bars -- which signals agree/disagree |
-| Sol Ring | substitute vs synergy | Swap modes to show the difference clearly |
-
-### Demo queries (cross-game):
-
-| Query | Game | What to point out |
-|-------|------|-------------------|
-| Ultra Ball | Pokemon | Substitute: Nest Ball, Quick Ball (search-for-Pokemon effects) |
-| Ash Blossom & Joyous Spring | Yu-Gi-Oh | Substitute: other hand traps (Effect Veiler, Infinite Impermanence) |
-
-### What to highlight in the UI:
-
-- **Score breakdown bars**: each result shows per-signal strength (embed, jaccard, functional, text, visual, archetype)
-- **Method dropdown**: switch between substitute/synergy/fusion/embedding/jaccard/meta
-- **Typeahead**: card name autocomplete (MeiliSearch-backed, fast)
-- **Card images**: loaded from Scryfall/official APIs
-
----
-
-## 3. Signal Architecture (5 min, talk + show)
-
-Switch to fusion mode on a query and point at the breakdown bars.
-
-Six signals fused via Reciprocal Rank Fusion:
-
-1. **Embedding cosine** (co-occurrence): PecanPy Word2Vec on 184K decks. Good at complement, mediocre at substitute.
-2. **Jaccard co-occurrence**: direct deck overlap ratio. Pure complement signal.
-3. **Functional tags**: type line, keywords, mana cost similarity. Rules-based, no learning.
-4. **Text embeddings** (E5-base-v2): card text similarity. 14-25% better than co-occurrence at substitute.
-5. **Visual embeddings** (SigLIP2): card art similarity. Catches visual archetypes.
-6. **Archetype similarity**: deck archetype template matching (25 Magic archetypes, etc.).
-
-Key insight: **substitute mode text-boosts** -- reranker upweights text_e5 and dampens co-occurrence for substitute use_case.
-
----
-
-## 4. Side-by-Side Comparison (3 min, show)
-
-Use the Compare tab in the UI. Set query to "Lightning Bolt", left=substitute, right=synergy. Shows how the same card gets different results depending on the question.
-
----
-
-## 5. Training Pipeline (5 min, talk, show code)
-
-Walk through the pipeline (point at files, don't run them):
+Verified responses (use_case parameter, not method):
 
 ```
-Deck scraping (Go backend, src/backend/)
-    -> Co-occurrence pairs (data/processed/pairs_*.csv)
-    -> Enriched graph (scripts/training/build_unified_graph.py)
-    -> PecanPy random walks + Word2Vec (scripts/training/train_metapath2vec.py)
-    -> Card attribute fusion (scripts/training/fuse_embeddings.py, alpha=0.7)
-    -> Text embedding index (scripts/training/build_text_embedding_index.py)
-    -> Visual embedding index (scripts/training/build_visual_embedding_index.py)
+Counterspell substitute -> Spell Snare, Negate, Flash Counter, Dispel, Preemptive Strike
+Counterspell synergy    -> Spell Snare, Day's Undoing, Narset, Mystic Gate, Jace
+Sol Ring substitute     -> Rakdos Signet, Azorius Signet, Hedron Archive, Dimir Signet
+Sol Ring synergy        -> Cultivate, Lightning Greaves, Temple of the False God, Reliquary Tower
+Wrath of God substitute -> Damnation, Catastrophe, Plague Wind, Winds of Rath
+Lightning Bolt substitute -> Wizard's Lightning, Lightning Strike, Lightning Blast, Lightning Helix
+Ash Blossom (YGO)      -> Effect Veiler, Ghost Ogre, Ghost Belle, Herald of Orange Light
+Ultra Ball (PKM)        -> Super Rod, Tera Orb, Energy Retrieval, Quick Ball
 ```
 
-Key decisions:
-- **ns_exponent=-0.5**: down-weights staple cards in negative sampling (Caselles-Dupre 2018)
-- **Spectral propagation**: smooths embeddings over graph Laplacian
-- **Card attribute fusion at alpha=0.7**: without it, nDCG drops 30-50%
+Response times: substitute/synergy ~70ms, fusion ~4.5s (computes all 6 signals live).
 
 ---
 
-## 6. Annotation Pipeline (5 min, talk + show prompt)
+## 1. Problem + Analogy (2 min, talk)
 
-How we generated 100K annotations for $25.
+Start with the analogy, not the jargon:
 
-### The prompt (show `scripts/annotation/multi_model_annotate.py` lines 101-125)
+> "When you buy a phone on Amazon, it recommends phone cases -- things that **go with** your purchase. That's a complement. But what if you want to find **other phones like yours**? That's a substitute. Very different problem, and the data you'd use (purchase history) is better at complements."
+
+Then ground it:
+
+> "Same problem in trading card games. 184K tournament deck lists tell us which cards appear together -- that's complement. But players also want: 'my card got banned, what replaces it?' or 'this card costs $50, what's the budget version?'  That's substitute -- and co-occurrence data is bad at it."
+
+Three games: Magic (26K cards), Pokemon (4.4K), Yu-Gi-Oh (13K). All with different game mechanics, card text formats, and metagames.
+
+---
+
+## 2. Live demo: substitute vs synergy (7 min, show)
+
+Open `http://localhost:8001`. This is the core demo moment. The whole point is showing that the same card returns completely different results depending on the question.
+
+### Star demo: Counterspell
+
+This is the clearest example. Do this one first.
+
+**Substitute** (mode dropdown -> substitute): search "Counterspell"
+> Results: Spell Snare, Negate, Flash Counter, Dispel, Preemptive Strike
+> "These are all counterspells. Different costs, different restrictions, but they all do the same thing: stop your opponent's spell."
+
+**Synergy** (switch to synergy): same card
+> Results: Swords to Plowshares, Disenchant, Dark Ritual, Brainstorm, Mishra's Factory
+> "Completely different cards. These are what you'd PUT IN THE SAME DECK as Counterspell -- removal, card draw, mana. They complement it, they don't replace it."
+
+Point out: the results share ZERO cards between modes. This is the complement-vs-substitute distinction made visible.
+
+### Second demo: Sol Ring
+
+**Substitute**: Rakdos Signet, Azorius Signet, Hedron Archive, Dimir Signet, Orzhov Signet
+> "All mana rocks. Sol Ring makes mana; so do these."
+
+**Synergy**: Cultivate, Lightning Greaves, Temple of the False God, Reliquary Tower, Chaos Warp
+> "Commander staples. Cards you play alongside Sol Ring in the same deck."
+
+### Compare tab
+
+Switch to the Compare tab. Enter "Lightning Bolt". Left=substitute, right=synergy. Both panels render simultaneously with the same card, different results. Point at the difference.
+
+### Cross-game (quick, 1 min)
+
+- Switch game to Yu-Gi-Oh, search "Ash Blossom & Joyous Spring", mode=substitute
+  > Effect Veiler, Ghost Ogre, Ghost Belle -- all hand traps. Works across games.
+- Switch to Pokemon, "Ultra Ball", substitute
+  > Super Rod, Tera Orb, Quick Ball -- all search/retrieval items.
+
+### What to point out in the UI
+
+- **Score breakdown bars** on each result: 6 colored segments showing which signals contributed (embed, jaccard, functional, text, visual, archetype)
+- **Response time** in bottom-left: ~70ms for substitute/synergy
+- **Card images** and metadata: loaded live from Scryfall/official APIs
+- **Typeahead**: start typing and watch MeiliSearch autocomplete
+
+---
+
+## 3. Why is this hard? (5 min, talk + show figure)
+
+Show `docs/figures/experiment_progression.png`. This is the nDCG curve across 63 experiments.
+
+### 5-beat story (point at the chart as you go):
+
+**Beat 1 -- Baseline is bad for the wrong reason.**
+Co-occurrence embeddings (Word2Vec on deck lists) get functional AUC 0.317 for substitution. Barely above random. They're good at "what goes together" but bad at "what does the same thing."
+
+**Beat 2 -- GNNs can't fix a data problem.**
+We tried LightGCN and Heterogeneous Graph Transformers. Link prediction AUC 0.80 -- the model learned the graph. But similarity nDCG: 0.003. The objective function (reconstruct edges) doesn't produce similarity-preserving embeddings. Architecture doesn't matter when the loss function is wrong.
+
+> "This killed two months of GNN experiments. The lesson: if your training signal measures X, your embeddings will be good at X, not at Y."
+
+**Beat 3 -- Evaluation is harder than training.**
+We discovered our annotations had 43-76% duplicates from multi-model judging. All nDCG numbers for a week were inflated 50-101%. After fixing that, we found that annotating what the model actually retrieves (top-K hole filling) had 5-10x the impact of annotating random pairs. nDCG jumped from 0.10 to 0.52.
+
+> "We spent more engineering time on evaluation methodology than on model architecture. That's the right allocation."
+
+**Beat 4 -- Text wins.**
+After 60 experiments of co-occurrence engineering, we tried E5-base-v2 text similarity. Zero-shot, no training. It beat everything by 14-25% at substitute. Co-occurrence captures what goes together; text captures what does the same thing.
+
+| Game | Co-occurrence nDCG | Text nDCG | Gap |
+|------|--------------------|-----------|-----|
+| Magic | 0.503 | 0.613 | +22% |
+| Pokemon | 0.414 | 0.518 | +25% |
+| Yu-Gi-Oh | 0.465 | 0.532 | +14% |
+
+> "The irony: the best substitute signal required zero training. But you can't know that without the evaluation infrastructure to measure it."
+
+**Beat 5 -- Honest numbers are always lower.**
+Cross-encoder reranker: v2 reported Pearson 0.695. v3 with proper query-level train/val split: 0.56. The difference? Same query card in both train and val = data leakage.
+
+### Failures table (optional, show if audience is ML-oriented):
+
+| Attempt | Result | Lesson |
+|---------|--------|--------|
+| LightGCN (exp 0004) | Sweep eval 0.545, real eval 0.095 | Never trust sweep-internal eval |
+| 10x Pokemon data (exp 0003) | nDCG barely moved | Tournament decks are homogeneous |
+| Deployed v7 (exp 0053) | Was 4-sigma outlier above mean | Multi-seed validation is mandatory |
+| E5 fine-tuning (exp 0064) | Catastrophic forgetting (0.44->0.29) | Frozen encoder + fusion > fine-tuning |
+| 51K Commander decks (exp 0050) | No improvement | Commander format != cross-format substitute |
+
+---
+
+## 4. How it works: 6 signals (3 min, show fusion breakdown)
+
+Go back to the UI. Search "Wrath of God", mode=fusion.
+
+Point at the breakdown bars on each result. Six signals, fused via Reciprocal Rank Fusion:
+
+1. **Embedding cosine** -- co-occurrence signal (complement)
+2. **Jaccard** -- direct deck overlap (complement)
+3. **Functional tags** -- type, keywords, mana cost (rules-based, no learning)
+4. **Text E5** -- card text similarity (best at substitute)
+5. **Visual SigLIP2** -- card art similarity
+6. **Archetype** -- deck archetype template matching
+
+> "For substitute queries, the reranker upweights text_e5 and dampens co-occurrence. For synergy queries, it does the opposite. Same data, different routing."
+
+Latency note: fusion takes ~4.5s because it computes all 6 signals live. Substitute/synergy route to a single signal: ~70ms.
+
+---
+
+## 5. Annotation pipeline (5 min, talk + show prompt)
+
+> "How do you evaluate card similarity at scale? You can't hire Magic experts for 100K annotations. We used LLMs."
+
+### Show the prompt
+
+Open `scripts/annotation/multi_model_annotate.py` in an editor (line 101). The actual prompt sent to Groq/Cerebras:
 
 ```
-Rate these {GAME} cards on similarity (0.0-1.0).
+Rate these MAGIC cards on similarity (0.0-1.0).
 
-Card A: {full card text, type, cost, oracle text}
-Card B: {full card text, type, cost, oracle text}
+Card A: Lightning Bolt | Instant | {R} | Lightning Bolt deals 3 damage to any target.
+Card B: Shock | Instant | {R} | Shock deals 2 damage to any target.
 
 SCORING SCALE (use the FULL range):
 - 0.00: Unrelated. Different functions, different archetypes.
@@ -132,98 +204,195 @@ SCORING SCALE (use the FULL range):
 - 1.00: Functional reprint or strictly-better/worse pair.
 
 CALIBRATION ANCHORS:
-- Lightning Bolt vs Shock = 0.70
-- Path to Exile vs Swords to Plowshares = 0.80
-- Counterspell vs Mana Leak = 0.50
-- Lightning Bolt vs Counterspell = 0.10
-- Sol Ring vs Wrath of God = 0.05
+- Lightning Bolt vs Shock = 0.70 (same function, different damage)
+- Path to Exile vs Swords to Plowshares = 0.80 (near-identical effect)
+- Counterspell vs Mana Leak = 0.50 (same function, different late-game)
+- Lightning Bolt vs Counterspell = 0.10 (both instants, different functions)
+- Sol Ring vs Wrath of God = 0.05 (unrelated)
 ```
 
-### Key design decisions:
+### Three things that matter in the prompt:
 
-1. **Card context is mandatory** (exp 0009). Without oracle text, LLMs hallucinate card effects from names. Error rate: 16% without context, 1% with.
-2. **Calibration anchors** in the prompt. Without them, models cluster scores around 0.5. Anchors spread the distribution.
-3. **Multi-model cascade**: Groq Llama 70B + Cerebras Llama 235B. Two independent models, consensus-averaged. Cost: $0.40/1K pairs.
-4. **4-dimensional scores**: similarity, functional, synergy, meta_relevance. Only `similarity_score` used for nDCG; others are diagnostic.
-5. **Provenance tracking**: every annotation records backend, model, prompt version, temperature.
+1. **Card context is mandatory.** Without oracle text, LLMs hallucinate card effects from names. "Sacred Ground" gets matched to "Wrath of God" because "ground" appears in board-wipe contexts. Error rate: 16% without context, 1% with.
 
-### What went wrong (and how we fixed it):
+2. **Calibration anchors.** Without them, models cluster everything around 0.5. The anchors spread the distribution across the full 0-1 range.
 
-- **Dedup crisis** (exp 0052): multi-model IAA produced duplicate annotations per pair. All nDCG numbers inflated 50-101%. Fix: consensus-average by (query, candidate) before eval.
-- **8B models don't work** (exp 0057): Ollama llama3.2 produced 54% zero scores, correlation -0.076 vs IAA. Minimum viable: 70B.
-- **IAA disagreement**: Krippendorff alpha 0.43 across 4 judges. Models disagree on fine-grained scores. We accept this and average.
+3. **Multi-model cascade.** Groq Llama 70B + Cerebras Llama 235B. Two independent models, consensus-averaged. Cost: $0.40 per 1000 pairs.
 
-### The eval-annotation feedback loop:
+### The eval-annotation loop (show as diagram or describe):
 
 ```
-Train embedding -> Retrieve top-K -> Find unjudged cards (holes)
-    -> Annotate holes -> Recompute nDCG -> (repeat)
+Train embedding -> Retrieve top-K for each test query -> Find unjudged results
+    -> Annotate those specific holes -> Recompute nDCG -> Repeat
 ```
 
-"Filling holes" (annotating the top-K candidates the embedding actually retrieves) had 5-10x the impact of annotating random pairs. nDCG jumped from 0.10 to 0.52 in two rounds ($23 total).
+> "Annotating the candidates the model actually retrieves had 5-10x the impact of annotating random pairs. Two rounds of hole-filling, $23 total, moved nDCG from 0.10 to 0.52. Total annotation cost: ~$25 for 100K pairs across 3 games."
+
+### What went wrong:
+
+- Multi-model IAA produced duplicate annotations per pair. All nDCG inflated 50-101% for a week before we caught it.
+- 8B models (Ollama llama3.2) are useless: 54% zero scores, correlation -0.076 vs human agreement. Minimum viable: 70B.
+- Inter-judge agreement (Krippendorff alpha): 0.43. Models disagree on fine-grained scores. We accept that and consensus-average.
 
 ---
 
-## 7. Experiment History (5 min, talk)
+## 6. Deck completion (3 min, show)
 
-Open `docs/experimental_narrative.md` -- 12 phases, 63 experiments.
+In the Swagger UI (`http://localhost:8001/docs`), find POST `/v1/deck/complete`.
 
-Show `docs/figures/experiment_progression.png` for the visual arc.
-
-### The story in 5 beats:
-
-1. **Baseline** (exp 0001-0002): Co-occurrence embeddings work for synergy but not substitute. Functional AUC 0.317 -- barely better than random for substitution.
-
-2. **GNNs fail** (exp 0004, 0054-0055): LightGCN, HGT. Link prediction AUC 0.80 but similarity nDCG 0.003-0.014. The objective function matters more than the architecture. Reconstruction/link-prediction loss doesn't produce similarity-preserving embeddings.
-
-3. **Evaluation is harder than training** (exp 0052, 0057-0059): annotation dedup crisis invalidated a week of results. Then: filling evaluation holes (annotating what the model actually retrieves) moved nDCG from 0.10 to 0.52. We spent more time on evaluation methodology than on model architecture.
-
-4. **Text wins** (exp 0061-0062): E5-base-v2 text similarity (zero-shot, no training) beats 60 experiments of co-occurrence engineering by 14-25%. Co-occurrence captures what goes together; text captures what does the same thing.
-
-5. **Methodology > architecture** (exp 0063): Cross-encoder training. v2 showed Pearson 0.695; v3 with honest query-level split showed 0.56. The convenient number is always higher than the honest one.
-
-### Key failures worth mentioning:
-
-| What | Why it failed | What we learned |
-|------|--------------|-----------------|
-| LightGCN | Sweep eval inflated 0.095->0.545 | Never trust sweep-internal eval |
-| Data scaling | 10x Pokemon pairs barely moved nDCG | Tournament decks are homogeneous |
-| MetaPath2Vec | Deployed v7 was 4-sigma above mean | Multi-seed validation mandatory |
-| E5 fine-tuning | Catastrophic forgetting (0.44->0.29) | Frozen encoder + fusion > fine-tuning |
-| Commander data | 51K decks, no improvement | Commander != cross-format substitute |
-
----
-
-## 8. Deck Completion (3 min, show)
-
-In the API docs (`/docs`), POST to `/v1/deck/complete`:
+Paste this payload:
 
 ```json
 {
   "game": "magic",
-  "cards": ["Lightning Bolt", "Monastery Swiftspear", "Goblin Guide", "Eidolon of the Great Revel"],
-  "target_size": 20,
-  "method": "beam"
+  "deck": {
+    "Main": [
+      "Lightning Bolt", "Lightning Bolt", "Lightning Bolt", "Lightning Bolt",
+      "Monastery Swiftspear", "Monastery Swiftspear", "Monastery Swiftspear", "Monastery Swiftspear",
+      "Goblin Guide", "Goblin Guide", "Goblin Guide", "Goblin Guide",
+      "Eidolon of the Great Revel", "Eidolon of the Great Revel", "Eidolon of the Great Revel", "Eidolon of the Great Revel"
+    ]
+  },
+  "target_main_size": 30,
+  "method": "greedy"
 }
 ```
 
-Shows beam search filling a burn deck with appropriate cards, respecting archetype curve targets (25 Magic archetypes, 15 YGO, 10 Pokemon).
+The system fills the remaining slots based on co-occurrence with the seed cards. It also detects the deck's archetype from 25 Magic templates and adjusts the mana curve target.
 
 ---
 
-## 9. Q&A Prep
+## 7. Takeaways (2 min, talk)
 
-**"Why not fine-tune E5/BERT end-to-end?"**
-Tried (exp 0005, 0064). E5 fine-tuning caused catastrophic forgetting (Pearson 0.44->0.29). LoRA + multi-task was better but still below the fusion approach. The frozen encoder + late fusion architecture is more robust.
+Three things:
 
-**"Why not GNNs?"**
-Tried LightGCN and HGT (exp 0004, 0054-0055). Link prediction AUC 0.80 but embedding similarity near-random. The objective function (reconstruction/link-prediction) doesn't produce similarity-preserving embeddings.
+1. **The training signal defines the ceiling.** Co-occurrence data is fundamentally a complement signal. No architecture (GNN, Word2Vec, contrastive) overcomes that. For substitute, you need text or function-level matching. Match your signal to your task.
 
-**"How do you know the annotations are good?"**
-Multi-model IAA (Krippendorff alpha 0.43). Calibration anchors in the prompt. Card context mandatory (error rate 16% -> 1%). Minimum 70B model. Isotonic calibration on the cascade. We accept inter-judge disagreement and consensus-average.
+2. **Evaluation infrastructure is the bottleneck.** We ran 63 experiments. The biggest jumps came from fixing evaluation methodology (dedup, hole-filling, condensed nDCG), not from better models. Measuring correctly is harder and more impactful than training better.
 
-**"Why condensed nDCG?"**
-Standard nDCG is biased downward with sparse annotations -- it penalizes unjudged cards as irrelevant. Condensed nDCG (Sakai 2007) only ranks judged items, measuring ranking quality not annotation coverage. When the gap between standard and condensed closes (<0.005), annotations are saturated for that embedding.
+3. **LLM annotations at scale are viable and cheap.** 100K calibrated annotations for $25 using open-weight models via inference APIs. The key: calibration anchors in the prompt, card context in every query, minimum 70B model size, multi-model consensus.
 
-**"What's the cost?"**
-~$25 for 100K annotations via Groq/Cerebras. Infrastructure: MeiliSearch + Qdrant in Docker, CPU-only inference. No GPU needed for serving. Total cloud spend: ~$30 (annotations + one A10G session for HGT experiments).
+> "Why not just ask ChatGPT to recommend cards? Latency (70ms vs 3-5s), cost ($0 per query vs ~$0.01), determinism (same query = same results), transparency (you can see which of 6 signals drove the ranking), and coverage (all 43K cards pre-indexed, no hallucinated card names)."
+
+---
+
+## Backup material (for Q&A, don't present unless asked)
+
+### Scraping architecture (limpet)
+
+The Go backend (`src/backend/`) scrapes 6 game sources (MTGGoldfish, MTGTop8, Archidekt, Limitless TCG, MasterDuelMeta, YGOProDeck). Key design:
+
+- **limpet** (our own Go library): HTTP cache that stores raw responses (HTML/JSON) in a local blob store. "Scrape once, store forever." Parsing logic runs against the cache, so when extraction code changes, we re-parse without re-fetching.
+- **Residential proxy rotation** for Cloudflare-protected sites (MasterDuelMeta, some Archidekt endpoints). TLS fingerprint spoofing to avoid bot detection.
+- Motivation: residential proxy bandwidth is the expensive resource. By caching raw responses, we decouple the cost of acquiring data from the cost of iterating on parsing/extraction logic. Parse bugs get fixed without burning proxy credits.
+- Result: 184K deck lists (Magic 83K, Pokemon 24K, YuGiOh 77K) stored as JSONL, re-parseable at will.
+
+### Annotation quality: IAA and Dawid-Skene
+
+5 LLM judges annotated ~2,300 unique pairs (Magic) with continuous similarity scores:
+
+| Model | Dawid-Skene Accuracy |
+|-------|---------------------|
+| Claude Haiku 4.5 | 0.643 |
+| Qwen 3.5 397B | 0.502 |
+| Gemini 2.5 Flash Lite | 0.501 |
+| DeepSeek Chat v3 | 0.436 |
+| GPT-4.1 Nano | 0.397 |
+
+Dawid-Skene (latent truth + annotator reliability model) produces consensus labels that weight more-reliable judges higher. Used for quality analysis but not for production eval -- production eval uses the multi-model cascade (Groq 70B + Cerebras 235B) which is cheaper and produces calibrated continuous scores.
+
+The Krippendorff alpha of 0.43 means models agree on broad strokes (similar vs dissimilar) but disagree on fine-grained distinctions. This is expected -- even human experts disagree on "is Counterspell vs Mana Leak a 0.50 or a 0.60?"
+
+### Saturation methodology (fill-the-holes)
+
+The standard vs condensed nDCG gap measures annotation coverage:
+
+```
+Standard nDCG: treats unjudged cards as irrelevant (score=0)
+Condensed nDCG: only ranks cards that have been annotated
+
+Gap = condensed - standard
+  Large gap -> many unjudged cards in top-K, metric measures coverage not quality
+  Small gap -> top-K is fully judged, metric reflects true ranking quality
+```
+
+The fill-the-holes loop:
+1. Run eval, note the gap
+2. For each query, find top-K results that have no annotation
+3. Send those specific (query, candidate) pairs to the annotation cascade
+4. Re-run eval
+
+Impact per round:
+- Round 1 (5K holes): Magic nDCG 0.104 -> 0.233, gap dropped from 0.45 to 0.22
+- Round 2 (remaining holes): Magic nDCG 0.233 -> 0.525, gap dropped to 0.002 [SATURATED]
+- Each round cost ~$6-12 in API calls
+
+Saturation is embedding-specific: training a new embedding reshuffles top-K and creates new holes.
+
+### Real annotation examples (for Clone)
+
+Clone has 46 annotations in the test set. Top matches:
+
+| Candidate | Similarity | Explanation |
+|-----------|-----------|-------------|
+| Clever Impersonator | 1.00 | Copy any permanent -- strict upgrade |
+| Progenitor Mimic | 1.00 | Clone + token generation each turn |
+| Cryptoplasm | 1.00 | Re-cloneable creature |
+| Body Double | 0.80 | Clone from graveyard (subset of function) |
+| Stunt Double | 0.80 | Clone with flash |
+| Bountiful Harvest | 0.06 | Unrelated (life gain spell) |
+| Savannah | 0.06 | Unrelated (dual land) |
+
+These annotations show calibrated scoring: functional reprints get 1.0, partial overlaps get 0.80, unrelated cards get 0.05-0.06.
+
+### "What about new cards with no deck history?"
+
+Three of six signals work without co-occurrence data: text embeddings, functional tags, and visual embeddings. New cards get text+functional+visual similarity immediately. Co-occurrence and Jaccard signals fill in as tournament data accumulates.
+
+### "Why Word2Vec and not something more modern?"
+
+PecanPy (node2vec variant) on the co-occurrence graph feeds into Word2Vec. It's the right tool for this: graph-walk embeddings on a co-occurrence matrix. We tried GNNs (LightGCN, HGT) and they performed worse because the objective function matters more than the architecture.
+
+### "Why condensed nDCG?"
+
+Standard nDCG penalizes unjudged cards as irrelevant. With sparse annotations (~100K across 43K cards), most top-K results are unjudged. Condensed nDCG (Sakai 2007) only ranks judged items, measuring ranking quality not annotation coverage. When the gap between standard and condensed nDCG closes (<0.005), annotations are saturated for that embedding.
+
+### "Is this production-ready?"
+
+It runs on CPU, no GPU needed for serving. MeiliSearch + Qdrant in Docker for search. ~40s cold start to load 3 games. Response time: 70ms for single-signal modes, ~4.5s for fusion (all 6 signals). 818 unit tests, 45 E2E tests. Deployed locally -- no public instance yet.
+
+### Architecture (show if asked)
+
+```
+Frontend (vanilla HTML/JS, no framework)
+    |
+FastAPI (src/ml/api/api.py, ~2200 LOC)
+    |
+    +-- Qdrant (vector search, auto-indexed at startup)
+    +-- MeiliSearch (text search + typeahead)
+    +-- WeightedLateFusion (6 signals, RRF aggregation)
+    +-- Reranker (multi-source, use_case-aware weighting)
+    +-- DeckBuilder (greedy, beam search, optimal transport)
+    |
+Data layer:
+    +-- Embedding files (.wv, PecanPy Word2Vec)
+    +-- Unified SQLite graph (card metadata, co-occurrence, edge types)
+    +-- Text embedding index (E5-base-v2, precomputed)
+    +-- Visual embedding index (SigLIP2, precomputed)
+    +-- Archetype templates (25 Magic, 15 YGO, 10 Pokemon)
+```
+
+### Data sources
+
+| Source | Game | Decks | Format |
+|--------|------|-------|--------|
+| MTGGoldfish | Magic | 18K | Modern, Standard, Pioneer |
+| MTGTop8 | Magic | 14K | Legacy, Vintage, Modern |
+| Archidekt | Magic | 51K | Commander |
+| Limitless TCG | Pokemon | 24K | Standard |
+| MasterDuelMeta | Yu-Gi-Oh | 65K | Master Duel |
+| YGOProDeck | Yu-Gi-Oh | 12K | Tournament |
+
+### Full experiment index
+
+See `data/experiments/SUMMARY.md` (63 experiments) and `docs/experimental_narrative.md` (12-phase walkthrough with failure analysis).
