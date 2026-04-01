@@ -306,3 +306,4 @@ references/rulebooks/
 !references/README.md
 !references/pull_references.sh
 .aider*
+data/training/selfsupervised_pairs.json
