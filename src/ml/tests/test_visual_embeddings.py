@@ -85,7 +85,8 @@ def test_preprocess_image():
     img = Image.new("RGB", (500, 300), color="blue")
     processed = embedder._preprocess_image(img)
 
-    assert processed.size == (224, 224)  # Should be resized to target size
+    expected = embedder.image_size
+    assert processed.size == (expected, expected)  # Should be resized to target size
 
 
 @pytest.mark.skipif(not VISUAL_EMBEDDINGS_AVAILABLE, reason="Visual embeddings not available")

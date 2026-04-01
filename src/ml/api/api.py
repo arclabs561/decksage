@@ -317,7 +317,7 @@ async def lifespan(app: FastAPI):
 
     # Shared settings (global)
     instruction_embedder_model = os.getenv("INSTRUCTION_EMBEDDER_MODEL", "intfloat/e5-base-v2")
-    visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224")
+    visual_embedder_model = os.getenv("VISUAL_EMBEDDER_MODEL", "google/siglip2-so400m-patch16-384")
 
     # ------------------------------------------------------------------
     # Load shared ML models once (reused across all games)
@@ -1520,9 +1520,19 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
             **(
                 {
                     "fusion_signals": [
-                        s for s in ["embed", "jaccard", "functional", "text_embed", "visual_embed", "archetype"]
+                        s
+                        for s in [
+                            "embed",
+                            "jaccard",
+                            "functional",
+                            "text_embed",
+                            "visual_embed",
+                            "archetype",
+                        ]
                         if not (s == "text_embed" and getattr(state, "text_embedder", None) is None)
-                        if not (s == "visual_embed" and getattr(state, "visual_embedder", None) is None)
+                        if not (
+                            s == "visual_embed" and getattr(state, "visual_embedder", None) is None
+                        )
                     ],
                 }
                 if method == "fusion"

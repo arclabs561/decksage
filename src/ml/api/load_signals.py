@@ -119,7 +119,7 @@ def load_signals_to_state(
 
         if visual_embedder_model is None:
             visual_embedder_model = os.getenv(
-                "VISUAL_EMBEDDER_MODEL", "google/siglip-base-patch16-224"
+                "VISUAL_EMBEDDER_MODEL", "google/siglip2-so400m-patch16-384"
             )
 
         if visual_embedder_model and HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
