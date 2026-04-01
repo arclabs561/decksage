@@ -101,12 +101,15 @@ Point out: the results share ZERO cards between modes. This is the complement-vs
 
 Switch to the Compare tab. Enter "Lightning Bolt". Left=substitute, right=synergy. Both panels render simultaneously with the same card, different results. Point at the difference.
 
-### Cross-game (quick, 1 min)
+### Cross-game (quick, 1 min -- show all 3 games work)
 
-- Switch game to Yu-Gi-Oh, search "Ash Blossom & Joyous Spring", mode=substitute
-  > Effect Veiler, Ghost Ogre, Ghost Belle -- all hand traps. Works across games.
-- Switch to Pokemon, "Ultra Ball", substitute
-  > Super Rod, Tera Orb, Quick Ball -- all search/retrieval items.
+- Switch game to **Yu-Gi-Oh**, search "Ash Blossom & Joyous Spring", mode=substitute
+  > Effect Veiler, Ghost Ogre, Ghost Belle -- all hand traps. Different game, same principle.
+  ![yugioh](figures/demo_yugioh_ash_blossom.png)
+
+- Switch to **Pokemon**, "Ultra Ball", substitute
+  > Super Rod, Tera Orb, Quick Ball, Friend Ball, Beast Ball, Poke Ball, Great Ball -- all search/retrieval Trainer Items.
+  ![pokemon](figures/demo_pokemon_ultra_ball.png)
 
 ### What to point out in the UI
 
@@ -162,11 +165,15 @@ Cross-encoder reranker: v2 reported Pearson 0.695. v3 with proper query-level tr
 
 ---
 
-## 4. How it works: 6 signals (3 min, show fusion breakdown)
+## 4. How it works: 6 signals (3 min, show breakdown bars)
 
-Go back to the UI. Search "Wrath of God", mode=fusion.
+Go back to the UI. Search "Wrath of God", mode=**Embedding (reranker)**, use_case=**Substitute**.
 
-Point at the breakdown bars on each result. Six signals, fused via Reciprocal Rank Fusion:
+Point at the breakdown bars on each result. Damnation shows text_e5=97%, co-occurrence varies per card. The bars make the signal architecture visible.
+
+![wrath breakdown](figures/demo_wrath_embedding_breakdown.png)
+
+Six signals, fused via Reciprocal Rank Fusion:
 
 1. **Embedding cosine** -- co-occurrence signal (complement)
 2. **Jaccard** -- direct deck overlap (complement)
@@ -258,7 +265,15 @@ Paste this payload:
 }
 ```
 
-The system fills the remaining slots based on co-occurrence with the seed cards. It also detects the deck's archetype from 25 Magic templates and adjusts the mana curve target.
+Three completion methods (selectable in the UI Method dropdown):
+
+- **Greedy**: picks the highest-scoring candidate one at a time. Fast, simple, myopic.
+- **Beam search** (beam_width=3): maintains 3 partial decks in parallel, picks the best complete deck. Can follow archetype curve targets (25 Magic archetypes, 15 YGO, 10 Pokemon).
+- **OT (Optimal Transport)**: formulates completion as a Sinkhorn transport problem. Source = quality-weighted candidate pool, target = archetype mana curve distribution, cost matrix = embedding distance + role gaps. Uses ILP rounding for integer card counts. Most principled but slowest. Requires `pot` package.
+
+The system also auto-detects the deck's archetype from seed cards and adjusts curve targets.
+
+![deck completion tab](figures/demo_deck_completion_tab.png)
 
 ---
 
@@ -344,6 +359,46 @@ Clone has 46 annotations in the test set. Top matches:
 | Savannah | 0.06 | Unrelated (dual land) |
 
 These annotations show calibrated scoring: functional reprints get 1.0, partial overlaps get 0.80, unrelated cards get 0.05-0.06.
+
+### Optimal Transport deck completion -- how it works
+
+The OT completer (`src/ml/deck_building/ot_completion.py`) frames "fill the remaining deck slots" as a transport problem:
+
+- **Source distribution**: candidate card pool, weighted by affinity to the seed deck (high affinity = more mass). Not uniform -- good candidates get more budget.
+- **Target distribution**: the archetype's ideal mana curve (e.g., burn wants 20 one-drops, 12 two-drops, 4 three-drops). 25 Magic archetypes, 15 YGO, 10 Pokemon.
+- **Cost matrix C[i,j]**: blends embedding distance between pool cards (structural diversity -- don't pick 10 copies of the same effect) with each card's affinity to the seed (quality). This avoids the circular problem where both source and target come from the same embedding.
+- **Solver**: log-stabilized Sinkhorn (`pot.sinkhorn` with `method='sinkhorn_log'`) at low regularization (reg=0.01). Produces fractional transport plan.
+- **Rounding**: ILP via `scipy.optimize.milp` to get integer card counts from the fractional plan, respecting copy limits (4 in Magic, 3 in Pokemon) and deck-size target. Falls back to greedy rounding if scipy unavailable.
+- **Unbalanced OT** (optional): KL penalty lets the solver leave weak candidate slots empty rather than filling them with bad cards.
+
+Why OT instead of greedy? Greedy picks the best card at each step, ignoring downstream interactions. OT optimizes the entire deck simultaneously -- if slot 5 needs a 2-drop and slot 6 needs removal, OT can choose a card that does both, while greedy would pick the best 2-drop and the best removal separately.
+
+### E5 text embeddings -- role in the system
+
+E5-base-v2 (`intfloat/e5-base-v2`) is loaded at API startup and serves multiple roles:
+
+1. **Text similarity signal** (`text_e5` in the reranker): the strongest substitute signal, 14-25% better than co-occurrence at finding functional replacements.
+2. **Precomputed index** (`data/cache/text_embeddings/`): all card oracle texts pre-embedded for fast cosine lookup. Used by fusion mode for candidate generation.
+3. **Substitute mode text-boost**: the reranker weights `text_e5 >= 0.5` and dampens co-occurrence by 70% specifically for substitute use_case queries.
+4. **Visible in the UI**: the "Text similarity" bar in score breakdowns (blue bars showing 92-97% for good substitutes).
+
+We also tried fine-tuning E5 on our annotation data (exp 0005 multi-task, exp 0064 bi-encoder). Both suffered catastrophic forgetting -- the fine-tuned model lost its general text understanding. Frozen E5 as one signal in the fusion ensemble is more robust than a fine-tuned E5 as the only signal.
+
+### Key decision provenance (why we chose what we chose)
+
+| Decision | When | Why | Evidence |
+|----------|------|-----|----------|
+| PecanPy + Word2Vec (not GNN) | exp 0004, 0054-0055 | GNNs optimize edge reconstruction, not similarity | LightGCN nDCG 0.095, HGT 0.003 |
+| ns_exponent=-0.5 | exp 0002 | Down-weights staple cards in negative sampling (Caselles-Dupre 2018) | Functional AUC improved |
+| Card attribute fusion alpha=0.7 | exp 0002 | PCA-projected card attributes blended with embeddings | Without it, nDCG drops 30-50% |
+| Spectral propagation | exp 0056 | Smooths embeddings over graph Laplacian | +0.004 nDCG, stabilizes training variance |
+| Text-boosted substitute mode | exp 0061-0062 | Text captures "same function", co-occurrence captures "same deck" | Text_e5 wins by 14-25% on substitute nDCG |
+| Frozen E5 (not fine-tuned) | exp 0005, 0064 | Fine-tuning catastrophically forgets general text understanding | Pearson dropped 0.44->0.29 |
+| Multi-model cascade (not single LLM) | exp 0057 | Single 8B model: 54% zeros, corr -0.076. Two 70B+ models, averaged | Cost: $0.40/1K pairs vs $2-15 for frontier |
+| Condensed nDCG (not standard) | exp 0058-0059 | Standard nDCG penalizes unjudged cards as irrelevant | Gap closed from 0.45 to 0.002 after hole-filling |
+| Greedy hole-filling (not random annotation) | exp 0058-0059 | Annotating what the model retrieves has 5-10x impact | nDCG 0.10->0.52 in two rounds ($23) |
+| Limpet cache-first scraping | initial design | Residential proxy is the expensive resource | Parse bugs fixed without re-scraping |
+| Per-game models (not unified) | initial design | Game mechanics differ too much (mana vs energy vs levels) | Per-game nDCG always beats unified |
 
 ### "What about new cards with no deck history?"
 
