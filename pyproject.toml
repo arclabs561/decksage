@@ -2,22 +2,25 @@
 name = "decksage"
 version = "0.1.0"
 description = "Card similarity search and deck operations for Magic, Pokemon, and Yu-Gi-Oh"
-license = {text = "MIT"}
-authors = [{name = "arclabs561"}]
+license = { text = "MIT" }
+authors = [{ name = "arclabs561" }]
 requires-python = ">=3.11"
 dependencies = [
-    "pandas>=2.0.0",
-    "numpy>=1.26.0",
-    "scikit-learn>=1.3.0",
-    # pecanpy moved to [training] -- only used by training scripts
-    "python-dotenv>=1.0.0",
-    "pydantic>=2.0.0",
-    "requests>=2.31.0",
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-    "httpx>=0.27.0",
-    "qdrant-client>=1.7.0",
-    "meilisearch>=0.32.0",
+  "pandas>=2.0.0",
+  "numpy>=1.26.0",
+  "scikit-learn>=1.3.0",
+  # pecanpy moved to [training] -- only used by training scripts
+  "python-dotenv>=1.0.0",
+  "pydantic>=2.0.0",
+  "requests>=2.31.0",
+  "fastapi>=0.100.0",
+  "uvicorn>=0.23.0",
+  "httpx>=0.27.0",
+  "qdrant-client>=1.7.0",
+  "meilisearch>=0.32.0",
+  "sentencepiece>=0.2.1",
+  "pillow>=12.1.0",
+  "runpod>=1.8.2",
 ]
 
 [project.urls]
@@ -29,71 +32,46 @@ decksage = "ml.cli.main:main"
 
 [project.optional-dependencies]
 dev = [
-    "ruff>=0.14.0",  # Fast, modern linter + formatter
-    "pytest>=9.0.0",
-    "pytest-asyncio>=0.23.0",  # Required for async tests
-    "pytest-cov>=4.1.0",
-    "pytest-xdist>=3.6.1",
-    "hypothesis>=6.98.0",
-    "fastapi>=0.100.0",
-    "httpx>=0.28.0",
-    "playwright>=1.57.0",
-    # aim removed -- AimStack archived 2024, superseded by structured results logs
+  "ruff>=0.14.0",           # Fast, modern linter + formatter
+  "pytest>=9.0.0",
+  "pytest-asyncio>=0.23.0", # Required for async tests
+  "pytest-cov>=4.1.0",
+  "pytest-xdist>=3.6.1",
+  "hypothesis>=6.98.0",
+  "fastapi>=0.100.0",
+  "httpx>=0.28.0",
+  "playwright>=1.57.0",
+  # aim removed -- AimStack archived 2024, superseded by structured results logs
 ]
-api = [
-    "fastapi>=0.100.0",
-    "uvicorn>=0.23.0",
-]
-embeddings = [
-    "gensim>=4.3.0",
-]
-training = [
-    "pecanpy>=2.0.0",
-    "gensim>=4.3.0",
-]
-viz = [
-    "matplotlib>=3.7.0",
-    "umap-learn>=0.5.4",
-    "plotly>=5.17.0",
-]
+api = ["fastapi>=0.100.0", "uvicorn>=0.23.0"]
+embeddings = ["gensim>=4.3.0"]
+training = ["pecanpy>=2.0.0", "gensim>=4.3.0"]
+viz = ["matplotlib>=3.7.0", "umap-learn>=0.5.4", "plotly>=5.17.0"]
 enrichment = [
-    "pillow>=10.0.0",  # Image processing for vision models
-    "openai>=1.0.0",   # For OpenRouter compatibility
-    "transformers>=4.0.0", # For SigLIP and other vision models
-    "sentencepiece>=0.1.99", # Required for SigLIP tokenizer
-    "sentence-transformers",  # Text embeddings (E5/MiniLM)
+  "pillow>=10.0.0",        # Image processing for vision models
+  "openai>=1.0.0",         # For OpenRouter compatibility
+  "transformers>=4.0.0",   # For SigLIP and other vision models
+  "sentencepiece>=0.1.99", # Required for SigLIP tokenizer
+  "sentence-transformers", # Text embeddings (E5/MiniLM)
 ]
 llm = [
-    "pydantic-ai>=0.1.0",  # LLM annotation, QA agents, chat router
+  "pydantic-ai>=0.1.0", # LLM annotation, QA agents, chat router
 ]
-gnn = [
-    "torch>=2.0.0",
-    "torch-geometric>=2.4.0",
-]
+gnn = ["torch>=2.0.0", "torch-geometric>=2.4.0"]
 stats = [
-    "scipy>=1.12.0",  # Optional: for statistical functions (IAA, etc)
+  "scipy>=1.12.0", # Optional: for statistical functions (IAA, etc)
 ]
-extras = [
-    "diskcache>=5.6.3",
-    "zstandard>=0.22.0",
-]
+extras = ["diskcache>=5.6.3", "zstandard>=0.22.0"]
 ot = [
-    "pot>=0.9.0",  # Python Optimal Transport (Sinkhorn, etc.)
+  "pot>=0.9.0", # Python Optimal Transport (Sinkhorn, etc.)
 ]
-discord = [
-    "discord.py>=2.3.0",
-    "httpx>=0.27.0",
-]
+discord = ["discord.py>=2.3.0", "httpx>=0.27.0"]
 ml = []
 
 [tool.hatch.build]
 # Only include Python ML code, exclude Go backend and massive data files
 only-include = ["src/ml"]
-exclude = [
-    "src/backend",
-    "src/frontend",
-    "src/experiments",
-]
+exclude = ["src/backend", "src/frontend", "src/experiments"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/ml"]
@@ -105,42 +83,42 @@ target-version = "py311"
 
 # Exclude paths
 exclude = [
-    ".git",
-    ".venv",
-    "__pycache__",
-    "build",
-    "dist",
-    "*.egg-info",
-    "archive",
-    "experiments/archived",
-    "src/backend/**",
-    "src/ml/scripts/**",
-    "integration_test_tmp/**",
-    "logs/**",
+  ".git",
+  ".venv",
+  "__pycache__",
+  "build",
+  "dist",
+  "*.egg-info",
+  "archive",
+  "experiments/archived",
+  "src/backend/**",
+  "src/ml/scripts/**",
+  "integration_test_tmp/**",
+  "logs/**",
 ]
 
 [tool.ruff.lint]
 # Modern Ruff v0.1.0+ uses lint.* namespace
 select = [
-    "E",   # pycodestyle errors
-    "W",   # pycodestyle warnings
-    "F",   # Pyflakes
-    "I",   # isort (import sorting)
-    "UP",  # pyupgrade (modernize code)
-    "B",   # flake8-bugbear (find likely bugs)
-    "C4",  # flake8-comprehensions
-    "RUF", # Ruff-specific rules
+  "E",   # pycodestyle errors
+  "W",   # pycodestyle warnings
+  "F",   # Pyflakes
+  "I",   # isort (import sorting)
+  "UP",  # pyupgrade (modernize code)
+  "B",   # flake8-bugbear (find likely bugs)
+  "C4",  # flake8-comprehensions
+  "RUF", # Ruff-specific rules
 ]
 
 ignore = [
-    "E501",  # Line too long (handled by formatter)
-    "B008",  # Do not perform function call in argument defaults
-    "B904",  # Within an except clause, raise without from
-    "B007",  # Loop control variable not used (common in analysis/scripts)
-    "B905",  # `zip()` without explicit `strict=` (noisy; opt-in)
-    "RUF001",  # Ambiguous unicode characters
-    "RUF002",  # Ambiguous unicode in docstrings
-    "RUF003",  # Ambiguous unicode in comments
+  "E501",   # Line too long (handled by formatter)
+  "B008",   # Do not perform function call in argument defaults
+  "B904",   # Within an except clause, raise without from
+  "B007",   # Loop control variable not used (common in analysis/scripts)
+  "B905",   # `zip()` without explicit `strict=` (noisy; opt-in)
+  "RUF001", # Ambiguous unicode characters
+  "RUF002", # Ambiguous unicode in docstrings
+  "RUF003", # Ambiguous unicode in comments
 ]
 
 [tool.ruff.format]
@@ -168,34 +146,34 @@ lines-after-imports = 2
 [tool.pytest.ini_options]
 testpaths = ["src/ml/tests"]
 norecursedirs = [
-    ".*",
-    "build",
-    "dist",
-    "CVS",
-    "_darcs",
-    "{arch}",
-    "*.egg",
-    "venv",
-    ".venv",
-    "archive",
-    "backups",
-    "src/backend",
-    "src/frontend",
-    "experiments",
-    "integration_test_tmp",
-    "logs",
-    "notebooks",
-    "__pycache__",
+  ".*",
+  "build",
+  "dist",
+  "CVS",
+  "_darcs",
+  "{arch}",
+  "*.egg",
+  "venv",
+  ".venv",
+  "archive",
+  "backups",
+  "src/backend",
+  "src/frontend",
+  "experiments",
+  "integration_test_tmp",
+  "logs",
+  "notebooks",
+  "__pycache__",
 ]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
 addopts = "-q --strict-markers --tb=short --maxfail=1 --durations=15"
 markers = [
-    "llm: marks tests that make actual LLM API calls (slow, requires API key)",
-    "slow: marks tests as slow",
-    "integration: marks tests as integration tests",
-    "edge_cases: marks tests that test edge cases and error conditions",
+  "llm: marks tests that make actual LLM API calls (slow, requires API key)",
+  "slow: marks tests as slow",
+  "integration: marks tests as integration tests",
+  "edge_cases: marks tests that test edge cases and error conditions",
 ]
 
 [build-system]
@@ -204,12 +182,12 @@ build-backend = "hatchling.build"
 
 [dependency-groups]
 dev = [
-    "accelerate>=1.13.0",
-    "datasets>=4.8.4",
-    "filelock>=3.20.2",
-    "hypothesis>=6.147.0",
-    "pytest>=9.0.0",
-    "pytest-cov>=7.0.0",
+  "accelerate>=1.13.0",
+  "datasets>=4.8.4",
+  "filelock>=3.20.2",
+  "hypothesis>=6.147.0",
+  "pytest>=9.0.0",
+  "pytest-cov>=7.0.0",
 ]
 
 [tool.coverage.run]
