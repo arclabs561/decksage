@@ -17,8 +17,7 @@ from ml.qa.agentic_qa_tools import GraphQATools
 from ml.utils.paths import PATHS
 
 
-@pytest.mark.asyncio
-async def test_agentic_tools_basic():
+def test_agentic_tools_basic():
     """Test basic agentic tools functionality."""
     if not PATHS.incremental_graph_db.exists():
         pytest.skip("Graph database not available")
@@ -39,8 +38,7 @@ async def test_agentic_tools_basic():
     tools.close()
 
 
-@pytest.mark.asyncio
-async def test_pipeline_summary():
+def test_pipeline_summary():
     """Test pipeline summary generation."""
     if not PATHS.incremental_graph_db.exists():
         pytest.skip("Graph database not available")
@@ -57,8 +55,7 @@ async def test_pipeline_summary():
     tools.close()
 
 
-@pytest.mark.asyncio
-async def test_data_freshness_check():
+def test_data_freshness_check():
     """Test data freshness checking."""
     if not PATHS.incremental_graph_db.exists():
         pytest.skip("Graph database not available")
@@ -98,8 +95,7 @@ def test_tools_error_handling():
         )
 
 
-@pytest.mark.asyncio
-async def test_agentic_agent_initialization():
+def test_agentic_agent_initialization():
     """Test agentic agent can be initialized (if pydantic-ai available)."""
     try:
         from ml.qa.agentic_qa_agent import AgenticQAAgent
@@ -118,8 +114,7 @@ async def test_agentic_agent_initialization():
         pytest.skip("pydantic-ai not available")
 
 
-@pytest.mark.asyncio
-async def test_agentic_analysis_fallback():
+def test_agentic_analysis_fallback():
     """Test that fallback works when agent unavailable."""
     if not PATHS.incremental_graph_db.exists():
         pytest.skip("Graph database not available")

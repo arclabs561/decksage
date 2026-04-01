@@ -220,6 +220,13 @@ class WeightedLateFusion:
         if game and (text_embedder is not None or (card_data and self.weights.text_embed > 0)):
             self._try_load_text_index(game)
 
+        # Visual embedding index for candidate generation (same pattern as text)
+        self._visual_index_matrix = None  # [N, D] L2-normalized
+        self._visual_index_names: list[str] = []
+        self._visual_name_to_idx: dict[str, int] = {}
+        if game and (visual_embedder is not None or (card_data and self.weights.visual_embed > 0)):
+            self._try_load_visual_index(game)
+
         # Pre-compute the weights dict for use in aggregation hot path.
         self._weights_dict = self.weights.to_dict()
 
@@ -245,6 +252,32 @@ class WeightedLateFusion:
             )
         except Exception as e:
             logger.debug(f"Failed to load text index: {e}")
+
+    def _try_load_visual_index(self, game: str) -> None:
+        """Load precomputed visual embedding index if available."""
+        data_dir = Path(__file__).resolve().parent.parent.parent.parent / "data"
+        idx_path = data_dir / "cache" / "visual_embeddings" / f"{game}_embeddings.npy"
+        names_path = data_dir / "cache" / "visual_embeddings" / f"{game}_names.txt"
+
+        if not idx_path.exists():
+            return
+
+        try:
+            import numpy as np
+
+            self._visual_index_matrix = np.load(str(idx_path))
+            with open(names_path) as f:
+                self._visual_index_names = [line.strip() for line in f]
+            self._visual_name_to_idx = {n: i for i, n in enumerate(self._visual_index_names)}
+            nonzero = int(
+                np.count_nonzero(self._visual_index_matrix) / self._visual_index_matrix.shape[1]
+            )
+            logger.info(
+                f"Loaded visual embedding index: {len(self._visual_index_names)} cards, "
+                f"{self._visual_index_matrix.shape[1]}D ({nonzero} with images)"
+            )
+        except Exception as e:
+            logger.debug(f"Failed to load visual index: {e}")
 
     def _get_embedding_similarity(self, query: str, candidate: str) -> float:
         """Get embedding similarity between query and candidate."""
@@ -427,6 +460,21 @@ class WeightedLateFusion:
                     candidates.add(self._text_index_names[idx])
             except Exception as e:
                 logger.debug(f"Text index candidate retrieval failed: {e}")
+
+        # Visual embedding candidates (from precomputed index, fast)
+        if self._visual_index_matrix is not None and query in self._visual_name_to_idx:
+            try:
+                import numpy as np
+
+                q_idx = self._visual_name_to_idx[query]
+                q_vec = self._visual_index_matrix[q_idx : q_idx + 1]
+                sims = (q_vec @ self._visual_index_matrix.T).flatten()
+                n_visual_candidates = min(50, self.candidate_topn)
+                top_indices = np.argpartition(-sims, n_visual_candidates)[:n_visual_candidates]
+                for idx in top_indices:
+                    candidates.add(self._visual_index_names[idx])
+            except Exception as e:
+                logger.debug(f"Visual index candidate retrieval failed: {e}")
 
         # Remove query itself
         candidates.discard(query)

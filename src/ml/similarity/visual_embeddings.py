@@ -99,10 +99,10 @@ class CardVisualEmbedder:
 
     def __init__(
         self,
-        model_name: str = "google/siglip-base-patch16-224",  # SigLIP (better than CLIP, patched for compatibility)
+        model_name: str = "google/siglip2-so400m-patch16-384",  # SigLIP2 SO400M (best base, 1152D)
         cache_dir: Path | str | None = None,
         image_cache_dir: Path | str | None = None,
-        image_size: int = 224,
+        image_size: int | None = None,  # Auto-detect from model name if None
     ):
         """
         Initialize visual embedder.
@@ -127,6 +127,17 @@ class CardVisualEmbedder:
         # Set attributes before model loading (needed for test image and cache setup)
         self.model_name = model_name
         self._memory_cache: dict[str, np.ndarray] = {}
+
+        # Auto-detect image size from model name if not specified
+        if image_size is None:
+            if "384" in model_name:
+                image_size = 384
+            elif "512" in model_name:
+                image_size = 512
+            elif "256" in model_name:
+                image_size = 256
+            else:
+                image_size = 224
         self.image_size = image_size
 
         # Setup cache directories (before model loading so cache_file is always set)
@@ -162,6 +173,17 @@ class CardVisualEmbedder:
                     self.processor = AutoProcessor.from_pretrained(model_name)
                     self.vision_model = AutoModel.from_pretrained(model_name)
                 self.vision_model.eval()
+
+                # Move to MPS (Apple Silicon GPU) if available
+                import torch
+
+                if torch.backends.mps.is_available():
+                    self.vision_model = self.vision_model.to("mps")
+                    logger.info(f"  Moved model to MPS")
+                elif torch.cuda.is_available():
+                    self.vision_model = self.vision_model.to("cuda")
+                    logger.info(f"  Moved model to CUDA")
+
                 self._use_transformers = True
                 self._sentence_transformer = None
                 self.model = None  # Not used for SigLIP
@@ -696,7 +718,7 @@ _global_visual_embedder: CardVisualEmbedder | None = None
 
 
 def get_visual_embedder(
-    model_name: str = "google/siglip-base-patch16-224",  # SigLIP (better performance, patched)
+    model_name: str = "google/siglip2-so400m-patch16-384",  # SigLIP2 SO400M (best base)
     cache_dir: Path | str | None = None,
     image_cache_dir: Path | str | None = None,
 ) -> CardVisualEmbedder:
