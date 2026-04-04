@@ -4,55 +4,107 @@
 /src/backend/export-decks-only
 /src/backend/validate-data
 /src/backend/cmd/*/validate-data
-## Generated binaries (ensure not tracked)
 /src/backend/analyze-decks
 /src/backend/backfill-source
-/src/backend/export-hetero
+/src/backend/export-*
 /src/backend/cmd/analyze-decks/analyze-decks
 /src/backend/cmd/export-hetero/export-hetero
 /src/backend/tools/cache-extract/cache-extract
+/src/backend/*.csv
+/src/backend/*.edg
+/src/backend/decks_hetero.jsonl
+/src/backend/data/processed/*.csv
+/src/backend/data/embeddings/*
+bin/
+build/
+dist/
+deploy/build/
 *.exe
 *.dll
 *.so
 *.dylib
-
-# Test binary
 *.test
 
-# Output of the go coverage tool
+# Go coverage
 *.out
 
-# Cache directories
-/src/backend/cache/
-/data/cache/
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.Python
+.venv/
+venv/
+*.egg-info/
+.mypy_cache/
+**/.hypothesis/
 
-# Data directories - large datasets
-/src/backend/data-full/
+# Cache directories
+**/cache/
+/.cache/
+.ruff_cache/
+.pytest_cache/
+
+# Data -- all large/derived data lives on S3, not in git
 /data/raw/
-/data/embeddings/*.wv
-/data/embeddings/*.kv
-/data/graphs/*.edg
 /data/archive/
 /data/checkpoints/
 /data/logs/
-/integration_test_tmp/
-## Large data samples (track elsewhere)
-/src/backend/decks_hetero.jsonl
+/data/decks/
+/data/eval/
+/data/eval_*.csv
+/data/models/
+/data/test_sets/
+!data/test_sets/functional_similarity_*.json
+!data/test_sets/search_relevance_queries.json
+/data/embeddings/
+/data/graphs/
+/data/processed/
+/data/annotations/
+/data/training/selfsupervised_pairs.json
+/data/metadata_cache.json
+/data/yugioh_card_mapping.json
+/data/test_set_*.json
+/data/comparison_report.html
+/data/triage_report.md
+/data/analytics/*.jsonl
+/data/annotations/user_feedback*.jsonl
+/data/DATASET_METADATA.json
+/data/DATA_INDEX.json
+/data/DATA_LAYOUT.md
+/data/DATA_LINEAGE_METADATA.json
+/data/DATA_LOCATIONS.md
+/data/to_prune.json
+**/*.wv
+**/*.kv
+**/*.edg
+**/*.db
 **/*.zst
 **/*.attrs
 **/*.sst
+**/*.vlog
+**/*.pkl
 
-# Data files in wrong locations (should be in /data)
-/src/backend/*.csv
-/src/backend/*.edg
+# Models
+models/
 
-# Keep processed CSVs but ignore backups
-/data/processed/*.bak
-/data/processed/*_backup.*
+# Environment files
+.env
+.env.*
+!.env.example
 
-# IDE
+# Logs
+*.log
+*.log.*
+/logs/
+
+# IDE / editor / assistant tooling
 .idea/
 .vscode/
+.cursor/
+.claude/*
+!.claude/commands/
+.aider*
 *.swp
 *.swo
 *~
@@ -62,153 +114,48 @@
 Thumbs.db
 
 # Frontend
-/src/frontend/*/node_modules/
+node_modules/
+package-lock.json
+yarn.lock
 /src/frontend/*/build/
 /src/frontend/*/dist/
 /src/frontend/*/.next/
 
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-.venv/
-venv/
-*.egg-info/
-/src/ml/vectors.kv
+# Dead frontend files (superseded by test_search.html)
+frontend/test_search_improved.html
+frontend/review_similarities.html
+frontend/test_ui_validation.html
+frontend/sw.js
 
-# Environment files (keep .env.example)
-.env
-.env.local
-.env.*.local
+# Playwright test artifacts
+test-results/
+playwright-report/
 
-# Logs
-*.log
-*.log.*
-/logs/
+# Reference materials (large PDFs; tracked script removed)
+references/
 
-# Local API outputs (should not be committed)
-/data/analytics/*.jsonl
-/data/annotations/user_feedback*.jsonl
+# Experiments
+/experiments/
+/integration_test_tmp/
+comparison_report.html
 
-# Temporary files
-*.tmp
-*.temp
-*~
-
-# MegaLinter reports
+# Linter configs (not in CI)
+.mega-linter.yml
+.markdownlint.json
+.yamllint.yml
+.golangci.yml
 megalinter-reports/
 report/
 
-# IDE / assistant tooling
-.cursor/
-.claude/*
-!.claude/commands/
-
-# QA artifacts (generated; do not track)
-qa/*
-!qa/reference/
-# Additional large files to ignore
-/data/decks/*.jsonl
-/data/processed/decks_pokemon.jsonl
-/data/processed/card_attributes_enriched.csv
-/experiments/*.json
-/.cache/**
-# Logs and cache
-*.log
-/logs/
-/.mypy_cache/
-.mypy_cache/
-# Large JSON config files
-/src/ml/*_functional_tags.json
-# Frontend dependencies
-/src/frontend/*/node_modules/
-src/frontend/*/node_modules/
-# Frontend lock files
-package-lock.json
-yarn.lock
-# Experiment artifacts
-experiments/*.png
-experiments/*.html
-deploy/build/
-
-# Built binaries (should be built on-demand, not committed)
-bin/
-archive/
-
-# Local state and cache directories (should not be committed)
-**/.aim/
-**/.hypothesis/
-**/.runctl/sessions/
-
-# Temporary status markers
-.enrichment-complete-*
-.final-status-*
-.session-complete
-.git_workaround.sh
-
-# Jupyter notebook checkpoints
-**/.ipynb_checkpoints/
-docs/assets
-
-# Large data files (should not be committed)
-data/processed/pairs_*.csv
-data/processed/pairs_*.csv.*.pkl
-data/processed/pairs_*.csv.*.msgpack
-data/processed/pairs_*.csv.msgpack
-data/graphs/incremental_graph.*
-data/embeddings/**/*.wv
-**/*.db
-
-# Compiled binaries and build artifacts
-src/backend/backfill-source
-src/backend/analyze-decks
-src/backend/export-*
-src/backend/*.exe
-bin/*
-build/
-dist/
-**/*.exe
-
-# Cache and database files
-**/*.sst
-**/*.vlog
-src/backend/cache/
-**/cache/
-output=experiments/test_set_comprehensive.json
-
-# Assets directory (contains potentially copyrighted fonts and symbols)
-assets/
-
-# Questionable content - should be local/S3 only
-data/processed/card_attributes_minimal.csv
-data/processed/scryfall_card_db.json
-data/processed/ground_truth_v1.json
-src/ml/scryfall_card_db.json
-src/ml/tests/fixtures/decks_*.jsonl
-experiments/downstream_tests/*.jsonl
-
-# Large data files (accidentally committed)
-src/backend/data/processed/pairs_large.csv
-data/processed/pairs_multi_game.csv.*
-
-# Large data files - prevent accidental commits
-**/*.wv
-**/*.kv
-**/*.edg
-**/*.db
-data/processed/*.csv
-data/graphs/*
-data/embeddings/**/*
-src/backend/data/processed/*.csv
-src/backend/data/embeddings/*
-data/processed/decks_all_final.jsonl
-
-# Ruff / local lint artifacts
+# Ruff artifacts
 ruff-report.json
 ruff-f821.json
 ruff-autofix-output.md
+ruff-check.txt
+
+# Generated reports
+.claude/enrich-report*.md
+.claude/audit-report*.md
 
 # Visual testing artifacts
 /tmp/ai-visual-test-*.json
@@ -217,93 +164,36 @@ ruff-autofix-output.md
 scripts/e2e_testing/tests/visual/results/
 scripts/e2e_testing/tests/visual/baselines/*.png
 !scripts/e2e_testing/tests/visual/baselines/.gitkeep
-
-# E2E tooling artifacts
 scripts/e2e_testing/node_modules/
 scripts/e2e_testing/package-lock.json
-
-# Local backup artifacts (generated by tests/scripts)
-experiments/backups/eval_registry_*/
-
-# Local scratch artifacts
-ruff-check.txt
-
-# Tracking and analysis noise
-docs/archive/
-docs/annotation/
-experiments/annotations*/
-experiments/backups/
-experiments/evaluation_logs/
-experiments/evaluation_results/
-experiments/test_sets_archive/
-experiments/downstream_eval_*/
-experiments/data/
-experiments/evaluations/
-experiments/*.md
-experiments/*.jsonl
-experiments/profile_results.txt
-experiments/model_registry.lock
-annotations/
-archive/
-
-# Test sets and annotations (derived data, lives on S3)
-data/test_sets/
-
-# Derived data containing scraped card names/metadata (licensing risk)
-# All derived data lives on S3 (s3://games-collections/), not in git.
-data/processed/*.jsonl
-data/processed/*.json
-data/processed/*_image_urls.json
-data/metadata_cache.json
-data/yugioh_card_mapping.json
-data/test_set_*.json
-data/annotations/*.yaml
-data/annotations/*.json
-experiments/downstream_test_data/
-experiments/annotations/
-
-# Node.js (VLM critique scripts)
-node_modules/
-package-lock.json
-
-# Playwright test artifacts
-test-results/
-playwright-report/
-
-# Generated reports and artifacts
-.claude/enrich-report*.md
-.claude/audit-report*.md
-comparison_report.html
-data/comparison_report.html
-data/triage_report.md
-
-# Eval results (generated by scripts)
-data/eval/
-data/eval_*.csv
-
-# Deck data (large, lives on S3)
-data/decks/
 
 # Debug scripts
 scripts/data/_debug_*
 
-# Hygiene (added by guardian audit)
-.env.*
-!.env.example
-src/backend/games/magic/dataset/scryfall/.cache/
-/data/test_sets/annotated_*.json
-
-# Model weights and large processed data
-models/*.pkl
-data/models/
-data/processed/*.pkl
+# Misc local state
+**/.aim/
+**/.runctl/sessions/
+.enrichment-complete-*
+.final-status-*
+.session-complete
+.git_workaround.sh
 runctl.toml
-data/checkpoints/
+/src/ml/vectors.kv
+/src/ml/*_functional_tags.json
 src/ml/experimental/*.jsonl
+src/ml/scryfall_card_db.json
+src/ml/tests/fixtures/decks_*.jsonl
+output=experiments/test_set_comprehensive.json
+assets/
+docs/archive/
+docs/annotation/
+docs/assets
+annotations/
+archive/
 
-# Reference materials (large PDFs gitignored; README + pull script tracked)
-references/rulebooks/
-!references/README.md
-!references/pull_references.sh
-.aider*
-data/training/selfsupervised_pairs.json
+# Jupyter
+**/.ipynb_checkpoints/
+
+# QA artifacts
+qa/*
+!qa/reference/
