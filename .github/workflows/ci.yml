@@ -115,7 +115,8 @@ jobs:
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.6.2
-          args: --timeout=5m ./src/backend/...
+          working-directory: src/backend
+          args: --timeout=5m ./...
 
   test-fast:
     name: Tests (Fast)

@@ -12,7 +12,6 @@ from __future__ import annotations
 from unittest.mock import MagicMock
 
 import numpy as np
-import pytest
 
 
 def _make_state_with_reranker(cards, sources, weights, intercept=0.0):
@@ -27,7 +26,9 @@ def _make_state_with_reranker(cards, sources, weights, intercept=0.0):
         weights=weights,
         intercept=intercept,
     )
-    state.reranker_embeddings = {name: _make_mock_kv(kv_cards) for name, kv_cards in sources.items()}
+    state.reranker_embeddings = {
+        name: _make_mock_kv(kv_cards) for name, kv_cards in sources.items()
+    }
     return state
 
 
@@ -85,10 +86,12 @@ class TestScoreBreakdown:
         )
         state.reranker_embeddings = {
             "src1": _make_mock_kv(cards),
-            "src2": _make_mock_kv({
-                "QueryCard": [1, 0, 0],
-                "ResultA": [0.8, 0.2, 0],
-            }),
+            "src2": _make_mock_kv(
+                {
+                    "QueryCard": [1, 0, 0],
+                    "ResultA": [0.8, 0.2, 0],
+                }
+            ),
         }
 
         results = _similar_reranker(state, "QueryCard", 2, game="magic")
@@ -104,7 +107,9 @@ class TestScoreBreakdown:
 
         cards = {"Q": [1.0, 0.0], "A": [0.9, 0.1]}
         state = _make_state_with_reranker(
-            cards, {"s1": cards}, {"s1": 1.0},
+            cards,
+            {"s1": cards},
+            {"s1": 1.0},
         )
 
         results = _similar_reranker(state, "Q", 1, game="magic")
@@ -125,9 +130,17 @@ class TestSubstituteWeighting:
             all_cards,
             sources={
                 # v5_fused: CooccurCard is closer
-                "v5_fused": {"Bolt": [1, 0, 0], "CooccurCard": [0.95, 0.05, 0], "TextCard": [0.1, 0.1, 0.8]},
+                "v5_fused": {
+                    "Bolt": [1, 0, 0],
+                    "CooccurCard": [0.95, 0.05, 0],
+                    "TextCard": [0.1, 0.1, 0.8],
+                },
                 # text_e5: TextCard is closer
-                "text_e5": {"Bolt": [1, 0, 0], "TextCard": [0.95, 0.05, 0], "CooccurCard": [0.1, 0.1, 0.8]},
+                "text_e5": {
+                    "Bolt": [1, 0, 0],
+                    "TextCard": [0.95, 0.05, 0],
+                    "CooccurCard": [0.1, 0.1, 0.8],
+                },
             },
             weights={"v5_fused": 0.8, "text_e5": 0.2},  # co-occurrence dominant by default
         )
@@ -141,7 +154,9 @@ class TestSubstituteWeighting:
         default_top = results_default[0].card
         sub_top = results_sub[0].card
         assert sub_top == "TextCard", f"Substitute mode should prefer TextCard, got {sub_top}"
-        assert default_top == "CooccurCard", f"Default mode should prefer CooccurCard, got {default_top}"
+        assert default_top == "CooccurCard", (
+            f"Default mode should prefer CooccurCard, got {default_top}"
+        )
 
 
 class TestScoreNormalization:
