@@ -28,7 +28,7 @@ repos:
     hooks:
       - id: ruff
         args: [--fix]
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         exclude: |
           (?x)^(
@@ -44,7 +44,7 @@ repos:
             experiments/archived/
           )
       - id: ruff-format
-        stages: [commit]
+        stages: [pre-commit]
         types: [python]
         exclude: |
           (?x)^(
@@ -63,7 +63,7 @@ repos:
     rev: v2.6.2
     hooks:
       - id: golangci-lint
-        stages: [commit]
+        stages: [pre-commit]
         args: [--timeout=5m]
         files: ^src/backend/.*\.go$
 
@@ -72,7 +72,7 @@ repos:
     rev: v0.10.0.1
     hooks:
       - id: shellcheck
-        stages: [commit]
+        stages: [pre-commit]
         types: [shell]
         args: [-e, SC1091]  # Allow sourcing files without checking
         exclude: |
@@ -90,7 +90,7 @@ repos:
     rev: v6.0.0
     hooks:
       - id: trailing-whitespace
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -112,7 +112,7 @@ repos:
             data/archive/
           )
       - id: end-of-file-fixer
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -134,7 +134,7 @@ repos:
             data/archive/
           )
       - id: check-yaml
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -149,7 +149,7 @@ repos:
             data/archive/
           )
       - id: check-json
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -166,11 +166,11 @@ repos:
           )
       - id: check-added-large-files
         args: ['--maxkb=1000']
-        stages: [commit]
+        stages: [pre-commit]
       - id: check-merge-conflict
-        stages: [commit]
+        stages: [pre-commit]
       - id: check-toml
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -181,7 +181,7 @@ repos:
             dist/
           )
       - id: mixed-line-ending
-        stages: [commit]
+        stages: [pre-commit]
         exclude: |
           (?x)^(
             \.git/|
@@ -199,8 +199,8 @@ repos:
             \.edg$
           )
       - id: check-executables-have-shebangs
-        stages: [commit]
-        types: [text]
+        stages: [pre-commit]
+        types: [text, executable]
         exclude: |
           (?x)^(
             \.git/|
@@ -220,7 +220,7 @@ repos:
             \.pre-commit-config\.yaml$  # Config file, not executable
           )
       - id: check-shebang-scripts-are-executable
-        stages: [commit]
+        stages: [pre-commit]
         types: [text]
         exclude: |
           (?x)^(
@@ -250,7 +250,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        stages: [commit]
+        stages: [pre-commit]
         verbose: true
 
       # Review recently edited files for common rule violations
@@ -261,7 +261,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: true
-        stages: [commit]
+        stages: [pre-commit]
         verbose: true
         fail_fast: false  # Non-blocking, informational
 
@@ -273,7 +273,7 @@ repos:
         entry: bash -c 'python3 scripts/validation/check_hardcoded_paths.py "$@"'
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: true  # Only check changed files
         fail_fast: true  # Stop on first error
 
@@ -285,7 +285,7 @@ repos:
         entry: bash -c 'python3 scripts/validation/check_lineage_usage.py "$@" || true'
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: true  # Only check changed files
 
       # Check for unvalidated deck loads (should use schema validation)
@@ -296,7 +296,7 @@ repos:
         entry: bash -c 'python3 scripts/validation/check_schema_validation.py "$@" || true'
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: true  # Only check changed files
         exclude: |
           (?x)^(
@@ -317,7 +317,7 @@ repos:
         entry: bash -c 'for f in "$@"; do grep -Hn "TODO\|FIXME\|XXX\|HACK" "$f" 2>/dev/null | head -3; done || true'
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: true  # Only check changed files
         verbose: false  # Reduce noise
 
@@ -328,7 +328,7 @@ repos:
         entry: bash -c 'for f in "$@"; do if head -1 "$f" 2>/dev/null | grep -q "^#!/usr/bin/env python"; then test -x "$f" || echo "⚠️  $f has shebang but is not executable"; fi; done || true'
         language: system
         types: [python]
-        stages: [commit]
+        stages: [pre-commit]
         pass_filenames: true  # Only check changed files
         verbose: false  # Reduce noise
 
@@ -342,7 +342,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: false
-        stages: [push]
+        stages: [pre-push]
         types: [python]
         verbose: false
 
@@ -352,7 +352,7 @@ repos:
         language: system
         pass_filenames: false
         always_run: false
-        stages: [push]
+        stages: [pre-push]
         types: [python]  # Only run if Python files changed
         verbose: false  # Reduce noise
 
