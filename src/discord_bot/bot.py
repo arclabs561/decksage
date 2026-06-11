@@ -21,6 +21,7 @@ import discord
 import httpx
 from discord import app_commands
 
+
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
@@ -62,7 +63,7 @@ _http: httpx.AsyncClient | None = None
 
 
 async def http() -> httpx.AsyncClient:
-    global _http  # noqa: PLW0603
+    global _http
     if _http is None or _http.is_closed:
         _http = httpx.AsyncClient(base_url=API_URL, timeout=30.0)
     return _http
