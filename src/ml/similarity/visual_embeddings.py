@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Card visual embeddings using vision-language models (CLIP/SigLIP).
 
@@ -175,14 +174,13 @@ class CardVisualEmbedder:
                 self.vision_model.eval()
 
                 # Move to MPS (Apple Silicon GPU) if available
-                import torch
 
                 if torch.backends.mps.is_available():
                     self.vision_model = self.vision_model.to("mps")
-                    logger.info(f"  Moved model to MPS")
+                    logger.info("  Moved model to MPS")
                 elif torch.cuda.is_available():
                     self.vision_model = self.vision_model.to("cuda")
-                    logger.info(f"  Moved model to CUDA")
+                    logger.info("  Moved model to CUDA")
 
                 self._use_transformers = True
                 self._sentence_transformer = None
