@@ -197,3 +197,5 @@ archive/
 # QA artifacts
 qa/*
 !qa/reference/
+
+.claude/settings.local.json
