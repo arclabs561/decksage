@@ -6,7 +6,7 @@ endpoint handlers remain in api.py.
 """
 
 import os
-from enum import Enum
+from enum import StrEnum
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, computed_field
@@ -43,7 +43,7 @@ class SimilarCard(BaseModel):
     )
 
 
-class UseCaseEnum(str, Enum):
+class UseCaseEnum(StrEnum):
     substitute = "substitute"
     synergy = "synergy"
     meta = "meta"

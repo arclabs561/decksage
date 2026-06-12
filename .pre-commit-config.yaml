@@ -74,7 +74,9 @@ repos:
       - id: shellcheck
         stages: [pre-commit]
         types: [shell]
-        args: [-e, SC1091]  # Allow sourcing files without checking
+        # error severity only: the script corpus carries style warnings;
+        # the gate catches breakage (parse errors, broken redirections).
+        args: [-e, SC1091, --severity=error]
         exclude: |
           (?x)^(
             \.git/|

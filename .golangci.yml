@@ -1,0 +1,7 @@
+version: "2"
+
+issues:
+  # Ratchet: gate findings introduced after the 2026-06-11 revive. The
+  # grandfathered backlog is unused stub-scraper vars and unchecked Close
+  # in one-shot CLI tools; it shrinks opportunistically.
+  new-from-rev: 3af456b
