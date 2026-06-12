@@ -5,7 +5,6 @@ import (
 	"embed"
 
 	"github.com/dgraph-io/dgo/v210"
-	"github.com/dgraph-io/dgo/v210/protos/api"
 )
 
 //go:embed assets
@@ -28,15 +27,9 @@ func NewStore(
 	return s, nil
 }
 
-func (s *Store) init(ctx context.Context) error {
-	return nil
-	schema, err := assets.ReadFile("assets/schema.graphql")
-	if err != nil {
-		return err
-	}
-	op := &api.Operation{Schema: string(schema)}
-	if err := s.dgraph.Alter(ctx, op); err != nil {
-		return err
-	}
+func (s *Store) init(_ context.Context) error {
+	// Dgraph schema setup was stubbed out in the 2025-12-30 cleanup
+	// (deprecated backend); callers only need the no-op. The previous body
+	// read assets/schema.graphql and ran s.dgraph.Alter.
 	return nil
 }
