@@ -144,7 +144,7 @@ scroll:
 			dur := time.Since(start)
 			pageRate := float64(currPage-startPage) / float64(dur.Seconds())
 			d.log.Fieldf("total_items", "%d", totalItems).
-				Fieldf("page_rate", fmt.Sprintf("%0.2f/s", pageRate)).
+				Fieldf("page_rate", "%0.2f/s", pageRate).
 				Infof(ctx, "parsing page %d", currPage)
 		}
 		urls, err := d.parsePage(ctx, opts, sc, currPage)
@@ -341,7 +341,7 @@ func (d *Dataset) parseItem(
 	doc.Find(".S14, .meta_arch, div[class*='result'], span[class*='result'], div[class*='rank'], span[class*='rank']").Each(func(i int, sel *goquery.Selection) {
 		text := strings.TrimSpace(sel.Text())
 		if strings.Contains(text, "st") || strings.Contains(text, "nd") || strings.Contains(text, "rd") || strings.Contains(text, "th") ||
-		   strings.Contains(text, "Top") || strings.Contains(text, "Winner") || strings.Contains(text, "Finalist") {
+			strings.Contains(text, "Top") || strings.Contains(text, "Winner") || strings.Contains(text, "Finalist") {
 			placement = text
 		}
 	})
