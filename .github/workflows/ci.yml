@@ -66,14 +66,15 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: |
-          uv pip install --system ruff
+        # Run the project-pinned ruff, not latest; version drift between
+        # the lockfile and a floating install produces phantom CI findings.
+        run: uv sync --extra dev
 
       - name: Run Ruff check
-        run: ruff check src/ml --output-format=concise
+        run: uv run ruff check src/ml --output-format=concise
 
       - name: Check Ruff format
-        run: ruff format --check src/ml
+        run: uv run ruff format --check src/ml
 
   typecheck:
     name: Type Check (ty)
