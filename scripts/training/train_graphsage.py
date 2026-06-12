@@ -42,6 +42,7 @@ Usage:
       --output data/embeddings/${game}_graphsage_v2.wv
   done
 """
+
 from __future__ import annotations
 
 import argparse
@@ -101,6 +102,7 @@ def build_index(edges: list[tuple[str, str, float]]) -> tuple[dict[str, int], li
 # ---------------------------------------------------------------------------
 # Card attribute features (optional)
 # ---------------------------------------------------------------------------
+
 
 def load_card_features(
     csv_path: Path,
@@ -241,13 +243,16 @@ def load_card_features(
 
     coverage = matched / num_nodes * 100
     print(f"  Card features: {matched}/{num_nodes} nodes matched ({coverage:.1f}%), dim={feat_dim}")
-    print(f"    types={len(type_cats)}, colors={len(colors_list)}, rarities={len(rarity_list)}, keywords={len(top_keywords)}")
+    print(
+        f"    types={len(type_cats)}, colors={len(colors_list)}, rarities={len(rarity_list)}, keywords={len(top_keywords)}"
+    )
     return features
 
 
 # ---------------------------------------------------------------------------
 # Loss functions
 # ---------------------------------------------------------------------------
+
 
 def uniformity_loss(embeddings: torch.Tensor, t: float = 2.0) -> torch.Tensor:
     """Wang & Isola uniformity loss on the unit hypersphere (DirectAU).
@@ -260,7 +265,10 @@ def uniformity_loss(embeddings: torch.Tensor, t: float = 2.0) -> torch.Tensor:
     sim = embeddings @ embeddings.T  # (N, N)
     sq_dist = 2.0 - 2.0 * sim
     # Extract upper triangle (exclude diagonal)
-    mask = torch.triu(torch.ones(sq_dist.size(0), sq_dist.size(0), device=sq_dist.device, dtype=torch.bool), diagonal=1)
+    mask = torch.triu(
+        torch.ones(sq_dist.size(0), sq_dist.size(0), device=sq_dist.device, dtype=torch.bool),
+        diagonal=1,
+    )
     sq_pdist = sq_dist[mask]
     return sq_pdist.mul(-t).exp().mean().log()
 
@@ -268,6 +276,7 @@ def uniformity_loss(embeddings: torch.Tensor, t: float = 2.0) -> torch.Tensor:
 # ---------------------------------------------------------------------------
 # GraphSAGE model
 # ---------------------------------------------------------------------------
+
 
 class GraphSAGENet(nn.Module):
     """Multi-layer GraphSAGE with optional input features.
@@ -342,6 +351,7 @@ class GraphSAGENet(nn.Module):
 # Training
 # ---------------------------------------------------------------------------
 
+
 def build_pyg_data(
     edges: list[tuple[str, str, float]],
     node_to_idx: dict[str, int],
@@ -407,30 +417,68 @@ def train_graphsage(
     model = GraphSAGENet(num_nodes, dim, features, num_layers=num_layers)
     model = model.to(device)
     optimizer = torch.optim.AdamW(model.parameters(), lr=lr, weight_decay=1e-4)
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epochs, eta_min=lr * 0.01)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+        optimizer, T_max=epochs, eta_min=lr * 0.01
+    )
 
     mode_str = "mini-batch" if mini_batch else "full-batch"
     print(f"  Training: {num_nodes:,} nodes, {num_edges:,} edges, {epochs} max epochs ({mode_str})")
-    print(f"  Model: {num_layers}-layer SAGEConv, dim={dim}, features={'yes' if features is not None else 'learned'}")
+    print(
+        f"  Model: {num_layers}-layer SAGEConv, dim={dim}, features={'yes' if features is not None else 'learned'}"
+    )
 
     if mini_batch:
         return _train_minibatch(
-            model, data, edge_weight, optimizer, scheduler,
-            num_nodes, num_edges, dim, epochs, neg_ratio, margin, batch_size,
-            idx_to_node, device, uniformity_weight=uniformity_weight,
+            model,
+            data,
+            edge_weight,
+            optimizer,
+            scheduler,
+            num_nodes,
+            num_edges,
+            dim,
+            epochs,
+            neg_ratio,
+            margin,
+            batch_size,
+            idx_to_node,
+            device,
+            uniformity_weight=uniformity_weight,
         )
     else:
         return _train_fullbatch(
-            model, data, edge_weight, optimizer, scheduler,
-            num_nodes, num_edges, dim, epochs, neg_ratio, margin,
-            idx_to_node, device, uniformity_weight=uniformity_weight,
+            model,
+            data,
+            edge_weight,
+            optimizer,
+            scheduler,
+            num_nodes,
+            num_edges,
+            dim,
+            epochs,
+            neg_ratio,
+            margin,
+            idx_to_node,
+            device,
+            uniformity_weight=uniformity_weight,
         )
 
 
 def _train_fullbatch(
-    model, data, edge_weight, optimizer, scheduler,
-    num_nodes, num_edges, dim, epochs, neg_ratio, margin,
-    idx_to_node, device, uniformity_weight=0.1,
+    model,
+    data,
+    edge_weight,
+    optimizer,
+    scheduler,
+    num_nodes,
+    num_edges,
+    dim,
+    epochs,
+    neg_ratio,
+    margin,
+    idx_to_node,
+    device,
+    uniformity_weight=0.1,
 ) -> KeyedVectors:
     """Full-batch training for small graphs."""
     edge_index = data.edge_index.to(device)
@@ -516,6 +564,7 @@ def _sample_subgraph(
                 sampled = neighbors
             else:
                 import random
+
                 sampled = random.sample(neighbors, k_neighbors)
             for n in sampled:
                 if n not in all_nodes:
@@ -536,14 +585,28 @@ def _sample_subgraph(
                 src.append(li)
                 dst.append(local_idx[neighbor])
 
-    edge_index = torch.tensor([src, dst], dtype=torch.long) if src else torch.zeros(2, 0, dtype=torch.long)
+    edge_index = (
+        torch.tensor([src, dst], dtype=torch.long) if src else torch.zeros(2, 0, dtype=torch.long)
+    )
     return node_list, edge_index
 
 
 def _train_minibatch(
-    model, data, edge_weight, optimizer, scheduler,
-    num_nodes, num_edges, dim, epochs, neg_ratio, margin, batch_size,
-    idx_to_node, device, uniformity_weight=0.1,
+    model,
+    data,
+    edge_weight,
+    optimizer,
+    scheduler,
+    num_nodes,
+    num_edges,
+    dim,
+    epochs,
+    neg_ratio,
+    margin,
+    batch_size,
+    idx_to_node,
+    device,
+    uniformity_weight=0.1,
 ) -> KeyedVectors:
     """Mini-batch training with manual neighbor sampling.
 
@@ -563,7 +626,7 @@ def _train_minibatch(
     # Scale neighbor sampling with graph density
     avg_degree = num_edges * 2 / max(num_nodes, 1)
     # Sample ~sqrt(avg_degree) neighbors per hop, clamped to [10, 50]
-    k = max(10, min(50, int(avg_degree ** 0.5)))
+    k = max(10, min(50, int(avg_degree**0.5)))
     num_neighbors_per_hop = [k] * num_layers
     print(f"    Avg degree: {avg_degree:.0f}, sampling {k} neighbors/hop")
 
@@ -606,7 +669,9 @@ def _train_minibatch(
 
         for batch_start in range(0, num_nodes, batch_size):
             seed_nodes = all_node_ids[batch_start : batch_start + batch_size]
-            node_list, local_edge_index = _sample_subgraph(adj_list, seed_nodes, num_neighbors_per_hop)
+            node_list, local_edge_index = _sample_subgraph(
+                adj_list, seed_nodes, num_neighbors_per_hop
+            )
 
             if local_edge_index.shape[1] < 2:
                 continue
@@ -679,7 +744,9 @@ def _train_minibatch(
             print(f"    Epoch {epoch + 1}/{epochs}, avg_loss={avg_loss:.4f}, lr={lr_now:.6f}")
 
     # Extract embeddings: full pass with sampled neighborhoods
-    return _extract_embeddings_minibatch(model, adj_list, num_nodes, dim, idx_to_node, num_neighbors_per_hop, batch_size, device)
+    return _extract_embeddings_minibatch(
+        model, adj_list, num_nodes, dim, idx_to_node, num_neighbors_per_hop, batch_size, device
+    )
 
 
 def _extract_embeddings(model, edge_index, num_nodes, dim, idx_to_node, device) -> KeyedVectors:
@@ -691,7 +758,14 @@ def _extract_embeddings(model, edge_index, num_nodes, dim, idx_to_node, device) 
 
 
 def _extract_embeddings_minibatch(
-    model, adj_list, num_nodes, dim, idx_to_node, num_neighbors_per_hop, batch_size, device,
+    model,
+    adj_list,
+    num_nodes,
+    dim,
+    idx_to_node,
+    num_neighbors_per_hop,
+    batch_size,
+    device,
 ) -> KeyedVectors:
     """Extract embeddings via manual neighbor sampling inference."""
     model.eval()
@@ -702,7 +776,9 @@ def _extract_embeddings_minibatch(
             seed_nodes = list(range(batch_start, min(batch_start + batch_size, num_nodes)))
             # Use more neighbors for inference (better approximation)
             inference_neighbors = [min(n * 3, 50) for n in num_neighbors_per_hop]
-            node_list, local_edge_index = _sample_subgraph(adj_list, seed_nodes, inference_neighbors)
+            node_list, local_edge_index = _sample_subgraph(
+                adj_list, seed_nodes, inference_neighbors
+            )
 
             if local_edge_index.shape[1] == 0:
                 continue
@@ -731,7 +807,10 @@ def _finalize_embeddings(emb: np.ndarray, dim: int, idx_to_node: list[str]) -> K
 # Quality metrics
 # ---------------------------------------------------------------------------
 
-def compute_quality_metrics(kv: KeyedVectors, edges: list[tuple[str, str, float]], n_random: int = 10000):
+
+def compute_quality_metrics(
+    kv: KeyedVectors, edges: list[tuple[str, str, float]], n_random: int = 10000
+):
     """Compute embedding quality metrics (same as train_blended_embeddings.py)."""
     # Random-pair cosine similarity
     keys = list(kv.key_to_index.keys())
@@ -750,9 +829,11 @@ def compute_quality_metrics(kv: KeyedVectors, edges: list[tuple[str, str, float]
     print(f"  Vocabulary size: {len(kv)}")
     print(f"  Random-pair cosine similarity (n={n}):")
     print(f"    mean={random_sims.mean():.4f}  std={random_sims.std():.4f}")
-    print(f"    min={random_sims.min():.4f}  p25={np.percentile(random_sims, 25):.4f}  "
-          f"median={np.median(random_sims):.4f}  p75={np.percentile(random_sims, 75):.4f}  "
-          f"max={random_sims.max():.4f}")
+    print(
+        f"    min={random_sims.min():.4f}  p25={np.percentile(random_sims, 25):.4f}  "
+        f"median={np.median(random_sims):.4f}  p75={np.percentile(random_sims, 75):.4f}  "
+        f"max={random_sims.max():.4f}"
+    )
 
     # Top-100 weighted edges similarity
     top_edges = sorted(edges, key=lambda x: x[2], reverse=True)[:100]
@@ -763,20 +844,27 @@ def compute_quality_metrics(kv: KeyedVectors, edges: list[tuple[str, str, float]
     if top_sims:
         top_sims = np.array(top_sims)
         print("  Top-100 weighted edges similarity:")
-        print(f"    mean={top_sims.mean():.4f}  std={top_sims.std():.4f}  "
-              f"min={top_sims.min():.4f}  max={top_sims.max():.4f}")
+        print(
+            f"    mean={top_sims.mean():.4f}  std={top_sims.std():.4f}  "
+            f"min={top_sims.min():.4f}  max={top_sims.max():.4f}"
+        )
 
 
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Train GraphSAGE embeddings via link prediction")
     parser.add_argument("--edgelist", type=Path, required=True, help="Base edgelist (.edg)")
     parser.add_argument("--enriched", type=Path, help="Optional enriched edgelist to merge")
-    parser.add_argument("--enriched-weight", type=float, default=3.0, help="Weight multiplier for enriched edges")
-    parser.add_argument("--card-attrs", type=Path, help="Optional card attributes CSV for node features")
+    parser.add_argument(
+        "--enriched-weight", type=float, default=3.0, help="Weight multiplier for enriched edges"
+    )
+    parser.add_argument(
+        "--card-attrs", type=Path, help="Optional card attributes CSV for node features"
+    )
     parser.add_argument("--output", type=Path, required=True, help="Output .wv file")
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--epochs", type=int, default=300)
@@ -784,14 +872,19 @@ def main() -> int:
     parser.add_argument("--neg-ratio", type=int, default=5, help="Negative samples per positive")
     parser.add_argument("--num-layers", type=int, default=3, help="Number of SAGEConv layers")
     parser.add_argument("--margin", type=float, default=1.0, help="Margin for ranking loss")
-    parser.add_argument("--max-edges", type=int, default=0,
-                        help="Subsample to top-K weighted edges (0=no limit)")
-    parser.add_argument("--device", type=str, default="auto",
-                        help="Device: auto, cpu, mps, cuda")
-    parser.add_argument("--force-fullbatch", action="store_true",
-                        help="Force full-batch mode even for large graphs")
-    parser.add_argument("--uniformity-weight", type=float, default=0.1,
-                        help="Weight for uniformity loss (0=off, default: 0.1)")
+    parser.add_argument(
+        "--max-edges", type=int, default=0, help="Subsample to top-K weighted edges (0=no limit)"
+    )
+    parser.add_argument("--device", type=str, default="auto", help="Device: auto, cpu, mps, cuda")
+    parser.add_argument(
+        "--force-fullbatch", action="store_true", help="Force full-batch mode even for large graphs"
+    )
+    parser.add_argument(
+        "--uniformity-weight",
+        type=float,
+        default=0.1,
+        help="Weight for uniformity loss (0=off, default: 0.1)",
+    )
     args = parser.parse_args()
 
     # Device selection
@@ -817,14 +910,16 @@ def main() -> int:
     enriched_edges = None
     if args.enriched and args.enriched.exists():
         enriched_edges = load_edgelist(args.enriched)
-        print(f"  Enriched: {args.enriched} ({len(enriched_edges):,} edges, weight={args.enriched_weight})")
+        print(
+            f"  Enriched: {args.enriched} ({len(enriched_edges):,} edges, weight={args.enriched_weight})"
+        )
 
     edges = merge_edgelists(base_edges, enriched_edges, args.enriched_weight)
 
     # Edge subsampling: keep top-K by weight for large graphs
     if args.max_edges and len(edges) > args.max_edges:
         edges.sort(key=lambda x: x[2], reverse=True)
-        edges = edges[:args.max_edges]
+        edges = edges[: args.max_edges]
         print(f"  Subsampled to top {args.max_edges:,} edges by weight")
 
     node_to_idx, idx_to_node = build_index(edges)

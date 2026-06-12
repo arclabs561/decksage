@@ -22,11 +22,12 @@ import argparse
 import json
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import httpx
+
 
 USER_AGENT = "DeckSage-BanlistScraper/0.1 (research; +https://github.com/decksage)"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "banlists"
@@ -52,9 +53,7 @@ SCRYFALL_FORMATS = [
 SCRYFALL_STATUSES = ["banned", "restricted"]
 
 
-def _scryfall_search(
-    client: httpx.Client, query: str, *, delay: float = 0.12
-) -> list[str]:
+def _scryfall_search(client: httpx.Client, query: str, *, delay: float = 0.12) -> list[str]:
     """Run a paginated Scryfall search and return card names."""
     names: list[str] = []
     url = "https://api.scryfall.com/cards/search"
@@ -103,7 +102,7 @@ def scrape_magic(client: httpx.Client) -> dict[str, Any]:
 
     result = {
         "game": "magic",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "scryfall",
         "formats": formats,
     }
@@ -155,7 +154,7 @@ def scrape_yugioh(client: httpx.Client) -> dict[str, Any]:
 
     result = {
         "game": "yugioh",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "ygoprodeck",
         "formats": formats,
     }
@@ -215,7 +214,7 @@ def scrape_pokemon(client: httpx.Client) -> dict[str, Any]:
 
     result = {
         "game": "pokemon",
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "source": "pokemontcg.io",
         "formats": formats,
     }
@@ -258,8 +257,7 @@ def main() -> None:
                 result = scraper(client)
             except httpx.HTTPStatusError as exc:
                 print(
-                    f"[{game}] HTTP error: {exc.response.status_code} "
-                    f"{exc.response.text[:200]}",
+                    f"[{game}] HTTP error: {exc.response.status_code} {exc.response.text[:200]}",
                     file=sys.stderr,
                 )
                 continue

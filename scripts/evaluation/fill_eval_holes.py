@@ -34,6 +34,7 @@ Usage:
     # All games
     uv run python scripts/evaluation/fill_eval_holes.py --all-games --model multi
 """
+
 from __future__ import annotations
 
 import argparse
@@ -48,6 +49,7 @@ from pathlib import Path
 import numpy as np
 import requests
 from dotenv import load_dotenv
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env", override=True)
@@ -135,11 +137,10 @@ def find_holes(game: str, k: int = 10, method: str = "cosine") -> list[tuple[str
     return holes
 
 
-def _find_holes_fusion(
-    kv, queries: dict, game: str, k: int = 10
-) -> list[tuple[str, str]]:
+def _find_holes_fusion(kv, queries: dict, game: str, k: int = 10) -> list[tuple[str, str]]:
     """Find holes using fusion-path candidates (substitution weights)."""
     import sys
+
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
     from ml.similarity.fusion import WeightedLateFusion
     from ml.utils.shared_operations import load_graph_for_jaccard
@@ -152,7 +153,10 @@ def _find_holes_fusion(
     print(f"  Loaded graph: {len(adj):,} cards")
 
     fusion = WeightedLateFusion(
-        embeddings=kv, adj=adj, task_type="substitution", game=game,
+        embeddings=kv,
+        adj=adj,
+        task_type="substitution",
+        game=game,
     )
 
     valid_queries = [(qn, qd) for qn, qd in queries.items() if qn in kv.key_to_index]
@@ -216,7 +220,7 @@ async def annotate_holes(
         sys.path.insert(0, str(PROJECT_ROOT / "scripts/annotation"))
         from multi_model_annotate import annotate_pair
 
-        logger.info(f"Using multi-model cascade (~$0.40/1000 pairs)")
+        logger.info("Using multi-model cascade (~$0.40/1000 pairs)")
     else:
         # Groq/Cerebras/OpenAI-compatible
         api_key = ""
@@ -262,11 +266,17 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     resp = await asyncio.to_thread(
                         session.post,
                         f"{api_url}/chat/completions",
-                        headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                        headers={
+                            "Authorization": f"Bearer {api_key}",
+                            "Content-Type": "application/json",
+                        },
                         json={
                             "model": model_name,
                             "messages": [
-                                {"role": "system", "content": "You are a card game expert. Respond with JSON only."},
+                                {
+                                    "role": "system",
+                                    "content": "You are a card game expert. Respond with JSON only.",
+                                },
                                 {"role": "user", "content": prompt},
                             ],
                             "temperature": 0.3,
@@ -307,13 +317,15 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
     # Process in chunks to show progress
     chunk_size = 100
     for i in range(0, len(tasks), chunk_size):
-        chunk = tasks[i:i + chunk_size]
+        chunk = tasks[i : i + chunk_size]
         chunk_results = await asyncio.gather(*chunk)
         for r in chunk_results:
             if r is not None:
                 results.append(r)
-        logger.info(f"  Progress: {min(i + chunk_size, len(tasks))}/{len(tasks)} "
-                     f"({len(results)} successful)")
+        logger.info(
+            f"  Progress: {min(i + chunk_size, len(tasks))}/{len(tasks)} "
+            f"({len(results)} successful)"
+        )
 
     return results
 
@@ -337,18 +349,20 @@ def merge_into_test_set(game: str, annotations: list[dict]) -> int:
         if candidate in existing:
             continue
 
-        qdata.setdefault("annotations", []).append({
-            "query": query,
-            "candidate": candidate,
-            "similarity_score": ann.get("similarity_score", 0),
-            "functional_score": ann.get("functional_score", 0),
-            "synergy_score": ann.get("synergy_score", 0),
-            "meta_relevance": ann.get("meta_relevance", 0),
-            "confidence": ann.get("confidence", 0.5),
-            "llm_model": ann.get("model_name", "unknown"),
-            "discovery_source": "eval_hole_fill",
-            "timestamp": ann.get("timestamp", ""),
-        })
+        qdata.setdefault("annotations", []).append(
+            {
+                "query": query,
+                "candidate": candidate,
+                "similarity_score": ann.get("similarity_score", 0),
+                "functional_score": ann.get("functional_score", 0),
+                "synergy_score": ann.get("synergy_score", 0),
+                "meta_relevance": ann.get("meta_relevance", 0),
+                "confidence": ann.get("confidence", 0.5),
+                "llm_model": ann.get("model_name", "unknown"),
+                "discovery_source": "eval_hole_fill",
+                "timestamp": ann.get("timestamp", ""),
+            }
+        )
 
         # Update relevance buckets
         sim = float(ann.get("similarity_score", 0))
@@ -378,12 +392,16 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Fill judgment holes in top-K eval results")
     parser.add_argument("--game", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--all-games", action="store_true")
-    parser.add_argument("--model", default="multi", help="Annotation backend (multi, groq/*, cerebras/*)")
+    parser.add_argument(
+        "--model", default="multi", help="Annotation backend (multi, groq/*, cerebras/*)"
+    )
     parser.add_argument("--k", type=int, default=10, help="Top-K depth to fill")
     parser.add_argument("--max-per-game", type=int, default=5000, help="Max holes to fill per game")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(
-        "--method", default="cosine", choices=["cosine", "fusion", "text_e5"],
+        "--method",
+        default="cosine",
+        choices=["cosine", "fusion", "text_e5"],
         help="Candidate retrieval: 'cosine' (embedding), 'fusion' (text+functional), 'text_e5' (text similarity holes)",
     )
     parser.add_argument("--concurrency", type=int, default=20)
@@ -413,7 +431,7 @@ def main() -> int:
             continue
 
         # Cap to budget
-        to_fill = holes[:args.max_per_game]
+        to_fill = holes[: args.max_per_game]
         if len(holes) > args.max_per_game:
             print(f"  Capping to {args.max_per_game} (of {len(holes)})")
 
@@ -425,21 +443,35 @@ def main() -> int:
         for chunk_start in range(0, len(to_fill), CHUNK_SIZE):
             chunk = to_fill[chunk_start : chunk_start + CHUNK_SIZE]
             annotations = asyncio.run(
-                annotate_holes(chunk, game, card_context, model=args.model, concurrency=args.concurrency)
+                annotate_holes(
+                    chunk, game, card_context, model=args.model, concurrency=args.concurrency
+                )
             )
             added = merge_into_test_set(game, annotations)
             total_added += added
-            print(f"  Checkpoint: {chunk_start + len(chunk)}/{len(to_fill)} holes, {total_added} merged")
+            print(
+                f"  Checkpoint: {chunk_start + len(chunk)}/{len(to_fill)} holes, {total_added} merged"
+            )
 
         print(f"  Total: {total_added} new annotations")
 
         # Quick eval
         import subprocess
+
         for emb in [EMBEDDING_PATHS[game]]:
             result = subprocess.run(
-                [sys.executable, str(PROJECT_ROOT / "scripts/evaluation/eval_per_mode.py"),
-                 "--game", game, "--embedding", emb, "--quick", "--json"],
-                capture_output=True, cwd=str(PROJECT_ROOT),
+                [
+                    sys.executable,
+                    str(PROJECT_ROOT / "scripts/evaluation/eval_per_mode.py"),
+                    "--game",
+                    game,
+                    "--embedding",
+                    emb,
+                    "--quick",
+                    "--json",
+                ],
+                capture_output=True,
+                cwd=str(PROJECT_ROOT),
             )
             if result.returncode == 0:
                 try:
@@ -450,7 +482,9 @@ def main() -> int:
                     saturated = gap < 0.05
                     hit10 = r.get("hit_at_k", {}).get("10", {}).get("rate", "?")
                     status = "SATURATED" if saturated else f"gap={gap:.3f}"
-                    print(f"  {emb}: sub={sub:.4f} condensed={condensed:.4f} [{status}] Hit@10={hit10}")
+                    print(
+                        f"  {emb}: sub={sub:.4f} condensed={condensed:.4f} [{status}] Hit@10={hit10}"
+                    )
                     if not saturated:
                         all_saturated = False
                 except (json.JSONDecodeError, KeyError):

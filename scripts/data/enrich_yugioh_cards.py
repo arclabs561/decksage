@@ -39,10 +39,10 @@ import argparse
 import csv
 import json
 import re
-import sys
 from pathlib import Path
 
 import httpx
+
 
 API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php"
 
@@ -100,9 +100,7 @@ def extract_summoning_requirements(desc: str, card_type: str) -> str:
     if not desc:
         return ""
 
-    is_extra = any(
-        t in card_type for t in ("Fusion", "Synchro", "XYZ", "Xyz", "Link")
-    )
+    is_extra = any(t in card_type for t in ("Fusion", "Synchro", "XYZ", "Xyz", "Link"))
     is_ritual = "Ritual" in card_type and "Monster" in card_type
 
     if is_extra:
@@ -115,9 +113,7 @@ def extract_summoning_requirements(desc: str, card_type: str) -> str:
 
     if is_ritual:
         # Look for "You can Ritual Summon this card with <spell name>"
-        m = re.search(
-            r'(?:You can )?Ritual Summon this card with "([^"]+)"', desc
-        )
+        m = re.search(r'(?:You can )?Ritual Summon this card with "([^"]+)"', desc)
         if m:
             return f'Ritual Spell: "{m.group(1)}"'
         return ""
@@ -148,9 +144,7 @@ def classify_effect_types(desc: str) -> str:
         types.append("Trigger")
 
     # Continuous-like patterns
-    if re.search(
-        r"\b(?:While|As long as|gains? \d+.*for each|loses? \d+.*for each)\b", desc
-    ):
+    if re.search(r"\b(?:While|As long as|gains? \d+.*for each|loses? \d+.*for each)\b", desc):
         types.append("Continuous")
 
     # Once Per Turn — explicit game rule marker
@@ -322,7 +316,9 @@ def main():
             row["attribute_enriched"] = api_card.get("attribute", "") or ""
             row["race_enriched"] = api_card.get("race", "") or ""
             row["archetype_enriched"] = api_card.get("archetype", "") or ""
-            row["pendulum_scale"] = str(api_card["scale"]) if api_card.get("scale") is not None else ""
+            row["pendulum_scale"] = (
+                str(api_card["scale"]) if api_card.get("scale") is not None else ""
+            )
             markers = api_card.get("linkmarkers", [])
             row["link_markers"] = ", ".join(markers) if markers else ""
             row["oracle_text_enriched"] = build_oracle_text_enriched(api_card)
@@ -375,22 +371,22 @@ def main():
         writer.writeheader()
         writer.writerows(rows)
 
-    print(f"\nEnrichment complete:")
+    print("\nEnrichment complete:")
     print(f"  Total cards: {len(rows)}")
     print(f"  Matched to API: {matched}")
     print(f"  Unmatched: {len(unmatched_names)}")
     if unmatched_names[:5]:
         print(f"  Sample unmatched: {unmatched_names[:5]}")
 
-    print(f"\n  Card categories:")
+    print("\n  Card categories:")
     for cat, count in sorted(categories.items(), key=lambda x: -x[1]):
         print(f"    {cat}: {count}")
 
-    print(f"\n  Top monster types:")
+    print("\n  Top monster types:")
     for mt, count in sorted(monster_types.items(), key=lambda x: -x[1])[:10]:
         print(f"    {mt}: {count}")
 
-    print(f"\n  Attributes:")
+    print("\n  Attributes:")
     for attr, count in sorted(attributes.items(), key=lambda x: -x[1]):
         print(f"    {attr}: {count}")
 

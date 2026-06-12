@@ -60,6 +60,7 @@ import torch.nn.functional as F
 from gensim.models import KeyedVectors
 from torch_geometric.nn import MessagePassing
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -476,7 +477,7 @@ def quality_check(kv: KeyedVectors, edges: list[tuple[str, str, float]]) -> None
         random_sims.append(float(kv.similarity(keys[i], keys[j])))
     random_sims_arr = np.array(random_sims)
 
-    print(f"\n--- Quality Metrics ---")
+    print("\n--- Quality Metrics ---")
     print(f"  Vocabulary size: {len(kv)}")
     print(f"  Random-pair cosine similarity (n={n}):")
     print(
@@ -492,7 +493,7 @@ def quality_check(kv: KeyedVectors, edges: list[tuple[str, str, float]]) -> None
             top_sims.append(float(kv.similarity(c1, c2)))
     if top_sims:
         top_sims_arr = np.array(top_sims)
-        print(f"  Top-100 weighted edges similarity:")
+        print("  Top-100 weighted edges similarity:")
         print(
             f"    mean={top_sims_arr.mean():.4f}  std={top_sims_arr.std():.4f}  "
             f"min={top_sims_arr.min():.4f}  max={top_sims_arr.max():.4f}"
@@ -605,9 +606,9 @@ def main() -> int:
         print(f"  Subsampled to top {args.max_edges:,} edges by weight")
 
     # Train
-    print(f"\n[2/3] Training LightGCN...")
+    print("\n[2/3] Training LightGCN...")
     t0 = time.monotonic()
-    kv, idx_to_node = train_lightgcn(
+    kv, _idx_to_node = train_lightgcn(
         edges,
         dim=args.dim,
         num_layers=args.layers,
@@ -630,7 +631,7 @@ def main() -> int:
     print(f"  Saved {len(kv):,} embeddings to {args.output}")
 
     # Quality
-    print(f"\n[3/3] Quality check...")
+    print("\n[3/3] Quality check...")
     quality_check(kv, edges)
 
     print(f"\n{'=' * 70}")

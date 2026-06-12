@@ -21,27 +21,27 @@ Usage:
         --output data/annotations/model_output_yugioh.json \
         --num-queries 50 --top-k 20 --concurrency 10
 """
+
 from __future__ import annotations
 
 import argparse
 import asyncio
 import json
-import os
 import random
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 from dotenv import load_dotenv
 
+
 load_dotenv()
 load_dotenv(Path(__file__).resolve().parents[2] / ".env")
 
-from gensim.models import KeyedVectors  # noqa: E402
+from gensim.models import KeyedVectors
 
 # Reuse existing annotation infrastructure
-from ml.annotation.multi_annotator_iaa import MultiAnnotatorIAA  # noqa: E402
+from ml.annotation.multi_annotator_iaa import MultiAnnotatorIAA
 
 
 async def annotate_model_output(args):
@@ -77,7 +77,7 @@ async def annotate_model_output(args):
             game_knowledge = json.load(f)
 
     # Initialize annotator
-    print(f"Initializing multi-annotator IAA system...")
+    print("Initializing multi-annotator IAA system...")
     annotator = MultiAnnotatorIAA(
         game=args.game,
         game_knowledge=game_knowledge,
@@ -126,7 +126,9 @@ async def annotate_model_output(args):
                 "similarity_type": result.consensus_annotation.similarity_type,
                 "is_substitute": result.consensus_annotation.is_substitute,
                 "reasoning": result.consensus_annotation.reasoning,
-            } if result.consensus_annotation else None,
+            }
+            if result.consensus_annotation
+            else None,
             "per_judge": {
                 name: {
                     "similarity_score": ann.similarity_score,
@@ -157,7 +159,7 @@ async def annotate_model_output(args):
                     elapsed = time.time() - t0
                     rate = elapsed / completed if completed else 0
                     eta = rate * (total - completed)
-                    print(f"  [{completed}/{total}] {rate:.1f}s/pair | ETA {eta/60:.0f}m")
+                    print(f"  [{completed}/{total}] {rate:.1f}s/pair | ETA {eta / 60:.0f}m")
 
             except Exception as e:
                 print(f"  Error: {query} <-> {card}: {e}")
@@ -166,7 +168,7 @@ async def annotate_model_output(args):
     await asyncio.gather(*tasks)
 
     # Finalize: convert checkpoint to structured test set
-    print(f"\nFinalizing...")
+    print("\nFinalizing...")
     labels = []
     with open(checkpoint_path) as f:
         for line in f:
@@ -174,6 +176,7 @@ async def annotate_model_output(args):
 
     # Build test set grouped by query
     from collections import defaultdict
+
     queries: dict[str, dict[str, list[str]]] = defaultdict(lambda: defaultdict(list))
 
     for label in labels:
@@ -218,7 +221,13 @@ async def annotate_model_output(args):
 
     print(f"\nTest set written to {args.output}")
     print(f"  {len(queries)} queries, {len(labels)} annotated pairs")
-    for grade in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+    for grade in [
+        "highly_relevant",
+        "relevant",
+        "somewhat_relevant",
+        "marginally_relevant",
+        "irrelevant",
+    ]:
         print(f"  {grade}: {grade_counts[grade]}")
 
 
@@ -227,10 +236,15 @@ def main():
     parser.add_argument("--game", required=True, choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--embeddings", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--num-queries", type=int, default=50,
-                        help="Number of query cards to sample (default: 50)")
-    parser.add_argument("--top-k", type=int, default=20,
-                        help="Number of top results to annotate per query (default: 20)")
+    parser.add_argument(
+        "--num-queries", type=int, default=50, help="Number of query cards to sample (default: 50)"
+    )
+    parser.add_argument(
+        "--top-k",
+        type=int,
+        default=20,
+        help="Number of top results to annotate per query (default: 20)",
+    )
     parser.add_argument("--concurrency", type=int, default=10)
     parser.add_argument("--seed", type=int, default=42)
     parser.add_argument("--resume", action="store_true")

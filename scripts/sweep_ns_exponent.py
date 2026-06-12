@@ -24,6 +24,7 @@ import sys
 import time
 from pathlib import Path
 
+
 NS_EXPONENTS = [-1.0, -0.5, 0.0, 0.5, 0.75, 1.0]
 
 
@@ -54,7 +55,7 @@ def run_sweep(game: str, dim: int, window: int, epochs: int, dry_run: bool) -> N
             print(f"[dry-run] Would train: {label} -> {out_path}")
             continue
 
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"Training: {label}")
         t0 = time.monotonic()
 
@@ -75,17 +76,19 @@ def run_sweep(game: str, dim: int, window: int, epochs: int, dry_run: bool) -> N
         model.wv.save(str(out_path))
 
         print(f"  vocab={vocab_size}, dim={dim}, time={elapsed:.1f}s")
-        print(f"  saved: {out_path} ({out_path.stat().st_size/1e6:.1f} MB)")
+        print(f"  saved: {out_path} ({out_path.stat().st_size / 1e6:.1f} MB)")
 
-        results.append({
-            "ns_exponent": ns_exp,
-            "vocab": vocab_size,
-            "time_s": round(elapsed, 1),
-            "path": str(out_path),
-        })
+        results.append(
+            {
+                "ns_exponent": ns_exp,
+                "vocab": vocab_size,
+                "time_s": round(elapsed, 1),
+                "path": str(out_path),
+            }
+        )
 
     if not dry_run and results:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print("Sweep complete. Run degree-stratified evaluation on each:")
         print()
         for r in results:
@@ -98,7 +101,9 @@ def main():
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--window", type=int, default=5)
     parser.add_argument("--epochs", type=int, default=10)
-    parser.add_argument("--dry-run", action="store_true", help="Show what would run without training")
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Show what would run without training"
+    )
     args = parser.parse_args()
 
     run_sweep(args.game, args.dim, args.window, args.epochs, args.dry_run)

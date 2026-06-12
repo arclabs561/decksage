@@ -15,16 +15,16 @@ Output: data/processed/card_attributes_riftbound.csv
 Usage:
     uv run scripts/data/scrape_riftbound_cards.py
 """
+
 from __future__ import annotations
 
 import csv
-import html
 import json
 import re
-import sys
 import time
 import urllib.request
 from pathlib import Path
+
 
 API_BASE = "https://api.riftcodex.com/cards"
 PAGE_SIZE = 100  # API max
@@ -186,9 +186,19 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     fieldnames = [
-        "name", "type", "colors", "cmc", "rarity",
-        "power", "toughness", "keywords",
-        "attribute", "race", "archetype", "oracle_text", "image_url",
+        "name",
+        "type",
+        "colors",
+        "cmc",
+        "rarity",
+        "power",
+        "toughness",
+        "keywords",
+        "attribute",
+        "race",
+        "archetype",
+        "oracle_text",
+        "image_url",
     ]
 
     written = 0
@@ -230,21 +240,23 @@ def main() -> None:
             set_label = card_set.get("label", "")
             set_label = SET_LABEL_FIXES.get(set_label, set_label)
 
-            writer.writerow({
-                "name": name,
-                "type": full_type,
-                "colors": colors,
-                "cmc": energy if energy is not None else "",
-                "rarity": rarity,
-                "power": might if might is not None else "",
-                "toughness": power_val if power_val is not None else "",
-                "keywords": ",".join(keywords),
-                "attribute": set_label,  # set name as attribute
-                "race": "",  # no race concept in Riftbound
-                "archetype": "",  # no archetype concept in Riftbound
-                "oracle_text": oracle_text,
-                "image_url": image_url,
-            })
+            writer.writerow(
+                {
+                    "name": name,
+                    "type": full_type,
+                    "colors": colors,
+                    "cmc": energy if energy is not None else "",
+                    "rarity": rarity,
+                    "power": might if might is not None else "",
+                    "toughness": power_val if power_val is not None else "",
+                    "keywords": ",".join(keywords),
+                    "attribute": set_label,  # set name as attribute
+                    "race": "",  # no race concept in Riftbound
+                    "archetype": "",  # no archetype concept in Riftbound
+                    "oracle_text": oracle_text,
+                    "image_url": image_url,
+                }
+            )
             written += 1
 
     print(f"Wrote {written} cards to {OUT_FILE}")

@@ -25,6 +25,7 @@ Usage:
         --output data/graphs/pairs_propagated_yugioh.edg \
         --decay 0.7 --jaccard-threshold 0.15 --max-propagated-per-pair 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -148,22 +149,45 @@ def propagate(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Propagate annotation labels via graph structure")
-    parser.add_argument("--annotations", type=Path, nargs="+", required=True,
-                        help="Annotation JSON files")
-    parser.add_argument("--edgelist", type=Path, required=True,
-                        help="Co-occurrence edgelist for neighborhood lookup")
-    parser.add_argument("--output", type=Path, required=True,
-                        help="Output edgelist with propagated pseudo-labels")
-    parser.add_argument("--decay", type=float, default=0.7,
-                        help="Score decay factor per hop (default: 0.7)")
-    parser.add_argument("--jaccard-threshold", type=float, default=0.15,
-                        help="Min Jaccard similarity for propagation (default: 0.15)")
-    parser.add_argument("--max-per-pair", type=int, default=20,
-                        help="Max propagated pairs per original pair (default: 20)")
-    parser.add_argument("--min-score", type=float, default=0.20,
-                        help="Min annotation score to use as seed (default: 0.20)")
-    parser.add_argument("--weight-scale", type=float, default=10.0,
-                        help="Scale factor for output edge weights (default: 10.0)")
+    parser.add_argument(
+        "--annotations", type=Path, nargs="+", required=True, help="Annotation JSON files"
+    )
+    parser.add_argument(
+        "--edgelist",
+        type=Path,
+        required=True,
+        help="Co-occurrence edgelist for neighborhood lookup",
+    )
+    parser.add_argument(
+        "--output", type=Path, required=True, help="Output edgelist with propagated pseudo-labels"
+    )
+    parser.add_argument(
+        "--decay", type=float, default=0.7, help="Score decay factor per hop (default: 0.7)"
+    )
+    parser.add_argument(
+        "--jaccard-threshold",
+        type=float,
+        default=0.15,
+        help="Min Jaccard similarity for propagation (default: 0.15)",
+    )
+    parser.add_argument(
+        "--max-per-pair",
+        type=int,
+        default=20,
+        help="Max propagated pairs per original pair (default: 20)",
+    )
+    parser.add_argument(
+        "--min-score",
+        type=float,
+        default=0.20,
+        help="Min annotation score to use as seed (default: 0.20)",
+    )
+    parser.add_argument(
+        "--weight-scale",
+        type=float,
+        default=10.0,
+        help="Scale factor for output edge weights (default: 10.0)",
+    )
     args = parser.parse_args()
 
     # Load graph
@@ -183,10 +207,14 @@ def main() -> int:
         labeled_cards.add(a)
         labeled_cards.add(b)
     in_graph = labeled_cards & graph_nodes
-    print(f"  {len(in_graph)}/{len(labeled_cards)} labeled cards found in graph ({100*len(in_graph)/len(labeled_cards):.1f}%)")
+    print(
+        f"  {len(in_graph)}/{len(labeled_cards)} labeled cards found in graph ({100 * len(in_graph) / len(labeled_cards):.1f}%)"
+    )
 
     # Propagate
-    print(f"Propagating (decay={args.decay}, jaccard>={args.jaccard_threshold}, max_per_pair={args.max_per_pair})...")
+    print(
+        f"Propagating (decay={args.decay}, jaccard>={args.jaccard_threshold}, max_per_pair={args.max_per_pair})..."
+    )
     propagated = propagate(labeled, adj, args.decay, args.jaccard_threshold, args.max_per_pair)
     print(f"  Generated {len(propagated)} pseudo-labeled pairs")
 
@@ -205,10 +233,12 @@ def main() -> int:
     total = len(merged)
     prop_scores = list(propagated.values()) if propagated else [0]
     print(f"\n  Original: {orig_count} pairs")
-    print(f"  Propagated: {prop_count} pairs ({prop_count/max(orig_count,1):.1f}x expansion)")
+    print(f"  Propagated: {prop_count} pairs ({prop_count / max(orig_count, 1):.1f}x expansion)")
     print(f"  Total (merged): {total} pairs")
-    print(f"  Propagated score stats: mean={np.mean(prop_scores):.3f}, "
-          f"median={np.median(prop_scores):.3f}, max={np.max(prop_scores):.3f}")
+    print(
+        f"  Propagated score stats: mean={np.mean(prop_scores):.3f}, "
+        f"median={np.median(prop_scores):.3f}, max={np.max(prop_scores):.3f}"
+    )
 
     # Write output
     args.output.parent.mkdir(parents=True, exist_ok=True)

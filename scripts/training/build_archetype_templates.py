@@ -32,10 +32,11 @@ import random
 import re
 import sys
 from collections import Counter, defaultdict
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
 
 import numpy as np
+
 
 logging.basicConfig(
     level=logging.INFO,
@@ -159,7 +160,7 @@ def load_card_attributes(game: str) -> dict[str, dict]:
     candidates = [
         f"card_attributes_{game}_enriched.csv",
         f"card_attributes_{game}_bulk.csv",
-        f"card_attributes_enriched.csv" if game == "magic" else None,
+        "card_attributes_enriched.csv" if game == "magic" else None,
         f"card_attributes_{game}.csv",
     ]
     attrs_dir = PROJECT_ROOT / "data" / "processed"
@@ -542,7 +543,7 @@ def detect_archetype(
         template_all = template_core | template_flex
         if not template_all:
             continue
-        intersection = deck_set & template_all
+        deck_set & template_all
         core_overlap = len(deck_set & template_core)
         flex_overlap = len(deck_set & template_flex)
         # Weighted score: core matches count double
@@ -695,7 +696,7 @@ def main() -> None:
 
     # 11. Quick self-test: detect archetype for first deck
     if decks:
-        detected_name, detected_id, detected_score = detect_archetype(decks[0], templates)
+        detected_name, _detected_id, detected_score = detect_archetype(decks[0], templates)
         print(f"Self-test: first deck detected as '{detected_name}' (score={detected_score})")
 
 

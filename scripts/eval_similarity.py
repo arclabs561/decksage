@@ -28,6 +28,7 @@ from pathlib import Path
 import httpx
 import yaml
 
+
 RELEVANCE_WEIGHTS = {
     "highly_relevant": 1.0,
     "relevant": 0.75,
@@ -67,6 +68,7 @@ def load_annotated_test_set(path: Path) -> dict[str, dict]:
 
 def compute_ndcg(predictions: list[str], labels: dict[str, list[str]], k: int) -> float:
     """Compute nDCG@k."""
+
     def rel_gain(card: str) -> float:
         for level, weight in RELEVANCE_WEIGHTS.items():
             if card in labels.get(level, []):
@@ -169,7 +171,9 @@ def evaluate_game(
                     f"MRR={mrrs[-1]:.3f} P@5={p5s[-1]:.3f}"
                 )
 
-        avg = lambda xs: sum(xs) / len(xs) if xs else 0.0
+        def avg(xs):
+            return sum(xs) / len(xs) if xs else 0.0
+
         results[mode] = {
             "ndcg@5": avg(ndcg5s),
             "ndcg@10": avg(ndcg10s),
@@ -252,7 +256,7 @@ def main():
                         f"nDCG@10={metrics['ndcg@10']:.4f}  "
                         f"MRR={metrics['mrr@10']:.4f}  "
                         f"P@5={metrics['p@5']:.4f}  "
-                        f"({metrics['n_evaluated']}/{metrics['n_evaluated']+metrics['n_skipped']} queries)"
+                        f"({metrics['n_evaluated']}/{metrics['n_evaluated'] + metrics['n_skipped']} queries)"
                     )
                 print(f"  elapsed: {elapsed:.1f}s")
     finally:
@@ -264,7 +268,18 @@ def main():
         out_path = csv_path / f"eval_{game}_similarity_results.csv"
         with open(out_path, "w", newline="") as f:
             writer = csv.DictWriter(
-                f, fieldnames=["game", "mode", "ndcg@5", "ndcg@10", "mrr@10", "p@5", "p@10", "n_evaluated", "n_skipped"]
+                f,
+                fieldnames=[
+                    "game",
+                    "mode",
+                    "ndcg@5",
+                    "ndcg@10",
+                    "mrr@10",
+                    "p@5",
+                    "p@10",
+                    "n_evaluated",
+                    "n_skipped",
+                ],
             )
             writer.writeheader()
             for mode, metrics in game_results.items():

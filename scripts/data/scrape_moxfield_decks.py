@@ -21,6 +21,7 @@ Usage:
         --output data/decks/decks_magic_commander_archidekt.jsonl \
         --source archidekt --limit 3000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -97,7 +98,9 @@ def _request_with_retry(
                 # Not retryable
                 return resp
             if resp.status_code == 429 or resp.status_code >= 500:
-                print(f"    HTTP {resp.status_code} on attempt {attempt}, backing off {backoff:.1f}s")
+                print(
+                    f"    HTTP {resp.status_code} on attempt {attempt}, backing off {backoff:.1f}s"
+                )
                 time.sleep(backoff)
                 backoff *= 2
                 continue
@@ -231,21 +234,23 @@ def scrape_archidekt(
         username = owner.get("username", "") if isinstance(owner, dict) else str(owner)
         created = detail.get("createdAt", detail.get("created_at", ""))
 
-        decks.append({
-            "deck_id": f"archidekt:{deck_id}",
-            "archetype": commander_name,
-            "format": "Commander",
-            "url": f"https://archidekt.com/decks/{deck_id}",
-            "source": "archidekt",
-            "player": username,
-            "event": "",
-            "placement": "",
-            "commander": commander_name,
-            "color_identity": color_id,
-            "created_at": created,
-            "scraped_at": _now_iso(),
-            "cards": cards,
-        })
+        decks.append(
+            {
+                "deck_id": f"archidekt:{deck_id}",
+                "archetype": commander_name,
+                "format": "Commander",
+                "url": f"https://archidekt.com/decks/{deck_id}",
+                "source": "archidekt",
+                "player": username,
+                "event": "",
+                "placement": "",
+                "commander": commander_name,
+                "color_identity": color_id,
+                "created_at": created,
+                "scraped_at": _now_iso(),
+                "cards": cards,
+            }
+        )
 
         if len(decks) % 25 == 0 or i == len(deck_ids) - 1:
             print(f"  {len(decks)} decks collected ({i + 1}/{len(deck_ids)} checked)...")
@@ -339,8 +344,14 @@ def _extract_archidekt_commander(detail: dict, cards: list[dict]) -> str:
         for cmd in commanders:
             if isinstance(cmd, dict):
                 card_info = cmd.get("card", cmd)
-                oracle = card_info.get("oracleCard", card_info) if isinstance(card_info, dict) else {}
-                n = oracle.get("name", card_info.get("name", "")) if isinstance(oracle, dict) else ""
+                oracle = (
+                    card_info.get("oracleCard", card_info) if isinstance(card_info, dict) else {}
+                )
+                n = (
+                    oracle.get("name", card_info.get("name", ""))
+                    if isinstance(oracle, dict)
+                    else ""
+                )
                 if n:
                     names.append(n)
             elif isinstance(cmd, str):
@@ -390,13 +401,17 @@ def scrape_moxfield(
 
     # Probe first page to see if we can access the API at all
     probe_resp = _request_with_retry(
-        client, "GET", MOXFIELD_SEARCH,
+        client,
+        "GET",
+        MOXFIELD_SEARCH,
         params={"fmt": "commander", "pageSize": "1", "pageNumber": "1"},
     )
     if probe_resp is None or probe_resp.status_code in (403, 503):
         status = probe_resp.status_code if probe_resp else "no response"
-        print(f"  Moxfield API is not accessible (status={status}). "
-              "This is expected -- Cloudflare blocks automated requests.")
+        print(
+            f"  Moxfield API is not accessible (status={status}). "
+            "This is expected -- Cloudflare blocks automated requests."
+        )
         print("  Skipping Moxfield. Use --source archidekt to avoid this message.")
         return []
 
@@ -444,30 +459,29 @@ def scrape_moxfield(
                 continue
 
             commander_name = _extract_moxfield_commander(detail, cards)
-            color_id = _color_identity_string(
-                detail.get("colorIdentity", detail.get("colors", []))
-            )
+            color_id = _color_identity_string(detail.get("colorIdentity", detail.get("colors", [])))
             created = detail.get("createdAtUtc", item.get("createdAtUtc", ""))
-            username = (
-                detail.get("createdByUser", {}).get("userName", "")
-                or item.get("createdByUser", {}).get("userName", "")
-            )
+            username = detail.get("createdByUser", {}).get("userName", "") or item.get(
+                "createdByUser", {}
+            ).get("userName", "")
 
-            decks.append({
-                "deck_id": f"moxfield:{public_id}",
-                "archetype": commander_name,
-                "format": "Commander",
-                "url": f"https://www.moxfield.com/decks/{public_id}",
-                "source": "moxfield",
-                "player": username,
-                "event": "",
-                "placement": "",
-                "commander": commander_name,
-                "color_identity": color_id,
-                "created_at": created,
-                "scraped_at": _now_iso(),
-                "cards": cards,
-            })
+            decks.append(
+                {
+                    "deck_id": f"moxfield:{public_id}",
+                    "archetype": commander_name,
+                    "format": "Commander",
+                    "url": f"https://www.moxfield.com/decks/{public_id}",
+                    "source": "moxfield",
+                    "player": username,
+                    "event": "",
+                    "placement": "",
+                    "commander": commander_name,
+                    "color_identity": color_id,
+                    "created_at": created,
+                    "scraped_at": _now_iso(),
+                    "cards": cards,
+                }
+            )
 
             if len(decks) % 25 == 0:
                 print(f"  {len(decks)} decks collected...")
@@ -563,7 +577,9 @@ def main() -> int:
         help="Which API(s) to scrape",
     )
     parser.add_argument(
-        "--min-cards", type=int, default=60,
+        "--min-cards",
+        type=int,
+        default=60,
         help="Skip decks with fewer cards (Commander = 100, but allow some slack)",
     )
     args = parser.parse_args()
@@ -604,7 +620,9 @@ def main() -> int:
             unique.append(deck)
 
     dupes = len(all_decks) - len(unique)
-    print(f"\nTotal: {len(all_decks)} collected -> {len(unique)} unique ({dupes} duplicates removed)")
+    print(
+        f"\nTotal: {len(all_decks)} collected -> {len(unique)} unique ({dupes} duplicates removed)"
+    )
 
     # Summary by source
     by_source: dict[str, int] = {}

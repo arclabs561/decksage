@@ -197,9 +197,9 @@ def main() -> None:
         if w in errors.index.get_level_values(0):
             wmat = errors.loc[w]
             diag = [wmat.iloc[i, i] for i in range(min(wmat.shape))]
-            used_labels = [l for l in wmat.index if l in consensus.values]
+            used_labels = [lbl for lbl in wmat.index if lbl in consensus.values]
             if used_labels:
-                weighted_diag = [wmat.loc[l, l] for l in used_labels]
+                weighted_diag = [wmat.loc[lbl, lbl] for lbl in used_labels]
                 reliability = sum(weighted_diag) / len(weighted_diag)
             else:
                 reliability = sum(diag) / len(diag)

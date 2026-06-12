@@ -36,6 +36,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -61,20 +62,24 @@ def load_upgrade_pairs(game: str) -> list[dict]:
                     head, tail = q, ann["candidate"]
                 else:
                     head, tail = ann["candidate"], q
-                pairs.append({
-                    "head": head,
-                    "tail": tail,
-                    "substitutability": sub,
-                    "source": "upgrade",
-                })
+                pairs.append(
+                    {
+                        "head": head,
+                        "tail": tail,
+                        "substitutability": sub,
+                        "source": "upgrade",
+                    }
+                )
             elif sub > 0.7:
                 # High substitutability = symmetric containment (sidegrade)
-                pairs.append({
-                    "head": q,
-                    "tail": ann["candidate"],
-                    "substitutability": sub,
-                    "source": "sidegrade",
-                })
+                pairs.append(
+                    {
+                        "head": q,
+                        "tail": ann["candidate"],
+                        "substitutability": sub,
+                        "source": "sidegrade",
+                    }
+                )
 
     return pairs
 
@@ -160,7 +165,6 @@ def evaluate(trainer, val_triples, card_to_id, id_to_card, seed=42):
             n_correct += 1
         elif p == n:
             n_correct += 0.5
-        n_total_count = n_total
 
     auc = n_correct / max(n_total, 1)
 
@@ -232,7 +236,7 @@ def run_game(game: str, dim: int = 16, epochs: int = 200, lr: float = 0.01, dry_
     mins = np.array(mins_flat).reshape(-1, dim_actual)
     maxs = np.array(maxs_flat).reshape(-1, dim_actual)
 
-    print(f"\n  Sample containment (head upgrades tail):")
+    print("\n  Sample containment (head upgrades tail):")
     for h, _, t in val[:5]:
         if h in id_to_idx and t in id_to_idx:
             hi, ti = id_to_idx[h], id_to_idx[t]
@@ -241,7 +245,9 @@ def run_game(game: str, dim: int = 16, epochs: int = 200, lr: float = 0.01, dry_
             prob = hbox.containment_prob(tbox)
             print(f"    {id_to_card[h]} > {id_to_card[t]}: P={prob:.3f}")
 
-    print(f"\n  Result: pos={final['pos_mean']:.3f}, neg={final['neg_mean']:.3f}, AUC={final['auc']:.3f}")
+    print(
+        f"\n  Result: pos={final['pos_mean']:.3f}, neg={final['neg_mean']:.3f}, AUC={final['auc']:.3f}"
+    )
     print(f"  Saved to {out_path}")
 
     return {

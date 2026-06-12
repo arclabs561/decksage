@@ -38,6 +38,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -62,7 +63,9 @@ def _load_card_db(game: str) -> dict[str, dict[str, str]]:
                     card_db[name] = {
                         "name": name,
                         "type": row.get("type_line", row.get("type", "")),
-                        "oracle_text": row.get("oracle_text", row.get("text", row.get("effect", ""))),
+                        "oracle_text": row.get(
+                            "oracle_text", row.get("text", row.get("effect", ""))
+                        ),
                         "mana_cost": row.get("mana_cost", row.get("cmc", "")),
                         "keywords": row.get("keywords", ""),
                         # Game-specific
@@ -128,10 +131,10 @@ def load_training_pairs(game: str) -> list[dict]:
 
         for ann in entry.get("annotations", []):
             candidate = ann.get("candidate", "")
-            score = ann.get("functional_score",
-                    ann.get("score",
-                    ann.get("similarity",
-                    ann.get("cosine_similarity", None))))
+            score = ann.get(
+                "functional_score",
+                ann.get("score", ann.get("similarity", ann.get("cosine_similarity", None))),
+            )
             if not isinstance(score, (int, float)):
                 continue
 
@@ -140,13 +143,15 @@ def load_training_pairs(game: str) -> list[dict]:
                 skipped_no_text += 1
                 continue
 
-            pairs.append({
-                "query": query_name,
-                "candidate": candidate,
-                "query_text": query_text,
-                "candidate_text": candidate_text,
-                "score": float(score),
-            })
+            pairs.append(
+                {
+                    "query": query_name,
+                    "candidate": candidate,
+                    "query_text": query_text,
+                    "candidate_text": candidate_text,
+                    "score": float(score),
+                }
+            )
 
     if skipped_no_text > 0:
         log.info(f"  Skipped {skipped_no_text} cards without oracle text")
@@ -160,15 +165,19 @@ def _add_symmetric_pairs(pairs: list[dict]) -> list[dict]:
     for p in pairs:
         key = (p["candidate"], p["query"])
         if key not in seen:
-            symmetric.append({
-                "query": p["candidate"],
-                "candidate": p["query"],
-                "query_text": p["candidate_text"],
-                "candidate_text": p["query_text"],
-                "score": p["score"],
-            })
+            symmetric.append(
+                {
+                    "query": p["candidate"],
+                    "candidate": p["query"],
+                    "query_text": p["candidate_text"],
+                    "candidate_text": p["query_text"],
+                    "score": p["score"],
+                }
+            )
             seen.add(key)
-    log.info(f"  Added {len(symmetric)} symmetric pairs ({len(pairs)} -> {len(pairs) + len(symmetric)})")
+    log.info(
+        f"  Added {len(symmetric)} symmetric pairs ({len(pairs)} -> {len(pairs) + len(symmetric)})"
+    )
     return pairs + symmetric
 
 
@@ -195,8 +204,16 @@ def _balance_scores(pairs: list[dict], zero_ratio: float = 0.20) -> list[dict]:
     hard_zeros = []
     easy_zeros = []
     for p in zeros:
-        q_type = p["query_text"].split("|")[1].strip().split(" — ")[0].strip() if "|" in p["query_text"] else ""
-        c_type = p["candidate_text"].split("|")[1].strip().split(" — ")[0].strip() if "|" in p["candidate_text"] else ""
+        q_type = (
+            p["query_text"].split("|")[1].strip().split(" — ")[0].strip()
+            if "|" in p["query_text"]
+            else ""
+        )
+        c_type = (
+            p["candidate_text"].split("|")[1].strip().split(" — ")[0].strip()
+            if "|" in p["candidate_text"]
+            else ""
+        )
         if q_type and c_type and q_type == c_type:
             hard_zeros.append(p)
         else:
@@ -205,14 +222,23 @@ def _balance_scores(pairs: list[dict], zero_ratio: float = 0.20) -> list[dict]:
     rng = np.random.RandomState(42)
     # Take all hard negatives first, fill remainder with easy ones
     if len(hard_zeros) >= target_zeros:
-        sampled = [hard_zeros[i] for i in rng.choice(len(hard_zeros), size=target_zeros, replace=False)]
+        sampled = [
+            hard_zeros[i] for i in rng.choice(len(hard_zeros), size=target_zeros, replace=False)
+        ]
     else:
         remainder = target_zeros - len(hard_zeros)
-        easy_sample = [easy_zeros[i] for i in rng.choice(len(easy_zeros), size=min(remainder, len(easy_zeros)), replace=False)]
+        easy_sample = [
+            easy_zeros[i]
+            for i in rng.choice(
+                len(easy_zeros), size=min(remainder, len(easy_zeros)), replace=False
+            )
+        ]
         sampled = hard_zeros + easy_sample
 
-    log.info(f"  Downsampled zeros: {len(zeros)} -> {len(sampled)} "
-             f"(hard: {min(len(hard_zeros), target_zeros)}, easy: {len(sampled) - min(len(hard_zeros), target_zeros)})")
+    log.info(
+        f"  Downsampled zeros: {len(zeros)} -> {len(sampled)} "
+        f"(hard: {min(len(hard_zeros), target_zeros)}, easy: {len(sampled) - min(len(hard_zeros), target_zeros)})"
+    )
     return nonzeros + sampled
 
 
@@ -231,13 +257,15 @@ def _add_hard_negatives(pairs: list[dict], ratio: float = 0.10) -> list[dict]:
     negatives = []
     for _ in range(n_neg):
         i, j = rng.choice(len(texts), size=2, replace=False)
-        negatives.append({
-            "query": "_hard_neg",
-            "candidate": "_hard_neg",
-            "query_text": texts[i],
-            "candidate_text": texts[j],
-            "score": 0.0,
-        })
+        negatives.append(
+            {
+                "query": "_hard_neg",
+                "candidate": "_hard_neg",
+                "query_text": texts[i],
+                "candidate_text": texts[j],
+                "score": 0.0,
+            }
+        )
     log.info(f"  Added {len(negatives)} hard negatives ({ratio:.0%})")
     return pairs + negatives
 
@@ -270,8 +298,10 @@ def _query_level_split(pairs: list[dict], val_ratio: float = 0.10):
         else:
             val_idx.extend(indices)
 
-    log.info(f"  Query-level split: {len(train_queries)} train queries, "
-             f"{len(query_names) - len(train_queries)} val queries")
+    log.info(
+        f"  Query-level split: {len(train_queries)} train queries, "
+        f"{len(query_names) - len(train_queries)} val queries"
+    )
     return train_idx, val_idx
 
 
@@ -285,8 +315,11 @@ def train(
     """Train cross-encoder on annotation pairs."""
     from sentence_transformers import InputExample
     from sentence_transformers.cross_encoder import CrossEncoder
+
     try:
-        from sentence_transformers.cross_encoder.evaluation import CrossEncoderCorrelationEvaluator as CECorrelationEvaluator
+        from sentence_transformers.cross_encoder.evaluation import (
+            CrossEncoderCorrelationEvaluator as CECorrelationEvaluator,
+        )
     except ImportError:
         from sentence_transformers.cross_encoder.evaluation import CECorrelationEvaluator
     from torch.utils.data import DataLoader
@@ -294,7 +327,7 @@ def train(
     log.info("=" * 60)
     log.info("Cross-encoder training (v3)")
     log.info(f"Model: {model_name}, max_length: {max_length}")
-    log.info(f"NOTE: Training on eval annotations -- metrics are upper bounds")
+    log.info("NOTE: Training on eval annotations -- metrics are upper bounds")
     log.info("=" * 60)
 
     # Collect pairs from all games
@@ -312,12 +345,14 @@ def train(
 
     # Score distribution before processing
     scores = np.array([p["score"] for p in all_pairs])
-    log.info(f"Raw score distribution: mean={scores.mean():.3f}, median={np.median(scores):.3f}, "
-             f"std={scores.std():.3f}")
+    log.info(
+        f"Raw score distribution: mean={scores.mean():.3f}, median={np.median(scores):.3f}, "
+        f"std={scores.std():.3f}"
+    )
     brackets = [(0, 0.01), (0.01, 0.1), (0.1, 0.3), (0.3, 0.5), (0.5, 0.7), (0.7, 1.01)]
     for lo, hi in brackets:
         n = int(((scores >= lo) & (scores < hi)).sum())
-        log.info(f"  [{lo:.2f}, {hi:.2f}): {n} ({n/len(scores)*100:.1f}%)")
+        log.info(f"  [{lo:.2f}, {hi:.2f}): {n} ({n / len(scores) * 100:.1f}%)")
 
     # Processing pipeline
     log.info("\nProcessing pipeline:")
@@ -327,16 +362,20 @@ def train(
 
     # Post-processing distribution
     scores = np.array([p["score"] for p in all_pairs])
-    log.info(f"\nProcessed: {len(all_pairs)} pairs, mean={scores.mean():.3f}, "
-             f"median={np.median(scores):.3f}")
+    log.info(
+        f"\nProcessed: {len(all_pairs)} pairs, mean={scores.mean():.3f}, "
+        f"median={np.median(scores):.3f}"
+    )
 
     # Query-level split
     log.info("\nSplitting:")
     train_idx, val_idx = _query_level_split(all_pairs, val_ratio=0.10)
 
     train_examples = [
-        InputExample(texts=[all_pairs[i]["query_text"], all_pairs[i]["candidate_text"]],
-                     label=all_pairs[i]["score"])
+        InputExample(
+            texts=[all_pairs[i]["query_text"], all_pairs[i]["candidate_text"]],
+            label=all_pairs[i]["score"],
+        )
         for i in train_idx
     ]
     val_pairs = [all_pairs[i] for i in val_idx]
@@ -344,8 +383,10 @@ def train(
     # Val score distribution
     val_scores = np.array([p["score"] for p in val_pairs])
     log.info(f"  Train: {len(train_examples)}, Val: {len(val_pairs)}")
-    log.info(f"  Val score distribution: mean={val_scores.mean():.3f}, "
-             f">0.5: {(val_scores > 0.5).sum()}, =0: {(val_scores == 0).sum()}")
+    log.info(
+        f"  Val score distribution: mean={val_scores.mean():.3f}, "
+        f">0.5: {(val_scores > 0.5).sum()}, =0: {(val_scores == 0).sum()}"
+    )
 
     # Initialize cross-encoder
     model = CrossEncoder(model_name, num_labels=1, max_length=max_length)
@@ -380,8 +421,10 @@ def train(
     # Final evaluation
     val_result = evaluator(model)
     if isinstance(val_result, dict):
-        log.info(f"Val correlation: Pearson={val_result.get('pearson', '?')}, "
-                 f"Spearman={val_result.get('spearman', '?')}")
+        log.info(
+            f"Val correlation: Pearson={val_result.get('pearson', '?')}, "
+            f"Spearman={val_result.get('spearman', '?')}"
+        )
     else:
         log.info(f"Val correlation: {val_result}")
 
@@ -392,14 +435,22 @@ def train(
     # Qualitative check
     log.info("\nQualitative check:")
     test_pairs = [
-        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated."),
-        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "Counterspell | Instant | UU | Counter target spell."),
-        ("Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
-         "Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target."),
-        ("Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
-         "Cultivate | Sorcery | 2G | Search your library for up to two basic land cards."),
+        (
+            "Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated.",
+        ),
+        (
+            "Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "Counterspell | Instant | UU | Counter target spell.",
+        ),
+        (
+            "Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+            "Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target.",
+        ),
+        (
+            "Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+            "Cultivate | Sorcery | 2G | Search your library for up to two basic land cards.",
+        ),
     ]
     for a, b in test_pairs:
         score = model.predict([(a, b)])[0]
@@ -437,10 +488,10 @@ def _eval_ranking(model, val_pairs: list[dict]) -> None:
     if ndcgs:
         arr = np.array(ndcgs)
         log.info(f"  Queries evaluated: {len(ndcgs)}")
-        log.info(f"  nDCG: mean={arr.mean():.4f}, median={np.median(arr):.4f}, "
-                 f"std={arr.std():.4f}")
-        log.info(f"  nDCG quartiles: Q1={np.percentile(arr, 25):.4f}, "
-                 f"Q3={np.percentile(arr, 75):.4f}")
+        log.info(f"  nDCG: mean={arr.mean():.4f}, median={np.median(arr):.4f}, std={arr.std():.4f}")
+        log.info(
+            f"  nDCG quartiles: Q1={np.percentile(arr, 25):.4f}, Q3={np.percentile(arr, 75):.4f}"
+        )
     else:
         log.info("  No queries with 2+ candidates in val set")
 
@@ -450,7 +501,9 @@ def load_selfsupervised_pairs() -> list[dict]:
     ss_path = DATA_DIR / "training" / "selfsupervised_pairs.json"
     if not ss_path.exists():
         log.warning(f"Self-supervised pairs not found at {ss_path}")
-        log.warning("Generate with: uv run scripts/training/generate_selfsupervised_pairs.py --all-games")
+        log.warning(
+            "Generate with: uv run scripts/training/generate_selfsupervised_pairs.py --all-games"
+        )
         return []
     with open(ss_path) as f:
         data = json.load(f)
@@ -466,13 +519,25 @@ def main():
     parser.add_argument("--epochs", type=int, default=5)
     parser.add_argument("--batch-size", type=int, default=32)
     parser.add_argument("--max-length", type=int, default=384)
-    parser.add_argument("--model", default="cross-encoder/ms-marco-MiniLM-L-12-v2",
-                        help="Base model (default: L-12 for deeper capacity)")
-    parser.add_argument("--selfsupervised", action="store_true",
-                        help="Use self-supervised pairs instead of annotations (no eval leakage)")
+    parser.add_argument(
+        "--model",
+        default="cross-encoder/ms-marco-MiniLM-L-12-v2",
+        help="Base model (default: L-12 for deeper capacity)",
+    )
+    parser.add_argument(
+        "--selfsupervised",
+        action="store_true",
+        help="Use self-supervised pairs instead of annotations (no eval leakage)",
+    )
     args = parser.parse_args()
 
-    games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game] if args.game else ["magic"]
+    games = (
+        ["magic", "pokemon", "yugioh"]
+        if args.all_games
+        else [args.game]
+        if args.game
+        else ["magic"]
+    )
 
     if args.selfsupervised:
         ss_pairs = load_selfsupervised_pairs()
@@ -480,11 +545,21 @@ def main():
             return
         # Override the annotation loading -- pass pairs directly
         log.info("Using self-supervised pairs (no annotation leakage)")
-        train_selfsupervised(ss_pairs, epochs=args.epochs, batch_size=args.batch_size,
-                             model_name=args.model, max_length=args.max_length)
+        train_selfsupervised(
+            ss_pairs,
+            epochs=args.epochs,
+            batch_size=args.batch_size,
+            model_name=args.model,
+            max_length=args.max_length,
+        )
     else:
-        train(games, epochs=args.epochs, batch_size=args.batch_size,
-              model_name=args.model, max_length=args.max_length)
+        train(
+            games,
+            epochs=args.epochs,
+            batch_size=args.batch_size,
+            model_name=args.model,
+            max_length=args.max_length,
+        )
 
 
 def train_selfsupervised(
@@ -497,8 +572,11 @@ def train_selfsupervised(
     """Train cross-encoder on self-supervised pairs (no eval leakage)."""
     from sentence_transformers import InputExample
     from sentence_transformers.cross_encoder import CrossEncoder
+
     try:
-        from sentence_transformers.cross_encoder.evaluation import CrossEncoderCorrelationEvaluator as CECorrelationEvaluator
+        from sentence_transformers.cross_encoder.evaluation import (
+            CrossEncoderCorrelationEvaluator as CECorrelationEvaluator,
+        )
     except ImportError:
         from sentence_transformers.cross_encoder.evaluation import CECorrelationEvaluator
     from torch.utils.data import DataLoader
@@ -506,7 +584,7 @@ def train_selfsupervised(
     log.info("=" * 60)
     log.info("Cross-encoder training (self-supervised, v4)")
     log.info(f"Model: {model_name}, max_length: {max_length}")
-    log.info(f"NO eval leakage -- training on attribute-derived pairs")
+    log.info("NO eval leakage -- training on attribute-derived pairs")
     log.info("=" * 60)
 
     # Add symmetric pairs
@@ -516,14 +594,17 @@ def train_selfsupervised(
     train_idx, val_idx = _query_level_split(pairs, val_ratio=0.10)
 
     train_examples = [
-        InputExample(texts=[pairs[i]["query_text"], pairs[i]["candidate_text"]],
-                     label=pairs[i]["score"])
+        InputExample(
+            texts=[pairs[i]["query_text"], pairs[i]["candidate_text"]], label=pairs[i]["score"]
+        )
         for i in train_idx
     ]
     val_pairs = [pairs[i] for i in val_idx]
 
     scores = np.array([p["score"] for p in pairs])
-    log.info(f"\nTotal: {len(pairs)} pairs, mean={scores.mean():.3f}, median={np.median(scores):.3f}")
+    log.info(
+        f"\nTotal: {len(pairs)} pairs, mean={scores.mean():.3f}, median={np.median(scores):.3f}"
+    )
     log.info(f"Train: {len(train_examples)}, Val: {len(val_pairs)}")
 
     model = CrossEncoder(model_name, num_labels=1, max_length=max_length)
@@ -555,8 +636,10 @@ def train_selfsupervised(
 
     val_result = evaluator(model)
     if isinstance(val_result, dict):
-        log.info(f"Val correlation: Pearson={val_result.get('pearson', '?')}, "
-                 f"Spearman={val_result.get('spearman', '?')}")
+        log.info(
+            f"Val correlation: Pearson={val_result.get('pearson', '?')}, "
+            f"Spearman={val_result.get('spearman', '?')}"
+        )
     else:
         log.info(f"Val correlation: {val_result}")
 
@@ -565,12 +648,18 @@ def train_selfsupervised(
 
     log.info("\nQualitative check:")
     test_pairs = [
-        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated."),
-        ("Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "Counterspell | Instant | UU | Counter target spell."),
-        ("Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
-         "Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target."),
+        (
+            "Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated.",
+        ),
+        (
+            "Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "Counterspell | Instant | UU | Counter target spell.",
+        ),
+        (
+            "Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+            "Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target.",
+        ),
     ]
     for a, b in test_pairs:
         score = model.predict([(a, b)])[0]

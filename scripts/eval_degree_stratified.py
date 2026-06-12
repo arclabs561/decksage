@@ -63,7 +63,7 @@ def evaluate(emb_path: str, pairs_path: str, k: int = 10) -> None:
         else:
             degree_bins["high (>20)"].append(card)
 
-    print(f"\nDegree distribution:")
+    print("\nDegree distribution:")
     for label, cards in degree_bins.items():
         print(f"  {label}: {len(cards)} cards")
 
@@ -79,7 +79,7 @@ def evaluate(emb_path: str, pairs_path: str, k: int = 10) -> None:
 
         recalls = []
         mrrs = []
-        sample = cards[:min(len(cards), 2000)]  # Cap for speed
+        sample = cards[: min(len(cards), 2000)]  # Cap for speed
 
         for card in sample:
             neighbors = adj.get(card, set())
@@ -103,9 +103,7 @@ def evaluate(emb_path: str, pairs_path: str, k: int = 10) -> None:
                 continue
 
         if recalls:
-            print(
-                f"{label:<20} {len(recalls):<8} {np.mean(recalls):<10.4f} {np.mean(mrrs):<10.4f}"
-            )
+            print(f"{label:<20} {len(recalls):<8} {np.mean(recalls):<10.4f} {np.mean(mrrs):<10.4f}")
         else:
             print(f"{label:<20} {'0':<8} {'--':<10} {'--':<10}")
 
@@ -117,8 +115,10 @@ def evaluate(emb_path: str, pairs_path: str, k: int = 10) -> None:
     effective_dim = emb.vector_size
     print(f"  Top singular value: {s[0]:.2f}")
     print(f"  Median singular value: {np.median(s):.2f}")
-    print(f"  Ratio top/median: {s[0]/np.median(s):.1f}x")
-    print(f"  Stable rank: {stable_rank:.1f} / {effective_dim} ({stable_rank/effective_dim*100:.0f}%)")
+    print(f"  Ratio top/median: {s[0] / np.median(s):.1f}x")
+    print(
+        f"  Stable rank: {stable_rank:.1f} / {effective_dim} ({stable_rank / effective_dim * 100:.0f}%)"
+    )
     if s[0] / np.median(s) > 10:
         print("  WARNING: top/median > 10x suggests dimensional collapse")
     if stable_rank / effective_dim < 0.5:
@@ -138,7 +138,9 @@ def main():
     pairs_path = args.pairs
 
     if not emb_path:
-        candidates = sorted(Path("data/embeddings").glob(f"{game}_*.wv"), key=lambda p: -p.stat().st_mtime)
+        candidates = sorted(
+            Path("data/embeddings").glob(f"{game}_*.wv"), key=lambda p: -p.stat().st_mtime
+        )
         if candidates:
             emb_path = str(candidates[0])
         else:
@@ -147,7 +149,8 @@ def main():
 
     if not pairs_path:
         candidates = sorted(
-            Path("data/processed").glob(f"pairs_{game}_*.csv") if game != "magic"
+            Path("data/processed").glob(f"pairs_{game}_*.csv")
+            if game != "magic"
             else Path("data/processed").glob("pairs_large.csv"),
             key=lambda p: -p.stat().st_size,
         )

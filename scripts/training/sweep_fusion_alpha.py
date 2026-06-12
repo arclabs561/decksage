@@ -37,6 +37,7 @@ import numpy as np
 from gensim.models import KeyedVectors
 from sklearn.decomposition import PCA
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 DATA_DIR = PROJECT_ROOT / "data"
@@ -83,7 +84,7 @@ def load_card_features(game: str) -> dict[str, np.ndarray] | None:
         spec = importlib.util.spec_from_file_location("fuse_emb", fuse_script)
         mod = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(mod)
-        features, dim = mod.load_card_features(csv_path)
+        features, _dim = mod.load_card_features(csv_path)
         return features
     return None
 
@@ -221,7 +222,7 @@ def sweep_game(game: str, alphas: list[float]) -> list[dict]:
     attr_features = load_card_features(game)
     if attr_features is None:
         print(f"  Card attribute features not found for {game}")
-        print(f"  Evaluating structural-only (alpha=1.0)")
+        print("  Evaluating structural-only (alpha=1.0)")
         result = eval_ndcg(structural, game)
         return [{"alpha": 1.0, "vocab": len(structural), **result}]
 

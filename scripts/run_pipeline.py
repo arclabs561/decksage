@@ -18,6 +18,7 @@ Usage:
     uv run scripts/run_pipeline.py --game magic --steps scrape-decks build-graph train
     uv run scripts/run_pipeline.py --game all --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -43,22 +44,30 @@ ALL_STEPS = [
 DECK_SCRAPE_COMMANDS: dict[str, list[list[str]]] = {
     "magic": [
         [
-            sys.executable, str(PROJECT_ROOT / "scripts/data/download_magic_decks.py"),
-            "--source", "goldfish",
-            "--output", str(PROJECT_ROOT / "data/decks/decks_magic_goldfish.jsonl"),
+            sys.executable,
+            str(PROJECT_ROOT / "scripts/data/download_magic_decks.py"),
+            "--source",
+            "goldfish",
+            "--output",
+            str(PROJECT_ROOT / "data/decks/decks_magic_goldfish.jsonl"),
         ],
     ],
     "pokemon": [
         [
-            sys.executable, str(PROJECT_ROOT / "scripts/data/scrape_limitless_decks.py"),
-            "--output", str(PROJECT_ROOT / "data/decks/decks_pokemon_limitless.jsonl"),
+            sys.executable,
+            str(PROJECT_ROOT / "scripts/data/scrape_limitless_decks.py"),
+            "--output",
+            str(PROJECT_ROOT / "data/decks/decks_pokemon_limitless.jsonl"),
         ],
     ],
     "yugioh": [
         [
-            sys.executable, str(PROJECT_ROOT / "scripts/data/scrape_ygoprodeck_decks.py"),
-            "--output", str(PROJECT_ROOT / "data/decks/decks_yugioh_ygoprodeck_recent.jsonl"),
-            "--archetypes-only", "--community-decks",
+            sys.executable,
+            str(PROJECT_ROOT / "scripts/data/scrape_ygoprodeck_decks.py"),
+            "--output",
+            str(PROJECT_ROOT / "data/decks/decks_yugioh_ygoprodeck_recent.jsonl"),
+            "--archetypes-only",
+            "--community-decks",
         ],
     ],
 }
@@ -79,10 +88,10 @@ CARD_ATTRIBUTES: dict[str, str] = {
 
 def run_step(label: str, cmd: list[str], dry_run: bool = False) -> bool:
     """Run a subprocess step, returning True on success."""
-    print(f"\n{'─'*60}")
+    print(f"\n{'─' * 60}")
     print(f"  [{label}]")
     print(f"  cmd: {' '.join(cmd)}")
-    print(f"{'─'*60}")
+    print(f"{'─' * 60}")
 
     if dry_run:
         print("  [dry-run] skipped")
@@ -102,10 +111,10 @@ def run_step(label: str, cmd: list[str], dry_run: bool = False) -> bool:
 
 def run_pipeline(game: str, steps: list[str], dry_run: bool = False) -> bool:
     """Run the pipeline for a single game. Returns True if all steps succeed."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Pipeline: {game.upper()}")
     print(f"  Steps: {', '.join(steps)}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     ok = True
 
@@ -116,8 +125,10 @@ def run_pipeline(game: str, steps: list[str], dry_run: bool = False) -> bool:
             [
                 sys.executable,
                 str(PROJECT_ROOT / "scripts/data/scrape_card_data.py"),
-                "--game", game,
-                "--data-type", "sets",
+                "--game",
+                game,
+                "--data-type",
+                "sets",
             ],
             dry_run,
         )
@@ -138,7 +149,8 @@ def run_pipeline(game: str, steps: list[str], dry_run: bool = False) -> bool:
             [
                 sys.executable,
                 str(PROJECT_ROOT / "scripts/training/build_unified_graph.py"),
-                "--game", game,
+                "--game",
+                game,
             ],
             dry_run,
         )
@@ -154,9 +166,12 @@ def run_pipeline(game: str, steps: list[str], dry_run: bool = False) -> bool:
         cmd = [
             sys.executable,
             str(PROJECT_ROOT / "scripts/training/train_prone.py"),
-            "--edgelist", str(edgelist),
-            "--output", str(output),
-            "--dim", "128",
+            "--edgelist",
+            str(edgelist),
+            "--output",
+            str(output),
+            "--dim",
+            "128",
         ]
         if card_attrs.exists():
             cmd.extend(["--card-attributes", str(card_attrs)])
@@ -217,9 +232,9 @@ def main() -> int:
         results[game] = run_pipeline(game, args.steps, args.dry_run)
 
     # Summary
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  Pipeline Summary")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for game, ok in results.items():
         status = "OK" if ok else "FAILED"
         print(f"  {game}: {status}")

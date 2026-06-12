@@ -21,6 +21,7 @@ import sys
 from collections import Counter
 from pathlib import Path
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
@@ -67,7 +68,7 @@ def check_game(game: str) -> list[str]:
     source_counts: Counter[str] = Counter({row[0]: row[1] for row in rows})
     total_edges = sum(source_counts.values())
     if total_edges == 0:
-        return [f"FAIL: Graph has 0 edges"]
+        return ["FAIL: Graph has 0 edges"]
 
     print(f"\n  Edge distribution ({total_edges:,} total):")
     for src, count in source_counts.most_common():
@@ -110,13 +111,14 @@ def check_game(game: str) -> list[str]:
             effective[src] = count * w
     if effective:
         total_eff = sum(effective.values())
-        print(f"\n  Effective weight after export multipliers:")
+        print("\n  Effective weight after export multipliers:")
         for src, ew in sorted(effective.items(), key=lambda x: -x[1]):
             print(f"    {src:20s}: {ew:>12,.0f} ({ew / total_eff:6.2%})")
 
     # Check for noise cards in graph nodes (basic lands, energy)
-    from ml.utils.constants import get_filter_set
     import sqlite3 as _sqlite3
+
+    from ml.utils.constants import get_filter_set
 
     noise_cards = get_filter_set(game, level="common")
     if noise_cards:

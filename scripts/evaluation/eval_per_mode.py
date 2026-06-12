@@ -36,6 +36,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -370,7 +371,7 @@ def _precompute_neighbors_fusion(
     """
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
     try:
-        from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+        from ml.similarity.fusion import WeightedLateFusion
         from ml.utils.shared_operations import load_graph_for_jaccard
     except ImportError as e:
         print(f"  Cannot load fusion modules: {e}")
@@ -418,8 +419,11 @@ def _precompute_neighbors_fusion(
 
 
 def eval_game(
-    game: str, embedding_name: str | None = None, k: int = 10, quick: bool = False,
-    method: str = "cosine"
+    game: str,
+    embedding_name: str | None = None,
+    k: int = 10,
+    quick: bool = False,
+    method: str = "cosine",
 ) -> dict:
     """Run full per-mode eval for one game.
 
@@ -444,7 +448,7 @@ def eval_game(
 
     # Precompute neighbors once for all metrics (biggest speedup)
     if method == "fusion":
-        print(f"  Using fusion-path neighbors (task_type per mode)")
+        print("  Using fusion-path neighbors (task_type per mode)")
         neighbor_cache = _precompute_neighbors_fusion(
             wv, list(queries.keys()), game, max_k=max(k, 30), task_type="substitution"
         )
@@ -780,7 +784,9 @@ def eval_game(
     }
     results["mrr_relevant"] = {
         "mrr": round(float(np.mean(mrr_scores)), 4) if mrr_scores else 0.0,
-        "mean_rank": round(1.0 / np.mean(mrr_scores), 1) if mrr_scores and np.mean(mrr_scores) > 0 else 0,
+        "mean_rank": round(1.0 / np.mean(mrr_scores), 1)
+        if mrr_scores and np.mean(mrr_scores) > 0
+        else 0,
         "n_queries": len(mrr_scores),
     }
     results["annotation_density"] = {
@@ -789,7 +795,9 @@ def eval_game(
         "mean_hits_in_top10": round(float(np.mean(hits_in_top10)), 2) if hits_in_top10 else 0,
         "embedding_is_Nx_better_than_random": round(
             np.mean(hits_in_top10) / max(10 * np.mean(ann_per_query) / len(wv), 1e-10), 0
-        ) if ann_per_query and hits_in_top10 else 0,
+        )
+        if ann_per_query and hits_in_top10
+        else 0,
     }
 
     # Dataset fingerprint: capture data shape at eval time
@@ -821,11 +829,14 @@ def main():
     parser.add_argument("-k", type=int, default=10)
     parser.add_argument("--json", action="store_true", help="Output as JSON")
     parser.add_argument(
-        "--quick", action="store_true",
+        "--quick",
+        action="store_true",
         help="Skip expensive secondary metrics (stratified, coverage, novelty, recall). ~4x faster.",
     )
     parser.add_argument(
-        "--method", default="cosine", choices=["cosine", "fusion"],
+        "--method",
+        default="cosine",
+        choices=["cosine", "fusion"],
         help="Neighbor retrieval method: 'cosine' (raw embedding) or 'fusion' (WeightedLateFusion with task-specific weights)",
     )
     args = parser.parse_args()
@@ -951,7 +962,9 @@ def main():
                 print(f"\n  Practical metrics: {', '.join(parts)}")
             mrr = r.get("mrr_relevant", {})
             if mrr.get("n_queries", 0) > 0:
-                print(f"  MRR (GT>0.5): {mrr['mrr']:.4f} (mean rank={mrr['mean_rank']}, n={mrr['n_queries']})")
+                print(
+                    f"  MRR (GT>0.5): {mrr['mrr']:.4f} (mean rank={mrr['mean_rank']}, n={mrr['n_queries']})"
+                )
 
             # Annotation density diagnostics
             ad = r.get("annotation_density", {})

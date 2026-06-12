@@ -42,6 +42,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+
 VENV_PYTHON = ".venv/bin/python"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -240,6 +241,7 @@ def step_evaluate(game: str, config: dict, embedding_paths: list[str], dry_run: 
     # Inline evaluation (same as batch_eval_ndcg.py)
     import json
     import math
+
     from gensim.models import KeyedVectors
 
     GRADES = {
@@ -387,7 +389,7 @@ def step_generate_review(
 
     existing = [p for p in embedding_paths if p and (Path(p).exists() or dry_run)]
     if not existing:
-        print(f"\n[5] Review HTML: SKIPPED (no embeddings)")
+        print("\n[5] Review HTML: SKIPPED (no embeddings)")
         return
 
     if not Path(test_set).exists() and not dry_run:

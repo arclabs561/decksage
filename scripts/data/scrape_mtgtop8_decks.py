@@ -22,16 +22,18 @@ Usage:
         --limit 5000 \
         --formats ST,MO,PI,LE,PAU
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
 import time
-from datetime import UTC, datetime
 from pathlib import Path
+
 import httpx
 from selectolax.parser import HTMLParser
+
 
 BASE_URL = "https://mtgtop8.com"
 USER_AGENT = "DeckSage/1.0 (research project)"
@@ -190,16 +192,18 @@ def search_decks(
             elif re.match(r"^\d+(-\d+)?$", text) and not date_str:
                 placement = text
 
-        results.append({
-            "event_id": event_id,
-            "deck_id": deck_id,
-            "archetype": archetype,
-            "player": player,
-            "event": event_name,
-            "placement": placement,
-            "date": _parse_date(date_str),
-            "format_code": fmt,
-        })
+        results.append(
+            {
+                "event_id": event_id,
+                "deck_id": deck_id,
+                "archetype": archetype,
+                "player": player,
+                "event": event_name,
+                "placement": placement,
+                "date": _parse_date(date_str),
+                "format_code": fmt,
+            }
+        )
 
     return results
 
@@ -248,9 +252,7 @@ def fetch_deck_cards(
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Scrape MTGTop8 tournament decklists"
-    )
+    parser = argparse.ArgumentParser(description="Scrape MTGTop8 tournament decklists")
     parser.add_argument(
         "--output",
         type=Path,
@@ -287,19 +289,21 @@ def main():
                     pass
         print(f"Loaded {len(seen_deck_ids)} existing deck IDs from {args.output}")
 
-    with httpx.Client(
-        headers={"User-Agent": USER_AGENT},
-        follow_redirects=True,
-    ) as client, open(args.output, "a") as out_f:
-
+    with (
+        httpx.Client(
+            headers={"User-Agent": USER_AGENT},
+            follow_redirects=True,
+        ) as client,
+        open(args.output, "a") as out_f,
+    ):
         for fmt in formats:
             if total_written >= args.limit:
                 break
 
             fmt_name = FORMAT_MAP.get(fmt, fmt)
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Format: {fmt_name} ({fmt})")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             fmt_count = 0
             page = 1
@@ -330,9 +334,7 @@ def main():
                         continue
 
                     time.sleep(RATE_LIMIT_DELAY)
-                    cards = fetch_deck_cards(
-                        client, meta["event_id"], meta["deck_id"], fmt
-                    )
+                    cards = fetch_deck_cards(client, meta["event_id"], meta["deck_id"], fmt)
 
                     if not cards:
                         print(f"    [skip] No cards for deck {meta['deck_id']}")
@@ -358,10 +360,7 @@ def main():
                     fmt_count += 1
 
                     if total_written % 50 == 0:
-                        print(
-                            f"    Progress: {total_written} total, "
-                            f"{fmt_count} {fmt_name}"
-                        )
+                        print(f"    Progress: {total_written} total, {fmt_count} {fmt_name}")
 
                 page += 1
 

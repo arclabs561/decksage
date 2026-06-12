@@ -25,16 +25,17 @@ Usage:
     # Re-score with multi-model cascade (replaces bad annotations)
     uv run scripts/annotation/repair_annotations.py reannotate --game magic --budget 200
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from collections import Counter
 from pathlib import Path
 
 from dotenv import load_dotenv
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 load_dotenv(PROJECT_ROOT / ".env", override=True)

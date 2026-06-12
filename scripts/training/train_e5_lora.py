@@ -36,6 +36,7 @@ import logging
 import sys
 from pathlib import Path
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
@@ -96,10 +97,9 @@ def main() -> int:
     args = parser.parse_args()
 
     try:
-        from sentence_transformers import SentenceTransformer, InputExample, losses
+        from peft import LoraConfig, TaskType, get_peft_model
+        from sentence_transformers import InputExample, SentenceTransformer, losses
         from torch.utils.data import DataLoader
-        from peft import LoraConfig, get_peft_model, TaskType
-        import torch
     except ImportError as e:
         logger.error(f"Missing dependency: {e}")
         return 1
