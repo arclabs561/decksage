@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Integration tests for error message usage in actual code paths.
 
@@ -88,6 +87,7 @@ class TestAssetLoadingErrorMessages:
     """Tests for error messages in asset loading scenarios."""
 
     def test_load_embeddings_error_handling(self):
+        pytest.importorskip("gensim")
         """Test error handling when embeddings fail to load."""
         from pathlib import Path
 

@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Integration tests for logging standards usage in actual code paths.
 
@@ -150,6 +149,7 @@ class TestLoggingInTextEmbeddings:
 
     def test_cache_save_logs_debug(self, log_capture, tmp_path: Path):
         """Test that cache save logs at DEBUG level."""
+        pytest.importorskip("sentence_transformers")
         from ..similarity.text_embeddings import CardTextEmbedder
 
         embedder = CardTextEmbedder(cache_dir=str(tmp_path))

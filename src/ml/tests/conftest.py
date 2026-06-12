@@ -210,3 +210,19 @@ def sample_test_set():
             }
         }
     }
+
+
+def pytest_collection_modifyitems(config, items):
+    """Skip llm-marked tests when pydantic-ai (the `llm` extra) is absent.
+
+    The OPENROUTER_API_KEY skipif on individual tests covers CI; this covers
+    local envs that have the key but not the extra installed.
+    """
+    import importlib.util
+
+    if importlib.util.find_spec("pydantic_ai") is not None:
+        return
+    skip = pytest.mark.skip(reason="pydantic-ai not installed (llm extra)")
+    for item in items:
+        if "llm" in item.keywords:
+            item.add_marker(skip)

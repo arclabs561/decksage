@@ -5,6 +5,11 @@ from __future__ import annotations
 import numpy as np
 import pytest
 
+
+# OT completion needs the POT library (import name `ot`), loaded lazily by
+# the implementation, so a module-level guard is required to skip cleanly.
+pytest.importorskip("ot")
+
 from ml.deck_building.ot_completion import (
     FormatConstraints,
     OTCompletionConfig,

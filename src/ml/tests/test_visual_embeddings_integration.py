@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Integration tests for visual embeddings in the full pipeline.
 
@@ -14,6 +13,9 @@ from __future__ import annotations
 from unittest.mock import MagicMock, patch
 
 import pytest
+
+
+pytest.importorskip("sentence_transformers")
 
 
 try:
