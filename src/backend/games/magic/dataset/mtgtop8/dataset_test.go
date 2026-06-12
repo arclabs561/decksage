@@ -42,14 +42,12 @@ func TestErrorHandling(t *testing.T) {
 
 	// Test with invalid URL that would trigger the bug
 	// This test verifies the error handling fix doesn't lose error context
-	opts, _ := dataset.ResolveUpdateOptions(
+	// This should either succeed (if URL is valid) or fail with a clear error
+	// The key is that if url.Parse fails, we should see the error, not a generic one
+	err = d.Extract(ctx, sc,
 		&dataset.OptExtractItemOnlyURL{URL: "https://mtgtop8.com/event?e=123&d=456"},
 		&dataset.OptExtractParallel{Parallel: 1},
 	)
-
-	// This should either succeed (if URL is valid) or fail with a clear error
-	// The key is that if url.Parse fails, we should see the error, not a generic one
-	err = d.Extract(ctx, sc, opts...)
 	// We don't care about success/failure here, just that errors are properly reported
 	// The actual bug was that url.Parse errors were lost
 	if err != nil {
