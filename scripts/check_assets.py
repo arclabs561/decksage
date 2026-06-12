@@ -27,8 +27,9 @@ import json
 import logging
 import sys
 import time
-from dataclasses import dataclass, field, asdict
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -222,7 +223,7 @@ def check_game(game: str) -> GameReport:
             with open(fw_path) as f:
                 data = json.load(f)
             status.loadable = True
-            w = data.get("best_weights", {})
+            data.get("best_weights", {})
             status.details = f"nDCG={data.get('ndcg_at_10', '?'):}"
         except Exception as e:
             status.details = f"JSON error: {e}"
@@ -284,7 +285,7 @@ def print_report(reports: list[GameReport], json_output: bool = False) -> int:
             return 1
         return 2 if sum(r.warnings for r in reports) > 0 else 0
 
-    max_name = max(len(a.name) for r in reports for a in r.assets)
+    max(len(a.name) for r in reports for a in r.assets)
 
     all_ok = True
     has_warnings = False
@@ -336,6 +337,7 @@ def main() -> int:
 
     # Determine games from env or check all
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv()

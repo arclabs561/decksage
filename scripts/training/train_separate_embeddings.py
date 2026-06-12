@@ -23,6 +23,7 @@ Usage:
 Evaluation: for overlapping cards, shows how the same query-candidate pair
 ranks in each embedding space.
 """
+
 from __future__ import annotations
 
 import argparse
@@ -149,6 +150,7 @@ def compare_embedding_spaces(
             return
     else:
         import random
+
         rng = random.Random(42)
         cards = rng.sample(sorted(overlap), min(5, len(overlap)))
 
@@ -191,6 +193,7 @@ def _rank_correlation(
 ) -> None:
     """Compute rank overlap between two embedding spaces for shared nodes."""
     import random
+
     rng = random.Random(42)
     sample = rng.sample(sorted(overlap), min(200, len(overlap)))
 
@@ -202,15 +205,19 @@ def _rank_correlation(
         overlaps.append(shared / topn)
 
     arr = np.array(overlaps)
-    print(f"    Mean top-{topn} overlap between [{label_a}] and [{label_b}]: "
-          f"{arr.mean():.3f} (std={arr.std():.3f})")
+    print(
+        f"    Mean top-{topn} overlap between [{label_a}] and [{label_b}]: "
+        f"{arr.mean():.3f} (std={arr.std():.3f})"
+    )
 
 
 def main() -> int:
     args = parse_args()
 
     if len(args.edgelist) != len(args.label):
-        print(f"Error: {len(args.edgelist)} edgelists but {len(args.label)} labels", file=sys.stderr)
+        print(
+            f"Error: {len(args.edgelist)} edgelists but {len(args.label)} labels", file=sys.stderr
+        )
         return 1
 
     print("=" * 70)

@@ -14,16 +14,17 @@ Usage:
         --output data/decks/decks_yugioh_masterduelmeta.jsonl \
         --max-pages 760
 """
+
 from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from datetime import datetime
 from pathlib import Path
 
 import httpx
+
 
 API_URL = "https://www.masterduelmeta.com/api/v1/top-decks"
 PAGE_SIZE = 100
@@ -134,9 +135,7 @@ def scrape(max_pages: int, output: Path) -> int:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(
-        description="Scrape Master Duel Meta top decks"
-    )
+    parser = argparse.ArgumentParser(description="Scrape Master Duel Meta top decks")
     parser.add_argument(
         "--output",
         type=Path,

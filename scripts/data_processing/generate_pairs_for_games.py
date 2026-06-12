@@ -22,6 +22,7 @@ import sys
 from collections import defaultdict
 from pathlib import Path
 
+
 # YGOProDeck numeric IDs (e.g., Card_10000080) that should never enter
 # co-occurrence pairs.
 _NUMERIC_ID_RE = re.compile(r"^Card_\d+$")

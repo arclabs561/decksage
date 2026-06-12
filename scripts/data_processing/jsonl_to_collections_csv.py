@@ -30,6 +30,7 @@ Usage:
     --input data/decks/decks_pokemon.jsonl data/decks/decks_pokemon_limitless-web.jsonl \\
     --output data/decks/collections_pokemon.csv
 """
+
 from __future__ import annotations
 
 import argparse
@@ -38,6 +39,7 @@ import json
 import re
 import sys
 from pathlib import Path
+
 
 # YGOProDeck numeric IDs (e.g., Card_10000080) that should never enter the
 # training corpus.  Dropped even when --canonical-names is not provided.
@@ -63,7 +65,14 @@ def convert_jsonl_to_collections(
     Returns stats dict with deck_count, card_count, unique_cards, skipped.
     """
     seen_ids: set[str] = set()
-    stats = {"deck_count": 0, "card_count": 0, "unique_cards": set(), "skipped": 0, "remapped": 0, "filtered": 0}
+    stats = {
+        "deck_count": 0,
+        "card_count": 0,
+        "unique_cards": set(),
+        "skipped": 0,
+        "remapped": 0,
+        "filtered": 0,
+    }
 
     with open(output_path, "w", newline="") as out_f:
         writer = csv.writer(out_f)
@@ -77,7 +86,10 @@ def convert_jsonl_to_collections(
                     try:
                         deck = json.loads(line)
                     except json.JSONDecodeError:
-                        print(f"  Warning: invalid JSON at {input_path.name}:{line_no}", file=sys.stderr)
+                        print(
+                            f"  Warning: invalid JSON at {input_path.name}:{line_no}",
+                            file=sys.stderr,
+                        )
                         stats["skipped"] += 1
                         continue
 
@@ -132,27 +144,41 @@ def main() -> int:
         description="Convert deck JSONL to collections CSV for word2vec training",
     )
     parser.add_argument(
-        "--input", "-i", type=Path, nargs="+", required=True,
+        "--input",
+        "-i",
+        type=Path,
+        nargs="+",
+        required=True,
         help="Input deck JSONL file(s)",
     )
     parser.add_argument(
-        "--output", "-o", type=Path, required=True,
+        "--output",
+        "-o",
+        type=Path,
+        required=True,
         help="Output collections CSV",
     )
     parser.add_argument(
-        "--partition", type=str, default=None,
+        "--partition",
+        type=str,
+        default=None,
         help="Filter cards by partition (e.g., 'Deck' to exclude sideboard)",
     )
     parser.add_argument(
-        "--no-dedup", action="store_true",
+        "--no-dedup",
+        action="store_true",
         help="Don't deduplicate by deck_id",
     )
     parser.add_argument(
-        "--name-mapping", type=Path, default=None,
+        "--name-mapping",
+        type=Path,
+        default=None,
         help="JSON file mapping Card_IDs to real names (e.g., data/yugioh_card_mapping.json)",
     )
     parser.add_argument(
-        "--canonical-names", type=Path, default=None,
+        "--canonical-names",
+        type=Path,
+        default=None,
         help="CSV with 'name' column; only names in this file are kept (drops non-English variants)",
     )
     args = parser.parse_args()
@@ -182,6 +208,7 @@ def main() -> int:
             return 1
         canonical = set()
         import csv as csv_mod
+
         with open(args.canonical_names, newline="", encoding="utf-8") as cf:
             for row in csv_mod.DictReader(cf):
                 name = row.get("name", "").strip()

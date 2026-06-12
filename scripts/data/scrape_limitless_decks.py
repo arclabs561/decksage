@@ -23,6 +23,7 @@ Usage:
         --output data/decks/decks_pokemon_limitless.jsonl \
         --limit 5000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -127,19 +128,19 @@ def _flatten_decklist(decklist: dict, section_map: dict[str, str]) -> list[dict]
             name = card.get("name", "")
             count = card.get("count", 1)
             if name:
-                cards.append({
-                    "name": name,
-                    "count": count,
-                    "partition": partition,
-                })
+                cards.append(
+                    {
+                        "name": name,
+                        "count": count,
+                        "partition": partition,
+                    }
+                )
     return cards
 
 
 def _card_fingerprint(cards: list[dict]) -> frozenset[tuple[str, int, str]]:
     """Create a hashable fingerprint from a card list for deduplication."""
-    return frozenset(
-        (c["name"], c["count"], c["partition"]) for c in cards
-    )
+    return frozenset((c["name"], c["count"], c["partition"]) for c in cards)
 
 
 # ---------------------------------------------------------------------------
@@ -213,8 +214,10 @@ def scrape_decks(
             tournament_index += 1
 
             if tournament_index % 100 == 0:
-                print(f"  --- Progress: {tournament_index} tournaments checked, "
-                      f"{len(unique_decks)} unique decks ---")
+                print(
+                    f"  --- Progress: {tournament_index} tournaments checked, "
+                    f"{len(unique_decks)} unique decks ---"
+                )
 
             try:
                 standings = fetch_standings(client, tid)
@@ -329,7 +332,7 @@ def main() -> int:
             follow_redirects=True,
         ) as client,
     ):
-        decks, stats = scrape_decks(
+        _decks, stats = scrape_decks(
             client,
             game=args.game,
             max_tournaments=args.max_tournaments,

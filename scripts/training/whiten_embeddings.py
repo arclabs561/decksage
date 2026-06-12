@@ -198,7 +198,7 @@ def main() -> int:
                 print(f"    {r['a']} <-> {r['b']}: {r['status']}")
 
     # Summary
-    print(f"\n--- DELTA ---")
+    print("\n--- DELTA ---")
     print(
         f"  Random-pair mean: {before_stats['mean']:.4f} -> {after_stats['mean']:.4f}  "
         f"(delta {after_stats['mean'] - before_stats['mean']:+.4f})"

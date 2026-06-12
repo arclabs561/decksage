@@ -29,11 +29,11 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 import time
 from pathlib import Path
 
 import httpx
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -423,7 +423,7 @@ def main():
                 f"  Semantic: P@{r['k']}={s['precision_at_k']:.3f}  R@{r['k']}={s['recall_at_k']:.3f}  MRR={s['mrr']:.3f}  nDCG@{r['k']}={s['ndcg_at_k']:.3f}  (n={s['n']})"
             )
 
-            print(f"\n  Per-query:")
+            print("\n  Per-query:")
             for pq in r["per_query"]:
                 found = len(pq["relevant_found"])
                 total = found + len(pq["relevant_missing"])

@@ -12,6 +12,7 @@ Output: data/processed/card_attributes_digimon.csv
 Usage:
     uv run scripts/data/scrape_digimon_cards.py
 """
+
 from __future__ import annotations
 
 import csv
@@ -21,6 +22,7 @@ import sys
 import time
 import urllib.request
 from pathlib import Path
+
 
 SEARCH_API = (
     "https://digimoncard.io/api-public/search.php"
@@ -32,13 +34,19 @@ OUT_FILE = OUT_DIR / "card_attributes_digimon.csv"
 
 # Digimon colors map to the "colors" column
 DIGIMON_COLORS = {
-    "Red", "Blue", "Yellow", "Green", "Black", "Purple", "White",
+    "Red",
+    "Blue",
+    "Yellow",
+    "Green",
+    "Black",
+    "Purple",
+    "White",
 }
 
 # Keywords to extract from effects text
 KEYWORD_PATTERNS = [
-    r"<([A-Z][A-Za-z\s]+?)>",           # <Blocker>, <Reboot>, etc.
-    r"\uff1c([A-Za-z\s]+?)\uff1e",       # fullwidth angle brackets
+    r"<([A-Z][A-Za-z\s]+?)>",  # <Blocker>, <Reboot>, etc.
+    r"\uff1c([A-Za-z\s]+?)\uff1e",  # fullwidth angle brackets
     r"\[(?:On Play|When Digivolving|When Attacking|End of Attack|"
     r"On Deletion|Start of Your Turn|Start of Your Main Phase|"
     r"Security|Main|All Turns|Your Turn|Opponent's Turn)\]",
@@ -73,8 +81,7 @@ def extract_keywords(card: dict) -> list[str]:
     """Extract gameplay keywords from card effects."""
     keywords: set[str] = []
     text = " ".join(
-        card.get(f, "") or ""
-        for f in ("main_effect", "source_effect", "alt_effect", "xros_req")
+        card.get(f, "") or "" for f in ("main_effect", "source_effect", "alt_effect", "xros_req")
     )
     # Card type
     ctype = card.get("type", "")
@@ -168,9 +175,19 @@ def main() -> None:
     OUT_DIR.mkdir(parents=True, exist_ok=True)
 
     fieldnames = [
-        "name", "type", "colors", "cmc", "rarity",
-        "power", "toughness", "keywords",
-        "attribute", "race", "archetype", "oracle_text", "image_url",
+        "name",
+        "type",
+        "colors",
+        "cmc",
+        "rarity",
+        "power",
+        "toughness",
+        "keywords",
+        "attribute",
+        "race",
+        "archetype",
+        "oracle_text",
+        "image_url",
     ]
 
     written = 0
@@ -204,21 +221,23 @@ def main() -> None:
                 if dt:
                     digi_types.append(dt)
 
-            writer.writerow({
-                "name": name,
-                "type": ctype,
-                "colors": colors,
-                "cmc": play_cost if play_cost is not None else "",
-                "rarity": rarity,
-                "power": dp if dp is not None else "",
-                "toughness": level if level is not None else "",
-                "keywords": ",".join(keywords),
-                "attribute": card.get("attribute") or "",
-                "race": "/".join(digi_types),
-                "archetype": "",
-                "oracle_text": oracle_text,
-                "image_url": "",
-            })
+            writer.writerow(
+                {
+                    "name": name,
+                    "type": ctype,
+                    "colors": colors,
+                    "cmc": play_cost if play_cost is not None else "",
+                    "rarity": rarity,
+                    "power": dp if dp is not None else "",
+                    "toughness": level if level is not None else "",
+                    "keywords": ",".join(keywords),
+                    "attribute": card.get("attribute") or "",
+                    "race": "/".join(digi_types),
+                    "archetype": "",
+                    "oracle_text": oracle_text,
+                    "image_url": "",
+                }
+            )
             written += 1
 
     print(f"Wrote {written} cards to {OUT_FILE}")

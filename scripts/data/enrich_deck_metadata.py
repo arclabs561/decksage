@@ -11,7 +11,6 @@ to --output-dir. Prints distribution stats to stdout.
 
 import argparse
 import json
-import os
 import re
 import sys
 from collections import Counter
@@ -284,10 +283,14 @@ def main():
         game = detect_game(fname)
         print(f"\n--- {fname} [{game}] ---")
         print(f"  Total decks: {stats['total']}")
-        print(f"  Format filled: {stats['format_filled']}/{stats['total']}"
-              f"  (added: {stats['format_added']})")
-        print(f"  Archetype filled: {stats['archetype_filled']}/{stats['total']}"
-              f"  (added/fixed: {stats['archetype_added']})")
+        print(
+            f"  Format filled: {stats['format_filled']}/{stats['total']}"
+            f"  (added: {stats['format_added']})"
+        )
+        print(
+            f"  Archetype filled: {stats['archetype_filled']}/{stats['total']}"
+            f"  (added/fixed: {stats['archetype_added']})"
+        )
 
         if stats["formats"]:
             print("  Formats:")

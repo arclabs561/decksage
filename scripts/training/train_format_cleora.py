@@ -18,6 +18,7 @@ Usage:
     uv run scripts/training/train_format_cleora.py --game magic
     uv run scripts/training/train_format_cleora.py --game magic --formats standard,modern
 """
+
 from __future__ import annotations
 
 import argparse
@@ -29,8 +30,9 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-from scipy import sparse
 from gensim.models import KeyedVectors
+from scipy import sparse
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -107,8 +109,12 @@ def main() -> int:
     parser.add_argument("--game", default="magic")
     parser.add_argument("--dim", type=int, default=128)
     parser.add_argument("--iterations", type=int, default=5)
-    parser.add_argument("--formats", type=str, default="standard,modern,commander",
-                        help="Comma-separated formats to train")
+    parser.add_argument(
+        "--formats",
+        type=str,
+        default="standard,modern,commander",
+        help="Comma-separated formats to train",
+    )
     args = parser.parse_args()
 
     formats = [f.strip() for f in args.formats.split(",")]
@@ -149,9 +155,20 @@ def main() -> int:
         if eval_script.exists():
             try:
                 r = subprocess.run(
-                    ["uv", "run", str(eval_script), "--game", args.game,
-                     "--embedding", out_name, "--json"],
-                    capture_output=True, text=True, timeout=300, cwd=str(PROJECT_ROOT),
+                    [
+                        "uv",
+                        "run",
+                        str(eval_script),
+                        "--game",
+                        args.game,
+                        "--embedding",
+                        out_name,
+                        "--json",
+                    ],
+                    capture_output=True,
+                    text=True,
+                    timeout=300,
+                    cwd=str(PROJECT_ROOT),
                 )
                 if r.returncode == 0 and r.stdout.strip():
                     raw = json.loads(r.stdout)
@@ -166,10 +183,15 @@ def main() -> int:
             except Exception as e:
                 print(f"    Eval failed: {e}")
 
-        results.append({
-            "format": fmt, "num_cards": len(node_list), "num_edges": len(edges),
-            "duration_s": round(elapsed, 1), "eval": eval_metrics,
-        })
+        results.append(
+            {
+                "format": fmt,
+                "num_cards": len(node_list),
+                "num_edges": len(edges),
+                "duration_s": round(elapsed, 1),
+                "eval": eval_metrics,
+            }
+        )
 
     # Comparison table
     if len(results) > 1:
@@ -178,14 +200,20 @@ def main() -> int:
         print("-" * 60)
         for r in results:
             ev = r.get("eval") or {}
-            print(f"{r['format']:<15} {r['num_cards']:>8,} {r['num_edges']:>10,} "
-                  f"{ev.get('sub', 0):>8.4f} {ev.get('ctx', 0):>8.4f} {ev.get('comp', 0):>8.4f}")
+            print(
+                f"{r['format']:<15} {r['num_cards']:>8,} {r['num_edges']:>10,} "
+                f"{ev.get('sub', 0):>8.4f} {ev.get('ctx', 0):>8.4f} {ev.get('comp', 0):>8.4f}"
+            )
 
     # Save summary
     logs_dir = DATA_DIR / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
-    summary = {"game": args.game, "model": "cleora_format", "results": results,
-               "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")}
+    summary = {
+        "game": args.game,
+        "model": "cleora_format",
+        "results": results,
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
+    }
     summary_path = logs_dir / f"{args.game}_cleora_format_run.json"
     with open(summary_path, "w") as f:
         json.dump(summary, f, indent=2)

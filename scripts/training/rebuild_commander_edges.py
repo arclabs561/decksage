@@ -12,6 +12,7 @@ Faster than running full build_unified_graph.py -- just produces the
 Usage:
     uv run scripts/training/rebuild_commander_edges.py --game magic
 """
+
 from __future__ import annotations
 
 import argparse
@@ -20,6 +21,7 @@ import sys
 import time
 from collections import defaultdict
 from pathlib import Path
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -32,8 +34,12 @@ DATA_DIR = PROJECT_ROOT / "data"
 def main() -> int:
     parser = argparse.ArgumentParser(description="Rebuild commander co-occurrence edges")
     parser.add_argument("--game", default="magic")
-    parser.add_argument("--min-cooccurrence", type=int, default=2,
-                        help="Minimum deck co-occurrence count to emit edge")
+    parser.add_argument(
+        "--min-cooccurrence",
+        type=int,
+        default=2,
+        help="Minimum deck co-occurrence count to emit edge",
+    )
     args = parser.parse_args()
 
     deck_dir = DATA_DIR / "decks"
@@ -77,10 +83,19 @@ def main() -> int:
                         continue
 
                     # Skip basic lands
-                    basics = {"Plains", "Island", "Swamp", "Mountain", "Forest",
-                              "Snow-Covered Plains", "Snow-Covered Island",
-                              "Snow-Covered Swamp", "Snow-Covered Mountain",
-                              "Snow-Covered Forest", "Wastes"}
+                    basics = {
+                        "Plains",
+                        "Island",
+                        "Swamp",
+                        "Mountain",
+                        "Forest",
+                        "Snow-Covered Plains",
+                        "Snow-Covered Island",
+                        "Snow-Covered Swamp",
+                        "Snow-Covered Mountain",
+                        "Snow-Covered Forest",
+                        "Wastes",
+                    }
                     cards -= basics
 
                     n_decks += 1
@@ -89,10 +104,12 @@ def main() -> int:
                     # Count all pairs
                     card_list = sorted(cards)
                     for i, a in enumerate(card_list):
-                        for b in card_list[i + 1:]:
+                        for b in card_list[i + 1 :]:
                             pair_counts[(a, b)] += 1
 
-    print(f"  {n_decks:,} decks, {n_cards_total:,} card-instances, {len(pair_counts):,} unique pairs")
+    print(
+        f"  {n_decks:,} decks, {n_cards_total:,} card-instances, {len(pair_counts):,} unique pairs"
+    )
 
     # Filter by min co-occurrence and write
     out_path = DATA_DIR / "graphs" / f"{args.game}_archidekt_commander.edg"
@@ -105,13 +122,16 @@ def main() -> int:
 
     elapsed = time.monotonic() - t0
     print(f"  Wrote {n_edges:,} edges to {out_path} ({elapsed:.1f}s)")
-    print(f"  (filtered from {len(pair_counts):,} pairs at min_cooccurrence={args.min_cooccurrence})")
+    print(
+        f"  (filtered from {len(pair_counts):,} pairs at min_cooccurrence={args.min_cooccurrence})"
+    )
 
     return 0
 
 
 if __name__ == "__main__":
     import traceback
+
     try:
         sys.exit(main())
     except Exception:

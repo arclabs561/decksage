@@ -29,15 +29,14 @@ from __future__ import annotations
 
 import argparse
 import asyncio
-import csv
 import json
 import logging
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any
+
 
 try:
     from dotenv import load_dotenv
@@ -250,7 +249,7 @@ async def annotate_pair(
                 ).split(",")[0],
                 "prompt_variant": prompt_variant,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
                 "input_tokens": input_tokens,
                 "output_tokens": output_tokens,
             }
@@ -304,12 +303,14 @@ def _load_checkpoint(game: str) -> set[tuple[str, str, str, str]]:
         for line in f:
             if line.strip():
                 d = json.loads(line)
-                done.add((
-                    d.get("query", ""),
-                    d.get("candidate", ""),
-                    d.get("llm_model", ""),
-                    d.get("prompt_variant", DEFAULT_PROMPT_VARIANT),
-                ))
+                done.add(
+                    (
+                        d.get("query", ""),
+                        d.get("candidate", ""),
+                        d.get("llm_model", ""),
+                        d.get("prompt_variant", DEFAULT_PROMPT_VARIANT),
+                    )
+                )
     return done
 
 
@@ -352,7 +353,8 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         for model_name in model_names:
             for variant in prompt_variants:
                 remaining = [
-                    p for p in all_pairs
+                    p
+                    for p in all_pairs
                     if (p["card1"], p["card2"], model_name, variant) not in done_pairs
                 ]
                 per_combo[f"{model_name}+{variant}"] = len(remaining)
@@ -377,8 +379,6 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     from ml.annotation.llm_annotator import CardSimilarityAnnotation
     from ml.utils.pydantic_ai_helpers import make_agent
 
-    prompt_base = "You are an expert TCG judge. Judge card similarity and fill ALL fields."
-
     annotations_by_query: dict[str, list[dict]] = {}
     total_done = 0
     total_failed = 0
@@ -393,8 +393,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     for combo_idx, (model_name, variant) in enumerate(combos):
         # Filter to pairs not yet done by this (model, variant) combo
         pairs = [
-            p for p in all_pairs
-            if (p["card1"], p["card2"], model_name, variant) not in done_pairs
+            p for p in all_pairs if (p["card1"], p["card2"], model_name, variant) not in done_pairs
         ]
         combo_label = f"{model_name}+{variant}" if variant != DEFAULT_PROMPT_VARIANT else model_name
         if not pairs:
@@ -403,9 +402,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             )
             continue
 
-        logger.info(
-            f"[{combo_idx + 1}/{n_combos}] {combo_label}: {len(pairs)} pairs to annotate"
-        )
+        logger.info(f"[{combo_idx + 1}/{n_combos}] {combo_label}: {len(pairs)} pairs to annotate")
 
         # Build system prompt with variant persona
         game_personas = GAME_EXPERTISE.get(game, {})
@@ -413,25 +410,35 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         if persona:
             system_prompt = f"{persona} Judge card similarity and fill ALL fields."
         else:
-            system_prompt = "You are an expert TCG judge. Judge card similarity and fill ALL fields."
+            system_prompt = (
+                "You are an expert TCG judge. Judge card similarity and fill ALL fields."
+            )
 
         agent = make_agent(model_name, CardSimilarityAnnotation, system_prompt)
         sem = asyncio.Semaphore(concurrency)
         n_done = 0
         n_failed = 0
 
-        async def _annotate_one(i: int, pair: dict, _variant=variant) -> tuple[int, dict | None]:
+        async def _annotate_one(
+            i: int, pair: dict, _variant=variant, _agent=agent, _sem=sem
+        ) -> tuple[int, dict | None]:
             card1 = pair["card1"]
             card2 = pair["card2"]
             result = await annotate_pair(
-                agent, card1, card2, pair, game, card_data, sem,
+                _agent,
+                card1,
+                card2,
+                pair,
+                game,
+                card_data,
+                _sem,
                 prompt_variant=_variant,
             )
             return i, result
 
         tasks = [_annotate_one(i, pair) for i, pair in enumerate(pairs)]
         for coro in asyncio.as_completed(tasks):
-            i, result = await coro
+            _i, result = await coro
             if result:
                 result["llm_model"] = model_name
                 result["prompt_variant"] = variant
@@ -473,10 +480,18 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
                     if not q:
                         continue
                     existing_keys = {
-                        (a.get("candidate"), a.get("llm_model", ""), a.get("prompt_variant", DEFAULT_PROMPT_VARIANT))
+                        (
+                            a.get("candidate"),
+                            a.get("llm_model", ""),
+                            a.get("prompt_variant", DEFAULT_PROMPT_VARIANT),
+                        )
                         for a in annotations_by_query.get(q, [])
                     }
-                    ann_key = (ann.get("candidate"), ann.get("llm_model", ""), ann.get("prompt_variant", DEFAULT_PROMPT_VARIANT))
+                    ann_key = (
+                        ann.get("candidate"),
+                        ann.get("llm_model", ""),
+                        ann.get("prompt_variant", DEFAULT_PROMPT_VARIANT),
+                    )
                     if ann_key not in existing_keys:
                         annotations_by_query.setdefault(q, []).append(ann)
                         n_from_checkpoint += 1
@@ -508,8 +523,14 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             cand = ann.get("candidate", "")
             if cand in deduped_anns:
                 existing = deduped_anns[cand]
-                for field in ["similarity_score", "functional_score", "synergy_score",
-                              "substitutability", "meta_relevance", "confidence"]:
+                for field in [
+                    "similarity_score",
+                    "functional_score",
+                    "synergy_score",
+                    "substitutability",
+                    "meta_relevance",
+                    "confidence",
+                ]:
                     old_val = existing.get(field)
                     new_val = ann.get(field)
                     if old_val is not None and new_val is not None:
@@ -545,7 +566,13 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             n_new_queries += 1
 
         # Rebuild relevance buckets from consensus scores
-        for bucket in ["highly_relevant", "relevant", "somewhat_relevant", "marginally_relevant", "irrelevant"]:
+        for bucket in [
+            "highly_relevant",
+            "relevant",
+            "somewhat_relevant",
+            "marginally_relevant",
+            "irrelevant",
+        ]:
             queries[query_card][bucket] = []
         for ann in queries[query_card]["annotations"]:
             score = ann.get("similarity_score", 0) or 0
@@ -562,8 +589,8 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
 
     test_data["queries"] = queries
     test_data["num_queries"] = len(queries)
-    test_data["updated"] = datetime.now(timezone.utc).isoformat()
-    test_data["diverse_pairs_integrated"] = datetime.now(timezone.utc).isoformat()
+    test_data["updated"] = datetime.now(UTC).isoformat()
+    test_data["diverse_pairs_integrated"] = datetime.now(UTC).isoformat()
 
     with open(test_path, "w") as f:
         json.dump(test_data, f, indent=2)

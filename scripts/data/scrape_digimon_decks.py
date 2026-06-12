@@ -14,6 +14,7 @@ Usage:
     uv run scripts/data/scrape_digimon_decks.py
     uv run scripts/data/scrape_digimon_decks.py --limit 2000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -23,6 +24,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+
 
 BASE_URL = "https://play.limitlesstcg.com/api"
 USER_AGENT = "DeckSage/1.0 (research project)"
@@ -96,19 +98,19 @@ def _flatten_decklist(decklist: dict) -> list[dict]:
             name = card.get("name", "")
             count = card.get("count", 1)
             if name:
-                cards.append({
-                    "name": name,
-                    "count": count,
-                    "partition": partition,
-                })
+                cards.append(
+                    {
+                        "name": name,
+                        "count": count,
+                        "partition": partition,
+                    }
+                )
     return cards
 
 
 def _card_fingerprint(cards: list[dict]) -> frozenset[tuple[str, int, str]]:
     """Create a hashable fingerprint from a card list for deduplication."""
-    return frozenset(
-        (c["name"], c["count"], c["partition"]) for c in cards
-    )
+    return frozenset((c["name"], c["count"], c["partition"]) for c in cards)
 
 
 def scrape_decks(
@@ -158,9 +160,7 @@ def scrape_decks(
             tournaments_checked += 1
 
             try:
-                standings = _get_json(
-                    client, f"{BASE_URL}/tournaments/{tid}/standings"
-                )
+                standings = _get_json(client, f"{BASE_URL}/tournaments/{tid}/standings")
             except (httpx.HTTPStatusError, httpx.RequestError) as exc:
                 print(f"    Skip tournament {tid} ({tname}): {exc}")
                 continue

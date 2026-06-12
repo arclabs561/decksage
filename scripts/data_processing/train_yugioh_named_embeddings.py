@@ -97,9 +97,9 @@ def show_similarity_samples() -> None:
     """Load saved embeddings and display sample similarities."""
     from gensim.models import KeyedVectors
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Sample similarity results (real card names)")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     wv = KeyedVectors.load(str(OUTPUT_WV))
 

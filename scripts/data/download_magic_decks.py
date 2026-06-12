@@ -21,6 +21,7 @@ Usage:
     --source goldfish mtgtop8 \
     --output data/decks/decks_magic.jsonl
 """
+
 from __future__ import annotations
 
 import argparse
@@ -91,7 +92,9 @@ def download_batch_awscli(s3_urls: list[str], dest_dir: Path) -> int:
         dest = dest_dir / filename
         result = subprocess.run(
             ["aws", "s3", "cp", url, str(dest)],
-            capture_output=True, text=True, timeout=30,
+            capture_output=True,
+            text=True,
+            timeout=30,
         )
         if result.returncode == 0:
             downloaded += 1
@@ -161,11 +164,13 @@ def process_deck_file(path: Path, source: str) -> dict | None:
     for partition in data.get("partitions", []):
         part_name = partition.get("name", "Main")
         for card in partition.get("cards", []):
-            cards.append({
-                "name": card["name"],
-                "count": card.get("count", 1),
-                "partition": part_name,
-            })
+            cards.append(
+                {
+                    "name": card["name"],
+                    "count": card.get("count", 1),
+                    "partition": part_name,
+                }
+            )
 
     if not cards:
         return None
@@ -189,7 +194,9 @@ def process_deck_file(path: Path, source: str) -> dict | None:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Download Magic decks from S3")
     parser.add_argument(
-        "--source", nargs="+", default=["goldfish"],
+        "--source",
+        nargs="+",
+        default=["goldfish"],
         choices=list(S3_SOURCES.keys()),
         help="S3 data sources to download from",
     )
@@ -207,9 +214,9 @@ def main() -> int:
     with open(args.output, "w") as out_f:
         for source in args.source:
             prefix = S3_SOURCES[source]
-            print(f"\n{'='*60}")
+            print(f"\n{'=' * 60}")
             print(f"Source: {source} ({prefix})")
-            print(f"{'='*60}")
+            print(f"{'=' * 60}")
 
             # List files
             print("  Listing S3 files...")
@@ -232,7 +239,9 @@ def main() -> int:
 
                 with tempfile.TemporaryDirectory() as tmp_dir:
                     tmp_path = Path(tmp_dir)
-                    print(f"\n  Batch {batch_num}/{total_batches}: downloading {len(batch)} files...")
+                    print(
+                        f"\n  Batch {batch_num}/{total_batches}: downloading {len(batch)} files..."
+                    )
                     t0 = time.monotonic()
 
                     if use_s5cmd:
@@ -258,7 +267,7 @@ def main() -> int:
             total_skipped += source_skipped
             print(f"\n  {source} total: {source_decks:,} decks, {source_skipped:,} skipped")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"DONE: {total_decks:,} decks written to {args.output}")
     print(f"  ({total_skipped:,} non-deck collections skipped)")
     return 0

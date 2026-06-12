@@ -29,6 +29,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
@@ -112,7 +113,7 @@ def evaluate_completion(
         n_seed = max(5, int(len(deck) * seed_fraction))
         indices = np.random.permutation(len(deck))
         seed = [deck[i] for i in indices[:n_seed]]
-        target_set = set(deck[i] for i in indices[n_seed:])
+        target_set = {deck[i] for i in indices[n_seed:]}
 
         # Complete
         n_to_generate = min(len(target_set), 30)
@@ -189,7 +190,7 @@ def main() -> int:
             return 1
     else:
         # Train
-        print(f"\nTraining flow completion model...")
+        print("\nTraining flow completion model...")
         t0 = time.monotonic()
         metrics = completer.train(
             train_decks,
@@ -221,7 +222,7 @@ def main() -> int:
 
     print(f"\nSample completion (seed: {n_seed} cards):")
     print(f"  Seed: {', '.join(seed[:5])}...")
-    print(f"  Suggestions:")
+    print("  Suggestions:")
     for card, score in suggestions[:10]:
         in_deck = " [IN DECK]" if card in set(sample_deck) else ""
         print(f"    {card}: {score:.3f}{in_deck}")

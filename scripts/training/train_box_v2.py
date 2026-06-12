@@ -19,6 +19,7 @@ Usage:
     uv run scripts/training/train_box_v2.py --game magic --dim 32 --epochs 200
     uv run scripts/training/train_box_v2.py --game magic --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -30,7 +31,6 @@ import traceback
 from collections import defaultdict
 from pathlib import Path
 
-import numpy as np
 
 # Force unbuffered stdout
 if not sys.stdout.isatty():
@@ -198,7 +198,9 @@ def build_triples(
     return triples, card_to_id, 1  # 1 relation type
 
 
-def evaluate_boxes(trainer, card_to_id: dict[str, int], test_pairs: list[tuple[str, str, str]]) -> dict:
+def evaluate_boxes(
+    trainer, card_to_id: dict[str, int], test_pairs: list[tuple[str, str, str]]
+) -> dict:
     """Evaluate box containment on held-out annotation pairs."""
     import subsumer
 
@@ -275,14 +277,14 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # 1. Load annotation pairs
-    print(f"\n[1/5] Loading annotation pairs...")
+    print("\n[1/5] Loading annotation pairs...")
     ann_pairs = load_annotation_pairs(args.game)
     upgrades = [p for p in ann_pairs if p[2] in ("a_upgrades_b", "b_upgrades_a")]
     subs = [p for p in ann_pairs if p[2] == "substitute"]
     print(f"  {len(upgrades)} upgrade pairs, {len(subs)} substitute pairs")
 
     # 2. Load deck-derived subset pairs
-    print(f"\n[2/5] Deriving deck subset pairs...")
+    print("\n[2/5] Deriving deck subset pairs...")
     deck_pairs = load_deck_subset_pairs(
         args.game, min_cooccurrence=args.min_cooccurrence, max_pairs=args.max_deck_pairs
     )
@@ -296,7 +298,7 @@ def main() -> int:
     test_ann = ann_pairs[split:]
 
     # 4. Build triples
-    print(f"\n[3/5] Building triples...")
+    print("\n[3/5] Building triples...")
     triples, card_to_id, n_relations = build_triples(train_ann, deck_pairs)
     print(f"  {len(triples)} triples, {len(card_to_id)} entities, {n_relations} relation")
 
@@ -347,13 +349,17 @@ def main() -> int:
         print(f"  Best epoch: {fit_result.get('best_epoch', 'N/A')}")
 
     # 6. Evaluate
-    print(f"\n[5/5] Evaluating...")
+    print("\n[5/5] Evaluating...")
     results = evaluate_boxes(trainer, card_to_id, test_ann)
-    print(f"  Direction accuracy: {results['direction_accuracy']:.3f} ({results['correct']}/{results['total_directional']})")
-    print(f"  Substitute overlap: {results['avg_substitute_overlap']:.3f} ({results['n_substitute_pairs']} pairs)")
+    print(
+        f"  Direction accuracy: {results['direction_accuracy']:.3f} ({results['correct']}/{results['total_directional']})"
+    )
+    print(
+        f"  Substitute overlap: {results['avg_substitute_overlap']:.3f} ({results['n_substitute_pairs']} pairs)"
+    )
 
     # Save
-    id_to_card = {v: k for k, v in card_to_id.items()}
+    {v: k for k, v in card_to_id.items()}
     out_dir = DATA_DIR / "embeddings"
     out_dir.mkdir(parents=True, exist_ok=True)
     out_path = out_dir / f"{args.game}_box_v2.json"

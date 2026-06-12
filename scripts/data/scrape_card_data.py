@@ -186,9 +186,7 @@ async def scrape_magic_rulings(
         card_name = card.get("name", card_id)
         await asyncio.sleep(DELAY_SCRYFALL)
         try:
-            data = await _get_json(
-                client, f"https://api.scryfall.com/cards/{card_id}/rulings"
-            )
+            data = await _get_json(client, f"https://api.scryfall.com/cards/{card_id}/rulings")
         except httpx.HTTPStatusError as exc:
             if exc.response.status_code == 404:
                 continue
@@ -231,9 +229,7 @@ async def scrape_yugioh_rulings(
         return {"game": "yugioh", "data_type": "rulings", "dry_run": True}
 
     await asyncio.sleep(DELAY_YGOPRODECK)
-    data = await _get_json(
-        client, "https://db.ygoprodeck.com/api/v7/cardinfo.php"
-    )
+    data = await _get_json(client, "https://db.ygoprodeck.com/api/v7/cardinfo.php")
     cards = data.get("data", [])
     if limit is not None:
         cards = cards[:limit]
@@ -322,9 +318,7 @@ async def scrape_yugioh_prices(
         return {"game": "yugioh", "data_type": "prices", "dry_run": True}
 
     await asyncio.sleep(DELAY_YGOPRODECK)
-    data = await _get_json(
-        client, "https://db.ygoprodeck.com/api/v7/cardinfo.php"
-    )
+    data = await _get_json(client, "https://db.ygoprodeck.com/api/v7/cardinfo.php")
     cards = data.get("data", [])
     if limit is not None:
         cards = cards[:limit]
@@ -515,9 +509,7 @@ async def scrape_yugioh_images(
     """Download YGO card images from YGOProDeck."""
     print("[yugioh/images] Starting...")
     await asyncio.sleep(DELAY_YGOPRODECK)
-    data = await _get_json(
-        client, "https://db.ygoprodeck.com/api/v7/cardinfo.php"
-    )
+    data = await _get_json(client, "https://db.ygoprodeck.com/api/v7/cardinfo.php")
     cards = data.get("data", [])
     if limit is not None:
         cards = cards[:limit]
@@ -687,9 +679,7 @@ async def scrape_magic_meta(
         return {"game": "magic", "data_type": "meta", "dry_run": True}
 
     await asyncio.sleep(DELAY_EDHREC)
-    commanders_data = await _get_json(
-        client, "https://json.edhrec.com/pages/commanders.json"
-    )
+    commanders_data = await _get_json(client, "https://json.edhrec.com/pages/commanders.json")
 
     # Extract top commanders
     container = commanders_data.get("container", {})
@@ -751,7 +741,9 @@ async def scrape_magic_meta(
         "top_commanders": top_commanders,
         "commander_details": commander_details,
     }
-    print(f"[magic/meta] Done. {len(top_commanders)} commanders, {len(commander_details)} with details.")
+    print(
+        f"[magic/meta] Done. {len(top_commanders)} commanders, {len(commander_details)} with details."
+    )
     return result
 
 
@@ -863,9 +855,7 @@ async def scrape_yugioh_sets(
         return {"game": "yugioh", "data_type": "sets", "dry_run": True}
 
     await asyncio.sleep(DELAY_YGOPRODECK)
-    data = await _get_json(
-        client, "https://db.ygoprodeck.com/api/v7/cardsets.php"
-    )
+    data = await _get_json(client, "https://db.ygoprodeck.com/api/v7/cardsets.php")
     # cardsets.php returns a list directly
     sets_list = data if isinstance(data, list) else data.get("data", [])
     if limit is not None:
@@ -973,8 +963,16 @@ async def scrape_magic_bulk(
         out.parent.mkdir(parents=True, exist_ok=True)
 
         fieldnames = [
-            "name", "type", "colors", "cmc", "rarity", "power", "toughness",
-            "keywords", "oracle_text", "image_url",
+            "name",
+            "type",
+            "colors",
+            "cmc",
+            "rarity",
+            "power",
+            "toughness",
+            "keywords",
+            "oracle_text",
+            "image_url",
         ]
 
         seen_names: set[str] = set()
@@ -993,24 +991,29 @@ async def scrape_magic_bulk(
                 image_uris = card.get("image_uris", {})
                 image_url = image_uris.get("normal", "")
 
-                writer.writerow({
-                    "name": name,
-                    "type": card.get("type_line", ""),
-                    "colors": colors,
-                    "cmc": card.get("cmc", ""),
-                    "rarity": card.get("rarity", ""),
-                    "power": card.get("power", ""),
-                    "toughness": card.get("toughness", ""),
-                    "keywords": keywords,
-                    "oracle_text": card.get("oracle_text", ""),
-                    "image_url": image_url,
-                })
+                writer.writerow(
+                    {
+                        "name": name,
+                        "type": card.get("type_line", ""),
+                        "colors": colors,
+                        "cmc": card.get("cmc", ""),
+                        "rarity": card.get("rarity", ""),
+                        "power": card.get("power", ""),
+                        "toughness": card.get("toughness", ""),
+                        "keywords": keywords,
+                        "oracle_text": card.get("oracle_text", ""),
+                        "image_url": image_url,
+                    }
+                )
                 rows_written += 1
 
         print(f"[magic/bulk] Wrote {rows_written} cards to {out}")
         return {
-            "game": "magic", "data_type": "bulk", "format": "csv",
-            "count": rows_written, "output": str(out),
+            "game": "magic",
+            "data_type": "bulk",
+            "format": "csv",
+            "count": rows_written,
+            "output": str(out),
         }
 
     # Default: save full JSON
@@ -1082,9 +1085,7 @@ async def run_scraper(
         return
 
     headers = {"User-Agent": USER_AGENT}
-    async with httpx.AsyncClient(
-        headers=headers, timeout=120.0, follow_redirects=True
-    ) as client:
+    async with httpx.AsyncClient(headers=headers, timeout=120.0, follow_redirects=True) as client:
         try:
             # Pass extra kwargs for bulk scraper
             kwargs: dict[str, Any] = {"dry_run": dry_run, "limit": limit}
@@ -1114,9 +1115,7 @@ async def run_scraper(
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(
-        description="Scrape rich card data from public TCG APIs."
-    )
+    parser = argparse.ArgumentParser(description="Scrape rich card data from public TCG APIs.")
     parser.add_argument(
         "--game",
         choices=[*ALL_GAMES, "all"],

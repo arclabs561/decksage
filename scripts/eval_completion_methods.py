@@ -22,6 +22,7 @@ from itertools import product
 
 import httpx
 
+
 # Test decks: seed cards for different archetypes
 TEST_DECKS = {
     "magic_burn": {
@@ -269,7 +270,7 @@ def run_sweep(client: httpx.Client, json_output: bool = False) -> list[dict]:
                 dist_str = f"{ot_dist:.4f}" if ot_dist is not None else "n/a"
                 print(
                     f"{reg:6.2f} {emb_w:6.2f} {role_w:6.2f} {curve_w:7.2f} | "
-                    f"{score_str:>8s} {dist_str:>8s} {str(ms):>6s} {deck_name:>15s}"
+                    f"{score_str:>8s} {dist_str:>8s} {ms!s:>6s} {deck_name:>15s}"
                 )
 
             # Track best by quality score if available, else by OT distance (lower=better)

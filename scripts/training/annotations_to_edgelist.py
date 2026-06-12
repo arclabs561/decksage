@@ -32,6 +32,7 @@ Usage:
         --card-sets data/processed/card_sets_yugioh_top.jsonl \
         --output data/graphs/pairs_enriched_yugioh.edg
 """
+
 from __future__ import annotations
 
 import argparse
@@ -149,21 +150,37 @@ def write_edgelist(edges: dict[tuple[str, str], float], output: Path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Convert annotations/card-sets to training edgelists")
-    parser.add_argument("--annotations", type=Path, nargs="*", default=[],
-                        help="Finalized annotation JSON files")
-    parser.add_argument("--card-sets", type=Path, nargs="*", default=[],
-                        help="Card set JSONL files")
-    parser.add_argument("--output", type=Path, required=True,
-                        help="Output .edg file")
-    parser.add_argument("--min-score", type=float, default=0.20,
-                        help="Min annotation similarity score to include (default: 0.20)")
-    parser.add_argument("--annotation-weight", type=float, default=10.0,
-                        help="Weight multiplier for annotation edges (default: 10.0)")
-    parser.add_argument("--card-set-weight", type=float, default=1.0,
-                        help="Weight multiplier for card set edges (default: 1.0)")
-    parser.add_argument("--min-lift", type=float, default=5.0,
-                        help="Min lift for card set edges (default: 5.0)")
+    parser = argparse.ArgumentParser(
+        description="Convert annotations/card-sets to training edgelists"
+    )
+    parser.add_argument(
+        "--annotations", type=Path, nargs="*", default=[], help="Finalized annotation JSON files"
+    )
+    parser.add_argument(
+        "--card-sets", type=Path, nargs="*", default=[], help="Card set JSONL files"
+    )
+    parser.add_argument("--output", type=Path, required=True, help="Output .edg file")
+    parser.add_argument(
+        "--min-score",
+        type=float,
+        default=0.20,
+        help="Min annotation similarity score to include (default: 0.20)",
+    )
+    parser.add_argument(
+        "--annotation-weight",
+        type=float,
+        default=10.0,
+        help="Weight multiplier for annotation edges (default: 10.0)",
+    )
+    parser.add_argument(
+        "--card-set-weight",
+        type=float,
+        default=1.0,
+        help="Weight multiplier for card set edges (default: 1.0)",
+    )
+    parser.add_argument(
+        "--min-lift", type=float, default=5.0, help="Min lift for card set edges (default: 5.0)"
+    )
     args = parser.parse_args()
 
     if not args.annotations and not args.card_sets:
@@ -176,10 +193,12 @@ def main():
     if args.annotations:
         valid = [p for p in args.annotations if p.exists()]
         if not valid:
-            print(f"Warning: no annotation files found", file=sys.stderr)
+            print("Warning: no annotation files found", file=sys.stderr)
         else:
             ann_edges = annotations_to_edges(valid, args.min_score, args.annotation_weight)
-            print(f"Annotations: {len(ann_edges)} edges from {len(valid)} files (min_score={args.min_score})")
+            print(
+                f"Annotations: {len(ann_edges)} edges from {len(valid)} files (min_score={args.min_score})"
+            )
 
             # Score distribution of kept edges
             if ann_edges:
@@ -193,10 +212,12 @@ def main():
     if args.card_sets:
         valid = [p for p in args.card_sets if p.exists()]
         if not valid:
-            print(f"Warning: no card set files found", file=sys.stderr)
+            print("Warning: no card set files found", file=sys.stderr)
         else:
             cs_edges = card_sets_to_edges(valid, args.min_lift, weight_scale=args.card_set_weight)
-            print(f"Card sets: {len(cs_edges)} edges from {len(valid)} files (min_lift={args.min_lift})")
+            print(
+                f"Card sets: {len(cs_edges)} edges from {len(valid)} files (min_lift={args.min_lift})"
+            )
 
             if cs_edges:
                 weights = list(cs_edges.values())

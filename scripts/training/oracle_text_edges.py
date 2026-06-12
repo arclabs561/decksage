@@ -32,6 +32,7 @@ Usage:
         --output data/graphs/yugioh_oracle_text.edg \
         --threshold 0.80 --top-k 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,17 +43,18 @@ from pathlib import Path
 import numpy as np
 
 
-def load_cards(csv_path: Path, name_col: str, text_col: str,
-               type_col: str | None) -> list[tuple[str, str]]:
+def load_cards(
+    csv_path: Path, name_col: str, text_col: str, type_col: str | None
+) -> list[tuple[str, str]]:
     """Load card names and text from CSV."""
     import csv
 
     cards = []
     seen = set()
-    with open(csv_path, newline='', encoding='utf-8') as f:
+    with open(csv_path, newline="", encoding="utf-8") as f:
         reader = csv.DictReader(f)
         for row in reader:
-            name = row.get(name_col, '').strip()
+            name = row.get(name_col, "").strip()
             if not name or name in seen:
                 continue
             seen.add(name)
@@ -61,11 +63,11 @@ def load_cards(csv_path: Path, name_col: str, text_col: str,
             parts = [name]
             if type_col and row.get(type_col):
                 parts.append(row[type_col].strip())
-            text = row.get(text_col, '').strip()
-            if text and text != 'nan':
+            text = row.get(text_col, "").strip()
+            if text and text != "nan":
                 parts.append(text)
 
-            full_text = '. '.join(parts)
+            full_text = ". ".join(parts)
             if len(full_text) > len(name) + 5:  # Has meaningful text beyond name
                 cards.append((name, full_text))
 
@@ -89,7 +91,7 @@ def embed_cards(texts: list[str], model_name: str, batch_size: int = 256) -> np.
         normalize_embeddings=True,  # Pre-normalize for cosine = dot product
     )
     elapsed = time.time() - t0
-    print(f"  Done in {elapsed:.1f}s ({len(texts)/elapsed:.0f} cards/sec)")
+    print(f"  Done in {elapsed:.1f}s ({len(texts) / elapsed:.0f} cards/sec)")
     return embeddings
 
 
@@ -116,7 +118,7 @@ def find_similar_pairs(
             row = sims[local_idx]
 
             # Zero out self and already-processed pairs (lower triangle)
-            row[:global_idx + 1] = -1
+            row[: global_idx + 1] = -1
 
             # Get top-K indices above threshold
             if top_k < n:
@@ -146,26 +148,42 @@ def main() -> int:
         description="Generate oracle text similarity edges",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--csv", type=Path, required=True,
-                        help="Card attributes CSV with text column")
-    parser.add_argument("--output", type=Path, required=True,
-                        help="Output edgelist (.edg)")
-    parser.add_argument("--name-col", default="name",
-                        help="Column name for card name (default: name)")
-    parser.add_argument("--text-col", default="oracle_text",
-                        help="Column name for card text (default: oracle_text)")
-    parser.add_argument("--type-col", default="type",
-                        help="Column name for card type (default: type)")
-    parser.add_argument("--model", default="all-MiniLM-L6-v2",
-                        help="Sentence transformer model (default: all-MiniLM-L6-v2)")
-    parser.add_argument("--threshold", type=float, default=0.80,
-                        help="Cosine similarity threshold for edges (default: 0.80)")
-    parser.add_argument("--top-k", type=int, default=20,
-                        help="Max neighbors per card (default: 20)")
-    parser.add_argument("--weight-scale", type=float, default=5.0,
-                        help="Scale factor for edge weights (default: 5.0)")
-    parser.add_argument("--batch-size", type=int, default=256,
-                        help="Embedding batch size (default: 256)")
+    parser.add_argument(
+        "--csv", type=Path, required=True, help="Card attributes CSV with text column"
+    )
+    parser.add_argument("--output", type=Path, required=True, help="Output edgelist (.edg)")
+    parser.add_argument(
+        "--name-col", default="name", help="Column name for card name (default: name)"
+    )
+    parser.add_argument(
+        "--text-col", default="oracle_text", help="Column name for card text (default: oracle_text)"
+    )
+    parser.add_argument(
+        "--type-col", default="type", help="Column name for card type (default: type)"
+    )
+    parser.add_argument(
+        "--model",
+        default="all-MiniLM-L6-v2",
+        help="Sentence transformer model (default: all-MiniLM-L6-v2)",
+    )
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.80,
+        help="Cosine similarity threshold for edges (default: 0.80)",
+    )
+    parser.add_argument(
+        "--top-k", type=int, default=20, help="Max neighbors per card (default: 20)"
+    )
+    parser.add_argument(
+        "--weight-scale",
+        type=float,
+        default=5.0,
+        help="Scale factor for edge weights (default: 5.0)",
+    )
+    parser.add_argument(
+        "--batch-size", type=int, default=256, help="Embedding batch size (default: 256)"
+    )
     args = parser.parse_args()
 
     if not args.csv.exists():
@@ -195,7 +213,7 @@ def main() -> int:
     # Stats
     if pairs:
         scores = [p[2] for p in pairs]
-        print(f"\nEdge stats:")
+        print("\nEdge stats:")
         print(f"  Count: {len(pairs):,}")
         print(f"  Score range: [{min(scores):.3f}, {max(scores):.3f}]")
         print(f"  Mean: {np.mean(scores):.3f}, Median: {np.median(scores):.3f}")
@@ -212,7 +230,7 @@ def main() -> int:
 
     # Write edgelist
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    with open(args.output, 'w') as f:
+    with open(args.output, "w") as f:
         for c1, c2, score in pairs:
             weight = score * args.weight_scale
             f.write(f"{c1}\t{c2}\t{weight:.4f}\n")

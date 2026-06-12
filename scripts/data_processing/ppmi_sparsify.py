@@ -18,6 +18,7 @@ Usage:
         --output data/graphs/yugioh_ppmi.edg \
         --threshold 1.0 --top-k 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -31,13 +32,21 @@ def main():
     parser = argparse.ArgumentParser(description="PPMI graph sparsification")
     parser.add_argument("--edgelist", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--threshold", type=float, default=0.0,
-                        help="Minimum PPMI to keep edge (default: 0.0, keep all positive)")
-    parser.add_argument("--top-k", type=int, default=0,
-                        help="Keep only top-K PPMI neighbors per node (0=no limit)")
-    parser.add_argument("--keep-weight", choices=["ppmi", "original", "ppmi_scaled"],
-                        default="ppmi_scaled",
-                        help="Edge weight in output: ppmi, original, or ppmi*original")
+    parser.add_argument(
+        "--threshold",
+        type=float,
+        default=0.0,
+        help="Minimum PPMI to keep edge (default: 0.0, keep all positive)",
+    )
+    parser.add_argument(
+        "--top-k", type=int, default=0, help="Keep only top-K PPMI neighbors per node (0=no limit)"
+    )
+    parser.add_argument(
+        "--keep-weight",
+        choices=["ppmi", "original", "ppmi_scaled"],
+        default="ppmi_scaled",
+        help="Edge weight in output: ppmi, original, or ppmi*original",
+    )
     args = parser.parse_args()
 
     # Load edgelist
@@ -99,12 +108,13 @@ def main():
         kept_pairs: set[tuple[str, str]] = set()
         for node in node_neighbors:
             neighbors = sorted(node_neighbors[node], key=lambda x: -x[1])
-            for nb, ppmi, w in neighbors[:args.top_k]:
+            for nb, ppmi, w in neighbors[: args.top_k]:
                 pair = tuple(sorted([node, nb]))
                 kept_pairs.add(pair)
 
         ppmi_edges = [
-            (n1, n2, ppmi, w) for n1, n2, ppmi, w in ppmi_edges
+            (n1, n2, ppmi, w)
+            for n1, n2, ppmi, w in ppmi_edges
             if tuple(sorted([n1, n2])) in kept_pairs
         ]
         print(f"  After top-{args.top_k}: {len(ppmi_edges)} edges")
@@ -129,12 +139,15 @@ def main():
     ppmi_values = [e[2] for e in ppmi_edges]
     if ppmi_values:
         import statistics
-        print(f"\nPPMI stats: mean={statistics.mean(ppmi_values):.3f}, "
-              f"median={statistics.median(ppmi_values):.3f}, "
-              f"max={max(ppmi_values):.3f}")
+
+        print(
+            f"\nPPMI stats: mean={statistics.mean(ppmi_values):.3f}, "
+            f"median={statistics.median(ppmi_values):.3f}, "
+            f"max={max(ppmi_values):.3f}"
+        )
 
     print(f"\nOutput: {len(nodes_out)} nodes, {len(output_edges)} edges")
-    print(f"  Sparsification ratio: {len(output_edges)/len(edges)*100:.1f}% of original")
+    print(f"  Sparsification ratio: {len(output_edges) / len(edges) * 100:.1f}% of original")
 
     # Write output
     args.output.parent.mkdir(parents=True, exist_ok=True)
