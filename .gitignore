@@ -143,7 +143,6 @@ comparison_report.html
 .mega-linter.yml
 .markdownlint.json
 .yamllint.yml
-.golangci.yml
 megalinter-reports/
 report/
 
@@ -183,6 +182,8 @@ runctl.toml
 src/ml/experimental/*.jsonl
 src/ml/scryfall_card_db.json
 src/ml/tests/fixtures/decks_*.jsonl
+# tiny committed fixture, exempt from the data glob above
+!src/ml/tests/fixtures/decks_export_hetero_small.jsonl
 output=experiments/test_set_comprehensive.json
 assets/
 docs/archive/

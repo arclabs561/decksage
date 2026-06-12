@@ -9,7 +9,7 @@ from __future__ import annotations
 import json
 from collections import defaultdict
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from pathlib import Path
 from time import time
 from typing import Any
@@ -40,7 +40,7 @@ HAS_VALIDATION = HAS_CARD_DB
 router = APIRouter(prefix="/v1/feedback", tags=["feedback"])
 
 
-class TaskType(str, Enum):
+class TaskType(StrEnum):
     """Type of task being evaluated."""
 
     similarity = "similarity"
