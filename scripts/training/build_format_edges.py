@@ -14,14 +14,16 @@ Usage:
     uv run scripts/training/build_format_edges.py --game magic
     uv run scripts/training/build_format_edges.py --game magic --min-cooccurrence 3
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
 import time
-from collections import Counter, defaultdict
+from collections import defaultdict
 from pathlib import Path
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -31,9 +33,17 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
 BASICS = {
-    "Plains", "Island", "Swamp", "Mountain", "Forest",
-    "Snow-Covered Plains", "Snow-Covered Island", "Snow-Covered Swamp",
-    "Snow-Covered Mountain", "Snow-Covered Forest", "Wastes",
+    "Plains",
+    "Island",
+    "Swamp",
+    "Mountain",
+    "Forest",
+    "Snow-Covered Plains",
+    "Snow-Covered Island",
+    "Snow-Covered Swamp",
+    "Snow-Covered Mountain",
+    "Snow-Covered Forest",
+    "Wastes",
 }
 
 
@@ -96,7 +106,9 @@ def main() -> int:
                 n_total += 1
 
     print(f"\n  {n_total:,} decks with format labels, {n_no_format:,} without")
-    print(f"  Formats: {', '.join(f'{k} ({len(v):,})' for k, v in sorted(format_decks.items(), key=lambda x: -len(x[1])))}")
+    print(
+        f"  Formats: {', '.join(f'{k} ({len(v):,})' for k, v in sorted(format_decks.items(), key=lambda x: -len(x[1])))}"
+    )
 
     # Build edges per format
     for fmt, decks in sorted(format_decks.items(), key=lambda x: -len(x[1])):
@@ -110,7 +122,7 @@ def main() -> int:
         for cards in decks:
             card_list = sorted(cards)
             for i, a in enumerate(card_list):
-                for b in card_list[i + 1:]:
+                for b in card_list[i + 1 :]:
                     pair_counts[(a, b)] += 1
 
         # Filter and write
@@ -132,6 +144,7 @@ def main() -> int:
 
 if __name__ == "__main__":
     import traceback
+
     try:
         sys.exit(main())
     except Exception:

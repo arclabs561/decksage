@@ -29,6 +29,7 @@ from pathlib import Path
 
 import httpx
 
+
 BULK_DATA_API = "https://api.scryfall.com/bulk-data"
 BULK_CACHE_PATH = Path("/tmp/scryfall_bulk_cards.json")
 USER_AGENT = "DeckSage/1.0 (https://github.com/arclabs561/decksage)"
@@ -70,9 +71,13 @@ def download_bulk_file(client: httpx.Client, url: str, dest: Path) -> None:
                 downloaded += len(chunk)
                 if total:
                     pct = downloaded * 100 // total
-                    print(f"\r  {downloaded // (1024*1024)}MB / {total // (1024*1024)}MB ({pct}%)", end="", flush=True)
+                    print(
+                        f"\r  {downloaded // (1024 * 1024)}MB / {total // (1024 * 1024)}MB ({pct}%)",
+                        end="",
+                        flush=True,
+                    )
         print()
-    print(f"  Download complete: {dest.stat().st_size // (1024*1024)}MB")
+    print(f"  Download complete: {dest.stat().st_size // (1024 * 1024)}MB")
 
 
 def front_face_name(name: str) -> str:
@@ -158,9 +163,7 @@ def write_prices(cards: dict[str, dict], dest: Path, *, dry_run: bool) -> None:
     print(f"Wrote {dest} ({dest.stat().st_size // 1024}KB, {len(prices):,} cards)")
 
 
-def update_enriched_csv(
-    cards: dict[str, dict], csv_path: Path, *, dry_run: bool
-) -> None:
+def update_enriched_csv(cards: dict[str, dict], csv_path: Path, *, dry_run: bool) -> None:
     """Add/update mana_cost column in the magic enriched CSV."""
     if not csv_path.exists():
         print(f"Warning: {csv_path} not found, skipping CSV update")
@@ -188,7 +191,9 @@ def update_enriched_csv(
     print(f"CSV mana_cost merge: {matched:,} / {len(rows):,} rows matched")
 
     if dry_run:
-        print(f"[dry-run] Would {'update' if had_mana_cost else 'add'} mana_cost column in {csv_path}")
+        print(
+            f"[dry-run] Would {'update' if had_mana_cost else 'add'} mana_cost column in {csv_path}"
+        )
         return
 
     out_path = csv_path  # overwrite in place
@@ -234,7 +239,9 @@ def main() -> None:
         if not bulk_path.exists():
             print(f"Error: --skip-download but {bulk_path} does not exist", file=sys.stderr)
             sys.exit(1)
-        print(f"Using cached bulk file: {bulk_path} ({bulk_path.stat().st_size // (1024*1024)}MB)")
+        print(
+            f"Using cached bulk file: {bulk_path} ({bulk_path.stat().st_size // (1024 * 1024)}MB)"
+        )
 
     cards = parse_bulk_cards(bulk_path)
 

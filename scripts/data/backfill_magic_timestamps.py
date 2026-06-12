@@ -14,6 +14,7 @@ Usage:
     --input data/decks/decks_magic_goldfish.jsonl \
     --output data/decks/decks_magic_goldfish_ts.jsonl
 """
+
 from __future__ import annotations
 
 import argparse
@@ -58,6 +59,7 @@ def extract_dates_from_batch(s3_urls: list[str]) -> dict[str, str]:
 
         # Try s5cmd first, fall back to aws cli
         import shutil
+
         if shutil.which("s5cmd"):
             url_file = tmp_path / "_urls.txt"
             with open(url_file, "w") as f:
@@ -65,7 +67,9 @@ def extract_dates_from_batch(s3_urls: list[str]) -> dict[str, str]:
                     f.write(f"cp {url} {tmp_path}/\n")
             subprocess.run(
                 ["s5cmd", "--log", "error", "run", str(url_file)],
-                capture_output=True, text=True, timeout=600,
+                capture_output=True,
+                text=True,
+                timeout=600,
             )
             url_file.unlink(missing_ok=True)
         else:
@@ -73,7 +77,9 @@ def extract_dates_from_batch(s3_urls: list[str]) -> dict[str, str]:
                 fname = url.split("/")[-1]
                 subprocess.run(
                     ["aws", "s3", "cp", url, str(tmp_path / fname)],
-                    capture_output=True, text=True, timeout=30,
+                    capture_output=True,
+                    text=True,
+                    timeout=30,
                 )
 
         for zst_file in tmp_path.glob("*.zst"):
@@ -125,7 +131,9 @@ def main() -> int:
         batch_dates = extract_dates_from_batch(batch)
         date_map.update(batch_dates)
         elapsed = time.monotonic() - t0
-        print(f"  Batch {batch_num}/{total_batches}: {len(batch_dates)} dates ({elapsed:.1f}s) | total: {len(date_map):,}")
+        print(
+            f"  Batch {batch_num}/{total_batches}: {len(batch_dates)} dates ({elapsed:.1f}s) | total: {len(date_map):,}"
+        )
 
     print(f"\nExtracted {len(date_map):,} dates from S3")
 
@@ -158,7 +166,7 @@ def main() -> int:
                 no_match += 1
                 outf.write(line)
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Total decks:       {total:,}")
     print(f"  Already had date:  {already_had:,}")
     print(f"  Dates added:       {added:,}")

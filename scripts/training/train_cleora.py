@@ -29,7 +29,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import subprocess
 import sys
@@ -38,8 +37,9 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-from scipy import sparse
 from gensim.models import KeyedVectors
+from scipy import sparse
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -153,16 +153,16 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # Load edges
-    print(f"\n[1/3] Loading edges...")
+    print("\n[1/3] Loading edges...")
     edges = load_edges(args.game)
     print(f"  Total: {len(edges):,} edges")
 
     # Build transition matrix
-    print(f"\n[2/3] Building transition matrix...")
-    transition, node_list, node_to_idx = build_transition_matrix(edges)
+    print("\n[2/3] Building transition matrix...")
+    transition, node_list, _node_to_idx = build_transition_matrix(edges)
 
     # Train at each iteration count
-    print(f"\n[3/3] Training embeddings...")
+    print("\n[3/3] Training embeddings...")
     results = []
     logs_dir = DATA_DIR / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)

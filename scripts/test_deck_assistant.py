@@ -12,8 +12,8 @@ from __future__ import annotations
 
 import sys
 import time
-from collections import defaultdict
 from pathlib import Path
+
 
 # ---------------------------------------------------------------------------
 # Setup paths
@@ -26,13 +26,14 @@ PAIRS_PATH = ROOT / "data" / "processed" / "pairs_yugioh_ygoprodeck-tournament.c
 # Import from deck_assistant
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts"))
-from deck_assistant import DeckContext, load_graph  # noqa: E402
-from gensim.models import KeyedVectors  # noqa: E402
+from deck_assistant import DeckContext, load_graph
+from gensim.models import KeyedVectors
 
 
 # ---------------------------------------------------------------------------
 # Fake RunContext that just exposes .deps
 # ---------------------------------------------------------------------------
+
 
 class FakeRunContext:
     """Minimal stand-in for pydantic_ai.RunContext[DeckContext]."""
@@ -90,7 +91,7 @@ print(f"\nTest cards: {card_a!r}, {card_b!r}, {card_c!r}\n")
 # Import tool functions
 # ---------------------------------------------------------------------------
 
-from deck_assistant import (  # noqa: E402
+from deck_assistant import (
     analyze_deck,
     find_similar_cards,
     get_card_info,
@@ -98,6 +99,7 @@ from deck_assistant import (  # noqa: E402
     suggest_additions,
     suggest_replacements,
 )
+
 
 # ===========================================================================
 # Test 1: find_similar_cards (embedding)
@@ -107,9 +109,10 @@ print("[1] find_similar_cards -- embedding method")
 results = find_similar_cards(ctx, card_a, top_k=5, method="embedding")
 check("returns list", isinstance(results, list))
 check("returns 5 results", len(results) == 5, f"got {len(results)}")
-check("each has card+score+source", all(
-    "card" in r and "score" in r and "source" in r for r in results
-))
+check(
+    "each has card+score+source",
+    all("card" in r and "score" in r and "source" in r for r in results),
+)
 check("scores in (0,1]", all(0 < r["score"] <= 1.0 for r in results))
 check("source is embedding", all(r["source"] == "embedding" for r in results))
 check("does not include query card", all(r["card"] != card_a for r in results))
@@ -141,10 +144,12 @@ if graph_cards:
     check("returns <= 5 results", 0 < len(results_co) <= 5, f"got {len(results_co)}")
     check("source is cooccurrence", all(r["source"] == "cooccurrence" for r in results_co))
     check("scores > 0", all(r["score"] > 0 for r in results_co))
-    check("sorted descending", all(
-        results_co[i]["score"] >= results_co[i + 1]["score"]
-        for i in range(len(results_co) - 1)
-    ))
+    check(
+        "sorted descending",
+        all(
+            results_co[i]["score"] >= results_co[i + 1]["score"] for i in range(len(results_co) - 1)
+        ),
+    )
 else:
     print("  SKIP  no cards in both embeddings and graph (first 100)")
 
@@ -158,9 +163,7 @@ results_search = search_cards_by_name(ctx, "dragon", limit=10)
 check("returns list", isinstance(results_search, list))
 check("non-empty", len(results_search) > 0, f"got {len(results_search)}")
 check("<= 10 results", len(results_search) <= 10)
-check("all contain 'dragon' (case-insensitive)", all(
-    "dragon" in c.lower() for c in results_search
-))
+check("all contain 'dragon' (case-insensitive)", all("dragon" in c.lower() for c in results_search))
 check("sorted alphabetically", results_search == sorted(results_search))
 
 # Edge case: empty query matches all (just check bounded)
@@ -203,9 +206,10 @@ check("unique_cards=10", analysis.get("unique_cards") == 10)
 check("cards_with_embeddings=10", analysis.get("cards_with_embeddings") == 10)
 check("has internal_synergy", "internal_synergy" in analysis)
 syn = analysis.get("internal_synergy", {})
-check("synergy has mean/max/min", all(
-    k in syn for k in ("mean_similarity", "max_similarity", "min_similarity")
-))
+check(
+    "synergy has mean/max/min",
+    all(k in syn for k in ("mean_similarity", "max_similarity", "min_similarity")),
+)
 check("mean in [-1,1]", -1 <= syn.get("mean_similarity", 99) <= 1)
 check("has cooccurrence_coverage", "cooccurrence_coverage" in analysis)
 cov = analysis.get("cooccurrence_coverage", {})
@@ -225,13 +229,15 @@ suggestions = suggest_additions(ctx, deck_cards[:5], top_k=8)
 check("returns list", isinstance(suggestions, list))
 check("non-empty", len(suggestions) > 0, f"got {len(suggestions)}")
 check("<= 8 results", len(suggestions) <= 8)
-check("each has card+synergy_score+synergizes_with_n_cards", all(
-    "card" in s and "synergy_score" in s and "synergizes_with_n_cards" in s
-    for s in suggestions
-))
-check("no suggestions already in deck", all(
-    s["card"] not in set(deck_cards[:5]) for s in suggestions
-))
+check(
+    "each has card+synergy_score+synergizes_with_n_cards",
+    all(
+        "card" in s and "synergy_score" in s and "synergizes_with_n_cards" in s for s in suggestions
+    ),
+)
+check(
+    "no suggestions already in deck", all(s["card"] not in set(deck_cards[:5]) for s in suggestions)
+)
 check("synergy_score > 0", all(s["synergy_score"] > 0 for s in suggestions))
 check("synergizes_with >= 1", all(s["synergizes_with_n_cards"] >= 1 for s in suggestions))
 
@@ -244,16 +250,20 @@ replacements = suggest_replacements(ctx, deck_cards[0], deck_cards[:5], top_k=5)
 check("returns list", isinstance(replacements, list))
 check("non-empty", len(replacements) > 0, f"got {len(replacements)}")
 check("<= 5 results", len(replacements) <= 5)
-check("each has card+similarity_to_replaced+avg_deck_synergy+combined_score", all(
-    all(k in r for k in ("card", "similarity_to_replaced", "avg_deck_synergy", "combined_score"))
-    for r in replacements
-))
-check("no replacement is the replaced card", all(
-    r["card"] != deck_cards[0] for r in replacements
-))
-check("no replacement already in deck", all(
-    r["card"] not in set(deck_cards[:5]) for r in replacements
-))
+check(
+    "each has card+similarity_to_replaced+avg_deck_synergy+combined_score",
+    all(
+        all(
+            k in r for k in ("card", "similarity_to_replaced", "avg_deck_synergy", "combined_score")
+        )
+        for r in replacements
+    ),
+)
+check("no replacement is the replaced card", all(r["card"] != deck_cards[0] for r in replacements))
+check(
+    "no replacement already in deck",
+    all(r["card"] not in set(deck_cards[:5]) for r in replacements),
+)
 
 # Not-found card
 repl_bad = suggest_replacements(ctx, "ZZZZNONEXISTENT999", deck_cards[:5], top_k=3)
@@ -263,8 +273,8 @@ check("not-found returns error", len(repl_bad) == 1 and "error" in repl_bad[0])
 # Summary
 # ===========================================================================
 
-print(f"\n{'='*60}")
+print(f"\n{'=' * 60}")
 print(f"Results: {passed} passed, {failed} failed, {passed + failed} total")
-print(f"{'='*60}")
+print(f"{'=' * 60}")
 
 sys.exit(1 if failed > 0 else 0)

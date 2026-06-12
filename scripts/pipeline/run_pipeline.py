@@ -29,6 +29,7 @@ Usage:
     # Dry run
     uv run python scripts/pipeline/run_pipeline.py --game magic --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -39,6 +40,7 @@ import time
 from pathlib import Path
 
 import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PYTHON = str(PROJECT_ROOT / ".venv/bin/python")
@@ -69,10 +71,11 @@ def run_cmd(cmd: list[str], label: str, dry_run: bool = False) -> int:
 
 def stage_diagnose(game: str, dry_run: bool) -> bool:
     """Stage 1: Dataset diagnostics. Returns True if clean."""
-    print(f"\n[1/6] DIAGNOSE: dataset sanity checks")
+    print("\n[1/6] DIAGNOSE: dataset sanity checks")
     ret = run_cmd(
         [PYTHON, "scripts/evaluation/dataset_diagnostics.py", "--game", game],
-        "diagnostics", dry_run,
+        "diagnostics",
+        dry_run,
     )
     if ret != 0 and not dry_run:
         print("  WARNING: diagnostics reported issues. Review output above.")
@@ -81,10 +84,11 @@ def stage_diagnose(game: str, dry_run: bool) -> bool:
 
 def stage_preflight(game: str, dry_run: bool) -> bool:
     """Stage 2: Preflight checks. Returns True if passed."""
-    print(f"\n[2/6] PREFLIGHT: edge source quality gates")
+    print("\n[2/6] PREFLIGHT: edge source quality gates")
     ret = run_cmd(
         [PYTHON, "scripts/training/preflight_check.py", "--game", game],
-        "preflight", dry_run,
+        "preflight",
+        dry_run,
     )
     if ret != 0 and not dry_run:
         print("  WARNING: preflight checks found issues.")
@@ -93,17 +97,18 @@ def stage_preflight(game: str, dry_run: bool) -> bool:
 
 def stage_build(game: str, dry_run: bool) -> bool:
     """Stage 3: Build unified graph."""
-    print(f"\n[3/6] BUILD: unified graph construction")
+    print("\n[3/6] BUILD: unified graph construction")
     ret = run_cmd(
         [PYTHON, "scripts/training/build_unified_graph.py", "--game", game],
-        "build", dry_run,
+        "build",
+        dry_run,
     )
     return ret == 0
 
 
 def stage_train(game: str, dry_run: bool, skip_build: bool = False) -> str | None:
     """Stage 4: Train embeddings. Returns path to best embedding or None."""
-    print(f"\n[4/6] TRAIN: PecanPy + attribute fusion")
+    print("\n[4/6] TRAIN: PecanPy + attribute fusion")
     args = [PYTHON, "scripts/training/train_all_embeddings.py", "--game", game]
     if skip_build:
         args.append("--skip-build")
@@ -120,7 +125,7 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
     from scipy import sparse
 
     output_path = input_emb.replace("_fused.wv", "_spectral.wv")
-    print(f"\n[5/6] SPECTRAL: propagation (mu=0.3, 10 steps)")
+    print("\n[5/6] SPECTRAL: propagation (mu=0.3, 10 steps)")
 
     if dry_run:
         print(f"  [DRY RUN] {input_emb} -> {output_path}")
@@ -141,7 +146,7 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
         # Try the v7 enriched edgelist as fallback
         edg_full = PROJECT_ROOT / f"data/embeddings/{game}_v7_enriched_merged.edg"
     if not edg_full.exists():
-        print(f"  SKIP: no edgelist found for spectral propagation")
+        print("  SKIP: no edgelist found for spectral propagation")
         return None
 
     edges = []
@@ -185,14 +190,15 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
 
 def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
     """Stage 6: Canonical evaluation."""
-    print(f"\n[6/6] EVAL: canonical per-mode nDCG")
+    print("\n[6/6] EVAL: canonical per-mode nDCG")
 
     # Always run diagnostics before eval
     if not dry_run:
         print("  Pre-eval diagnostics check...")
         subprocess.run(
             [PYTHON, "scripts/evaluation/dataset_diagnostics.py", "--game", game],
-            cwd=str(PROJECT_ROOT), capture_output=True,
+            cwd=str(PROJECT_ROOT),
+            capture_output=True,
         )
 
     for emb_name in embedding_names:
@@ -203,9 +209,17 @@ def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
             continue
 
         result = subprocess.run(
-            [PYTHON, "scripts/evaluation/eval_per_mode.py",
-             "--game", game, "--embedding", name, "--json"],
-            cwd=str(PROJECT_ROOT), capture_output=True,
+            [
+                PYTHON,
+                "scripts/evaluation/eval_per_mode.py",
+                "--game",
+                game,
+                "--embedding",
+                name,
+                "--json",
+            ],
+            cwd=str(PROJECT_ROOT),
+            capture_output=True,
         )
         if result.returncode == 0:
             try:
@@ -217,8 +231,10 @@ def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
                 hit10 = r.get("hit_at_k", {}).get("10", {}).get("rate", "?")
                 mrr = r.get("mrr_relevant", {}).get("mrr", "?")
                 ann_density = r.get("annotation_density", {}).get("mean_annotated_per_query", "?")
-                print(f"  {name}: sub={sub:.4f} syn={syn:.4f} overall={overall:.4f} "
-                      f"Hit@10={hit10} MRR={mrr} ann/q={ann_density}")
+                print(
+                    f"  {name}: sub={sub:.4f} syn={syn:.4f} overall={overall:.4f} "
+                    f"Hit@10={hit10} MRR={mrr} ann/q={ann_density}"
+                )
             except (json.JSONDecodeError, KeyError, IndexError):
                 print(f"  {name}: eval parse error")
         else:

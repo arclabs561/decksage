@@ -30,11 +30,11 @@ import argparse
 import csv
 import json
 import logging
-import time
 from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -113,7 +113,31 @@ def _oracle_tokens(row: dict) -> set[str]:
     if not oracle:
         return set()
     # Simple tokenization, lowercase, filter short/common words
-    stop = {"the", "a", "an", "to", "of", "and", "or", "is", "it", "its", "this", "that", "for", "in", "on", "at", "with", "from", "by", "as", "if", "you", "your"}
+    stop = {
+        "the",
+        "a",
+        "an",
+        "to",
+        "of",
+        "and",
+        "or",
+        "is",
+        "it",
+        "its",
+        "this",
+        "that",
+        "for",
+        "in",
+        "on",
+        "at",
+        "with",
+        "from",
+        "by",
+        "as",
+        "if",
+        "you",
+        "your",
+    }
     tokens = set()
     for word in oracle.lower().split():
         word = word.strip(".,;:()\"'")
@@ -206,13 +230,15 @@ def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
                 continue
 
             score = compute_similarity(row_a, row_b)
-            pairs.append({
-                "query_text": text_a,
-                "candidate_text": text_b,
-                "score": round(score, 4),
-                "query": row_a.get("name", ""),
-                "candidate": row_b.get("name", ""),
-            })
+            pairs.append(
+                {
+                    "query_text": text_a,
+                    "candidate_text": text_b,
+                    "score": round(score, 4),
+                    "query": row_a.get("name", ""),
+                    "candidate": row_b.get("name", ""),
+                }
+            )
 
         if len(pairs) >= max_pairs:
             break
@@ -225,7 +251,7 @@ def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
     brackets = [(0, 0.1), (0.1, 0.3), (0.3, 0.5), (0.5, 0.7), (0.7, 1.01)]
     for lo, hi in brackets:
         n = int(((scores >= lo) & (scores < hi)).sum())
-        log.info(f"    [{lo:.1f}, {hi:.1f}): {n} ({n/len(scores)*100:.0f}%)")
+        log.info(f"    [{lo:.1f}, {hi:.1f}): {n} ({n / len(scores) * 100:.0f}%)")
 
     return pairs
 
@@ -238,7 +264,13 @@ def main():
     parser.add_argument("--output", default=None)
     args = parser.parse_args()
 
-    games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game] if args.game else ["magic"]
+    games = (
+        ["magic", "pokemon", "yugioh"]
+        if args.all_games
+        else [args.game]
+        if args.game
+        else ["magic"]
+    )
 
     all_pairs = []
     for game in games:

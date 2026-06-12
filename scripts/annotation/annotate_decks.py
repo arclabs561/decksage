@@ -42,14 +42,16 @@ import os
 import random
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from ml.utils.paths import PATHS
+
 
 try:
     from dotenv import load_dotenv
@@ -277,7 +279,7 @@ async def annotate_deck(
                 "num_cards": sum(c.get("count", 1) for c in deck.get("cards", [])),
                 "llm_model": model_name,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         except Exception as e:
             logger.warning(f"Annotation failed for {deck_id}: {e}")
@@ -286,7 +288,7 @@ async def annotate_deck(
                 "error": str(e),
                 "llm_model": model_name,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -350,7 +352,7 @@ async def run_pipeline(
         return {"n_existing": len(already_done), "n_new": 0}
 
     if dry_run:
-        print(f"\n--- Dry Run ---")
+        print("\n--- Dry Run ---")
         print(f"  Total decks sampled: {len(decks)}")
         print(f"  Already annotated: {len(already_done)}")
         print(f"  Decks to annotate: {len(todo)}")
@@ -391,7 +393,7 @@ async def run_pipeline(
             "version": "1.0",
             "game": game,
             "llm_model": model_name,
-            "updated": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(UTC).isoformat(),
             "num_decks": len(decks_data),
             "decks": decks_data,
         }
@@ -404,7 +406,7 @@ async def run_pipeline(
                 f"  Progress: {n_done}/{len(todo)} ({rate:.1f} decks/s, {len(decks_data)} total)"
             )
 
-    print(f"\n--- Deck Annotation Summary ---")
+    print("\n--- Deck Annotation Summary ---")
     print(f"  New this run: {n_done}")
     print(f"  Total annotated: {len(decks_data)}")
     print(f"  Output: {output_path}")

@@ -27,21 +27,45 @@ import time
 import urllib.request
 from pathlib import Path
 
+
 # GitHub raw content base for the pokemon-tcg-data repo
 GITHUB_RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 GITHUB_API = "https://api.github.com/repos/PokemonTCG/pokemon-tcg-data/contents/cards/en"
 
 # Pokemon types -> color mapping for the "colors" column
 POKEMON_TYPES = {
-    "Fire", "Water", "Grass", "Lightning", "Psychic",
-    "Fighting", "Darkness", "Metal", "Dragon", "Fairy", "Colorless",
+    "Fire",
+    "Water",
+    "Grass",
+    "Lightning",
+    "Psychic",
+    "Fighting",
+    "Darkness",
+    "Metal",
+    "Dragon",
+    "Fairy",
+    "Colorless",
 }
 
 # Keywords to extract from subtypes
 SUBTYPE_KEYWORDS = {
-    "Basic", "Stage 1", "Stage 2", "V", "VMAX", "VSTAR",
-    "ex", "GX", "EX", "Mega", "BREAK", "Supporter", "Item",
-    "Stadium", "Tool", "Restored", "Level-Up",
+    "Basic",
+    "Stage 1",
+    "Stage 2",
+    "V",
+    "VMAX",
+    "VSTAR",
+    "ex",
+    "GX",
+    "EX",
+    "Mega",
+    "BREAK",
+    "Supporter",
+    "Item",
+    "Stadium",
+    "Tool",
+    "Restored",
+    "Level-Up",
 }
 
 
@@ -56,7 +80,7 @@ def fetch_json(url: str, *, timeout: int = 30, retries: int = 3) -> object:
         except Exception as e:
             if attempt == retries - 1:
                 raise
-            wait = 2 ** attempt
+            wait = 2**attempt
             print(f"    Attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
             time.sleep(wait)
     raise RuntimeError("unreachable")
@@ -90,7 +114,7 @@ def process_card(card: dict, set_release: str) -> dict:
     abilities = card.get("abilities") or []
 
     # type: combine supertype + subtypes
-    type_parts = [supertype] + subtypes
+    type_parts = [supertype, *subtypes]
     type_str = " ".join(type_parts).strip()
 
     # colors: map Pokemon types
@@ -210,10 +234,7 @@ def main() -> int:
     # -- Step 2: List all set card files --
     print("Listing card set files...")
     dir_listing = fetch_json(GITHUB_API)
-    set_files = [
-        f["name"] for f in dir_listing
-        if f["name"].endswith(".json")
-    ]
+    set_files = [f["name"] for f in dir_listing if f["name"].endswith(".json")]
     print(f"  {len(set_files)} set files found.")
 
     # -- Step 3: Fetch all card data --
@@ -239,7 +260,9 @@ def main() -> int:
             all_rows.append(row)
 
         if i % 20 == 0 or i == len(set_files):
-            print(f"  [{i}/{len(set_files)}] {filename}: {count} cards (running total: {total_raw})")
+            print(
+                f"  [{i}/{len(set_files)}] {filename}: {count} cards (running total: {total_raw})"
+            )
 
         # Small delay to be polite to GitHub
         time.sleep(0.05)
@@ -264,10 +287,23 @@ def main() -> int:
 
     # -- Step 5: Write CSV (remove internal fields) --
     fieldnames = [
-        "name", "type", "colors", "cmc", "rarity", "power", "toughness",
-        "keywords", "supertype", "subtypes", "hp", "retreat_cost",
-        "weakness_type", "resistance_type", "regulation_mark",
-        "oracle_text", "image_url",
+        "name",
+        "type",
+        "colors",
+        "cmc",
+        "rarity",
+        "power",
+        "toughness",
+        "keywords",
+        "supertype",
+        "subtypes",
+        "hp",
+        "retreat_cost",
+        "weakness_type",
+        "resistance_type",
+        "regulation_mark",
+        "oracle_text",
+        "image_url",
     ]
 
     rows = []
@@ -308,13 +344,13 @@ def main() -> int:
     print(f"Total unique cards: {len(rows)}")
     print(f"Cards with attacks (power > 0): {has_attacks}")
     print(f"Cards with abilities: {has_ability}")
-    print(f"\nBy supertype:")
+    print("\nBy supertype:")
     for st, count in sorted(supertypes.items(), key=lambda x: -x[1]):
         print(f"  {st}: {count}")
-    print(f"\nBy Pokemon type (colors):")
+    print("\nBy Pokemon type (colors):")
     for t, count in sorted(type_counts.items(), key=lambda x: -x[1]):
         print(f"  {t}: {count}")
-    print(f"\nBy rarity (top 10):")
+    print("\nBy rarity (top 10):")
     for r, count in sorted(rarities.items(), key=lambda x: -x[1])[:10]:
         print(f"  {r}: {count}")
 

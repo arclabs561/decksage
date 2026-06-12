@@ -25,10 +25,10 @@ import json
 import random
 import sys
 import time
-from collections import defaultdict
 from pathlib import Path
 
 import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -252,10 +252,13 @@ def main():
         decks, holdout_ratio=args.holdout
     )
 
-    n_entities = max(
-        max(t[0] for t in train_triples + val_triples),
-        max(t[2] for t in train_triples + val_triples),
-    ) + 1
+    n_entities = (
+        max(
+            max(t[0] for t in train_triples + val_triples),
+            max(t[2] for t in train_triples + val_triples),
+        )
+        + 1
+    )
     all_card_ids = list(id_to_card.keys())
 
     print(f"  Decks: {len(id_to_deck)}")
@@ -337,9 +340,7 @@ def main():
     print(f"  Separation ratio: {final['held_out_mean'] / max(final['random_mean'], 1e-6):.2f}x")
 
     # Save checkpoint
-    output_path = args.output or str(
-        DATA_DIR / "embeddings" / f"{args.game}_box_containment.json"
-    )
+    output_path = args.output or str(DATA_DIR / "embeddings" / f"{args.game}_box_containment.json")
     checkpoint = trainer.save_checkpoint()
     Path(output_path).parent.mkdir(parents=True, exist_ok=True)
     with open(output_path, "w") as f:

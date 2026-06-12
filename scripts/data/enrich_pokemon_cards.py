@@ -26,18 +26,42 @@ import time
 import urllib.request
 from pathlib import Path
 
+
 GITHUB_RAW = "https://raw.githubusercontent.com/PokemonTCG/pokemon-tcg-data/master"
 GITHUB_API = "https://api.github.com/repos/PokemonTCG/pokemon-tcg-data/contents/cards/en"
 
 POKEMON_TYPES = {
-    "Fire", "Water", "Grass", "Lightning", "Psychic",
-    "Fighting", "Darkness", "Metal", "Dragon", "Fairy", "Colorless",
+    "Fire",
+    "Water",
+    "Grass",
+    "Lightning",
+    "Psychic",
+    "Fighting",
+    "Darkness",
+    "Metal",
+    "Dragon",
+    "Fairy",
+    "Colorless",
 }
 
 SUBTYPE_KEYWORDS = {
-    "Basic", "Stage 1", "Stage 2", "V", "VMAX", "VSTAR",
-    "ex", "GX", "EX", "Mega", "BREAK", "Supporter", "Item",
-    "Stadium", "Tool", "Restored", "Level-Up",
+    "Basic",
+    "Stage 1",
+    "Stage 2",
+    "V",
+    "VMAX",
+    "VSTAR",
+    "ex",
+    "GX",
+    "EX",
+    "Mega",
+    "BREAK",
+    "Supporter",
+    "Item",
+    "Stadium",
+    "Tool",
+    "Restored",
+    "Level-Up",
 }
 
 
@@ -52,7 +76,7 @@ def fetch_json(url: str, *, timeout: int = 30, retries: int = 3) -> object:
         except Exception as e:
             if attempt == retries - 1:
                 raise
-            wait = 2 ** attempt
+            wait = 2**attempt
             print(f"    Attempt {attempt + 1} failed: {e}. Retrying in {wait}s...")
             time.sleep(wait)
     raise RuntimeError("unreachable")
@@ -73,7 +97,7 @@ def build_oracle_text(card: dict) -> str:
     supertype = card.get("supertype", "")
     subtypes = card.get("subtypes") or []
     types = card.get("types") or []
-    type_line_parts = [supertype] + subtypes
+    type_line_parts = [supertype, *subtypes]
     if types:
         type_line_parts.append("-")
         type_line_parts.extend(types)
@@ -165,15 +189,12 @@ def process_card(card: dict) -> dict:
     resistances = card.get("resistances") or []
     abilities = card.get("abilities") or []
 
-    type_str = " ".join([supertype] + subtypes).strip()
+    type_str = " ".join([supertype, *subtypes]).strip()
     colors = [t for t in types if t in POKEMON_TYPES]
 
     cmc = 0
     if attacks:
-        cmc = max(
-            (a.get("convertedEnergyCost") or len(a.get("cost", [])))
-            for a in attacks
-        )
+        cmc = max((a.get("convertedEnergyCost") or len(a.get("cost", []))) for a in attacks)
 
     power = 0
     if attacks:
@@ -240,19 +261,36 @@ def process_card(card: dict) -> dict:
 
 
 FIELDNAMES = [
-    "name", "type", "colors", "cmc", "rarity", "power", "toughness",
-    "keywords", "supertype", "subtypes", "hp", "retreat_cost",
-    "weakness_type", "resistance_type", "regulation_mark",
-    "oracle_text", "image_url",
+    "name",
+    "type",
+    "colors",
+    "cmc",
+    "rarity",
+    "power",
+    "toughness",
+    "keywords",
+    "supertype",
+    "subtypes",
+    "hp",
+    "retreat_cost",
+    "weakness_type",
+    "resistance_type",
+    "regulation_mark",
+    "oracle_text",
+    "image_url",
     # enriched columns
-    "set_name", "set_release_date", "attacks_detail", "abilities_detail",
+    "set_name",
+    "set_release_date",
+    "attacks_detail",
+    "abilities_detail",
 ]
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Enrich Pokemon card attributes from GitHub data")
     parser.add_argument(
-        "--output", type=Path,
+        "--output",
+        type=Path,
         default=Path("data/processed/card_attributes_pokemon_enriched.csv"),
         help="Output CSV path",
     )
@@ -283,7 +321,7 @@ def main() -> int:
     print(f"  {len(set_files)} set files found.")
 
     if args.limit:
-        set_files = set_files[:args.limit]
+        set_files = set_files[: args.limit]
         print(f"  Limited to {args.limit} sets.")
 
     # Step 3: Fetch all card data
@@ -312,7 +350,9 @@ def main() -> int:
             all_rows.append(row)
 
         if i % 20 == 0 or i == len(set_files):
-            print(f"  [{i}/{len(set_files)}] {filename}: {count} cards (running total: {total_raw})")
+            print(
+                f"  [{i}/{len(set_files)}] {filename}: {count} cards (running total: {total_raw})"
+            )
 
         time.sleep(0.05)
 
@@ -369,8 +409,8 @@ def main() -> int:
     print(f"Cards with attacks (power > 0): {has_attacks}")
     print(f"Cards with abilities: {has_ability}")
     print(f"Cards with set info: {has_set_info}")
-    print(f"New columns: set_name, set_release_date, attacks_detail, abilities_detail")
-    print(f"\nBy supertype:")
+    print("New columns: set_name, set_release_date, attacks_detail, abilities_detail")
+    print("\nBy supertype:")
     for st, count in sorted(supertypes.items(), key=lambda x: -x[1]):
         print(f"  {st}: {count}")
 

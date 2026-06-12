@@ -15,6 +15,7 @@ Usage:
         --output data/decks/decks_magic_commander_seq.jsonl \
         --start-id 20000000 --count 5000 --limit 1000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -26,6 +27,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+
 
 USER_AGENT = "DeckSage/1.0 (research project)"
 ARCHIDEKT_DECK = "https://archidekt.com/api/decks"
@@ -113,8 +115,14 @@ def _extract_commander(detail: dict, cards: list[dict]) -> str:
         for cmd in commanders:
             if isinstance(cmd, dict):
                 card_info = cmd.get("card", cmd)
-                oracle = card_info.get("oracleCard", card_info) if isinstance(card_info, dict) else {}
-                n = oracle.get("name", card_info.get("name", "")) if isinstance(oracle, dict) else ""
+                oracle = (
+                    card_info.get("oracleCard", card_info) if isinstance(card_info, dict) else {}
+                )
+                n = (
+                    oracle.get("name", card_info.get("name", ""))
+                    if isinstance(oracle, dict)
+                    else ""
+                )
                 if n:
                     names.append(n)
         if names:
@@ -213,24 +221,32 @@ def main() -> int:
             username = owner.get("username", "") if isinstance(owner, dict) else str(owner)
             created = detail.get("createdAt", detail.get("created_at", ""))
 
-            fmt_names = {3: "Commander", 12: "cEDH", 17: "Oathbreaker", 22: "Brawl", 24: "Duel Commander"}
+            fmt_names = {
+                3: "Commander",
+                12: "cEDH",
+                17: "Oathbreaker",
+                22: "Brawl",
+                24: "Duel Commander",
+            }
             fmt_name = fmt_names.get(fmt_id, "Commander")
 
-            decks.append({
-                "deck_id": did,
-                "archetype": commander_name,
-                "format": fmt_name,
-                "url": f"https://archidekt.com/decks/{deck_id}",
-                "source": "archidekt",
-                "player": username,
-                "event": "",
-                "placement": "",
-                "commander": commander_name,
-                "color_identity": color_id,
-                "created_at": created,
-                "scraped_at": _now_iso(),
-                "cards": cards,
-            })
+            decks.append(
+                {
+                    "deck_id": did,
+                    "archetype": commander_name,
+                    "format": fmt_name,
+                    "url": f"https://archidekt.com/decks/{deck_id}",
+                    "source": "archidekt",
+                    "player": username,
+                    "event": "",
+                    "placement": "",
+                    "commander": commander_name,
+                    "color_identity": color_id,
+                    "created_at": created,
+                    "scraped_at": _now_iso(),
+                    "cards": cards,
+                }
+            )
 
             if len(decks) % 25 == 0:
                 print(f"  {len(decks)} decks ({checked} checked, {not_found} 404s)")

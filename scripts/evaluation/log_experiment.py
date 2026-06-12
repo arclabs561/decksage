@@ -14,6 +14,7 @@ Usage:
     uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json --hypothesis "Testing 320 epochs"
     uv run scripts/evaluation/log_experiment.py data/logs/magic_metapath2vec_run.json --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -55,17 +56,24 @@ def build_experiment(run: dict, exp_id: str, hypothesis: str | None = None) -> d
             "args": " ".join(f"--{k.replace('_', '-')} {v}" for k, v in params.items()),
             "commit": run.get("git_sha", "unknown"),
         },
-        "data": {k: v for k, v in run.get("data", {}).items()},
+        "data": dict(run.get("data", {}).items()),
         "results": {},
         "conclusion": "TODO: fill in after reviewing results",
         "artifacts": list(run.get("artifacts", {}).values())
-                     if isinstance(run.get("artifacts"), dict)
-                     else run.get("artifacts", []),
+        if isinstance(run.get("artifacts"), dict)
+        else run.get("artifacts", []),
     }
 
     if ev:
-        for key in ["sub_ndcg", "syn_ndcg", "meta_ndcg", "substitutability_ndcg",
-                     "catalog_coverage", "novelty", "bias_ratio"]:
+        for key in [
+            "sub_ndcg",
+            "syn_ndcg",
+            "meta_ndcg",
+            "substitutability_ndcg",
+            "catalog_coverage",
+            "novelty",
+            "bias_ratio",
+        ]:
             if key in ev:
                 exp["results"][key] = ev[key]
 

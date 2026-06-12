@@ -213,7 +213,6 @@ def fuse_weighted_average(
     assert kv_a.vector_size == kv_b.vector_size, (
         f"Dimension mismatch: A={kv_a.vector_size}, B={kv_b.vector_size}"
     )
-    dim = kv_a.vector_size
 
     all_keys = []
     all_vecs = []

@@ -19,6 +19,7 @@ Usage:
     # or:
     PYTHONPATH=src .venv/bin/python scripts/data/download_yugioh_card_attributes.py
 """
+
 from __future__ import annotations
 
 import csv
@@ -28,6 +29,7 @@ from collections import Counter
 from pathlib import Path
 
 import requests
+
 
 API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php?misc=yes"
 
@@ -49,10 +51,7 @@ TEXT_MINE_KEYWORDS = [
 
 # Compile case-insensitive patterns (except "Quick Effect" / "Once per turn"
 # which are conventionally capitalized in YGO text)
-KEYWORD_PATTERNS = [
-    (kw, re.compile(re.escape(kw), re.IGNORECASE))
-    for kw in TEXT_MINE_KEYWORDS
-]
+KEYWORD_PATTERNS = [(kw, re.compile(re.escape(kw), re.IGNORECASE)) for kw in TEXT_MINE_KEYWORDS]
 
 CSV_COLUMNS = [
     "name",
@@ -209,9 +208,9 @@ def process_card(card: dict) -> dict:
 
 def print_summary(rows: list[dict]) -> None:
     """Print summary statistics."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Summary: {len(rows)} cards total")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # Type distribution
     type_counts = Counter(r["type"] for r in rows)
@@ -244,20 +243,20 @@ def print_summary(rows: list[dict]) -> None:
             kw = kw.strip()
             if kw in {k for k, _ in KEYWORD_PATTERNS}:
                 kw_counts[kw] += 1
-    print(f"\nText-mined keyword frequencies:")
+    print("\nText-mined keyword frequencies:")
     for k, c in kw_counts.most_common():
         print(f"  {k:30s} {c:>5d}")
 
     # Cards with archetypes
     with_arch = sum(1 for r in rows if r["archetype"])
-    print(f"\nCards with archetype: {with_arch}/{len(rows)} ({with_arch/len(rows)*100:.1f}%)")
+    print(f"\nCards with archetype: {with_arch}/{len(rows)} ({with_arch / len(rows) * 100:.1f}%)")
 
     # Level/CMC distribution
     level_counts = Counter()
     for r in rows:
         if r["cmc"]:
             level_counts[int(r["cmc"])] += 1
-    print(f"\nLevel distribution (monsters):")
+    print("\nLevel distribution (monsters):")
     for lv in sorted(level_counts):
         print(f"  Level {lv:2d}: {level_counts[lv]:>5d}")
 

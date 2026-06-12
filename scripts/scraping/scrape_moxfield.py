@@ -27,10 +27,11 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import cloudscraper
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -47,9 +48,11 @@ def get_client(use_proxy: bool = False) -> cloudscraper.CloudScraper:
     scraper = cloudscraper.create_scraper(
         browser={"browser": "chrome", "platform": "darwin", "mobile": False},
     )
-    scraper.headers.update({
-        "Accept": "application/json",
-    })
+    scraper.headers.update(
+        {
+            "Accept": "application/json",
+        }
+    )
 
     if use_proxy:
         proxy_url = os.environ.get("PROXY_URL") or os.environ.get("HTTP_PROXY")
@@ -121,11 +124,13 @@ def deck_to_jsonl(deck: dict, fmt: str) -> dict | None:
             if not card_name or not isinstance(card_data, dict):
                 continue
             quantity = card_data.get("quantity", 1)
-            cards.append({
-                "name": card_name,
-                "count": quantity,
-                "partition": partition_name,
-            })
+            cards.append(
+                {
+                    "name": card_name,
+                    "count": quantity,
+                    "partition": partition_name,
+                }
+            )
 
     if not cards:
         return None
@@ -145,7 +150,7 @@ def deck_to_jsonl(deck: dict, fmt: str) -> dict | None:
         "views": deck.get("viewCount", 0),
         "created_at": deck.get("createdAtUtc", ""),
         "updated_at": deck.get("lastUpdatedAtUtc", ""),
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "cards": cards,
     }
 
@@ -168,6 +173,7 @@ def main() -> int:
 
     try:
         from dotenv import load_dotenv
+
         load_dotenv()
     except ImportError:
         pass

@@ -24,6 +24,7 @@ from pathlib import Path
 
 import pandas as pd
 
+
 ANNOTATIONS_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "annotations"
 
 # Discretize continuous [0, 1] scores into 5 ordinal bins.
@@ -74,27 +75,29 @@ def print_data_summary(df: pd.DataFrame, crowd: pd.DataFrame) -> None:
     pairs = df.groupby(["query", "candidate"]).size()
     models = df["llm_model"].value_counts()
 
-    print(f"\n--- Data Summary ---")
+    print("\n--- Data Summary ---")
     print(f"Total annotations:  {len(df)}")
     print(f"Unique pairs:       {len(pairs)}")
     print(f"Models:             {len(models)}")
     for model, count in models.items():
         print(f"  {model}: {count}")
 
-    print(f"\nPairs with N annotators:")
+    print("\nPairs with N annotators:")
     annotator_counts = pairs.value_counts().sort_index()
     for n, count in annotator_counts.items():
         print(f"  {n} annotators: {count} pairs")
 
-    print(f"\nLabel distribution (discretized bins):")
+    print("\nLabel distribution (discretized bins):")
     label_dist = crowd["label"].value_counts().sort_index()
     for label, count in label_dist.items():
         print(f"  {label}: {count} ({100 * count / len(crowd):.1f}%)")
 
-    print(f"\nSimilarity score stats:")
+    print("\nSimilarity score stats:")
     scores = df["similarity_score"]
-    print(f"  mean={scores.mean():.3f}  median={scores.median():.3f}  "
-          f"std={scores.std():.3f}  min={scores.min():.3f}  max={scores.max():.3f}")
+    print(
+        f"  mean={scores.mean():.3f}  median={scores.median():.3f}  "
+        f"std={scores.std():.3f}  min={scores.min():.3f}  max={scores.max():.3f}"
+    )
 
 
 def run_aggregation(crowd: pd.DataFrame, df_raw: pd.DataFrame) -> dict:
@@ -119,13 +122,17 @@ def run_aggregation(crowd: pd.DataFrame, df_raw: pd.DataFrame) -> dict:
             worker_err = ds.errors_.loc[worker]
             # Diagonal = correct rate per true label.
             if hasattr(worker_err, "values"):
-                diag = worker_err.values.diagonal() if hasattr(worker_err.values, "diagonal") else None
+                diag = (
+                    worker_err.values.diagonal() if hasattr(worker_err.values, "diagonal") else None
+                )
                 error_rates[worker] = {
                     "mean_accuracy": float(diag.mean()) if diag is not None else None,
                 }
         results["dawid_skene"]["worker_reliability"] = error_rates
         print("\nPer-model reliability (Dawid-Skene diagonal accuracy):")
-        for worker, info in sorted(error_rates.items(), key=lambda x: x[1].get("mean_accuracy", 0) or 0, reverse=True):
+        for worker, info in sorted(
+            error_rates.items(), key=lambda x: x[1].get("mean_accuracy", 0) or 0, reverse=True
+        ):
             acc = info.get("mean_accuracy")
             print(f"  {worker}: {acc:.3f}" if acc is not None else f"  {worker}: N/A")
 
@@ -153,16 +160,20 @@ def run_aggregation(crowd: pd.DataFrame, df_raw: pd.DataFrame) -> dict:
     common_tasks = set(ds_labels.index) & set(mv_labels.index)
     if common_tasks:
         agree = sum(1 for t in common_tasks if ds_labels[t] == mv_labels[t])
-        print(f"\nDS vs MV agreement: {agree}/{len(common_tasks)} "
-              f"({100 * agree / len(common_tasks):.1f}%)")
+        print(
+            f"\nDS vs MV agreement: {agree}/{len(common_tasks)} "
+            f"({100 * agree / len(common_tasks):.1f}%)"
+        )
 
     if "labels" in results.get("glad", {}):
         glad_labels = pd.Series(results["glad"]["labels"])
         common_ds_glad = set(ds_labels.index) & set(glad_labels.index)
         if common_ds_glad:
             agree = sum(1 for t in common_ds_glad if ds_labels[t] == glad_labels[t])
-            print(f"DS vs GLAD agreement: {agree}/{len(common_ds_glad)} "
-                  f"({100 * agree / len(common_ds_glad):.1f}%)")
+            print(
+                f"DS vs GLAD agreement: {agree}/{len(common_ds_glad)} "
+                f"({100 * agree / len(common_ds_glad):.1f}%)"
+            )
 
     # --- Weighted continuous consensus ---
     # Use DS worker reliability to compute reliability-weighted mean of raw scores.
@@ -179,9 +190,7 @@ def run_aggregation(crowd: pd.DataFrame, df_raw: pd.DataFrame) -> dict:
 
     # Build per-task weighted mean from raw continuous scores.
     df_with_task = df_raw.copy()
-    df_with_task["task"] = df_with_task.apply(
-        lambda r: f"{r['query']}||{r['candidate']}", axis=1
-    )
+    df_with_task["task"] = df_with_task.apply(lambda r: f"{r['query']}||{r['candidate']}", axis=1)
     df_with_task["weight"] = df_with_task["llm_model"].map(worker_weights).fillna(1.0)
     df_with_task["weighted_score"] = df_with_task["similarity_score"] * df_with_task["weight"]
 
@@ -250,9 +259,11 @@ def main() -> None:
 
     dropped = len(crowd) - len(crowd_filtered)
     if dropped > 0:
-        print(f"Filtered to pairs with >= {args.min_annotators} annotators: "
-              f"dropped {dropped} annotations "
-              f"({len(task_counts) - len(valid_tasks)} pairs)")
+        print(
+            f"Filtered to pairs with >= {args.min_annotators} annotators: "
+            f"dropped {dropped} annotations "
+            f"({len(task_counts) - len(valid_tasks)} pairs)"
+        )
 
     print_data_summary(df_filtered, crowd_filtered)
 

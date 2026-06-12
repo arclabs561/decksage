@@ -18,6 +18,7 @@ Usage:
     uv run scripts/evaluation/eval_fusion.py --game magic --sources cleora_1iter,text_e5
     uv run scripts/evaluation/eval_fusion.py --game magic --json
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,6 +28,7 @@ from pathlib import Path
 
 import numpy as np
 from gensim.models import KeyedVectors
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -51,6 +53,7 @@ DEFAULT_SOURCES = {
 def ndcg(relevances: list[float], ideal: list[float], k: int) -> float:
     def dcg(rels: list[float], k: int) -> float:
         return sum(r / np.log2(i + 2) for i, r in enumerate(rels[:k]))
+
     ideal_dcg = dcg(sorted(ideal, reverse=True), k)
     if ideal_dcg == 0:
         return 0.0
@@ -69,11 +72,16 @@ def reciprocal_rank_fusion(rankings: list[list[str]], k: int = 60) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Evaluate rank fusion of embeddings")
     parser.add_argument("--game", default="magic")
-    parser.add_argument("--sources", type=str, default="",
-                        help="Comma-separated embedding names (default: game-specific best)")
+    parser.add_argument(
+        "--sources",
+        type=str,
+        default="",
+        help="Comma-separated embedding names (default: game-specific best)",
+    )
     parser.add_argument("--top-k", type=int, default=10)
-    parser.add_argument("--candidates", type=int, default=100,
-                        help="Candidates per source before fusion")
+    parser.add_argument(
+        "--candidates", type=int, default=100, help="Candidates per source before fusion"
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
@@ -154,7 +162,7 @@ def main() -> int:
                 continue
 
             # Fuse rankings
-            fused = reciprocal_rank_fusion(rankings)[:args.top_k]
+            fused = reciprocal_rank_fusion(rankings)[: args.top_k]
 
             # Score
             relevances = [gt.get(card, 0.0) for card in fused]
@@ -216,5 +224,6 @@ if __name__ == "__main__":
         sys.exit(main())
     except Exception:
         import traceback
+
         traceback.print_exc()
         sys.exit(1)

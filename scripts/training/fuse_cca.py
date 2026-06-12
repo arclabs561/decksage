@@ -236,7 +236,7 @@ def run_sweep(
                 n_pass += 1
 
         # nDCG
-        m5, m10, n_q = evaluate_ndcg(kv, test_set_path, f"CCA-{nc_eff}D")
+        m5, m10, _n_q = evaluate_ndcg(kv, test_set_path, f"CCA-{nc_eff}D")
 
         # Random baseline
         vecs_norm = normalize(vecs, norm="l2")

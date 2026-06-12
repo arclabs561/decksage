@@ -15,6 +15,7 @@ Usage:
         --output data/decks/decks_yugioh_ygoprodeck_recent.jsonl \
         --limit 500
 """
+
 from __future__ import annotations
 
 import argparse
@@ -154,9 +155,13 @@ def _parse_deck(raw: dict, card_db: dict[int, str]) -> dict | None:
         for section in ["main", "extra", "side"]:
             for card_id in raw.get(section, []):
                 name = card_db.get(card_id, f"Card_{card_id}")
-                partition = {"main": "Main Deck", "extra": "Extra Deck", "side": "Side Deck"}[section]
+                partition = {"main": "Main Deck", "extra": "Extra Deck", "side": "Side Deck"}[
+                    section
+                ]
                 # Count duplicates
-                existing = next((c for c in cards if c["name"] == name and c["partition"] == partition), None)
+                existing = next(
+                    (c for c in cards if c["name"] == name and c["partition"] == partition), None
+                )
                 if existing:
                     existing["count"] += 1
                 else:
@@ -194,7 +199,9 @@ def _parse_community_deck(raw: dict, card_db: dict[int, str], archetype: str) ->
                     "extra_deck": "Extra Deck",
                     "side_deck": "Side Deck",
                 }[section]
-                existing = next((c for c in cards if c["name"] == name and c["partition"] == partition), None)
+                existing = next(
+                    (c for c in cards if c["name"] == name and c["partition"] == partition), None
+                )
                 if existing:
                     existing["count"] += 1
                 else:
@@ -216,21 +223,65 @@ def _parse_community_deck(raw: dict, card_db: dict[int, str], archetype: str) ->
 # Top competitive archetypes (2024-2026 meta)
 TOP_ARCHETYPES = [
     # 2025-2026 meta
-    "Fiendsmith", "Tenpai Dragon", "Snake-Eye", "Yubel", "Labrynth",
-    "Branded", "Fire King", "Rescue-ACE", "Centur-Ion", "White Forest",
-    "Vaalmonica", "Memento", "Chimera", "Mikanko", "Bystial",
+    "Fiendsmith",
+    "Tenpai Dragon",
+    "Snake-Eye",
+    "Yubel",
+    "Labrynth",
+    "Branded",
+    "Fire King",
+    "Rescue-ACE",
+    "Centur-Ion",
+    "White Forest",
+    "Vaalmonica",
+    "Memento",
+    "Chimera",
+    "Mikanko",
+    "Bystial",
     # 2024 meta
-    "Kashtira", "Purrely", "Runick", "Floowandereeze", "Tearlaments",
-    "Spright", "Salamangreat", "Sky Striker", "Eldlich", "Tri-Brigade",
+    "Kashtira",
+    "Purrely",
+    "Runick",
+    "Floowandereeze",
+    "Tearlaments",
+    "Spright",
+    "Salamangreat",
+    "Sky Striker",
+    "Eldlich",
+    "Tri-Brigade",
     # Eternal staples
-    "Virtual World", "Swordsoul", "Despia", "Dragonmaid", "Marincess",
-    "Rikka", "Madolche", "Altergeist", "Amazement", "Ancient Warriors",
-    "Unchained", "Infernoble Knight", "Dragon Link", "Phantom Knights",
-    "Invoked", "Shaddoll", "Dogmatika", "Springans", "Therion",
-    "Mathmech", "Scareclaw", "Vernusylph", "Naturia",
+    "Virtual World",
+    "Swordsoul",
+    "Despia",
+    "Dragonmaid",
+    "Marincess",
+    "Rikka",
+    "Madolche",
+    "Altergeist",
+    "Amazement",
+    "Ancient Warriors",
+    "Unchained",
+    "Infernoble Knight",
+    "Dragon Link",
+    "Phantom Knights",
+    "Invoked",
+    "Shaddoll",
+    "Dogmatika",
+    "Springans",
+    "Therion",
+    "Mathmech",
+    "Scareclaw",
+    "Vernusylph",
+    "Naturia",
     # Additional popular archetypes
-    "Blue-Eyes", "Dark Magician", "Exodia", "Stardust",
-    "Synchron", "Utopia", "Cyber Dragon", "HERO",
+    "Blue-Eyes",
+    "Dark Magician",
+    "Exodia",
+    "Stardust",
+    "Synchron",
+    "Utopia",
+    "Cyber Dragon",
+    "HERO",
 ]
 
 
@@ -297,10 +348,14 @@ def main():
     parser = argparse.ArgumentParser(description="Scrape YGO tournament decklists")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--limit", type=int, default=2000)
-    parser.add_argument("--archetypes-only", action="store_true",
-                        help="Only fetch by archetype (skip tournament endpoint)")
-    parser.add_argument("--community-decks", action="store_true",
-                        help="Also fetch recent community-submitted decks")
+    parser.add_argument(
+        "--archetypes-only",
+        action="store_true",
+        help="Only fetch by archetype (skip tournament endpoint)",
+    )
+    parser.add_argument(
+        "--community-decks", action="store_true", help="Also fetch recent community-submitted decks"
+    )
     parser.add_argument("--per-archetype", type=int, default=50)
     args = parser.parse_args()
 
@@ -319,10 +374,15 @@ def main():
             all_decks.extend(tournament)
             print(f"  Got {len(tournament)} tournament decks")
 
-        print(f"\nFetching archetype decks ({len(TOP_ARCHETYPES)} archetypes, "
-              f"{args.per_archetype} per archetype)...")
+        print(
+            f"\nFetching archetype decks ({len(TOP_ARCHETYPES)} archetypes, "
+            f"{args.per_archetype} per archetype)..."
+        )
         archetype_decks = fetch_decks_by_archetype(
-            client, card_db, TOP_ARCHETYPES, per_archetype=args.per_archetype,
+            client,
+            card_db,
+            TOP_ARCHETYPES,
+            per_archetype=args.per_archetype,
         )
         all_decks.extend(archetype_decks)
         print(f"  Got {len(archetype_decks)} archetype decks")

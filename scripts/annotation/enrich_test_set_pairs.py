@@ -45,11 +45,12 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from pydantic import BaseModel, Field
+
 
 try:
     from dotenv import load_dotenv
@@ -336,7 +337,7 @@ async def run_enrichment(
             logger.info(f"  Progress: {n_done}/{n_total} pairs ({rate:.1f} p/s)")
 
     # Final save
-    data["enrichment_updated"] = datetime.now(timezone.utc).isoformat()
+    data["enrichment_updated"] = datetime.now(UTC).isoformat()
     data["enrichment_model"] = model_name
     with open(path, "w") as f:
         json.dump(data, f, indent=2)

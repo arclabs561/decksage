@@ -21,6 +21,7 @@ Usage:
     --test-set data/test_set_minimal.json \
     --output-dir data/embeddings --prefix pokemon
 """
+
 from __future__ import annotations
 
 import argparse
@@ -34,13 +35,13 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from gensim.models import KeyedVectors, Word2Vec
-from torch_geometric.data import Data
 from torch_geometric.nn import SAGEConv
 
 
 # ---------------------------------------------------------------------------
 # Edgelist I/O (tab-separated: card1 \t card2 \t weight)
 # ---------------------------------------------------------------------------
+
 
 def load_edgelist(path: Path) -> list[tuple[str, str, float]]:
     """Load tab-separated edgelist. Handles card names with spaces."""
@@ -74,6 +75,7 @@ def build_index(edges: list[tuple[str, str, float]]) -> tuple[dict[str, int], di
 # ---------------------------------------------------------------------------
 # Method 1: PecanPy node2vec+
 # ---------------------------------------------------------------------------
+
 
 def train_pecanpy(
     edgelist_path: Path,
@@ -114,6 +116,7 @@ def train_pecanpy(
 # Method 2: PyG GraphSAGE (link prediction)
 # ---------------------------------------------------------------------------
 
+
 class GraphSAGENet(nn.Module):
     """2-layer GraphSAGE with learned embeddings (not one-hot)."""
 
@@ -152,7 +155,7 @@ def train_graphsage(
         weights.extend([w, w])
 
     edge_index = torch.tensor([src, dst], dtype=torch.long)
-    edge_weight = torch.tensor(weights, dtype=torch.float)
+    torch.tensor(weights, dtype=torch.float)
 
     model = GraphSAGENet(num_nodes, dim)
     optimizer = torch.optim.Adam(model.parameters(), lr=lr, weight_decay=1e-5)
@@ -314,6 +317,7 @@ def evaluate_embeddings(
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Compare PecanPy vs PyG GraphSAGE embeddings")
     parser.add_argument("--edgelist", type=Path, required=True, help="Input edgelist (.edg)")
@@ -351,18 +355,23 @@ def main() -> int:
     print(f"  Test queries in graph: {in_graph}/{len(test_set)}")
 
     if in_graph == 0:
-        print("Error: no test queries found in graph. Wrong edgelist for this test set?", file=sys.stderr)
+        print(
+            "Error: no test queries found in graph. Wrong edgelist for this test set?",
+            file=sys.stderr,
+        )
         return 1
 
     args.output_dir.mkdir(parents=True, exist_ok=True)
     results = {}
 
     # --- Method 1: PecanPy node2vec+ ---
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Method 1: PecanPy node2vec+")
-    print(f"  walks={args.pecanpy_walks}, walk_length={args.pecanpy_walk_length}, "
-          f"epochs={args.pecanpy_epochs}, dim={args.dim}")
-    print(f"{'='*60}")
+    print(
+        f"  walks={args.pecanpy_walks}, walk_length={args.pecanpy_walk_length}, "
+        f"epochs={args.pecanpy_epochs}, dim={args.dim}"
+    )
+    print(f"{'=' * 60}")
 
     t0 = time.monotonic()
     pecan_kv = train_pecanpy(
@@ -382,14 +391,16 @@ def main() -> int:
 
     pecan_metrics = evaluate_embeddings(pecan_kv, test_set)
     results["pecanpy_node2vec+"] = {**pecan_metrics, "train_time_s": round(pecan_time, 1)}
-    print(f"  nDCG@10={pecan_metrics['ndcg@10']:.4f}  P@10={pecan_metrics['p@10']:.4f}  "
-          f"MRR@10={pecan_metrics['mrr@10']:.4f}  (eval={pecan_metrics['evaluated']}, skip={pecan_metrics['skipped']})")
+    print(
+        f"  nDCG@10={pecan_metrics['ndcg@10']:.4f}  P@10={pecan_metrics['p@10']:.4f}  "
+        f"MRR@10={pecan_metrics['mrr@10']:.4f}  (eval={pecan_metrics['evaluated']}, skip={pecan_metrics['skipped']})"
+    )
 
     # --- Method 2: PyG GraphSAGE ---
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("Method 2: PyG GraphSAGE (link prediction)")
     print(f"  epochs={args.gnn_epochs}, dim={args.dim}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     t0 = time.monotonic()
     sage_kv = train_graphsage(
@@ -408,17 +419,21 @@ def main() -> int:
 
     sage_metrics = evaluate_embeddings(sage_kv, test_set)
     results["pyg_graphsage"] = {**sage_metrics, "train_time_s": round(sage_time, 1)}
-    print(f"  nDCG@10={sage_metrics['ndcg@10']:.4f}  P@10={sage_metrics['p@10']:.4f}  "
-          f"MRR@10={sage_metrics['mrr@10']:.4f}  (eval={sage_metrics['evaluated']}, skip={sage_metrics['skipped']})")
+    print(
+        f"  nDCG@10={sage_metrics['ndcg@10']:.4f}  P@10={sage_metrics['p@10']:.4f}  "
+        f"MRR@10={sage_metrics['mrr@10']:.4f}  (eval={sage_metrics['evaluated']}, skip={sage_metrics['skipped']})"
+    )
 
     # --- Summary ---
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("COMPARISON SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"{'Method':<25} {'nDCG@10':>8} {'P@10':>8} {'MRR@10':>8} {'Time':>8}")
     print("-" * 60)
     for name, m in results.items():
-        print(f"{name:<25} {m['ndcg@10']:>8.4f} {m['p@10']:>8.4f} {m['mrr@10']:>8.4f} {m['train_time_s']:>7.1f}s")
+        print(
+            f"{name:<25} {m['ndcg@10']:>8.4f} {m['p@10']:>8.4f} {m['mrr@10']:>8.4f} {m['train_time_s']:>7.1f}s"
+        )
     print("-" * 60)
 
     # Winner

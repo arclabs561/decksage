@@ -37,6 +37,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -50,7 +51,9 @@ def load_pairs(source: str = "selfsupervised") -> list[dict]:
         ss_path = DATA_DIR / "training" / "selfsupervised_pairs.json"
         if not ss_path.exists():
             log.error(f"Self-supervised pairs not found: {ss_path}")
-            log.error("Generate with: uv run scripts/training/generate_selfsupervised_pairs.py --all-games")
+            log.error(
+                "Generate with: uv run scripts/training/generate_selfsupervised_pairs.py --all-games"
+            )
             return []
         with open(ss_path) as f:
             data = json.load(f)
@@ -61,6 +64,7 @@ def load_pairs(source: str = "selfsupervised") -> list[dict]:
         # Load from annotations (with leakage warning)
         log.warning("Loading annotation pairs -- eval metrics will be upper bounds")
         from train_cross_encoder import load_training_pairs
+
         all_pairs = []
         for game in ["magic", "pokemon", "yugioh"]:
             all_pairs.extend(load_training_pairs(game))
@@ -90,6 +94,7 @@ def train(
 
     # Query-level split
     from collections import defaultdict
+
     by_query = defaultdict(list)
     for i, p in enumerate(pairs):
         by_query[p["query"]].append(i)
@@ -110,8 +115,10 @@ def train(
         return f"query: {text}" if not text.startswith("query:") else text
 
     train_examples = [
-        InputExample(texts=[e5_text(pairs[i]["query_text"]), e5_text(pairs[i]["candidate_text"])],
-                     label=pairs[i]["score"])
+        InputExample(
+            texts=[e5_text(pairs[i]["query_text"]), e5_text(pairs[i]["candidate_text"])],
+            label=pairs[i]["score"],
+        )
         for i in train_idx
     ]
     val_pairs = [pairs[i] for i in val_idx]
@@ -122,7 +129,9 @@ def train(
 
     # Load model
     model = SentenceTransformer(model_name)
-    log.info(f"Model loaded: {model_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.0f}M params)")
+    log.info(
+        f"Model loaded: {model_name} ({sum(p.numel() for p in model.parameters()) / 1e6:.0f}M params)"
+    )
 
     # Use CosineSimilarityLoss (regression on cosine similarity)
     # This is the standard loss for similarity fine-tuning
@@ -167,14 +176,22 @@ def train(
     # Qualitative: encode pairs and check cosine
     log.info("\nQualitative check (cosine similarity):")
     test_texts = [
-        ("query: Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "query: Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated."),
-        ("query: Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
-         "query: Counterspell | Instant | UU | Counter target spell."),
-        ("query: Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
-         "query: Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target."),
-        ("query: Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
-         "query: Cultivate | Sorcery | 2G | Search your library for up to two basic land cards."),
+        (
+            "query: Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "query: Damnation | Sorcery | 2BB | Destroy all creatures. They can't be regenerated.",
+        ),
+        (
+            "query: Wrath of God | Sorcery | 2WW | Destroy all creatures. They can't be regenerated.",
+            "query: Counterspell | Instant | UU | Counter target spell.",
+        ),
+        (
+            "query: Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+            "query: Lightning Strike | Instant | 1R | Lightning Strike deals 3 damage to any target.",
+        ),
+        (
+            "query: Lightning Bolt | Instant | R | Lightning Bolt deals 3 damage to any target.",
+            "query: Cultivate | Sorcery | 2G | Search your library for up to two basic land cards.",
+        ),
     ]
     for a, b in test_texts:
         emb_a = model.encode(a, normalize_embeddings=True)
@@ -189,13 +206,19 @@ def train(
 
 def main():
     parser = argparse.ArgumentParser(description="Fine-tune E5 on TCG card pairs")
-    parser.add_argument("--source", choices=["selfsupervised", "annotations"], default="selfsupervised")
+    parser.add_argument(
+        "--source", choices=["selfsupervised", "annotations"], default="selfsupervised"
+    )
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument("--model", default="intfloat/e5-base-v2")
     parser.add_argument("--output", default=None)
-    parser.add_argument("--max-pairs", type=int, default=20000,
-                        help="Subsample to N pairs (default 20K, faster training)")
+    parser.add_argument(
+        "--max-pairs",
+        type=int,
+        default=20000,
+        help="Subsample to N pairs (default 20K, faster training)",
+    )
     args = parser.parse_args()
 
     pairs = load_pairs(args.source)
@@ -209,8 +232,13 @@ def main():
         pairs = [pairs[i] for i in indices]
         log.info(f"Subsampled to {len(pairs)} pairs for faster training")
 
-    train(pairs, epochs=args.epochs, batch_size=args.batch_size,
-          model_name=args.model, output_dir=args.output)
+    train(
+        pairs,
+        epochs=args.epochs,
+        batch_size=args.batch_size,
+        model_name=args.model,
+        output_dir=args.output,
+    )
 
 
 if __name__ == "__main__":

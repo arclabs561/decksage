@@ -39,12 +39,12 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import subprocess
 import sys
 import time
 import traceback
 from pathlib import Path
+
 
 # Force unbuffered stdout so logs appear immediately in redirected files
 if not sys.stdout.isatty():
@@ -56,6 +56,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from gensim.models import KeyedVectors
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -767,7 +768,7 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # Load edges
-    print(f"\n[1/5] Loading typed edges...")
+    print("\n[1/5] Loading typed edges...")
     edge_types = load_typed_edges(args.game)
 
     # Filter to requested edge types
@@ -784,12 +785,12 @@ def main() -> int:
         return 1
 
     # Build heterogeneous graph (without features first to get card_list)
-    print(f"\n[2/5] Building heterogeneous graph...")
+    print("\n[2/5] Building heterogeneous graph...")
     data, card_list, card_to_idx = build_hetero_data(edge_types)
     num_nodes = len(card_list)
 
     # Load node features and attach to HeteroData
-    print(f"\n[3/5] Loading node features from card annotations...")
+    print("\n[3/5] Loading node features from card annotations...")
     node_features, feat_dim = load_node_features(args.game, card_list, card_to_idx, args.dim)
     data["card"].x = node_features
 
@@ -847,7 +848,7 @@ def main() -> int:
     embeddings = (embeddings / norms).astype(np.float32)
 
     # Save as KeyedVectors
-    print(f"\n[5/5] Saving embeddings...")
+    print("\n[5/5] Saving embeddings...")
     kv = KeyedVectors(vector_size=args.dim)
     kv.add_vectors(card_list, embeddings)
 
@@ -865,7 +866,7 @@ def main() -> int:
     quality_pairs = {}
     pairs = test_cards.get(args.game, [])
     if pairs:
-        print(f"\n  Quality pairs:")
+        print("\n  Quality pairs:")
         for c1, c2 in pairs:
             if c1 in kv and c2 in kv:
                 sim = float(kv.similarity(c1, c2))
@@ -876,7 +877,7 @@ def main() -> int:
     eval_results = None
     eval_script = PROJECT_ROOT / "scripts" / "evaluation" / "eval_per_mode.py"
     if eval_script.exists():
-        print(f"\n  Running evaluation...")
+        print("\n  Running evaluation...")
         try:
             result = subprocess.run(
                 [
@@ -932,7 +933,7 @@ def main() -> int:
 
     # Downstream task evals
     downstream = {}
-    print(f"\n  Downstream evals...")
+    print("\n  Downstream evals...")
 
     test_set_path = DATA_DIR / "test_sets" / f"annotated_{args.game}_v2.json"
     if test_set_path.exists():

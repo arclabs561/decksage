@@ -48,11 +48,12 @@ import os
 import sys
 import time
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
@@ -60,6 +61,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 
 from ml.utils.data_loading import load_edgelist
 from ml.utils.paths import PATHS
+
 
 # Optional: pydantic-ai for LLM annotations
 try:
@@ -78,7 +80,7 @@ except ImportError:
     KeyedVectors = None
 
 try:
-    from ml.annotation.llm_annotator import CardSimilarityAnnotation, LLMAnnotator
+    from ml.annotation.llm_annotator import CardSimilarityAnnotation
 
     HAS_ANNOTATOR = True
 except ImportError:
@@ -428,7 +430,7 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "llm_model": model_name,
             "embedding_version": embedding_version,
             "game": game,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
         logger.warning(f"Annotation failed for {query_card} <-> {candidate_card}: {e}")
@@ -444,7 +446,7 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "llm_model": model_name,
             "embedding_version": embedding_version,
             "game": game,
-            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "timestamp": datetime.now(UTC).isoformat(),
         }
 
 
@@ -573,7 +575,7 @@ def build_fallback_query(
                 "llm_model": "cosine_fallback",
                 "embedding_version": embedding_version,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         )
 
@@ -693,7 +695,7 @@ async def run_pipeline(
     card_metadata: dict[str, dict] | None = None
     for attrs_name in [
         f"card_attributes_{game}_enriched.csv",
-        f"card_attributes_enriched.csv" if game == "magic" else f"card_attributes_{game}.csv",
+        "card_attributes_enriched.csv" if game == "magic" else f"card_attributes_{game}.csv",
         f"card_attributes_{game}.csv",
     ]:
         attrs_path = PATHS.processed / attrs_name
@@ -728,7 +730,7 @@ async def run_pipeline(
         logger.info(f"Popularity computed from {edgelist_path}: {len(popularity)} cards")
     else:
         logger.warning(f"Edgelist not found: {edgelist_path}, using uniform popularity")
-        popularity = Counter({c: 1 for c in kv.key_to_index})
+        popularity = Counter(dict.fromkeys(kv.key_to_index, 1))
 
     # 6. Select new queries
     target_new = target - n_existing
@@ -765,7 +767,7 @@ async def run_pipeline(
         pop_stats = [popularity.get(q, 0) for q in new_queries]
         pop_arr = np.array(pop_stats) if pop_stats else np.array([0])
 
-        print(f"\n--- Dry Run Summary ---")
+        print("\n--- Dry Run Summary ---")
         print(f"  Existing queries: {n_existing}")
         print(f"  New queries to add: {len(query_neighbors)}")
         if batch_size:
@@ -782,12 +784,12 @@ async def run_pipeline(
         )
 
         # Show sample queries
-        print(f"\n  Sample popular queries:")
+        print("\n  Sample popular queries:")
         popular = sorted(new_queries, key=lambda c: popularity.get(c, 0), reverse=True)[:5]
         for c in popular:
             print(f"    {c} (popularity={popularity.get(c, 0):.0f})")
 
-        print(f"  Sample cold-start queries:")
+        print("  Sample cold-start queries:")
         cold = sorted(new_queries, key=lambda c: popularity.get(c, 0))[:5]
         for c in cold:
             print(f"    {c} (popularity={popularity.get(c, 0):.0f})")
@@ -889,8 +891,8 @@ async def run_pipeline(
             "source": "scale_annotations.py",
             "embedding_version": embedding_version,
             "llm_model": ",".join(m for m, _ in agent_pool) if agent_pool else model_name,
-            "created": output_data.get("created", datetime.now(timezone.utc).isoformat()),
-            "updated": datetime.now(timezone.utc).isoformat(),
+            "created": output_data.get("created", datetime.now(UTC).isoformat()),
+            "updated": datetime.now(UTC).isoformat(),
             "num_queries": len(merged_queries),
             "num_seed": len(seed_queries),
             "mode_counts": dict(mode_counts),
@@ -957,7 +959,7 @@ async def run_pipeline(
             )
 
     # 10. Final report
-    print(f"\n--- Annotation Summary ---")
+    print("\n--- Annotation Summary ---")
     print(f"  Seed queries: {len(seed_queries)}")
     print(f"  New queries this run: {n_done}")
     print(f"  Total queries: {len(merged_queries)}")
@@ -965,7 +967,7 @@ async def run_pipeline(
     print(f"  Embedding version: {embedding_version}")
     print(f"  LLM model: {model_name}")
     if mode_counts:
-        print(f"  Mode breakdown (new queries):")
+        print("  Mode breakdown (new queries):")
         for mode, count in mode_counts.most_common():
             print(f"    {mode}: {count}")
     print(f"  Cost: {cost}")
@@ -973,7 +975,7 @@ async def run_pipeline(
     remaining = target - len(merged_queries)
     if remaining > 0:
         print(f"\n  {remaining} queries remain to reach target {target}.")
-        print(f"  Re-run this command to continue.")
+        print("  Re-run this command to continue.")
 
     return {
         "n_existing": n_existing,

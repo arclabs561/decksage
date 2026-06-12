@@ -27,12 +27,12 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import subprocess
 import sys
 import time
 import traceback
 from pathlib import Path
+
 
 # Force unbuffered stdout so logs appear immediately in redirected files
 if not sys.stdout.isatty():
@@ -42,6 +42,7 @@ if not sys.stdout.isatty():
 import numpy as np
 import torch
 from gensim.models import KeyedVectors
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -243,9 +244,9 @@ def main() -> int:
         type=str,
         default="",
         help="Explicit metapath as comma-separated edge types. "
-             "E.g. --metapath deck,deck (2-hop co-occurrence for substitution). "
-             "Repeating a type creates multi-hop walks through that edge type. "
-             "Default: chain all available types once.",
+        "E.g. --metapath deck,deck (2-hop co-occurrence for substitution). "
+        "Repeating a type creates multi-hop walks through that edge type. "
+        "Default: chain all available types once.",
     )
     args = parser.parse_args()
 
@@ -254,7 +255,7 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # Load edges (via shared registry with leakage guard)
-    print(f"\n[1/4] Loading typed edges...")
+    print("\n[1/4] Loading typed edges...")
     from edge_registry import get_edge_files, load_edges_from_files
 
     graph_dir = DATA_DIR / "graphs"
@@ -269,8 +270,8 @@ def main() -> int:
         return 1
 
     # Build heterogeneous graph
-    print(f"\n[2/4] Building heterogeneous graph...")
-    edge_index_dict, card_list, card_to_idx = build_hetero_data(edge_types)
+    print("\n[2/4] Building heterogeneous graph...")
+    edge_index_dict, card_list, _card_to_idx = build_hetero_data(edge_types)
 
     # Pre-flight diagnostics
     try:
@@ -350,7 +351,7 @@ def main() -> int:
     quality_pairs = {}
     pairs = QUALITY_PAIRS.get(args.game, [])
     if pairs:
-        print(f"\n  Quality pairs:")
+        print("\n  Quality pairs:")
         for c1, c2 in pairs:
             if c1 in kv and c2 in kv:
                 sim = float(kv.similarity(c1, c2))
@@ -361,7 +362,7 @@ def main() -> int:
     eval_results = None
     eval_script = PROJECT_ROOT / "scripts" / "evaluation" / "eval_per_mode.py"
     if eval_script.exists():
-        print(f"\n  Running evaluation...")
+        print("\n  Running evaluation...")
         try:
             result = subprocess.run(
                 [
@@ -417,7 +418,7 @@ def main() -> int:
 
     # Downstream task evals (offline, from embeddings + annotations)
     downstream = {}
-    print(f"\n  Downstream evals...")
+    print("\n  Downstream evals...")
 
     # Contextual: for each annotated query, check if graded buckets rank correctly
     test_set_path = DATA_DIR / "test_sets" / f"annotated_{args.game}_v2.json"

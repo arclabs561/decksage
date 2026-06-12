@@ -30,6 +30,7 @@ Usage:
         --output data/processed/card_sets_magic_top.jsonl \
         --min-weight 5 --max-size 5 --top-k 10000
 """
+
 from __future__ import annotations
 
 import argparse
@@ -40,9 +41,7 @@ from collections import defaultdict
 from pathlib import Path
 
 
-def load_edgelist(
-    path: Path, min_weight: int = 2
-) -> tuple[dict[str, dict[str, int]], int]:
+def load_edgelist(path: Path, min_weight: int = 2) -> tuple[dict[str, dict[str, int]], int]:
     """Load tab-separated edgelist into adjacency dict.
 
     Returns (adj, edge_count) where adj[u][v] = weight.
@@ -125,7 +124,7 @@ def extend_set(
     Returns list of (card_set, total_weight, density, lift) for the base and extensions.
     """
     results = []
-    base_tw, base_ec = score_set(adj, base)
+    base_tw, _base_ec = score_set(adj, base)
     n = len(base)
     max_edges = n * (n - 1) / 2
     density = base_tw / max_edges if max_edges > 0 else 0
@@ -159,7 +158,7 @@ def extend_set(
         extended = current | {cand}
         if len(extended) > max_size:
             break
-        ext_tw, ext_ec = score_set(adj, extended)
+        ext_tw, _ext_ec = score_set(adj, extended)
         ext_n = len(extended)
         ext_max_edges = ext_n * (ext_n - 1) / 2
         ext_density = ext_tw / ext_max_edges if ext_max_edges > 0 else 0
@@ -174,7 +173,9 @@ def extend_set(
             ext_common = set(adj.get(ext_list[0], {}).keys()) - current_ext
             for m in ext_list[1:]:
                 ext_common &= set(adj.get(m, {}).keys())
-            for cand2_node in sorted(ext_common, key=lambda c: -sum(adj[c].get(m, 0) for m in ext_list))[:3]:
+            for cand2_node in sorted(
+                ext_common, key=lambda c: -sum(adj[c].get(m, 0) for m in ext_list)
+            )[:3]:
                 ext2 = current_ext | {cand2_node}
                 if len(ext2) > max_size:
                     break
@@ -223,23 +224,33 @@ def main():
     parser.add_argument("--edgelist", type=Path, required=True, help="Tab-separated edgelist file")
     parser.add_argument("--output", type=Path, required=True, help="Output JSONL file")
     parser.add_argument(
-        "--min-weight", type=int, default=5,
+        "--min-weight",
+        type=int,
+        default=5,
         help="Minimum edge weight to include (default: 5)",
     )
     parser.add_argument(
-        "--min-size", type=int, default=3,
+        "--min-size",
+        type=int,
+        default=3,
         help="Minimum set size (default: 3)",
     )
     parser.add_argument(
-        "--max-size", type=int, default=5,
+        "--max-size",
+        type=int,
+        default=5,
         help="Maximum set size (default: 5)",
     )
     parser.add_argument(
-        "--top-k", type=int, default=10_000,
+        "--top-k",
+        type=int,
+        default=10_000,
         help="Keep top K sets by score (default: 10000)",
     )
     parser.add_argument(
-        "--max-triangles", type=int, default=500_000,
+        "--max-triangles",
+        type=int,
+        default=500_000,
         help="Max triangles to process for extension (default: 500000)",
     )
     parser.add_argument("--game", type=str, default="magic", help="Game name for metadata")
@@ -279,15 +290,19 @@ def main():
 
     # Show weight distribution of triangles
     tri_weights = [t[3] for t in triangles]
-    print(f"  Triangle weight range: {min(tri_weights)}-{max(tri_weights)}, "
-          f"median={tri_weights[len(tri_weights)//2]}")
+    print(
+        f"  Triangle weight range: {min(tri_weights)}-{max(tri_weights)}, "
+        f"median={tri_weights[len(tri_weights) // 2]}"
+    )
 
     # Step 3: Extend top triangles to larger sets
     process_count = min(len(triangles), args.max_triangles)
     print(f"Extending top {process_count} triangles to size {args.min_size}-{args.max_size}...")
     t2 = time.time()
 
-    all_sets: dict[frozenset[str], tuple[float, float, float]] = {}  # -> (total_weight, density, lift)
+    all_sets: dict[
+        frozenset[str], tuple[float, float, float]
+    ] = {}  # -> (total_weight, density, lift)
 
     for idx, (a, b, c, tw) in enumerate(triangles[:process_count]):
         base = frozenset({a, b, c})
@@ -301,8 +316,7 @@ def main():
                 all_sets[card_set] = (total_w, density, lift)
 
         if (idx + 1) % 100_000 == 0:
-            print(f"    Processed {idx + 1}/{process_count} triangles, "
-                  f"{len(all_sets)} unique sets")
+            print(f"    Processed {idx + 1}/{process_count} triangles, {len(all_sets)} unique sets")
 
     print(f"  {len(all_sets)} unique sets in {time.time() - t2:.1f}s")
 
@@ -311,16 +325,18 @@ def main():
     for card_set, (total_w, density, lift) in all_sets.items():
         size = len(card_set)
         score = size * density * lift
-        scored.append({
-            "cards": sorted(card_set),
-            "size": size,
-            "support": round(total_w),
-            "support_pct": 0.0,
-            "lift": round(lift, 3),
-            "density": round(density, 3),
-            "total_weight": round(total_w),
-            "score": round(score, 3),
-        })
+        scored.append(
+            {
+                "cards": sorted(card_set),
+                "size": size,
+                "support": round(total_w),
+                "support_pct": 0.0,
+                "lift": round(lift, 3),
+                "density": round(density, 3),
+                "total_weight": round(total_w),
+                "score": round(score, 3),
+            }
+        )
 
     scored.sort(key=lambda x: (-x["score"], -x["size"], -x["lift"]))
     results = scored[: args.top_k]
@@ -363,15 +379,19 @@ def main():
         items = by_size[size]
         avg_lift = sum(i["lift"] for i in items) / len(items) if items else 0
         avg_density = sum(i["density"] for i in items) / len(items) if items else 0
-        print(f"  {size}-card sets: {len(items)} (avg lift: {avg_lift:.2f}, avg density: {avg_density:.1f})")
+        print(
+            f"  {size}-card sets: {len(items)} (avg lift: {avg_lift:.2f}, avg density: {avg_density:.1f})"
+        )
 
     for size in sorted(by_size):
         items = sorted(by_size[size], key=lambda x: -x["lift"])[:5]
         print(f"\n  Top {size}-card sets by lift:")
         for item in items:
             cards = ", ".join(item["cards"])
-            print(f"    lift={item['lift']:.2f}  weight={item['total_weight']}  "
-                  f"density={item['density']:.1f}  [{cards}]")
+            print(
+                f"    lift={item['lift']:.2f}  weight={item['total_weight']}  "
+                f"density={item['density']:.1f}  [{cards}]"
+            )
 
     print(f"\nWritten to {args.output}")
 

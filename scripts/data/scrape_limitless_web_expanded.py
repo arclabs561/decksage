@@ -15,12 +15,12 @@ Complements the Limitless API scraper by scraping the main limitlesstcg.com
 website directly. The website has server-rendered HTML with card data in
 <span class="card-count"> and <span class="card-name"> elements.
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import re
-import sys
 import time
 from datetime import UTC, datetime
 from pathlib import Path
@@ -79,7 +79,7 @@ def discover_tournament_ids(client: httpx.Client, max_pages: int = 21) -> list[d
             print(f"  No data on page {page}, stopping.")
             break
 
-        for m in re.finditer(r'/tournaments/(\d+)', html):
+        for m in re.finditer(r"/tournaments/(\d+)", html):
             tid = m.group(1)
             if tid not in seen_ids:
                 seen_ids.add(tid)
@@ -120,16 +120,18 @@ def discover_deck_ids_from_tournament(
         date_str = date_m.group(1)
 
     # Find /decks/list/{id} links
-    for m in re.finditer(r'/decks/list/(\d+)', html):
+    for m in re.finditer(r"/decks/list/(\d+)", html):
         did = m.group(1)
         if did not in seen:
             seen.add(did)
-            decks.append({
-                "deck_id": did,
-                "tournament": tournament_name,
-                "tournament_id": tournament_id,
-                "date": date_str,
-            })
+            decks.append(
+                {
+                    "deck_id": did,
+                    "tournament": tournament_name,
+                    "tournament_id": tournament_id,
+                    "date": date_str,
+                }
+            )
 
     return decks
 
@@ -174,7 +176,7 @@ def parse_decklist_page(html: str) -> dict | None:
     pos = 0
     for m in _CARD_RE.finditer(html):
         # Check for section headers between previous position and this match
-        chunk = html[pos:m.start()]
+        chunk = html[pos : m.start()]
         for sm in _SECTION_RE.finditer(chunk):
             section = sm.group(1).strip().lower()
             if "pok" in section:
@@ -257,10 +259,16 @@ def _write_decks(path: Path, decks: list[dict]) -> None:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Expand Pokemon deck data from Limitless TCG website.")
+    parser = argparse.ArgumentParser(
+        description="Expand Pokemon deck data from Limitless TCG website."
+    )
     parser.add_argument("--output", type=Path, required=True, help="Output JSONL file")
-    parser.add_argument("--existing", type=Path, nargs="*", default=[], help="Existing JSONL files to dedup against")
-    parser.add_argument("--max-tournament-pages", type=int, default=21, help="Max tournament listing pages")
+    parser.add_argument(
+        "--existing", type=Path, nargs="*", default=[], help="Existing JSONL files to dedup against"
+    )
+    parser.add_argument(
+        "--max-tournament-pages", type=int, default=21, help="Max tournament listing pages"
+    )
     parser.add_argument("--max-decks", type=int, default=15000, help="Max new decks to fetch")
     args = parser.parse_args()
 
@@ -275,7 +283,6 @@ def main():
         headers={"User-Agent": USER_AGENT},
         follow_redirects=True,
     ) as client:
-
         # Phase 1: Discover tournaments
         tournaments = discover_tournament_ids(client, max_pages=args.max_tournament_pages)
 
@@ -287,7 +294,9 @@ def main():
             if len(all_deck_metas) >= args.max_decks:
                 break
             if (i + 1) % 20 == 0:
-                print(f"  Progress: {i+1}/{len(tournaments)} tournaments, {len(all_deck_metas)} deck IDs found")
+                print(
+                    f"  Progress: {i + 1}/{len(tournaments)} tournaments, {len(all_deck_metas)} deck IDs found"
+                )
             decks = discover_deck_ids_from_tournament(client, t["id"])
             for d in decks:
                 did = d["deck_id"]
@@ -329,12 +338,14 @@ def main():
             new_decks.append(record)
 
             if len(new_decks) % 100 == 0:
-                print(f"  Scraped {len(new_decks)} new decks (failed: {failed_ids}, remaining: {to_fetch - i - 1})")
+                print(
+                    f"  Scraped {len(new_decks)} new decks (failed: {failed_ids}, remaining: {to_fetch - i - 1})"
+                )
                 _write_decks(args.output, new_decks)
 
     _write_decks(args.output, new_decks)
 
-    print(f"\n--- Results ---")
+    print("\n--- Results ---")
     print(f"  New decks scraped: {len(new_decks)}")
     print(f"  Failed/404 IDs:   {failed_ids}")
     print(f"  Output:           {args.output}")

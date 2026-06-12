@@ -38,7 +38,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import csv
 import json
 import sys
 from collections import defaultdict
@@ -49,6 +48,7 @@ import pandas as pd
 from gensim.models import KeyedVectors
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity as sklearn_cosine
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -336,7 +336,7 @@ def generate_budget_pairs(
                         "card1": ch_name,
                         "card2": exp_name,
                         "source": "budget_pair",
-                        "shared_role": list(exp_roles & ch_roles)[0],
+                        "shared_role": next(iter(exp_roles & ch_roles)),
                         "price_cheap": round(ch_row["usd"], 2),
                         "price_expensive": round(exp_row["usd"], 2),
                         "emb_sim": round(emb_sim, 4),
@@ -426,7 +426,9 @@ def generate_all(
 
 def main():
     parser = argparse.ArgumentParser(description="Generate diverse annotation pairs")
-    parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh", "digimon", "onepiece"])
+    parser.add_argument(
+        "--game", default="magic", choices=["magic", "pokemon", "yugioh", "digimon", "onepiece"]
+    )
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--output", type=Path, default=None)
     parser.add_argument("--n-text", type=int, default=200, help="Text similarity pairs per game")

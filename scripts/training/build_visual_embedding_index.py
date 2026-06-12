@@ -45,6 +45,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
@@ -134,7 +135,7 @@ def download_all_images(
         done = 0
         for future in as_completed(futures):
             done += 1
-            name, ok = future.result()
+            _name, ok = future.result()
             if ok:
                 success += 1
             else:

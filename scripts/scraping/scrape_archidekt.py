@@ -28,10 +28,11 @@ import json
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 import httpx
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -90,7 +91,7 @@ def get_deck_detail(client: httpx.Client, deck_id: int) -> dict | None:
             return r.json()
         else:
             return None
-    except Exception as e:
+    except Exception:
         return None
 
 
@@ -141,7 +142,7 @@ def deck_to_jsonl(deck: dict) -> dict | None:
         "view_count": deck.get("viewCount", 0),
         "created_at": deck.get("createdAt", ""),
         "updated_at": deck.get("updatedAt", ""),
-        "scraped_at": datetime.now(timezone.utc).isoformat(),
+        "scraped_at": datetime.now(UTC).isoformat(),
         "cards": cards,
     }
 

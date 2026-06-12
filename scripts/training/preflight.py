@@ -12,9 +12,8 @@ Usage in training scripts:
 
 from __future__ import annotations
 
-import sys
-from collections import defaultdict
 from pathlib import Path
+
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data"
 
@@ -42,7 +41,10 @@ def preflight_check(
         for i in range(len(type_names)):
             for j in range(i + 1, len(type_names)):
                 a, b = type_names[i], type_names[j]
-                sa, sb = set((e[0], e[1]) for e in edge_types[a]), set((e[0], e[1]) for e in edge_types[b])
+                sa, sb = (
+                    {(e[0], e[1]) for e in edge_types[a]},
+                    {(e[0], e[1]) for e in edge_types[b]},
+                )
                 if len(sa) > 0 and len(sb) > 0:
                     overlap = len(sa & sb) / len(sa | sb)
                     if overlap > 0.95:
@@ -82,10 +84,12 @@ def preflight_check(
         print(f"  [preflight] WARNING: {w}")
 
     if not critical and not warnings:
-        print(f"  [preflight] OK -- no issues found")
+        print("  [preflight] OK -- no issues found")
 
     if critical:
-        print(f"\n  [preflight] {len(critical)} critical issue(s). Training will likely produce degenerate results.")
+        print(
+            f"\n  [preflight] {len(critical)} critical issue(s). Training will likely produce degenerate results."
+        )
         return False
 
     return True

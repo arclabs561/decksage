@@ -28,6 +28,7 @@ Usage:
   uv run scripts/data_processing/retrain_embeddings_v4.py --game pokemon
   uv run scripts/data_processing/retrain_embeddings_v4.py --game magic --dim 128
 """
+
 from __future__ import annotations
 
 import argparse
@@ -42,6 +43,7 @@ import numpy as np
 from gensim.models import KeyedVectors, Word2Vec
 from pecanpy.pecanpy import SparseOTF
 
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 EMBEDDINGS_DIR = REPO_ROOT / "data" / "embeddings"
 
@@ -55,8 +57,11 @@ GAME_CONFIG = {
         "window": 10,
         "epochs": 50,
         "query_cards": [
-            "Lightning Bolt", "Counterspell", "Sol Ring",
-            "Swords to Plowshares", "Brainstorm",
+            "Lightning Bolt",
+            "Counterspell",
+            "Sol Ring",
+            "Swords to Plowshares",
+            "Brainstorm",
         ],
     },
     "pokemon": {
@@ -68,8 +73,11 @@ GAME_CONFIG = {
         "window": 10,
         "epochs": 100,
         "query_cards": [
-            "Charizard ex", "Pikachu", "Arcanine ex",
-            "Boss's Orders", "Professor's Research",
+            "Charizard ex",
+            "Pikachu",
+            "Arcanine ex",
+            "Boss's Orders",
+            "Professor's Research",
         ],
     },
     "yugioh": {
@@ -81,8 +89,10 @@ GAME_CONFIG = {
         "window": 10,
         "epochs": 50,
         "query_cards": [
-            "Dark Magician", "Blue-Eyes White Dragon",
-            "Ash Blossom & Joyous Spring", "Nibiru, the Primal Being",
+            "Dark Magician",
+            "Blue-Eyes White Dragon",
+            "Ash Blossom & Joyous Spring",
+            "Nibiru, the Primal Being",
             "Called by the Grave",
         ],
     },
@@ -187,7 +197,9 @@ def train_w2v_collections(collections_path: Path, cfg: dict) -> KeyedVectors:
     return model.wv
 
 
-def blend_embeddings(wv_list: list[KeyedVectors], weights: list[float] | None = None) -> KeyedVectors:
+def blend_embeddings(
+    wv_list: list[KeyedVectors], weights: list[float] | None = None
+) -> KeyedVectors:
     """Blend multiple KeyedVectors into one by weighted average."""
     if len(wv_list) == 1:
         return wv_list[0]
@@ -241,9 +253,9 @@ def train_game(game: str, cfg: dict) -> Path:
     """Train embeddings for one game."""
     output_path = EMBEDDINGS_DIR / f"{game}_cleaned_v4.wv"
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Training {game.upper()}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     embeddings: list[KeyedVectors] = []
 
@@ -280,7 +292,7 @@ def train_game(game: str, cfg: dict) -> Path:
 
     # Show samples
     if cfg.get("query_cards"):
-        print(f"\n  Sample similarities:")
+        print("\n  Sample similarities:")
         show_samples(final, cfg["query_cards"])
 
     return output_path
@@ -302,9 +314,9 @@ def main() -> int:
         output = train_game(game, cfg)
         results[game] = output
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("TRAINING COMPLETE")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     for game, path in results.items():
         exists = path.exists()
         print(f"  {game}: {path.name} {'(OK)' if exists else '(MISSING)'}")

@@ -28,6 +28,7 @@ Usage:
   # Both
   uv run scripts/data_processing/normalize_corpus_names.py --collections --pairs
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,6 +36,7 @@ import csv
 import re
 import sys
 from pathlib import Path
+
 
 # YGOProDeck numeric IDs that leak from deck JSONLs when --name-mapping is
 # incomplete or omitted.  These have no metadata and form isolated subgraphs.
@@ -102,8 +104,10 @@ def audit_collections(canonical: set[str]) -> dict[str, set[str]]:
         numeric_ids = {n for n in dropped if _NUMERIC_ID_RE.match(n)}
         non_canonical = dropped - numeric_ids
         pct = len(dropped) / len(total_names) * 100 if total_names else 0
-        print(f"  {game}: {len(total_names):,} unique names, "
-              f"{len(dropped):,} non-canonical ({pct:.1f}%)")
+        print(
+            f"  {game}: {len(total_names):,} unique names, "
+            f"{len(dropped):,} non-canonical ({pct:.1f}%)"
+        )
         if numeric_ids:
             print(f"    ({len(numeric_ids)} Card_XXXX numeric IDs)")
         if non_canonical:
@@ -139,8 +143,10 @@ def audit_pairs(canonical: set[str]) -> set[str]:
     numeric_ids = {n for n in dropped if _NUMERIC_ID_RE.match(n)}
     non_canonical = dropped - numeric_ids
     pct = len(dropped) / len(total_names) * 100 if total_names else 0
-    print(f"  pairs_large: {len(total_names):,} unique names, "
-          f"{len(dropped):,} non-canonical ({pct:.1f}%)")
+    print(
+        f"  pairs_large: {len(total_names):,} unique names, "
+        f"{len(dropped):,} non-canonical ({pct:.1f}%)"
+    )
     if numeric_ids:
         print(f"    ({len(numeric_ids)} Card_XXXX numeric IDs)")
     if non_canonical:
@@ -173,8 +179,9 @@ def clean_collections(canonical: set[str]) -> None:
             writer = csv.writer(f)
             writer.writerows(cleaned_rows)
 
-        print(f"  {game}: {rows_in} -> {rows_out} decks, "
-              f"{names_dropped:,} name occurrences removed")
+        print(
+            f"  {game}: {rows_in} -> {rows_out} decks, {names_dropped:,} name occurrences removed"
+        )
 
 
 def clean_pairs(canonical: set[str]) -> None:
@@ -205,8 +212,10 @@ def clean_pairs(canonical: set[str]) -> None:
         writer.writerows(cleaned_rows)
 
     dropped = rows_in - rows_out
-    print(f"  pairs_large: {rows_in:,} -> {rows_out:,} rows "
-          f"({dropped:,} dropped, {dropped / rows_in * 100:.1f}%)")
+    print(
+        f"  pairs_large: {rows_in:,} -> {rows_out:,} rows "
+        f"({dropped:,} dropped, {dropped / rows_in * 100:.1f}%)"
+    )
 
 
 def main() -> int:

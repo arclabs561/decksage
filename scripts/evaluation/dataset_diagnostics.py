@@ -33,6 +33,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -261,12 +262,27 @@ def diagnose_metadata(game: str) -> dict:
     df = pd.read_csv(csv_path, low_memory=False)
     total = len(df)
     coverage = {}
-    for col in ["name", "oracle_text", "type", "type_line", "mana_cost", "colors", "rarity", "image_url"]:
+    for col in [
+        "name",
+        "oracle_text",
+        "type",
+        "type_line",
+        "mana_cost",
+        "colors",
+        "rarity",
+        "image_url",
+    ]:
         if col in df.columns:
-            filled = (df[col].notna() & (df[col].astype(str) != "") & (df[col].astype(str) != "nan")).sum()
-            coverage[col] = {"filled": int(filled), "total": total, "pct": round(filled / total * 100)}
+            filled = (
+                df[col].notna() & (df[col].astype(str) != "") & (df[col].astype(str) != "nan")
+            ).sum()
+            coverage[col] = {
+                "filled": int(filled),
+                "total": total,
+                "pct": round(filled / total * 100),
+            }
             if filled / total < 0.5:
-                results["warnings"].append(f"LOW COVERAGE: {col} only {filled/total:.0%} filled")
+                results["warnings"].append(f"LOW COVERAGE: {col} only {filled / total:.0%} filled")
 
     results["total_cards"] = total
     results["coverage"] = coverage
@@ -318,7 +334,7 @@ def run_diagnostics(game: str, as_json: bool = False) -> dict:
         print(f"{'=' * 60}")
 
         # Edges
-        print(f"\n--- Edge Types ---")
+        print("\n--- Edge Types ---")
         for etype, info in results["edges"].get("edge_types", {}).items():
             print(f"  {etype:15s}: {info['edges']:>12,} edges, {info['cards']:>6,} cards")
         print(f"  {'TOTAL':15s}: {results['edges'].get('total_cards', 0):>12,} unique cards")
@@ -327,15 +343,15 @@ def run_diagnostics(game: str, as_json: bool = False) -> dict:
         ann = results.get("annotations", {})
         if "test_set" in ann:
             ts = ann["test_set"]
-            print(f"\n--- Test Set ---")
+            print("\n--- Test Set ---")
             print(f"  Queries: {ts['queries']}, with annotations: {ts['with_annotations']}")
         if "card_annotations" in ann:
             ca = ann["card_annotations"]
-            print(f"\n--- Card Annotations ---")
+            print("\n--- Card Annotations ---")
             print(f"  Total: {ca['total']}, success: {ca['success']}, errored: {ca['errored']}")
         if "diverse_iaa" in ann:
             iaa = ann["diverse_iaa"]
-            print(f"\n--- Diverse IAA ---")
+            print("\n--- Diverse IAA ---")
             print(f"  Judgments: {iaa['total_judgments']:,}, pairs: {iaa['unique_pairs']:,}")
             print(f"  Annotators/pair: {iaa['annotators_per_pair']}")
             print(f"  Score: mean={iaa['score_mean']:.3f}, std={iaa['score_std']:.3f}")
@@ -363,7 +379,7 @@ def run_diagnostics(game: str, as_json: bool = False) -> dict:
             for w in all_warnings:
                 print(f"  [!] {w}")
         else:
-            print(f"\n  No warnings.")
+            print("\n  No warnings.")
 
     return results
 

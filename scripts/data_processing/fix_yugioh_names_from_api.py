@@ -23,7 +23,6 @@ Steps:
 
 from __future__ import annotations
 
-import csv
 import json
 import re
 import sys
@@ -31,6 +30,7 @@ from pathlib import Path
 
 import httpx
 import pandas as pd
+
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 API_URL = "https://db.ygoprodeck.com/api/v7/cardinfo.php"
@@ -160,7 +160,7 @@ def rewrite_edgelist(edg_path: Path, mapping: dict[str, str]) -> dict:
 
     output_lines: list[str] = []
 
-    with open(edg_path, "r") as f:
+    with open(edg_path) as f:
         for line in f:
             lines_before += 1
             line = line.rstrip("\n")

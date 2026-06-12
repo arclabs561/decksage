@@ -13,16 +13,18 @@ Produces a clean, distill.pub-style SVG.
 """
 
 import matplotlib
+
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import numpy as np
+
 
 # Data: (experiment_id, magic_sub_ndcg, label_or_None)
 # Only experiments with measured Magic sub nDCG
 data = [
-    (1,  0.151, None),
-    (2,  0.156, "v5 fused\n(+attr fusion)"),
-    (4,  0.095, "LightGCN\n(inflated->real)"),
+    (1, 0.151, None),
+    (2, 0.156, "v5 fused\n(+attr fusion)"),
+    (4, 0.095, "LightGCN\n(inflated->real)"),
     (23, 0.156, None),  # v7 set edges
     (26, 0.156, "all-games\nbaseline"),
     (29, 0.088, "Commander\ndata (-22%)"),
@@ -68,16 +70,32 @@ ax.axvspan(51.5, 52.5, alpha=0.06, color="#d32f2f")
 ax.axvline(x=59, color="#34a853", linestyle="--", alpha=0.4, linewidth=1)
 
 # Labels for key points
-label_style = dict(fontsize=7.5, color="#444", ha="center", va="bottom",
-                   fontfamily="sans-serif", linespacing=1.3)
+label_style = {
+    "fontsize": 7.5,
+    "color": "#444",
+    "ha": "center",
+    "va": "bottom",
+    "fontfamily": "sans-serif",
+    "linespacing": 1.3,
+}
 for exp_id, ndcg, label in data:
     if label:
         offset_y = 0.02
         if "DEDUP" in label:
             offset_y = 0.04
-            label_style_local = {**label_style, "color": "#d32f2f", "fontweight": "bold", "fontsize": 8}
+            label_style_local = {
+                **label_style,
+                "color": "#d32f2f",
+                "fontweight": "bold",
+                "fontsize": 8,
+            }
         elif "SATURATED" in label:
-            label_style_local = {**label_style, "color": "#34a853", "fontweight": "bold", "fontsize": 8}
+            label_style_local = {
+                **label_style,
+                "color": "#34a853",
+                "fontweight": "bold",
+                "fontsize": 8,
+            }
         elif "HGT" in label or "LightGCN" in label:
             label_style_local = {**label_style, "color": "#888"}
             offset_y = -0.06
@@ -89,9 +107,16 @@ for exp_id, ndcg, label in data:
         ax.annotate(label, (exp_id, ndcg + offset_y), **label_style_local)
 
 # Text_e5 label
-ax.annotate(text_e5_point[2], (text_e5_point[0], text_e5_point[1] + 0.02),
-            fontsize=8, color="#34a853", fontweight="bold", ha="center", va="bottom",
-            fontfamily="sans-serif")
+ax.annotate(
+    text_e5_point[2],
+    (text_e5_point[0], text_e5_point[1] + 0.02),
+    fontsize=8,
+    color="#34a853",
+    fontweight="bold",
+    ha="center",
+    va="bottom",
+    fontfamily="sans-serif",
+)
 
 # Axes
 ax.set_xlabel("Experiment", fontsize=11, fontfamily="sans-serif", color="#333")
@@ -116,13 +141,22 @@ phases = [
 ]
 for x0, x1, label in phases:
     mid = (x0 + x1) / 2
-    ax.annotate(label, (mid, -0.01), fontsize=7, color="#999", ha="center", va="top",
-                fontfamily="sans-serif")
+    ax.annotate(
+        label,
+        (mid, -0.01),
+        fontsize=7,
+        color="#999",
+        ha="center",
+        va="top",
+        fontfamily="sans-serif",
+    )
 
 plt.tight_layout()
 
 out = "docs/figures/experiment_progression.png"
 import os
+
+
 os.makedirs(os.path.dirname(out), exist_ok=True)
 fig.savefig(out, dpi=200, bbox_inches="tight", facecolor="#ffffff")
 fig.savefig(out.replace(".png", ".svg"), bbox_inches="tight", facecolor="#ffffff")

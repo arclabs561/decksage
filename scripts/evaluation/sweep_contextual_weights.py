@@ -22,12 +22,12 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import itertools
 import json
 import sys
 from pathlib import Path
 
 import numpy as np
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -125,7 +125,7 @@ def sweep_fusion_weights(game: str) -> list[dict]:
 
     # Baseline: current embedding-only recall
     baseline = evaluate_substitution_recall(kv, test_data)
-    print(f"\nBaseline (embedding-only):")
+    print("\nBaseline (embedding-only):")
     print(f"  Recall@10: {baseline['recall']:.3f} ({baseline['found']}/{baseline['expected']})")
     print(f"  nDCG@10: {baseline['ndcg']:.3f}")
 
@@ -137,7 +137,7 @@ def sweep_fusion_weights(game: str) -> list[dict]:
     # Check LightGCN if available
     lgcn_path = DATA_DIR / "embeddings" / f"{game}_lightgcn_best.wv"
     if lgcn_path.exists():
-        print(f"\nLightGCN embedding comparison:")
+        print("\nLightGCN embedding comparison:")
         lgcn_kv = KeyedVectors.load(str(lgcn_path))
         lgcn_result = evaluate_substitution_recall(lgcn_kv, test_data)
         print(

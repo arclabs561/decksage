@@ -4,9 +4,11 @@ Shared edge file registry for all training scripts.
 Single source of truth for which edge types exist and which are safe for training.
 Import this instead of duplicating the edge file map.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
+
 
 # Edge types safe for training (self-supervised, no eval leakage)
 TRAINING_EDGE_FILES = {
@@ -43,8 +45,15 @@ EVAL_ONLY_EDGE_FILES = {
 # Use TRAINING_SAFE_SOURCE_TYPES with export_edgelist_filtered(source_types=...).
 EVAL_ONLY_SOURCE_TYPES = {"annotation", "diverse_annotation"}
 TRAINING_SAFE_SOURCE_TYPES = [
-    "co_occurrence", "ppmi", "oracle_text", "propagated",
-    "set", "precon", "keyword", "archetype", "commander",
+    "co_occurrence",
+    "ppmi",
+    "oracle_text",
+    "propagated",
+    "set",
+    "precon",
+    "keyword",
+    "archetype",
+    "commander",
 ]
 
 # Quality check pairs per game (for quick sanity checks after training)
@@ -112,6 +121,7 @@ def load_edges_from_files(
             edge_types[etype] = edges
             print(f"  {etype}: {len(edges):,} edges")
     return edge_types
+
 
 # Per-format edge files (from build_format_edges.py)
 FORMAT_EDGE_FILES = {

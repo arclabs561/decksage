@@ -22,20 +22,20 @@ Usage:
     uv run scripts/training/train_reranker.py --game magic
     uv run scripts/training/train_reranker.py --game magic --embeddings v5_fused,metapath2vec_sweep_80ep,cleora_1iter
 """
+
 from __future__ import annotations
 
 import argparse
 import json
 import sys
-import time
 import traceback
 from pathlib import Path
 
 import numpy as np
 from gensim.models import KeyedVectors
 from sklearn.linear_model import Ridge
-from sklearn.metrics import ndcg_score
 from sklearn.model_selection import train_test_split
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -62,13 +62,15 @@ def load_pairs(game: str) -> list[dict]:
             func = ann.get("functional_score")
             sub = ann.get("substitutability")
             if candidate and sim is not None:
-                pairs.append({
-                    "query": qname,
-                    "candidate": candidate,
-                    "similarity": float(sim),
-                    "functional": float(func) if func is not None else None,
-                    "substitutability": float(sub) if sub is not None else None,
-                })
+                pairs.append(
+                    {
+                        "query": qname,
+                        "candidate": candidate,
+                        "similarity": float(sim),
+                        "functional": float(func) if func is not None else None,
+                        "substitutability": float(sub) if sub is not None else None,
+                    }
+                )
     return pairs
 
 
@@ -90,13 +92,17 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Train embedding reranker")
     parser.add_argument("--game", default="magic")
     parser.add_argument(
-        "--embeddings", type=str,
+        "--embeddings",
+        type=str,
         default="v5_fused,metapath2vec_sweep_80ep,cleora_1iter,text_e5",
         help="Comma-separated embedding names to use as features",
     )
-    parser.add_argument("--target", default="similarity",
-                        choices=["similarity", "functional", "substitutability"],
-                        help="Which annotation score to predict")
+    parser.add_argument(
+        "--target",
+        default="similarity",
+        choices=["similarity", "functional", "substitutability"],
+        help="Which annotation score to predict",
+    )
     args = parser.parse_args()
 
     emb_names = [e.strip() for e in args.embeddings.split(",")]
@@ -107,7 +113,7 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # Load embeddings
-    print(f"\n[1/4] Loading embeddings...")
+    print("\n[1/4] Loading embeddings...")
     embeddings = {}
     for name in emb_names:
         path = DATA_DIR / "embeddings" / f"{args.game}_{name}.wv"
@@ -123,12 +129,12 @@ def main() -> int:
         return 1
 
     # Load annotation pairs
-    print(f"\n[2/4] Loading annotation pairs...")
+    print("\n[2/4] Loading annotation pairs...")
     pairs = load_pairs(args.game)
     print(f"  {len(pairs)} pairs")
 
     # Build feature matrix
-    print(f"\n[3/4] Building features...")
+    print("\n[3/4] Building features...")
     X = []
     y = []
     valid_pairs = []
@@ -151,13 +157,13 @@ def main() -> int:
         return 1
 
     # Train/eval split (80/20)
-    X_train, X_test, y_train, y_test, pairs_train, pairs_test = train_test_split(
+    X_train, X_test, y_train, y_test, _pairs_train, _pairs_test = train_test_split(
         X, y, valid_pairs, test_size=0.2, random_state=42
     )
     print(f"  Train: {len(X_train)}, Test: {len(X_test)}")
 
     # Train reranker (Ridge regression -- simple, interpretable)
-    print(f"\n[4/4] Training reranker...")
+    print("\n[4/4] Training reranker...")
     model = Ridge(alpha=1.0)
     model.fit(X_train, y_train)
 
@@ -166,28 +172,29 @@ def main() -> int:
     y_pred_test = model.predict(X_test)
 
     # Per-feature importance (Ridge coefficients)
-    print(f"\n  Feature weights:")
+    print("\n  Feature weights:")
     for name, coef in zip(embeddings.keys(), model.coef_):
         print(f"    {name}: {coef:.4f}")
     print(f"    intercept: {model.intercept_:.4f}")
 
     # Correlation
     from scipy.stats import spearmanr
+
     train_corr, _ = spearmanr(y_train, y_pred_train)
     test_corr, _ = spearmanr(y_test, y_pred_test)
-    print(f"\n  Spearman correlation:")
+    print("\n  Spearman correlation:")
     print(f"    Train: {train_corr:.4f}")
     print(f"    Test:  {test_corr:.4f}")
 
     # RMSE
     train_rmse = np.sqrt(np.mean((y_train - y_pred_train) ** 2))
     test_rmse = np.sqrt(np.mean((y_test - y_pred_test) ** 2))
-    print(f"\n  RMSE:")
+    print("\n  RMSE:")
     print(f"    Train: {train_rmse:.4f}")
     print(f"    Test:  {test_rmse:.4f}")
 
     # Compare individual features vs combined
-    print(f"\n  Individual feature correlations (test set):")
+    print("\n  Individual feature correlations (test set):")
     for i, name in enumerate(embeddings.keys()):
         feat_corr, _ = spearmanr(y_test, X_test[:, i])
         print(f"    {name}: {feat_corr:.4f}")

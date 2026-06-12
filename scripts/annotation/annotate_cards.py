@@ -42,14 +42,16 @@ import logging
 import os
 import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from ml.utils.paths import PATHS
+
 
 try:
     from dotenv import load_dotenv
@@ -131,7 +133,7 @@ def load_card_metadata(game: str) -> dict[str, dict]:
 
     candidates = [
         PATHS.processed / f"card_attributes_{game}_enriched.csv",
-        PATHS.processed / f"card_attributes_enriched.csv" if game == "magic" else None,
+        PATHS.processed / "card_attributes_enriched.csv" if game == "magic" else None,
         PATHS.processed / f"card_attributes_{game}.csv",
     ]
     for p in candidates:
@@ -240,7 +242,7 @@ async def annotate_card(
                 "reasoning": ann.reasoning,
                 "llm_model": model_name,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
         except Exception as e:
             logger.warning(f"Annotation failed for {name}: {e}")
@@ -249,7 +251,7 @@ async def annotate_card(
                 "error": str(e),
                 "llm_model": model_name,
                 "game": game,
-                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "timestamp": datetime.now(UTC).isoformat(),
             }
 
 
@@ -320,7 +322,7 @@ async def run_pipeline(
         return {"n_existing": len(already_done), "n_new": 0}
 
     if dry_run:
-        print(f"\n--- Dry Run ---")
+        print("\n--- Dry Run ---")
         print(f"  Total cards in metadata: {len(card_metadata)}")
         print(f"  Already annotated: {len(already_done)}")
         print(f"  Cards to annotate: {len(todo)}")
@@ -369,7 +371,7 @@ async def run_pipeline(
             "version": "1.0",
             "game": game,
             "llm_model": model_name,
-            "updated": datetime.now(timezone.utc).isoformat(),
+            "updated": datetime.now(UTC).isoformat(),
             "num_cards": len(cards_data),
             "cards": cards_data,
         }
@@ -382,7 +384,7 @@ async def run_pipeline(
         )
 
     remaining = len(card_metadata) - len(cards_data)
-    print(f"\n--- Card Annotation Summary ---")
+    print("\n--- Card Annotation Summary ---")
     print(f"  New this run: {n_done}")
     print(f"  Total annotated: {len(cards_data)}")
     print(f"  Remaining: {remaining}")

@@ -32,6 +32,7 @@ from pathlib import Path
 import numpy as np
 from gensim.models import KeyedVectors
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -151,7 +152,7 @@ def main() -> int:
     parser.add_argument("--embedding", default="magic_v5_fused")
     args = parser.parse_args()
 
-    print(f"Comparing raw vs reliability-weighted nDCG")
+    print("Comparing raw vs reliability-weighted nDCG")
     print(f"Game: {args.game}, Embedding: {args.embedding}")
     print()
 
@@ -173,7 +174,7 @@ def main() -> int:
     mp_emb = f"{args.game}_metapath2vec"
     mp_path = DATA_DIR / "embeddings" / f"{mp_emb}.wv"
     if mp_path.exists():
-        print(f"\n--- MetaPath2Vec comparison ---")
+        print("\n--- MetaPath2Vec comparison ---")
         mp_result = eval_game(args.game, mp_emb)
         print(f"Raw nDCG@10:      {mp_result['raw_ndcg']:.4f}")
         print(f"Weighted nDCG@10: {mp_result['weighted_ndcg']:.4f}")

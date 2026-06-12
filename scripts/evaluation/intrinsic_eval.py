@@ -41,6 +41,7 @@ import numpy as np
 from gensim.models import KeyedVectors
 from sklearn.metrics import roc_auc_score
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 EMBEDDINGS_DIR = DATA_DIR / "embeddings"
@@ -312,12 +313,6 @@ def functional_similarity_eval(
 
     pairs = data.get("pairs", [])
     neg_pairs = data.get("negative_pairs", [])
-
-    relevance_weights = {
-        "highly_relevant": 1.0,
-        "relevant": 0.75,
-        "irrelevant": 0.0,
-    }
 
     # Positive pairs
     pos_sims: list[float] = []

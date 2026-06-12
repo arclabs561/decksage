@@ -15,6 +15,7 @@ Usage:
         --output data/processed/card_sets_magic_goldfish.jsonl \
         --min-support 10 --min-lift 2.0 --max-size 4 --exclude-basics
 """
+
 from __future__ import annotations
 
 import argparse
@@ -74,14 +75,14 @@ def main():
     parser = argparse.ArgumentParser(description="Fast card set extraction via FP-Growth")
     parser.add_argument("--decks", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--min-support", type=int, default=10,
-                        help="Minimum deck count (default: 10)")
-    parser.add_argument("--min-lift", type=float, default=2.0,
-                        help="Minimum lift (default: 2.0)")
-    parser.add_argument("--max-size", type=int, default=4,
-                        help="Maximum set size (default: 4)")
-    parser.add_argument("--top-k", type=int, default=10000,
-                        help="Keep top K sets by lift (default: 10000)")
+    parser.add_argument(
+        "--min-support", type=int, default=10, help="Minimum deck count (default: 10)"
+    )
+    parser.add_argument("--min-lift", type=float, default=2.0, help="Minimum lift (default: 2.0)")
+    parser.add_argument("--max-size", type=int, default=4, help="Maximum set size (default: 4)")
+    parser.add_argument(
+        "--top-k", type=int, default=10000, help="Keep top K sets by lift (default: 10000)"
+    )
     parser.add_argument("--game", type=str, default=None)
     parser.add_argument("--exclude-energy", action="store_true")
     parser.add_argument("--exclude-basics", action="store_true")
@@ -97,10 +98,19 @@ def main():
     print(f"  {total_decks:,} decks loaded", flush=True)
 
     if args.exclude_basics:
-        basics = {"Plains", "Island", "Swamp", "Mountain", "Forest",
-                  "Snow-Covered Plains", "Snow-Covered Island",
-                  "Snow-Covered Swamp", "Snow-Covered Mountain",
-                  "Snow-Covered Forest", "Wastes"}
+        basics = {
+            "Plains",
+            "Island",
+            "Swamp",
+            "Mountain",
+            "Forest",
+            "Snow-Covered Plains",
+            "Snow-Covered Island",
+            "Snow-Covered Swamp",
+            "Snow-Covered Mountain",
+            "Snow-Covered Forest",
+            "Wastes",
+        }
         decks = [[c for c in d if c not in basics] for d in decks]
         decks = [d for d in decks if len(d) >= 3]
         print(f"  After removing basics: {len(decks):,} decks", flush=True)
@@ -134,7 +144,10 @@ def main():
     print(f"  Encoded in {time.time() - t0:.1f}s ({df.shape[0]:,} x {df.shape[1]:,})", flush=True)
 
     # Run FP-Growth
-    print(f"Running FP-Growth (min_support={min_support_pct:.4f}, max_len={args.max_size})...", flush=True)
+    print(
+        f"Running FP-Growth (min_support={min_support_pct:.4f}, max_len={args.max_size})...",
+        flush=True,
+    )
     t0 = time.time()
     freq_itemsets = fpgrowth(
         df,
@@ -154,7 +167,7 @@ def main():
     item_support = {}
     single_items = freq_itemsets[freq_itemsets["itemsets"].apply(len) == 1]
     for _, row in single_items.iterrows():
-        item = list(row["itemsets"])[0]
+        item = next(iter(row["itemsets"]))
         item_support[item] = row["support"]
 
     results = []
@@ -163,20 +176,22 @@ def main():
         if len(items) < 2:
             continue
         support_pct = row["support"]
-        support_count = int(round(support_pct * total_decks))
+        support_count = round(support_pct * total_decks)
 
         lift = compute_lift(items, support_pct, item_support)
         if lift < args.min_lift:
             continue
 
-        results.append({
-            "cards": sorted(items),
-            "size": len(items),
-            "support": support_count,
-            "support_pct": round(support_pct * 100, 1),
-            "lift": round(lift, 3),
-            "total_decks": total_decks,
-        })
+        results.append(
+            {
+                "cards": sorted(items),
+                "size": len(items),
+                "support": support_count,
+                "support_pct": round(support_pct * 100, 1),
+                "lift": round(lift, 3),
+                "total_decks": total_decks,
+            }
+        )
 
     # Take top-k per size to avoid larger sets dominating
     by_size_lists: dict[int, list] = defaultdict(list)
@@ -190,12 +205,15 @@ def main():
         capped.extend(size_results[:per_size_k])
     results = sorted(capped, key=lambda x: -x["lift"])
     if len(results) > args.top_k:
-        results = results[:args.top_k]
-    print(f"  Kept top {per_size_k} per size ({len(by_size_lists)} sizes), total {len(results)}", flush=True)
+        results = results[: args.top_k]
+    print(
+        f"  Kept top {per_size_k} per size ({len(by_size_lists)} sizes), total {len(results)}",
+        flush=True,
+    )
 
     # Write output
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    elapsed = time.time() - t0
+    time.time() - t0
     with open(args.output, "w") as f:
         meta = {
             "_meta": True,
@@ -217,7 +235,7 @@ def main():
     for r in results:
         by_size[r["size"]].append(r)
 
-    print(f"\nResults:", flush=True)
+    print("\nResults:", flush=True)
     print(f"  Total sets with lift >= {args.min_lift}: {len(results)}", flush=True)
     for size in sorted(by_size):
         items = by_size[size]

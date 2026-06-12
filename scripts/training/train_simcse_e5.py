@@ -24,6 +24,7 @@ Usage:
     uv run scripts/training/train_simcse_e5.py --game magic --epochs 3
     uv run scripts/training/train_simcse_e5.py --game magic --epochs 1 --dry-run
 """
+
 from __future__ import annotations
 
 import argparse
@@ -35,8 +36,8 @@ import traceback
 from pathlib import Path
 
 import numpy as np
-import torch
-from torch.utils.data import DataLoader, Dataset
+from torch.utils.data import Dataset
+
 
 if not sys.stdout.isatty():
     sys.stdout.reconfigure(line_buffering=True)
@@ -57,6 +58,7 @@ def load_card_texts(game: str) -> dict[str, str]:
     attrs_path = next((p for p in candidates if p.exists()), None)
     if attrs_path:
         import csv
+
         cards = {}
         with open(attrs_path, newline="", encoding="utf-8") as f:
             reader = csv.DictReader(f)
@@ -82,10 +84,19 @@ def load_deck_pairs(game: str, max_pairs: int = 100000) -> list[tuple[str, str]]
     pairs = []
     seen = set()
 
-    basics = {"Plains", "Island", "Swamp", "Mountain", "Forest",
-              "Snow-Covered Plains", "Snow-Covered Island",
-              "Snow-Covered Swamp", "Snow-Covered Mountain",
-              "Snow-Covered Forest", "Wastes"}
+    basics = {
+        "Plains",
+        "Island",
+        "Swamp",
+        "Mountain",
+        "Forest",
+        "Snow-Covered Plains",
+        "Snow-Covered Island",
+        "Snow-Covered Swamp",
+        "Snow-Covered Mountain",
+        "Snow-Covered Forest",
+        "Wastes",
+    }
 
     for f in sorted(deck_dir.glob(f"decks_{game}_*.jsonl")):
         with open(f) as fh:
@@ -171,13 +182,13 @@ def main() -> int:
     print(f"{'=' * 60}")
 
     # Load data
-    print(f"\n[1/4] Loading card texts...")
+    print("\n[1/4] Loading card texts...")
     card_texts = load_card_texts(args.game)
     if not card_texts:
         print("  No card texts available. Cannot fine-tune text model.")
         return 1
 
-    print(f"\n[2/4] Loading deck pairs (self-supervised)...")
+    print("\n[2/4] Loading deck pairs (self-supervised)...")
     pairs = load_deck_pairs(args.game, max_pairs=args.max_pairs)
     if len(pairs) < 100:
         print(f"  Too few pairs ({len(pairs)}). Need at least 100.")
@@ -195,8 +206,8 @@ def main() -> int:
         return 0
 
     # Load model
-    print(f"\n[3/4] Loading model...")
-    from sentence_transformers import SentenceTransformer, losses, InputExample
+    print("\n[3/4] Loading model...")
+    from sentence_transformers import InputExample, SentenceTransformer, losses
     from torch.utils.data import DataLoader as STDataLoader
 
     model = SentenceTransformer(args.model)
@@ -208,9 +219,7 @@ def main() -> int:
         neg = random.choice(all_cards)
         while neg in (a, b):
             neg = random.choice(all_cards)
-        train_examples.append(InputExample(
-            texts=[card_texts[a], card_texts[b], card_texts[neg]]
-        ))
+        train_examples.append(InputExample(texts=[card_texts[a], card_texts[b], card_texts[neg]]))
 
     train_dataloader = STDataLoader(train_examples, shuffle=True, batch_size=args.batch_size)
     train_loss = losses.TripletLoss(model=model)
@@ -230,13 +239,15 @@ def main() -> int:
     print(f"\n  Training complete in {elapsed:.1f}s")
 
     # Save embeddings for all cards
-    print(f"\n  Encoding all cards...")
+    print("\n  Encoding all cards...")
     all_names = list(card_texts.keys())
     all_texts = [card_texts[n] for n in all_names]
-    embeddings = model.encode(all_texts, batch_size=64, show_progress_bar=True,
-                              normalize_embeddings=True)
+    embeddings = model.encode(
+        all_texts, batch_size=64, show_progress_bar=True, normalize_embeddings=True
+    )
 
     from gensim.models import KeyedVectors
+
     kv = KeyedVectors(vector_size=embeddings.shape[1])
     kv.add_vectors(all_names, embeddings.astype(np.float32))
 
@@ -247,6 +258,7 @@ def main() -> int:
     # Quality pairs
     sys.path.insert(0, str(Path(__file__).parent))
     from edge_registry import QUALITY_PAIRS
+
     for c1, c2 in QUALITY_PAIRS.get(args.game, []):
         if c1 in kv and c2 in kv:
             sim = float(kv.similarity(c1, c2))
@@ -256,23 +268,38 @@ def main() -> int:
     logs_dir = DATA_DIR / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
     import subprocess
+
     git_sha = "unknown"
     try:
-        r = subprocess.run(["git", "rev-parse", "--short", "HEAD"],
-                           capture_output=True, text=True, timeout=5, cwd=str(PROJECT_ROOT))
+        r = subprocess.run(
+            ["git", "rev-parse", "--short", "HEAD"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            cwd=str(PROJECT_ROOT),
+        )
         if r.returncode == 0:
             git_sha = r.stdout.strip()
     except FileNotFoundError:
         pass
 
     summary = {
-        "game": args.game, "model": "simcse_e5",
+        "game": args.game,
+        "model": "simcse_e5",
         "git_sha": git_sha,
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S"),
-        "params": {"base_model": args.model, "epochs": args.epochs, "lr": args.lr,
-                   "batch_size": args.batch_size, "max_pairs": args.max_pairs},
-        "data": {"num_cards": len(all_names), "num_pairs": len(pairs),
-                 "source": "deck co-occurrence (self-supervised, no annotations)"},
+        "params": {
+            "base_model": args.model,
+            "epochs": args.epochs,
+            "lr": args.lr,
+            "batch_size": args.batch_size,
+            "max_pairs": args.max_pairs,
+        },
+        "data": {
+            "num_cards": len(all_names),
+            "num_pairs": len(pairs),
+            "source": "deck co-occurrence (self-supervised, no annotations)",
+        },
         "training": {"duration_s": round(elapsed, 1)},
         "artifacts": {"embeddings": str(out_path)},
     }

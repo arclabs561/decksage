@@ -14,6 +14,7 @@ Usage:
     uv run scripts/data/scrape_riftbound_decks.py
     uv run scripts/data/scrape_riftbound_decks.py --limit 20
 """
+
 from __future__ import annotations
 
 import argparse
@@ -27,6 +28,7 @@ from pathlib import Path
 
 import httpx
 from selectolax.parser import HTMLParser
+
 
 BASE_URL = "https://riftmana.com"
 USER_AGENT = "DeckSage/1.0 (research project)"
@@ -64,9 +66,7 @@ def fetch_page(client: httpx.Client, url: str, retries: int = 3) -> str:
 def discover_tournament_urls(client: httpx.Client) -> list[str]:
     """Discover all tournament deck page URLs from /tournaments/."""
     page_html = fetch_page(client, f"{BASE_URL}/tournaments/")
-    links = re.findall(
-        r'href="(https?://riftmana\.com/tournaments/[^"?]+)"', page_html
-    )
+    links = re.findall(r'href="(https?://riftmana\.com/tournaments/[^"?]+)"', page_html)
     # Deduplicate and sort
     unique = sorted(set(links))
     print(f"  Found {len(unique)} tournament URLs")
@@ -76,9 +76,7 @@ def discover_tournament_urls(client: httpx.Client) -> list[str]:
 def discover_deck_urls(client: httpx.Client) -> list[str]:
     """Discover community deck page URLs from /decks/."""
     page_html = fetch_page(client, f"{BASE_URL}/decks/")
-    links = re.findall(
-        r'href="(https?://riftmana\.com/decks/[^"?]+)"', page_html
-    )
+    links = re.findall(r'href="(https?://riftmana\.com/decks/[^"?]+)"', page_html)
     unique = sorted(set(links))
     print(f"  Found {len(unique)} community deck URLs")
     return unique
@@ -121,10 +119,8 @@ def extract_decks_from_page(page_html: str, page_url: str) -> list[dict]:
         seen_cards: dict[str, int] = {}  # name -> index in cards list
 
         for i, card_el in enumerate(card_elements):
-            card_id = card_el.attributes.get("data-card-id", "")
-            card_name = html_mod.unescape(
-                card_el.attributes.get("data-card-name", "")
-            )
+            card_el.attributes.get("data-card-id", "")
+            card_name = html_mod.unescape(card_el.attributes.get("data-card-name", ""))
             if not card_name:
                 continue
 
@@ -150,11 +146,13 @@ def extract_decks_from_page(page_html: str, page_url: str) -> list[dict]:
                 cards[idx]["count"] += qty
             else:
                 seen_cards[card_name] = len(cards)
-                cards.append({
-                    "name": card_name,
-                    "count": qty,
-                    "partition": partition,
-                })
+                cards.append(
+                    {
+                        "name": card_name,
+                        "count": qty,
+                        "partition": partition,
+                    }
+                )
 
         if not cards:
             continue
@@ -170,7 +168,6 @@ def extract_decks_from_page(page_html: str, page_url: str) -> list[dict]:
 
         # Determine source type
         is_tournament = "/tournaments/" in page_url
-        source_type = "tournament" if is_tournament else "community"
 
         # Extract champion (Legend card)
         champion = ""
@@ -249,12 +246,10 @@ def main() -> None:
         for deck in all_decks:
             f.write(json.dumps(deck, ensure_ascii=False) + "\n")
 
-    total_cards = sum(
-        sum(c["count"] for c in d["cards"]) for d in all_decks
-    )
+    total_cards = sum(sum(c["count"] for c in d["cards"]) for d in all_decks)
     avg_cards = total_cards / len(all_decks) if all_decks else 0
 
-    print(f"\nResults:")
+    print("\nResults:")
     print(f"  Decks written: {len(all_decks)}")
     print(f"  Total card slots: {total_cards}")
     print(f"  Avg cards/deck: {avg_cards:.1f}")

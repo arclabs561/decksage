@@ -27,11 +27,11 @@ import itertools
 import json
 import sys
 import time
-from datetime import datetime, timezone
 from pathlib import Path
 
 import numpy as np
 import torch
+
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
@@ -40,9 +40,10 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 
 from ml.utils.data_loading import load_edgelist
 
+
 # Import training function from existing script
 sys.path.insert(0, str(Path(__file__).parent))
-from train_lightgcn import train_lightgcn, quality_check
+from train_lightgcn import train_lightgcn
 
 
 def evaluate_ndcg(kv, game: str, k: int = 10) -> dict[str, float]:
@@ -101,7 +102,7 @@ def evaluate_ndcg(kv, game: str, k: int = 10) -> dict[str, float]:
             except KeyError:
                 continue
 
-            neighbor_rank = {card: i for i, (card, _) in enumerate(neighbors)}
+            {card: i for i, (card, _) in enumerate(neighbors)}
             gt_map = dict(scored_candidates)
 
             # Get relevance scores in embedding rank order
@@ -218,7 +219,7 @@ def main() -> int:
 
         t0 = time.monotonic()
         try:
-            kv, idx_to_node = train_lightgcn(
+            kv, _idx_to_node = train_lightgcn(
                 edges,
                 dim=dim,
                 num_layers=layers,
@@ -270,7 +271,7 @@ def main() -> int:
             print(f"  NEW BEST -> saved to {out_path}")
 
     print(f"\n{'=' * 60}")
-    print(f"SWEEP COMPLETE")
+    print("SWEEP COMPLETE")
     print(
         f"Best config: dim={best_config[0]}, layers={best_config[1]}, lr={best_config[2]}, l2_reg={best_config[3]}"
     )

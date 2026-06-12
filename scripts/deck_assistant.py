@@ -58,6 +58,7 @@ from ml.utils.data_loading import load_graph_adjacency
 # Data context (injected into agent via deps)
 # ---------------------------------------------------------------------------
 
+
 class DeckContext:
     """Holds loaded game data for tool access."""
 
@@ -101,6 +102,7 @@ class DeckContext:
 # ---------------------------------------------------------------------------
 # Tools
 # ---------------------------------------------------------------------------
+
 
 def find_similar_cards(
     ctx: RunContext[DeckContext],
@@ -207,7 +209,11 @@ def check_card_legality(
     """
     dc = ctx.deps
     if not dc.banned_cards:
-        return {"format": dc.format_name or "unknown", "note": "No ban list loaded", "all_legal": True}
+        return {
+            "format": dc.format_name or "unknown",
+            "note": "No ban list loaded",
+            "all_legal": True,
+        }
 
     results = {}
     for card in card_names:
@@ -367,12 +373,14 @@ def suggest_replacements(
         avg_deck_sim = sum(deck_sims) / len(deck_sims) if deck_sims else 0
         combined = 0.6 * float(sim_score) + 0.4 * avg_deck_sim
 
-        results.append({
-            "card": cand,
-            "similarity_to_replaced": round(float(sim_score), 4),
-            "avg_deck_synergy": round(avg_deck_sim, 4),
-            "combined_score": round(combined, 4),
-        })
+        results.append(
+            {
+                "card": cand,
+                "similarity_to_replaced": round(float(sim_score), 4),
+                "avg_deck_synergy": round(avg_deck_sim, 4),
+                "combined_score": round(combined, 4),
+            }
+        )
 
         if len(results) >= top_k:
             break
@@ -399,7 +407,9 @@ def find_card_packages(
     """
     dc = ctx.deps
     if not dc.card_sets_index:
-        return [{"error": "No card set data loaded. Run with --card-sets to enable package search."}]
+        return [
+            {"error": "No card set data loaded. Run with --card-sets to enable package search."}
+        ]
 
     # Find sets containing this card
     sets = dc.card_sets_index.get(card_name, [])
@@ -421,14 +431,16 @@ def find_card_packages(
     results = []
     for s in filtered[:top_k]:
         other_cards = [c for c in s["cards"] if c != card_name]
-        results.append({
-            "package": s["cards"],
-            "other_cards": other_cards,
-            "size": s["size"],
-            "support": s["support"],
-            "support_pct": s.get("support_pct", 0),
-            "lift": s["lift"],
-        })
+        results.append(
+            {
+                "package": s["cards"],
+                "other_cards": other_cards,
+                "size": s["size"],
+                "support": s["support"],
+                "support_pct": s.get("support_pct", 0),
+                "lift": s["lift"],
+            }
+        )
 
     return results
 
@@ -474,15 +486,20 @@ def find_deck_packages(
 
             # Score: more overlap + higher lift = better suggestion
             score = len(overlap) / len(set_cards) * card_set["lift"]
-            scored.append((score, {
-                "package": card_set["cards"],
-                "cards_in_deck": sorted(overlap),
-                "cards_to_add": sorted(missing),
-                "overlap": len(overlap),
-                "size": card_set["size"],
-                "lift": card_set["lift"],
-                "support": card_set["support"],
-            }))
+            scored.append(
+                (
+                    score,
+                    {
+                        "package": card_set["cards"],
+                        "cards_in_deck": sorted(overlap),
+                        "cards_to_add": sorted(missing),
+                        "overlap": len(overlap),
+                        "size": card_set["size"],
+                        "lift": card_set["lift"],
+                        "support": card_set["support"],
+                    },
+                )
+            )
 
     scored.sort(key=lambda x: -x[0])
     return [item for _, item in scored[:top_k]]
@@ -527,6 +544,7 @@ When suggesting cards:
 # Data loading
 # ---------------------------------------------------------------------------
 
+
 def load_graph(pairs_path: Path) -> dict[str, dict[str, float]]:
     """Load co-occurrence graph from edgelist/CSV."""
     return load_graph_adjacency(pairs_path)
@@ -553,6 +571,7 @@ def load_attrs(attrs_path: Path) -> dict[str, dict]:
 # ---------------------------------------------------------------------------
 # REPL
 # ---------------------------------------------------------------------------
+
 
 async def chat_loop(agent: Agent, dc: DeckContext):
     """Interactive chat loop."""
@@ -615,13 +634,27 @@ def main():
     parser.add_argument("--embeddings", type=Path, required=True, help="Path to .wv embeddings")
     parser.add_argument("--pairs", type=Path, required=True, help="Path to pairs edgelist/CSV")
     parser.add_argument("--attrs", type=Path, help="Path to card attributes CSV/JSON")
-    parser.add_argument("--model", default=None, help="LLM model (default: from env or claude-sonnet-4.5)")
-    parser.add_argument("--card-sets", type=Path, default=None,
-                        help="Path to card sets JSONL (from extract_card_sets_fast.py)")
-    parser.add_argument("--format", type=str, default=None,
-                        help="Game format for ban list filtering (e.g., 'modern', 'tcg')")
-    parser.add_argument("--banlist", type=Path, default=None,
-                        help="Path to ban list JSON (auto-detected if not specified)")
+    parser.add_argument(
+        "--model", default=None, help="LLM model (default: from env or claude-sonnet-4.5)"
+    )
+    parser.add_argument(
+        "--card-sets",
+        type=Path,
+        default=None,
+        help="Path to card sets JSONL (from extract_card_sets_fast.py)",
+    )
+    parser.add_argument(
+        "--format",
+        type=str,
+        default=None,
+        help="Game format for ban list filtering (e.g., 'modern', 'tcg')",
+    )
+    parser.add_argument(
+        "--banlist",
+        type=Path,
+        default=None,
+        help="Path to ban list JSON (auto-detected if not specified)",
+    )
     args = parser.parse_args()
 
     # Validate paths
@@ -665,6 +698,7 @@ def main():
     if args.format:
         try:
             from ml.utils.banlist_filter import BanlistFilter
+
             bl_path = args.banlist or Path(f"data/banlists/{args.game}_banlists.json")
             if bl_path.exists():
                 bf = BanlistFilter.load(args.game, bl_path)
@@ -693,10 +727,12 @@ def main():
         Tool(suggest_replacements),
     ]
     if dc.card_sets:
-        tools.extend([
-            Tool(find_card_packages),
-            Tool(find_deck_packages),
-        ])
+        tools.extend(
+            [
+                Tool(find_card_packages),
+                Tool(find_deck_packages),
+            ]
+        )
 
     agent = Agent(
         model_id,
@@ -707,6 +743,7 @@ def main():
     )
 
     import asyncio
+
     asyncio.run(chat_loop(agent, dc))
     return 0
 

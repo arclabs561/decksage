@@ -32,6 +32,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -213,7 +214,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     if text_idx_path.exists():
         text_matrix = np.load(str(text_idx_path))
         with open(text_names_path) as f:
-            text_names = [l.strip() for l in f]
+            text_names = [line.strip() for line in f]
         log.info(f"  Text index: {text_matrix.shape[0]:,} cards")
 
     vis_idx_path = DATA_DIR / "cache" / "visual_embeddings" / f"{game}_embeddings.npy"
@@ -222,7 +223,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     if vis_idx_path.exists():
         vis_matrix = np.load(str(vis_idx_path))
         with open(vis_names_path) as f:
-            vis_names = [l.strip() for l in f]
+            vis_names = [line.strip() for line in f]
         nonzero = int(np.count_nonzero(vis_matrix) / vis_matrix.shape[1])
         log.info(f"  Visual index: {vis_matrix.shape[0]:,} cards ({nonzero} with images)")
 

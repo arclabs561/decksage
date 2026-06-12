@@ -37,6 +37,7 @@ from pathlib import Path
 
 import numpy as np
 
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
@@ -211,13 +212,15 @@ def run_game(
 
         if (epoch + 1) % 100 == 0 or epoch == 0 or epoch == epochs - 1:
             # Evaluate
-            ids, axes, apertures = trainer.export_embeddings()
+            _ids, axes, apertures = trainer.export_embeddings()
             pos_scores, neg_scores = [], []
             for h, _, t in val:
                 try:
                     score = subsumer.cone_containment_score(
-                        axes[h].tolist(), apertures[h].tolist(),
-                        axes[t].tolist(), apertures[t].tolist(),
+                        axes[h].tolist(),
+                        apertures[h].tolist(),
+                        axes[t].tolist(),
+                        apertures[t].tolist(),
                     )
                     pos_scores.append(score)
                 except Exception:
@@ -225,8 +228,10 @@ def run_game(
                 rand_id = rng.choice(all_ids)
                 try:
                     neg = subsumer.cone_containment_score(
-                        axes[h].tolist(), apertures[h].tolist(),
-                        axes[rand_id].tolist(), apertures[rand_id].tolist(),
+                        axes[h].tolist(),
+                        apertures[h].tolist(),
+                        axes[rand_id].tolist(),
+                        apertures[rand_id].tolist(),
                     )
                     neg_scores.append(neg)
                 except Exception:
@@ -242,22 +247,30 @@ def run_game(
                 )
 
     # Final eval
-    ids, axes, apertures = trainer.export_embeddings()
+    _ids, axes, apertures = trainer.export_embeddings()
     pos_scores, neg_scores = [], []
     for h, _, t in val:
         try:
-            pos_scores.append(subsumer.cone_containment_score(
-                axes[h].tolist(), apertures[h].tolist(),
-                axes[t].tolist(), apertures[t].tolist(),
-            ))
+            pos_scores.append(
+                subsumer.cone_containment_score(
+                    axes[h].tolist(),
+                    apertures[h].tolist(),
+                    axes[t].tolist(),
+                    apertures[t].tolist(),
+                )
+            )
         except Exception:
             pass
         rand_id = rng.choice(all_ids)
         try:
-            neg_scores.append(subsumer.cone_containment_score(
-                axes[h].tolist(), apertures[h].tolist(),
-                axes[rand_id].tolist(), apertures[rand_id].tolist(),
-            ))
+            neg_scores.append(
+                subsumer.cone_containment_score(
+                    axes[h].tolist(),
+                    apertures[h].tolist(),
+                    axes[rand_id].tolist(),
+                    apertures[rand_id].tolist(),
+                )
+            )
         except Exception:
             pass
 
@@ -271,19 +284,21 @@ def run_game(
         f.write(trainer.save_checkpoint())
 
     # Show examples
-    print(f"\n  Sample containment:")
+    print("\n  Sample containment:")
     for h, _, t in val[:5]:
         try:
             prob = subsumer.cone_containment_score(
-                axes[h].tolist(), apertures[h].tolist(),
-                axes[t].tolist(), apertures[t].tolist(),
+                axes[h].tolist(),
+                apertures[h].tolist(),
+                axes[t].tolist(),
+                apertures[t].tolist(),
             )
             print(f"    {id_to_card[h]} > {id_to_card[t]}: {prob:.3f}")
         except Exception:
             pass
 
     # Active learning: find pairs with highest uncertainty for next annotation
-    print(f"\n  Active learning candidates (highest uncertainty):")
+    print("\n  Active learning candidates (highest uncertainty):")
     uncertain = []
     for i in range(min(len(all_ids), 50)):
         for j in range(i + 1, min(len(all_ids), 50)):
@@ -292,17 +307,23 @@ def run_game(
                 continue
             try:
                 score_ab = subsumer.cone_containment_score(
-                    axes[a].tolist(), apertures[a].tolist(),
-                    axes[b].tolist(), apertures[b].tolist(),
+                    axes[a].tolist(),
+                    apertures[a].tolist(),
+                    axes[b].tolist(),
+                    apertures[b].tolist(),
                 )
                 score_ba = subsumer.cone_containment_score(
-                    axes[b].tolist(), apertures[b].tolist(),
-                    axes[a].tolist(), apertures[a].tolist(),
+                    axes[b].tolist(),
+                    apertures[b].tolist(),
+                    axes[a].tolist(),
+                    apertures[a].tolist(),
                 )
                 # Uncertainty = both directions have moderate scores
                 uncertainty = min(score_ab, score_ba) + abs(score_ab - score_ba) * 0.5
                 if uncertainty > 0.1:
-                    uncertain.append((id_to_card[a], id_to_card[b], score_ab, score_ba, uncertainty))
+                    uncertain.append(
+                        (id_to_card[a], id_to_card[b], score_ab, score_ba, uncertainty)
+                    )
             except Exception:
                 pass
 
@@ -342,8 +363,13 @@ def main():
     results = {}
     for game in games:
         r = run_game(
-            game, dim=args.dim, epochs=args.epochs, lr=args.lr,
-            augment_tc=args.augment_tc, hard_neg=args.hard_neg, dry_run=args.dry_run,
+            game,
+            dim=args.dim,
+            epochs=args.epochs,
+            lr=args.lr,
+            augment_tc=args.augment_tc,
+            hard_neg=args.hard_neg,
+            dry_run=args.dry_run,
         )
         if r:
             results[game] = r
