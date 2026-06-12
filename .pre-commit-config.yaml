@@ -57,14 +57,17 @@ repos:
             venv/
           )
 
-  # Go: golangci-lint (comprehensive Go linter)
-  # Updated to v2.6.2 for Go 1.24 support and v2 config format compatibility
-  - repo: https://github.com/golangci/golangci-lint
-    rev: v2.6.2
+  # Go: golangci-lint via local hook so it runs from src/backend, where
+  # go.mod lives; the upstream hook runs from the repo root and fails
+  # typechecking ("directory prefix . does not contain main module").
+  - repo: local
     hooks:
       - id: golangci-lint
+        name: golangci-lint
+        language: system
+        entry: bash -c 'cd src/backend && golangci-lint run --timeout=5m ./...'
+        pass_filenames: false
         stages: [pre-commit]
-        args: [--timeout=5m]
         files: ^src/backend/.*\.go$
 
   # Shell: shellcheck (shell script linter)
