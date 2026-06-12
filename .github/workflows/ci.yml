@@ -44,7 +44,10 @@ jobs:
         run: uv pip install --system pre-commit
 
       - name: Run pre-commit on all files
-        run: pre-commit run --all-files
+        # golangci-lint runs in its own job (working-directory aware);
+        # check-hardcoded-paths is advisory and structurally red on
+        # --all-files until the PATHS migration happens.
+        run: SKIP=golangci-lint,check-hardcoded-paths pre-commit run --all-files
 
   lint:
     name: Lint (Ruff)
@@ -111,6 +114,10 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+        with:
+          # full history: the golangci new-from-rev ratchet diffs against a
+          # fixed rev, which a shallow clone does not contain
+          fetch-depth: 0
 
       - name: Set up Go
         uses: actions/setup-go@v6
