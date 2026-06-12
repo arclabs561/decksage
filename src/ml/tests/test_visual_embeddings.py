@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tests for visual embeddings integration.
 """
@@ -6,6 +5,9 @@ Tests for visual embeddings integration.
 from __future__ import annotations
 
 import pytest
+
+
+pytest.importorskip("sentence_transformers")
 
 
 try:

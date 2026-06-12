@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tests for Python shutdown scenarios and resource cleanup.
 
@@ -11,6 +10,13 @@ import pickle
 import sys
 from pathlib import Path
 from unittest.mock import patch
+
+import pytest
+
+
+# CardTextEmbedder requires sentence-transformers (similarity extra); its
+# constructor raises when absent, so guard at module level.
+pytest.importorskip("sentence_transformers")
 
 from ..similarity.text_embeddings import CardTextEmbedder
 

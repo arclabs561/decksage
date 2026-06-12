@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """
 Tests for fusion system with visual embeddings integration.
 """
@@ -7,6 +6,10 @@ from __future__ import annotations
 
 import pytest
 
+
+# fusion loads gensim lazily at call time, so the try/except below does not
+# catch a missing gensim; skip explicitly (embeddings/training extra).
+pytest.importorskip("gensim")
 
 try:
     from PIL import Image
