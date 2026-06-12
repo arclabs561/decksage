@@ -26,15 +26,19 @@ try:
 except Exception:
     pass
 
+# pydantic is a core dependency; only pydantic-ai (the `llm` extra) is
+# optional. Conflating the two in one guard used to wipe BaseModel/Field
+# whenever pydantic-ai was absent, making this module unimportable.
+from pydantic import BaseModel, Field
+
+
 try:
-    from pydantic import BaseModel, Field
     from pydantic_ai import Agent
 
     HAS_PYDANTIC_AI = True
 except ImportError:
     HAS_PYDANTIC_AI = False
-    BaseModel = None
-    Field = None
+    Agent = None
 
 from ..utils.pydantic_ai_helpers import make_agent
 

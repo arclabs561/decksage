@@ -94,8 +94,13 @@ jobs:
         with:
           python-version: "3.11"
 
+      - name: Install dependencies
+        run: uv sync
+
       - name: Run ty type checker
-        run: uvx ty check --config-file ty.toml src/ml/data/incremental_graph.py
+        # --python .venv: ty resolves third-party imports from the project
+        # env; without it numpy/pandas are unresolved-import errors.
+        run: uvx ty check --python .venv --config-file ty.toml src/ml/data/incremental_graph.py
 
   go-lint:
     name: Lint (Go)

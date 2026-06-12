@@ -19,6 +19,11 @@ from unittest.mock import MagicMock
 import pytest
 
 
+# The chat router requires the `llm` extra; without pydantic-ai the API
+# degrades to 501 for every chat route and these tests assert live-router
+# behavior.
+pytest.importorskip("pydantic_ai")
+
 if TYPE_CHECKING:
     from ml.api.chat import ChatDeps
 
