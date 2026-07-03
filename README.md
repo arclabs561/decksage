@@ -65,9 +65,9 @@ $DECKSAGE --game pokemon similar "Ultra Ball" --k 5
 ## Development
 
 ```bash
-just test     # 818 unit tests
+just test     # 834 unit tests
 just lint     # ruff check + format
-npx playwright test   # 45 E2E tests (requires running server + search backends)
+npx playwright test   # 41 E2E tests (requires running server + search backends)
 just qa-deps-up       # start MeiliSearch + Qdrant
 just qa-deps-down     # stop
 ```
