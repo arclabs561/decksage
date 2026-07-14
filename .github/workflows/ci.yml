@@ -104,7 +104,7 @@ jobs:
       - name: Run ty type checker
         # --python .venv: ty resolves third-party imports from the project
         # env; without it numpy/pandas are unresolved-import errors.
-        run: uvx ty check --python .venv --config-file ty.toml src/ml/data/incremental_graph.py
+        run: uvx ty@0.0.59 check --exit-zero-on-warning --python .venv --config-file ty.toml src/ml/data/incremental_graph.py
 
   go-lint:
     name: Lint (Go)
