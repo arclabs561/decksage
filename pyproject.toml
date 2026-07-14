@@ -54,7 +54,7 @@ enrichment = [
   "sentence-transformers", # Text embeddings (E5/MiniLM)
 ]
 llm = [
-  "pydantic-ai>=0.1.0", # LLM annotation, QA agents, chat router
+  "pydantic-ai>=1.102.0", # LLM annotation, QA agents, chat router
 ]
 gnn = ["torch>=2.0.0", "torch-geometric>=2.4.0"]
 stats = [
