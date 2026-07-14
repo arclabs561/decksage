@@ -198,7 +198,7 @@ lint-scripts:
 # Type check Python code with ty (Astral's type checker)
 typecheck *args='src/ml/data/incremental_graph.py':
     #!/usr/bin/env bash
-    uvx ty check --config-file ty.toml {{args}}
+    uvx ty@0.0.59 check --exit-zero-on-warning --python .venv --config-file ty.toml {{args}}
 
 # Type check training scripts
 typecheck-scripts:
@@ -306,8 +306,7 @@ serve:
     for port in 7700 6333; do
         cid=$(docker ps -q --filter "publish=$port" 2>/dev/null)
         if [ -n "$cid" ]; then
-            name=$(docker inspect --format '{{.Name}}' "$cid" | sed 's|^/||')
-            echo "Stopping $name (port $port)..."
+            echo "Stopping container $cid (port $port)..."
             docker stop "$cid" >/dev/null
         fi
     done
