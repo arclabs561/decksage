@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -28,7 +29,8 @@ from pathlib import Path
 import zstandard
 
 
-S3_PREFIX = "s3://games-collections/games/magic/goldfish/"
+S3_BUCKET = os.environ.get("DECKSAGE_S3_BUCKET", "")
+S3_PREFIX = f"s3://{S3_BUCKET}/games/magic/goldfish/"
 BATCH_SIZE = 5000
 
 
@@ -45,7 +47,7 @@ def list_s3_files() -> list[str]:
             continue
         parts = line.split()
         if len(parts) >= 4 and parts[-1].endswith(".zst"):
-            files.append(f"s3://games-collections/{parts[-1]}")
+            files.append(f"s3://{S3_BUCKET}/{parts[-1]}")
     return files
 
 
@@ -104,6 +106,8 @@ def main() -> int:
     parser.add_argument("--input", type=Path, required=True, help="Input JSONL")
     parser.add_argument("--output", type=Path, required=True, help="Output JSONL")
     args = parser.parse_args()
+    if not S3_BUCKET:
+        parser.error("Set DECKSAGE_S3_BUCKET to your bucket name")
 
     if not args.input.exists():
         print(f"Input file not found: {args.input}", file=sys.stderr)

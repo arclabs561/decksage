@@ -80,7 +80,7 @@ def create_expansion_command():
     print()
     print("Option 1: Broad expansion (+2,000 decks)")
     print("```bash")
-    print("cd /Users/henry/Documents/dev/decksage/src/backend")
+    print("From the repository root: cd src/backend")
     print("go run cmd/dataset/main.go extract mtgtop8 \\")
     print("  --bucket=file://./data-full \\")
     print("  --pages=200 \\")

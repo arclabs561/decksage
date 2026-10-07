@@ -2,7 +2,8 @@
 # Sync all important data to S3 for backup (using s5cmd for speed)
 set -euo pipefail
 
-BUCKET="s3://games-collections"
+: "${BUCKET:?Set BUCKET to an S3 URI you control (s3://bucket)}"
+BUCKET="${BUCKET%/}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 

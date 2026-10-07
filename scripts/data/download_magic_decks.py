@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import shutil
 import subprocess
@@ -37,7 +38,7 @@ from pathlib import Path
 import zstandard
 
 
-S3_BUCKET = "games-collections"
+S3_BUCKET = os.environ.get("DECKSAGE_S3_BUCKET", "")
 S3_SOURCES = {
     "goldfish": f"s3://{S3_BUCKET}/games/magic/goldfish/",
     "mtgtop8": f"s3://{S3_BUCKET}/games/magic/mtgtop8/collections/",
@@ -204,6 +205,8 @@ def main() -> int:
     parser.add_argument("--limit", type=int, help="Max decks per source")
     parser.add_argument("--batch-size", type=int, default=5000, help="Download batch size")
     args = parser.parse_args()
+    if not S3_BUCKET:
+        parser.error("Set DECKSAGE_S3_BUCKET to your bucket name")
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     use_s5cmd = shutil.which("s5cmd") is not None

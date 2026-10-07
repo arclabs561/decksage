@@ -4,6 +4,7 @@ Data lineage validation utilities.
 Provides functions to validate data lineage dependencies and enforce rules.
 """
 
+import os
 from collections.abc import Generator
 from contextlib import contextmanager
 from pathlib import Path
@@ -12,8 +13,9 @@ from pathlib import Path
 # Order 0 locations (immutable)
 ORDER_0_LOCATIONS = [
     "src/backend/data-full/games/",
-    "s3://games-collections/games/",
 ]
+if bucket := os.environ.get("DECKSAGE_S3_BUCKET"):
+    ORDER_0_LOCATIONS.append(f"s3://{bucket}/games/")
 
 # Order definitions
 DATA_ORDERS = {

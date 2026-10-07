@@ -30,8 +30,12 @@ SUBSTITUTION_PAIRS="${SUBSTITUTION_PAIRS:-experiments/substitution_pairs.json}"
 OUTPUT_DIR="${OUTPUT_DIR:-data/embeddings}"
 
 # S3 paths (for cloud training)
-S3_DATA="${S3_DATA:-s3://games-collections/processed/}"
-S3_OUTPUT="${S3_OUTPUT:-s3://games-collections/embeddings/}"
+if [[ "$MODE" != "local" ]]; then
+ S3_DATA="${S3_DATA:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/}"
+fi
+if [[ "$MODE" != "local" ]]; then
+ S3_OUTPUT="${S3_OUTPUT:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/}"
+fi
 
 echo "Starting training with runctl (mode: $MODE)"
 echo "   Pairs CSV: $PAIRS_CSV"

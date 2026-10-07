@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Monitor S3 outputs and intermediate progress files
 # Uses runctl for instance management instead of raw AWS commands
 # Checks for training/evaluation completion by monitoring S3
@@ -13,9 +14,9 @@ RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
 INSTANCE_ID="${1:-i-0773955f0a1998ceb}"
 CHECK_INTERVAL="${CHECK_INTERVAL:-30}"
 
-GNN_OUTPUT="s3://games-collections/embeddings/gnn_graphsage.json"
-EVAL_OUTPUT="s3://games-collections/experiments/hybrid_evaluation_results.json"
-PROGRESS_DIR="s3://games-collections/training_progress"
+GNN_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json"
+EVAL_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json"
+PROGRESS_DIR="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/training_progress"
 
 echo "======================================================================"
 echo "CONTINUOUS MONITORING - S3 OUTPUTS + INTERMEDIATE PROGRESS"

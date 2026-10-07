@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Quick status check for downstream evaluation (non-blocking)
 # Usage: ./scripts/evaluation/check_eval_status.sh <instance-id>
 
@@ -10,7 +11,7 @@ if [[ -z "$INSTANCE_ID" ]]; then
     exit 1
 fi
 
-SSH_KEY="${SSH_KEY_PATH:-$HOME/.ssh/tarek.pem}"
+SSH_KEY="${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}"
 INSTANCE_IP=$(aws ec2 describe-instances --instance-ids "$INSTANCE_ID" --query 'Reservations[0].Instances[0].PublicIpAddress' --output text 2>/dev/null || echo "")
 
 echo "Evaluation Status Check"
@@ -23,7 +24,7 @@ echo ""
 
 # Check S3 output
 echo "S3 Output:"
-aws s3 ls s3://games-collections/experiments/downstream_evaluation_*.json 2>&1 | tail -5 || echo "  No output files found"
+aws s3 ls s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/downstream_evaluation_*.json 2>&1 | tail -5 || echo "  No output files found"
 echo ""
 
 # Check running processes (if SSH available)

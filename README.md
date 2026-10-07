@@ -12,7 +12,11 @@ Requires Python 3.11+, Docker, [uv](https://github.com/astral-sh/uv).
 uv sync --extra embeddings
 ```
 
-Embedding files, graph databases, and processed CSVs are not in git (~6 GB uncompressed). Extract the data archive into the repo root:
+Embedding files, graph databases, and processed CSVs are not in git (~6 GB uncompressed).
+The demo archive is currently an unavailable public prerequisite: this repository
+does not provide a public download or a verified end-to-end archive build command.
+A fresh clone cannot reproduce the demo until these artifacts are supplied.
+If you already have a trusted copy, extract it into the repo root:
 
 ```bash
 tar xzf decksage-demo-data.tar.gz   # creates data/embeddings/, data/graphs/, data/processed/
@@ -61,6 +65,20 @@ $DECKSAGE --game magic similar "Lightning Bolt" --k 5 --output table
 $DECKSAGE --game magic search "destroy all creatures" --limit 5
 $DECKSAGE --game pokemon similar "Ultra Ball" --k 5
 ```
+
+## Cloud automation
+
+Cloud operations require your own destinations. Set `BUCKET=s3://your-bucket`
+for `scripts/data_processing/sync_to_s3.sh` and `scripts/review_s3_buckets.sh`.
+Extraction accepts an explicit `BUCKET` URI and never auto-creates buckets.
+The Go dataset CLI requires `--bucket` (or `--bucket-url` for transform/index).
+The auto-stop script requires `GNN_OUTPUT` and `EVAL_OUTPUT` as complete S3
+object URIs for the run whose instance you want to stop. Daily updates retain
+logs locally unless `S3_LOG_DESTINATION` is set; `--dry-run` never uploads logs.
+Other cloud shell workflows and S3 model-card/asset publishing use
+`DECKSAGE_S3_BUCKET` (a bucket name, without `s3://`). Existing per-script
+`S3_DATA`, `S3_OUTPUT` and `S3_BUCKET` overrides still take precedence where
+supported. Cloud workflows fail when a required destination is unset.
 
 ## Development
 

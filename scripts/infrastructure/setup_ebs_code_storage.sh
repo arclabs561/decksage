@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Setup EBS volume for code storage (one-time setup)
 # Pre-populates EBS volume with code to avoid re-uploading every time
 
@@ -114,8 +115,8 @@ mkdir -p decksage
 echo "Step 1: Syncing code to instance (temporary location)..."
 "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/train_hybrid_from_pairs.py" \
- --data-s3 "s3://games-collections/" \
- --output-s3 "s3://games-collections/" \
+ --data-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/" \
+ --output-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/" \
  -- --help > /dev/null 2>&1 || {
  echo "Warning: Code sync initiated (this will complete in background)"
 }

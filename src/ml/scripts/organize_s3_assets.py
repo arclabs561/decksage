@@ -15,13 +15,14 @@ Creates:
 # ]
 # ///
 
+import os
 from datetime import UTC, datetime
 from typing import Any
 
 import boto3
 
 
-S3_BUCKET = "games-collections"
+S3_BUCKET = os.environ.get("DECKSAGE_S3_BUCKET", "")
 
 
 def create_directory_readme(
@@ -100,6 +101,8 @@ def format_size(size_bytes: int) -> str:
 
 def main() -> None:
     """Organize S3 assets and create README files."""
+    if not S3_BUCKET:
+        raise SystemExit("Set DECKSAGE_S3_BUCKET to your bucket name")
     s3_client = boto3.client("s3")
 
     # Embeddings directory
@@ -120,8 +123,8 @@ def main() -> None:
         "Graph embedding models for card similarity. Trained using Node2Vec, DeepWalk, and variants.",
         emb_contents,
         {
-            "Download": "aws s3 cp s3://games-collections/embeddings/{name}.wv .",
-            "List all": "aws s3 ls s3://games-collections/embeddings/",
+            "Download": f"aws s3 cp s3://{S3_BUCKET}/embeddings/{{name}}.wv .",
+            "List all": f"aws s3 ls s3://{S3_BUCKET}/embeddings/",
             "Load in Python": "from gensim.models import KeyedVectors; model = KeyedVectors.load('{name}.wv')",
         },
     )
@@ -152,8 +155,8 @@ def main() -> None:
         "Processed deck data used for training embeddings and computing signals.",
         proc_contents,
         {
-            "Download": "aws s3 cp s3://games-collections/processed/{name} .",
-            "List all": "aws s3 ls s3://games-collections/processed/",
+            "Download": f"aws s3 cp s3://{S3_BUCKET}/processed/{{name}} .",
+            "List all": f"aws s3 ls s3://{S3_BUCKET}/processed/",
         },
     )
 
@@ -183,8 +186,8 @@ def main() -> None:
         "Utility scripts for training and data processing, designed to run on EC2 instances.",
         script_contents,
         {
-            "Download": "aws s3 cp s3://games-collections/scripts/{name} .",
-            "List all": "aws s3 ls s3://games-collections/scripts/",
+            "Download": f"aws s3 cp s3://{S3_BUCKET}/scripts/{{name}} .",
+            "List all": f"aws s3 ls s3://{S3_BUCKET}/scripts/",
         },
     )
 
@@ -214,17 +217,17 @@ This bucket contains all ML artifacts, training data, and scripts for the DeckSa
 
 ### Download Embeddings
 ```bash
-aws s3 cp s3://games-collections/embeddings/magic_128d_test_pecanpy.wv .
+aws s3 cp s3://{S3_BUCKET}/embeddings/magic_128d_test_pecanpy.wv .
 ```
 
 ### Download Processed Data
 ```bash
-aws s3 cp s3://games-collections/processed/pairs_large.csv .
+aws s3 cp s3://{S3_BUCKET}/processed/pairs_large.csv .
 ```
 
 ### List All Assets
 ```bash
-aws s3 ls s3://games-collections/ --recursive
+aws s3 ls s3://{S3_BUCKET}/ --recursive
 ```
 
 ## Model Cards

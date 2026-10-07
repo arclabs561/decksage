@@ -22,8 +22,12 @@ OUTPUT_DIR="${OUTPUT_DIR:-experiments/evaluations}"
 BATCH_SIZE="${BATCH_SIZE:-20}"
 
 # S3 paths (for cloud)
-S3_DATA="${S3_DATA:-s3://games-collections/}"
-S3_OUTPUT="${S3_OUTPUT:-s3://games-collections/evaluations/}"
+if [[ "$MODE" != "local" ]]; then
+ S3_DATA="${S3_DATA:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/}"
+fi
+if [[ "$MODE" != "local" ]]; then
+ S3_OUTPUT="${S3_OUTPUT:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/evaluations/}"
+fi
 
 echo "Starting LLM evaluation with runctl (mode: $MODE)"
 echo "   Test set: $TEST_SET"

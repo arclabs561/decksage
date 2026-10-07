@@ -22,8 +22,12 @@ BATCH_SIZE="${BATCH_SIZE:-10}"
 MAX_QUERIES="${MAX_QUERIES:-50}"
 
 # S3 paths (for cloud)
-S3_DATA="${S3_DATA:-s3://games-collections/processed/}"
-S3_OUTPUT="${S3_OUTPUT:-s3://games-collections/annotations/}"
+if [[ "$MODE" != "local" ]]; then
+ S3_DATA="${S3_DATA:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/}"
+fi
+if [[ "$MODE" != "local" ]]; then
+ S3_OUTPUT="${S3_OUTPUT:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/annotations/}"
+fi
 
 echo "Starting enhanced labeling with runctl (mode: $MODE)"
 echo "   Queries: $QUERIES_JSON"

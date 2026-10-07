@@ -8,7 +8,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
 
-HYPERPARAM_RESULTS="${HYPERPARAM_RESULTS:-s3://games-collections/experiments/hyperparameter_results.json}"
+HYPERPARAM_RESULTS="${HYPERPARAM_RESULTS:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hyperparameter_results.json}"
 
 echo "🔍 Checking for hyperparameter results..."
 echo "   Looking for: $HYPERPARAM_RESULTS"

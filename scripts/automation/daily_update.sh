@@ -11,7 +11,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Parse arguments
@@ -156,8 +156,10 @@ echo "======================================================================"
 echo "Log: $LOG_FILE"
 echo ""
 
-# Upload log to S3 for tracking
-if command -v s5cmd >/dev/null 2>&1; then
- s5cmd cp "$LOG_FILE" "s3://games-collections/logs/daily/" 2>&1 | grep -v "^$" || true
- echo "✓ Log uploaded to S3"
+# Upload logs only to an explicitly selected destination, never during dry-run.
+if [[ -n "${S3_LOG_DESTINATION:-}" ]] && [[ "$DRY_RUN" == "false" ]]; then
+ if command -v s5cmd >/dev/null 2>&1; then
+  s5cmd cp "$LOG_FILE" "$S3_LOG_DESTINATION"
+  echo "✓ Log uploaded to S3"
+ fi
 fi

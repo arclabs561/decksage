@@ -22,7 +22,7 @@ if [ ! -d "$RAW_DATA_DIR" ]; then
     echo "⚠ Raw data directory not found: $RAW_DATA_DIR"
     echo ""
     echo "Raw data is stored on S3. To generate deck files:"
-    echo "  1. Sync data from S3: s5cmd sync s3://games-collections/games/ $RAW_DATA_DIR/"
+    echo "  1. Sync data from S3: s5cmd sync s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/games/ $RAW_DATA_DIR/"
     echo "  2. Run this script again"
     echo ""
     exit 1

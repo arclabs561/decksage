@@ -5,27 +5,8 @@
 # Don't exit on errors - continue with other extractions
 set +e
 
-# Default to S3 bucket if AWS is configured, otherwise use local file storage
-if [ -z "$BUCKET" ]; then
-    if aws sts get-caller-identity >/dev/null 2>&1; then
-        # Check if games-collections bucket exists
-        if aws s3api head-bucket --bucket "games-collections" 2>/dev/null; then
-            BUCKET="s3://games-collections"
-        else
-            # Try to create it
-            REGION=$(aws configure get region 2>/dev/null || echo "us-east-1")
-            if aws s3api create-bucket --bucket "games-collections" --region "$REGION" --create-bucket-configuration LocationConstraint="$REGION" 2>/dev/null || \
-               aws s3api create-bucket --bucket "games-collections" --region "$REGION" 2>/dev/null; then
-                BUCKET="s3://games-collections"
-            else
-                BUCKET="file:///tmp/decksage-full"
-                echo "⚠️  Could not create S3 bucket, using local storage: $BUCKET"
-            fi
-        fi
-    else
-        BUCKET="file:///tmp/decksage-full"
-    fi
-fi
+# Select storage explicitly; this helper never creates a cloud bucket.
+: "${BUCKET:?Set BUCKET to a file:// or s3:// URL you control}"
 PARALLEL="${PARALLEL:-128}"
 LOG_LEVEL="${LOG_LEVEL:-info}"
 

@@ -13,6 +13,9 @@ if [ -f "$PROJECT_ROOT/scripts/find_or_build_runctl.sh" ]; then
 fi
 
 MODE="${1:-local}"
+if [[ "$MODE" != "local" ]]; then
+ : "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
+fi
 shift || true
 
 # Default arguments
@@ -61,8 +64,8 @@ case "$MODE" in
  echo "Running on AWS using runctl..."
  "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/train_hybrid_full.py" \
- --data-s3 "s3://games-collections/processed/" \
- --output-s3 "s3://games-collections/embeddings/" \
+ --data-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/" \
+ --output-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/" \
  -- \
  "--decks-path" "processed/decks_all_final.jsonl" \
  "--graph-path" "graphs/incremental_graph.json" \
