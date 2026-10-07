@@ -28,7 +28,7 @@ func init() {
 
 	flags.String("log-level", "info", "level to log at")
 	flags.BoolP("debug", "d", false, "whether to set log level to debug, overrides --log-level")
-	flags.String("bucket-url", "s3://games-collections", "bucket url for writing dataset")
+	flags.String("bucket-url", "", "bucket url for writing dataset")
 	flags.StringP("cache", "c", "", "dir to use for local blob cache")
 
 	flags.IntP("limit", "l", 0, "total number of items to transform")
@@ -64,6 +64,10 @@ func runIndex(cmd *cobra.Command, args []string) error {
 	bucketUrl, err := cmd.Flags().GetString("bucket-url")
 	if err != nil {
 		panic(err)
+	}
+
+	if bucketUrl == "" {
+		return fmt.Errorf("--bucket-url is required; select a file:// or s3:// URL you control")
 	}
 
 	var bucketOpts []blob.BucketOption

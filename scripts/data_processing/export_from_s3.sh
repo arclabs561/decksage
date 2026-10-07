@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Export decks from S3 blob storage
 # Downloads from S3, runs export-hetero, cleans up
 
@@ -14,7 +15,7 @@ if [[ -z "$GAME" || -z "$DATASET" || -z "$OUTPUT" ]]; then
     exit 1
 fi
 
-BUCKET="s3://games-collections"
+BUCKET="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 S3_PREFIX="games/${GAME}/${DATASET}"
 TEMP_DIR=$(mktemp -d)
 EXPORT_BINARY="bin/export-hetero"

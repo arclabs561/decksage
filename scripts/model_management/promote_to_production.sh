@@ -16,7 +16,7 @@ set -euo pipefail
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Defaults
@@ -24,7 +24,7 @@ GNN_VERSIONED="${GNN_VERSIONED:-}"
 COOCCURRENCE_VERSIONED="${COOCCURRENCE_VERSIONED:-}"
 ARCHIVE_PREVIOUS="${ARCHIVE_PREVIOUS:-true}"
 USE_SYMLINK="${USE_SYMLINK:-true}" # Use symlink (faster) or copy (safer)
-S3_BUCKET="${S3_BUCKET:-s3://games-collections}"
+S3_BUCKET="${S3_BUCKET:-${DECKSAGE_S3_BUCKET:+s3://$DECKSAGE_S3_BUCKET}}"
 
 # Parse arguments
 while [[ $# -gt 0 ]]; do
@@ -161,6 +161,7 @@ promote_model() {
  # Update metadata
  local metadata_path="${production_path%.*}_metadata.json"
  if [[ "$production_path" == s3://* ]]; then
+ : "${S3_BUCKET:?Set S3_BUCKET or DECKSAGE_S3_BUCKET for cloud metadata}"
  metadata_path="s3://${S3_BUCKET#s3://}/models/metadata/$(basename "${production_path%.*}")_metadata.json"
  fi
 
@@ -219,4 +220,6 @@ fi
 echo ""
 echo "Next steps:"
 echo " 1. Verify models work: ./scripts/evaluation/eval_hybrid_with_runctl.sh local"
-echo " 2. Sync to S3: s5cmd sync embeddings/ s3://games-collections/embeddings/"
+if [[ -n "$S3_BUCKET" ]]; then
+ echo " 2. Sync to S3: s5cmd sync embeddings/ ${S3_BUCKET%/}/embeddings/"
+fi

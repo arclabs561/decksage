@@ -19,13 +19,14 @@ Model cards follow modern best practices:
 # ///
 
 import json
+import os
 from datetime import UTC, datetime
 from typing import Any
 
 import boto3
 
 
-S3_BUCKET = "games-collections"
+S3_BUCKET = os.environ.get("DECKSAGE_S3_BUCKET", "")
 S3_PREFIX = "model-cards/"
 
 
@@ -149,6 +150,8 @@ def upload_model_card(s3_client: Any, card: dict[str, Any], filename: str) -> No
 
 def main() -> None:
     """Create and upload model cards for all artifacts."""
+    if not S3_BUCKET:
+        raise SystemExit("Set DECKSAGE_S3_BUCKET to your bucket name")
     s3_client = boto3.client("s3")
 
     # Embedding model cards
@@ -261,8 +264,8 @@ def main() -> None:
             "signals/": "Similarity signals (sideboard, temporal, archetype, format)",
         },
         "usage": {
-            "view_model_card": "Download JSON from s3://games-collections/model-cards/{category}/{name}.json",
-            "list_all": "aws s3 ls s3://games-collections/model-cards/ --recursive",
+            "view_model_card": f"Download JSON from s3://{S3_BUCKET}/model-cards/{{category}}/{{name}}.json",
+            "list_all": f"aws s3 ls s3://{S3_BUCKET}/model-cards/ --recursive",
         },
         "standards": {
             "format": "JSON",

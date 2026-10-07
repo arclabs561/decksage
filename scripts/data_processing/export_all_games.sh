@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-BUCKET_URL="${1:-s3://games-collections}"
+BUCKET_URL="${1:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}}"
 OUTPUT_DIR="${2:-data/processed}"
 
 echo "=" * 80

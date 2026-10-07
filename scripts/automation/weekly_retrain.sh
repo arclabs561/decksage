@@ -12,7 +12,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
+PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Parse arguments
@@ -42,6 +42,10 @@ while [[ $# -gt 0 ]]; do
  ;;
  esac
 done
+
+if [[ "$DRY_RUN" == "false" ]]; then
+ : "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
+fi
 
 LOG_DIR="${LOG_DIR:-logs/weekly}"
 mkdir -p "$LOG_DIR"
@@ -190,7 +194,7 @@ PREV_EVAL="experiments/hybrid_evaluation_results_v${PREV_WEEK}.json"
 if [[ "$DRY_RUN" == "true" ]]; then
  echo "[DRY-RUN] Would compare with previous week ($PREV_WEEK)"
  echo "[DRY-RUN] Would check for regression and auto-rollback if needed"
-elif [[ -f "$PREV_EVAL" ]] || s5cmd ls "s3://games-collections/$PREV_EVAL" >/dev/null 2>&1; then
+elif [[ -f "$PREV_EVAL" ]] || s5cmd ls "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/$PREV_EVAL" >/dev/null 2>&1; then
  # Use EvaluationRegistry for comparison (if available)
  if uv run python -c "from ml.utils.evaluation_registry import EvaluationRegistry; print('OK')" 2>/dev/null; then
  # Extract versions from paths
@@ -254,7 +258,7 @@ except Exception as e:
  echo " Triggering auto-rollback..."
  # Auto-rollback: promote previous week's model
  PREV_GNN="embeddings/gnn_graphsage_v${PREV_WEEK}.json"
- if [[ -f "$PREV_GNN" ]] || s5cmd ls "s3://games-collections/$PREV_GNN" >/dev/null 2>&1; then
+ if [[ -f "$PREV_GNN" ]] || s5cmd ls "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/$PREV_GNN" >/dev/null 2>&1; then
  echo " Rolling back to previous week's model: $PREV_GNN"
  "$SCRIPT_DIR/../model_management/promote_to_production.sh" --gnn "$PREV_GNN" 2>&1 | tee -a "$LOG_FILE"
  echo " ✓ Rollback complete"
@@ -290,9 +294,9 @@ echo "Instance: $INSTANCE_ID"
 echo "Log: $LOG_FILE"
 echo ""
 
-# Upload results to S3
-if command -v s5cmd >/dev/null 2>&1; then
- s5cmd cp "$LOG_FILE" "s3://games-collections/logs/weekly/" 2>&1 | grep -v "^$" || true
- s5cmd cp "$EVAL_OUTPUT" "s3://games-collections/experiments/" 2>&1 | grep -v "^$" || true
+# Upload results only when configured and outside dry-run.
+if [[ "$DRY_RUN" == "false" ]] && [[ -n "${DECKSAGE_S3_BUCKET:-}" ]] && command -v s5cmd >/dev/null 2>&1; then
+ s5cmd cp "$LOG_FILE" "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/logs/weekly/" 2>&1 | grep -v "^$" || true
+ s5cmd cp "$EVAL_OUTPUT" "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/" 2>&1 | grep -v "^$" || true
  echo "✓ Results uploaded to S3"
 fi

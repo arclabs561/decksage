@@ -28,7 +28,7 @@ var rootCmd = &cobra.Command{
 func init() {
 	flags := rootCmd.PersistentFlags()
 	flags.String("log", "info", "level to log at")
-	flags.String("bucket", "s3://games-collections", "bucket url for writing dataset")
+	flags.String("bucket", "", "bucket url for writing dataset")
 	flags.StringP("cache", "c", "", "dir to use for local blob cache")
 	flags.String("profile", "", "address to serve profiler at")
 
@@ -84,6 +84,10 @@ func newRootConfig(cmd *cobra.Command) (*rootConfig, error) {
 	bucketUrl, err := cmd.Flags().GetString("bucket")
 	if err != nil {
 		panic(err)
+	}
+
+	if bucketUrl == "" {
+		return nil, fmt.Errorf("--bucket is required; select a file:// or s3:// URL you control")
 	}
 
 	var bucketOpts []blob.BucketOption

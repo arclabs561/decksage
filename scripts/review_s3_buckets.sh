@@ -3,7 +3,8 @@
 
 set -euo pipefail
 
-BUCKET="s3://games-collections"
+: "${BUCKET:?Set BUCKET to an S3 URI you control (s3://bucket)}"
+BUCKET="${BUCKET%/}"
 
 echo "=" | tr '=' '='
 echo "S3 BUCKET REVIEW"

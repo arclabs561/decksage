@@ -4,7 +4,7 @@ package main
 // Uses IterItemsBlobPrefix pattern - works with any blob storage
 //
 // DATA LINEAGE: Order 1 (depends on Order 0: Primary Source Data)
-// - Input: s3://games-collections/games/{game}/{dataset}/ (Order 0)
+// - Input: s3://your-bucket/games/{game}/{dataset}/ (Order 0)
 // - Output: data/processed/decks_{game}_{dataset}.jsonl (Order 1)
 // - Converts Collection objects to flattened JSONL format
 
@@ -29,7 +29,7 @@ import (
 func main() {
 	if len(os.Args) < 4 {
 		fmt.Println("Usage: export-blob <bucket-url> <game> <dataset> <output.jsonl>")
-		fmt.Println("Example: export-blob s3://games-collections pokemon limitless-web output.jsonl")
+		fmt.Println("Example: export-blob s3://your-bucket pokemon limitless-web output.jsonl")
 		fmt.Println("Example: export-blob file://./data-full magic mtgtop8 output.jsonl")
 		os.Exit(1)
 	}

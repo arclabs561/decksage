@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Expand test sets and sync to S3
 
 set -euo pipefail
@@ -32,7 +33,7 @@ echo ""
 if [ ! -f "$CANONICAL" ]; then
     echo "ERROR: Canonical test set not found: $CANONICAL"
     echo "Syncing from S3..."
-    aws s3 cp "s3://games-collections/experiments/test_set_canonical_${GAME}.json" "$CANONICAL" || {
+    aws s3 cp "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/test_set_canonical_${GAME}.json" "$CANONICAL" || {
         echo "ERROR: Failed to sync canonical test set"
         exit 1
     }
@@ -84,7 +85,7 @@ echo ""
 
 # Sync to S3
 echo "Syncing to S3..."
-aws s3 cp "$OUTPUT" "s3://games-collections/experiments/$(basename $OUTPUT)" || {
+aws s3 cp "$OUTPUT" "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/$(basename $OUTPUT)" || {
     echo "WARNING: Failed to sync to S3"
 }
 
@@ -92,7 +93,7 @@ aws s3 cp "$OUTPUT" "s3://games-collections/experiments/$(basename $OUTPUT)" || 
 if [ -f "$EXPANDED" ] && [ "$FINAL_SIZE" -gt "$(python3 -c "import json; print(len(json.load(open('$EXPANDED')).get('queries', {})))" 2>/dev/null || echo "0")" ]; then
     echo "Updating expanded test set reference..."
     cp "$OUTPUT" "$EXPANDED"
-    aws s3 cp "$EXPANDED" "s3://games-collections/experiments/test_set_expanded_${GAME}.json" || true
+    aws s3 cp "$EXPANDED" "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/test_set_expanded_${GAME}.json" || true
 fi
 
 echo ""
@@ -101,4 +102,4 @@ echo "COMPLETE"
 echo "=" | tr -d '\n' | head -c 70 && echo
 echo "Output: $OUTPUT"
 echo "Size: $FINAL_SIZE queries"
-echo "Synced to S3: s3://games-collections/experiments/$(basename $OUTPUT)"
+echo "Synced to S3: s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/$(basename $OUTPUT)"

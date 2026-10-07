@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Full pipeline monitoring (training + evaluation)
 # Combines: monitor_full_pipeline.sh, monitor_s3_outputs.sh
 
@@ -18,9 +19,9 @@ echo "Instance: $INSTANCE_ID"
 echo "Check interval: ${CHECK_INTERVAL}s"
 echo ""
 
-GNN_OUTPUT="s3://games-collections/embeddings/gnn_graphsage.json"
-EVAL_OUTPUT="s3://games-collections/experiments/hybrid_evaluation_results.json"
-PROGRESS_DIR="s3://games-collections/training_progress"
+GNN_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json"
+EVAL_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json"
+PROGRESS_DIR="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/training_progress"
 
 iteration=0
 gnn_found=false

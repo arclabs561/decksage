@@ -51,7 +51,7 @@ if [ $MISSING -gt 0 ]; then
         fi
     else
         echo "  ⚠ Raw data not found. To generate:"
-        echo "    1. Sync from S3: s5cmd sync s3://games-collections/games/ src/backend/data-full/games/"
+        echo "    1. Sync from S3: s5cmd sync s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/games/ src/backend/data-full/games/"
         echo "    2. Run: uv run scripts/data_processing/unified_export_pipeline.py"
     fi
 else

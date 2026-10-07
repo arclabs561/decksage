@@ -16,8 +16,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
 
-GNN_OUTPUT="s3://games-collections/embeddings/gnn_graphsage.json"
-EVAL_OUTPUT="s3://games-collections/experiments/hybrid_evaluation_results.json"
+: "${GNN_OUTPUT:?Set GNN_OUTPUT to the completed model S3 URI}"
+: "${EVAL_OUTPUT:?Set EVAL_OUTPUT to the completed evaluation S3 URI}"
 
 echo "======================================================================"
 echo "AUTO-STOP AFTER TRAINING"

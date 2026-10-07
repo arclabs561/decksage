@@ -13,7 +13,7 @@ Handles:
 2. Hand annotations (YAML) - annotations/hand_batch_*.yaml
 3. LLM judgments (JSONL) - annotations/judgment_*.jsonl (unified format)
    - Backward compatibility: annotations/llm_judgments/judgment_*.json (old format)
-4. S3-synced annotations - s3://games-collections/annotations/
+4. S3-synced annotations - s3://your-bucket/annotations/
 
 Converts all to:
 - Substitution pairs (for training)

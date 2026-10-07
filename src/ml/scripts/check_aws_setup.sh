@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Check AWS setup for training
 set -euo pipefail
 
@@ -52,7 +53,7 @@ echo ""
 
 # Check S3 access
 echo "5. S3 Access:"
-if aws s3 ls s3://games-collections/ > /dev/null 2>&1; then
+if aws s3 ls s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/ > /dev/null 2>&1; then
     echo "   ✅ S3 bucket accessible"
 else
     echo "   ❌ Cannot access S3 bucket"

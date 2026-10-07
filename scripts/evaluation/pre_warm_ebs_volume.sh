@@ -25,7 +25,7 @@ if [[ -z "$VOLUME_ID" ]]; then
     exit 1
 fi
 
-S3_DATA="${S3_DATA:-s3://games-collections/}"
+S3_DATA="${S3_DATA:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/}"
 
 echo "Pre-warming EBS volume: $VOLUME_ID"
 echo "   S3 source: $S3_DATA"

@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Continuous monitoring and execution of full pipeline
 # Monitors training, then automatically runs evaluation
 
@@ -25,7 +26,7 @@ check_training() {
 # Function to check S3 for training completion
 check_training_complete() {
  # Check if GNN embeddings exist in S3
- aws s3 ls "s3://games-collections/embeddings/gnn_graphsage.json" > /dev/null 2>&1
+ aws s3 ls "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json" > /dev/null 2>&1
 }
 
 # Function to check if evaluation is running
@@ -58,8 +59,8 @@ else
 
  SSH_KEY_PATH="$SSH_KEY_PATH" "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/train_hybrid_full.py" \
- --data-s3 "s3://games-collections/" \
- --output-s3 "s3://games-collections/" \
+ --data-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/" \
+ --output-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/" \
  -- \
  --decks-path "processed/decks_all_final.jsonl" \
  --graph-path "graphs/incremental_graph.json" \
@@ -95,8 +96,8 @@ else
 
  "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
  "src/ml/scripts/evaluate_hybrid_with_runctl.py" \
- --data-s3 "s3://games-collections/" \
- --output-s3 "s3://games-collections/experiments/" \
+ --data-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/" \
+ --output-s3 "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/" \
  -- \
     --test-set "experiments/test_set_unified_magic.json" \
  --graph "graphs/incremental_graph.json" \
@@ -121,8 +122,8 @@ fi
 # Step 3: Download results
 echo ""
 echo "Step 3: Downloading results..."
-s5cmd cp "s3://games-collections/embeddings/gnn_graphsage.json" "data/embeddings/" 2>&1 | grep -v "^$" || true
-s5cmd cp "s3://games-collections/experiments/hybrid_evaluation_results.json" "experiments/" 2>&1 | grep -v "^$" || true
+s5cmd cp "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json" "data/embeddings/" 2>&1 | grep -v "^$" || true
+s5cmd cp "s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json" "experiments/" 2>&1 | grep -v "^$" || true
 
 echo ""
 echo "="*70

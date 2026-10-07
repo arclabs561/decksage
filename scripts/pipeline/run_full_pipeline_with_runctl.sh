@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Full pipeline: Train + Evaluate hybrid system with runctl
 # Usage: ./scripts/run_full_pipeline_with_runctl.sh [instance-id]
 
@@ -30,9 +31,9 @@ echo ""
 
 # Step 1: Sync data to S3
 echo "Step 1: Syncing data to S3..."
-s5cmd cp data/graphs/incremental_graph.json s3://games-collections/graphs/ 2>&1 | grep -v "^$" || true
-s5cmd cp data/graphs/train_val_edgelist.edg s3://games-collections/graphs/ 2>&1 | grep -v "^$" || true
-s5cmd cp experiments/test_set_canonical_magic.json s3://games-collections/experiments/ 2>&1 | grep -v "^$" || true
+s5cmd cp data/graphs/incremental_graph.json s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/graphs/ 2>&1 | grep -v "^$" || true
+s5cmd cp data/graphs/train_val_edgelist.edg s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/graphs/ 2>&1 | grep -v "^$" || true
+s5cmd cp experiments/test_set_canonical_magic.json s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/ 2>&1 | grep -v "^$" || true
 echo "✓ Data synced"
 echo ""
 
@@ -68,8 +69,8 @@ echo "="*70
 echo "PIPELINE COMPLETE"
 echo "="*70
 echo "Instance: $INSTANCE_ID"
-echo "Results: s3://games-collections/experiments/hybrid_evaluation_results.json"
+echo "Results: s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json"
 echo ""
 echo "Download results:"
-echo " s5cmd cp s3://games-collections/experiments/hybrid_evaluation_results.json experiments/"
+echo " s5cmd cp s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json experiments/"
 echo "="*70

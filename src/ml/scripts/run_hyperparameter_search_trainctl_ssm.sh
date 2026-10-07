@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Run hyperparameter search with runctl using SSM (no SSH key needed)
 set -euo pipefail
 
@@ -34,11 +35,11 @@ fi
 echo "Starting hyperparameter search..."
 $RUNCTL_BIN aws train "$INSTANCE_ID" \
     src/ml/scripts/improve_embeddings_hyperparameter_search.py \
-    --output-s3 s3://games-collections/experiments/ \
+    --output-s3 s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/ \
     -- \
-    --input s3://games-collections/processed/pairs_large.csv \
-    --output s3://games-collections/experiments/hyperparameter_results.json \
-    --test-set s3://games-collections/processed/test_set_canonical_magic.json
+    --input s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/pairs_large.csv \
+    --output s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hyperparameter_results.json \
+    --test-set s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/test_set_canonical_magic.json
 
 echo "✅ Training started. Monitoring..."
 $RUNCTL_BIN aws monitor "$INSTANCE_ID" --follow

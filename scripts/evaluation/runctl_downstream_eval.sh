@@ -30,9 +30,15 @@ USE_EBS="${USE_EBS:-true}"
 DATA_VOLUME_SIZE="${DATA_VOLUME_SIZE:-500}" # GB - adjust based on dataset size
 
 # S3 paths (for cloud - per cursor rules)
+S3_DATA="${S3_DATA:-}"
+S3_OUTPUT="${S3_OUTPUT:-}"
 # If using EBS, data is pre-warmed on volume, S3 used for initial setup and output
-S3_DATA="${S3_DATA:-s3://games-collections/}"
-S3_OUTPUT="${S3_OUTPUT:-s3://games-collections/experiments/}"
+if [[ "$MODE" != "local" ]]; then
+ S3_DATA="${S3_DATA:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/}"
+fi
+if [[ "$MODE" != "local" ]]; then
+ S3_OUTPUT="${S3_OUTPUT:-s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/}"
+fi
 
 # Local paths (will be synced to S3 by runctl, or accessed from EBS if mounted)
 # EBS volume is typically mounted at /data or /mnt/data
@@ -195,9 +201,9 @@ case "$MODE" in
  fi
  fi
 
- # Fallback to tarek key if available
- if [[ -z "${SSH_KEY_PATH:-}" ]] && [[ -f "$HOME/.ssh/tarek.pem" ]]; then
- export SSH_KEY_PATH="$HOME/.ssh/tarek.pem"
+ # Fallback to the standard SSH key if available
+ if [[ -z "${SSH_KEY_PATH:-}" ]] && [[ -f "$HOME/.ssh/id_rsa" ]]; then
+ export SSH_KEY_PATH="$HOME/.ssh/id_rsa"
  echo " Using fallback SSH key: $SSH_KEY_PATH"
  fi
 
@@ -215,7 +221,7 @@ case "$MODE" in
 
  # Export environment variables for runctl
  export TRAINCTL_USE_SHELL_SYNC=1 # Use shell-based sync for reliability
- export SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/tarek.pem}"
+ export SSH_KEY_PATH="${SSH_KEY_PATH:-$HOME/.ssh/id_rsa}"
 
  echo "Syncing code to instance..."
  echo " Syncing from: src/ml/scripts"
@@ -247,6 +253,8 @@ echo ""
 echo "Evaluation completed!"
 echo ""
 echo "To check status without hanging:"
-echo " ssh -i ~/.ssh/tarek.pem ec2-user@<instance-ip> 'tail -f /home/ec2-user/dev/training.log'"
-echo " aws s3 ls s3://games-collections/experiments/downstream_evaluation_*.json"
+echo " ssh <configured-host> 'tail -f <remote-project>/training.log'"
+if [[ "$MODE" != "local" ]]; then
+ echo " aws s3 ls ${S3_OUTPUT%/}/downstream_evaluation_*.json"
+fi
 echo " aws ssm list-commands --instance-id $INSTANCE_ID --max-items 1"

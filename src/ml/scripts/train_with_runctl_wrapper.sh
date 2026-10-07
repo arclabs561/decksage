@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Generic wrapper to run any training script with runctl
 # Usage: train_with_runctl_wrapper.sh <script_path> <instance_id> [script_args...]
 
@@ -41,6 +42,6 @@ echo ""
 # Run with runctl
 exec "$RUNCTL_BIN" aws train "$INSTANCE_ID" \
     "$SCRIPT_PATH" \
-    --output-s3 s3://games-collections/experiments/ \
+    --output-s3 s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/ \
     -- \
     "$@"

@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Run hyperparameter search for multi-game embeddings
 set -euo pipefail
 
@@ -42,10 +43,10 @@ fi
 echo "Starting multi-game hyperparameter search..."
 $RUNCTL_BIN aws train "$INSTANCE_ID" \
     src/ml/scripts/train_multi_game_embeddings.py \
-    --output-s3 s3://games-collections/embeddings/ \
+    --output-s3 s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/ \
     -- \
-    --input s3://games-collections/processed/pairs_multi_game.csv \
-    --output s3://games-collections/embeddings/multi_game_unified.wv \
+    --input s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/processed/pairs_multi_game.csv \
+    --output s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/multi_game_unified.wv \
     --mode unified
 
 echo "✅ Multi-game training started. Monitoring..."

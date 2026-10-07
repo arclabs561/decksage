@@ -1,4 +1,5 @@
 #!/bin/bash
+: "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
 # Unified training monitoring
 # Combines: monitor_training_unified.py, monitor_runctl_unified.sh, training/monitor_training*.sh
 
@@ -40,8 +41,8 @@ if [ -f "$MONITOR_SCRIPT" ] && [ "$USE_STRUCTURED" = "1" ]; then
 fi
 
 # Fallback to S3 + instance monitoring
-GNN_OUTPUT="s3://games-collections/embeddings/gnn_graphsage.json"
-PROGRESS_DIR="s3://games-collections/training_progress"
+GNN_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json"
+PROGRESS_DIR="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/training_progress"
 
 iteration=0
 while true; do

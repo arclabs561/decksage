@@ -9,6 +9,9 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 MODE="${1:-local}"
+if [[ "$MODE" != "local" ]]; then
+ : "${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}"
+fi
 INSTANCE_ID="${2:-}"
 
 echo "="*70
@@ -43,8 +46,8 @@ if [[ "$MODE" == "local" ]]; then
  --epochs 100
 elif [[ "$MODE" == "aws" && -n "$INSTANCE_ID" ]]; then
  ./scripts/training/train_hybrid_gnn_with_runctl.sh aws "$INSTANCE_ID" \
- --edgelist s3://games-collections/graphs/edgelist.edg \
- --output s3://games-collections/embeddings/gnn_graphsage.json \
+ --edgelist s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/graphs/edgelist.edg \
+ --output s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/gnn_graphsage.json \
  --epochs 100
 else
  echo "Warning: Skipping GNN training (requires instance ID for AWS)"
@@ -59,8 +62,8 @@ if [[ "$MODE" == "local" ]]; then
  --output experiments/hybrid_evaluation_results.json
 elif [[ "$MODE" == "aws" && -n "$INSTANCE_ID" ]]; then
  ./scripts/evaluation/eval_hybrid_with_runctl.sh aws "$INSTANCE_ID" \
- --test-set s3://games-collections/experiments/test_set_canonical_magic.json \
- --output s3://games-collections/experiments/hybrid_evaluation_results.json
+ --test-set s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/test_set_canonical_magic.json \
+ --output s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/experiments/hybrid_evaluation_results.json
 else
  echo "Warning: Skipping evaluation (requires instance ID for AWS)"
 fi

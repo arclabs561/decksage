@@ -31,8 +31,12 @@ BATCH="${BATCH:-256}"
 ALL_GAMES=(magic pokemon yugioh)
 
 RUNCTL_BIN="${RUNCTL_BIN:-runctl}"
-S3_DATA="s3://games-collections/graphs/"
-S3_OUTPUT="s3://games-collections/embeddings/"
+if [[ "$MODE" != "local" ]]; then
+ S3_DATA="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/graphs/"
+fi
+if [[ "$MODE" != "local" ]]; then
+ S3_OUTPUT="s3://${DECKSAGE_S3_BUCKET:?Set DECKSAGE_S3_BUCKET to your bucket name}/embeddings/"
+fi
 
 train_one() {
     local game="$1"
