@@ -83,6 +83,18 @@ def ndcg(relevances: list[float], ideal: list[float], k: int) -> float:
     return dcg(relevances, k) / idcg
 
 
+def condensed_ndcg(ranked: list[str], gt: dict[str, float], k: int) -> float | None:
+    """nDCG@k over the condensed list (Sakai 2007): unjudged results are
+    dropped, judged ones keep their order. None if nothing was judged."""
+    condensed_rels = [gt[card] for card in ranked if card in gt]
+    if not condensed_rels:
+        return None
+    ideal = sorted(gt.values(), reverse=True)
+    # The ideal ranking keeps all k slots: truncating it to the condensed
+    # length would score one judged hit as perfect.
+    return ndcg(condensed_rels, ideal, k)
+
+
 def load_test_set(game: str) -> dict:
     """Load annotated test set with deduplication check."""
     path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
@@ -232,9 +244,6 @@ def eval_mode(
         for card, _ in neighbors:
             relevances.append(gt.get(card, 0.0))
 
-        # Condensed list: only judged cards, preserving rank order (Sakai 2007)
-        condensed_rels = [gt[card] for card, _ in neighbors if card in gt]
-
         # Ideal ranking: sort all ground truth scores descending
         ideal = sorted(gt.values(), reverse=True)
 
@@ -247,8 +256,8 @@ def eval_mode(
         ndcg_scores.append(score)
 
         # Condensed nDCG: ignores unjudged documents (no 0-score penalty)
-        if condensed_rels:
-            condensed_score = ndcg(condensed_rels, ideal, min(k, len(condensed_rels)))
+        condensed_score = condensed_ndcg([card for card, _ in neighbors], gt, k)
+        if condensed_score is not None:
             condensed_ndcg_scores.append(condensed_score)
 
         n_evaluated += 1
