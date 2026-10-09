@@ -305,6 +305,29 @@ def _query_level_split(pairs: list[dict], val_ratio: float = 0.10):
     return train_idx, val_idx
 
 
+def _leak_free_split(pairs: list[dict], val_ratio: float = 0.10):
+    """Query-level split of raw pairs, before any augmentation.
+
+    Train pairs whose candidate is a validation query are dropped too:
+    their reverse is a validation pair, and the symmetric augmentation
+    would add it to training.
+    """
+    train_idx, val_idx = _query_level_split(pairs, val_ratio=val_ratio)
+    val = [pairs[i] for i in val_idx]
+    val_queries = {p["query"] for p in val}
+    train = [pairs[i] for i in train_idx if pairs[i]["candidate"] not in val_queries]
+    return train, val
+
+
+def _prepare_splits(all_pairs: list[dict]) -> tuple[list[dict], list[dict]]:
+    """Split the annotation pairs into (train, val), then augment train only."""
+    train, val = _leak_free_split(all_pairs, val_ratio=0.10)
+    train = _add_symmetric_pairs(train)
+    train = _balance_scores(train, zero_ratio=0.20)
+    train = _add_hard_negatives(train, ratio=0.10)
+    return train, val
+
+
 def train(
     games: list[str],
     epochs: int = 3,
@@ -354,31 +377,24 @@ def train(
         n = int(((scores >= lo) & (scores < hi)).sum())
         log.info(f"  [{lo:.2f}, {hi:.2f}): {n} ({n / len(scores) * 100:.1f}%)")
 
-    # Processing pipeline
+    # Processing pipeline and query-level split
     log.info("\nProcessing pipeline:")
-    all_pairs = _add_symmetric_pairs(all_pairs)
-    all_pairs = _balance_scores(all_pairs, zero_ratio=0.20)
-    all_pairs = _add_hard_negatives(all_pairs, ratio=0.10)
+    train_pairs, val_pairs = _prepare_splits(all_pairs)
 
     # Post-processing distribution
-    scores = np.array([p["score"] for p in all_pairs])
+    scores = np.array([p["score"] for p in train_pairs])
     log.info(
-        f"\nProcessed: {len(all_pairs)} pairs, mean={scores.mean():.3f}, "
+        f"\nProcessed train: {len(train_pairs)} pairs, mean={scores.mean():.3f}, "
         f"median={np.median(scores):.3f}"
     )
 
-    # Query-level split
-    log.info("\nSplitting:")
-    train_idx, val_idx = _query_level_split(all_pairs, val_ratio=0.10)
-
     train_examples = [
         InputExample(
-            texts=[all_pairs[i]["query_text"], all_pairs[i]["candidate_text"]],
-            label=all_pairs[i]["score"],
+            texts=[p["query_text"], p["candidate_text"]],
+            label=p["score"],
         )
-        for i in train_idx
+        for p in train_pairs
     ]
-    val_pairs = [all_pairs[i] for i in val_idx]
 
     # Val score distribution
     val_scores = np.array([p["score"] for p in val_pairs])
@@ -587,19 +603,14 @@ def train_selfsupervised(
     log.info("NO eval leakage -- training on attribute-derived pairs")
     log.info("=" * 60)
 
-    # Add symmetric pairs
-    pairs = _add_symmetric_pairs(pairs)
-
-    # Query-level split
-    train_idx, val_idx = _query_level_split(pairs, val_ratio=0.10)
+    # Query-level split first, then symmetric pairs for training only
+    train_pairs, val_pairs = _leak_free_split(pairs, val_ratio=0.10)
+    train_pairs = _add_symmetric_pairs(train_pairs)
 
     train_examples = [
-        InputExample(
-            texts=[pairs[i]["query_text"], pairs[i]["candidate_text"]], label=pairs[i]["score"]
-        )
-        for i in train_idx
+        InputExample(texts=[p["query_text"], p["candidate_text"]], label=p["score"])
+        for p in train_pairs
     ]
-    val_pairs = [pairs[i] for i in val_idx]
 
     scores = np.array([p["score"] for p in pairs])
     log.info(
