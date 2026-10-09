@@ -104,13 +104,15 @@ data/             Embeddings, graphs, annotations, test sets (not in git)
 
 ## Evaluation
 
-~100K LLM-generated annotations across 3 games (~$25 total via Groq 70B + Cerebras 235B cascade). Substitute nDCG@10 (condensed, saturated):
+~100K LLM-generated annotations across 3 games (~$25 total via Groq 70B + Cerebras 235B cascade). The relevance labels are those LLM scores, not human judgments. Substitute nDCG@10, both embeddings on the same expanded test set per game (`scripts/evaluation/eval_per_mode.py --all-games --compare text_e5 --quick`):
 
-| Game | Co-occurrence | Text (E5) | Improvement |
-|---|---|---|---|
-| Magic | 0.527 | 0.613 | +16% |
-| Pokemon | 0.438 | 0.518 | +18% |
-| Yu-Gi-Oh | 0.482 | 0.532 | +10% |
+| Game | Co-occurrence nDCG | Text (E5) nDCG | Co-occurrence condensed | Text (E5) condensed |
+|---|---|---|---|---|
+| Magic | 0.501 | 0.151 | 0.503 | 0.471 |
+| Pokemon | 0.412 | 0.230 | 0.414 | 0.418 |
+| Yu-Gi-Oh | 0.461 | 0.276 | 0.464 | 0.466 |
+
+Standard nDCG counts unjudged results as irrelevant. Condensed nDCG (Sakai 2007) drops them and keeps the full ideal ranking. Most of text E5's top 10 results are still unjudged, so its standard score understates it; on the condensed score the two embeddings are within 0.04 of each other. Co-occurrence is scored only on queries in its vocabulary (Magic: 2,535 of 3,046 annotated queries); text E5 on nearly all of them.
 
 See `docs/experimental_narrative.md` for a walkthrough of 63 experiments and `docs/failure_taxonomy.md` for categorized failure modes.
 
