@@ -1,6 +1,6 @@
 # CLAUDE.md -- DeckSage
 
-Project-specific rules for DeckSage. Inherits from `~/Documents/dev/CLAUDE.md`.
+Project-specific rules for DeckSage.
 
 ---
 
