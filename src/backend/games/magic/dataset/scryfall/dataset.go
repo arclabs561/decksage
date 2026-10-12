@@ -2,9 +2,11 @@ package scryfall
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"net/url"
 	"path/filepath"
@@ -96,8 +98,9 @@ type respBulkData struct {
 }
 
 type bulkDataItem struct {
-	Type        string `json:"type"`
-	DownloadURI string `json:"download_uri"`
+	Type             string `json:"type"`
+	DownloadURI      string `json:"download_uri"`
+	JSONLDownloadURI string `json:"jsonl_download_uri"`
 }
 
 // https://scryfall.com/docs/api/cards
@@ -155,10 +158,16 @@ func (d *Dataset) extractCards(
 		return err
 	}
 	uri := mo.None[string]()
+	jsonl := false
 	var types []string
 	for _, data := range resp.Data {
 		if data.Type == "default_cards" {
-			uri = mo.Some(data.DownloadURI)
+			if data.JSONLDownloadURI != "" {
+				uri = mo.Some(data.JSONLDownloadURI)
+				jsonl = true
+			} else if data.DownloadURI != "" {
+				uri = mo.Some(data.DownloadURI)
+			}
 			break
 		}
 		types = append(types, data.Type)
@@ -166,33 +175,13 @@ func (d *Dataset) extractCards(
 	if uri.IsAbsent() {
 		return fmt.Errorf("failed to find default_cards type, but found: %v", types)
 	}
-	// Download bulk data directly with net/http (too large for limpet's cache).
-	// Stream-decode to avoid holding the full ~500MB JSON in memory.
-	bulkReq, err := http.NewRequestWithContext(ctx, "GET", uri.MustGet(), nil)
+	limit := -1
+	if n, ok := opts.ItemLimit.Get(); ok {
+		limit = n
+	}
+	rawCards, err := downloadBulkCards(ctx, uri.MustGet(), jsonl, limit)
 	if err != nil {
 		return err
-	}
-	scryfallHeaders(bulkReq)
-	bulkResp, err := http.DefaultClient.Do(bulkReq)
-	if err != nil {
-		return fmt.Errorf("failed to download bulk data: %w", err)
-	}
-	defer bulkResp.Body.Close()
-	if bulkResp.StatusCode != http.StatusOK {
-		return fmt.Errorf("bulk data download returned status %d", bulkResp.StatusCode)
-	}
-	dec := json.NewDecoder(bulkResp.Body)
-	// Read opening bracket
-	if _, err := dec.Token(); err != nil {
-		return fmt.Errorf("failed to read opening bracket: %w", err)
-	}
-	var rawCards []card
-	for dec.More() {
-		var c card
-		if err := dec.Decode(&c); err != nil {
-			return fmt.Errorf("failed to decode card: %w", err)
-		}
-		rawCards = append(rawCards, c)
 	}
 	d.log.Fieldf("dur", "%v", time.Since(start).Round(time.Millisecond)).
 		Infof(ctx, "extracted %d raw cards", len(rawCards))
@@ -262,6 +251,63 @@ func (d *Dataset) extractCards(
 	d.log.Fieldf("dur", "%v", time.Since(start).Round(time.Millisecond)).
 		Infof(ctx, "parsed %d cards, with %d errors", nok, nerr)
 	return nil
+}
+
+// downloadBulkCards accepts the current gzipped JSONL format and legacy JSON arrays.
+// A nonnegative limit bounds decoding before collecting cards for parsing.
+func downloadBulkCards(ctx context.Context, uri string, jsonl bool, limit int) ([]card, error) {
+	// Download bulk data directly with net/http (too large for limpet's cache).
+	// Stream-decode to avoid holding the full ~500MB JSON in memory.
+	bulkReq, err := http.NewRequestWithContext(ctx, "GET", uri, nil)
+	if err != nil {
+		return nil, err
+	}
+	scryfallHeaders(bulkReq)
+	bulkResp, err := http.DefaultClient.Do(bulkReq)
+	if err != nil {
+		return nil, fmt.Errorf("failed to download bulk data: %w", err)
+	}
+	defer func() { _ = bulkResp.Body.Close() }()
+	if bulkResp.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("bulk data download returned status %d", bulkResp.StatusCode)
+	}
+	var reader io.Reader = bulkResp.Body
+	if jsonl {
+		gz, err := gzip.NewReader(reader)
+		if err != nil {
+			return nil, fmt.Errorf("failed to open bulk gzip: %w", err)
+		}
+		defer func() { _ = gz.Close() }()
+		reader = gz
+	}
+	dec := json.NewDecoder(reader)
+	if !jsonl {
+		token, err := dec.Token()
+		if err != nil {
+			return nil, fmt.Errorf("failed to read opening bracket: %w", err)
+		}
+		if token != json.Delim('[') {
+			return nil, fmt.Errorf("bulk data is not a JSON array")
+		}
+	}
+	var cards []card
+	for limit < 0 || len(cards) < limit {
+		if !jsonl && !dec.More() {
+			if _, err := dec.Token(); err != nil {
+				return nil, fmt.Errorf("failed to read closing bracket: %w", err)
+			}
+			break
+		}
+		var c card
+		if err := dec.Decode(&c); err != nil {
+			if jsonl && err == io.EOF {
+				break
+			}
+			return nil, fmt.Errorf("failed to decode card: %w", err)
+		}
+		cards = append(cards, c)
+	}
+	return cards, nil
 }
 
 func (d *Dataset) parseCard(
