@@ -112,6 +112,7 @@ func TestExtractStatsExportJSON(t *testing.T) {
 	stats.RecordError(ctx, "http://example.com/error", "test", errors.New("test error"))
 	stats.RecordNormalization()
 	stats.RecordCacheHit()
+	stats.RecordCacheMiss()
 
 	jsonData, err := stats.ExportJSON()
 	if err != nil {
@@ -131,8 +132,8 @@ func TestExtractStatsExportJSON(t *testing.T) {
 	if export["success_rate"] == nil {
 		t.Error("ExportJSON() missing 'success_rate' field")
 	}
-	if export["cache_hit_rate"] == nil {
-		t.Error("ExportJSON() missing 'cache_hit_rate' field")
+	if export["cache_hit_rate"] != 50.0 {
+		t.Errorf("ExportJSON() cache_hit_rate = %v, want 50", export["cache_hit_rate"])
 	}
 }
 
@@ -158,8 +159,8 @@ func TestExtractStatsErrorLimit(t *testing.T) {
 func contains(s, substr string) bool {
 	return len(s) >= len(substr) && (s == substr || len(substr) == 0 ||
 		(len(s) > len(substr) && (s[:len(substr)] == substr ||
-		 s[len(s)-len(substr):] == substr ||
-		 containsMiddle(s, substr))))
+			s[len(s)-len(substr):] == substr ||
+			containsMiddle(s, substr))))
 }
 
 func containsMiddle(s, substr string) bool {
