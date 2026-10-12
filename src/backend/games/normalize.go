@@ -38,25 +38,31 @@ func NormalizeFormatName(format string) string {
 
 	// Map common variations to canonical names
 	formatMap := map[string]string{
-		"std":     "standard",
-		"mod":     "modern",
-		"leg":     "legacy",
-		"vin":     "vintage",
-		"pio":     "pioneer",
-		"pau":     "pauper",
-		"cedh":    "cedh",
-		"commander": "commander",
-		"edh":     "commander",
+		"std":            "standard",
+		"mod":            "modern",
+		"leg":            "legacy",
+		"vin":            "vintage",
+		"pio":            "pioneer",
+		"pau":            "pauper",
+		"cedh":           "cedh",
+		"commander":      "commander",
+		"edh":            "commander",
 		"duel commander": "duel commander",
-		"dc":      "duel commander",
-		"premodern": "premodern",
-		"pre":     "premodern",
-		"highlander": "highlander",
-		"peasant": "peasant",
+		"dc":             "duel commander",
+		"premodern":      "premodern",
+		"pre":            "premodern",
+		"highlander":     "highlander",
+		"peasant":        "peasant",
 	}
 
 	if canonical, ok := formatMap[format]; ok {
 		return canonical
+	}
+	// A canonical name must survive normalization unchanged.
+	for _, canonical := range formatMap {
+		if format == canonical {
+			return canonical
+		}
 	}
 
 	// Capitalize first letter of each word for unknown formats

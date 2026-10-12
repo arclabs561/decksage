@@ -127,3 +127,12 @@ func TestIsValidCardName(t *testing.T) {
 		})
 	}
 }
+
+func TestNormalizeFormatNameCanonicalNamesAreIdempotent(t *testing.T) {
+	for _, alias := range []string{"std", "mod", "leg", "vin", "pio", "pau", "edh"} {
+		canonical := NormalizeFormatName(alias)
+		if got := NormalizeFormatName(canonical); got != canonical {
+			t.Errorf("NormalizeFormatName(%q) = %q, want %q", canonical, got, canonical)
+		}
+	}
+}
