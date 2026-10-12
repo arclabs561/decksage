@@ -39,9 +39,9 @@ type ExtractStats struct {
 	CacheHits          int
 	CacheMisses        int
 
-	mu         sync.Mutex
-	startTime  time.Time
-	log        *logger.Logger
+	mu        sync.Mutex
+	startTime time.Time
+	log       *logger.Logger
 }
 
 // ExtractError represents a single extraction error
@@ -55,10 +55,10 @@ type ExtractError struct {
 // NewExtractStats creates a new stats tracker
 func NewExtractStats(log *logger.Logger) *ExtractStats {
 	return &ExtractStats{
-		startTime:         time.Now(),
-		Errors:            make([]ExtractError, 0, 100),
+		startTime:          time.Now(),
+		Errors:             make([]ExtractError, 0, 100),
 		ValidationFailures: make(map[string]int),
-		log:               log,
+		log:                log,
 	}
 }
 
@@ -148,6 +148,11 @@ func (s *ExtractStats) RecordCacheMiss() {
 func (s *ExtractStats) GetCacheHitRate() float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
+	return s.cacheHitRateLocked()
+}
+
+// cacheHitRateLocked requires s.mu to be held by the caller.
+func (s *ExtractStats) cacheHitRateLocked() float64 {
 	total := s.CacheHits + s.CacheMisses
 	if total == 0 {
 		return 0.0
@@ -171,7 +176,7 @@ func (s *ExtractStats) ExportJSON() ([]byte, error) {
 		CacheMisses        int            `json:"cache_misses"`
 		CacheHitRate       float64        `json:"cache_hit_rate"`
 		Duration           string         `json:"duration"`
-		Errors             []ExtractError  `json:"errors"`
+		Errors             []ExtractError `json:"errors"`
 	}
 
 	duration := time.Since(s.startTime)
@@ -189,7 +194,7 @@ func (s *ExtractStats) ExportJSON() ([]byte, error) {
 		ValidationFailures: make(map[string]int),
 		CacheHits:          s.CacheHits,
 		CacheMisses:        s.CacheMisses,
-		CacheHitRate:       s.GetCacheHitRate() * 100,
+		CacheHitRate:       s.cacheHitRateLocked() * 100,
 		Duration:           duration.Round(time.Second).String(),
 		Errors:             make([]ExtractError, len(s.Errors)),
 	}
