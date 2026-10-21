@@ -19,7 +19,7 @@ dependencies = [
   "qdrant-client>=1.7.0",
   "meilisearch>=0.32.0",
   "sentencepiece>=0.2.1",
-  "pillow>=12.1.0",
+  "pillow>=10.0.0",
 ]
 
 [project.urls]
