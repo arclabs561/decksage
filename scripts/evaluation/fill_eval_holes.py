@@ -330,7 +330,7 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
     return results
 
 
-def merge_into_test_set(game: str, annotations: list[dict]) -> int:
+def merge_into_test_set(game: str, annotations: list[dict], discovery: dict | None = None) -> int:
     """Merge hole-fill annotations into the test set."""
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     with open(test_path) as f:
@@ -361,6 +361,11 @@ def merge_into_test_set(game: str, annotations: list[dict]) -> int:
                 "llm_model": ann.get("model_name", "unknown"),
                 "discovery_source": "eval_hole_fill",
                 "timestamp": ann.get("timestamp", ""),
+                "_provenance": {
+                    **dict(ann.get("_provenance") or {}),
+                    "selection": "embedding_topk",
+                    "discovery": discovery or {"source": "eval_hole_fill"},
+                },
             }
         )
 
@@ -447,7 +452,11 @@ def main() -> int:
                     chunk, game, card_context, model=args.model, concurrency=args.concurrency
                 )
             )
-            added = merge_into_test_set(game, annotations)
+            added = merge_into_test_set(
+                game,
+                annotations,
+                discovery={"method": args.method, "k": args.k},
+            )
             total_added += added
             print(
                 f"  Checkpoint: {chunk_start + len(chunk)}/{len(to_fill)} holes, {total_added} merged"

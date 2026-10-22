@@ -106,6 +106,19 @@ Best embeddings per game (canonical eval_per_mode.py, all top-10 holes filled, e
 - Saturation is embedding-specific: new embeddings will create new holes to fill
 - All nDCG numbers before 2026-03-22 were inflated by test set duplication.
 
+### Known contaminated results
+
+- **Exp 0062 (text_e5 beats co-occurrence by 14-25%) is contaminated.** `train_e5_lora.py`
+  trained the E5 model on `annotated_*_v2.json`, the evaluation set, so 0.613/0.518/0.532
+  are upper bounds. Rerun on self-supervised pairs before citing them; the trainer now
+  refuses eval data and has no override flag.
+- **Exp 0063 (cross-encoder)** also trained on eval annotations. Its Pearson numbers are
+  upper bounds, and the trained model is not served. `train_cross_encoder.py` now requires
+  `data/annotations/<game>_train.json`.
+- Eval measures raw cosine by default while the API serves a linear multi-source reranker,
+  so eval_per_mode.py numbers do not describe production. Measure the served path before
+  claiming a production improvement.
+
 ---
 
 ## Bespoke Audit Commands
