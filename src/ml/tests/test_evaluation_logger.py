@@ -374,6 +374,7 @@ class TestIntegrationBridges:
             logger = EvaluationLogger(
                 log_dir=temp_dir / "logs",
                 bridge_to_registry=True,
+                registry_dir=temp_dir / "registry",
             )
 
             run_id = logger.log_evaluation(

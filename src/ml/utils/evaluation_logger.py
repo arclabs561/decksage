@@ -123,6 +123,7 @@ class EvaluationLogger:
         use_json: bool = False,  # Default False to reduce format proliferation
         write_to_experiment_log: bool = False,
         bridge_to_registry: bool = False,
+        registry_dir: Path | None = None,
         validate: bool = True,
         validate_on_read: bool = True,
     ):
@@ -136,6 +137,9 @@ class EvaluationLogger:
             use_json: Enable JSON logging (one file per run) - Default False
             write_to_experiment_log: Also write to EXPERIMENT_LOG_CANONICAL.jsonl
             bridge_to_registry: Also write to EvaluationRegistry (if available)
+            registry_dir: Root for the model registry and results (default:
+                experiments/). Pass a temp directory in tests so a run cannot
+                write test entries into the real registry.
             validate: Enable Pydantic validation on write (if available)
             validate_on_read: Enable validation when reading existing files
         """
@@ -160,7 +164,14 @@ class EvaluationLogger:
             try:
                 from .evaluation_registry import EvaluationRegistry
 
-                self.registry = EvaluationRegistry()
+                if registry_dir is None:
+                    self.registry = EvaluationRegistry()
+                else:
+                    root = Path(registry_dir)
+                    self.registry = EvaluationRegistry(
+                        registry_path=root / "model_registry.json",
+                        results_dir=root / "evaluation_results",
+                    )
             except ImportError:
                 pass
 
