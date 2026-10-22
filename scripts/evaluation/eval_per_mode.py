@@ -498,11 +498,24 @@ def eval_game(
         if max(ideal[:k]) > 0:
             sub_ndcg_scores.append(ndcg(relevances, ideal, k))
 
-    results["substitutability_ndcg"] = {
-        "ndcg_at_k": float(np.mean(sub_ndcg_scores)) if sub_ndcg_scores else 0.0,
-        "n_evaluated": len(sub_ndcg_scores),
-        "k": k,
-    }
+    if sub_ndcg_scores:
+        results["substitutability_ndcg"] = {
+            "ndcg_at_k": float(np.mean(sub_ndcg_scores)),
+            "n_evaluated": len(sub_ndcg_scores),
+            "k": k,
+            "status": "measured",
+        }
+    else:
+        # ADR-0001: a metric with no labels is absent, not zero. The cascade
+        # annotator never writes substitutability, so reporting 0.0 here read
+        # as "the model is terrible" when nothing had been judged.
+        results["substitutability_ndcg"] = {
+            "ndcg_at_k": None,
+            "n_evaluated": 0,
+            "k": k,
+            "status": "absent",
+            "reason": "no substitutability labels in this test set",
+        }
 
     # Upgrade direction coverage
     results["upgrade_direction"] = eval_upgrade_direction(queries)
