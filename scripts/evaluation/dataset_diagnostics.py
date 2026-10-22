@@ -248,6 +248,61 @@ def diagnose_annotations(game: str) -> dict:
     return results
 
 
+BUCKET_BANDS = {
+    "highly_relevant": (0.70, 1.01),
+    "relevant": (0.50, 0.70),
+    "somewhat_relevant": (0.30, 0.50),
+    "marginally_relevant": (0.15, 0.30),
+}
+
+
+def diagnose_bucket_consistency(game: str) -> dict:
+    """Check that relevance buckets agree with the annotation scores.
+
+    Buckets and annotations are written by different paths and read by
+    different tools: the fusion evaluators read buckets, eval_per_mode reads
+    annotation scores. If the two disagree, the same pair is highly relevant to
+    one evaluator and irrelevant to the other, which silently makes their
+    numbers incomparable.
+    """
+    results: dict = {"checked": 0, "contradictions": 0, "examples": [], "warnings": []}
+    path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
+    if not path.exists():
+        results["warnings"].append(f"bucket check skipped: missing {path.name}")
+        return results
+
+    with open(path) as handle:
+        data = json.load(handle)
+    for query, entry in data.get("queries", {}).items():
+        scores = {
+            ann.get("candidate"): ann.get("similarity_score")
+            for ann in entry.get("annotations", [])
+        }
+        for bucket, (low, high) in BUCKET_BANDS.items():
+            for candidate in entry.get(bucket, []):
+                score = scores.get(candidate)
+                if score is None:
+                    continue
+                results["checked"] += 1
+                if not low <= float(score) < high:
+                    results["contradictions"] += 1
+                    if len(results["examples"]) < 5:
+                        results["examples"].append(
+                            {
+                                "query": query,
+                                "candidate": candidate,
+                                "bucket": bucket,
+                                "similarity_score": float(score),
+                            }
+                        )
+    if results["contradictions"]:
+        results["warnings"].append(
+            f"{results['contradictions']} of {results['checked']} bucketed pairs "
+            "disagree with their annotation score"
+        )
+    return results
+
+
 def diagnose_metadata(game: str) -> dict:
     """Check card metadata coverage."""
     import pandas as pd
@@ -313,6 +368,7 @@ def run_diagnostics(game: str, as_json: bool = False) -> dict:
         "game": game,
         "edges": diagnose_edges(game),
         "annotations": diagnose_annotations(game),
+        "bucket_consistency": diagnose_bucket_consistency(game),
         "decks": diagnose_decks(game),
     }
 
@@ -324,7 +380,7 @@ def run_diagnostics(game: str, as_json: bool = False) -> dict:
 
     # Collect all warnings
     all_warnings = []
-    for section in ["edges", "annotations", "metadata", "decks"]:
+    for section in ["edges", "annotations", "bucket_consistency", "metadata", "decks"]:
         all_warnings.extend(results.get(section, {}).get("warnings", []))
     results["warnings"] = all_warnings
 
