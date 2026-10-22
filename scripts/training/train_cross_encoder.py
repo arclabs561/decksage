@@ -15,10 +15,11 @@ Train a cross-encoder reranker on DeckSage annotation pairs.
 Takes (query_card_text, candidate_card_text, similarity_score) triples from
 the annotated test sets and fine-tunes a cross-encoder for pairwise scoring.
 
-WARNING: This trains on eval annotations (annotated_*_v2.json). If deployed
-as a reranker, nDCG numbers from eval_per_mode.py are upper bounds, not
-generalizable metrics. This is acceptable for demonstration but not for
-claiming production quality. See critique in docs/experimental_narrative.md.
+Training data must be a separate annotation file under data/annotations/.
+The evaluation sets (data/test_sets/annotated_*_v2.json) are refused: a
+reranker trained on them cannot be measured against them (CLAUDE.md,
+Train/Eval Separation). Experiment 0063 results are therefore upper bounds
+and are not comparable to eval_per_mode.py numbers.
 
 Usage:
     uv run scripts/training/train_cross_encoder.py --all-games
@@ -110,8 +111,15 @@ def _card_to_text(name: str, card_db: dict[str, dict[str, str]]) -> str | None:
 
 def load_training_pairs(game: str) -> list[dict]:
     """Load annotation pairs with rich card text for cross-encoder training."""
-    test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    with open(test_path) as f:
+    train_path = DATA_DIR / "annotations" / f"{game}_train.jsonl"
+    if "test_sets" in train_path.parts:
+        raise SystemExit("refusing to train on the evaluation set")
+    if not train_path.exists():
+        raise SystemExit(
+            f"Missing {train_path}. Cross-encoder training needs a non-test "
+            "annotation file; the eval sets are not a training source."
+        )
+    with open(train_path) as f:
         data = json.load(f)
 
     card_db = _load_card_db(game)
@@ -332,7 +340,7 @@ def train(
     games: list[str],
     epochs: int = 3,
     batch_size: int = 32,
-    model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     max_length: int = 384,
 ):
     """Train cross-encoder on annotation pairs."""
@@ -537,7 +545,7 @@ def main():
     parser.add_argument("--max-length", type=int, default=384)
     parser.add_argument(
         "--model",
-        default="cross-encoder/ms-marco-MiniLM-L-12-v2",
+        default="cross-encoder/ms-marco-MiniLM-L-6-v2",
         help="Base model (default: L-12 for deeper capacity)",
     )
     parser.add_argument(
@@ -582,7 +590,7 @@ def train_selfsupervised(
     pairs: list[dict],
     epochs: int = 5,
     batch_size: int = 32,
-    model_name: str = "cross-encoder/ms-marco-MiniLM-L-12-v2",
+    model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     max_length: int = 384,
 ):
     """Train cross-encoder on self-supervised pairs (no eval leakage)."""

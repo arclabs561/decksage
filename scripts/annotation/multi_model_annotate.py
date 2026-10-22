@@ -57,13 +57,19 @@ logger = logging.getLogger("multi_model_annotate")
 
 # ---------------------------------------------------------------------------
 # Model pool
+#
+# Pins rot: llama-3.3-70b-versatile, qwen/qwen3-32b (Groq) and
+# qwen-3-235b-a22b-instruct-2507 (Cerebras) were all retired during 2026, so
+# every annotation run failed at request time. Check the provider deprecation
+# pages before changing these, and record a discontinuity when the cascade
+# identity changes: scores from different model generations are not comparable.
 # ---------------------------------------------------------------------------
 
 TIER1_MODELS = [
     {
-        "name": "groq_llama_70b",
+        "name": "groq_gpt_oss_120b",
         "provider": "groq",
-        "model": "llama-3.3-70b-versatile",
+        "model": "openai/gpt-oss-120b",
         "api_url": "https://api.groq.com/openai/v1",
         "api_key_env": "GROQ_API_KEY",
         "cost_per_1k_tok": 0.69,
@@ -71,9 +77,9 @@ TIER1_MODELS = [
         "concurrency": 20,
     },
     {
-        "name": "cerebras_qwen_235b",
+        "name": "cerebras_gpt_oss_120b",
         "provider": "cerebras",
-        "model": "qwen-3-235b-a22b-instruct-2507",
+        "model": "gpt-oss-120b",
         "api_url": "https://api.cerebras.ai/v1",
         "api_key_env": "CEREBRAS_API_KEY",
         "cost_per_1k_tok": 0.20,
@@ -84,9 +90,9 @@ TIER1_MODELS = [
 
 TIER2_MODELS = [
     {
-        "name": "groq_qwen3_32b",
+        "name": "groq_qwen3_8_27b",
         "provider": "groq",
-        "model": "qwen/qwen3-32b",
+        "model": "qwen/qwen3.8-27b",
         "api_url": "https://api.groq.com/openai/v1",
         "api_key_env": "GROQ_API_KEY",
         "cost_per_1k_tok": 0.44,
