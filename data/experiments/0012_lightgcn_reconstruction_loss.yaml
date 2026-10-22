@@ -30,6 +30,8 @@ data:
       yugioh: 1841618 edges
 
 results:
+  status: incomplete
+  reason: "Quality-pair similarities were never measured; only the BPR-collapse and reconstruction-training outcomes exist."
   bpr_outcome: "Embedding collapse -- all quality pair scores failed"
   reconstruction_outcome: "Trains without collapse, produces non-degenerate embeddings"
   quality_pairs: "not recorded (LightGCN needs hyperparameter tuning)"

@@ -15,7 +15,17 @@ method:
        rarity), PCA to 128D, alpha=0.7. Same recipe as v5 fused.
     B: MetaPath2Vec 40 epochs, 30 walks/node, lr=0.005 (in progress).
 
+data:
+  training:
+    source: "Magic MetaPath2Vec embeddings (128D) concatenated with 9 card attributes (cmc, power, toughness, WUBRG, rarity), PCA to 128D at alpha=0.7"
+    count: not recorded
+  evaluation:
+    source: "Magic per-mode annotation evaluation"
+    count: not recorded
+
 results:
+  status: incomplete
+  reason: "The 40-epoch variant is not recorded here; it was logged separately in 0037_metapath2vec_40epochs.yaml."
   attribute_fusion:
     sub_ndcg: 0.160
     syn_ndcg: 0.145
@@ -25,7 +35,7 @@ results:
     verdict: "WORSE than unfused (0.178 sub). Attribute PCA adds noise."
 
   forty_epochs:
-    status: "in progress"
+    status: "not recorded (logged in 0037_metapath2vec_40epochs.yaml)"
 
 conclusion: >
   Attribute fusion that helped PecanPy HURTS MetaPath2Vec. MetaPath2Vec

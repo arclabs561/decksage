@@ -15,7 +15,11 @@ method:
   training_time: "776.8s (13min)"
 
 data:
-  same as experiment 0054
+  note: "same as experiment 0054 (0054_hgt_mini_batch.yaml)"
+  edge_types: deck (1.5M), enriched (1.5M), set (2.2M), precon (283K), keyword (83K), oracle_text (497K)
+  total_directed_edges: 12M
+  nodes: 36,315
+  card_annotations: 27,507/36,315 (76%)
 
 results:
   training:

@@ -11,7 +11,7 @@ method:
   type: eval
   script: scripts/evaluation/eval_per_mode.py
   args: "--game magic --embedding magic_lightgcn_best"
-  commit: pending
+  commit: not recorded
 
 data:
   eval:

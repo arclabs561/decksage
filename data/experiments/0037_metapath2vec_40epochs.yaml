@@ -13,6 +13,14 @@ method:
   script: scripts/training/train_metapath2vec.py
   args: "--game magic --dim 128 --epochs 40 --walks-per-node 30 --lr 0.005"
 
+data:
+  training:
+    source: "Magic graph walks (train_metapath2vec.py --game magic)"
+    count: "35,265 cards (embedding vocabulary)"
+  evaluation:
+    source: "Magic per-mode annotation evaluation"
+    count: not recorded
+
 results:
   training_loss: "0.725 (vs 0.735 at 20 epochs, 0.86 at 5 epochs)"
   training_time: "~20 min"

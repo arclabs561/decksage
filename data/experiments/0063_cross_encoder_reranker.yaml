@@ -24,6 +24,8 @@ data:
     WARNING: Training on eval annotations. Metrics are upper bounds.
     Query-level split (v3) gives honest generalization numbers.
 results:
+  status: incomplete
+  reason: "v3 training was still at epoch 0.9 when recorded; final Pearson/Spearman/nDCG were never written."
   v1:
     pearson: 0.461
     spearman: 0.315
@@ -35,9 +37,9 @@ results:
     training_time: "4036s (~67min)"
     notes: "Pair-level split inflates metrics (same card in train+val)"
   v3:
-    pearson: "pending (0.560 at epoch 0.9)"
-    spearman: "pending (0.475 at epoch 0.9)"
-    ndcg: "pending"
+    pearson: "0.560 (epoch 0.9; final not recorded)"
+    spearman: "0.475 (epoch 0.9; final not recorded)"
+    ndcg: not recorded
     notes: "Query-level split, honest generalization. Expected ~0.60-0.65 final."
 conclusion: >
   Methodology matters more than model size. v2's Pearson 0.695 dropped to

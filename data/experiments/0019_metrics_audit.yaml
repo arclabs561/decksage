@@ -16,6 +16,14 @@ method:
     (LLM judge bias), Li et al. 2021 (NBR evaluation), Chen et al. 2018
     (Q-DeckRec), Duricic et al. 2023 (GNN beyond-accuracy).
 
+data:
+  training:
+    source: "not recorded (literature review; no dataset trained on)"
+    count: not recorded
+  evaluation:
+    source: "RecSys evaluation literature: Chapelle et al. 2009, Kaminskas & Bridge 2016, Penha et al. 2025, Li et al. 2021, Chen et al. 2018, Duricic et al. 2023"
+    count: not recorded
+
 results:
   current_metrics_assessment:
     nDCG: "Appropriate for exploratory tasks (synergy, meta). For substitution (navigational), ERR may be better."

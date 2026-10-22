@@ -14,6 +14,14 @@ method:
     For 200 queries, retrieved top-50 from both v5 and MetaPath2Vec,
     fused with RRF, CombMNZ, and CombSum via rankops, measured nDCG.
 
+data:
+  training:
+    source: "not recorded (evaluation of existing v5 and MetaPath2Vec embeddings)"
+    count: not recorded
+  evaluation:
+    source: "Magic queries, top-50 candidates from v5_fused and MetaPath2Vec"
+    count: "200 queries"
+
 results:
   v5_only: 0.169
   metapath2vec_only: 0.239

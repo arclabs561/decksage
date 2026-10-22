@@ -11,7 +11,7 @@ method:
   type: eval
   script: scripts/evaluation/eval_e5_finetuned.py
   args: "--game magic"
-  commit: pending
+  commit: not recorded
   details: >
     Ranks annotation candidates by E5 cosine similarity per query.
     Computes per-mode nDCG and substitution recall within the annotation

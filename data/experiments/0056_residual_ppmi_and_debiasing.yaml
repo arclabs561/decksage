@@ -15,6 +15,14 @@ method:
     3: "Spectral + debiasing: both applied to v7_fused"
   note: "residual2vec library segfaults on macOS ARM, implemented manually"
 
+data:
+  training:
+    source: "Magic v7_fused embeddings (PecanPy 128D), degree-corrected PPMI matrix, spectral propagation"
+    count: not recorded
+  evaluation:
+    source: "Magic per-mode annotation evaluation"
+    count: not recorded
+
 results:
   residual_ppmi_fused: 0.0837
   v7_debiased: 0.1031

@@ -10,6 +10,15 @@ method:
   script: scripts/training/train_metapath2vec.py
   args: "--game magic --epochs 160 --walks-per-node 30 --lr 0.003 --batch-size 256"
   commit: f181de0
+
+data:
+  training:
+    source: "Magic graph walks (train_metapath2vec.py --game magic, 30 walks/node)"
+    count: "35,272 cards (embedding vocabulary, from results catalog_coverage)"
+  evaluation:
+    source: "Magic per-mode annotation evaluation"
+    count: not recorded
+
 results:
   sub_ndcg: 0.228
   syn_ndcg: 0.228

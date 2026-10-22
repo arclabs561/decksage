@@ -17,6 +17,14 @@ method:
     4. Top-neighbor quality (manual inspection)
     5. Reconstruction loss trivial solution analysis
 
+data:
+  training:
+    source: "not recorded (diagnosis of existing embeddings; no new training)"
+    count: "331K edges / 246M possible pairs (0.27% graph density)"
+  evaluation:
+    source: "Magic annotation test set + LightGCN/v5_fused embedding vocabularies"
+    count: "3,301 annotated cards; vocab overlap 15,645 shared / 5,506 v5-only / 52 LightGCN-only"
+
 results:
   vocab_overlap: "15,645 shared, 5,506 only in v5, 52 only in LightGCN"
   annotated_cards_in_top10:

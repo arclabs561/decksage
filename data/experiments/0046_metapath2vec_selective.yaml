@@ -22,16 +22,21 @@ data:
     note: "No Commander, no set, no precon -- these diluted signal in exp 0041"
 
 results:
+  status: incomplete
+  reason: "Selective-edge runs produced embeddings (data/logs/*_metapath2vec__selective_run.json) but per-mode metrics were never recorded in this file."
   magic:
-    sub_ndcg: pending
-    contextual_recall: pending
+    sub_ndcg: not recorded
+    contextual_recall: not recorded
   pokemon:
-    sub_ndcg: pending
+    sub_ndcg: not recorded
   yugioh:
-    sub_ndcg: pending
+    sub_ndcg: not recorded
   comparison:
     v1_3_types: "sub nDCG 0.228 (deck+enriched+annotation, 160ep)"
     v2_8_types: "sub nDCG 0.114 (all types, 80ep)"
-    selective: pending
+    selective: not recorded
 
-conclusion: pending
+conclusion: >
+  NOT CONCLUDED. The selective-edge-type runs were never evaluated in this
+  record, so the hypothesis (selective edges restore v1-level sub nDCG)
+  remains open. See results.reason.

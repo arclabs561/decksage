@@ -13,6 +13,14 @@ method:
     Analyzed deck quality, card frequency distribution, pair weights,
     cross-format contamination, and annotation coverage gaps.
 
+data:
+  training:
+    source: "Magic deck co-occurrence corpus (deck exports, all formats)"
+    count: "83,611 decks, 15,697 unique cards"
+  evaluation:
+    source: "Magic annotation set (coverage vs co-occurrence graph)"
+    count: "2,791 annotated cards (730 not in graph)"
+
 results:
   deck_quality:
     total_decks: 83611

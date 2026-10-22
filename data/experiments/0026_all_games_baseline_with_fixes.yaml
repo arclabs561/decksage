@@ -13,6 +13,21 @@ method:
   script: scripts/evaluation/eval_per_mode.py
   args: "--game {magic,pokemon,yugioh} --embedding {v5_fused,v5_fused,cleaned_v5}"
 
+data:
+  training:
+    source: "not recorded (evaluation only; no new training in this experiment)"
+    count: not recorded
+  evaluation:
+    source: "Expanded diverse-annotation test sets per game"
+    count:
+      magic: "836 queries"
+      pokemon: "639 queries"
+      yugioh: "689 queries"
+  embeddings:
+    magic: v5_fused
+    pokemon: v5_fused
+    yugioh: cleaned_v5
+
 results:
   magic:
     overall_ndcg: 0.113

@@ -14,6 +14,14 @@ method:
     union of top-10 candidates, scored by average embedding similarity.
     Error taxonomy of joint failures.
 
+data:
+  training:
+    source: "not recorded (analysis of existing v5_fused and MetaPath2Vec embeddings)"
+    count: not recorded
+  evaluation:
+    source: "Magic per-mode query set, top-10 candidates from each embedding"
+    count: "3,819 ground-truth cards"
+
 results:
   per_query_comparison:
     mp_wins: 219 (25%)

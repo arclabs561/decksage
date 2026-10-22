@@ -88,6 +88,9 @@ artifacts:
 
 - Write hypothesis BEFORE running. If you can't state what you expect, you don't understand the experiment.
 - Never backfill metrics you didn't measure. "not recorded" is honest; guessing is not.
+- If a record is incomplete (a run never finished, or a metric was never measured), say so
+  explicitly: `results.status: incomplete` plus a one-line `results.reason`. The schema
+  check (`scripts/validation/check_experiment_schema.py`) requires the reason.
 - Record negative results. "This didn't work because X" is as valuable as "this improved Y by Z%."
 - Commit experiment files WITH the code changes, not separately.
 - Per-game metrics always. A single "overall" number hides domain-specific results.

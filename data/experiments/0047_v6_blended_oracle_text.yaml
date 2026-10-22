@@ -14,7 +14,7 @@ method:
   script: scripts/training/train_blended_embeddings.py
   args_pokemon: "--edgelist pokemon_merged_all (x1) + oracle_text (x5) + set (x3) --ns-exponent -0.5"
   args_yugioh: "--edgelist yugioh_merged_all (x1) + oracle_text (x5) + archetype (x3) --ns-exponent -0.5"
-  args_magic: "pending (oracle text edges generating)"
+  args_magic: "not recorded (oracle text edges were still generating)"
 
 data:
   pokemon:
@@ -25,12 +25,17 @@ data:
     edges: "merged_all 331K + oracle_text (generating) + enriched 1.46M"
 
 results:
-  pokemon_sub_ndcg: pending
-  yugioh_sub_ndcg: pending
-  magic_sub_ndcg: pending
+  status: incomplete
+  reason: "Blend runs produced embeddings (data/embeddings/*_v6_blended.wv) but sub nDCG was never recorded; Magic oracle-text edges were still generating."
+  pokemon_sub_ndcg: not recorded
+  yugioh_sub_ndcg: not recorded
+  magic_sub_ndcg: not recorded
   comparison:
     v5_fused_magic: 0.099
     v5_fused_pokemon: 0.075
     v5_fused_yugioh: 0.157
 
-conclusion: pending
+conclusion: >
+  NOT CONCLUDED. No blend sub nDCG was ever measured or recorded, so the
+  oracle-text-edge hypothesis is untested. Only the v5_fused comparison
+  baselines above are measured values. See results.reason.

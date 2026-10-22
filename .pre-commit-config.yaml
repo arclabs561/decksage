@@ -327,6 +327,18 @@ repos:
         pass_filenames: true  # Only check changed files
         verbose: false  # Reduce noise
 
+      # Validate experiment log schema (data/experiments/NNNN_*.yaml)
+      # Blocking: keeps the log's data/results/conclusion provenance honest.
+      # Uses `uv run` because the validator needs PyYAML from the project env.
+      - id: check-experiment-schema
+        name: Check experiment log schema
+        entry: bash -c 'uv run python scripts/validation/check_experiment_schema.py "$@"'
+        language: system
+        files: ^data/experiments/.*\.yaml$
+        stages: [pre-commit]
+        pass_filenames: true
+        verbose: true
+
       # Validate Python file permissions (shebang vs executable)
       # Only runs on changed files for speed
       - id: check-python-permissions

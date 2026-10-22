@@ -12,6 +12,14 @@ method:
   script: scripts/training/runctl_metapath2vec.sh local
   args: "EPOCHS=80 WALKS=30 LR=0.003"
 
+data:
+  training:
+    source: "Magic graph walks (runctl_metapath2vec.sh local)"
+    count: not recorded
+  evaluation:
+    source: "Magic per-mode annotation evaluation"
+    count: not recorded
+
 results:
   training_loss: "0.717 (vs 0.725 at 40ep, 0.735 at 20ep)"
   overall_ndcg: 0.128

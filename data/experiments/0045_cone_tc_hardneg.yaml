@@ -13,6 +13,17 @@ method:
   script: scripts/training/train_cone_upgrades.py
   args: "--all-games --augment-tc --hard-neg --dim 16 --epochs 300 --lr 0.005"
 
+data:
+  training:
+    source: "Per-game upgrade pairs with TC augmentation + same-role hard negatives"
+    count:
+      magic: {pairs: 146, hard_negatives: 408}
+      pokemon: {pairs: 398, hard_negatives: 1153}
+      yugioh: {pairs: 249, hard_negatives: 712}
+  evaluation:
+    source: "not recorded"
+    count: not recorded
+
 results:
   magic:
     auc: 0.857

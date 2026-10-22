@@ -12,7 +12,7 @@ method:
   type: embedding
   script: scripts/training/train_box_containment.py
   args: "--game magic --dim 32 --epochs 50 --max-decks 2000 --lr 0.005"
-  commit: pending
+  commit: not recorded
   configs_tried:
     - "lr=0.02, dim=32, neg_samples=1 (default), 10K decks -> AUC 0.498"
     - "lr=0.005, dim=32, neg_samples=1, 2K decks -> AUC 0.493"

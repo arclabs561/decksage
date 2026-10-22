@@ -13,6 +13,17 @@ method:
   script: inline (cone + TC test)
   args: "dim=16, epochs=300, lr=0.005, TC augmentation"
 
+data:
+  training:
+    source: "Per-game upgrade annotations, augmented with transitive closure"
+    count:
+      magic: {original_edges: 145, tc_edges: 146}
+      pokemon: {original_edges: 344, tc_edges: 389}
+      yugioh: {original_edges: 225, tc_edges: 240}
+  evaluation:
+    source: "not recorded"
+    count: not recorded
+
 results:
   magic:
     original_edges: 145
