@@ -43,6 +43,9 @@ results:
     meta_ndcg: 0.530
     vocab: 13745
 
+summary:
+  title: "v4 co-occurrence baseline"
+
 conclusion: >
   YuGiOh nDCG far exceeds Magic/Pokemon due to larger, denser co-occurrence
   graph (1.8M pairs). Magic deck completion picks wrong cards. Pokemon

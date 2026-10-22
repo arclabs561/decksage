@@ -36,6 +36,11 @@ results:
     v2_8_types: "sub nDCG 0.114 (all types, 80ep)"
     selective: not recorded
 
+summary:
+  title: "MetaPath2Vec selective (deck+enriched+keyword)"
+  data: "331K+1.46M+83K edges (Magic)"
+  result: "selective run never evaluated"
+
 conclusion: >
   NOT CONCLUDED. The selective-edge-type runs were never evaluated in this
   record, so the hypothesis (selective edges restore v1-level sub nDCG)

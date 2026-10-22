@@ -81,6 +81,11 @@ results:
     contextual_discovery: "Primary: nDCG per mode, MRR. Secondary: Serendipity, Novelty, Coverage."
     system_comparison: "Kendall's tau, Spearman's rho between embedding versions."
 
+summary:
+  title: "Eval metrics audit"
+  data: "literature review (no dataset)"
+  result: "recommendations"
+
 conclusion: >
   Current metrics cover accuracy but entirely lack beyond-accuracy metrics.
   Highest-value additions: Catalog Coverage (trivial), Novelty (trivial),

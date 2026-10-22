@@ -41,6 +41,12 @@ results:
     Castle Locthwain. All mono-black -- learns correct color/archetype
     neighborhood but not precise card selection.
 
+summary:
+  title: "Flow-based deck completion"
+  data: "4,500 train / 500 test decks"
+  metric: "hit@10"
+  result: "0.031 (first pass)"
+
 conclusion: >
   Model learns correct neighborhoods (mono-black seed -> mono-black
   suggestions) but Hit@10 is low (3.1%). Known issues: (1) centroid

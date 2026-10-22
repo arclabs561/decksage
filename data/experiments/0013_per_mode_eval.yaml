@@ -49,6 +49,11 @@ results:
     yugioh: 0.60
   deck_completion: "Magic burn correct (Eidolon, Skullcrack)"
 
+summary:
+  title: "Per-mode eval framework"
+  data: "v2 test sets + 14 search queries"
+  result: "eval scripts created"
+
 conclusion: >
   Evaluation framework established. Magic substitutability is weakest (0.079
   nDCG), confirming text_embed signal needed in fusion. YuGiOh leads across

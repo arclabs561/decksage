@@ -33,6 +33,12 @@ results:
     spectral_sub_ndcg: 0.1067
     note: "Contrastive WORSE than link prediction (0.012 vs 0.014)"
 
+summary:
+  title: "HGT contrastive (InfoNCE) on A10G"
+  data: "same as 0054"
+  metric: "sub nDCG"
+  result: "0.002 raw, 0.012 fused (worse than link pred 0.014; loss plateaued epoch 20)"
+
 conclusion: >
   InfoNCE contrastive loss on co-occurrence edges does not produce useful
   similarity embeddings. Loss plateaued early (1.758 from epoch 20-100).

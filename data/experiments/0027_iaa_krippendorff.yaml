@@ -29,6 +29,12 @@ results:
   unanimous_type_agreement: "50/100 (50%)"
   interpretation: "REVISE (alpha < 0.667)"
 
+summary:
+  title: "IAA Krippendorff alpha"
+  data: "100 pairs, 4 judges, 373 ratings"
+  metric: "alpha"
+  result: "0.43 (judges disagree)"
+
 conclusion: >
   LLM judges do NOT reliably agree on continuous similarity scores (alpha
   0.43). They agree on binary decisions (99% unanimous on is_substitute)

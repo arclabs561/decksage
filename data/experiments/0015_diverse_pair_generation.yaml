@@ -40,6 +40,12 @@ results:
   strategies: 4
   example_text_sim_gap: "Stalking Vengeance <-> Dreadhorde Butcher: text=0.87, emb=0.11"
 
+summary:
+  title: "Diverse pair generation"
+  data: "1,600 pairs (600/501/499)"
+  metric: "pairs"
+  result: "1,600 (4 sources)"
+
 conclusion: >
   Generated 1,600 diverse pairs that the embedding model currently misses.
   Text similarity pairs expose functional substitutes invisible to

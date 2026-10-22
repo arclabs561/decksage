@@ -30,6 +30,12 @@ results:
   spectral_only: 0.1071
   v7_fused: 0.1022
 
+summary:
+  title: "Residual PPMI (SVD) + degree debiasing"
+  data: "v7 edgelist"
+  metric: "sub nDCG"
+  result: "PPMI 0.084, v7_debiased 0.103, spectral_debiased 0.107, spectral 0.107"
+
 conclusion: >
   PPMI SVD is worse than PecanPy (0.084 vs 0.102) -- random walks capture more
   nuance than matrix factorization. Degree debiasing as post-processing gives +1%

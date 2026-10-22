@@ -38,6 +38,11 @@ results:
     synergy_ndcg: +0.011
     meta_ndcg: +0.013
 
+summary:
+  title: "E5 fine-tuned eval"
+  metric: "nDCG"
+  result: "within-annotation ranking"
+
 conclusion: >
   Fine-tuning barely moves the needle on within-annotation ranking. Both
   models achieve ~0.79 nDCG and perfect recall because the candidate set

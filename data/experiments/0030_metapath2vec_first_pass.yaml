@@ -43,6 +43,12 @@ results:
     syn_ndcg: 0.121
     coverage: 0.290
 
+summary:
+  title: "MetaPath2Vec first pass"
+  data: "3 edge types: 331K+1.46M+927"
+  metric: "sub nDCG"
+  result: "0.114 (5ep baseline)"
+
 conclusion: >
   First pass: per-mode nDCG (0.114 sub, 0.118 syn) is within 8% of v5
   fused despite using only 3/8 edge types and 5 epochs. Overall nDCG lower

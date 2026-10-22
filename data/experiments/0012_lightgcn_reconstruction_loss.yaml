@@ -36,6 +36,11 @@ results:
   reconstruction_outcome: "Trains without collapse, produces non-degenerate embeddings"
   quality_pairs: "not recorded (LightGCN needs hyperparameter tuning)"
 
+summary:
+  title: "LightGCN reconstruction loss"
+  data: "M:7.1M Y:1.8M edges"
+  result: "BPR collapses, recon works; quality pairs not recorded"
+
 conclusion: >
   BPR is wrong for dense co-occurrence graphs. Few true negatives means
   random negative sampling mostly picks connected nodes, collapsing

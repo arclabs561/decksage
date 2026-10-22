@@ -35,6 +35,12 @@ results:
   rotation_strategy: "per-query round-robin"
   calibration_anchors: 6
 
+summary:
+  title: "IAA model rotation"
+  data: "4-model judge pool"
+  metric: "models"
+  result: "4-model pool"
+
 conclusion: >
   Model rotation enables IAA measurement across 4 diverse LLMs. Calibration
   anchors provide concrete reference points to reduce score drift between

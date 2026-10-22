@@ -35,6 +35,12 @@ results:
   n_cards: 18739
   n_triples: 127994
 
+summary:
+  title: "Box containment POC (deck-contains-card)"
+  data: "2,001 decks, 127,994 triples"
+  metric: "AUC"
+  result: "0.504 (no separation, degenerate)"
+
 conclusion: >
   FAILED. No meaningful separation between held-out and random cards
   (AUC 0.504, effectively random). Root cause: TCG decks share many cards

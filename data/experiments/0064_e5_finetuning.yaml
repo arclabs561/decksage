@@ -34,6 +34,13 @@ results:
     wrath_counterspell: 0.231  # was 0.839 zero-shot
     bolt_strike: 0.842  # was 0.986 zero-shot
     bolt_cultivate: 0.254  # was 0.771 zero-shot
+
+summary:
+  title: "E5 bi-encoder fine-tuning"
+  data: "5,000 train / 2,079 val pairs"
+  metric: "Pearson"
+  result: "0.293 after 1 epoch (worse than 0.438 zero-shot; catastrophic forgetting)"
+
 conclusion: >
   Fine-tuning E5 on 5K TCG pairs with default LR caused catastrophic
   forgetting. The model lost general language understanding to fit domain

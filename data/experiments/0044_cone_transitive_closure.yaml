@@ -39,6 +39,10 @@ results:
     tc_edges: 240
     auc: 0.649
 
+summary:
+  title: "Cone + transitive closure"
+  data: "145-344 upgrade pairs + TC"
+
 conclusion: >
   Magic improved from 0.700 to 0.762 (+9%). YuGiOh 0.649, Pokemon 0.547.
   The upgrade graph is very flat (mostly depth-1 pairs) so TC only adds

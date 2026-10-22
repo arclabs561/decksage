@@ -30,6 +30,12 @@ results:
   upgrade_direction_labeled: 332
   confidence_coverage: "6,690 / 6,690 (100%)"
 
+summary:
+  title: "Annotation enrichment"
+  data: "6,690 pairs"
+  metric: "enriched pairs"
+  result: "6,690 total"
+
 conclusion: >
   All 6,690 pairs now have extended fields. Enables contextual endpoint eval
   (upgrade/downgrade recall) and substitutability nDCG metric. Coverage gaps

@@ -35,6 +35,12 @@ results:
     v5_fused_pokemon: 0.075
     v5_fused_yugioh: 0.157
 
+summary:
+  title: "v6 blended: PecanPy + oracle text edges"
+  data: "merged + oracle_text + game edges"
+  metric: "sub nDCG"
+  result: "no blend nDCG measured"
+
 conclusion: >
   NOT CONCLUDED. No blend sub nDCG was ever measured or recorded, so the
   oracle-text-edge hypothesis is untested. Only the v5_fused comparison

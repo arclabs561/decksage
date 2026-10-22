@@ -92,6 +92,12 @@ results:
     pokemon: 0.1004
     yugioh: 0.1643
 
+summary:
+  title: "**Multi-model cascade annotation** (key)"
+  data: "Groq 70B + Cerebras 235B cascade"
+  metric: "corr vs IAA"
+  result: "**0.639 calibrated** (vs $2-15 IAA at $0.40/1K). Cleanup of 3,349 bad annotations: Magic nDCG +21.6%"
+
 conclusion: >
   Hypothesis confirmed. The multi-model cascade achieves correlation 0.639
   with IAA consensus after isotonic calibration, at $0.40/1K pairs (vs $2-15).

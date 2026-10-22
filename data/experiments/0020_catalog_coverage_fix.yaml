@@ -41,6 +41,12 @@ results:
   improvement: "95% (2,446 -> 4,765 unique cards)"
   queries_tested: 1032
 
+summary:
+  title: "Coverage fix via text embeddings"
+  data: "v5_fused + e5-base-v2 + card catalog"
+  metric: "coverage"
+  result: "11.6% -> 29%"
+
 conclusion: >
   Coverage improved from 11.6% to 22.5% (95% increase). 4,765 unique cards
   now surface in fusion recommendations vs 2,446 with embedding-only.

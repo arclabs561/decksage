@@ -43,6 +43,12 @@ results:
   train_time_s: 638
   samples_per_second: 38.01
 
+summary:
+  title: "E5 multi-task fine-tuning"
+  data: "8,084 samples (3,084 pairs + 5,000 edges)"
+  metric: "train loss"
+  result: "0.027 (converged)"
+
 conclusion: >
   Training converged (loss 0.065 -> 0.027). Model saved. Need to evaluate
   downstream: (1) use as text_embed signal in fusion and measure contextual

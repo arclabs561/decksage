@@ -38,6 +38,12 @@ results:
     sub_ndcg_delta: "+0.6%"
     sol_ring_arcane_signet_delta: "+37%"
 
+summary:
+  title: "Commander data scaling"
+  data: "3.8M pairs from 2,615 decks"
+  metric: "pairs"
+  result: "3.8M from 2,615 decks"
+
 conclusion: >
   Commander data dramatically improves Commander-specific card relationships
   (Sol Ring<->Arcane Signet +37%) while maintaining competitive format nDCG.

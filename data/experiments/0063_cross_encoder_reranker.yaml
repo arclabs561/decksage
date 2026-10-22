@@ -47,6 +47,12 @@ validity:
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
+summary:
+  title: "Cross-encoder reranker training"
+  data: "100K annotation pairs"
+  metric: "Pearson/nDCG"
+  result: "v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9"
+
 conclusion: >
   Methodology matters more than model size. v2's Pearson 0.695 dropped to
   v3's ~0.56 at epoch 1 because query-level split is genuinely harder.

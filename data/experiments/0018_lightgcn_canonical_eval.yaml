@@ -40,6 +40,12 @@ results:
   pokemon_v5_fused:
     overall_ndcg: 0.259
 
+summary:
+  title: "LightGCN canonical eval"
+  data: "15,697 (LightGCN) vs 21,151 (v5) cards"
+  metric: "nDCG"
+  result: "0.095 (inflated sweep: 0.545)"
+
 conclusion: >
   LightGCN is WORSE than v5 fused by canonical eval (0.095 vs 0.154 for
   Magic, 0.030 vs 0.259 for Pokemon). The sweep's inline eval was inflated

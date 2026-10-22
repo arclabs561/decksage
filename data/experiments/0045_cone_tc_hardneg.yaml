@@ -49,6 +49,11 @@ results:
     tc_only: "AUC 0.76 (+9%)"
     tc_plus_hn: "AUC 0.86 (+22%)"
 
+summary:
+  title: "Cone + TC + hard negatives"
+  data: "146-398 pairs + hard negs"
+  result: "M:0.857 P:0.603 Y:0.553"
+
 conclusion: >
   Hard negatives doubled the improvement over TC alone for Magic (0.76->0.86).
   Pokemon and YuGiOh still weak (0.60, 0.55) -- their upgrade annotations

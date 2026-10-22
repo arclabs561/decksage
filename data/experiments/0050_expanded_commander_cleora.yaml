@@ -37,6 +37,12 @@ results:
     "Counterspell <-> Mana Leak": 0.998
     "Lightning Bolt <-> Lava Spike": 0.953
 
+summary:
+  title: "Expanded Commander Cleora (51K decks)"
+  data: "25.2M Commander edges"
+  metric: "sub nDCG"
+  result: "0.100 (unchanged from 18K decks, Commander != cross-format sub)"
+
 conclusion: >
   More Commander data didn't improve substitution nDCG. The eval set tests
   cross-format substitution, but Commander has a unique card pool and

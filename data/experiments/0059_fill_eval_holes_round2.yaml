@@ -48,6 +48,12 @@ results:
     yugioh: 27106
   all_saturated: true
 
+summary:
+  title: "**Fill eval holes round 2 -- SATURATED** (key)"
+  data: "remaining holes, multi cascade"
+  metric: "sub nDCG"
+  result: "Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations"
+
 conclusion: >
   All three games reached nDCG saturation (standard ~= condensed, gap < 0.005).
   These are the true embedding quality numbers: Magic 0.525, Pokemon 0.437,

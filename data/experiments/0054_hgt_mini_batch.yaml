@@ -32,6 +32,12 @@ results:
     v7_fused_sub_ndcg: 0.1019
     note: "HGT embeddings are near-random for similarity despite good link prediction AUC"
 
+summary:
+  title: "**HGT mini-batch on A10G** (key)"
+  data: "12M edges, 36K nodes, 6 edge types"
+  metric: "sub nDCG"
+  result: "0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving)"
+
 conclusion: >
   NeighborLoader mini-batching solved the OOM issue (17GB/24GB). The model trains
   and achieves reasonable link prediction AUC (0.80). However, the node embeddings

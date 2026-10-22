@@ -32,6 +32,12 @@ results:
   bias_ratio: 1.03
   interpretation: "No popularity bias (< 2x threshold)"
 
+summary:
+  title: "Stratified nDCG bias check"
+  data: "500 queries (329 annotated)"
+  metric: "bias ratio"
+  result: "popular/niche split"
+
 conclusion: >
   Bias ratio 1.03x -- essentially no popularity bias in nDCG between
   popular and niche query cards. The LLM annotation quality concern from

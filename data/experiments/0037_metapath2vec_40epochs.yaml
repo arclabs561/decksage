@@ -43,6 +43,12 @@ results:
     syn_delta: "+8.1%"
     meta_delta: "+7.6%"
 
+summary:
+  title: "MetaPath2Vec 40ep"
+  data: "35,265 cards (vocab)"
+  metric: "sub nDCG"
+  result: "0.186 (+50% over v5)"
+
 conclusion: >
   NEW SESSION BEST. 40 epochs with more walks and lower LR gives consistent
   improvement. Loss still dropping at 0.725 -- could benefit from 60-80

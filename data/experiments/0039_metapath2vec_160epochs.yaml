@@ -43,6 +43,11 @@ validity:
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
+summary:
+  title: "MetaPath2Vec 160ep"
+  data: "35K cards, 29M edges"
+  result: "0.228 (LEAKED)"
+
 conclusion: >
   Hypothesis confirmed: 160 epochs improves significantly over 80 (+15%). No overfitting observed. Progression is sublinear but not plateauing. All three modes (sub/syn/meta) improve roughly equally. Coverage expanded to 18.5% (was ~11% at 80ep baseline). AWS training running for pokemon + yugioh at 160ep. Next: try 320ep to find ceiling, or focus on coverage (candidate retrieval).
 

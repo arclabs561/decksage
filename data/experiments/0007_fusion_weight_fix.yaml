@@ -51,6 +51,12 @@ results:
     The fusion weight fix should improve the API-level recall by routing
     alternatives through substitution weights.
 
+summary:
+  title: "Fusion weight switching fix"
+  data: "v2 test sets, substitution pairs sub>0.5"
+  metric: "recall@10"
+  result: "M:0.38 P:0.38 Y:0.62"
+
 conclusion: >
   Fix deployed, tests pass. Need to re-measure API-level contextual recall
   with the fix active to quantify improvement. The embedding-only baseline

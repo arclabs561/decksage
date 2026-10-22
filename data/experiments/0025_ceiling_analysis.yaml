@@ -44,6 +44,12 @@ results:
   gt_in_top50: "1,749/3,444 (51%)"
   gt_retrievable_but_missed: 1695
 
+summary:
+  title: "Ceiling analysis"
+  data: "836 eval queries"
+  metric: "ranking"
+  result: "95.6% optimal, retrieval is bottleneck"
+
 conclusion: >
   THE BOTTLENECK IS CANDIDATE RETRIEVAL, NOT RANKING.
 

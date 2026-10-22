@@ -50,6 +50,12 @@ results:
     overall_ndcg: 0.154
     queries_evaluated: 301
 
+summary:
+  title: "v7 retrain w/ set edges"
+  data: "4.31M edges (6 types)"
+  metric: "nDCG"
+  result: "coverage up, nDCG down"
+
 conclusion: >
   Coverage improved 55% (11.6% -> 18.0%) and vocab grew 66% (21K -> 35K).
   But nDCG dropped 41% (0.154 -> 0.090). The set edges diluted the

@@ -30,6 +30,12 @@ results:
     yugioh: 1495
     total: 3232
 
+summary:
+  title: "Annotation edges export"
+  data: "enriched v2 test sets"
+  metric: "edges"
+  result: "3,232 exported"
+
 conclusion: >
   3,232 annotation edges exported. These close the loop: annotations improve
   the graph, which improves embeddings, which improve annotations. Edgelists

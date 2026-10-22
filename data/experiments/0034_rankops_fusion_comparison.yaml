@@ -32,6 +32,12 @@ results:
   best_fusion: "CombMNZ (+32% over v5, +10% over RRF)"
   current_default: "RRF (used in fusion.py)"
 
+summary:
+  title: "rankops CombMNZ vs RRF"
+  data: "200 queries, top-50 per embedding"
+  metric: "nDCG"
+  result: "CombMNZ +10% over RRF"
+
 conclusion: >
   CombMNZ outperforms RRF by 10% for dual-embedding fusion. CombMNZ
   rewards cards that appear in BOTH ranked lists (overlap count * score

@@ -35,6 +35,12 @@ results:
     vocab: 21151
     overall_ndcg: 0.113
 
+summary:
+  title: "v8 Commander retrain"
+  data: "1.92M pairs (331K + 1.59M), 507 decks"
+  metric: "nDCG"
+  result: "coverage up, nDCG down"
+
 conclusion: >
   Commander pairs expand vocab (+7,489 cards) and eliminate popularity
   bias (1.02x) but reduce nDCG by 22% (0.113 -> 0.088). Same pattern as

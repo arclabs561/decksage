@@ -66,6 +66,11 @@ fix_options:
   3: "BPR with degree^0.75 weighted negatives (not uniform)"
   4: "Abandon LightGCN for this graph density -- PecanPy random walks may be fundamentally better for sparse graphs"
 
+summary:
+  title: "LightGCN collapse root cause"
+  data: "LightGCN vs v5, 331K edges (0.27% density)"
+  result: "trivial solution on sparse graphs"
+
 conclusion: >
   LightGCN fails because both loss functions (BPR and reconstruction) have
   degenerate solutions on sparse graphs. BPR collapses to constant

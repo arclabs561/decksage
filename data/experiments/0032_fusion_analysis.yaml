@@ -50,6 +50,12 @@ results:
     both_fail: 99 (32%)
     at_least_one_works: 210
 
+summary:
+  title: "Dual-embedding fusion analysis"
+  data: "3,819 GT cards, v5 + MP2V"
+  metric: "nDCG"
+  result: "v5+MP2V = +16%"
+
 conclusion: >
   v5 and MetaPath2Vec are COMPLEMENTARY: they retrieve different relevant
   cards (411 unique to MP, 183 unique to v5). Simple fusion gives +16% nDCG.

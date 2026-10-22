@@ -37,6 +37,12 @@ results:
   existing_deck_edges: 7111569
   increase_pct: "35%"
 
+summary:
+  title: "Set/keyword/precon edges"
+  data: "36,923 cards, 492 sets"
+  metric: "edges"
+  result: "new edge types added"
+
 conclusion: >
   2.5M new edges extracted (35% increase over deck-only graph). These cover
   cards that may never appear in player decks but were designed to synergize.

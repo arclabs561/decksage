@@ -339,6 +339,20 @@ repos:
         pass_filenames: true
         verbose: true
 
+      # Keep the SUMMARY.md index derived from the experiment records
+      # Blocking: a hand-edited table drifts from the YAML the moment a record
+      # changes. Regenerate with
+      # `uv run python scripts/validation/generate_experiment_summary.py --write`.
+      # Uses `uv run` because the generator needs PyYAML from the project env.
+      - id: check-experiment-summary
+        name: Check experiment summary is derived
+        entry: bash -c 'uv run python scripts/validation/generate_experiment_summary.py --check'
+        language: system
+        files: ^data/experiments/.*\.yaml$
+        stages: [pre-commit]
+        pass_filenames: false
+        verbose: true
+
       # Validate Python file permissions (shebang vs executable)
       # Only runs on changed files for speed
       - id: check-python-permissions

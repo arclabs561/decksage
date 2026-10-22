@@ -45,6 +45,12 @@ results:
     lightning_bolt_lava_spike: 0.222
     sol_ring_arcane_signet: 0.556
 
+summary:
+  title: "MetaPath2Vec v2 beats v5"
+  data: "3 edge types: 331K+1.46M+927"
+  metric: "sub nDCG"
+  result: "0.177 (+43% over v5)"
+
 conclusion: >
   FIRST MODEL TO BEAT V5 FUSED ON CANONICAL EVAL.
 

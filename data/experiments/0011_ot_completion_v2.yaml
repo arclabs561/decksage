@@ -34,6 +34,11 @@ results:
     exemption, restricted=1, color identity filtering, backward compatibility
   formats_supported: 11
 
+summary:
+  title: "OT completion v2"
+  data: "OT completion module (no new data)"
+  result: "reformulated (was degenerate)"
+
 conclusion: >
   Format-aware constraints ensure completed decks are legal. Commander
   singleton, color identity, and copy limits all enforced at the candidate

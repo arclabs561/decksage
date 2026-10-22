@@ -40,6 +40,12 @@ results:
     40_epochs: "sub 0.186"
     80_epochs: "sub 0.198"
 
+summary:
+  title: "MetaPath2Vec 80ep"
+  data: "Magic graph walks (count not recorded)"
+  metric: "sub nDCG"
+  result: "0.198 (+60% over v5)"
+
 conclusion: >
   More epochs consistently improve MetaPath2Vec. No sign of overfitting.
   Loss trajectory: 0.86 -> 0.74 -> 0.72 -> 0.72 (still decreasing).

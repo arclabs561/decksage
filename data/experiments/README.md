@@ -99,6 +99,32 @@ artifacts:
 
 See `SUMMARY.md` for a chronological table of all experiments.
 
+The table is generated from these records; the prose around it (Key Insights,
+the CORRECTION history) is hand-written and the generator never touches it:
+
+```bash
+# Fail when SUMMARY.md drifts from the records (pre-commit + CI use this)
+uv run python scripts/validation/generate_experiment_summary.py --check
+
+# Regenerate the table after editing a record
+uv run python scripts/validation/generate_experiment_summary.py --write
+```
+
+Each record may carry its own one-line projection, so the index never has to be
+edited by hand:
+
+```yaml
+summary:
+  title: "Short title for the table"     # optional; defaults to `title`
+  data: "331,264 edges, 500 queries"     # optional; derived from `data`
+  metric: "overall nDCG"                 # optional; derived from `results`
+  result: "0.095 (worse than v5 0.154)"  # optional; derived from `results`
+```
+
+Only the fields a record wants to editorialise belong here. The row's markers are
+never authored: `[invalid]` before the file link and `[incomplete]` appended to
+the result both come from `validity.status` and `results.status`.
+
 ## Validity
 
 An experiment whose result was produced by buggy code, leaked data, or an

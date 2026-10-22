@@ -48,6 +48,12 @@ results:
     text_e5_sub: {magic: 0.049, pokemon: 0.065, yugioh: 0.224}
     cleora_best_sub: {magic: 0.103, pokemon: 0.103, yugioh: 0.284}
 
+summary:
+  title: "Cleora iteration sweep"
+  data: "4-35K cards, 500K-29M edges"
+  metric: "sub nDCG"
+  result: "M:0.103 P:0.103 Y:0.284"
+
 conclusion: >
   Cleora iteration sweep confirms the complement/substitute hypothesis for
   yugioh (0.236 at 1-iter vs 0.284 at 5-iter) but not for magic (peaks at

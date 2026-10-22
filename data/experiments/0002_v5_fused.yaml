@@ -56,6 +56,10 @@ results:
     vocab: 13745
     contextual_recall: 0.600
 
+summary:
+  title: "v5 fused (enriched + ns=-0.5 + attr)"
+  data: "M:7.1M P:16.7K Y:1.8M pairs + attributes"
+
 conclusion: >
   Magic: marginal overall improvement (+3%) but deck completion quality
   dramatically better (burn cards correct). Pokemon: 5x improvement from

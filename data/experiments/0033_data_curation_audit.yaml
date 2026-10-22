@@ -51,6 +51,11 @@ results:
     3: "Annotate split/DFC cards (2,071 at 0%)"
     4: "Balance annotation rarity (commons under-represented)"
 
+summary:
+  title: "Data curation audit"
+  data: "83,611 decks, 15,697 cards"
+  result: "dedup, land noise, gaps"
+
 conclusion: >
   Three high-impact data issues:
   1. 23% deck duplication inflates staple pair weights (noise)

@@ -25,6 +25,12 @@ results:
   yugioh_auc: 0.500
   note: "All degenerate -- boxes expand to contain everything"
 
+summary:
+  title: "Card containment (box embeddings)"
+  data: "M:168 P:292 Y:263 train triples"
+  metric: "AUC"
+  result: "M:0.500 P:0.583 Y:0.500 (degenerate, too sparse)"
+
 conclusion: >
   FAILED. Same degenerate behavior as experiment 0040 (deck-level).
   168-365 training triples are too sparse for subsumer's BoxEmbeddingTrainer

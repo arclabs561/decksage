@@ -27,6 +27,11 @@ results:
   separation: "393580x"
   training_loss: 0.0314
 
+summary:
+  title: "Cone containment (cones > boxes)"
+  data: "116 train triples, 282 cards"
+  result: "0.700 (vs box 0.500)"
+
 conclusion: >
   Cones significantly outperform boxes (AUC 0.70 vs 0.50) with the same
   sparse data (116 training triples). The cone geometry naturally models

@@ -49,6 +49,12 @@ results:
       v8_new_graph: 0.1483
       note: "v8 graph beats ablation for YuGiOh -- new data helps this game"
 
+summary:
+  title: "**Training variance ablation** (key)"
+  data: "v7 vs v8 edgelist, 3 seeds each"
+  metric: "sub nDCG"
+  result: "v7 mean 0.094 (std 0.001), v8 mean 0.090. Deployed v7 (0.102) was 2.5-sigma outlier"
+
 conclusion: >
   v7 edgelist mean sub nDCG = 0.094, v8 graph mean = 0.090 (4% gap, not 15%).
   The deployed v7_fused (0.102) was 2.5 sigma above its distribution mean --

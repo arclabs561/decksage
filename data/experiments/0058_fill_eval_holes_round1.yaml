@@ -52,6 +52,12 @@ results:
     pokemon: 12187
     yugioh: 13662
 
+summary:
+  title: "**Fill eval holes round 1** (key)"
+  data: "5K holes per game, multi cascade"
+  metric: "sub nDCG"
+  result: "Magic 0.104->**0.233**, Pokemon 0.088->**0.190**, YuGiOh 0.160->**0.240**. ~$6 total. 42K holes remain"
+
 conclusion: >
   Filling 5K holes per game doubled measured nDCG across all games. This
   confirms that the primary bottleneck in measured eval quality is annotation

@@ -44,6 +44,12 @@ results:
     pokemon: 27376
     yugioh: 29106
 
+summary:
+  title: "Text_e5 annotation holes"
+  data: "6K new annotations"
+  metric: "sub nDCG"
+  result: "Co-occur nDCG drops 3-6% (expected: can't rank text-similar candidates)"
+
 conclusion: >
   nDCG dropped 3-6% across all games after adding text_e5 candidates.
   This is expected and correct: the co-occurrence embedding ranks

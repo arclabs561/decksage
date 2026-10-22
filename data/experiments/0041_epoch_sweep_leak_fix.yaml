@@ -42,6 +42,13 @@ results:
     yugioh_mp2v_80ep: 0.308
     yugioh_cleora_3iter: 0.284
     note: "MetaPath2Vec 80ep beats Cleora for YuGiOh (+8%) but takes 42 min vs seconds"
+
+summary:
+  title: "Epoch sweep (leak fix)"
+  data: "4-35K cards, no ann edges"
+  metric: "sub nDCG"
+  result: "poke:0.096 yug:0.311 (160ep)"
+
 conclusion: >
   COMPLETE. Without annotation leakage, MetaPath2Vec needs 80+ epochs to produce useful substitution embeddings. YuGiOh converges well (sub 0.308 at 80ep, beats Cleora 0.284) but takes 42 min. Pokemon converges poorly (sub 0.096 at 160ep, below Cleora 0.103 in seconds).
 

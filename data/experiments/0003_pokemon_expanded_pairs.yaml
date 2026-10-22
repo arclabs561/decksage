@@ -31,6 +31,11 @@ results:
     sub_score_ndcg: 0.2784
     vocab: 4384
 
+summary:
+  title: "Pokemon pairs expansion 16K->179K"
+  data: "179,914 pairs (from 16,676)"
+  result: "0.294 (+19% rel, plateau)"
+
 conclusion: >
   nDCG barely moved (0.247 -> 0.294, +19% relative). Data QUALITY matters
   more than quantity. All 24K source decks are from Limitless (tournament

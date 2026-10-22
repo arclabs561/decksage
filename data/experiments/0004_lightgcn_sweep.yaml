@@ -73,6 +73,11 @@ validity:
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
+summary:
+  title: "LightGCN hyperparameter sweep"
+  data: "331,264 edges, 15,697 nodes; 500 queries"
+  result: "sweep: 0.545 (inflated), canonical: 0.095 (WORSE than v5 0.154)"
+
 conclusion: >
   SWEEP EVAL WAS INFLATED. The inline sweep evaluator ranked within the
   annotation candidate set (biased), while canonical eval_per_mode.py checks

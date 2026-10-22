@@ -40,6 +40,12 @@ validity:
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
+summary:
+  title: "Magic epoch sweep (no leakage)"
+  data: "35K cards, self-supervised only"
+  metric: "sub nDCG"
+  result: "0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora)"
+
 conclusion: >
   Magic MetaPath2Vec 80ep produces sub nDCG 0.127 on honest (leak-free) eval.
   This is the best Magic result and 27% better than Cleora 1-iter (0.100).

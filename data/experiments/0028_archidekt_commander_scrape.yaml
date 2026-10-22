@@ -33,6 +33,12 @@ results:
   new_vs_existing: "1.59M new / 331K existing = 4.8x graph expansion"
   card_coverage: "10,403 unique cards (many Commander-only staples)"
 
+summary:
+  title: "Archidekt Commander scrape"
+  data: "507 decks, 1.59M pairs"
+  metric: "pairs"
+  result: "1.59M from 507 decks"
+
 conclusion: >
   507 Commander decks produced 4.8x more pairs than the entire existing
   Magic graph. Commander's 100-card singleton format creates C(100,2)=4,950

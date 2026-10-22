@@ -48,6 +48,12 @@ validity:
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
+summary:
+  title: "Text_e5 vs co-occurrence quality"
+  data: "condensed sub nDCG"
+  metric: "condensed nDCG"
+  result: "**CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds"
+
 conclusion: >
   Text embeddings (E5-base-v2 on oracle text) produce 14-25% higher
   condensed substitute nDCG than co-occurrence embeddings (PecanPy +

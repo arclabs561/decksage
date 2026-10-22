@@ -35,6 +35,12 @@ results:
   modes: "synergy, substitution, meta per annotation"
   annotator_versioned: true
 
+summary:
+  title: "Annotation v2 test sets"
+  data: "250/198/140 queries (M/P/Y)"
+  metric: "annotated pairs"
+  result: "M:481 P:300 Y:300"
+
 conclusion: >
   v2 test sets triple the evaluation coverage vs v1 and enable per-mode nDCG.
   Annotator versioning supports future inter-annotator agreement measurement.

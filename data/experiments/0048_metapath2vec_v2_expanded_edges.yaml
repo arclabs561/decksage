@@ -25,6 +25,11 @@ results:
   completion_recall_30: 0.411
   n_cards: 35280
 
+summary:
+  title: "MetaPath2Vec v2: 8 edge types"
+  data: "35K cards, 12M edges (8 types)"
+  result: "0.114 INFLATED (Commander dilutes signal, regressed from 0.228)"
+
 conclusion: >
   REGRESSED on nDCG (0.114 vs 0.228 v1). Commander edges (16.2M directed,
   dominant signal) diluted substitution signal from enriched edges.

@@ -42,6 +42,12 @@ results:
     YuGiOh deck and enriched edge files are 100% identical (743K/743K).
     MetaPath2Vec was double-counting the same co-occurrence data.
 
+summary:
+  title: "Annotation dedup correction"
+  data: "deduped test sets"
+  metric: "sub nDCG"
+  result: "**All prior nDCG inflated 78-101%** (84/78/101 per game). True: M:0.069 P:0.058 Y:0.153"
+
 conclusion: >
   ALL prior nDCG numbers in experiments 0039-0044 were inflated by
   annotation duplication in the test set. The true performance is roughly

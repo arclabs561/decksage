@@ -37,6 +37,12 @@ results:
   forty_epochs:
     status: "not recorded (logged in 0037_metapath2vec_40epochs.yaml)"
 
+summary:
+  title: "MetaPath2Vec tuning"
+  data: "MP2V + 9 attributes, PCA 128D"
+  metric: "sub nDCG"
+  result: "attr fusion hurts; 40ep variant not recorded"
+
 conclusion: >
   Attribute fusion that helped PecanPy HURTS MetaPath2Vec. MetaPath2Vec
   already captures richer structure through typed walks -- coarse features

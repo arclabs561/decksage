@@ -30,6 +30,12 @@ results:
   error_rate_after: 0.01
   hallucination_type: "LLM fabricated card effects without card text context"
 
+summary:
+  title: "Card context in annotations"
+  data: "card attributes CSV (oracle text)"
+  metric: "error rate"
+  result: "16% -> 1%"
+
 conclusion: >
   Card context is essential for LLM annotations. Error rate dropped from 16%
   to 1%. The LLM cannot reliably judge card similarity from names alone --
