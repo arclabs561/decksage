@@ -132,17 +132,14 @@ Note: Spell Snare appears in both modes (#1 in each) because it's both a functio
 
 Switch to the Compare tab. The query carries over from Search (or type "Counterspell"). Set Left: Embedding/Substitute, Right: Fusion/Synergy. Hit Compare. Both panels render simultaneously -- same card, completely different results.
 
-![compare](figures/demo_compare_sub_vs_syn.png)
 
 ### Cross-game (quick, 1 min -- show all 3 games work)
 
 - Switch game to **Yu-Gi-Oh**, search "Ash Blossom & Joyous Spring", mode=substitute
   > Effect Veiler, Ghost Ogre, Ghost Belle -- all hand traps. Different game, same principle.
-  ![yugioh](figures/demo_yugioh_ash_blossom.png)
 
 - Switch to **Pokemon**, "Ultra Ball", substitute
   > Super Rod, Tera Orb, Quick Ball, Friend Ball, Beast Ball, Poke Ball, Great Ball -- all search/retrieval Trainer Items.
-  ![pokemon](figures/demo_pokemon_ultra_ball.png)
 
 ### What to point out in the UI
 
@@ -155,7 +152,7 @@ Switch to the Compare tab. The query carries over from Search (or type "Counters
 
 ## 3. Why is this hard? (5 min, talk + show figure)
 
-Show `docs/figures/experiment_progression.png`. This is the nDCG curve across 63 experiments.
+Describe the nDCG curve across the experiment log instead of showing a captured chart; the image is not in the repository.
 
 ### 5-beat story (point at the chart as you go):
 
@@ -204,7 +201,6 @@ Go back to the UI. Search "Wrath of God", mode=**Embedding (reranker)**, use_cas
 
 Point at the breakdown bars on each result. Damnation shows text_e5=97%, co-occurrence varies per card. The bars make the signal architecture visible.
 
-![wrath breakdown](figures/demo_wrath_embedding_breakdown.png)
 
 Six signals, fused via Reciprocal Rank Fusion:
 
@@ -306,11 +302,9 @@ Three completion methods (selectable in the UI Method dropdown):
 
 The system auto-detects the deck's archetype from seed cards and adjusts curve targets.
 
-![deck completion tab](figures/demo_deck_completion_tab.png)
 
 After running, you see the step-by-step additions and completed deck JSON:
 
-![deck completion result](figures/demo_deck_completion_result.png)
 
 Note: the greedy completer uses co-occurrence embeddings, so it finds cards that appear in the same decks as the seed. With Goblin Guide in the seed, it pulls goblin tribal (Goblin Chieftain, Ringleader, Matron, etc.) -- that's the co-occurrence signal working. If you want burn-specific completion, the beam method with archetype detection would route toward the burn template instead. This is a good talking point: "the completion method uses the complement signal (same deck), which is where co-occurrence actually helps."
 
