@@ -10,9 +10,13 @@
 """
 Calibrate fusion signal weights against annotated test sets.
 
-Grid-searches over FusionWeights to maximize condensed nDCG@10 for the
-substitution task. Outputs best weights as JSON for loading via
-FUSION_WEIGHTS_PATH_{GAME}.
+Grid-searches FusionWeights to maximize nDCG@k over judged candidates (the
+condensed variant: unjudged results are ignored, and the ideal ranking is
+truncated to the number of judged hits). The grid runs on an 80% query split
+and the selected weights are reported on the held-out 20%; a fit-on-everything
+number is not comparable to eval_per_mode.py.
+
+Outputs best weights as JSON for loading via FUSION_WEIGHTS_PATH_{GAME}.
 
 Usage:
     uv run scripts/training/calibrate_fusion_weights.py --game magic
@@ -26,6 +30,7 @@ import argparse
 import itertools
 import json
 import logging
+import random
 import sys
 import time
 from pathlib import Path
@@ -84,6 +89,45 @@ def load_graph(game: str):
     pairs_path = sorted(matches, key=lambda p: Path(p).stat().st_size)[-1]
     log.info(f"  Graph: {Path(pairs_path).name}")
     return load_graph(pairs_path)
+
+
+def _ground_truth(labels) -> dict[str, float]:
+    """Normalize a v2 annotation entry into {card: relevance}.
+
+    v2 test sets store `queries[card]` as a dict with an `annotations` list and
+    relevance buckets. Legacy files store a list of labels. Reading the dict
+    with `for label in labels` yielded its keys and silently scored every key
+    as relevance 1.0, which made nDCG meaningless.
+    """
+    gt: dict[str, float] = {}
+    if isinstance(labels, dict):
+        for ann in labels.get("annotations", []):
+            name = ann.get("candidate") or ann.get("card") or ""
+            if not name:
+                continue
+            score = ann.get("functional_score", ann.get("similarity_score", 0)) or 0
+            gt[name] = max(gt.get(name, 0.0), float(score))
+        if gt:
+            return gt
+        for bucket, value in (
+            ("highly_relevant", 1.0),
+            ("relevant", 0.6),
+            ("somewhat_relevant", 0.3),
+            ("marginally_relevant", 0.1),
+        ):
+            for name in labels.get(bucket, []):
+                gt[name] = max(gt.get(name, 0.0), value)
+        return gt
+
+    for label in labels or []:
+        if isinstance(label, dict):
+            name = label.get("candidate") or label.get("card", "")
+            score = label.get("functional_score", label.get("score", 0))
+        else:
+            name, score = str(label), 1.0
+        if name:
+            gt[name] = float(score)
+    return gt
 
 
 def compute_ndcg(relevances: list[float], k: int) -> float:
@@ -152,17 +196,7 @@ def evaluate_weights(
         if query_card not in wv and (not graph or query_card not in graph.adjacency):
             continue
 
-        # Get ground truth relevances
-        gt = {}
-        for label in labels:
-            if isinstance(label, dict):
-                name = label.get("card", "")
-                score = label.get("functional_score", label.get("score", 0))
-            else:
-                name = str(label)
-                score = 1.0
-            if name:
-                gt[name] = float(score)
+        gt = _ground_truth(labels)
 
         if not gt:
             continue
@@ -190,6 +224,14 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     test_data = load_test_set(game)
     if not test_data:
         return None
+
+    queries = test_data.get("queries", {})
+    names = sorted(queries)
+    random.Random(13).shuffle(names)
+    split = int(len(names) * 0.8)
+    train_data = {"queries": {name: queries[name] for name in names[:split]}}
+    holdout_data = {"queries": {name: queries[name] for name in names[split:]}}
+    log.info(f"  Fit queries: {split:,}  holdout: {len(names) - split:,}")
 
     from gensim.models import KeyedVectors
 
@@ -245,7 +287,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
             vals["functional"],
             vals["text_embed"],
             vals["visual_embed"],
-            test_data,
+            train_data,
             graph,
             wv,
             text_matrix,
@@ -264,15 +306,36 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
             )
 
     elapsed = time.time() - t0
+    holdout_score = 0.0
+    if best_weights is not None:
+        holdout_score = evaluate_weights(
+            game,
+            best_weights["embed"],
+            best_weights["jaccard"],
+            best_weights["functional"],
+            best_weights["text_embed"],
+            best_weights["visual_embed"],
+            holdout_data,
+            graph,
+            wv,
+            text_matrix,
+            text_names,
+            vis_matrix,
+            vis_names,
+        )
     log.info(f"\nCalibration done in {elapsed:.0f}s")
-    log.info(f"Best nDCG@10: {best_score:.4f}")
+    log.info(f"Fit nDCG@10: {best_score:.4f}")
+    log.info(f"Holdout nDCG@10: {holdout_score:.4f}")
     log.info(f"Best weights: {best_weights}")
 
     result = {
         "game": game,
-        "ndcg_at_10": best_score,
+        "ndcg_at_10": holdout_score,
+        "ndcg_at_10_fit": best_score,
         "best_weights": best_weights,
         "grid_size": len(combos),
+        "fit_queries": split,
+        "holdout_queries": len(names) - split,
         "elapsed_seconds": round(elapsed),
         "calibration_type": "quick" if quick else "full",
         "has_visual_index": vis_matrix is not None,
