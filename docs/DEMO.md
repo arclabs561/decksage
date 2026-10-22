@@ -48,32 +48,26 @@ Open `http://localhost:8001` in a browser -- you should see the DeckSage UI with
 - API won't start: check `.env` exists and `data/embeddings/*.wv` files are present
 - "No module named gensim": re-run `uv sync --extra embeddings`
 
-### Screenshots (pre-captured, use as backup if setup fails)
+### Screenshots
 
-All in `docs/figures/`:
+The captured screenshots were removed from the repository: they embedded
+Scryfall, Pokemon and Yu-Gi-Oh card art, which the MIT license cannot cover
+(see `docs/PUBLISHING.md`). Recapture them from a local run if a walkthrough
+needs images, and keep publisher art out of any published copy.
 
-1. **Counterspell substitute** (`demo_counterspell_substitute.png`): all counterspells, score breakdown bars visible
-   ![substitute](figures/demo_counterspell_substitute.png)
+What the walkthrough showed, in words:
 
-2. **Counterspell synergy** (`demo_counterspell_synergy.png`): Day's Undoing, Narset, Jace -- blue control staples, not counterspells
-   ![synergy](figures/demo_counterspell_synergy.png)
-
-3. **Compare tab** (`demo_compare_sub_vs_syn.png`): side-by-side, same card, different results. This is the money shot.
-   ![compare](figures/demo_compare_sub_vs_syn.png)
-
-4. **YuGiOh hand traps** (`demo_yugioh_ash_blossom.png`): Ash Blossom -> Effect Veiler, Ghost Ogre, Ghost Belle. Cross-game proof.
-   ![yugioh](figures/demo_yugioh_ash_blossom.png)
-
-5. **Wrath of God breakdown bars** (`demo_wrath_embedding_breakdown.png`): text_e5 at 97%, shows signal architecture
-   ![wrath](figures/demo_wrath_embedding_breakdown.png)
-
-6. **Pokemon Ultra Ball** (`demo_pokemon_ultra_ball.png`): all Ball/search items. Third game.
-   ![pokemon](figures/demo_pokemon_ultra_ball.png)
-
-7. **Deck completion result** (`demo_deck_completion_result.png`): 16-card seed -> 60-card deck in 11 steps
-   ![deck](figures/demo_deck_completion_result.png)
-
-8. **Experiment progression** (`experiment_progression.png`): nDCG across 63 experiments (already exists)
+1. Counterspell, substitute mode: other counterspells, with the per-signal
+   score breakdown visible.
+2. Counterspell, synergy mode: Day's Undoing, Narset, Jace. Blue control
+   staples rather than counterspells, which is the point of separating modes.
+3. Compare tab: same card, both modes side by side.
+4. Ash Blossom (Yu-Gi-Oh): Effect Veiler, Ghost Ogre, Ghost Belle. Cross-game
+   behaviour on hand traps.
+5. Wrath of God breakdown: text_e5 carrying roughly 97 percent of the score,
+   which is the signal architecture in one glance.
+6. Ultra Ball (Pokemon): search and Ball items, the third game.
+7. Deck completion: a 16-card seed extended to a 60-card deck.
 
 ### Pre-tested queries with known-good results
 
