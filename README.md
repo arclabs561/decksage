@@ -23,6 +23,16 @@ tar xzf decksage-demo-data.tar.gz   # creates data/embeddings/, data/graphs/, da
 cp .env.example .env                 # defaults work with extracted paths
 ```
 
+## Configuration
+
+Copy `.env.example` to `.env`; its defaults use relative paths under `data/`.
+`DECKSAGE_DEVICE` selects compute (`mps` by default, `cpu` or `cuda` otherwise).
+
+Data, annotations, and derived embeddings are not distributed with this
+repository. `docs/PUBLISHING.md` states what is shareable (code, experiment
+records, explicitly released trained assets) and what is not (card corpora,
+deck lists, annotation corpora, derived embeddings).
+
 ## Run
 
 ```bash
