@@ -1,0 +1,33 @@
+# Paths removed from every commit before this repository is published.
+# One entry per line. Blank lines and '#' comments are ignored.
+# git-filter-repo accepts literal paths, 'glob:' patterns, and 'regex:' rules.
+#
+# Third-party card art and screenshots: the MIT license covers code only and
+# cannot relicense publisher-owned images.
+qa/reference/
+docs/figures/
+glob:*.png
+glob:*.jpg
+glob:*.jpeg
+
+# Local configuration that must never be in history.
+.env
+glob:.env.*
+!.env.example
+
+# Data corpora are not ours to redistribute, and they are not needed to build.
+# Keep small fixtures and experiment records; drop the corpora and derived
+# artifacts even where an older ignore rule let one slip in.
+glob:data/annotations/**
+glob:data/decks/**
+glob:data/processed/**
+glob:data/embeddings/**
+glob:data/graphs/**
+glob:data/raw/**
+glob:data/checkpoints/**
+glob:data/logs/**
+glob:data/test_sets/**
+glob:data/models/**
+glob:**/*.wv
+glob:**/*.edg
+glob:**/*.db
