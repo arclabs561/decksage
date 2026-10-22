@@ -14,15 +14,22 @@ filtering annotated pairs to mode-relevant ground truth and scoring
 the embedding's ranking against it.
 
 Uses the per-pair annotations already in annotated_*_v2.json:
-- functional_score (0-1): ground truth for substitute mode
-- synergy_score (0-1): ground truth for synergy mode
-- meta_relevance (0-1): ground truth for meta mode
-- mode (substitution/synergy/meta): primary mode classification
+- functional_score (0-1): ground truth for the substitute task
+- synergy_score (0-1): ground truth for the synergy task
+- meta_relevance (0-1): ground truth for the meta task
+
+Task scoping (ADR-0001): each pair is annotated for exactly one task, recorded
+as `task` on the pair. A pair is read only by the task it names; there is no
+fallback from one score field to another, and a metric with no labeled pairs is
+reported as absent (status="absent", ndcg_at_k=null), never as 0.0. Pairs with
+no `task` field are legacy: they are read through the historical task->field
+mapping and counted in `legacy_label_pairs`.
 
 Requires: annotated test sets with per-pair annotations (not just buckets).
 
 Usage:
     uv run scripts/evaluation/eval_per_mode.py --game magic
+    uv run scripts/evaluation/eval_per_mode.py --game magic --task synergy
     uv run scripts/evaluation/eval_per_mode.py --game magic --embedding magic_v5_fused
     uv run scripts/evaluation/eval_per_mode.py --all-games
 """
@@ -58,12 +65,23 @@ V5_EMBEDDINGS = {
     "yugioh": "yugioh_enriched_v6",
 }
 
-# Mode -> which annotation score field to use as ground truth
-MODE_SCORE_FIELD = {
+# Task -> the one annotation score field that measures it (ADR-0001).
+# A pair's `task` selects the field. Pairs without a `task` are legacy and are
+# read through this same historical mapping, counted as legacy labels.
+TASK_SCORE_FIELD = {
     "substitute": "functional_score",
     "synergy": "synergy_score",
     "meta": "meta_relevance",
 }
+TASKS = tuple(TASK_SCORE_FIELD)
+
+
+def pair_task(ann: dict) -> str | None:
+    """The task a pair was annotated for, or None for legacy (pre-ADR-0001) pairs."""
+    task = ann.get("task")
+    if not isinstance(task, str):
+        return None
+    return task.strip().lower() or None
 
 
 def dcg(relevances: list[float], k: int) -> float:
@@ -191,19 +209,27 @@ def eval_mode(
     use_normalized: bool = False,
     neighbor_cache: dict[str, list[tuple[str, float]]] | None = None,
 ) -> dict:
-    """Evaluate a single mode's nDCG using per-pair annotation scores.
+    """Evaluate a single task's nDCG using that task's labels only.
 
     For each query that has per-pair annotations:
-    1. Extract the mode-specific ground truth score for each annotated pair
+    1. Extract the task's own score field for each pair annotated for this task
+       (ADR-0001: pairs annotated for another task are not read, and a missing
+       field is never filled in from a different field)
     2. Get the embedding's top-K ranking for that query
     3. Compute nDCG using the ground truth scores at the embedding's ranking positions
+
+    Pairs without a `task` field are legacy: they are read through the
+    historical task->field mapping and counted in `legacy_label_pairs`.
     """
-    base_field = MODE_SCORE_FIELD[mode]
+    base_field = TASK_SCORE_FIELD[mode]
     score_field = f"{base_field}_normalized" if use_normalized else base_field
     ndcg_scores = []
     condensed_ndcg_scores = []  # Sakai 2007: ignores unjudged docs
     n_skipped = 0
     n_evaluated = 0
+    n_legacy = 0
+    n_other_task = 0
+    n_missing_field = 0
 
     for qname, qdata in queries.items():
         annotations = qdata.get("annotations", [])
@@ -211,13 +237,24 @@ def eval_mode(
             n_skipped += 1
             continue
 
-        # Build ground truth: candidate -> mode-specific score
+        # Build ground truth: candidate -> this task's score
         gt = {}
         for ann in annotations:
+            ann_task = pair_task(ann)
+            if ann_task is not None and ann_task != mode:
+                n_other_task += 1
+                continue
             candidate = ann.get("candidate", "")
             score = ann.get(score_field)
-            if score is not None and candidate:
-                gt[candidate] = float(score)
+            if not candidate:
+                continue
+            if score is None:
+                # ADR-0001: a missing field is never filled from another field.
+                n_missing_field += 1
+                continue
+            gt[candidate] = float(score)
+            if ann_task is None:
+                n_legacy += 1
 
         if not gt:
             n_skipped += 1
@@ -263,12 +300,26 @@ def eval_mode(
         n_evaluated += 1
 
     if not ndcg_scores:
+        # ADR-0001: a metric with no labeled pairs is absent, not zero.
+        reason = f"no {score_field} labels for task '{mode}' in this test set"
+        if n_missing_field:
+            reason += f"; {n_missing_field} pairs lacked {score_field}"
+        if n_other_task:
+            reason += (
+                f"; {n_other_task} pairs annotated for other tasks were not read"
+                f" (pass --task all to see every task)"
+            )
         return {
             "mode": mode,
+            "task": mode,
             "score_field": score_field,
-            "ndcg_at_k": 0.0,
+            "status": "absent",
+            "reason": reason,
+            "ndcg_at_k": None,
             "n_evaluated": 0,
             "n_skipped": n_skipped,
+            "legacy_label_pairs": n_legacy,
+            "n_excluded_other_task": n_other_task,
             "k": k,
         }
 
@@ -278,7 +329,9 @@ def eval_mode(
 
     return {
         "mode": mode,
+        "task": mode,
         "score_field": score_field,
+        "status": "measured",
         "ndcg_at_k": standard,
         "condensed_ndcg": condensed,
         "convergence_gap": convergence_gap,
@@ -287,6 +340,8 @@ def eval_mode(
         "ndcg_median": float(np.median(ndcg_scores)),
         "n_evaluated": n_evaluated,
         "n_skipped": n_skipped,
+        "legacy_label_pairs": n_legacy,
+        "n_excluded_other_task": n_other_task,
         "k": k,
     }
 
@@ -433,12 +488,15 @@ def eval_game(
     k: int = 10,
     quick: bool = False,
     method: str = "cosine",
+    task: str = "all",
 ) -> dict:
-    """Run full per-mode eval for one game.
+    """Run full per-task eval for one game.
 
     Args:
         quick: If True, skip expensive secondary metrics (stratified, catalog,
                novelty, contextual/completion recall, search proxy). ~4-5x faster.
+        task: Which task's labels to read (ADR-0001). "all" evaluates each task
+              in turn; any other value evaluates only that task's metric.
     """
     test_set = load_test_set(game)
     if not test_set:
@@ -468,15 +526,24 @@ def eval_game(
         "game": game,
         "embedding": emb_name,
         "method": method,
+        "task": task,
         "vocab_size": len(wv),
         "total_queries": len(queries),
         "queries_with_annotations": sum(1 for q in queries.values() if q.get("annotations")),
         "k": k,
     }
 
-    # Per-mode nDCG
-    for mode in ["substitute", "synergy", "meta"]:
-        results[f"mode_{mode}"] = eval_mode(wv, queries, mode, k, neighbor_cache=neighbor_cache)
+    # Per-task nDCG: each task reads only its own labels (ADR-0001)
+    tasks = list(TASKS) if task == "all" else [task]
+    for t in tasks:
+        results[f"mode_{t}"] = eval_mode(wv, queries, t, k, neighbor_cache=neighbor_cache)
+
+    # Legacy (pre-ADR-0001) pairs have no `task` field. They are still read
+    # through the historical task->field mapping, and counted so a result built
+    # on legacy labels is never mistaken for a task-scoped one.
+    legacy_pairs = sum(results[f"mode_{t}"].get("legacy_label_pairs", 0) for t in tasks)
+    results["legacy_labels"] = legacy_pairs > 0
+    results["legacy_label_pairs"] = legacy_pairs
 
     # Substitutability-weighted nDCG (uses continuous substitutability scores)
     sub_ndcg_scores = []
@@ -861,6 +928,12 @@ def main():
         choices=["cosine", "fusion"],
         help="Neighbor retrieval method: 'cosine' (raw embedding) or 'fusion' (WeightedLateFusion with task-specific weights)",
     )
+    parser.add_argument(
+        "--task",
+        default="all",
+        choices=["substitute", "synergy", "meta", "all"],
+        help="Evaluate only this task's labels (ADR-0001). 'all' (default) evaluates each task in turn.",
+    )
     args = parser.parse_args()
 
     if args.all_games:
@@ -881,10 +954,14 @@ def main():
             for emb_name in args.compare.split(","):
                 emb_name = emb_name.strip()
                 full_name = f"{game}_{emb_name}" if not emb_name.startswith(game) else emb_name
-                result = eval_game(game, full_name, args.k, quick=args.quick, method=args.method)
+                result = eval_game(
+                    game, full_name, args.k, quick=args.quick, method=args.method, task=args.task
+                )
                 all_results.append(result)
         else:
-            result = eval_game(game, args.embedding, args.k, quick=args.quick, method=args.method)
+            result = eval_game(
+                game, args.embedding, args.k, quick=args.quick, method=args.method, task=args.task
+            )
             all_results.append(result)
 
             if args.compare_v5 and not args.embedding:
@@ -892,7 +969,9 @@ def main():
                 if v5_name:
                     v5_path = DATA_DIR / "embeddings" / f"{v5_name}.wv"
                     if v5_path.exists():
-                        v5_result = eval_game(game, v5_name, args.k, quick=args.quick)
+                        v5_result = eval_game(
+                            game, v5_name, args.k, quick=args.quick, task=args.task
+                        )
                         all_results.append(v5_result)
 
     if args.json:
@@ -904,17 +983,26 @@ def main():
                 continue
 
             print(f"\n{'=' * 60}")
-            print(f"{r['game'].upper()} ({r['embedding']}, vocab={r['vocab_size']})")
+            print(
+                f"{r['game'].upper()} ({r['embedding']}, vocab={r['vocab_size']}, task={r.get('task', 'all')})"
+            )
             print(
                 f"  Queries: {r['total_queries']} total, {r['queries_with_annotations']} with annotations"
             )
+            if r.get("legacy_labels"):
+                print(
+                    f"  WARNING: {r['legacy_label_pairs']} pair label(s) came from legacy "
+                    f"annotations without a `task` field; they are not task-scoped."
+                )
             print(
                 f"  Overall nDCG@{r['k']}: {r['overall_ndcg']['ndcg_at_k']:.4f} (n={r['overall_ndcg']['n_evaluated']})"
             )
 
-            print(f"\n  Per-mode nDCG@{r['k']}:")
+            print(f"\n  Per-task nDCG@{r['k']}:")
             for mode in ["substitute", "synergy", "meta"]:
-                m = r[f"mode_{mode}"]
+                m = r.get(f"mode_{mode}")
+                if m is None:
+                    continue
                 if m["n_evaluated"] > 0:
                     gap = m.get("convergence_gap", 0)
                     sat = " [SATURATED]" if m.get("coverage_saturated") else f" [gap={gap:.3f}]"
@@ -922,7 +1010,9 @@ def main():
                         f"    {mode:12s}: {m['ndcg_at_k']:.4f} condensed={m['condensed_ndcg']:.4f}{sat} (n={m['n_evaluated']})"
                     )
                 else:
-                    print(f"    {mode:12s}: -- (no evaluable queries)")
+                    print(
+                        f"    {mode:12s}: ABSENT (n=0) -- {m.get('reason', 'no evaluable queries')}"
+                    )
 
             sn = r.get("substitutability_ndcg", {})
             if sn.get("n_evaluated", 0) > 0:
@@ -1022,13 +1112,14 @@ def main():
                     print(f"{'Embedding':<30} {'sub':>8} {'syn':>8} {'ctx':>8} {'comp':>8}")
                     print("-" * 70)
                     for gr in game_results:
-                        sub = gr.get("mode_substitute", {}).get("ndcg_at_k", 0)
-                        syn = gr.get("mode_synergy", {}).get("ndcg_at_k", 0)
+                        # ndcg_at_k is null when the task has no labels (ADR-0001)
+                        sub = gr.get("mode_substitute", {}).get("ndcg_at_k")
+                        syn = gr.get("mode_synergy", {}).get("ndcg_at_k")
                         ctx_r = gr.get("contextual_recall_at_20", {}).get("recall", 0)
                         comp_r = gr.get("completion_recall_at_30", {}).get("recall", 0)
-                        print(
-                            f"{gr['embedding']:<30} {sub:>8.4f} {syn:>8.4f} {ctx_r:>8.4f} {comp_r:>8.4f}"
-                        )
+                        sub_s = f"{sub:>8.4f}" if sub is not None else f"{'absent':>8}"
+                        syn_s = f"{syn:>8.4f}" if syn is not None else f"{'absent':>8}"
+                        print(f"{gr['embedding']:<30} {sub_s} {syn_s} {ctx_r:>8.4f} {comp_r:>8.4f}")
 
 
 if __name__ == "__main__":
