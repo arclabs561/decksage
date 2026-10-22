@@ -13,17 +13,26 @@ Combines Cleora (graph structure) + Text E5 (card text semantics) via
 CombMNZ rank fusion. Each source provides a ranked list per query,
 and the fused ranking uses reciprocal rank weighting.
 
+Query selection is explicit. `--split all` (default) scores every query, which
+includes the queries `calibrate_fusion_weights.py` fit on, so the number is
+in-sample and not a generalization estimate. `--split train` and
+`--split holdout` use the same seed-13 query partition as the calibrator, so
+`--split holdout` is the out-of-sample number for those weights.
+
 Usage:
     uv run scripts/evaluation/eval_fusion.py --game magic
     uv run scripts/evaluation/eval_fusion.py --game magic --sources cleora_1iter,text_e5
     uv run scripts/evaluation/eval_fusion.py --game magic --json
+    uv run scripts/evaluation/eval_fusion.py --game magic --split holdout --json
 """
 
 from __future__ import annotations
 
 import argparse
 import json
+import random
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
@@ -47,6 +56,67 @@ DEFAULT_SOURCES = {
     "pokemon": ["cleora_5iter", "text_e5"],
     "yugioh": ["cleora_3iter", "text_e5"],
 }
+
+# Shared with scripts/training/calibrate_fusion_weights.py: the calibrator
+# shuffles the sorted query names with a seed-13 RNG, fits on the first 80% and
+# reports the remaining 20%. Reusing both constants keeps this script's
+# train/holdout partition aligned with the one that produced the weights.
+SPLIT_SEED = 13
+TRAIN_FRACTION = 0.8
+SPLIT_CHOICES = ("all", "train", "holdout")
+
+
+def split_query_names(names: Iterable[str], split: str, seed: int = SPLIT_SEED) -> list[str]:
+    """Return the query names that belong to `split`.
+
+    Deterministic and exhaustive for a fixed seed: `train` and `holdout`
+    partition the query names with no overlap and no gaps, and `all` returns
+    every name.
+    """
+    if split not in SPLIT_CHOICES:
+        raise ValueError(f"unknown split {split!r}; expected one of {SPLIT_CHOICES}")
+
+    ordered = sorted(names)
+    if split == "all":
+        return ordered
+    random.Random(seed).shuffle(ordered)
+    n_train = int(len(ordered) * TRAIN_FRACTION)
+    return ordered[:n_train] if split == "train" else ordered[n_train:]
+
+
+def split_note(split: str, seed: int, n_queries: int, n_total: int) -> dict:
+    """Describe what a nDCG number from `split` does and does not measure."""
+    if split == "all":
+        return {
+            "partial": False,
+            "in_sample": True,
+            "note": (
+                f"In-sample result over all {n_total} queries, including the queries "
+                f"calibrate_fusion_weights.py fit fusion weights on. Not a "
+                f"generalization estimate; use --split holdout for that."
+            ),
+        }
+    if split == "train":
+        return {
+            "partial": True,
+            "in_sample": True,
+            "note": (
+                f"Partial result: the {n_queries} fit queries of the seed-{seed} 80% "
+                f"split, the same queries calibrate_fusion_weights.py optimizes on. "
+                f"In-sample, covers {n_queries}/{n_total} queries, and not a "
+                f"generalization estimate."
+            ),
+        }
+    return {
+        "partial": True,
+        "in_sample": False,
+        "note": (
+            f"Partial result: the {n_queries} held-out queries of the seed-{seed} 20% "
+            f"split, out-of-sample for weights fit on the complementary 80%. Covers "
+            f"only {n_queries}/{n_total} queries, so it is not comparable to a "
+            f"full-test-set number."
+        ),
+    }
 
 
 def ndcg(relevances: list[float], ideal: list[float], k: int) -> float:
@@ -82,6 +152,21 @@ def main() -> int:
         "--candidates", type=int, default=100, help="Candidates per source before fusion"
     )
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--split",
+        choices=SPLIT_CHOICES,
+        default="all",
+        help=(
+            "Query subset to evaluate: 'all' (in-sample, default), 'train' "
+            "(the 80% fit split), or 'holdout' (the 20% out-of-sample split)"
+        ),
+    )
+    parser.add_argument(
+        "--split-seed",
+        type=int,
+        default=SPLIT_SEED,
+        help=f"Seed for the train/holdout partition (default: {SPLIT_SEED})",
+    )
     args = parser.parse_args()
 
     # Determine sources
@@ -115,7 +200,17 @@ def main() -> int:
 
     with open(test_path) as f:
         test_data = json.load(f)
-    queries = test_data.get("queries", {})
+    all_queries = test_data.get("queries", {})
+
+    # Restrict scoring to the requested query split (both the fused and the
+    # per-source loops below read from `queries`).
+    selected_names = split_query_names(all_queries, args.split, args.split_seed)
+    queries = {name: all_queries[name] for name in selected_names}
+    if args.split != "all" and not args.json:
+        print(
+            f"  Split: {args.split} "
+            f"({len(queries)}/{len(all_queries)} queries, seed {args.split_seed})"
+        )
 
     # Evaluate per mode
     results = {}
@@ -207,10 +302,24 @@ def main() -> int:
     results["individual_sub_ndcg"] = individual
     results["sources"] = source_names
     results["game"] = args.game
+
+    # Split provenance: a reader must be able to tell in-sample from out-of-sample.
+    split_info = split_note(args.split, args.split_seed, len(queries), len(all_queries))
+    results["split"] = args.split
+    results["split_seed"] = args.split_seed
+    results["n_queries"] = len(queries)
+    results["partial"] = split_info["partial"]
+    results["in_sample"] = split_info["in_sample"]
+    results["note"] = split_info["note"]
+
     results["data"] = {
-        "num_queries": len(queries),
+        "num_queries": len(all_queries),
+        "split_queries": len(queries),
         "source_sizes": {name: len(kv) for name, kv in sources},
     }
+
+    if not args.json and args.split != "all":
+        print(f"  {split_info['note']}")
 
     if args.json:
         print(json.dumps(results, indent=2))
