@@ -45,11 +45,25 @@ import numpy as np
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 PYTHON = str(PROJECT_ROOT / ".venv/bin/python")
 
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
+from ml.utils.paths import PATHS
+
+
 GAME_ATTRS = {
-    "magic": "data/processed/card_attributes_enriched.csv",
-    "pokemon": "data/processed/card_attributes_pokemon.csv",
-    "yugioh": "data/processed/card_attributes_yugioh.csv",
+    "magic": PATHS.processed / "card_attributes_enriched.csv",
+    "pokemon": PATHS.processed / "card_attributes_pokemon.csv",
+    "yugioh": PATHS.processed / "card_attributes_yugioh.csv",
 }
+
+
+def format_score(value: float | None) -> str:
+    """Format an nDCG score; None means the metric is absent (ADR-0001)."""
+    return "absent" if value is None else f"{value:.4f}"
+
+
+def format_optional(value: object) -> str:
+    """Format a non-nDCG value; None is absent, a missing key stays '?'."""
+    return "absent" if value is None else str(value)
 
 
 def run_cmd(cmd: list[str], label: str, dry_run: bool = False) -> int:
@@ -116,7 +130,7 @@ def stage_train(game: str, dry_run: bool, skip_build: bool = False) -> str | Non
     if ret != 0:
         return None
     # The pipeline produces {game}_pecanpy_merged_fused.wv
-    return f"data/embeddings/{game}_pecanpy_merged_fused.wv"
+    return str(PATHS.embedding(f"{game}_pecanpy_merged_fused"))
 
 
 def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> str | None:
@@ -144,7 +158,7 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
     edg_full = PROJECT_ROOT / edg_path
     if not edg_full.exists():
         # Try the v7 enriched edgelist as fallback
-        edg_full = PROJECT_ROOT / f"data/embeddings/{game}_v7_enriched_merged.edg"
+        edg_full = PATHS.embeddings / f"{game}_v7_enriched_merged.edg"
     if not edg_full.exists():
         print("  SKIP: no edgelist found for spectral propagation")
         return None
@@ -203,7 +217,7 @@ def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
 
     for emb_name in embedding_names:
         # Strip path prefix and .wv suffix for eval_per_mode
-        name = emb_name.replace("data/embeddings/", "").replace(".wv", "")
+        name = Path(emb_name).stem
         if dry_run:
             print(f"  [DRY RUN] eval {name}")
             continue
@@ -232,8 +246,10 @@ def stage_eval(game: str, embedding_names: list[str], dry_run: bool) -> None:
                 mrr = r.get("mrr_relevant", {}).get("mrr", "?")
                 ann_density = r.get("annotation_density", {}).get("mean_annotated_per_query", "?")
                 print(
-                    f"  {name}: sub={sub:.4f} syn={syn:.4f} overall={overall:.4f} "
-                    f"Hit@10={hit10} MRR={mrr} ann/q={ann_density}"
+                    f"  {name}: sub={format_score(sub)} syn={format_score(syn)} "
+                    f"overall={format_score(overall)} "
+                    f"Hit@10={format_optional(hit10)} MRR={format_optional(mrr)} "
+                    f"ann/q={format_optional(ann_density)}"
                 )
             except (json.JSONDecodeError, KeyError, IndexError):
                 print(f"  {name}: eval parse error")
@@ -252,7 +268,7 @@ def run_game(game: str, args: argparse.Namespace) -> None:
     if args.eval_only:
         # Just evaluate existing embeddings
         embs = []
-        emb_dir = PROJECT_ROOT / "data" / "embeddings"
+        emb_dir = PATHS.embeddings
         # Find latest fused and spectral embeddings
         for pattern in [f"{game}_*_spectral*.wv", f"{game}_*_fused.wv", f"{game}_v7_fused.wv"]:
             for p in sorted(emb_dir.glob(pattern)):
@@ -275,10 +291,10 @@ def run_game(game: str, args: argparse.Namespace) -> None:
         emb_path = stage_train(game, args.dry_run, skip_build=True)
         if not emb_path and not args.dry_run:
             print("  TRAIN FAILED. Evaluating existing embeddings.")
-            emb_path = f"data/embeddings/{game}_v7_fused.wv"
+            emb_path = str(PATHS.embedding(f"{game}_v7_fused"))
 
         # Spectral post-processing
-        edg_path = f"data/graphs/{game}_merged_all.edg"
+        edg_path = str(PATHS.graph(f"{game}_merged_all"))
         spectral_path = None
         if emb_path:
             spectral_path = stage_spectral(game, emb_path, edg_path, args.dry_run)
@@ -290,7 +306,7 @@ def run_game(game: str, args: argparse.Namespace) -> None:
         if emb_path:
             eval_embs.append(emb_path)
         # Also compare against deployed
-        eval_embs.append(f"data/embeddings/{game}_v7_fused.wv")
+        eval_embs.append(str(PATHS.embedding(f"{game}_v7_fused")))
         stage_eval(game, eval_embs, args.dry_run)
 
     elapsed = time.time() - t0

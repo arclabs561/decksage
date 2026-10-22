@@ -25,6 +25,12 @@ reported as absent (status="absent", ndcg_at_k=null), never as 0.0. Pairs with
 no `task` field are legacy: they are read through the historical task->field
 mapping and counted in `legacy_label_pairs`.
 
+The composite similarity_score metrics (`overall_ndcg`, `hit_at_k`,
+`mrr_relevant`, `stratified_ndcg`) are not labels for any task. A task-scoped
+run (`--task substitute`) reports them as absent; the default `--task all` run
+keeps them for continuity and marks them `legacy_composite: true` and
+`task_scoped: false`, because they span every pair regardless of task.
+
 Requires: annotated test sets with per-pair annotations (not just buckets).
 
 Usage:
@@ -65,23 +71,12 @@ V5_EMBEDDINGS = {
     "yugioh": "yugioh_enriched_v6",
 }
 
-# Task -> the one annotation score field that measures it (ADR-0001).
+# The task -> field mapping lives in scripts/evaluation/task_labels.py so the
+# other per-mode evaluators read the same table instead of their own copy.
 # A pair's `task` selects the field. Pairs without a `task` are legacy and are
 # read through this same historical mapping, counted as legacy labels.
-TASK_SCORE_FIELD = {
-    "substitute": "functional_score",
-    "synergy": "synergy_score",
-    "meta": "meta_relevance",
-}
-TASKS = tuple(TASK_SCORE_FIELD)
-
-
-def pair_task(ann: dict) -> str | None:
-    """The task a pair was annotated for, or None for legacy (pre-ADR-0001) pairs."""
-    task = ann.get("task")
-    if not isinstance(task, str):
-        return None
-    return task.strip().lower() or None
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from task_labels import TASK_SCORE_FIELD, TASKS, pair_task
 
 
 def dcg(relevances: list[float], k: int) -> float:
@@ -344,6 +339,84 @@ def eval_mode(
         "n_excluded_other_task": n_other_task,
         "k": k,
     }
+
+
+# ADR-0001: these metrics are composites over `similarity_score` for every pair
+# in the test set, not labels for a single task. They stay in the JSON so
+# consumers do not KeyError, but a task-scoped run reports them as absent.
+COMPOSITE_METRICS = ("overall_ndcg", "hit_at_k", "mrr_relevant", "stratified_ndcg")
+
+_COMPOSITE_REASON = (
+    "composite over similarity_score across all pairs; similarity_score is not a "
+    "label for task '{task}' (ADR-0001). Run with --task all for the unscoped "
+    "legacy composite"
+)
+
+
+def _absent_composite(metric: str, original: dict, reason: str) -> dict:
+    """Null one composite metric's scores while keeping its JSON keys."""
+    if metric == "overall_ndcg":
+        return {
+            "ndcg_at_k": None,
+            "n_evaluated": 0,
+            "k": original["k"],
+            "status": "absent",
+            "reason": reason,
+        }
+    if metric == "hit_at_k":
+        # Per-K rates keep their "10"/"20"/"50" keys so indexed reads still work.
+        absent: dict = {k: {"rate": None, "hits": 0, "total": 0} for k in original}
+        absent["status"] = "absent"
+        absent["reason"] = reason
+        return absent
+    if metric == "mrr_relevant":
+        return {
+            "mrr": None,
+            "mean_rank": None,
+            "n_queries": 0,
+            "status": "absent",
+            "reason": reason,
+        }
+    # stratified_ndcg
+    return {
+        "popular_ndcg": None,
+        "popular_n": 0,
+        "niche_ndcg": None,
+        "niche_n": 0,
+        "median_popularity": 0,
+        "bias_ratio": None,
+        "status": "absent",
+        "reason": reason,
+    }
+
+
+def scope_composite_metrics(results: dict, task: str) -> dict:
+    """Apply ADR-0001 to the composite similarity_score metrics.
+
+    A task-scoped run (`task` != "all") reports them as absent. The default
+    `all` run keeps their values for continuity and marks them as legacy
+    composites that are not task-scoped.
+    """
+    reason = _COMPOSITE_REASON.format(task=task)
+    for metric in COMPOSITE_METRICS:
+        original = results.get(metric)
+        if original is None:
+            continue
+        if task == "all":
+            original["legacy_composite"] = True
+            original["task_scoped"] = False
+            original["note"] = (
+                "composite over similarity_score across all pairs regardless of "
+                "task; not task-scoped (ADR-0001)"
+            )
+            continue
+        results[metric] = _absent_composite(metric, original, reason)
+    return results
+
+
+def format_score(value: float | None) -> str:
+    """Format a metric score; None is an absent metric (ADR-0001), never 0.0."""
+    return "absent" if value is None else f"{value:.4f}"
 
 
 def eval_upgrade_direction(queries: dict) -> dict:
@@ -889,6 +962,11 @@ def eval_game(
         else 0,
     }
 
+    # ADR-0001: the composite similarity_score metrics above span every pair, so
+    # they are not task-scoped. Absent for a single-task run, legacy-marked for
+    # the default `all` run.
+    results = scope_composite_metrics(results, task)
+
     # Dataset fingerprint: capture data shape at eval time
     results["dataset_fingerprint"] = {
         "test_set_queries": len(queries),
@@ -994,8 +1072,13 @@ def main():
                     f"  WARNING: {r['legacy_label_pairs']} pair label(s) came from legacy "
                     f"annotations without a `task` field; they are not task-scoped."
                 )
+            ov = r["overall_ndcg"]
+            composite_note = (
+                " [legacy composite: not task-scoped]" if ov.get("legacy_composite") else ""
+            )
             print(
-                f"  Overall nDCG@{r['k']}: {r['overall_ndcg']['ndcg_at_k']:.4f} (n={r['overall_ndcg']['n_evaluated']})"
+                f"  Overall nDCG@{r['k']}: {format_score(ov['ndcg_at_k'])} "
+                f"(n={ov['n_evaluated']}){composite_note}"
             )
 
             print(f"\n  Per-task nDCG@{r['k']}:")
@@ -1029,14 +1112,24 @@ def main():
                     print(f"    {d}: {c}")
 
             strat = r.get("stratified_ndcg", {})
-            if strat:
-                bias = strat.get("bias_ratio", 0)
+            if strat.get("status") == "absent":
+                print(f"\n  Stratified nDCG: absent -- {strat.get('reason', 'no labels')}")
+            elif strat:
+                bias = strat.get("bias_ratio")
+                bias_s = f"{bias:.2f}x" if bias is not None else "absent"
+                if bias is None:
+                    verdict = ""
+                else:
+                    verdict = (
+                        " (OK)"
+                        if bias < 2.0
+                        else " (BIASED - popular cards get disproportionate nDCG)"
+                    )
                 print(
                     f"\n  Stratified nDCG (popularity bias check):"
-                    f"\n    Popular cards:  {strat['popular_ndcg']:.4f} (n={strat['popular_n']})"
-                    f"\n    Niche cards:    {strat['niche_ndcg']:.4f} (n={strat['niche_n']})"
-                    f"\n    Bias ratio:     {bias:.2f}x"
-                    f" {'(OK)' if bias < 2.0 else '(BIASED - popular cards get disproportionate nDCG)'}"
+                    f"\n    Popular cards:  {format_score(strat['popular_ndcg'])} (n={strat['popular_n']})"
+                    f"\n    Niche cards:    {format_score(strat['niche_ndcg'])} (n={strat['niche_n']})"
+                    f"\n    Bias ratio:     {bias_s}{verdict}"
                 )
 
             cc = r.get("catalog_coverage", {})
@@ -1070,7 +1163,12 @@ def main():
             # Hit@K and MRR (practical metrics)
             hk = r.get("hit_at_k", {})
             if hk:
-                parts = [f"Hit@{k}: {v['rate']:.3f}" for k, v in sorted(hk.items())]
+                # Absent composites keep their per-K keys next to status/reason.
+                parts = [
+                    f"Hit@{k}: {format_score(v['rate'])}"
+                    for k, v in hk.items()
+                    if isinstance(v, dict)
+                ]
                 print(f"\n  Practical metrics: {', '.join(parts)}")
             mrr = r.get("mrr_relevant", {})
             if mrr.get("n_queries", 0) > 0:

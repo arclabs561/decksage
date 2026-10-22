@@ -37,11 +37,10 @@ if not sys.stdout.isatty():
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 
-MODE_SCORE_FIELD = {
-    "substitute": "functional_score",
-    "synergy": "synergy_score",
-    "meta": "meta_relevance",
-}
+# Task -> score field is shared with eval_per_mode.py (ADR-0001); see task_labels.py.
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from task_labels import TASK_SCORE_FIELD
+
 
 DEFAULT_SOURCES = {
     "magic": ["cleora_1iter", "text_e5"],
@@ -120,7 +119,7 @@ def main() -> int:
 
     # Evaluate per mode
     results = {}
-    for mode, score_field in MODE_SCORE_FIELD.items():
+    for mode, score_field in TASK_SCORE_FIELD.items():
         ndcg_scores = []
         n_evaluated = 0
         n_skipped = 0
@@ -188,7 +187,7 @@ def main() -> int:
             gt = {}
             for ann in annotations:
                 candidate = ann.get("candidate", "")
-                score = ann.get("functional_score")
+                score = ann.get(TASK_SCORE_FIELD["substitute"])
                 if score is not None and candidate:
                     gt[candidate] = float(score)
             if not gt or max(gt.values()) == 0:

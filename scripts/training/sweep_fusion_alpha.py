@@ -42,6 +42,11 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 DATA_DIR = PROJECT_ROOT / "data"
 
+# Task -> score field is shared with eval_per_mode.py (ADR-0001); see task_labels.py.
+sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "evaluation"))
+from task_labels import TASK_SCORE_FIELD
+
+
 # Structural (PecanPy) embeddings -- trained on co-occurrence graph
 STRUCTURAL_EMBEDDINGS = {
     "magic": "magic_v7_spectral_mu35",
@@ -138,11 +143,6 @@ def eval_ndcg(wv: KeyedVectors, game: str, k: int = 10) -> dict:
         data = json.load(f)
 
     queries = data.get("queries", {})
-    MODE_SCORE_FIELD = {
-        "substitute": "functional_score",
-        "synergy": "synergy_score",
-        "meta": "meta_relevance",
-    }
 
     def _dcg(rels, k_):
         r = np.array(rels[:k_], dtype=float)
@@ -155,7 +155,7 @@ def eval_ndcg(wv: KeyedVectors, game: str, k: int = 10) -> dict:
         return _dcg(rels, k_) / idcg if idcg > 0 else 0.0
 
     results = {}
-    for mode, field in MODE_SCORE_FIELD.items():
+    for mode, field in TASK_SCORE_FIELD.items():
         scores = []
         for qname, qdata in queries.items():
             annotations = qdata.get("annotations", [])
