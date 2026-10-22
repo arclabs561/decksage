@@ -1,0 +1,194 @@
+# Label source registry
+#
+# One entry per external source that could produce labels. This file is the
+# policy record: a source may only be used for the labels and access listed
+# here, and only at or below its verdict. See docs/LABEL-SOURCES.md.
+#
+# verdict: adopt  - permissive enough to use now, with attribution
+#          trial  - needs a licence, a sample audit, or both
+#          reject - not usable for this project
+# terms:   permissive | attribution | licence-required | prohibited | unknown
+
+[[source]]
+id = "commander-spellbook"
+labels = ["synergy"]
+access = "rest"
+terms = "attribution"
+verdict = "adopt"
+note = "Explicit combo relations. Public API, 80 rpm, credit requested."
+
+[[source]]
+id = "scryfall-tagger"
+labels = ["role"]
+access = "rest+bulk"
+terms = "attribution"
+verdict = "adopt"
+note = "Community functional tags. Daily bulk; no repackaging."
+
+[[source]]
+id = "mtgjson"
+labels = ["role", "meta"]
+access = "bulk"
+terms = "permissive"
+verdict = "adopt"
+note = "MIT. Card metadata, legalities, 90-day prices."
+
+[[source]]
+id = "limitless"
+labels = ["meta", "completion"]
+access = "api"
+terms = "attribution"
+verdict = "adopt"
+note = "Official Pokemon tournament API; redistribution terms need confirming."
+
+[[source]]
+id = "ygoprodeck"
+labels = ["role", "meta"]
+access = "api"
+terms = "unknown"
+verdict = "adopt"
+note = "Card data and decks, 20 req/s. No explicit licence; Konami IP."
+
+[[source]]
+id = "yugipedia"
+labels = ["synergy"]
+access = "api"
+terms = "attribution"
+verdict = "adopt"
+note = "CC BY-SA. Card Tips give explicit searched-by and used-with relations."
+
+[[source]]
+id = "wizards-bnr"
+labels = ["substitute"]
+access = "rss"
+terms = "permissive"
+verdict = "adopt"
+note = "Ban events as natural experiments. Sparse, confounded by reprints."
+
+[[source]]
+id = "konami-fl"
+labels = ["substitute"]
+access = "html"
+terms = "permissive"
+verdict = "adopt"
+note = "Forbidden and limited events; OCG/TCG divergence."
+
+[[source]]
+id = "pokemon-rotation"
+labels = ["substitute"]
+access = "html"
+terms = "permissive"
+verdict = "adopt"
+note = "Annual rotation events; broad rather than card-specific."
+
+[[source]]
+id = "edhrec"
+labels = ["synergy", "substitute", "role"]
+access = "html+json"
+terms = "licence-required"
+verdict = "trial"
+note = "Precon cut/add lists are the best substitution proxy; personal non-commercial terms."
+
+[[source]]
+id = "archidekt"
+labels = ["substitute", "completion"]
+access = "api"
+terms = "licence-required"
+verdict = "trial"
+note = "Maybeboards and deck-help requests; undocumented API."
+
+[[source]]
+id = "moxfield"
+labels = ["substitute", "completion"]
+access = "api"
+terms = "licence-required"
+verdict = "trial"
+note = "Maybeboards and sideboards; automated access prohibited by terms."
+
+[[source]]
+id = "cubecobra"
+labels = ["synergy", "substitute"]
+access = "api"
+terms = "licence-required"
+verdict = "trial"
+note = "Changelogs give dated card-out/card-in; ai-train=no."
+
+[[source]]
+id = "mtgstocks"
+labels = ["substitute"]
+access = "html+api"
+terms = "unknown"
+verdict = "trial"
+note = "Price history for event studies only; levels are dominated by supply."
+
+[[source]]
+id = "reddit"
+labels = ["substitute", "synergy"]
+access = "api"
+terms = "licence-required"
+verdict = "trial"
+note = "Best prose corpus; commercial use needs a licence. Gold-set generation only."
+
+[[source]]
+id = "master-duel-meta"
+labels = ["meta", "synergy"]
+access = "html+api"
+terms = "unknown"
+verdict = "trial"
+note = "Combos and counters; digital format differs from paper."
+
+[[source]]
+id = "mtgtop8"
+labels = ["meta"]
+access = "html"
+terms = "unknown"
+verdict = "trial"
+note = "Tournament archive; no explicit scraping clause."
+
+[[source]]
+id = "mtggoldfish"
+labels = ["meta"]
+access = "html"
+terms = "prohibited"
+verdict = "reject"
+note = "Terms prohibit automated access and derivatives."
+
+[[source]]
+id = "tappedout"
+labels = ["substitute", "completion"]
+access = "html"
+terms = "prohibited"
+verdict = "reject"
+note = "Terms prohibit crawlers and commercial use."
+
+[[source]]
+id = "youtube"
+labels = []
+access = "api"
+terms = "prohibited"
+verdict = "reject"
+note = "No downloading or scraping transcripts without permission."
+
+[[source]]
+id = "discord"
+labels = []
+access = "none"
+terms = "prohibited"
+verdict = "reject"
+note = "No public archive; terms forbid scraping and commercialising."
+
+[[source]]
+id = "marketplace-reviews"
+labels = []
+access = "html"
+terms = "prohibited"
+verdict = "reject"
+note = "Reviews describe condition and shipping, not card function."
+
+[[source]]
+id = "stackexchange"
+labels = ["completion"]
+access = "api"
+terms = "attribution"
+verdict = "reject"
+note = "Tiny deck-building volume; mostly rules questions."
