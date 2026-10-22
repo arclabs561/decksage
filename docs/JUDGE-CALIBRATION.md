@@ -66,3 +66,54 @@ calibrated ([PPI](https://www.science.org/doi/10.1126/science.adi6000),
   agree and are both wrong; treat disagreement as a diagnostic only.
 - Do not report a threshold decision without about 30 labels within +/-0.1 of
   that threshold.
+
+## Cheap calibration runs
+
+Calibration work is high-volume and low-stakes per call, so run it on the cheap
+route rather than the frontier one. Credentials come from 1Password at process
+start; nothing is written to disk.
+
+```sh
+# OpenRouter key resolved from the vault, exported only to this process
+op run --no-masking --env-file=/dev/null -- \
+  env OPENROUTER_MODEL=deepseek/deepseek-v4.1-flash \
+  uv run scripts/evaluation/judge_probe.py --pairs data/audit/anchors.jsonl
+
+# or inject a single reference
+OPENROUTER_API_KEY="$(op read 'op://Private/OpenRouter/api key')" \
+  uv run scripts/evaluation/judge_probe.py --pairs data/audit/anchors.jsonl
+```
+
+At roughly 300 input and 100 output tokens per pair, a 500-pair probe costs
+about $0.02 to $0.05 on a flash-tier model. That is cheap enough to run the
+whole Stage 0 suite on every prompt change instead of once.
+
+### Three techniques, in increasing order of what they prove
+
+1. **Rubric alignment (cheap, weakest).** Score the same 200 pairs under two
+   rubric wordings and one exemplar-anchored variant. Keep the variant only if
+   score variance drops without rank correlation to the anchor set dropping.
+   Proves: the prompt is not adding avoidable noise.
+2. **Cross-family agreement (cheap, diagnostic).** Run two or three model
+   families on the same pairs; report per-item spread. Treat spread as an
+   uncertainty feature, never as truth. Proves: which pairs are unstable.
+3. **Anchored calibration (needs labels).** Fit a monotone map from judge score
+   to human score on 50-100 labelled pairs with cross-fitting, then propagate
+   aggregate estimates with PPI. Proves: the direction and size of the mapping,
+   and nothing outside the observed score range.
+
+### Augmentation as a calibration probe, not a label source
+
+Augmented pairs are useful here for one narrow purpose: an invariance test. If
+paraphrasing a card's rules text while keeping its function moves the judge's
+score more than a small amount, the judge is reading surface form. That is a
+cheap, falsifiable check.
+
+What augmentation must not become is ground truth. Per ADR-0002, synthetic
+pairs are training-only, carry `_provenance.augmentation`, and are refused by
+the evaluation merge. A judge scored against its own paraphrases measures
+self-consistency, not correctness.
+
+*Implementation status: `judge_probe.py` is not written yet. The recipe above is
+the contract it must satisfy; building it is the next task, and it needs an
+anchor file first.*
