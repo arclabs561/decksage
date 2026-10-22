@@ -343,6 +343,11 @@ def merge_into_test_set(game: str, annotations: list[dict], discovery: dict | No
         candidate = ann.get("candidate", "")
         if not query or not candidate or query not in queries:
             continue
+        # Evaluation data must stay human- or judge-labeled real pairs.
+        # ADR-0002 keeps augmented and synthetic pairs training-only; letting
+        # one in would raise scores for reasons that do not transfer.
+        if ann.get("synthetic") or (ann.get("_provenance") or {}).get("augmentation"):
+            continue
 
         qdata = queries[query]
         existing = {a.get("candidate", "") for a in qdata.get("annotations", [])}
