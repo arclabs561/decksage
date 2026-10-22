@@ -51,3 +51,11 @@ the same candidates inherits that selection.
   possible.
 - Robustness claims need slice-level reporting, which costs a small extra
   evaluation pass.
+
+## See also
+
+`docs/AUGMENTATION.md` holds the transformation catalog: text, art, and graph
+analogues of crop, flip, jitter and occlusion, with what each preserves and the
+failure mode when applied to the wrong task. It also names the one permitted
+non-training use, the invariance probe that tests a judge rather than scoring
+it against its own paraphrases.
