@@ -88,7 +88,10 @@ def load_graph(game: str):
     # Use largest
     pairs_path = sorted(matches, key=lambda p: Path(p).stat().st_size)[-1]
     log.info(f"  Graph: {Path(pairs_path).name}")
-    return load_graph(pairs_path)
+    # similarity_methods.load_graph returns (adjacency, edge_weights); the
+    # calibrator only needs the adjacency dict.
+    adj, _weights = load_graph(pairs_path)
+    return adj
 
 
 def _ground_truth(labels) -> dict[str, float]:
@@ -173,7 +176,7 @@ def evaluate_weights(
 
     fusion = WeightedLateFusion(
         embeddings=wv,
-        adj=graph.adjacency if graph else None,
+        adj=graph,
         weights=weights,
         aggregator="rrf",
         game=game,
@@ -193,7 +196,7 @@ def evaluate_weights(
     ndcg_scores = []
 
     for query_card, labels in queries.items():
-        if query_card not in wv and (not graph or query_card not in graph.adjacency):
+        if query_card not in wv and (not graph or query_card not in graph):
             continue
 
         gt = _ground_truth(labels)
@@ -269,17 +272,54 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
         nonzero = int(np.count_nonzero(vis_matrix) / vis_matrix.shape[1])
         log.info(f"  Visual index: {vis_matrix.shape[0]:,} cards ({nonzero} with images)")
 
-    # Generate grid
-    keys = list(grid.keys())
+    # A weight is only meaningful for a signal that can actually produce a
+    # score. WeightedLateFusion is built here without a tagger or text/visual
+    # embedder, so any missing input yields a constant 0.0 and the grid would
+    # happily "fit" it to zero, recording "this signal does not matter" when the
+    # truth is "this signal was never computed".
+    text_has_signal = text_matrix is not None and float(np.std(text_matrix[:512])) > 0.0
+    visual_has_signal = (
+        vis_matrix is not None
+        and int(np.count_nonzero(vis_matrix[: min(512, vis_matrix.shape[0])])) > 0
+    )
+    availability = {
+        "embed": len(wv) > 0,
+        "jaccard": bool(graph) and len(graph) > 0,
+        # No tagger is passed to WeightedLateFusion in this script, so the
+        # functional signal can only ever score zero here.
+        "functional": False,
+        "text_embed": text_has_signal,
+        "visual_embed": visual_has_signal,
+    }
+    excluded = {
+        "embed": "embedding file is empty",
+        "jaccard": "no co-occurrence graph",
+        "functional": "no tagger is constructed in this script",
+        "text_embed": "text index missing or constant",
+        "visual_embed": "visual index missing or all-zero",
+    }
+    excluded = {k: excluded[k] for k, v in availability.items() if not v}
+    for key, reason in excluded.items():
+        log.warning(f"  Excluding {key}: {reason}")
+
+    keys = [key for key in grid if availability[key]]
+    if len(keys) < 2:
+        log.error(
+            "Refusing to calibrate: fewer than two live signals (%s). "
+            "Weights fitted over constants are meaningless.",
+            ", ".join(keys) or "none",
+        )
+        return None
     combos = list(itertools.product(*[grid[k] for k in keys]))
-    log.info(f"  Grid: {len(combos)} combinations")
+    log.info(f"  Grid: {len(combos)} combinations over {', '.join(keys)}")
 
     best_score = 0.0
     best_weights = None
     t0 = time.time()
 
     for i, combo in enumerate(combos):
-        vals = dict(zip(keys, combo))
+        vals = dict.fromkeys(grid, 0.0)
+        vals.update(zip(keys, combo))
         score = evaluate_weights(
             game,
             vals["embed"],
@@ -340,6 +380,8 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
         "calibration_type": "quick" if quick else "full",
         "has_visual_index": vis_matrix is not None,
         "has_text_index": text_matrix is not None,
+        "signals_used": keys,
+        "signals_excluded": excluded,
     }
 
     # Save
