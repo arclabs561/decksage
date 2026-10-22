@@ -11,9 +11,14 @@ glob:*.jpg
 glob:*.jpeg
 
 # Local configuration that must never be in history.
+#
+# Do not use `glob:.env.*` here: git-filter-repo has no negation syntax, so the
+# `!.env.example` exception is ignored and the template gets purged along with
+# the real files. Name the sensitive files explicitly instead.
 .env
-glob:.env.*
-!.env.example
+.env.local
+.env.production
+.env.development
 
 # Data corpora are not ours to redistribute, and they are not needed to build.
 # Keep small fixtures and experiment records; drop the corpora and derived

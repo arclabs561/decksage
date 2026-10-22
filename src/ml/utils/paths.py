@@ -58,9 +58,14 @@ DECKS_ALL_ENHANCED = PROCESSED_DIR / "decks_all_enhanced.jsonl"
 DECKS_ALL_FINAL = PROCESSED_DIR / "decks_all_final.jsonl"
 
 # Test sets (unified - merged from best available sources)
-TEST_SET_MAGIC = EXPERIMENTS_DIR / "test_set_unified_magic.json"
-TEST_SET_POKEMON = EXPERIMENTS_DIR / "test_set_unified_pokemon.json"
-TEST_SET_YUGIOH = EXPERIMENTS_DIR / "test_set_unified_yugioh.json"
+#
+# Read from data/, not experiments/. The experiments/ copies of the Pokemon and
+# YuGiOh unified sets are pre-cleanup snapshots: the Pokemon one is byte-identical
+# to test_set_unified_pokemon.json.contaminated.bak, so pointing here evaluated
+# against a set that had already been rejected. data/ holds the later versions.
+TEST_SET_MAGIC = DATA_DIR / "test_set_unified_magic.json"
+TEST_SET_POKEMON = DATA_DIR / "test_set_unified_pokemon.json"
+TEST_SET_YUGIOH = DATA_DIR / "test_set_unified_yugioh.json"
 
 # Experiment log (Oct 2025: consolidated to canonical version)
 EXPERIMENT_LOG = EXPERIMENTS_DIR / "EXPERIMENT_LOG_CANONICAL.jsonl"
