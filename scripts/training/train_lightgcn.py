@@ -66,6 +66,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from ml.utils.data_loading import load_edgelist
+from ml.utils.device import get_device
 
 
 # ---------------------------------------------------------------------------
@@ -581,15 +582,7 @@ def main() -> int:
     np.random.seed(args.seed)
 
     # Device selection
-    if args.device == "auto":
-        if torch.cuda.is_available():
-            device = torch.device("cuda")
-        elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-            device = torch.device("mps")
-        else:
-            device = torch.device("cpu")
-    else:
-        device = torch.device(args.device)
+    device = get_device(None if args.device == "auto" else args.device)
 
     print("=" * 70)
     print(f"LightGCN Embedding Training  [{args.game}]  [device={device}]")

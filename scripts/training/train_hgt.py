@@ -63,6 +63,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from ml.utils.device import get_device
+
 
 # ---------------------------------------------------------------------------
 # Data loading (via shared edge_registry)
@@ -427,7 +429,7 @@ def train_hgt(
     if num_neighbors is None:
         num_neighbors = [10, 10]
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    device = get_device()
     print(f"  Device: {device}")
     print(
         f"  Loss: {loss_mode}"

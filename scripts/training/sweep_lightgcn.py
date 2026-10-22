@@ -39,6 +39,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 from ml.utils.data_loading import load_edgelist
+from ml.utils.device import get_device
 
 
 # Import training function from existing script
@@ -168,12 +169,7 @@ def main() -> int:
     print(f"  {len(nodes):,} nodes, {len(edges):,} edges")
 
     # Device
-    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
-        device = torch.device("mps")
-    elif torch.cuda.is_available():
-        device = torch.device("cuda")
-    else:
-        device = torch.device("cpu")
+    device = get_device()
     print(f"  Device: {device}")
 
     # Define grid

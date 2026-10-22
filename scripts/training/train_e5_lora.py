@@ -45,13 +45,7 @@ if str(PROJECT_ROOT / "src") not in sys.path:
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# Mode -> annotation score field
-MODE_SCORE_FIELD = {
-    "substitution": "functional_score",
-    "synergy": "synergy_score",
-    "meta": "meta_relevance",
-}
-
+# Mode -> instruction prefix
 MODE_INSTRUCTION = {
     "substitution": "query: Find functional substitute for",
     "synergy": "query: Find cards that synergize with",
@@ -59,29 +53,29 @@ MODE_INSTRUCTION = {
 }
 
 
-def load_training_data(game: str, task: str) -> list[tuple[str, str, float]]:
-    """Load mode-filtered training pairs with graded labels."""
-    test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    with open(test_path) as f:
-        test_data = json.load(f)
+def load_training_data(game: str) -> list[tuple[str, str, float]]:
+    """Load self-supervised card-text pairs.
 
+    Annotations under data/test_sets/ are evaluation data (CLAUDE.md,
+    Train/Eval Separation) and are never a training source. There is no flag to
+    override this: a model trained on the eval set cannot be evaluated against
+    it, so the option should not exist.
+    """
+    path = DATA_DIR / "training" / "selfsupervised_pairs.json"
+    if not path.exists():
+        raise SystemExit(
+            f"Missing {path}; run scripts/training/generate_selfsupervised_pairs.py first"
+        )
+    data = json.loads(path.read_text())
     pairs = []
-    for query_card, labels in test_data.get("queries", {}).items():
-        for ann in labels.get("annotations", []):
-            candidate = ann.get("candidate", "")
-            mode = ann.get("mode", "unknown")
-            if not candidate:
-                continue
-
-            if task == "all" or mode == task:
-                score_field = MODE_SCORE_FIELD.get(mode, "similarity_score")
-                score = float(ann.get(score_field, 0.0) or 0.0)
-                if task == "substitution":
-                    sub = float(ann.get("substitutability", 0.0) or 0.0)
-                    score = max(score, sub)
-                pairs.append((query_card, candidate, score))
-
-    logger.info(f"Loaded {len(pairs)} {task} pairs for {game}")
+    for entry in data.get("pairs", []):
+        query_text = entry.get("query_text", "")
+        candidate_text = entry.get("candidate_text", "")
+        if query_text and candidate_text:
+            pairs.append((query_text, candidate_text, float(entry.get("score", 1.0))))
+    if not pairs:
+        raise SystemExit(f"No usable pairs in {path}")
+    logger.info(f"Loaded {len(pairs)} self-supervised pairs for {game}")
     return pairs
 
 
@@ -132,7 +126,7 @@ def main() -> int:
     model[0].auto_model = peft_model
 
     # Load training data
-    pairs = load_training_data(args.game, args.task)
+    pairs = load_training_data(args.game)
     if not pairs:
         logger.error("No training pairs found")
         return 1
