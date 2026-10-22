@@ -176,6 +176,18 @@ class WeightedLateFusion:
         else:
             self.weights = base_weights.normalized()
 
+        # A fusion built without a tagger can never score the functional signal:
+        # _get_functional_tag_similarity returns 0.0 by construction. Leaving its
+        # default 10% in place silently dilutes the ranking, so drop the weight
+        # once and say so.
+        if tagger is None and getattr(self.weights, "functional", 0.0) > 0.0:
+            logger.warning(
+                "Fusion built without a tagger: dropping the functional weight (%.2f). "
+                "Pass a tagger or set functional=0 explicitly.",
+                self.weights.functional,
+            )
+            self.weights.functional = 0.0
+
         self.embeddings = embeddings
         self.adj = adj or {}
         self.tagger = tagger
