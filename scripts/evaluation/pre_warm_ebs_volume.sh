@@ -43,7 +43,7 @@ echo "   Volume AZ: $VOLUME_AZ"
 
 if [[ -z "$INSTANCE_ID" ]]; then
     echo "   Creating temporary instance for pre-warming..."
-    CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --instance-type t3.medium --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek 2>&1)
+    CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --instance-type t3.medium --iam-instance-profile EC2-SSM-InstanceProfile --key-name "${KEY_NAME:-decksage-dev}" 2>&1)
     INSTANCE_ID=$(echo "$CREATE_OUTPUT" | grep -oE 'i-[a-z0-9]+' | head -1 || echo "")
 
     if [[ -z "$INSTANCE_ID" ]]; then

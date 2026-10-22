@@ -27,11 +27,11 @@ aws ssm describe-instance-information --filters "Key=InstanceIds,Values=i-XXX"
 ### Option 2: Use SSH
 ```bash
 # Create instance with key pair
-../runctl/target/release/runctl aws create --spot --key-name tarek g4dn.xlarge
+../runctl/target/release/runctl aws create --spot --key-name "${KEY_NAME:-decksage-dev}" g4dn.xlarge
 
 # Ensure security group allows SSH from your IP
 # Then run:
-export SSH_KEY_PATH=~/.ssh/tarek.pem
+export SSH_KEY_PATH=${SSH_KEY_PATH:-$HOME/.ssh/decksage-dev.pem}
 ./scripts/evaluation/runctl_downstream_eval.sh aws <instance-id>
 ```
 

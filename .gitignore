@@ -200,3 +200,8 @@ qa/*
 !qa/reference/
 
 .claude/settings.local.json
+
+# local/derived data artifacts that case-varied ignores missed
+/data/data-*.json
+/data/data-*.md
+.agents/

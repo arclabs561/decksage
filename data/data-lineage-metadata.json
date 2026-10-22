@@ -5,7 +5,7 @@
         "name": "Primary Source Data",
         "immutable": true,
         "locations": {
-          "s3": "s3://games-collections/games/",
+          "s3": "s3://your-bucket/games/",
           "local": "src/backend/data-full/games/"
         },
         "tools": [
@@ -94,8 +94,8 @@
             "annotations/llm_judgments/judgment_*.json"
           ],
           "s3": [
-            "s3://games-collections/annotations/",
-            "s3://games-collections/experiments/annotations_llm/"
+            "s3://your-bucket/annotations/",
+            "s3://your-bucket/experiments/annotations_llm/"
           ]
         },
         "tools": [

@@ -50,7 +50,7 @@ uv run scripts/data_processing/regenerate_multi_game_pairs.py
 
 ## Syncing (optional)
 
-Some workflows sync to/from S3 (project bucket typically looks like `s3://games-collections/...`). See:
+Some workflows sync to/from S3 (project bucket typically looks like `s3://your-bucket/...`). See:
 
 - `scripts/data_processing/export_from_s3.sh`
 - `scripts/data_processing/sync_to_s3.sh`

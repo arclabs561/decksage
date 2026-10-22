@@ -124,9 +124,9 @@ case "$MODE" in
  echo " Volume will be auto-mounted at /mnt/data by user-data script"
  fi
 
- CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --data-volume-size "$DATA_VOLUME_SIZE" --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek "$INSTANCE_TYPE" 2>&1)
+ CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --data-volume-size "$DATA_VOLUME_SIZE" --iam-instance-profile EC2-SSM-InstanceProfile --key-name "${KEY_NAME:-decksage-dev}" "$INSTANCE_TYPE" 2>&1)
  else
- CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek "$INSTANCE_TYPE" 2>&1)
+ CREATE_OUTPUT=$("$RUNCTL_BIN" aws create --spot --iam-instance-profile EC2-SSM-InstanceProfile --key-name "${KEY_NAME:-decksage-dev}" "$INSTANCE_TYPE" 2>&1)
  fi
 
  echo "$CREATE_OUTPUT"
@@ -146,9 +146,9 @@ case "$MODE" in
  echo ""
  echo "Please create manually and provide instance ID:"
  if [[ "$USE_EBS" == "true" ]]; then
- echo " $RUNCTL_BIN aws create --spot --data-volume-size $DATA_VOLUME_SIZE --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek $INSTANCE_TYPE"
+ echo " $RUNCTL_BIN aws create --spot --data-volume-size $DATA_VOLUME_SIZE --iam-instance-profile EC2-SSM-InstanceProfile --key-name "${KEY_NAME:-decksage-dev}" $INSTANCE_TYPE"
  else
- echo " $RUNCTL_BIN aws create --spot --iam-instance-profile EC2-SSM-InstanceProfile --key-name tarek $INSTANCE_TYPE"
+ echo " $RUNCTL_BIN aws create --spot --iam-instance-profile EC2-SSM-InstanceProfile --key-name "${KEY_NAME:-decksage-dev}" $INSTANCE_TYPE"
  fi
  echo " Then run: $0 aws <instance-id>"
  exit 1

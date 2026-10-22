@@ -37,12 +37,15 @@ BACKUP="../$(basename "$ROOT")-backup-$STAMP.bundle"
 git bundle create "$BACKUP" --all
 echo "backup: $BACKUP"
 
+# Capture the remote before the rewrite: filter-repo removes origin, so reading
+# it afterwards yields an empty URL and silently leaves the clone with no remote.
+ORIGIN_URL=$(git config --get remote.origin.url || true)
+
 git filter-repo --invert-paths --paths-from-file "$CONFIG" --force
 
-# filter-repo drops origin; restore it so a force-push is possible.
-ORIGIN_URL=$(git config --get remote.origin.url || true)
 if [ -n "${ORIGIN_URL:-}" ] && ! git remote | grep -qx origin; then
   git remote add origin "$ORIGIN_URL"
+  git fetch origin --quiet 2>/dev/null || true
 fi
 
 echo
