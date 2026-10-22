@@ -205,3 +205,7 @@ qa/*
 /data/data-*.json
 /data/data-*.md
 .agents/
+
+# ADRs are tracked here; the global excludes file ignores docs/adr/
+!docs/adr/
+!docs/adr/**

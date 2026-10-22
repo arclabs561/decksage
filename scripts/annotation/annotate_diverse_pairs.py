@@ -245,7 +245,7 @@ async def annotate_pair(
                 "confidence": getattr(ann, "confidence", 0.5),
                 "pair_source": source,
                 "llm_model": os.getenv(
-                    "ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5"
+                    "ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-5.5"
                 ).split(",")[0],
                 "prompt_variant": prompt_variant,
                 "game": game,
@@ -332,7 +332,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
         return {"game": game, "error": "no diverse pairs"}
 
     # Parse model list for multi-judge IAA
-    model_env = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4.5")
+    model_env = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-5.5")
     model_names = [m.strip() for m in model_env.split(",") if m.strip()]
 
     # Resume support: load checkpoint (keys include model name)

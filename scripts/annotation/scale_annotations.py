@@ -809,8 +809,8 @@ async def run_pipeline(
 
     # Determine annotation method
     # Support model rotation for IAA: comma-separated models in env var
-    # e.g., ANNOTATOR_MODEL_SIMILARITY=anthropic/claude-haiku-4-5-20251001,google/gemini-3-flash-preview
-    model_str = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-4-5-20251001")
+    # e.g., ANNOTATOR_MODEL_SIMILARITY=anthropic/claude-haiku-5.5,google/gemini-3-flash-preview
+    model_str = os.getenv("ANNOTATOR_MODEL_SIMILARITY", "anthropic/claude-haiku-5.5")
     model_pool = [m.strip() for m in model_str.split(",") if m.strip()]
     model_name = model_pool[0]  # Primary model for metadata
 

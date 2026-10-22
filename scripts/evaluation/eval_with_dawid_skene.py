@@ -41,6 +41,9 @@ MODEL_RELIABILITY = {
     "claude_sonnet_4_6": 0.831,
     "anthropic/claude-sonnet-4.5": 0.831,
     "anthropic/claude-haiku-4.5": 0.75,  # estimated (close to sonnet)
+    # 5.5 assumed equal to 4.5 pending a calibration run. Labels written
+    # before this entry came from 4.5 and are not directly comparable.
+    "anthropic/claude-haiku-5.5": 0.75,
     "gpt_5_2": 0.636,
     "openai/gpt-4o-mini": 0.636,
     "openai/gpt-4.1-nano": 0.636,
