@@ -9,7 +9,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0001 | 2026-03-17 | v4 co-occurrence baseline | all | M:7.1M P:16.7K Y:1.8M pairs | overall nDCG | M:0.151 P:0.049 Y:0.554 | [0001](0001_v4_baseline.yaml) |
 | 0002 | 2026-03-17 | v5 fused (enriched + ns=-0.5 + attr) | all | M:7.1M P:16.7K Y:1.8M pairs + attributes | overall nDCG | M:0.156 P:0.247 Y:0.554 | [0002](0002_v5_fused.yaml) |
 | 0003 | 2026-03-18 | Pokemon pairs expansion 16K->179K | pokemon | 179,914 pairs (from 16,676) | overall nDCG | 0.294 (+19% rel, plateau) | [0003](0003_pokemon_expanded_pairs.yaml) |
-| 0004 | 2026-03-19 | LightGCN hyperparameter sweep | magic | 331,264 edges, 15,697 nodes; 500 queries | overall nDCG | sweep: 0.545 (inflated), canonical: 0.095 (WORSE than v5 0.154) | [0004](0004_lightgcn_sweep.yaml) |
+| 0004 | 2026-03-19 | LightGCN hyperparameter sweep | magic | 331,264 edges, 15,697 nodes; 500 queries | overall nDCG | sweep: 0.545 (inflated), canonical: 0.095 (WORSE than v5 0.154) | [invalid] [0004](0004_lightgcn_sweep.yaml) |
 | 0005 | 2026-03-19 | E5 multi-task fine-tuning | magic | 8,084 samples (3,084 pairs + 5,000 edges) | train loss | 0.027 (converged) | [0005](0005_e5_multitask_finetune.yaml) |
 | 0006 | 2026-03-19 | Flow-based deck completion | magic | 4,500 train / 500 test decks | hit@10 | 0.031 (first pass) | [0006](0006_flow_completion.yaml) |
 | 0007 | 2026-03-19 | Fusion weight switching fix | all | v2 test sets, substitution pairs sub>0.5 | recall@10 | M:0.38 P:0.38 Y:0.62 | [0007](0007_fusion_weight_fix.yaml) |
@@ -44,7 +44,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0036 | 2026-03-20 | MetaPath2Vec tuning | magic | MP2V + 9 attributes, PCA 128D | sub nDCG | attr fusion hurts; 40ep variant not recorded **[incomplete]** | [0036](0036_metapath2vec_tuning.yaml) |
 | 0037 | 2026-03-20 | MetaPath2Vec 40ep | magic | 35,265 cards (vocab) | sub nDCG | 0.186 (+50% over v5) | [0037](0037_metapath2vec_40epochs.yaml) |
 | 0038 | 2026-03-20 | MetaPath2Vec 80ep | magic | Magic graph walks (count not recorded) | sub nDCG | 0.198 (+60% over v5) | [0038](0038_metapath2vec_80epochs.yaml) |
-| 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [0039](0039_metapath2vec_160epochs.yaml) |
+| 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [invalid] [0039](0039_metapath2vec_160epochs.yaml) |
 | 0040 | 2026-03-21 | Box containment POC (deck-contains-card) | magic | 2,001 decks, 127,994 triples | AUC | 0.504 (no separation, degenerate) | [0040](0040_box_containment_poc.yaml) |
 | 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:0.311 (160ep) | [0041](0041_epoch_sweep_leak_fix.yaml) |
 | 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [0042](0042_cleora_iteration_sweep.yaml) |
@@ -56,7 +56,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0048 | 2026-03-21 | MetaPath2Vec v2: 8 edge types | magic | 35K cards, 12M edges (8 types) | sub nDCG | 0.114 INFLATED (Commander dilutes signal, regressed from 0.228) | [0048](0048_metapath2vec_v2_expanded_edges.yaml) |
 | 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [0049](0049_card_containment.yaml) |
 | 0050 | 2026-03-22 | Expanded Commander Cleora (51K decks) | magic | 25.2M Commander edges | sub nDCG | 0.100 (unchanged from 18K decks, Commander != cross-format sub) | [0050](0050_expanded_commander_cleora.yaml) |
-| 0051 | 2026-03-22 | Magic epoch sweep (no leakage) | magic | 35K cards, self-supervised only | sub nDCG | 0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora) | [0051](0051_magic_epoch_sweep.yaml) |
+| 0051 | 2026-03-22 | Magic epoch sweep (no leakage) | magic | 35K cards, self-supervised only | sub nDCG | 0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora) | [invalid] [0051](0051_magic_epoch_sweep.yaml) |
 | 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | **All prior nDCG inflated 50-101%**. True: M:0.069 P:0.058 Y:0.153 | [0052](0052_dedup_correction.yaml) |
 | 0053 | 2026-03-23 | **Training variance ablation** (key) | magic | v7 vs v8 edgelist, 3 seeds each | sub nDCG | v7 mean 0.094 (std 0.001), v8 mean 0.090. Deployed v7 (0.102) was 2.5-sigma outlier | [0053](0053_training_variance_ablation.yaml) |
 | 0054 | 2026-03-23 | **HGT mini-batch on A10G** (key) | magic | 12M edges, 36K nodes, 6 edge types | sub nDCG | 0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving) | [0054](0054_hgt_mini_batch.yaml) |
@@ -67,8 +67,8 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0059 | 2026-03-25 | **Fill eval holes round 2 -- SATURATED** (key) | all | remaining holes, multi cascade | sub nDCG | Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations | [0059](0059_fill_eval_holes_round2.yaml) |
 | 0060 | 2026-03-26 | Fusion-path substitute eval | magic | v7_spectral, 36K annotations | sub nDCG | Cosine: **0.525**, Fusion: **0.031** (gap=0.256). Test set is cosine-specific; fusion candidates unjudged. Need fusion-specific annotation filling | [0060](0060_fusion_path_eval.yaml) |
 | 0061 | 2026-03-31 | Text_e5 annotation holes | all | 6K new annotations | sub nDCG | Co-occur nDCG drops 3-6% (expected: can't rank text-similar candidates) | [0061](0061_text_e5_annotation_holes.yaml) |
-| 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | **CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds | [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
-| 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9 **[incomplete]** | [0063](0063_cross_encoder_reranker.yaml) |
+| 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | **CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds | [invalid] [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
+| 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9 **[incomplete]** | [invalid] [0063](0063_cross_encoder_reranker.yaml) |
 | 0064 | 2026-03-31 | E5 bi-encoder fine-tuning | magic | 5,000 train / 2,079 val pairs | Pearson | 0.293 after 1 epoch (worse than 0.438 zero-shot; catastrophic forgetting) | [0064](0064_e5_finetuning.yaml) |
 
 ## Key Insights (cross-cutting)

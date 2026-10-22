@@ -41,6 +41,12 @@ results:
     spearman: "0.475 (epoch 0.9; final not recorded)"
     ndcg: not recorded
     notes: "Query-level split, honest generalization. Expected ~0.60-0.65 final."
+validity:
+  status: invalid
+  reason: "Cross-encoder trained on eval annotations. Pearson figures are upper bounds and the model is not served."
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+
 conclusion: >
   Methodology matters more than model size. v2's Pearson 0.695 dropped to
   v3's ~0.56 at epoch 1 because query-level split is genuinely harder.

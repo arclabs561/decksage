@@ -98,3 +98,29 @@ artifacts:
 ## Index
 
 See `SUMMARY.md` for a chronological table of all experiments.
+
+## Validity
+
+An experiment whose result was produced by buggy code, leaked data, or an
+invalid evaluation stays in the log. Deleting it loses the reason a line of work
+was abandoned and invites repeating it. Mark it instead:
+
+```yaml
+validity:
+  status: invalid        # invalid | superseded | valid
+  reason: "one sentence naming the bug and what it invalidates"
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+```
+
+Rules:
+
+- `status: invalid` means the recorded number must not be quoted. The YAML keeps
+  the original results untouched, because the record of what was measured is
+  still true.
+- `status: superseded` means a later experiment replaces it; name that id in
+  the reason.
+- The SUMMARY row carries `[invalid]` before the file link.
+- Every future bug that touches an experiment gets a `validity` block in the
+  same commit that fixes the bug. This is not optional cleanup: an unmarked
+  invalid number is worse than no number.

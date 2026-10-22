@@ -34,6 +34,12 @@ results:
     metapath2vec_80ep: 0.127
     note: "MetaPath2Vec 80ep is the best Magic method (+27% over Cleora)"
 
+validity:
+  status: invalid
+  reason: "Scores predate the duplicate-annotation correction in 0052; pre-dedup nDCG was inflated 50-101%."
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+
 conclusion: >
   Magic MetaPath2Vec 80ep produces sub nDCG 0.127 on honest (leak-free) eval.
   This is the best Magic result and 27% better than Cleora 1-iter (0.100).

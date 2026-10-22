@@ -67,6 +67,12 @@ canonical_eval:
   comparison_pokemon_v5_fused:
     overall_ndcg: 0.259
 
+validity:
+  status: invalid
+  reason: "Inline sweep evaluator ranked inside the annotation candidate set. The 0.545 sweep figure is withdrawn; the canonical number is experiment 0018."
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+
 conclusion: >
   SWEEP EVAL WAS INFLATED. The inline sweep evaluator ranked within the
   annotation candidate set (biased), while canonical eval_per_mode.py checks

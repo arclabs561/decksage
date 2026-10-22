@@ -37,6 +37,12 @@ results:
     sub_delta: "+84% (0.228 vs 0.124)"
     syn_delta: "+88% (0.228 vs 0.121)"
     meta_delta: "+75% (0.222 vs 0.127)"
+validity:
+  status: invalid
+  reason: "Annotation edges leaked into training (marked LEAKED in SUMMARY). The 0.228 sub nDCG is not attainable without leakage."
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+
 conclusion: >
   Hypothesis confirmed: 160 epochs improves significantly over 80 (+15%). No overfitting observed. Progression is sublinear but not plateauing. All three modes (sub/syn/meta) improve roughly equally. Coverage expanded to 18.5% (was ~11% at 80ep baseline). AWS training running for pokemon + yugioh at 160ep. Next: try 320ep to find ceiling, or focus on coverage (candidate retrieval).
 

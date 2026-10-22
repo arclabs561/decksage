@@ -42,6 +42,12 @@ results:
     pokemon: 0.288
     yugioh: 0.256
 
+validity:
+  status: invalid
+  reason: "E5 was fine-tuned on annotated_*_v2.json, the evaluation set. The 0.613/0.518/0.532 figures are upper bounds, not measurements."
+  detected: "2026-10-22"
+  rule: "data/experiments/README.md#validity"
+
 conclusion: >
   Text embeddings (E5-base-v2 on oracle text) produce 14-25% higher
   condensed substitute nDCG than co-occurrence embeddings (PecanPy +

@@ -115,6 +115,28 @@ def validate_document(data: Any, path: Path) -> list[tuple[str, str]]:
                 if is_empty(results.get("reason")):
                     violations.append(("results.reason", f"required when status is '{INCOMPLETE}'"))
 
+    violations.extend(validate_validity(data))
+    return violations
+
+
+VALIDITY_STATUSES = {"valid", "invalid", "superseded"}
+
+
+def validate_validity(data: dict) -> list[tuple[str, str]]:
+    """A withdrawn result must say why, so nobody quotes the number again."""
+    if "validity" not in data:
+        return []
+    validity = data["validity"]
+    if not isinstance(validity, dict):
+        return [("validity", "must be a mapping")]
+    violations: list[tuple[str, str]] = []
+    status = validity.get("status")
+    if status not in VALIDITY_STATUSES:
+        violations.append(
+            ("validity.status", f"must be one of {', '.join(sorted(VALIDITY_STATUSES))}")
+        )
+    if status in {"invalid", "superseded"} and is_empty(validity.get("reason")):
+        violations.append(("validity.reason", "required when the result is withdrawn"))
     return violations
 
 
