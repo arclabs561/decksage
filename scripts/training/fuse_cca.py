@@ -24,6 +24,14 @@ Usage:
 
 from __future__ import annotations
 
+import sys
+from pathlib import Path
+
+
+PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
 import argparse
 import json
 import math
@@ -35,6 +43,8 @@ import numpy as np
 from gensim.models import KeyedVectors
 from sklearn.cross_decomposition import CCA
 from sklearn.preprocessing import normalize
+
+from ml.utils.paths import PATHS
 
 
 QUALITY_PAIRS = [
@@ -290,7 +300,7 @@ def main() -> int:
     parser.add_argument(
         "--test-set",
         type=Path,
-        default=Path("data/test_set_annotated_magic.json"),
+        default=PATHS.data / "test_sets" / "annotated_magic_v2.json",
         help="Annotated test set for nDCG evaluation",
     )
     args = parser.parse_args()

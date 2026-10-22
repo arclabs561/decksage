@@ -45,15 +45,19 @@ from pathlib import Path
 
 VENV_PYTHON = ".venv/bin/python"
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from ml.utils.paths import PATHS
 
 
 # ── Game configurations ──
 
 GAME_CONFIGS = {
     "pokemon": {
-        "card_attributes": "data/processed/card_attributes_pokemon.csv",
-        "test_set": "data/test_set_annotated_pokemon.json",
-        "image_urls": "data/processed/pokemon_image_urls.json",
+        "card_attributes": str(PATHS.processed / "card_attributes_pokemon.csv"),
+        "test_set": str(PATHS.data / "test_sets" / "annotated_pokemon_v2.json"),
+        "image_urls": str(PATHS.processed / "pokemon_image_urls.json"),
         # Export weights: per-source-type multipliers for the merged edgelist
         # Matches old pipeline: ppmi x1.0, enriched x5.0, propagated x3.0, oracle x5.0
         "export_weights": {
@@ -64,9 +68,9 @@ GAME_CONFIGS = {
         },
     },
     "yugioh": {
-        "card_attributes": "data/processed/card_attributes_yugioh.csv",
-        "test_set": "data/test_set_annotated_yugioh.json",
-        "image_urls": "data/processed/yugioh_image_urls.json",
+        "card_attributes": str(PATHS.processed / "card_attributes_yugioh.csv"),
+        "test_set": str(PATHS.data / "test_sets" / "annotated_yugioh_v2.json"),
+        "image_urls": str(PATHS.processed / "yugioh_image_urls.json"),
         "export_weights": {
             "ppmi": 1.0,
             "enriched": 5.0,
@@ -75,9 +79,9 @@ GAME_CONFIGS = {
         },
     },
     "magic": {
-        "card_attributes": "data/processed/card_attributes_enriched.csv",
-        "test_set": "data/test_set_annotated_magic.json",
-        "image_urls": "data/processed/card_attributes_enriched_image_urls.json",
+        "card_attributes": str(PATHS.processed / "card_attributes_enriched.csv"),
+        "test_set": str(PATHS.data / "test_sets" / "annotated_magic_v2.json"),
+        "image_urls": str(PATHS.processed / "card_attributes_enriched_image_urls.json"),
         "export_weights": {
             "ppmi": 1.0,
             "enriched": 5.0,
@@ -119,7 +123,7 @@ def step_build_unified_graph(game: str, dry_run: bool) -> Path:
 
 def step_export_edgelist(game: str, config: dict, db_path: Path, dry_run: bool) -> str:
     """Step 1: Export filtered edgelist from unified graph."""
-    output = f"data/graphs/{game}_merged_all.edg"
+    output = str(PATHS.graphs / f"{game}_merged_all.edg")
     source_types = list(config["export_weights"].keys())
     weights = config["export_weights"]
 
@@ -132,6 +136,7 @@ def step_export_edgelist(game: str, config: dict, db_path: Path, dry_run: bool) 
         return output
 
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
     from ml.data.incremental_graph import IncrementalCardGraph
 
     graph = IncrementalCardGraph(graph_path=db_path, use_sqlite=True)
@@ -148,7 +153,7 @@ def step_export_edgelist(game: str, config: dict, db_path: Path, dry_run: bool) 
 
 def step_train_prone(game: str, merged_edgelist: str, dry_run: bool) -> str:
     """Step 2a: Train ProNE embeddings."""
-    output = f"data/embeddings/{game}_prone_propagated.wv"
+    output = str(PATHS.embeddings / f"{game}_prone_propagated.wv")
     print(f"\n[2a] ProNE training: {merged_edgelist} -> {output}")
     run(
         [
@@ -168,7 +173,7 @@ def step_train_prone(game: str, merged_edgelist: str, dry_run: bool) -> str:
 
 def step_train_pecanpy(game: str, merged_edgelist: str, dry_run: bool) -> str:
     """Step 2b: Train PecanPy embeddings."""
-    output = f"data/embeddings/{game}_pecanpy_propagated.wv"
+    output = str(PATHS.embeddings / f"{game}_pecanpy_propagated.wv")
     print(f"\n[2b] PecanPy training: {merged_edgelist} -> {output}")
     run(
         [
@@ -198,7 +203,7 @@ def step_fuse_attributes(
     """Step 3: Fuse structural embeddings with card attributes."""
     if not config["card_attributes"]:
         return ""
-    output = f"data/embeddings/{game}_{suffix}_fused.wv"
+    output = str(PATHS.embeddings / f"{game}_{suffix}_fused.wv")
     print(f"\n[3] Fusion: {embedding_path} + {config['card_attributes']} -> {output}")
     run(
         [
@@ -385,7 +390,7 @@ def step_generate_review(
     """Step 5: Generate visual review HTML with card images."""
     test_set = config["test_set"]
     image_urls = config.get("image_urls", "")
-    output = f"experiments/review_{game}.html"
+    output = str(PATHS.experiments / f"review_{game}.html")
 
     existing = [p for p in embedding_paths if p and (Path(p).exists() or dry_run)]
     if not existing:
