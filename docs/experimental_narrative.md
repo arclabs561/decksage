@@ -72,7 +72,7 @@ Swept 16 configs of LightGCN (He et al., SIGIR 2020) with reconstruction loss. T
 
 ### LightGCN Collapse Diagnosis (exp 0024)
 
-Further investigation revealed the fundamental issue: on dense co-occurrence graphs, BPR's random-negative assumption breaks down. Random negatives are mostly *connected* nodes (the graph is dense -- 331K edges for 15K nodes). The model learns trivial solutions. Reconstruction loss (weighted MSE) works mechanically but the representations aren't similarity-preserving.
+Further investigation revealed the fundamental issue: BPR's random-negative assumption breaks down on this graph: it is sparse overall (0.27 percent density, 331K edges over 15K nodes, exp 0024) but locally clustered, so a random negative is frequently a deck partner of the query. The model learns trivial solutions. Reconstruction loss (weighted MSE) works mechanically but the representations aren't similarity-preserving.
 
 ### HGT on A10G GPU (exp 0054-0055)
 
@@ -104,7 +104,7 @@ Multi-model IAA (4 LLM judges) produced Krippendorff alpha = 0.43. The judges di
 
 On 2026-03-22, diagnostic tooling revealed that multi-model IAA had produced **43-76% duplicate annotations** in the test sets (multiple judges producing separate entries for the same query-candidate pair).
 
-**Impact**: all nDCG numbers from experiments 0031-0046 were inflated by 50-101%. True baselines after dedup:
+**Impact**: all nDCG numbers from experiments 0031-0046 were inflated by 78-101% (84/78/101 per game, exp 0052). True baselines after dedup:
 
 | Embedding | Magic | Pokemon | YuGiOh |
 |-----------|-------|---------|--------|
@@ -259,7 +259,7 @@ Experiment 0060 tested routing substitutes through the fusion engine (zeroing co
 
 ### 1. Evaluation methodology is harder than model development
 - Inflated sweep eval (exp 0004): 3.5x overestimate *(the 0.545 sweep figure it rests on is withdrawn; exp 0018 is the canonical number)*
-- Test set duplication (exp 0052): 50-100% inflation
+- Test set duplication (exp 0052): 78-101% inflation, per game
 - Training variance masking real differences (exp 0053)
 - Annotation coverage masking true quality (exp 0058-0059)
 - Method-specific saturation (exp 0060)

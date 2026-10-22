@@ -1,6 +1,6 @@
 id: "0052"
 date: "2026-03-22"
-title: "Annotation dedup correction: all prior nDCG was inflated 50-90%"
+title: "Annotation dedup correction: all prior nDCG was inflated 78-101%"
 game: all
 
 hypothesis: >
