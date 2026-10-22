@@ -4,13 +4,51 @@ A chronological account of what was tried, what worked, what failed, and how fai
 
 ---
 
+## How to read the numbers in this document
+
+`data/experiments/SUMMARY.md` is the authoritative index: every experiment id
+below resolves to a row there, and a row flagged `[invalid]` is withdrawn. A
+withdrawn experiment keeps its original numbers in its YAML -- the record of what
+was measured is still true -- and adds a `validity:` block naming the bug. When
+this narrative and an id's YAML disagree about whether a figure may be quoted,
+the YAML wins.
+
+Three kinds of figure appear below, and they are not interchangeable:
+
+- **Current** -- measured on the deduplicated test sets by an experiment not
+  marked `[invalid]`: the saturated nDCG series (exp 0058-0059, later re-scoped
+  by exp 0061), spectral propagation and PPMI (exp 0056), the cascade
+  calibration (exp 0057), the fusion-path coverage gap (exp 0060). These are the
+  numbers to present today.
+- **Pre-dedup** -- any nDCG from an experiment dated before the 2026-03-22
+  dedup correction (exp 0052). Duplicate annotations inflated the ideal
+  ranking, so these values are comparable only with other pre-dedup values,
+  never with post-dedup ones. They are kept because they explain why later
+  choices were made, and they are labelled where the narrative compares them
+  with later results.
+- **Withdrawn** -- an inline `[withdrawn: exp NNNN -- one clause on why]` tag.
+  Five experiments carry it: exp 0004 (inline sweep evaluator), exp 0039
+  (annotation edges leaked into training), exp 0051 (pre-dedup epoch sweep),
+  exp 0062 and exp 0063 (models trained on the evaluation set). The history is
+  kept so a reader can see why the line of work ended; the number must not be
+  reused as a current result.
+
+Where a figure has been superseded, this document names the experiment id
+instead of restating the newer value. Read that id's YAML for the current
+number.
+
+Labels are scoped to one task (ADR-0001): a substitute nDCG is evidence about
+substitute ranking only, not about synergy or meta pairing.
+
+---
+
 ## Phase 1: Baseline and the Fundamental Signal Problem (exp 0001-0002)
 
 **Starting point**: PecanPy random walks on co-occurrence graphs (cards that appear in the same tournament deck), trained via Word2Vec. Three games: Magic (83K decks), Pokemon (24K), Yu-Gi-Oh (77K).
 
 **v4 baseline** (raw co-occurrence): Magic nDCG 0.151, Pokemon 0.049, YuGiOh 0.554.
 
-**v5 fused** (enriched edges + ns_exponent=-0.5 + card attribute fusion): Magic 0.156, Pokemon 0.247, YuGiOh 0.554.
+**v5 fused** (enriched edges + ns_exponent=-0.5 + card attribute fusion): Magic 0.156, Pokemon 0.247, YuGiOh 0.554. *(Both baselines are pre-dedup, exp 0001/0002: measured before the correction in exp 0052, so they are not comparable with the post-dedup figures in Phases 6-12.)*
 
 The key architectural decision: **card attribute fusion**. PCA-projecting card attributes (type, mana cost, colors, rarity) into the same 128D space and blending at alpha=0.7. This was essential -- without it, nDCG drops 30-50% across games.
 
@@ -24,9 +62,9 @@ The key architectural decision: **card attribute fusion**. PCA-projecting card a
 
 ### LightGCN (exp 0004): Inflated Metrics Discovery
 
-Swept 16 configs of LightGCN (He et al., SIGIR 2020) with reconstruction loss. The sweep evaluator reported **0.545 nDCG** -- a 3.5x improvement over v5 fused.
+Swept 16 configs of LightGCN (He et al., SIGIR 2020) with reconstruction loss. The sweep evaluator reported **0.545 nDCG** -- a 3.5x improvement over v5 fused. **[withdrawn: exp 0004, the inline sweep evaluator ranked inside the annotation candidate set]**
 
-**The catch**: the sweep evaluator ranked within the annotation candidate set (relative ranking), while the canonical evaluator checks whether ground-truth cards appear in the embedding's top-10 (absolute recall). Canonical eval: **0.095** -- actually *worse* than v5 fused (0.154).
+**The catch**: the sweep evaluator ranked within the annotation candidate set (relative ranking), while the canonical evaluator checks whether ground-truth cards appear in the embedding's top-10 (absolute recall). Canonical eval: **0.095** (exp 0018, the replacement for the sweep figure) -- actually *worse* than v5 fused (0.154).
 
 **Root cause**: (1) smaller vocab (15.7K vs 21.2K -- GNN only embeds graph nodes, misses cards not in training edges), (2) annotations were created from v5 neighbors, biasing ground truth toward what v5 retrieves.
 
@@ -73,6 +111,13 @@ On 2026-03-22, diagnostic tooling revealed that multi-model IAA had produced **4
 | v5_fused | 0.099 | 0.075 | 0.157 |
 | MetaPath2Vec 160ep | 0.045 | 0.024 | 0.157 |
 
+*This is the deduplicated baseline table copied from `SUMMARY.md`, not a
+re-measurement of exp 0039: that experiment's 160-epoch result is
+**[withdrawn: exp 0039, annotation edges leaked into training]**, and the row
+above is the post-dedup MetaPath2Vec entry (selective 160ep / v2 all-types).
+Exp 0052 records the leak-free post-dedup MetaPath2Vec baseline -- cite it by id
+rather than reading this row as a surviving 0039 number.*
+
 A week of experimental results were invalidated. The fix: consensus-average numeric scores by (query, candidate) before computing any ranking metric. Added as a pre-eval gate in `dataset_diagnostics.py`.
 
 ### Multi-Model Cascade Annotation (exp 0057)
@@ -101,11 +146,11 @@ The "improvement" from v5 to v7 was partly a lucky random walk. Strategy change:
 
 ### Pokemon pairs: 10x data, marginal gain (exp 0003)
 
-Expanded Pokemon from 16K to 179K pairs. nDCG: 0.247 to 0.294 (+19% relative). But tournament decks are homogeneous -- more decks from the same meta provide diminishing signal.
+Expanded Pokemon from 16K to 179K pairs. nDCG: 0.247 to 0.294 (+19% relative). *(Pre-dedup, exp 0002 -> exp 0003.)* But tournament decks are homogeneous -- more decks from the same meta provide diminishing signal.
 
 ### Commander data: coverage up, quality down (exp 0029, 0035, 0050)
 
-Added 51K Archidekt Commander decks (25.2M edges). Coverage improved (+7,489 cards) but nDCG dropped 22%. Same with 3x Commander scaling. Root cause: Commander is a different format with different card relationships. The PecanPy random walks get diluted by casual/singleton format data when the test set measures competitive Standard/Modern similarity.
+Added 51K Archidekt Commander decks (25.2M edges; exp 0050). Coverage improved (+7,489 cards) but nDCG dropped 22% (exp 0029). Same with 3x Commander scaling. Root cause: Commander is a different format with different card relationships. The PecanPy random walks get diluted by casual/singleton format data when the test set measures competitive Standard/Modern similarity.
 
 **Lesson**: heterogeneous data sources dilute signal in embedding methods that treat all edges equally. Either use edge-type-aware methods (MetaPath2Vec) or weight by source quality.
 
@@ -115,27 +160,30 @@ Added 51K Archidekt Commander decks (25.2M edges). Coverage improved (+7,489 car
 
 ### MetaPath2Vec: Typed Walks (exp 0030-0039)
 
-MetaPath2Vec uses typed random walks (deck-card-deck paths vs enriched-card-enriched paths). Initially promising: 5 epochs baseline 0.114, scaled to 0.228 at 160 epochs. But the 160ep result was **leaked** (annotation edges in training). After fixing:
+MetaPath2Vec uses typed random walks (deck-card-deck paths vs enriched-card-enriched paths). Initially promising: 5 epochs baseline 0.114, scaled to 0.228 at 160 epochs. But the 160ep result was **leaked** (annotation edges in training) **[withdrawn: exp 0039, annotation edges leaked into the training graph -- the 0.228 is not attainable without them]**. After fixing:
 
 - MetaPath2Vec LOST to v5_fused on Magic and Pokemon
 - Tied on YuGiOh
 - Adding more edge types (Commander, set, keyword) *regressed* performance -- the type-diverse walks diluted the core co-occurrence signal
 
+*The win/lose/tie bullets are the post-dedup comparison from the dedup table
+above; exp 0052 carries the leak-free Magic baseline by id.*
+
 MetaPath2Vec removed from production.
 
 ### Cleora: Matrix Factorization (exp 0042)
 
-Fast, deterministic, but underperformed PecanPy across all games (Magic 0.103, Pokemon 0.103, YuGiOh 0.284).
+Fast, deterministic, but underperformed PecanPy across all games (Magic 0.103, Pokemon 0.103, YuGiOh 0.284). *(Pre-dedup, exp 0042; exp 0050 reran the 51K-deck Magic graph afterwards -- read its YAML by id.)*
 
 ### Spectral Propagation (ProNE): The Deterministic Winner (exp 0056)
 
-ProNE spectral propagation applied as post-processing to PecanPy embeddings: **Magic 0.107** -- the best single-model result and fully deterministic. No random walks, no seed sensitivity. Subsumes the benefit of degree debiasing.
+ProNE spectral propagation applied as post-processing to PecanPy embeddings: **Magic 0.107** -- the best single-model result and fully deterministic. No random walks, no seed sensitivity. Subsumes the benefit of degree debiasing. *(Post-dedup, exp 0056: this is the first Phase-6 figure that is directly comparable with the later saturation series, and it is not comparable with the pre-dedup 0.15x numbers above.)*
 
 This became the production embedding for Magic: `v7_spectral_mu35`.
 
 ### PPMI SVD: Classical Baseline (exp 0056)
 
-Full replacement with degree-corrected PPMI + SVD: 0.084 -- worse than PecanPy. Random walks capture more nuance than matrix factorization for this graph structure.
+Full replacement with degree-corrected PPMI + SVD: 0.084 -- worse than PecanPy. Random walks capture more nuance than matrix factorization for this graph structure. *(Post-dedup, exp 0056.)*
 
 ---
 
@@ -152,6 +200,11 @@ After filling 5K eval holes per game ($6 total via the multi-model cascade), sta
 | Magic | 0.104 | 0.233 | **0.525** | 0.527 |
 | Pokemon | 0.088 | 0.190 | **0.437** | 0.438 |
 | YuGiOh | 0.160 | 0.240 | **0.478** | 0.482 |
+
+*These are exp 0058/0059 figures measured on the co-occurrence-only test set.
+Exp 0061 later added text_e5 candidates and concluded the "saturated" values
+overstate substitute quality, so this table is a historical phase transition, not
+the current quality of the shipped embedding: quote exp 0061 by id instead.*
 
 When standard nDCG converges to condensed nDCG (gap < 0.005), annotation coverage is **saturated** and the metric reflects true ranking quality.
 
@@ -194,7 +247,7 @@ The system routes similarity queries by use case:
 - **Synergy** (cards that go together): should use co-occurrence + Jaccard
 - **Meta** (competitive pairings): co-occurrence weighted by tournament performance
 
-Experiment 0060 tested routing substitutes through the fusion engine (zeroing co-occurrence, boosting text + functional). Result: nDCG collapsed from 0.525 to 0.031.
+Experiment 0060 tested routing substitutes through the fusion engine (zeroing co-occurrence, boosting text + functional). Result: nDCG collapsed from 0.525 to 0.031. *(The 0.525 baseline predates exp 0061's test-set expansion; the comparison stands as evidence of a coverage gap in exp 0060, not as a measure of fusion quality.)*
 
 **Not because fusion is worse** -- because the test set only covers cosine-ranked candidates. Fusion retrieves fundamentally different cards that haven't been annotated yet (convergence gap 0.256 vs 0.002 for cosine).
 
@@ -205,7 +258,7 @@ Experiment 0060 tested routing substitutes through the fusion engine (zeroing co
 ## Cross-Cutting Themes
 
 ### 1. Evaluation methodology is harder than model development
-- Inflated sweep eval (exp 0004): 3.5x overestimate
+- Inflated sweep eval (exp 0004): 3.5x overestimate *(the 0.545 sweep figure it rests on is withdrawn; exp 0018 is the canonical number)*
 - Test set duplication (exp 0052): 50-100% inflation
 - Training variance masking real differences (exp 0053)
 - Annotation coverage masking true quality (exp 0058-0059)
@@ -215,12 +268,12 @@ Each of these individually could lead to wrong conclusions. Together, they argue
 
 ### 2. Data quality > data quantity
 - 10x Pokemon pairs: +19% (exp 0003)
-- 51K Commander decks: -22% (exp 0029)
+- 51K Commander decks (exp 0050): -22% (exp 0029)
 - Removing 3,349 bad annotations: +21.6% (exp 0057)
 - Card context in LLM prompts: error rate 16% to 1% (exp 0009)
 
 ### 3. The objective function matters more than the architecture
-- LightGCN with reconstruction loss: near-random for similarity (exp 0004)
+- LightGCN with reconstruction loss: near-random for similarity (exp 0018, 0024)
 - HGT with link prediction: good AUC, useless embeddings (exp 0054)
 - HGT with InfoNCE: worse than link prediction (exp 0055)
 - PecanPy with ns=-0.5 + spectral post-processing: best result (exp 0056)
@@ -229,11 +282,15 @@ Each of these individually could lead to wrong conclusions. Together, they argue
 The fundamental signal problem. Embedding cosine on co-occurrence data measures "how likely are these cards to appear in the same deck" -- which anti-correlates with substitutability. A burn deck runs Lightning Bolt AND Eidolon, but a user looking for a Lightning Bolt substitute wants Searing Blaze, not Eidolon.
 
 ### 5. Cheap inference-time annotation at scale changes the game
-The multi-model cascade ($0.40/1K pairs, correlation 0.639) enabled 89K annotations for $23. This saturation-filling approach transformed nDCG from an unreliable coverage metric into a true quality metric.
+The multi-model cascade ($0.40/1K pairs, correlation 0.639) enabled 89K annotations for $23. This saturation-filling approach transformed nDCG from an unreliable coverage metric into a true quality metric. *(Scope narrowed later: exp 0061 found the saturation held only for the co-occurrence candidate set, so the claim is true per retrieval path, not globally.)*
 
 ---
 
 ## Current State (2026-03-30)
+
+*Superseded: exp 0061 added text_e5 candidates to the test sets the next day, so
+the nDCG column below is no longer the current substitute quality for these
+embeddings. Read the current value from exp 0061.*
 
 | Metric | Magic | Pokemon | YuGiOh |
 |--------|-------|---------|--------|
@@ -281,7 +338,11 @@ Filled 6K text_e5 annotation holes ($2.40). Co-occurrence embedding nDCG dropped
 | Pokemon | 0.414 | **0.518** | +25% |
 | YuGiOh | 0.465 | **0.532** | +14% |
 
-Text embeddings (E5-base-v2 on card oracle text, no training data, zero-shot) beat 60 experiments of co-occurrence embedding engineering by 14-25%.
+**[withdrawn: exp 0062 -- the E5 model was fine-tuned on the annotated test
+sets, so the text_e5 column is an upper bound, not a measurement, and the
+"zero-shot" description is wrong]**
+
+Text embeddings (E5-base-v2 on card oracle text, no training data, zero-shot) beat 60 experiments of co-occurrence embedding engineering by 14-25%. **[withdrawn: exp 0062, same contamination -- the 14-25% margins do not establish that ranking quality; the motivation for text signals rests on the divergence evidence in exp 0061, not on this table]**
 
 YuGiOh has the smallest gap because archetype naming provides natural overlap between co-occurrence and text signals. Magic has the largest gap because co-occurrence captures deck strategy while text captures card mechanics.
 
@@ -289,13 +350,13 @@ YuGiOh has the smallest gap because archetype naming provides natural overlap be
 
 **Open questions**:
 1. Can a unified embedding (contrastive fine-tuning on both signals) outperform the signal-switching reranker?
-2. What is the ceiling for text_e5? Its convergence gap is still 0.25-0.46 (many candidates unjudged).
+2. What is the ceiling for text_e5? Its convergence gap is still 0.25-0.46 (many candidates unjudged). *(Gap figures come from exp 0062, which is withdrawn as a quality comparison; the coverage observation itself is the reason the question stays open.)*
 
 ---
 
 ## Phase 12: Cross-Encoder Reranker Training
 
-Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three games to learn TCG-specific pairwise similarity scoring.
+Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three games to learn TCG-specific pairwise similarity scoring. **[withdrawn as a result: exp 0063, the training pairs come from the annotated evaluation sets, so every correlation in this phase is an upper bound and the model was never served]**
 
 ### Three iterations, each fixing problems found in the previous
 
@@ -304,7 +365,7 @@ Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three game
 - Missing deps (`datasets`, `accelerate`), evaluator API change
 
 **v2** (5 epochs, all games, L6, 256 tokens, hard negatives + positive oversampling):
-- Pearson **0.695**, Spearman **0.658**
+- Pearson **0.695**, Spearman **0.658** **[withdrawn: exp 0063, pair-level split over eval-derived pairs, so the same card appears in train and val]**
 - But: pair-level random split (same query card in train+val), inflated metrics
 
 **v3** (5 epochs, all games, L12, 384 tokens, all methodology fixes):
@@ -326,7 +387,7 @@ Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three game
 | No symmetry | (A,B) != (B,A) | Add reverse pairs |
 | Correlation only | Pearson/Spearman | Per-query nDCG added |
 
-**Key insight**: v2's Pearson 0.695 dropped to v3's ~0.56 at epoch 1 because query-level split is genuinely harder. The honest number is always lower than the convenient one. Evaluation methodology matters more than architecture or hyperparameters.
+**Key insight**: v2's Pearson 0.695 dropped to v3's ~0.56 at epoch 1 because query-level split is genuinely harder. The honest number is always lower than the convenient one. Evaluation methodology matters more than architecture or hyperparameters. *(Both values are from exp 0063, which is withdrawn; the methodological lesson survives, the numbers do not. v3's final metrics were never recorded.)*
 
 ### Failure mode taxonomy
 
