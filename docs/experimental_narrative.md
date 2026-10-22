@@ -173,7 +173,7 @@ MetaPath2Vec removed from production.
 
 ### Cleora: Matrix Factorization (exp 0042)
 
-Fast, deterministic, but underperformed PecanPy across all games (Magic 0.103, Pokemon 0.103, YuGiOh 0.284). *(Pre-dedup, exp 0042; exp 0050 reran the 51K-deck Magic graph afterwards -- read its YAML by id.)*
+Fast, deterministic, but underperformed PecanPy across all games (Magic 0.103 on the 18K-deck graph, Pokemon 0.103, YuGiOh 0.284). *(Pre-dedup, exp 0042. The 51K-deck rerun measured Magic 0.100, exp 0050, so the two Magic figures answer different graph sizes rather than contradicting each other.)*
 
 ### Spectral Propagation (ProNE): The Deterministic Winner (exp 0056)
 
@@ -202,6 +202,8 @@ After filling 5K eval holes per game ($6 total via the multi-model cascade), sta
 | YuGiOh | 0.160 | 0.240 | **0.478** | 0.482 |
 
 *These are exp 0058/0059 figures measured on the co-occurrence-only test set.
+*(Small deltas between the co-occurrence columns of exp 0061 and exp 0062, 0.501 against 0.503 for Magic, come from exp 0062 evaluating after the text_e5 holes were merged into the test set: the query set grew, so the denominator changed. Neither number is wrong; they are not comparable without stating which snapshot each used.)*
+
 Exp 0061 later added text_e5 candidates and concluded the "saturated" values
 overstate substitute quality, so this table is a historical phase transition, not
 the current quality of the shipped embedding: quote exp 0061 by id instead.*
