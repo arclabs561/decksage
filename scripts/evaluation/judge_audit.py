@@ -54,7 +54,8 @@ def field_stats(values: list[float]) -> dict:
     counts: dict[float, int] = {}
     for v in values:
         counts[v] = counts.get(v, 0) + 1
-    top_share = max(counts.values()) / len(values)
+    modal_share = max(counts.values()) / len(values)
+    bin_share = max(bins) / len(values)
     return {
         "n": len(values),
         "status": "measured",
@@ -63,13 +64,17 @@ def field_stats(values: list[float]) -> dict:
         "distinct": len(counts),
         "tie_rate": round(1 - len(counts) / len(values), 4),
         "zero_share": round(sum(1 for v in values if v == 0.0) / len(values), 4),
-        "largest_bin_share": round(top_share, 4),
+        # Same quantity as judge_probe.py: the largest 0.1-width bin. The share
+        # of the single most common exact value is reported separately, because
+        # quantised scores make that number large without meaning compression.
+        "largest_bin_share": round(bin_share, 4),
+        "modal_value_share": round(modal_share, 4),
         "histogram": bins,
-        "verdict": resolution_verdict(values, top_share),
+        "verdict": resolution_verdict(values, bin_share),
     }
 
 
-def resolution_verdict(values: list[float], top_share: float) -> str:
+def resolution_verdict(values: list[float], bin_share: float) -> str:
     """Judge usability from the distribution, not from the raw tie count.
 
     tie_rate mostly reflects score quantization (two decimals), so it is
@@ -78,11 +83,11 @@ def resolution_verdict(values: list[float], top_share: float) -> str:
     """
     sd = statistics.pstdev(values) if len(values) > 1 else 0.0
     zero_share = sum(1 for v in values if v == 0.0) / len(values)
-    if sd < 0.05 or top_share > 0.8:
+    if sd < 0.05 or bin_share > 0.8:
         return "compressed: fix prompt or split into subscores before labeling"
     if zero_share > 0.7:
         return "deflated: most pairs scored zero, ranking power lost"
-    if top_share > 0.6:
+    if bin_share > 0.6:
         return "concentrated: most mass in one bin"
     return "usable"
 

@@ -114,6 +114,8 @@ pairs are training-only, carry `_provenance.augmentation`, and are refused by
 the evaluation merge. A judge scored against its own paraphrases measures
 self-consistency, not correctness.
 
-*Implementation status: `judge_probe.py` is not written yet. The recipe above is
-the contract it must satisfy; building it is the next task, and it needs an
-anchor file first.*
+*Implementation status: `scripts/evaluation/judge_probe.py` implements the
+resolution, order-swap and two-variant rubric checks with a `--dry-run` fake
+scorer. It still needs an anchor file at `data/audit/anchors.jsonl`, and the
+exemplar-anchored third variant is not built, so the rubric gate falls back to
+variant-to-variant correlation until human labels exist.*
