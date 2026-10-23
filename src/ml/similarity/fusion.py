@@ -82,6 +82,25 @@ class FusionWeights:
     visual_embed: float = 0.20  # Visual embeddings (card images, CLIP/SigLIP)
     archetype: float = 0.0  # Archetype staples and co-occurrence (optional)
 
+    def __post_init__(self) -> None:
+        """Reject weights that cannot describe a blend.
+
+        A negative, NaN or all-zero weight vector produces either an exception
+        deep in ranking or a silently empty result, and both are far from the
+        line that caused them. Failing at construction keeps the error at the
+        caller.
+        """
+        values = self.to_dict()
+        for name, value in values.items():
+            if isinstance(value, bool) or not isinstance(value, int | float):
+                raise TypeError(f"fusion weight {name} must be numeric, got {type(value).__name__}")
+            if not math.isfinite(float(value)):
+                raise ValueError(f"fusion weight {name} must be finite, got {value!r}")
+            if value < 0:
+                raise ValueError(f"fusion weight {name} must be non-negative, got {value!r}")
+        if sum(values.values()) <= 0:
+            raise ValueError("fusion weights must sum to a positive number")
+
     def to_dict(self) -> dict[str, float]:
         """Return weights as a dict keyed by signal name."""
         return {f.name: getattr(self, f.name) for f in fields(self)}
@@ -90,7 +109,7 @@ class FusionWeights:
         """Return normalized weights that sum to 1.0."""
         d = self.to_dict()
         total = sum(d.values())
-        if total <= 0.0:
+        if total <= 0.0:  # unreachable after __post_init__, kept for clarity
             return FusionWeights(
                 embed=0.25,
                 jaccard=0.15,

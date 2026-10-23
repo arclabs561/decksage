@@ -344,6 +344,16 @@ repos:
       # changes. Regenerate with
       # `uv run python scripts/validation/generate_experiment_summary.py --write`.
       # Uses `uv run` because the generator needs PyYAML from the project env.
+      # Incremental type gate: strict for the typed contracts, where a missing
+      # field or a None embedder is a bug class we have paid for. Wider scope
+      # comes later, file by file.
+      - id: ty-contracts
+        name: Type-check the typed contracts
+        entry: bash -c 'uvx ty check "$@"'
+        language: system
+        files: ^src/ml/contracts/.*\.py$
+        stages: [pre-commit]
+        verbose: true
       - id: check-experiment-summary
         name: Check experiment summary is derived
         entry: bash -c 'uv run python scripts/validation/generate_experiment_summary.py --check'
