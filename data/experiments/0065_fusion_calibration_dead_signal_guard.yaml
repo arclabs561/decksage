@@ -1,0 +1,63 @@
+id: "0065"
+date: "2026-10-22"
+title: "Fusion weight calibration on v2 labels with dead-signal guard"
+game: magic
+hypothesis: >
+  With three of five signals unavailable in this script, calibrating the
+  remaining ones should still beat the unweighted default, and the fit should
+  not overstate what fusion can do when functional and visual inputs are
+  missing.
+method:
+  script: scripts/training/calibrate_fusion_weights.py
+  args: "--game magic --quick"
+  notes: |
+    27-combination quick grid over the signals that survive the new
+    availability check: embed, jaccard, text_embed. functional is excluded
+    because this script never constructs a tagger; visual_embed because no
+    visual index exists on disk. Fitness on an 80% query split, reported on
+    the held-out 20%, seed 13.
+data:
+  training:
+    source: "data/test_sets/annotated_magic_v2.json, 80% query split"
+    count: 2437
+  evaluation:
+    source: "same file, seed-13 20% holdout"
+    count: 610
+  fingerprint:
+    embedding: magic_v7_spectral_mu35
+    cards: 25892
+    graph: pairs_magic_archidekt_commander.csv
+    text_index_cards: 36453
+    annotations: 43307
+results:
+  status: measured
+  ndcg_at_10_holdout: 0.5923
+  ndcg_at_10_fit: 0.5743
+  best_weights:
+    embed: 0.25
+    jaccard: 0.0
+    functional: 0.0
+    text_embed: 0.0
+    visual_embed: 0.0
+  grid_size: 27
+  signals_used: ["embed", "jaccard", "text_embed"]
+  signals_excluded:
+    functional: "no tagger is constructed in this script"
+    visual_embed: "visual index missing or all-zero"
+  elapsed_seconds: 3731
+conclusion: >
+  The calibrated optimum is the embedding signal alone; every added signal is
+  driven to zero on this grid. Holdout (0.592) exceeds fit (0.574), which means
+  the split, not the weights, is doing the work at this sample size, so the
+  number should be read as "embedding-only fusion is competitive" rather than
+  "fusion weights are tuned". Do not serve this artifact as evidence that the
+  multi-signal blend helps: functional and visual inputs were absent, and
+  text_embed lost to raw embeddings. The next step is a real tagger and visual
+  index before any fusion claim.
+artifacts:
+  - data/embeddings/fusion_weights_magic.json
+summary:
+  title: "Fusion calibration, dead-signal guarded"
+  data: "v2 labels, seed-13 80/20 split; 3 of 5 signals live"
+  metric: "holdout nDCG@10"
+  result: "0.592 embed-only; text, jaccard driven to zero"

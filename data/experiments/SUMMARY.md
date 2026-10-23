@@ -70,6 +70,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | **CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds | [invalid] [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
 | 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9 **[incomplete]** | [invalid] [0063](0063_cross_encoder_reranker.yaml) |
 | 0064 | 2026-03-31 | E5 bi-encoder fine-tuning | magic | 5,000 train / 2,079 val pairs | Pearson | 0.293 after 1 epoch (worse than 0.438 zero-shot; catastrophic forgetting) | [0064](0064_e5_finetuning.yaml) |
+| 0065 | 2026-10-22 | Fusion calibration, dead-signal guarded | magic | v2 labels, seed-13 80/20 split; 3 of 5 signals live | holdout nDCG@10 | 0.592 embed-only; text, jaccard driven to zero | [0065](0065_fusion_calibration_dead_signal_guard.yaml) |
 
 ## Key Insights (cross-cutting)
 
