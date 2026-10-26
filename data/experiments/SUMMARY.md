@@ -71,6 +71,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9 **[incomplete]** | [invalid] [0063](0063_cross_encoder_reranker.yaml) |
 | 0064 | 2026-03-31 | E5 bi-encoder fine-tuning | magic | 5,000 train / 2,079 val pairs | Pearson | 0.293 after 1 epoch (worse than 0.438 zero-shot; catastrophic forgetting) | [0064](0064_e5_finetuning.yaml) |
 | 0065 | 2026-10-22 | Fusion calibration, dead-signal guarded | magic | v2 labels, seed-13 80/20 split; 3 of 5 signals live | holdout nDCG@10 | 0.592 embed-only; text, jaccard driven to zero | [0065](0065_fusion_calibration_dead_signal_guard.yaml) |
+| 0066 | 2026-10-26 | Reprint recall, judge-free | magic | 187 families / 396 cards from Scryfall oracle dump | recall@10, substitute by construction | text_e5 0.891 vs spectral 0.321 | [0066](0066_reprint_family_recall.yaml) |
 
 ## Key Insights (cross-cutting)
 

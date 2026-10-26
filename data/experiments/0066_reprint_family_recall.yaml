@@ -1,0 +1,57 @@
+id: "0066"
+date: "2026-10-26"
+title: "Functional-reprint recall: a judge-free substitute metric"
+game: magic
+hypothesis: >
+  If co-occurrence embeddings capture complement rather than replacement, then
+  cards that are substitutes by construction (identical effect, cost and type,
+  different name) should be found far more reliably by a text embedding than by
+  the co-occurrence embedding.
+method:
+  script: scripts/evaluation/eval_reprints.py
+  args: "--game magic --embedding <name>"
+  notes: |
+    Families are built by scripts/data/reprint_families.py from the local
+    Scryfall oracle dump: normalized oracle text (name replaced by "~",
+    reminder text stripped), identical type line, mana cost and power/toughness.
+    Artifact and theme cards are excluded because their text normalizes to
+    nothing. Each member is queried, and recall counts other members of the
+    same family in the top k.
+data:
+  source: "data/raw/scryfall/oracle-cards.json, 36,923 cards"
+  count: "187 families, 396 cards"
+  fingerprint:
+    families_file: data/derived/reprint_families_magic.json
+    exclusions: "artifact/theme cards, empty normalized text, families smaller than 2"
+results:
+  status: measured
+  spectral_cooccurrence:
+    embedding: magic_v7_spectral_mu35
+    families_eligible: 133
+    queries: 272
+    recall_at_1: 0.162
+    recall_at_5: 0.252
+    recall_at_10: 0.321
+    mean_rank: 8.33
+  text_e5:
+    embedding: magic_text_e5
+    families_eligible: 187
+    queries: 396
+    recall_at_1: 0.490
+    recall_at_5: 0.779
+    recall_at_10: 0.891
+    mean_rank: 3.04
+conclusion: >
+  Hypothesis confirmed, and more cleanly than any prior result: on labels that
+  involve no judge, no annotation and no leakage, text E5 finds the actual
+  substitute in the top ten 89 percent of the time against 32 percent for the
+  co-occurrence embedding. This is the strongest evidence yet for routing
+  substitute queries to text and keeping co-occurrence for synergy. It also
+  gives a cheap regression metric for any future embedding.
+artifacts:
+  - data/derived/reprint_families_magic.json
+summary:
+  title: "Reprint recall, judge-free"
+  data: "187 families / 396 cards from Scryfall oracle dump"
+  metric: "recall@10, substitute by construction"
+  result: "text_e5 0.891 vs spectral 0.321"
