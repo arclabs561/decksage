@@ -209,3 +209,6 @@ qa/*
 # ADRs are tracked here; the global excludes file ignores docs/adr/
 !docs/adr/
 !docs/adr/**
+
+# Derived data artifacts
+/data/derived/
