@@ -44,7 +44,7 @@ results:
 
 validity:
   status: invalid
-  reason: "E5 was fine-tuned on annotated_*_v2.json, the evaluation set. The 0.613/0.518/0.532 figures are upper bounds, not measurements."
+  reason: "E5 was fine-tuned on annotated_*_v2.json, the evaluation set. The scores do not measure held-out quality and are not established upper bounds."
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
@@ -52,28 +52,13 @@ summary:
   title: "Text_e5 vs co-occurrence quality"
   data: "condensed sub nDCG"
   metric: "condensed nDCG"
-  result: "**CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds"
+  result: "**CONTAMINATED**: E5 trained on the eval set; held-out quality unknown"
 
 conclusion: >
-  Text embeddings (E5-base-v2 on oracle text) produce 14-25% higher
-  condensed substitute nDCG than co-occurrence embeddings (PecanPy +
-  spectral). This confirms the central thesis: co-occurrence captures
-  complement (cards in same deck), not substitute (cards that replace
-  each other).
-
-  The text_e5 standard nDCG is low (0.15-0.28) because 46-26% of its
-  top-10 candidates are still unjudged (large convergence gap). Filling
-  those holes would further increase measured quality.
-
-  YuGiOh has the smallest gap (14%) because archetype naming provides
-  overlap between co-occurrence and text similarity signals. Magic has
-  the largest gap (22%) because co-occurrence captures deck strategy
-  (burn, control) while text captures card mechanics (damage, counter).
-
-  Implication for production: the text-boosted reranker (which blends
-  text_e5 with co-occurrence at runtime) is the correct approach for
-  substitute queries. Pure text_e5 embedding deployment would sacrifice
-  synergy/co-occurrence quality, but the reranker preserves both.
+  Withdrawn: the evaluated E5 model was trained on evaluation annotations.
+  These results cannot establish a held-out advantage or justify a production
+  routing decision. Re-evaluate independent models on matched queries and a
+  frozen, task-specific reference set.
 
 artifacts:
   - /tmp/eval_compare.log

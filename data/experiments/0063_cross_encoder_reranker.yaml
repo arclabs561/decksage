@@ -21,8 +21,8 @@ data:
     source: data/test_sets/annotated_*_v2.json (EVAL DATA -- leakage documented)
     count: "~100K raw pairs -> 135K after symmetric+balance+negatives (v3)"
   notes: |
-    WARNING: Training on eval annotations. Metrics are upper bounds.
-    Query-level split (v3) gives honest generalization numbers.
+    WARNING: Training on eval annotations. Metrics are not held-out estimates.
+    Query-level splitting alone does not establish independent evaluation.
 results:
   status: incomplete
   reason: "v3 training was still at epoch 0.9 when recorded; final Pearson/Spearman/nDCG were never written."
@@ -40,10 +40,10 @@ results:
     pearson: "0.560 (epoch 0.9; final not recorded)"
     spearman: "0.475 (epoch 0.9; final not recorded)"
     ndcg: not recorded
-    notes: "Query-level split, honest generalization. Expected ~0.60-0.65 final."
+    notes: "Query-level split; training was unfinished and final performance is unknown."
 validity:
   status: invalid
-  reason: "Cross-encoder trained on eval annotations. Pearson figures are upper bounds and the model is not served."
+  reason: "Cross-encoder trained on eval annotations. Pearson figures are not held-out estimates and the model is not served."
   detected: "2026-10-22"
   rule: "data/experiments/README.md#validity"
 
@@ -54,11 +54,9 @@ summary:
   result: "v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9"
 
 conclusion: >
-  Methodology matters more than model size. v2's Pearson 0.695 dropped to
-  v3's ~0.56 at epoch 1 because query-level split is genuinely harder.
-  The v3 architecture (L12, 384 tokens, rich text) is correct; the v2
-  evaluation was wrong. Cross-encoder shows promise for reranking but
-  the train/eval leakage must be resolved before production deployment.
+  Withdrawn: the training source overlaps the evaluation annotations and v3
+  did not finish. The reported figures do not establish held-out performance
+  or a fair comparison between the iterations.
 artifacts:
   - data/models/cross_encoder_reranker/
   - scripts/training/train_cross_encoder.py

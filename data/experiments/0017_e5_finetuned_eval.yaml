@@ -2,6 +2,12 @@ id: "0017"
 date: "2026-03-19"
 title: "E5 fine-tuned vs zero-shot evaluation (within-annotation ranking)"
 game: magic
+validity:
+  status: invalid
+  reason: >
+    The evaluator treats missing task scores as zero, scores all modes using the
+    substitution instruction, and drops failed candidate encodings from the
+    ideal ranking. These figures do not establish task-specific performance.
 
 hypothesis: >
   Fine-tuned E5 (multi-task, mode-aware) should rank substitution pairs
@@ -44,10 +50,7 @@ summary:
   result: "within-annotation ranking"
 
 conclusion: >
-  Fine-tuning barely moves the needle on within-annotation ranking. Both
-  models achieve ~0.79 nDCG and perfect recall because the candidate set
-  is small (10 annotated candidates per query). This eval has the same
-  within-set bias as the LightGCN sweep (experiment 0004). The real test
-  is whether fine-tuned E5 improves FULL VOCABULARY ranking when used as
-  text_embed in the fusion pipeline -- that requires integration testing
-  with the live API, not standalone eval.
+  Withdrawn: the evaluator has missing-score, task-instruction and failed
+  encoding defects. Its restricted candidate pool also cannot establish full
+  vocabulary performance. Compare independently trained models on a frozen,
+  task-specific evaluation before drawing a conclusion.

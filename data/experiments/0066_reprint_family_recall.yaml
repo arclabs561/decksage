@@ -41,17 +41,24 @@ results:
     recall_at_5: 0.779
     recall_at_10: 0.891
     mean_rank: 3.04
+validity:
+  status: invalid
+  reason: >
+    Family construction stripped plus and minus signs, grouping cards with
+    opposite effects, including Weakstone and Mightstone. The two embeddings
+    were also evaluated on different eligible queries. The reported recall
+    denominator was capped at k, rather than counting all relevant members;
+    ranks beyond the cutoff were recorded as 11. These measurements do not
+    establish the claimed paired comparison and must be rerun on corrected
+    families and a common query set.
 conclusion: >
-  Hypothesis confirmed, and more cleanly than any prior result: on labels that
-  involve no judge, no annotation and no leakage, text E5 finds the actual
-  substitute in the top ten 89 percent of the time against 32 percent for the
-  co-occurrence embedding. This is the strongest evidence yet for routing
-  substitute queries to text and keeping co-occurrence for synergy. It also
-  gives a cheap regression metric for any future embedding.
+  Withdrawn: the label construction admits opposite effects, and the two
+  embeddings were measured on different query sets. The recorded numbers are
+  historical observations, not evidence for the stated comparison.
 artifacts:
   - data/derived/reprint_families_magic.json
 summary:
   title: "Reprint recall, judge-free"
   data: "187 families / 396 cards from Scryfall oracle dump"
-  metric: "recall@10, substitute by construction"
-  result: "text_e5 0.891 vs spectral 0.321"
+  metric: "historical capped hit score, mislabeled recall@10"
+  result: "Withdrawn: false substitute labels and unmatched query sets"

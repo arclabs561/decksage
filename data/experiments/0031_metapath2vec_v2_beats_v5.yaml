@@ -45,6 +45,10 @@ results:
     lightning_bolt_lava_spike: 0.222
     sol_ring_arcane_signet: 0.556
 
+validity:
+  status: invalid
+  reason: "Training used annotation edges; the claimed independent-evaluation improvements are withdrawn. The exact evaluation snapshot was not recorded."
+
 summary:
   title: "MetaPath2Vec v2 beats v5"
   data: "3 edge types: 331K+1.46M+927"

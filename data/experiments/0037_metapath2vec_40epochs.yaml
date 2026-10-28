@@ -43,6 +43,10 @@ results:
     syn_delta: "+8.1%"
     meta_delta: "+7.6%"
 
+validity:
+  status: invalid
+  reason: "The evaluation snapshot and graph inputs are insufficiently recorded to establish independence or the reported comparison after the dedup correction (experiment 0052)."
+
 summary:
   title: "MetaPath2Vec 40ep"
   data: "35,265 cards (vocab)"

@@ -1,6 +1,6 @@
 id: "0052"
 date: "2026-03-22"
-title: "Annotation dedup correction: all prior nDCG was inflated 78-101%"
+title: "Annotation dedup correction: selected nDCG comparisons"
 game: all
 
 hypothesis: >
@@ -24,6 +24,12 @@ data:
     yugioh_annotations: 7494
     note: "Numbers changed because dedup merges multi-judge scores per pair"
 
+limitations: >
+  The before/after counts and snapshot provenance are incomplete (Magic's
+  recorded post-dedup count exceeds its before count). The three recorded
+  comparisons do not establish the same inflation factor or direction for
+  every prior result, nor that relative rankings were preserved generally.
+
 results:
   before_dedup:
     magic_mp2v_80ep: 0.127
@@ -46,14 +52,12 @@ summary:
   title: "Annotation dedup correction"
   data: "deduped test sets"
   metric: "sub nDCG"
-  result: "**All prior nDCG inflated 78-101%** (84/78/101 per game). True: M:0.069 P:0.058 Y:0.153"
+  result: "Selected nDCG comparisons: 84/78/101% higher before dedup; snapshot provenance incomplete"
 
 conclusion: >
-  ALL prior nDCG numbers in experiments 0039-0044 were inflated by
-  annotation duplication in the test set. The true performance is roughly
-  half of what was reported. This does not invalidate the relative comparisons
-  (Cleora vs MetaPath2Vec ordering is preserved) but the absolute numbers
-  are significantly worse than we thought.
+  The recorded comparisons are substantially lower after deduplication.
+  Incomplete snapshot provenance limits the conclusions about other runs and
+  whether relative model rankings are preserved.
 
   Corrected baselines (post-dedup, honest):
     Magic: 0.069 (MetaPath2Vec 80ep)

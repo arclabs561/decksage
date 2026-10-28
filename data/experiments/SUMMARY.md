@@ -22,7 +22,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0014 | 2026-03-18 | IAA model rotation | all | 4-model judge pool | models | 4-model pool | [0014](0014_iaa_model_rotation.yaml) |
 | 0015 | 2026-03-18 | Diverse pair generation | all | 1,600 pairs (600/501/499) | pairs | 1,600 (4 sources) | [0015](0015_diverse_pair_generation.yaml) |
 | 0016 | 2026-03-18 | Annotation edges export | all | enriched v2 test sets | edges | 3,232 exported | [0016](0016_annotation_edges_export.yaml) |
-| 0017 | 2026-03-19 | E5 fine-tuned eval | magic | 500 queries, 3,290 annotations | nDCG | within-annotation ranking | [0017](0017_e5_finetuned_eval.yaml) |
+| 0017 | 2026-03-19 | E5 fine-tuned eval | magic | 500 queries, 3,290 annotations | nDCG | within-annotation ranking | [invalid] [0017](0017_e5_finetuned_eval.yaml) |
 | 0018 | 2026-03-19 | LightGCN canonical eval | magic | 15,697 (LightGCN) vs 21,151 (v5) cards | nDCG | 0.095 (inflated sweep: 0.545) | [0018](0018_lightgcn_canonical_eval.yaml) |
 | 0019 | 2026-03-19 | Eval metrics audit | all | literature review (no dataset) | -- | recommendations | [0019](0019_metrics_audit.yaml) |
 | 0020 | 2026-03-19 | Coverage fix via text embeddings | magic | v5_fused + e5-base-v2 + card catalog | coverage | 11.6% -> 29% | [0020](0020_catalog_coverage_fix.yaml) |
@@ -36,18 +36,18 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0028 | 2026-03-20 | Archidekt Commander scrape | magic | 507 decks, 1.59M pairs | pairs | 1.59M from 507 decks | [0028](0028_archidekt_commander_scrape.yaml) |
 | 0029 | 2026-03-20 | v8 Commander retrain | magic | 1.92M pairs (331K + 1.59M), 507 decks | nDCG | coverage up, nDCG down | [0029](0029_v8_commander_retrain.yaml) |
 | 0030 | 2026-03-20 | MetaPath2Vec first pass | magic | 3 edge types: 331K+1.46M+927 | sub nDCG | 0.114 (5ep baseline) | [0030](0030_metapath2vec_first_pass.yaml) |
-| 0031 | 2026-03-20 | MetaPath2Vec v2 beats v5 | magic | 3 edge types: 331K+1.46M+927 | sub nDCG | 0.177 (+43% over v5) | [0031](0031_metapath2vec_v2_beats_v5.yaml) |
-| 0032 | 2026-03-20 | Dual-embedding fusion analysis | magic | 3,819 GT cards, v5 + MP2V | nDCG | v5+MP2V = +16% | [0032](0032_fusion_analysis.yaml) |
+| 0031 | 2026-03-20 | MetaPath2Vec v2 beats v5 | magic | 3 edge types: 331K+1.46M+927 | sub nDCG | 0.177 (+43% over v5) | [invalid] [0031](0031_metapath2vec_v2_beats_v5.yaml) |
+| 0032 | 2026-03-20 | Dual-embedding fusion analysis | magic | 3,819 GT cards, v5 + MP2V | nDCG | v5+MP2V = +16% | [invalid] [0032](0032_fusion_analysis.yaml) |
 | 0033 | 2026-03-20 | Data curation audit | magic | 83,611 decks, 15,697 cards | -- | dedup, land noise, gaps | [0033](0033_data_curation_audit.yaml) |
-| 0034 | 2026-03-20 | rankops CombMNZ vs RRF | magic | 200 queries, top-50 per embedding | nDCG | CombMNZ +10% over RRF | [0034](0034_rankops_fusion_comparison.yaml) |
+| 0034 | 2026-03-20 | rankops CombMNZ vs RRF | magic | 200 queries, top-50 per embedding | nDCG | CombMNZ +10% over RRF | [invalid] [0034](0034_rankops_fusion_comparison.yaml) |
 | 0035 | 2026-03-20 | Commander data scaling | magic | 3.8M pairs from 2,615 decks | pairs | 3.8M from 2,615 decks | [0035](0035_commander_data_scaling.yaml) |
 | 0036 | 2026-03-20 | MetaPath2Vec tuning | magic | MP2V + 9 attributes, PCA 128D | sub nDCG | attr fusion hurts; 40ep variant not recorded **[incomplete]** | [0036](0036_metapath2vec_tuning.yaml) |
-| 0037 | 2026-03-20 | MetaPath2Vec 40ep | magic | 35,265 cards (vocab) | sub nDCG | 0.186 (+50% over v5) | [0037](0037_metapath2vec_40epochs.yaml) |
-| 0038 | 2026-03-20 | MetaPath2Vec 80ep | magic | Magic graph walks (count not recorded) | sub nDCG | 0.198 (+60% over v5) | [0038](0038_metapath2vec_80epochs.yaml) |
+| 0037 | 2026-03-20 | MetaPath2Vec 40ep | magic | 35,265 cards (vocab) | sub nDCG | 0.186 (+50% over v5) | [invalid] [0037](0037_metapath2vec_40epochs.yaml) |
+| 0038 | 2026-03-20 | MetaPath2Vec 80ep | magic | Magic graph walks (count not recorded) | sub nDCG | 0.198 (+60% over v5) | [invalid] [0038](0038_metapath2vec_80epochs.yaml) |
 | 0039 | 2026-03-21 | MetaPath2Vec 160ep | magic | 35K cards, 29M edges | sub nDCG | 0.228 (LEAKED) | [invalid] [0039](0039_metapath2vec_160epochs.yaml) |
 | 0040 | 2026-03-21 | Box containment POC (deck-contains-card) | magic | 2,001 decks, 127,994 triples | AUC | 0.504 (no separation, degenerate) | [0040](0040_box_containment_poc.yaml) |
-| 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:0.311 (160ep) | [0041](0041_epoch_sweep_leak_fix.yaml) |
-| 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [0042](0042_cleora_iteration_sweep.yaml) |
+| 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:0.311 (160ep) | [invalid] [0041](0041_epoch_sweep_leak_fix.yaml) |
+| 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [invalid] [0042](0042_cleora_iteration_sweep.yaml) |
 | 0043 | 2026-03-21 | Cone containment (cones > boxes) | magic | 116 train triples, 282 cards | AUC | 0.700 (vs box 0.500) | [0043](0043_cone_containment.yaml) |
 | 0044 | 2026-03-21 | Cone + transitive closure | all | 145-344 upgrade pairs + TC | AUC | M:0.762 P:0.547 Y:0.649 | [0044](0044_cone_transitive_closure.yaml) |
 | 0045 | 2026-03-21 | Cone + TC + hard negatives | all | 146-398 pairs + hard negs | AUC | M:0.857 P:0.603 Y:0.553 | [0045](0045_cone_tc_hardneg.yaml) |
@@ -57,7 +57,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [0049](0049_card_containment.yaml) |
 | 0050 | 2026-03-22 | Expanded Commander Cleora (51K decks) | magic | 25.2M Commander edges | sub nDCG | 0.100 (unchanged from 18K decks, Commander != cross-format sub) | [0050](0050_expanded_commander_cleora.yaml) |
 | 0051 | 2026-03-22 | Magic epoch sweep (no leakage) | magic | 35K cards, self-supervised only | sub nDCG | 0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora) | [invalid] [0051](0051_magic_epoch_sweep.yaml) |
-| 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | **All prior nDCG inflated 78-101%** (84/78/101 per game). True: M:0.069 P:0.058 Y:0.153 | [0052](0052_dedup_correction.yaml) |
+| 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | Selected nDCG comparisons: 84/78/101% higher before dedup; snapshot provenance incomplete | [0052](0052_dedup_correction.yaml) |
 | 0053 | 2026-03-23 | **Training variance ablation** (key) | magic | v7 vs v8 edgelist, 3 seeds each | sub nDCG | v7 mean 0.094 (std 0.001), v8 mean 0.090. Deployed v7 (0.102) was 2.5-sigma outlier | [0053](0053_training_variance_ablation.yaml) |
 | 0054 | 2026-03-23 | **HGT mini-batch on A10G** (key) | magic | 12M edges, 36K nodes, 6 edge types | sub nDCG | 0.003 raw, 0.014 fused (link prediction AUC 0.80 but embeddings not similarity-preserving) | [0054](0054_hgt_mini_batch.yaml) |
 | 0055 | 2026-03-24 | HGT contrastive (InfoNCE) on A10G | magic | same as 0054 | sub nDCG | 0.002 raw, 0.012 fused (worse than link pred 0.014; loss plateaued epoch 20) | [0055](0055_hgt_contrastive.yaml) |
@@ -67,11 +67,11 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0059 | 2026-03-25 | **Fill eval holes round 2 -- SATURATED** (key) | all | remaining holes, multi cascade | sub nDCG | Magic **0.525**, Pokemon **0.437**, YuGiOh **0.478**. All saturated (gap<0.005). ~$23 total. 89K annotations | [0059](0059_fill_eval_holes_round2.yaml) |
 | 0060 | 2026-03-26 | Fusion-path substitute eval | magic | v7_spectral, 36K annotations | sub nDCG | Cosine: **0.525**, Fusion: **0.031** (gap=0.256). Test set is cosine-specific; fusion candidates unjudged. Need fusion-specific annotation filling | [0060](0060_fusion_path_eval.yaml) |
 | 0061 | 2026-03-31 | Text_e5 annotation holes | all | 6K new annotations | sub nDCG | Co-occur nDCG drops 3-6% (expected: can't rank text-similar candidates) | [0061](0061_text_e5_annotation_holes.yaml) |
-| 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | **CONTAMINATED**: E5 trained on the eval set. 0.613/0.518/0.532 are upper bounds | [invalid] [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
+| 0062 | 2026-03-31 | Text_e5 vs co-occurrence quality | all | condensed sub nDCG | condensed nDCG | **CONTAMINATED**: E5 trained on the eval set; held-out quality unknown | [invalid] [0062](0062_text_e5_vs_cooccurrence_quality.yaml) |
 | 0063 | 2026-03-31 | Cross-encoder reranker training | all | 100K annotation pairs | Pearson/nDCG | v2: Pearson **0.695** (inflated), v3: **~0.56** at epoch 0.9 **[incomplete]** | [invalid] [0063](0063_cross_encoder_reranker.yaml) |
 | 0064 | 2026-03-31 | E5 bi-encoder fine-tuning | magic | 5,000 train / 2,079 val pairs | Pearson | 0.293 after 1 epoch (worse than 0.438 zero-shot; catastrophic forgetting) | [0064](0064_e5_finetuning.yaml) |
-| 0065 | 2026-10-22 | Fusion calibration, dead-signal guarded | magic | v2 labels, seed-13 80/20 split; 3 of 5 signals live | holdout nDCG@10 | 0.592 embed-only; text, jaccard driven to zero | [0065](0065_fusion_calibration_dead_signal_guard.yaml) |
-| 0066 | 2026-10-26 | Reprint recall, judge-free | magic | 187 families / 396 cards from Scryfall oracle dump | recall@10, substitute by construction | text_e5 0.891 vs spectral 0.321 | [0066](0066_reprint_family_recall.yaml) |
+| 0065 | 2026-10-22 | Fusion calibration, dead-signal guarded | magic | v2 labels, seed-13 80/20 split; 3 of 5 signals live | holdout nDCG@10 | Withdrawn: invalid calibration objective | [invalid] [0065](0065_fusion_calibration_dead_signal_guard.yaml) |
+| 0066 | 2026-10-26 | Reprint recall, judge-free | magic | 187 families / 396 cards from Scryfall oracle dump | historical capped hit score, mislabeled recall@10 | Withdrawn: false substitute labels and unmatched query sets | [invalid] [0066](0066_reprint_family_recall.yaml) |
 
 ## Key Insights (cross-cutting)
 
@@ -87,12 +87,13 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 
 6. **Mode-aware training is critical.** Using substitution instruction for synergy pairs poisons the objective. Route pairs by mode to correct instruction prefixes. (0005)
 
-## CORRECTION (2026-03-22): All nDCG numbers prior to this date were inflated
+## CORRECTION (2026-03-22): Duplicate annotations affected nDCG
 
 Test set annotations contained 43-76% duplicates from multi-model IAA.
-All nDCG numbers in experiments 0031-0046 were inflated.
+Experiment 0052 records inflation for three selected before/after comparisons.
+Other results from the period require their own snapshot and provenance checks.
 
-### True baselines (deduped test sets):
+### Historical baselines (deduped test sets):
 | Embedding | Magic sub | Pokemon sub | YuGiOh sub |
 |-----------|-----------|-------------|------------|
 | v5_fused (deployed) | 0.099 | 0.075 | 0.157 |
@@ -104,7 +105,7 @@ MetaPath2Vec ties YuGiOh but loses on Magic/Pokemon.
 
 ### 2026-03-22/23 session findings (experiments 0052-0054)
 
-- **0052**: annotation dedup revealed 78-101% nDCG inflation across all games. All absolute numbers before this date are unreliable.
+- **0052**: three recorded comparisons changed by 78-101% relative to the post-dedup score. Incomplete snapshot provenance limits extrapolation to other runs.
 - **0053**: deployed v7_fused (0.102) is a 2.5-sigma outlier from its distribution mean (0.094). Strategy: train N seeds, deploy best.
 - **0054**: HGT fits on A10G (17GB/24GB) but link prediction objective does not produce similarity-preserving embeddings. Needs contrastive loss.
 
@@ -114,9 +115,9 @@ ProNE spectral propagation on the v7 edgelist produces Magic sub nDCG **0.1067**
 
 ### nDCG convergence: annotation coverage was the bottleneck (exp 0058)
 
-After filling 15K top-10 eval holes (~$6), standard nDCG doubled across all games. Pokemon and YuGiOh reached **standard ~= condensed nDCG** (gap < 0.05), meaning annotation coverage is saturated and the metric now reflects true ranking quality. This is a phase transition: before saturation, nDCG measures annotation coverage; after, it measures embedding quality.
+After filling 15K top-10 eval holes (~$6), standard nDCG doubled across all games. Pokemon and YuGiOh reached **standard ~= condensed nDCG** (gap < 0.05) for the evaluated embedding and retrieval method. A small gap does not establish label accuracy or coverage for other systems.
 
-**Implication**: further hole-filling for Pokemon/YuGiOh has diminishing returns *for the current embedding*. Embedding improvements are now the binding constraint. But new embeddings will reshuffle top-K, surfacing unjudged candidates -- saturation is embedding-specific, not absolute.
+**Implication**: further hole-filling may have diminishing returns *for the evaluated ranking*. New embeddings can reshuffle top-K, surfacing unjudged candidates; a small gap does not identify the binding constraint on quality.
 
 **Outer loop**: fill holes -> get true quality -> train better embedding -> fill new holes from reshuffled top-K -> repeat. Convergence of this outer loop is when new-embedding holes don't change the ranking.
 

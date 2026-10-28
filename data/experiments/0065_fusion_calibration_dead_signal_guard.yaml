@@ -45,19 +45,21 @@ results:
     functional: "no tagger is constructed in this script"
     visual_embed: "visual index missing or all-zero"
   elapsed_seconds: 3731
+validity:
+  status: invalid
+  reason: >
+    The calibration objective computed the ideal ranking from retrieved items
+    only and counted unjudged results as zero, contrary to the canonical
+    condensed nDCG definition. The selected weights and holdout score do not
+    establish the claimed comparison; rerun with the corrected objective.
 conclusion: >
-  The calibrated optimum is the embedding signal alone; every added signal is
-  driven to zero on this grid. Holdout (0.592) exceeds fit (0.574), which means
-  the split, not the weights, is doing the work at this sample size, so the
-  number should be read as "embedding-only fusion is competitive" rather than
-  "fusion weights are tuned". Do not serve this artifact as evidence that the
-  multi-signal blend helps: functional and visual inputs were absent, and
-  text_embed lost to raw embeddings. The next step is a real tagger and visual
-  index before any fusion claim.
+  Withdrawn: the objective differs from canonical condensed nDCG and does not
+  penalize missing higher-relevance candidates in its ideal ranking. Functional
+  and visual inputs were also unavailable during the run.
 artifacts:
   - data/embeddings/fusion_weights_magic.json
 summary:
   title: "Fusion calibration, dead-signal guarded"
   data: "v2 labels, seed-13 80/20 split; 3 of 5 signals live"
   metric: "holdout nDCG@10"
-  result: "0.592 embed-only; text, jaccard driven to zero"
+  result: "Withdrawn: invalid calibration objective"

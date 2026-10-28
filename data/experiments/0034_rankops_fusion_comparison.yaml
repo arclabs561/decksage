@@ -32,6 +32,10 @@ results:
   best_fusion: "CombMNZ (+32% over v5, +10% over RRF)"
   current_default: "RRF (used in fusion.py)"
 
+validity:
+  status: invalid
+  reason: "The comparison uses a MetaPath2Vec embedding without recording its training provenance; the contemporaneous model in experiment 0031 included annotation edges. Independence is not established."
+
 summary:
   title: "rankops CombMNZ vs RRF"
   data: "200 queries, top-50 per embedding"

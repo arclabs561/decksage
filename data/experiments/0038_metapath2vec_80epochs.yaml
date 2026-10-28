@@ -40,6 +40,10 @@ results:
     40_epochs: "sub 0.186"
     80_epochs: "sub 0.198"
 
+validity:
+  status: invalid
+  reason: "The evaluation snapshot and graph inputs are insufficiently recorded to establish independence or the reported comparison after the dedup correction (experiment 0052)."
+
 summary:
   title: "MetaPath2Vec 80ep"
   data: "Magic graph walks (count not recorded)"

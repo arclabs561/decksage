@@ -50,6 +50,10 @@ results:
     both_fail: 99 (32%)
     at_least_one_works: 210
 
+validity:
+  status: invalid
+  reason: "The analysis uses a MetaPath2Vec embedding without recording its training provenance; the contemporaneous model in experiment 0031 included annotation edges. Independence is not established."
+
 summary:
   title: "Dual-embedding fusion analysis"
   data: "3,819 GT cards, v5 + MP2V"

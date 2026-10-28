@@ -48,6 +48,10 @@ results:
     text_e5_sub: {magic: 0.049, pokemon: 0.065, yugioh: 0.224}
     cleora_best_sub: {magic: 0.103, pokemon: 0.103, yugioh: 0.284}
 
+validity:
+  status: invalid
+  reason: "The nDCG sweep predates the test-set deduplication correction (experiment 0052); its absolute scores and model-ranking conclusions require reevaluation."
+
 summary:
   title: "Cleora iteration sweep"
   data: "4-35K cards, 500K-29M edges"
