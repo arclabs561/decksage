@@ -56,6 +56,19 @@ def test_type_line_must_match():
     assert reprints.family_key(a) != reprints.family_key(b)
 
 
+def test_opposite_power_modifiers_are_not_reprints():
+    # Scryfall oracle text for Weakstone and Mightstone.
+    weak = card("Weakstone", "Attacking creatures get -1/-0.", "Artifact", "{3}")
+    might = card("Mightstone", "Attacking creatures get +1/+0.", "Artifact", "{3}")
+    assert reprints.family_key(weak) != reprints.family_key(might)
+
+
+def test_card_name_does_not_replace_part_of_another_word():
+    assert reprints.normalize_text("Draw a card.", "Arc") != reprints.normalize_text(
+        "Draw a cd.", "Zap"
+    )
+
+
 def test_theme_and_art_cards_are_excluded():
     theme = card("Aang", "(Theme color: {W})", type_line="Card")
     assert not reprints.is_eligible(theme)

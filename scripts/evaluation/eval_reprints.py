@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Evaluate embeddings on functional-reprint families.
 
-Members of a family are substitutes by construction: same effect, same cost,
-same type, different name. Ranking one member should surface the others, and
-no judge is involved, so this is a leak-free substitute metric.
+Families are candidate substitutes based on normalized rules text and selected
+card attributes. They require validation; no judge is used to generate them,
+which does not by itself rule out leakage or mismatched evaluation populations.
 
 Usage:
     uv run scripts/evaluation/eval_reprints.py --game magic --embedding magic_v7_spectral_mu35
@@ -36,6 +36,8 @@ def family_hits(neighbors: list[str], family: set[str], member: str) -> dict[int
 
 
 def evaluate(vectors, families: list[dict], top_k: int = 10) -> dict:
+    if top_k < max(KS):
+        raise ValueError(f"top_k must be at least {max(KS)}")
     hits = dict.fromkeys(KS, 0)
     possible = dict.fromkeys(KS, 0)
     queries = 0
@@ -51,7 +53,7 @@ def evaluate(vectors, families: list[dict], top_k: int = 10) -> dict:
         member_set = set(members)
         family_hits_total = dict.fromkeys(KS, 0)
         for k in KS:
-            possible[k] += len(members) * min(k, len(members) - 1)
+            possible[k] += len(members) * (len(members) - 1)
         for member in members:
             neighbors = [name for name, _ in vectors.most_similar(member, topn=top_k)]
             got = family_hits(neighbors, member_set, member)
@@ -76,8 +78,8 @@ def evaluate(vectors, families: list[dict], top_k: int = 10) -> dict:
         "recall": {k: (hits[k] / possible[k] if possible[k] else None) for k in KS},
         "hits": hits,
         "possible": possible,
-        "mean_rank": statistics.fmean(ranks) if ranks else None,
-        "median_rank": statistics.median(ranks) if ranks else None,
+        "mean_capped_rank": statistics.fmean(ranks) if ranks else None,
+        "median_capped_rank": statistics.median(ranks) if ranks else None,
         "per_family": per_family[:10],
     }
 
@@ -106,7 +108,11 @@ def main() -> int:
         return 2
 
     with open(families_path) as handle:
-        families = json.load(handle)["records"]
+        payload = json.load(handle)
+    if payload.get("normalization_version") != 2:
+        print("stale reprint families; rebuild them before evaluating", file=sys.stderr)
+        return 2
+    families = payload["records"]
     vectors = KeyedVectors.load(str(emb_path))
     result = evaluate(vectors, families)
     result.update({"embedding": args.embedding, "families_file": str(families_path)})
@@ -122,8 +128,11 @@ def main() -> int:
         recall = result["recall"][k]
         shown = f"{recall:.3f}" if recall is not None else "n/a"
         print(f"  recall@{k:<2d} {shown}  ({result['hits'][k]}/{result['possible'][k]})")
-    if result["mean_rank"] is not None:
-        print(f"  mean rank {result['mean_rank']:.2f}  median {result['median_rank']}")
+    if result["mean_capped_rank"] is not None:
+        print(
+            f"  rank capped at 11: mean {result['mean_capped_rank']:.2f}"
+            f"  median {result['median_capped_rank']}"
+        )
     return 0
 
 

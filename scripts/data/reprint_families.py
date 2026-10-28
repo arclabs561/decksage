@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
 """Build functional-reprint families from Scryfall oracle cards.
 
-Cards with identical normalized oracle text, type line and mana cost are
-perfect substitutes by construction. That gives objective substitute labels
-with no judge, no human, and no licence question: same effect, same cost, same
-card type, different name.
+Cards with identical normalized oracle text, type line, mana cost and stats
+are candidate substitutes. Other characteristics, such as color identity and
+format legality, can still differ; review families before treating them as
+ground truth.
 
 Usage:
     uv run scripts/data/reprint_families.py --game magic
@@ -29,7 +29,7 @@ from ml.utils.paths import PATHS
 
 
 REMINDER = re.compile(r"\([^()]*\)")
-NON_WORD = re.compile(r"[^a-z0-9 ]+")
+NON_WORD = re.compile(r"[^a-z0-9 +\-/]+")
 SKIP_TYPES = ("token", "emblem", "basic land", "card //", "vanguard", "scheme", "plane")
 
 
@@ -40,7 +40,9 @@ def normalize_text(text: str, name: str) -> str:
     refers to the card by name and otherwise no two reprints would ever match.
     Reminder text is stripped: it is printing-dependent rules help, not effect.
     """
-    lowered = text.lower().replace(name.lower(), "~")
+    lowered = text.lower()
+    if name:
+        lowered = re.sub(r"(?<!\w)" + re.escape(name.lower()) + r"(?!\w)", "~", lowered)
     without_reminders = REMINDER.sub(" ", lowered)
     cleaned = NON_WORD.sub(" ", without_reminders)
     return " ".join(cleaned.split())
@@ -124,6 +126,7 @@ def main() -> int:
         json.dumps(
             {
                 "game": args.game,
+                "normalization_version": 2,
                 "source": str(cards_path),
                 "families": len(families),
                 "cards_covered": sum(f["size"] for f in families),
