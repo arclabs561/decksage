@@ -1,15 +1,17 @@
 # Label sources
 
-Where labels could come from, what each source actually measures, what is legal
-to use, and which proxies deserve a trial. Companion to ADR-0001 (task-scoped
-labels), ADR-0002 (augmentation is training-only) and `JUDGE-CALIBRATION.md`.
+Potential label sources and the proxies they might provide. Source-specific
+terms and verdicts below are historical notes unless independently verified;
+they do not establish permission to ingest or redistribute data. Companion to
+ADR-0001, ADR-0002 and `JUDGE-CALIBRATION.md`.
 
 ## Construct first, source second
 
-Krippendorff alpha is 0.62 overall but 0.21 for synergy. That is too low to be
-only annotator noise: the construct is underspecified. "Synergy" currently
-mixes combo, theme fit, role complement and meta pairing. "Substitute" mixes
-same-role replacement, budget downgrade, functional reprint and meta call.
+"Synergy" can mix combo, theme fit, role complement and meta pairing;
+"substitute" can mix same-role replacement, budget downgrade, functional
+reprint and meta call. Experiment 0027 reports low agreement on a specific
+Magic multi-judge sample; agreement alone does not identify its cause or
+establish agreement for other tasks or datasets.
 
 Splitting the constructs is a prerequisite. No source will validate a label it
 is not labelling, and no proxy comparison is interpretable while one field
@@ -35,12 +37,13 @@ error source.
 | Archidekt maybeboard + deck help | substitute, completion | undocumented API | personal, non-commercial | casual skew, "considered" not "replaced" | trial, licence first |
 | Moxfield maybeboard, sideboard, primers | substitute, completion | undocumented API | automated access prohibited | view popularity | trial, partner only |
 | CubeCobra changelogs | substitute inside a cube | public API | `ai-train=no` | idiosyncratic designers | evaluation only |
-| Commander Spellbook | synergy (explicit combos) | REST, 80 rpm | public, credit | combo/cEDH bias | adopt |
+| Commander Spellbook | synergy (explicit combos) | [API and bulk export](https://spacecowmedia.github.io/commander-spellbook-backend/api.html) | data reuse terms unverified | combo/cEDH bias | research-only sample |
 | Scryfall Tagger / oracle tags | card role | REST + daily bulk | no repackage | community inconsistency | adopt |
-| MTGJSON | role, legality, prices | bulk | MIT | no functional labels | adopt |
+| MTGJSON | role, legality, prices | [bulk](https://www.mtgjson.com/downloads/all-files/) | [license page](https://www.mtgjson.com/license/) contains website-use terms; data rights not assessed | no functional labels | review before use |
 | Wizards B&R, Konami F&L, Pokemon rotation | substitute via shocks | HTML/RSS | official facts | sparse, confounded by reprints | adopt as event anchors |
-| MTGJSON prices, MTGStocks | substitute via market | bulk / undocumented | MIT / unverified | supply shocks dominate | event studies only |
-| 17Lands public datasets | preference and performance | published files | CC BY 4.0; live API not for outside use | Limited only, skill skew | trial, Limited |
+| MTGJSON prices, MTGStocks | substitute via market | bulk / undocumented | source-specific terms unverified | supply shocks dominate | event studies only |
+| 17Lands public datasets | preference and performance | [published files](https://www.17lands.com/public_datasets) | reuse terms not verified in this audit | Limited only, skill skew | research, Limited |
+| MTG cards similarity dataset | similarity proxy | [dataset card](https://huggingface.co/datasets/philipp-zettl/mtg_cards-2025-04-04) | rights and reuse unverified | labels automatically annotated; method not documented on the card | research only, not human gold |
 | Limitless API | meta, completion | official API | attribution; redistribution unclear | top-cut bias | adopt |
 | YGOPRODeck API | card, meta | 20 req/s | no explicit licence, Konami IP | netdecking, MD/TCG mix | adopt for card data |
 | Yugipedia Card Tips | synergy (explicit relations) | MediaWiki | CC BY-SA | speculative, obsolete combos | adopt |
@@ -50,10 +53,8 @@ error source.
 | YouTube, Discord, podcasts | none usable | no archive / prohibited | no scraping | entertainment | reject |
 | Marketplace reviews, StackExchange, Blogatog | none or thin | varies | varies | not card function | reject |
 
-Two distinctions worth keeping straight: a terms breach is a contract issue, not
-automatically copyright infringement, but for a commercial product the licence
-is the constraint. And raw text must never be redistributed: store derived
-labels with provenance, not copies.
+Check source-specific terms and the project publishing boundary before using
+or redistributing data. Preserve provenance for derived labels.
 
 ## Substitution: the task with no good public proxy
 
@@ -142,9 +143,9 @@ the three calibration techniques.
 
 ## Ranked next steps
 
-1. Write the source registry with the adopt list only: Commander Spellbook,
-   Scryfall Tagger, MTGJSON, Limitless, YGOPRODeck card data, official ban and
-   rotation announcements. No permission needed.
+1. Review the existing `config/label_sources.toml` registry against primary
+   sources, including source-specific reuse terms and attribution. Its current
+   classifications are not independently verified by this audit.
 2. Build deck-edit deltas from weekly snapshots of your own deck corpus to
    derive swap pairs without any external scrape.
 3. Run the 60-query validation slice before adopting any amber source.

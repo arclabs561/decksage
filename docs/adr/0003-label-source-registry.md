@@ -27,7 +27,7 @@ annotation work.
   `assert_source_allowed(source, label)` as the guard ingestion code must call
   before using a source.
 - The loader refuses duplicate ids, unknown verdict or terms values, an
-  `adopt` entry whose terms are `prohibited`, and any usable entry that lists no
+  usable entry whose terms are `prohibited`, and any usable entry that lists no
   labels.
 - `trial` sources may be used for evaluation samples; training use requires the
   caller to check the verdict explicitly, which is the same boundary ADR-0002
@@ -46,7 +46,8 @@ annotation work.
 ## Consequences
 
 - Adding a source is a reviewable one-file change with its terms attached.
-- The publishing boundary is machine-checkable: a prohibited source cannot be
-  adopted, and a trial source cannot silently become training data.
+- The registry boundary rejects prohibited sources and prevents a trial source
+  from silently becoming training data; its term classifications still require
+  verification against the source.
 - The registry will lag reality between updates, so its notes carry the date the
   terms were read.

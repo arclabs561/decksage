@@ -67,11 +67,12 @@ def test_duplicate_id_is_rejected(tmp_path):
         load_sources(path)
 
 
-def test_adopted_prohibited_source_is_rejected(tmp_path):
+@pytest.mark.parametrize("verdict", ["adopt", "trial"])
+def test_usable_prohibited_source_is_rejected(tmp_path, verdict):
     path = tmp_path / "registry.toml"
     path.write_text(
         '[[source]]\nid = "a"\nlabels = ["x"]\naccess = "api"\n'
-        'terms = "prohibited"\nverdict = "adopt"\n'
+        f'terms = "prohibited"\nverdict = "{verdict}"\n'
     )
     with pytest.raises(SourcePolicyError):
         load_sources(path)

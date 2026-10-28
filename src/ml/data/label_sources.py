@@ -35,7 +35,7 @@ def load_sources(path: Path | None = None) -> dict[str, LabelSource]:
     """Load and validate the registry.
 
     Raises SourcePolicyError on duplicate ids, unknown verdict or terms, or an
-    entry marked adopt whose terms forbid use.
+    usable entry whose terms forbid use.
     """
     registry = path or REGISTRY_PATH
     with open(registry, "rb") as handle:
@@ -59,8 +59,8 @@ def load_sources(path: Path | None = None) -> dict[str, LabelSource]:
             raise SourcePolicyError(f"{source.id}: unknown verdict {source.verdict!r}")
         if source.terms not in TERMS:
             raise SourcePolicyError(f"{source.id}: unknown terms {source.terms!r}")
-        if source.verdict == "adopt" and source.terms == "prohibited":
-            raise SourcePolicyError(f"{source.id}: cannot adopt a prohibited source")
+        if source.verdict != "reject" and source.terms == "prohibited":
+            raise SourcePolicyError(f"{source.id}: cannot use a prohibited source")
         if source.verdict != "reject" and not source.labels:
             raise SourcePolicyError(f"{source.id}: usable source lists no labels")
         sources[source.id] = source
@@ -81,6 +81,8 @@ def assert_source_allowed(
         raise SourcePolicyError(f"unknown source: {source_id}")
     if source.verdict == "reject":
         raise SourcePolicyError(f"{source_id} is rejected for this project")
+    if source.terms == "prohibited":
+        raise SourcePolicyError(f"{source_id} is prohibited for this project")
     if label not in source.labels:
         raise SourcePolicyError(f"{source_id} is not registered for label {label!r}")
     return source
