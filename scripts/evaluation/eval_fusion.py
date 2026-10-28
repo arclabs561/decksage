@@ -9,15 +9,12 @@
 """
 Evaluate rank fusion of multiple embedding sources.
 
-Combines Cleora (graph structure) + Text E5 (card text semantics) via
-CombMNZ rank fusion. Each source provides a ranked list per query,
-and the fused ranking uses reciprocal rank weighting.
+Combines ranked lists from embedding sources using reciprocal rank fusion.
 
 Query selection is explicit. `--split all` (default) scores every query, which
-includes the queries `calibrate_fusion_weights.py` fit on, so the number is
-in-sample and not a generalization estimate. `--split train` and
-`--split holdout` use the same seed-13 query partition as the calibrator, so
-`--split holdout` is the out-of-sample number for those weights.
+uses all queries. `--split train` and `--split holdout` reuse the calibrator's
+query partition, but this script does not load its weights. A partition alone
+does not establish whether any source embedding was trained on those queries.
 
 Usage:
     uv run scripts/evaluation/eval_fusion.py --game magic
@@ -48,7 +45,7 @@ sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Task -> score field is shared with eval_per_mode.py (ADR-0001); see task_labels.py.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from task_labels import TASK_SCORE_FIELD
+from task_labels import TASK_SCORE_FIELD, pair_task
 
 
 DEFAULT_SOURCES = {
@@ -97,37 +94,31 @@ def split_query_names(names: Iterable[str], split: str, seed: int = SPLIT_SEED) 
 
 def split_note(split: str, seed: int, n_queries: int, n_total: int) -> dict:
     """Describe what a nDCG number from `split` does and does not measure."""
-    if split == "all":
-        return {
-            "partial": False,
-            "in_sample": True,
-            "note": (
-                f"In-sample result over all {n_total} queries, including the queries "
-                f"calibrate_fusion_weights.py fit fusion weights on. Not a "
-                f"generalization estimate; use --split holdout for that."
-            ),
-        }
-    if split == "train":
-        return {
-            "partial": True,
-            "in_sample": True,
-            "note": (
-                f"Partial result: the {n_queries} fit queries of the seed-{seed} 80% "
-                f"split, the same queries calibrate_fusion_weights.py optimizes on. "
-                f"In-sample, covers {n_queries}/{n_total} queries, and not a "
-                f"generalization estimate."
-            ),
-        }
     return {
-        "partial": True,
-        "in_sample": False,
+        "partial": split != "all",
+        "in_sample": None,
         "note": (
-            f"Partial result: the {n_queries} held-out queries of the seed-{seed} 20% "
-            f"split, out-of-sample for weights fit on the complementary 80%. Covers "
-            f"only {n_queries}/{n_total} queries, so it is not comparable to a "
-            f"full-test-set number."
+            f"{'Partial result' if split != 'all' else 'All-query result'}: "
+            f"{n_queries}/{n_total} queries, split={split}, seed={seed}. "
+            "This script uses RRF, not calibrated weights; source model training "
+            "provenance is unknown, so independence is not established."
         ),
     }
+
+
+def task_scores(annotations: list[dict], task: str) -> dict[str, float]:
+    """Select the task's explicit and untagged legacy scores only."""
+    field = TASK_SCORE_FIELD[task]
+    scores = {}
+    for ann in annotations:
+        raw_task = ann.get("task")
+        annotated_task = pair_task(ann)
+        if raw_task not in (None, "") and annotated_task != task:
+            continue
+        candidate, value = ann.get("candidate"), ann.get(field)
+        if candidate and value is not None:
+            scores[candidate] = float(value)
+    return scores
 
 
 def ndcg(relevances: list[float], ideal: list[float], k: int) -> float:
@@ -231,10 +222,11 @@ def main() -> int:
 
     # Evaluate per mode
     results = {}
-    for mode, score_field in TASK_SCORE_FIELD.items():
+    for mode in TASK_SCORE_FIELD:
         ndcg_scores = []
         n_evaluated = 0
         n_skipped = 0
+        n_legacy = 0
 
         for qname, qdata in queries.items():
             annotations = qdata.get("annotations", [])
@@ -243,12 +235,14 @@ def main() -> int:
                 continue
 
             # Build ground truth
-            gt = {}
-            for ann in annotations:
-                candidate = ann.get("candidate", "")
-                score = ann.get(score_field)
-                if score is not None and candidate:
-                    gt[candidate] = float(score)
+            gt = task_scores(annotations, mode)
+            n_legacy += sum(
+                1
+                for ann in annotations
+                if ann.get("task") in (None, "")
+                and ann.get("candidate")
+                and ann.get(TASK_SCORE_FIELD[mode]) is not None
+            )
 
             if not gt or max(gt.values()) == 0:
                 n_skipped += 1
@@ -282,11 +276,13 @@ def main() -> int:
             ndcg_scores.append(score)
             n_evaluated += 1
 
-        avg_ndcg = float(np.mean(ndcg_scores)) if ndcg_scores else 0.0
-        results[f"{mode}_ndcg"] = round(avg_ndcg, 4)
+        avg_ndcg = float(np.mean(ndcg_scores)) if ndcg_scores else None
+        results[f"{mode}_ndcg"] = round(avg_ndcg, 4) if avg_ndcg is not None else None
         results[f"{mode}_n"] = n_evaluated
+        results[f"{mode}_legacy_pairs"] = n_legacy
         if not args.json:
-            print(f"  {mode}: nDCG@{args.top_k} = {avg_ndcg:.4f} (n={n_evaluated})")
+            value = f"{avg_ndcg:.4f}" if avg_ndcg is not None else "absent"
+            print(f"  {mode}: nDCG@{args.top_k} = {value} (n={n_evaluated})")
 
     # Also evaluate individual sources for comparison
     individual = {}
@@ -296,12 +292,7 @@ def main() -> int:
             annotations = qdata.get("annotations", [])
             if not annotations or qname not in kv:
                 continue
-            gt = {}
-            for ann in annotations:
-                candidate = ann.get("candidate", "")
-                score = ann.get(TASK_SCORE_FIELD["substitute"])
-                if score is not None and candidate:
-                    gt[candidate] = float(score)
+            gt = task_scores(annotations, "substitute")
             if not gt or max(gt.values()) == 0:
                 continue
             try:
@@ -311,10 +302,11 @@ def main() -> int:
                 src_ndcg.append(ndcg(relevances, ideal, args.top_k))
             except KeyError:
                 continue
-        avg = float(np.mean(src_ndcg)) if src_ndcg else 0.0
-        individual[name] = round(avg, 4)
+        avg = float(np.mean(src_ndcg)) if src_ndcg else None
+        individual[name] = round(avg, 4) if avg is not None else None
         if not args.json:
-            print(f"  [{name} alone]: sub nDCG = {avg:.4f}")
+            value = f"{avg:.4f}" if avg is not None else "absent"
+            print(f"  [{name} alone]: sub nDCG = {value}")
 
     results["individual_sub_ndcg"] = individual
     results["sources"] = source_names

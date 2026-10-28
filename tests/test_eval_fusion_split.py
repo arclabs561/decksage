@@ -1,10 +1,8 @@
 """Held-out query split for the fusion evaluator.
 
 Covers `scripts/evaluation/eval_fusion.py`: the seed-13 query partition shared
-with `calibrate_fusion_weights.py`, its 80/20 sizes, and the split metadata the
-JSON result carries so a reader can tell an in-sample number from an
-out-of-sample one. Ranking math and metric definitions are untouched by the
-split, so no score expectations live here.
+with `calibrate_fusion_weights.py`, its 80/20 sizes, and split metadata that
+does not infer model independence from the partition alone.
 """
 
 import importlib.util
@@ -106,12 +104,11 @@ def test_unknown_split_is_rejected(evaluator):
 # --- provenance recorded in the result --------------------------------------
 
 
-def test_all_split_is_marked_in_sample(evaluator):
+def test_split_does_not_claim_unknown_source_model_independence(evaluator):
     info = evaluator.split_note("all", 13, 20, 20)
     assert info["partial"] is False
-    assert info["in_sample"] is True
-    assert "In-sample" in info["note"]
-    assert "Not a generalization estimate" in info["note"]
+    assert info["in_sample"] is None
+    assert "independence is not established" in info["note"]
 
 
 @pytest.mark.parametrize("split", ["train", "holdout"])
@@ -122,9 +119,19 @@ def test_partial_splits_say_they_are_partial(evaluator, split):
     assert "16/20" in info["note"]
 
 
-def test_holdout_is_out_of_sample_and_train_is_not(evaluator):
-    assert evaluator.split_note("holdout", 13, 4, 20)["in_sample"] is False
-    assert evaluator.split_note("train", 13, 16, 20)["in_sample"] is True
+def test_splits_do_not_establish_model_training_provenance(evaluator):
+    assert evaluator.split_note("holdout", 13, 4, 20)["in_sample"] is None
+    assert evaluator.split_note("train", 13, 16, 20)["in_sample"] is None
+
+
+def test_labels_are_scoped_to_their_declared_task(evaluator):
+    annotations = [
+        {"candidate": "sub", "task": "substitute", "functional_score": 0.8},
+        {"candidate": "other", "task": "synergy", "functional_score": 1.0},
+        {"candidate": "legacy", "functional_score": 0.5},
+        {"candidate": "typo", "task": "substitut", "functional_score": 1.0},
+    ]
+    assert evaluator.task_scores(annotations, "substitute") == {"sub": 0.8, "legacy": 0.5}
 
 
 # --- end to end through main() ---------------------------------------------
@@ -208,10 +215,12 @@ def test_result_records_split_metadata(unit_eval, monkeypatch, capsys):
     assert everything["split_seed"] == 13
     assert everything["n_queries"] == n_total
     assert everything["partial"] is False
-    assert everything["in_sample"] is True
-    assert "In-sample" in everything["note"]
-    assert "Not a generalization estimate" in everything["note"]
+    assert everything["in_sample"] is None
+    assert "independence is not established" in everything["note"]
     assert everything["data"]["num_queries"] == n_total
+    assert everything["substitute_legacy_pairs"] == 3 * n_total
+    assert everything["synergy_ndcg"] is None
+    assert everything["synergy_n"] == 0
 
     train = run_main(evaluator, monkeypatch, capsys, "train")
     holdout = run_main(evaluator, monkeypatch, capsys, "holdout")
@@ -222,8 +231,8 @@ def test_result_records_split_metadata(unit_eval, monkeypatch, capsys):
     assert holdout["n_queries"] == n_total - int(n_total * 0.8)
     assert "Partial result" in train["note"]
     assert "Partial result" in holdout["note"]
-    assert "out-of-sample" in holdout["note"]
-    assert holdout["in_sample"] is False
+    assert "independence is not established" in holdout["note"]
+    assert holdout["in_sample"] is None
     # data.num_queries still describes the whole test set, not the split.
     assert holdout["data"]["num_queries"] == n_total
     assert holdout["data"]["split_queries"] == holdout["n_queries"]
