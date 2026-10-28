@@ -349,7 +349,7 @@ repos:
       # comes later, file by file.
       - id: ty-contracts
         name: Type-check the typed contracts
-        entry: bash -c 'uvx ty check "$@"'
+        entry: bash -c 'uvx ty@0.0.59 check --python .venv --config-file ty.toml "$@"' _
         language: system
         files: ^src/ml/contracts/.*\.py$
         stages: [pre-commit]

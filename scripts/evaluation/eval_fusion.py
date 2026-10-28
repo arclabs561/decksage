@@ -36,7 +36,6 @@ from collections.abc import Iterable
 from pathlib import Path
 
 import numpy as np
-from gensim.models import KeyedVectors
 
 
 if not sys.stdout.isatty():
@@ -64,6 +63,13 @@ DEFAULT_SOURCES = {
 SPLIT_SEED = 13
 TRAIN_FRACTION = 0.8
 SPLIT_CHOICES = ("all", "train", "holdout")
+
+
+def load_vectors(path: Path):
+    """Load a legacy vector artifact only when evaluation requires it."""
+    from gensim.models import KeyedVectors
+
+    return KeyedVectors.load(str(path))
 
 
 def split_query_names(names: Iterable[str], split: str, seed: int = SPLIT_SEED) -> list[str]:
@@ -178,13 +184,13 @@ def main() -> int:
     print(f"Fusion eval [{args.game}]: {source_names}")
 
     # Load embeddings
-    sources: list[tuple[str, KeyedVectors]] = []
+    sources = []
     for name in source_names:
         path = DATA_DIR / "embeddings" / f"{args.game}_{name}.wv"
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping")
             continue
-        kv = KeyedVectors.load(str(path))
+        kv = load_vectors(path)
         sources.append((name, kv))
         print(f"  Loaded {name}: {len(kv)} cards")
 
@@ -200,6 +206,11 @@ def main() -> int:
 
     with open(test_path) as f:
         test_data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    test_data, excluded = curate_evaluation_data(test_data)
+    if excluded:
+        print(f"Excluded {excluded} failed, synthetic, or fallback judgments", file=sys.stderr)
     all_queries = test_data.get("queries", {})
 
     # Restrict scoring to the requested query split (both the fused and the

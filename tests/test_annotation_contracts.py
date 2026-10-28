@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import sys
 from pathlib import Path
 
@@ -13,11 +14,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
 
 from ml.contracts.annotations import (
     Annotation,
+    JudgeScores,
     QueryEntry,
     Task,
     TestSet,
-    load_test_set,
+    curate_evaluation_data,
 )
+from ml.utils.paths import PATHS
 
 
 def _entry(**overrides):
@@ -56,6 +59,16 @@ def test_candidate_in_two_buckets_is_not_silently_accepted():
         )
 
 
+def test_irrelevant_bucket_must_match_score():
+    with pytest.raises(ValidationError, match="irrelevant"):
+        QueryEntry.model_validate(
+            {
+                "annotations": [{"candidate": "Bolt", "similarity_score": 0.8}],
+                "irrelevant": ["Bolt"],
+            }
+        )
+
+
 def test_duplicate_annotations_are_rejected():
     with pytest.raises(ValidationError, match="duplicate"):
         QueryEntry.model_validate(
@@ -72,6 +85,29 @@ def test_duplicate_annotations_are_rejected():
 def test_score_out_of_range_is_rejected():
     with pytest.raises(ValidationError):
         Annotation.model_validate({"candidate": "Bolt", "similarity_score": 1.4})
+
+
+def test_judge_response_cannot_fill_missing_or_invalid_scores_with_zero():
+    with pytest.raises(ValidationError):
+        JudgeScores.model_validate({"similarity_score": 0.8})
+    with pytest.raises(ValidationError):
+        JudgeScores.model_validate(
+            {"similarity_score": 2, "functional_score": 0, "synergy_score": 0, "meta_relevance": 0}
+        )
+
+
+@pytest.mark.parametrize(
+    "marker",
+    [
+        {"synthetic": True},
+        {"error": True},
+        {"_provenance": {"augmentation": "swap"}},
+        {"llm_model": "cosine_fallback"},
+    ],
+)
+def test_evaluation_contract_rejects_ineligible_judgments(marker):
+    with pytest.raises(ValidationError):
+        QueryEntry.model_validate({"annotations": [{"candidate": "Bolt", **marker}]})
 
 
 def test_missing_score_stays_none_not_zero():
@@ -95,8 +131,9 @@ def test_declared_query_count_must_match():
 
 
 def test_real_test_set_loads():
-    path = Path(__file__).resolve().parent.parent / "data/test_sets/annotated_magic_v2.json"
+    path = PATHS.data / "test_sets" / "annotated_magic_v2.json"
     if not path.exists():
         pytest.skip("local test set not present")
-    test_set = load_test_set(path)
+    data, _removed = curate_evaluation_data(json.loads(path.read_text()))
+    test_set = TestSet.model_validate(data)
     assert len(test_set.queries) > 1000

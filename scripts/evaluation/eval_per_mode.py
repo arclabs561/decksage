@@ -46,18 +46,17 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 
+if TYPE_CHECKING:
+    from gensim.models import KeyedVectors
+
+
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
-
-try:
-    from gensim.models import KeyedVectors
-except ImportError:
-    print("Install gensim: pip install gensim")
-    sys.exit(1)
 
 DEFAULT_EMBEDDINGS = {
     "magic": "magic_v7_spectral_mu35",
@@ -116,6 +115,14 @@ def load_test_set(game: str) -> dict:
         return {}
     with open(path) as f:
         data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    data, excluded = curate_evaluation_data(data)
+    if excluded:
+        print(
+            f"  Excluded {excluded} failed, synthetic, or fallback judgments from evaluation",
+            file=sys.stderr,
+        )
 
     # Pre-eval dedup check: detect inflated test sets
     total_anns = 0
@@ -143,6 +150,8 @@ def load_embeddings(game: str, name: str | None = None) -> KeyedVectors | None:
     if not path.exists():
         print(f"Embedding not found: {path}")
         return None
+    from gensim.models import KeyedVectors
+
     return KeyedVectors.load(str(path))
 
 
@@ -946,9 +955,7 @@ def eval_game(
     }
     results["mrr_relevant"] = {
         "mrr": round(float(np.mean(mrr_scores)), 4) if mrr_scores else 0.0,
-        "mean_rank": round(1.0 / np.mean(mrr_scores), 1)
-        if mrr_scores and np.mean(mrr_scores) > 0
-        else 0,
+        "mean_rank": round(float(np.mean([1.0 / rr for rr in mrr_scores])), 1) if mrr_scores else 0,
         "n_queries": len(mrr_scores),
     }
     results["annotation_density"] = {

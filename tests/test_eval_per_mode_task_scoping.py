@@ -73,6 +73,53 @@ def patch_eval_game(monkeypatch, evaluator, queries, wv, neighbor_cache):
     )
 
 
+def test_composite_mean_rank_is_arithmetic_mean(evaluator, monkeypatch):
+    queries = {
+        "Q1": {"annotations": [{"candidate": "A", "similarity_score": 0.9}]},
+        "Q2": {"annotations": [{"candidate": "B", "similarity_score": 0.9}]},
+    }
+    wv = fake_universe(["Q1", "Q2", "A", "B", "Distractor"])
+    wv._normed[:] = 0
+    wv._normed[wv.key_to_index["Q1"], 0] = 1
+    wv._normed[wv.key_to_index["A"], 0] = 1
+    wv._normed[wv.key_to_index["Q2"], 1] = 1
+    wv._normed[wv.key_to_index["Distractor"], 1] = 0.9
+    wv._normed[wv.key_to_index["B"], 1] = 0.8
+    patch_eval_game(monkeypatch, evaluator, queries, wv, {})
+    result = evaluator.eval_game("magic", quick=True)
+    assert result["mrr_relevant"]["mrr"] == 0.75
+    assert result["mrr_relevant"]["mean_rank"] == 1.5
+
+
+def test_canonical_loader_excludes_failed_pseudo_judgments(
+    evaluator, monkeypatch, tmp_path, capsys
+):
+    import json
+
+    monkeypatch.setattr(evaluator, "DATA_DIR", tmp_path)
+    (tmp_path / "test_sets").mkdir()
+    path = tmp_path / "test_sets/annotated_magic_v2.json"
+    path.write_text(
+        json.dumps(
+            {
+                "queries": {
+                    "q": {
+                        "annotations": [
+                            {"candidate": "failed", "similarity_score": 0.9, "error": True},
+                            {"candidate": "valid", "similarity_score": 0.8},
+                        ],
+                        "highly_relevant": ["failed", "valid"],
+                    }
+                }
+            }
+        )
+    )
+    result = evaluator.load_test_set("magic")
+    assert [row["candidate"] for row in result["queries"]["q"]["annotations"]] == ["valid"]
+    assert result["queries"]["q"]["highly_relevant"] == ["valid"]
+    assert "Excluded 1" in capsys.readouterr().err
+
+
 def test_synergy_task_pair_is_not_consumed_by_substitute_eval(evaluator):
     # Pairs annotated for the synergy task only: they carry synergy_score and no
     # functional_score, so a substitute run must not read them at all.

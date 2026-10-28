@@ -12,10 +12,11 @@ the error message should name the query and candidate that broke it.
 
 from __future__ import annotations
 
+import copy
 from enum import StrEnum
 from pathlib import Path
 
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, model_validator
 
 
 # Bucket -> inclusive lower bound, exclusive upper bound, matching
@@ -25,6 +26,7 @@ BUCKET_BANDS: dict[str, tuple[float, float]] = {
     "relevant": (0.50, 0.70),
     "somewhat_relevant": (0.30, 0.50),
     "marginally_relevant": (0.15, 0.30),
+    "irrelevant": (0.0, 0.15),
 }
 
 
@@ -40,6 +42,75 @@ class ScoreField(StrEnum):
     FUNCTIONAL = "functional_score"
     SYNERGY = "synergy_score"
     META = "meta_relevance"
+
+
+class JudgeScores(BaseModel):
+    """A successful judge response contains all requested bounded scores."""
+
+    model_config = ConfigDict(extra="allow")
+    similarity_score: float = Field(ge=0, le=1)
+    functional_score: float = Field(ge=0, le=1)
+    synergy_score: float = Field(ge=0, le=1)
+    meta_relevance: float = Field(ge=0, le=1)
+
+
+class EvaluationRecord(BaseModel):
+    """Input eligible for evaluation: augmentation stays in training data."""
+
+    model_config = ConfigDict(extra="allow")
+
+    synthetic: bool = False
+    error: bool = False
+    llm_model: str | None = None
+    provenance: dict | None = Field(default=None, validation_alias="_provenance")
+
+    @model_validator(mode="after")
+    def no_augmentation(self) -> EvaluationRecord:
+        if (
+            self.synthetic
+            or self.error
+            or self.llm_model == "cosine_fallback"
+            or (self.provenance or {}).get("augmentation")
+        ):
+            raise ValueError("synthetic, failed or fallback records cannot enter evaluation")
+        return self
+
+
+def is_evaluation_record(record: dict) -> bool:
+    """Reject augmented or malformed provenance at evaluation ingress."""
+    try:
+        EvaluationRecord.model_validate(record)
+    except ValidationError:
+        return False
+    return True
+
+
+def curate_evaluation_data(data: dict) -> tuple[dict, int]:
+    """Return a copy excluding failed, synthetic, and fallback judgments."""
+    curated = copy.deepcopy(data)
+    removed = 0
+    for entry in curated.get("queries", {}).values():
+        records = entry.get("annotations", [])
+        valid = [record for record in records if is_evaluation_record(record)]
+        invalid_names = {
+            record.get("candidate") for record in records if not is_evaluation_record(record)
+        } - {record.get("candidate") for record in valid}
+        removed += len(records) - len(valid)
+        entry["annotations"] = valid
+        for bucket in (
+            "highly_relevant",
+            "relevant",
+            "somewhat_relevant",
+            "marginally_relevant",
+            "irrelevant",
+        ):
+            if bucket in entry:
+                entry[bucket] = [name for name in entry[bucket] if name not in invalid_names]
+        if isinstance(entry.get("modes"), dict):
+            entry["modes"] = {
+                key: value for key, value in entry["modes"].items() if key not in invalid_names
+            }
+    return curated, removed
 
 
 TASK_SCORE_FIELD: dict[Task, ScoreField] = {
@@ -113,6 +184,8 @@ class QueryEntry(BaseModel):
         seen: set[str] = set()
         duplicates: list[str] = []
         for ann in self.annotations:
+            if not is_evaluation_record(ann.model_dump()):
+                raise ValueError(f"candidate {ann.candidate!r} is synthetic or augmented")
             if ann.candidate in seen:
                 duplicates.append(ann.candidate)
             seen.add(ann.candidate)

@@ -193,12 +193,8 @@ def unit_eval(evaluator, monkeypatch, tmp_path):
     monkeypatch.setattr(evaluator, "DATA_DIR", tmp_path)
     monkeypatch.setattr(
         evaluator,
-        "KeyedVectors",
-        type(
-            "FakeLoad",
-            (),
-            {"load": staticmethod(lambda path: FakeKeyedVectors(keys, neighbors))},
-        ),
+        "load_vectors",
+        lambda path: FakeKeyedVectors(keys, neighbors),
     )
     return evaluator, inputs
 
