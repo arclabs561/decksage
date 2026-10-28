@@ -1,4 +1,7 @@
-# DeckSage
+<p align="center">
+  <img src="docs/assets/decksage.png" alt="" width="160" />
+</p>
+<h1 align="center">DeckSage</h1>
 
 Card similarity and deck building for Magic: The Gathering, Pokemon TCG, and Yu-Gi-Oh.
 
@@ -13,15 +16,9 @@ uv sync --extra embeddings
 ```
 
 Embedding files, graph databases, and processed CSVs are not in git (~6 GB uncompressed).
-The demo archive is currently an unavailable public prerequisite: this repository
-does not provide a public download or a verified end-to-end archive build command.
-A fresh clone cannot reproduce the demo until these artifacts are supplied.
-If you already have a trusted copy, extract it into the repo root:
-
-```bash
-tar xzf decksage-demo-data.tar.gz   # creates data/embeddings/, data/graphs/, data/processed/
-cp .env.example .env                 # defaults work with extracted paths
-```
+This repository does not provide a public download or a verified end-to-end
+build command for these artifacts. A fresh clone cannot reproduce the application
+until they are supplied separately.
 
 ## Configuration
 
@@ -93,9 +90,9 @@ supported. Cloud workflows fail when a required destination is unset.
 ## Development
 
 ```bash
-just test     # 834 unit tests
-just lint     # ruff check + format
-npx playwright test   # 41 E2E tests (requires running server + search backends)
+just test     # Python tests
+just lint     # Ruff lint
+npx playwright test   # requires running server + search backends
 just qa-deps-up       # start MeiliSearch + Qdrant
 just qa-deps-down     # stop
 ```
@@ -114,15 +111,14 @@ data/             Embeddings, graphs, annotations, test sets (not in git)
 
 ## Evaluation
 
-~100K LLM-generated annotations across 3 games (~$25 total via Groq 70B + Cerebras 235B cascade). The relevance labels are those LLM scores, not human judgments. Substitute nDCG@10, both embeddings on the same expanded test set per game (`scripts/evaluation/eval_per_mode.py --all-games --compare text_e5 --quick`):
+The test sets use LLM-generated relevance labels, not human judgments. Standard
+nDCG counts unjudged results as irrelevant; condensed nDCG drops unjudged
+results while keeping the full judged ideal ranking. Scores depend on which
+queries and candidates each model covers.
 
-| Game | Co-occurrence nDCG | Text (E5) nDCG | Co-occurrence condensed | Text (E5) condensed |
-|---|---|---|---|---|
-| Magic | 0.501 | 0.151 | 0.503 | 0.471 |
-| Pokemon | 0.412 | 0.230 | 0.414 | 0.418 |
-| Yu-Gi-Oh | 0.461 | 0.276 | 0.464 | 0.466 |
-
-Standard nDCG counts unjudged results as irrelevant. Condensed nDCG (Sakai 2007) drops them and keeps the full ideal ranking. Most of text E5's top 10 results are still unjudged, so its standard score understates it; on the condensed score the two embeddings are within 0.04 of each other. Co-occurrence is scored only on queries in its vocabulary (Magic: 2,535 of 3,046 annotated queries); text E5 on nearly all of them.
+The earlier text E5 comparison is withdrawn: experiment 0062 used a model
+fine-tuned on the evaluation set. A valid comparison needs an independent model,
+matched queries, and a frozen evaluation snapshot.
 
 See `docs/experimental_narrative.md` for a walkthrough of 63 experiments and `docs/failure_taxonomy.md` for categorized failure modes.
 
