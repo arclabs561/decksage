@@ -25,8 +25,9 @@ Run `scripts/evaluation/judge_audit.py --game <game>`.
    resolution collapses ([arXiv:2509.24678](https://arxiv.org/html/2509.24678)).
    If sd < 0.05 or one 0.1 bin holds most of the mass, fix the prompt or use
    per-dimension subscores before buying labels.
-2. **Agreement ceiling.** Krippendorff alpha per field. Synergy and
-   substitutability sit near 0.2 and 0.4, which caps every downstream number.
+2. **Agreement.** Estimate inter-annotator agreement per field on a documented
+   shared sample. Judge agreement is a diagnostic and is not an upper bound on
+   accuracy against independent human judgments.
 3. **Invariance.** Order swap should be near-exact for a symmetric score;
    paraphrase and boilerplate stripping should not move the score much.
    Invariance is necessary, not sufficient: a judge can be perfectly invariant
@@ -34,16 +35,32 @@ Run `scripts/evaluation/judge_audit.py --game <game>`.
 
 ## Stage 1: 50-100 human pairs
 
-Sample actively by judge-score decile plus the highest-disagreement items, and
-keep about 30 random pairs to check selection bias. Have three annotators cover
-30 items to estimate rater variance, which is the ceiling every later number is
-measured against. At n=50-100 and r about 0.8, the honest precision is about
-+/-0.10 on Spearman; a kappa can only be called roughly 0.6-0.8.
+Prepare a local, blinded review batch with:
 
-Then fit a monotone (isotonic) map from judge score to human score with
-cross-fitting, and report out-of-fold error. Propagate aggregates to the full
-judged set with prediction-powered inference rather than assuming the judge is
-calibrated ([PPI](https://www.science.org/doi/10.1126/science.adi6000),
+```sh
+uv run scripts/annotation/prepare_human_review.py --output-dir data-local/review-batch
+```
+
+`review.json` contains the card contexts and task but no judge scores; the
+separate selection ledger contains the scores and source hashes and must stay
+hidden until independent review is complete. A blank score is unreviewed,
+not zero. Reviewers should record identity, a 0–1 task-specific score and
+reasoning, or leave the score blank when the available context is insufficient.
+The sample combines a random pair-task reserve with score-stratified cases;
+it is not a representative gold set. It excludes explicitly failed and marked
+synthetic records, but missing provenance remains unknown.
+
+Sample by game, task and judge-score band, plus high-disagreement items, and
+reserve a separately drawn random sample to assess selection bias. Have
+multiple annotators independently review a shared subset, with an explicit
+rubric and adjudication protocol. Report uncertainty from the actual sample;
+do not assume a universal precision or agreement ceiling.
+
+If sample size and score coverage support it, evaluate a monotone calibration
+map with a held-out or cross-fitted assessment. Do not extrapolate beyond the
+reviewed distribution. Prediction-powered inference would require its sampling
+and inference assumptions to be justified before using it for corpus estimates
+([PPI](https://www.science.org/doi/10.1126/science.adi6000),
 [PPI++](https://arxiv.org/abs/2311.01453)).
 
 ## Known biases to test for
@@ -98,9 +115,8 @@ whole Stage 0 suite on every prompt change instead of once.
    families on the same pairs; report per-item spread. Treat spread as an
    uncertainty feature, never as truth. Proves: which pairs are unstable.
 3. **Anchored calibration (needs labels).** Fit a monotone map from judge score
-   to human score on 50-100 labelled pairs with cross-fitting, then propagate
-   aggregate estimates with PPI. Proves: the direction and size of the mapping,
-   and nothing outside the observed score range.
+   to human score, assess it out of sample, and quantify uncertainty. This
+   estimates calibration only for the reviewed population and score range.
 
 ### Augmentation as a calibration probe, not a label source
 
