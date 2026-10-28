@@ -4,7 +4,6 @@
 # dependencies = [
 #     "torch>=2.0.0",
 #     "torch-geometric>=2.4.0",
-#     "gensim>=4.3.0",
 #     "numpy>=1.26.0",
 # ]
 # ///
@@ -41,7 +40,6 @@ if not sys.stdout.isatty():
 
 import numpy as np
 import torch
-from gensim.models import KeyedVectors
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -212,6 +210,16 @@ def train_metapath2vec(
     return embeddings, loss_history
 
 
+def save_training_vectors(card_list: list[str], embeddings: np.ndarray, out_path: Path):
+    """Save a new portable artifact without overwriting an earlier run."""
+    from ml.similarity.named_vectors import NamedVectors
+
+    vectors = NamedVectors(card_list, embeddings)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    vectors.save(out_path)
+    return vectors
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Train MetaPath2Vec embeddings")
     parser.add_argument("--game", default="magic")
@@ -249,6 +257,11 @@ def main() -> int:
         "Default: chain all available types once.",
     )
     args = parser.parse_args()
+
+    suffix = f"_{args.output_suffix}" if args.output_suffix else ""
+    out_path = DATA_DIR / "embeddings" / f"{args.game}_metapath2vec{suffix}.npz"
+    if out_path.exists():
+        raise FileExistsError(f"Refusing to overwrite {out_path}; choose a new output suffix")
 
     print(f"{'=' * 60}")
     print(f"MetaPath2Vec Training [{args.game}]")
@@ -336,13 +349,7 @@ def main() -> int:
     norms = np.maximum(norms, 1e-8)
     embeddings = (embeddings / norms).astype(np.float32)
 
-    # Save as KeyedVectors
-    kv = KeyedVectors(vector_size=args.dim)
-    kv.add_vectors(card_list, embeddings)
-
-    suffix = f"_{args.output_suffix}" if args.output_suffix else ""
-    out_path = DATA_DIR / "embeddings" / f"{args.game}_metapath2vec{suffix}.wv"
-    kv.save(str(out_path))
+    kv = save_training_vectors(card_list, embeddings, out_path)
     print(f"  Saved {len(kv):,} embeddings to {out_path}")
 
     # Quick quality check
@@ -372,7 +379,7 @@ def main() -> int:
                     "--game",
                     args.game,
                     "--embedding",
-                    f"{args.game}_metapath2vec{suffix}",
+                    f"{args.game}_metapath2vec{suffix}.npz",
                     "--json",
                 ],
                 capture_output=True,

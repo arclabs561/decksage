@@ -23,8 +23,10 @@ The converter uses Gensim and its pickle-based loader for the source; only
 convert trusted artifacts. Keep the source and its possible sidecars. An
 existing output is refused. Point `EMBEDDINGS_PATH_MAGIC` at the new `.npz`
 to opt in; reverting to the old `.wv` path restores the previous reader. The
-API and the two evaluation readers support explicit `.npz` paths; other readers
-and writers still require migration. Conversion does not retrain embeddings.
+API and the two evaluation readers support explicit `.npz` paths. New
+MetaPath2Vec training output uses `.npz` and refuses to overwrite an existing
+run; use a distinct `--output-suffix` for each run. Other readers and writers
+still require migration. Conversion does not retrain embeddings.
 
 NumPy is already a project dependency and provides exact search at current
 dataset sizes. [Faiss](https://faiss.ai/index.html) is an option if measured

@@ -90,3 +90,19 @@ def test_evaluators_load_explicit_portable_vectors(tmp_path, monkeypatch):
     monkeypatch.setattr(per_mode, "DATA_DIR", tmp_path)
     assert fusion.load_vectors(path).most_similar("A", 1)[0][0] == "B"
     assert per_mode.load_embeddings("magic", "magic_sample.npz").most_similar("A", 1)[0][0] == "B"
+
+
+def test_metapath_output_is_portable_and_does_not_overwrite(tmp_path):
+    pytest.importorskip("torch")
+    root = Path(__file__).resolve().parents[1]
+    spec = importlib.util.spec_from_file_location(
+        "train_metapath2vec", root / "scripts/training/train_metapath2vec.py"
+    )
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    path = tmp_path / "embeddings" / "magic_metapath2vec.npz"
+    source = np.array([[1, 0], [1, 1]], dtype=np.float32)
+    module.save_training_vectors(["A", "B"], source, path)
+    np.testing.assert_array_equal(NamedVectors.load(path).vectors, source)
+    with pytest.raises(FileExistsError):
+        module.save_training_vectors(["A", "B"], source, path)
