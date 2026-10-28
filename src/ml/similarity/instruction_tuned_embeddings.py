@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Instruction-Tuned Embeddings for Card Similarity
+Task-prompted embeddings for card similarity
 
-Uses E5-base-instruct for zero-shot card embeddings with task-specific instructions.
-Handles new cards immediately without retraining.
+Uses E5-base-v2 by default with task text prepended to card descriptions.
+The default model is not an instruction-tuned model; prompt effectiveness
+for card tasks has not been established.
 """
 
 from __future__ import annotations
@@ -33,7 +34,7 @@ except ImportError:
 
 class InstructionTunedCardEmbedder:
     """
-    Instruction-tuned card embedder using E5-base-instruct.
+    Card embedder with task text prepended to the input.
 
     Supports task-specific instructions for different similarity tasks:
     - Functional substitution
@@ -64,10 +65,10 @@ class InstructionTunedCardEmbedder:
         default_instruction: str = "substitution",
     ):
         """
-        Initialize instruction-tuned embedder.
+        Initialize the card embedder.
 
         Args:
-            model_name: HuggingFace model name (default: E5-base-instruct)
+            model_name: HuggingFace model name (default: intfloat/e5-base-v2)
             cache_dir: Cache directory for model
             default_instruction: Default instruction type
         """

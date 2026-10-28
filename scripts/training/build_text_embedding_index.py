@@ -14,8 +14,8 @@
 Pre-encode all cards with E5 text embeddings for candidate generation.
 
 Builds a numpy matrix of text embeddings for the full card catalog,
-enabling text-based candidate retrieval in fusion (breaking the
-co-occurrence echo chamber that limits catalog coverage to 11.6%).
+enabling text-based candidate retrieval in fusion. Coverage improvements
+require measurement on a frozen evaluation set.
 
 Usage:
     uv run scripts/training/build_text_embedding_index.py --game magic
