@@ -137,7 +137,7 @@ except ImportError:
     logger = logging.getLogger("decksage.api")
 
 if not HAS_GENSIM:
-    logger.warning("gensim is not installed; embedding features will be unavailable")
+    logger.info("gensim is not installed; legacy .wv files will be unavailable")
 
 
 # ---------------------------------------------------------------------------
@@ -164,7 +164,14 @@ def load_embeddings_to_state(
     _emb_size = _ep.stat().st_size / 1e6 if _ep.exists() else 0
     logger.info("Loading embeddings: %s (%.1f MB)", emb_path, _emb_size)
     _t0 = _time.monotonic()
-    emb = KeyedVectors.load(emb_path)
+    if _ep.suffix == ".npz":
+        from ..similarity.named_vectors import NamedVectors
+
+        emb = NamedVectors.load(_ep)
+    elif HAS_GENSIM:
+        emb = KeyedVectors.load(emb_path)
+    else:
+        raise RuntimeError("gensim is required to read legacy .wv embeddings")
     state.embeddings = emb
     state.model_info = {
         "num_cards": len(emb),
@@ -363,7 +370,7 @@ async def lifespan(app: FastAPI):
         pairs_path = os.getenv(pairs_key)
         if not pairs_path:
             # Auto-discover pairs file: prefer largest available
-            pairs_dir = PATHS.project_root / "data/processed"
+            pairs_dir = PATHS.data / "processed"
             candidates = sorted(
                 pairs_dir.glob(f"pairs_{game}_*.csv"),
                 key=lambda p: p.stat().st_size,
@@ -377,7 +384,7 @@ async def lifespan(app: FastAPI):
         signals_dir = os.getenv(signals_key) or None
 
         if emb_path:
-            if not HAS_GENSIM:
+            if not HAS_GENSIM and Path(emb_path).suffix != ".npz":
                 logger.error(
                     "gensim is not installed; cannot load embeddings for %s from %s",
                     game,
@@ -504,7 +511,7 @@ async def lifespan(app: FastAPI):
         state = get_state(game)
 
         # Banlists
-        banlist_path = PATHS.project_root / f"data/banlists/{game}_banlists.json"
+        banlist_path = PATHS.data / "banlists" / f"{game}_banlists.json"
         if banlist_path.exists():
             try:
                 with open(banlist_path, encoding="utf-8") as f:
@@ -518,7 +525,7 @@ async def lifespan(app: FastAPI):
         archetypes_index: dict[str, list[str]] = {}
 
         # From game_knowledge (core_cards + flex_slots -> archetype name)
-        gk_path = PATHS.project_root / f"data/game_knowledge/{game}.json"
+        gk_path = PATHS.data / "game_knowledge" / f"{game}.json"
         if gk_path.exists():
             try:
                 with open(gk_path, encoding="utf-8") as f:
@@ -539,7 +546,7 @@ async def lifespan(app: FastAPI):
 
         # YGO: merge yugioh_archetype_mapping.json (card -> single archetype)
         if game == "yugioh":
-            ygo_map_path = PATHS.project_root / "data/yugioh_archetype_mapping.json"
+            ygo_map_path = PATHS.data / "yugioh_archetype_mapping.json"
             if ygo_map_path.exists():
                 try:
                     with open(ygo_map_path, encoding="utf-8") as f:
@@ -586,7 +593,7 @@ async def lifespan(app: FastAPI):
 
         # Scryfall legality + prices (Magic-only, shared across games but only useful for magic)
         if game == "magic":
-            legality_path = PATHS.project_root / "data/processed/scryfall_legality.json"
+            legality_path = PATHS.data / "processed" / "scryfall_legality.json"
             if legality_path.exists():
                 try:
                     with open(legality_path, encoding="utf-8") as f:
@@ -595,7 +602,7 @@ async def lifespan(app: FastAPI):
                 except (OSError, ValueError, KeyError):
                     logger.debug("Failed to load Scryfall legality data", exc_info=True)
 
-            prices_path = PATHS.project_root / "data/processed/scryfall_prices.json"
+            prices_path = PATHS.data / "processed" / "scryfall_prices.json"
             if prices_path.exists():
                 try:
                     with open(prices_path, encoding="utf-8") as f:
@@ -2262,15 +2269,17 @@ def main():
         default=os.getenv("DECKSAGE_DEFAULT_GAME", "magic"),
         help="Game name (magic|pokemon|yugioh). For true multi-game serving, use DECKSAGE_GAMES + per-game env vars.",
     )
-    parser.add_argument("--embeddings", type=str, required=True, help="Path to .wv file")
+    parser.add_argument(
+        "--embeddings", type=str, required=True, help="Path to .npz or legacy .wv file"
+    )
     parser.add_argument("--pairs", type=str, help="Path to pairs.csv (for Jaccard)")
     parser.add_argument("--host", type=str, default="0.0.0.0")
     parser.add_argument("--port", type=int, default=8000)
 
     args = parser.parse_args()
 
-    if not HAS_GENSIM:
-        logger.error("gensim not installed")
+    if not HAS_GENSIM and Path(args.embeddings).suffix != ".npz":
+        logger.error("gensim is required to read legacy .wv embeddings")
         return 1
 
     # Load embeddings and graph

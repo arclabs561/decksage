@@ -57,6 +57,7 @@ if TYPE_CHECKING:
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 DEFAULT_EMBEDDINGS = {
     "magic": "magic_v7_spectral_mu35",
@@ -146,10 +147,14 @@ def load_embeddings(game: str, name: str | None = None) -> KeyedVectors | None:
     """Load embedding file."""
     if name is None:
         name = DEFAULT_EMBEDDINGS.get(game, f"{game}_cleaned_v4")
-    path = DATA_DIR / "embeddings" / f"{name}.wv"
+    path = DATA_DIR / "embeddings" / (name if name.endswith(".npz") else f"{name}.wv")
     if not path.exists():
         print(f"Embedding not found: {path}")
         return None
+    if path.suffix == ".npz":
+        from ml.similarity.named_vectors import NamedVectors
+
+        return NamedVectors.load(path)
     from gensim.models import KeyedVectors
 
     return KeyedVectors.load(str(path))

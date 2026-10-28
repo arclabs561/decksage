@@ -44,6 +44,7 @@ if not sys.stdout.isatty():
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Task -> score field is shared with eval_per_mode.py (ADR-0001); see task_labels.py.
 sys.path.insert(0, str(Path(__file__).resolve().parent))
@@ -66,7 +67,11 @@ SPLIT_CHOICES = ("all", "train", "holdout")
 
 
 def load_vectors(path: Path):
-    """Load a legacy vector artifact only when evaluation requires it."""
+    """Load a portable artifact or a legacy vector artifact."""
+    if path.suffix == ".npz":
+        from ml.similarity.named_vectors import NamedVectors
+
+        return NamedVectors.load(path)
     from gensim.models import KeyedVectors
 
     return KeyedVectors.load(str(path))
@@ -186,7 +191,8 @@ def main() -> int:
     # Load embeddings
     sources = []
     for name in source_names:
-        path = DATA_DIR / "embeddings" / f"{args.game}_{name}.wv"
+        filename = f"{args.game}_{name}" if name.endswith(".npz") else f"{args.game}_{name}.wv"
+        path = DATA_DIR / "embeddings" / filename
         if not path.exists():
             print(f"  WARNING: {path} not found, skipping")
             continue
