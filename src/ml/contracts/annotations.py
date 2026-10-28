@@ -63,6 +63,17 @@ class EvaluationRecord(BaseModel):
     error: bool = False
     llm_model: str | None = None
     provenance: dict | None = Field(default=None, validation_alias="_provenance")
+    similarity_score: float | None = Field(
+        default=None, ge=0, le=1, allow_inf_nan=False, strict=True
+    )
+    functional_score: float | None = Field(
+        default=None, ge=0, le=1, allow_inf_nan=False, strict=True
+    )
+    synergy_score: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False, strict=True)
+    meta_relevance: float | None = Field(default=None, ge=0, le=1, allow_inf_nan=False, strict=True)
+    substitutability: float | None = Field(
+        default=None, ge=0, le=1, allow_inf_nan=False, strict=True
+    )
 
     @model_validator(mode="after")
     def no_augmentation(self) -> EvaluationRecord:

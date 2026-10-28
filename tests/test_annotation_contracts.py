@@ -19,6 +19,7 @@ from ml.contracts.annotations import (
     Task,
     TestSet,
     curate_evaluation_data,
+    is_evaluation_record,
 )
 from ml.utils.paths import PATHS
 
@@ -108,6 +109,11 @@ def test_judge_response_cannot_fill_missing_or_invalid_scores_with_zero():
 def test_evaluation_contract_rejects_ineligible_judgments(marker):
     with pytest.raises(ValidationError):
         QueryEntry.model_validate({"annotations": [{"candidate": "Bolt", **marker}]})
+
+
+@pytest.mark.parametrize("value", [float("nan"), float("inf"), -0.1, 1.1, "0.8", True])
+def test_evaluation_ingress_rejects_malformed_scores(value):
+    assert not is_evaluation_record({"candidate": "Bolt", "functional_score": value})
 
 
 def test_missing_score_stays_none_not_zero():
