@@ -11,8 +11,8 @@
 Calibrate fusion signal weights against annotated test sets.
 
 Grid-searches FusionWeights to maximize nDCG@k over judged candidates (the
-condensed variant: unjudged results are ignored, and the ideal ranking is
-truncated to the number of judged hits). The grid runs on an 80% query split
+condensed variant: unjudged results are ignored, while the ideal ranking uses
+all judged candidates). The grid runs on an 80% query split
 and the selected weights are reported on the held-out 20%; a fit-on-everything
 number is not comparable to eval_per_mode.py.
 
@@ -71,7 +71,13 @@ def load_test_set(game: str) -> dict:
         log.error(f"Test set not found: {path}")
         return {}
     with open(path) as f:
-        return json.load(f)
+        data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    data, excluded = curate_evaluation_data(data)
+    if excluded:
+        log.warning("Excluded %s failed, synthetic, or fallback judgments", excluded)
+    return data
 
 
 def load_graph(game: str):
@@ -95,48 +101,22 @@ def load_graph(game: str):
 
 
 def _ground_truth(labels) -> dict[str, float]:
-    """Normalize a v2 annotation entry into {card: relevance}.
-
-    v2 test sets store `queries[card]` as a dict with an `annotations` list and
-    relevance buckets. Legacy files store a list of labels. Reading the dict
-    with `for label in labels` yielded its keys and silently scored every key
-    as relevance 1.0, which made nDCG meaningless.
-    """
+    """Read substitution scores without substituting composite bucket labels."""
     gt: dict[str, float] = {}
     if isinstance(labels, dict):
         for ann in labels.get("annotations", []):
             name = ann.get("candidate") or ann.get("card") or ""
-            if not name:
+            score = ann.get("functional_score")
+            if not name or score is None or ann.get("task") not in (None, "", "substitute"):
                 continue
-            score = ann.get("functional_score", ann.get("similarity_score", 0)) or 0
             gt[name] = max(gt.get(name, 0.0), float(score))
-        if gt:
-            return gt
-        for bucket, value in (
-            ("highly_relevant", 1.0),
-            ("relevant", 0.6),
-            ("somewhat_relevant", 0.3),
-            ("marginally_relevant", 0.1),
-        ):
-            for name in labels.get(bucket, []):
-                gt[name] = max(gt.get(name, 0.0), value)
-        return gt
-
-    for label in labels or []:
-        if isinstance(label, dict):
-            name = label.get("candidate") or label.get("card", "")
-            score = label.get("functional_score", label.get("score", 0))
-        else:
-            name, score = str(label), 1.0
-        if name:
-            gt[name] = float(score)
     return gt
 
 
-def compute_ndcg(relevances: list[float], k: int) -> float:
+def compute_ndcg(relevances: list[float], ideal_relevances: list[float], k: int) -> float:
     """Compute nDCG@k."""
     dcg = sum(r / np.log2(i + 2) for i, r in enumerate(relevances[:k]))
-    ideal = sorted(relevances, reverse=True)
+    ideal = sorted(ideal_relevances, reverse=True)
     idcg = sum(r / np.log2(i + 2) for i, r in enumerate(ideal[:k]))
     return dcg / idcg if idcg > 0 else 0.0
 
@@ -156,14 +136,14 @@ def evaluate_weights(
     visual_index_matrix,
     visual_index_names,
     k: int = 10,
-) -> float:
-    """Evaluate a weight config. Returns condensed nDCG@k."""
+) -> float | None:
+    """Return condensed nDCG only when every eligible query has judged results."""
     from ml.similarity.fusion import FusionWeights, WeightedLateFusion
 
     # Skip configs where all weights are 0
     total = w_embed + w_jaccard + w_functional + w_text + w_visual
     if total <= 0:
-        return 0.0
+        return None
 
     weights = FusionWeights(
         embed=w_embed,
@@ -201,21 +181,23 @@ def evaluate_weights(
 
         gt = _ground_truth(labels)
 
-        if not gt:
+        if not gt or max(gt.values()) <= 0:
             continue
 
         results = fusion.similar(query_card, k=k)
-        if not results:
-            continue
+        relevances = [gt[card] for card, _ in results if card in gt]
+        if not relevances:
+            return None
+        ndcg_scores.append(compute_ndcg(relevances, list(gt.values()), k))
 
-        relevances = [gt.get(card, 0.0) for card, _ in results]
-        ndcg_scores.append(compute_ndcg(relevances, k))
-
-    return float(np.mean(ndcg_scores)) if ndcg_scores else 0.0
+    return float(np.mean(ndcg_scores)) if ndcg_scores else None
 
 
 def calibrate(game: str, quick: bool = False) -> dict | None:
     """Grid-search fusion weights for a game."""
+    out_path = DATA_DIR / "embeddings" / f"fusion_weights_{game}.json"
+    if out_path.exists():
+        raise FileExistsError(f"Refusing to overwrite {out_path}")
     grid = QUICK_GRID if quick else FULL_GRID
 
     log.info(f"\n{'=' * 60}")
@@ -335,7 +317,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
             vis_matrix,
             vis_names,
         )
-        if score > best_score:
+        if score is not None and score > best_score:
             best_score = score
             best_weights = vals
             log.info(
@@ -346,7 +328,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
             )
 
     elapsed = time.time() - t0
-    holdout_score = 0.0
+    holdout_score = None
     if best_weights is not None:
         holdout_score = evaluate_weights(
             game,
@@ -365,6 +347,9 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
         )
     log.info(f"\nCalibration done in {elapsed:.0f}s")
     log.info(f"Fit nDCG@10: {best_score:.4f}")
+    if best_weights is None or holdout_score is None:
+        log.error("Refusing to publish weights: comparable judged coverage is unavailable")
+        return None
     log.info(f"Holdout nDCG@10: {holdout_score:.4f}")
     log.info(f"Best weights: {best_weights}")
 
@@ -385,9 +370,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     }
 
     # Save
-    out_dir = DATA_DIR / "embeddings"
-    out_path = out_dir / f"fusion_weights_{game}.json"
-    with open(out_path, "w") as f:
+    with open(out_path, "x") as f:
         json.dump(result, f, indent=2)
     log.info(f"Saved to {out_path}")
 
@@ -420,7 +403,7 @@ def main() -> int:
                 f"v={w['visual_embed']:.2f}"
             )
 
-    return 0
+    return 0 if len(results) == len(games) else 1
 
 
 if __name__ == "__main__":
