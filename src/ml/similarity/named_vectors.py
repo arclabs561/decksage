@@ -65,6 +65,18 @@ class NamedVectors:
         order = np.argsort(-scores, kind="stable")
         return [(self.index_to_key[i], float(scores[i])) for i in order if i != query_index][:topn]
 
+    def similar_by_vector(self, vector: np.ndarray, topn: int = 10) -> list[tuple[str, float]]:
+        """Rank all names for a nonzero query vector, including any matching seed."""
+        query = np.asarray(vector)
+        if query.shape != (self.vector_size,) or not np.isfinite(query).all():
+            raise ValueError("query vector must be finite and match the embedding dimension")
+        norm = np.linalg.norm(query)
+        if not np.isfinite(norm) or norm == 0 or topn < 0:
+            raise ValueError("query norm must be finite and nonzero; topn must be nonnegative")
+        scores = self._normalized @ (query / norm)
+        order = np.argsort(-scores, kind="stable")[:topn]
+        return [(self.index_to_key[i], float(scores[i])) for i in order]
+
     def save(self, path: str | Path) -> None:
         """Create a new portable artifact; never overwrite an existing file."""
         with Path(path).open("xb") as handle:

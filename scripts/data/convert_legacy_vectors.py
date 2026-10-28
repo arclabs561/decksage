@@ -31,8 +31,11 @@ def main() -> int:
     legacy = KeyedVectors.load(str(args.source))
     vectors = NamedVectors(legacy.index_to_key, legacy.vectors)
     vectors.save(args.output)
+    with args.source.open("rb") as source, args.output.open("rb") as output:
+        source_hash = hashlib.file_digest(source, "sha256").hexdigest()
+        output_hash = hashlib.file_digest(output, "sha256").hexdigest()
     print(
-        f"converted {len(vectors)} vectors; output sha256={hashlib.sha256(args.output.read_bytes()).hexdigest()}"
+        f"converted {len(vectors)} vectors; source sha256={source_hash} output sha256={output_hash}"
     )
     return 0
 

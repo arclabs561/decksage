@@ -18,6 +18,9 @@ def test_roundtrip_and_cosine_retrieval(tmp_path):
     np.testing.assert_array_equal(loaded.vectors, vectors.vectors)
     assert [name for name, _ in loaded.most_similar("A", 2)] == ["B", "C"]
     assert loaded.similarity("A", "B") == pytest.approx(1 / np.sqrt(2))
+    assert [name for name, _ in loaded.similar_by_vector(np.array([1.0, 0.0]), 2)] == ["A", "B"]
+    with pytest.raises(ValueError, match="query norm"):
+        loaded.similar_by_vector(np.zeros(2))
     with pytest.raises(FileExistsError):
         vectors.save(path)
 
