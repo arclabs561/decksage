@@ -206,6 +206,7 @@ qa/*
 /data/data-*.json
 /data/data-*.md
 .agents/
+.taste-skill/
 
 # ADRs are tracked here; the global excludes file ignores docs/adr/
 !docs/adr/
