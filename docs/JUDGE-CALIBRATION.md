@@ -59,6 +59,28 @@ metadata. It does not mean the labels are correct: duplicate rounds, bucket
 mismatches and evidence-poor records are still reported, and a judgment can be
 wrong in ways metadata cannot express.
 
+## Coverage: the denominator a published number carries
+
+An nDCG without its denominator is not a measurement.
+
+- **Query coverage.** Eligible queries that retrieved at least one judged
+  candidate, over all eligible queries. This is the `coverage` field of
+  `evaluate_weights_partial`. On the canonical Magic set the shipped weights
+  reach 0.881 at k=10 and 0.887 at k=50.
+- **Slot coverage.** Judged relevance among retrieved slots: 0.870 at k=10 but
+  0.203 at k=50, because the judged pool averages 14 candidates.
+- **Ideal completeness.** Queries whose judged set fills k candidates, so IDCG@k
+  needs no imputation: 0.886 at k=10, 0.003 at k=50.
+
+Publish an absolute nDCG only when query coverage at the reporting k is at least
+0.85; below that, print it only as coverage-limited. Print query coverage with
+its fraction and k beside every number, record slot and ideal coverage in the
+experiment entry, and print both arms' coverage and the number of shared queries
+beside any delta. Do not subtract arms' means when they scored different query
+sets, and do not read deep-k numbers as judged. Fix PYTHONHASHSEED when
+publishing: tied scores are ordered by set iteration, so counts move about half
+a percent between runs.
+
 ## Stage 1: 50-100 human pairs
 
 Prepare a local, blinded review batch with:
