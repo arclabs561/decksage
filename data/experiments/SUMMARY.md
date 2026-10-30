@@ -48,13 +48,13 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0040 | 2026-03-21 | Box containment POC (deck-contains-card) | magic | 2,001 decks, 127,994 triples | AUC | 0.504 (no separation, degenerate) | [0040](0040_box_containment_poc.yaml) |
 | 0041 | 2026-03-21 | Epoch sweep (leak fix) | all | 4-35K cards, no ann edges | sub nDCG | poke:0.096 yug:0.311 (160ep) | [invalid] [0041](0041_epoch_sweep_leak_fix.yaml) |
 | 0042 | 2026-03-21 | Cleora iteration sweep | all | 4-35K cards, 500K-29M edges | sub nDCG | M:0.103 P:0.103 Y:0.284 | [invalid] [0042](0042_cleora_iteration_sweep.yaml) |
-| 0043 | 2026-03-21 | Cone containment (cones > boxes) | magic | 116 train triples, 282 cards | AUC | 0.700 (vs box 0.500) | [0043](0043_cone_containment.yaml) |
+| 0043 | 2026-03-21 | Cone containment (cones > boxes) | magic | 116 train triples, 282 cards | AUC | 0.700 (vs box 0.500) | [invalid] [0043](0043_cone_containment.yaml) |
 | 0044 | 2026-03-21 | Cone + transitive closure | all | 145-344 upgrade pairs + TC | AUC | M:0.762 P:0.547 Y:0.649 | [0044](0044_cone_transitive_closure.yaml) |
-| 0045 | 2026-03-21 | Cone + TC + hard negatives | all | 146-398 pairs + hard negs | AUC | M:0.857 P:0.603 Y:0.553 | [0045](0045_cone_tc_hardneg.yaml) |
+| 0045 | 2026-03-21 | Cone + TC + hard negatives | all | 146-398 pairs + hard negs | AUC | M:0.857 P:0.603 Y:0.553 | [invalid] [0045](0045_cone_tc_hardneg.yaml) |
 | 0046 | 2026-03-22 | MetaPath2Vec selective (deck+enriched+keyword) | all | 331K+1.46M+83K edges (Magic) | sub nDCG | selective run never evaluated **[incomplete]** | [0046](0046_metapath2vec_selective.yaml) |
 | 0047 | 2026-03-22 | v6 blended: PecanPy + oracle text edges | all | merged + oracle_text + game edges | sub nDCG | no blend nDCG measured **[incomplete]** | [0047](0047_v6_blended_oracle_text.yaml) |
 | 0048 | 2026-03-21 | MetaPath2Vec v2: 8 edge types | magic | 35K cards, 12M edges (8 types) | sub nDCG | 0.114 INFLATED (Commander dilutes signal, regressed from 0.228) | [0048](0048_metapath2vec_v2_expanded_edges.yaml) |
-| 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [0049](0049_card_containment.yaml) |
+| 0049 | 2026-03-21 | Card containment (box embeddings) | all | M:168 P:292 Y:263 train triples | AUC | M:0.500 P:0.583 Y:0.500 (degenerate, too sparse) | [invalid] [0049](0049_card_containment.yaml) |
 | 0050 | 2026-03-22 | Expanded Commander Cleora (51K decks) | magic | 25.2M Commander edges | sub nDCG | 0.100 (unchanged from 18K decks, Commander != cross-format sub) | [0050](0050_expanded_commander_cleora.yaml) |
 | 0051 | 2026-03-22 | Magic epoch sweep (no leakage) | magic | 35K cards, self-supervised only | sub nDCG | 0.127 INFLATED at 80ep (best Magic pre-dedup, +27% over Cleora) | [invalid] [0051](0051_magic_epoch_sweep.yaml) |
 | 0052 | 2026-03-22 | Annotation dedup correction | all | deduped test sets | sub nDCG | Selected nDCG comparisons: 84/78/101% higher before dedup; snapshot provenance incomplete | [0052](0052_dedup_correction.yaml) |

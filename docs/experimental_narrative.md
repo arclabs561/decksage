@@ -219,6 +219,13 @@ Fill holes -> get true quality -> train better embedding -> fill new holes from 
 
 ## Phase 8: Box and Cone Embeddings for Upgrade Ordering (exp 0040, 0043-0045, 0049)
 
+> **Withdrawn 2026-10-30.** Experiments 0043, 0045 and 0049 trained on
+> `upgrade_direction` judgments from the evaluation sets. Train/eval separation
+> forbids that, and the loaders now refuse; the cone AUC figures below are
+> retired and must not be quoted. Experiment 0040 (deck containment) used deck
+> corpora, not eval judgments, and remains a valid negative result about boxes
+> on deck membership.
+
 ### Box Embeddings: Degenerate on TCG Data (exp 0040, 0049)
 
 Trained subsumer's BoxEmbeddingTrainer on (deck, contains, card) triples. AUC 0.504 -- random. Root cause: TCG decks share many staple cards, so the optimal box solution is "expand all boxes to contain everything." The same degenerate behavior appeared with card-card containment (168-365 training triples too sparse).

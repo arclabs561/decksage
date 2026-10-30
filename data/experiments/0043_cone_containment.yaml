@@ -3,6 +3,13 @@ date: "2026-03-21"
 title: "Cone containment: AUC 0.70 on card upgrades (cones > boxes)"
 game: magic
 
+validity:
+  status: invalid
+  reason: >
+    Trained on annotated_magic_v2.json upgrade_direction pairs, which are
+    evaluation judgments. The train/eval separation rule forbids using them as
+    training data; scripts/training/train_cone_upgrades.py now raises on load.
+
 hypothesis: >
   Cone embeddings (via subsumer ConeEmbeddingTrainer) will outperform
   box embeddings for card upgrade partial order because cones naturally

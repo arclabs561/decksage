@@ -3,6 +3,13 @@ date: "2026-03-21"
 title: "Card-card containment via subsumer -- too sparse, needs more data"
 game: all
 
+validity:
+  status: invalid
+  reason: >
+    Trained on annotated_*_v2.json upgrade_direction pairs, which are
+    evaluation judgments. The train/eval separation rule forbids using them as
+    training data; scripts/training/train_card_containment.py now raises on load.
+
 hypothesis: >
   Box embeddings trained on 712 upgrade_direction pairs (A upgrades B = A's
   box contains B's box) will produce AUC > 0.7 for held-out upgrade pairs
