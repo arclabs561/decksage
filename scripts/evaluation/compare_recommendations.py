@@ -32,7 +32,9 @@ The only thing that differs between arms is how an already-retrieved candidate i
 scored. Arms share one interface (``Scorer.score``): the baseline is one source
 with weight 1.0, the candidate is one or more sources with optional weights, so a
 fused artefact or a late-fusion scorer plugs in through the command line without
-editing this file.
+editing this file. A source may be an embedding or a non-learned heuristic
+(``--baseline heuristic:b1|b2``, see ``heuristic_scorers.py``); a heuristic is a
+single source with weight 1.0 and is subject to the same candidate-set checks.
 
 Verdicts
 --------
@@ -310,7 +312,37 @@ class Scorer:
         return {candidate: float(value) for candidate, value in zip(candidates, normalized)}
 
 
-def build_arm(arm: str, specs: Sequence[str], weights: Sequence[float] | None) -> Scorer:
+def build_arm(
+    arm: str,
+    specs: Sequence[str],
+    weights: Sequence[float] | None,
+    *,
+    game: str | None = None,
+    metadata: Path | None = None,
+) -> Scorer:
+    """One arm: an embedding source, or a non-learned heuristic source.
+
+    A heuristic is a single source with weight 1.0 and gets the same treatment as
+    an embedding everywhere else -- retrieval, scoring and the fixed-candidate-set
+    assertion are unchanged. It must not be mixed with embeddings in one arm,
+    because its scores are cosine-like but not on the same scale.
+    """
+    from heuristic_scorers import HeuristicError, build_heuristic, is_heuristic_spec
+
+    heuristic_specs = [spec for spec in specs if is_heuristic_spec(spec)]
+    if heuristic_specs:
+        if len(specs) != 1 or weights:
+            raise HarnessRefusal(
+                f"arm {arm!r} names a heuristic ({heuristic_specs[0]!r}); a heuristic arm "
+                "takes exactly one source and no weights"
+            )
+        if game is None:
+            raise HarnessRefusal(f"arm {arm!r} needs a game to resolve heuristic metadata")
+        try:
+            source = build_heuristic(heuristic_specs[0], game, metadata)
+        except HeuristicError as exc:
+            raise HarnessRefusal(str(exc)) from exc
+        return Scorer(arm=arm, sources=(source,), weights=(1.0,))
     paths = [resolve_embedding_path(spec) for spec in specs]
     indexes = [
         SourceIndex.build(spec, path, load_vectors(path))
@@ -643,7 +675,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--baseline",
         default=None,
-        help="baseline embedding name or path (default: the game's deployed embedding)",
+        help=(
+            "baseline embedding name or path (default: the game's deployed "
+            "embedding); 'heuristic:b1' or 'heuristic:b2' names a non-learned "
+            "baseline from scripts/evaluation/heuristic_scorers.py"
+        ),
     )
     parser.add_argument(
         "--candidate-sources",
@@ -657,6 +693,15 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--metadata-dir", type=Path, default=None, help="card metadata for the gate"
+    )
+    parser.add_argument(
+        "--heuristic-metadata",
+        type=Path,
+        default=None,
+        help=(
+            "enriched attribute table for a heuristic arm "
+            "(default: data/processed/card_attributes_<game>_enriched.csv)"
+        ),
     )
     parser.add_argument(
         "--allow-contradictions",
@@ -706,8 +751,16 @@ def resolve_inputs(args: argparse.Namespace) -> dict[str, Any]:
     baseline_spec = args.baseline or DEFAULT_BASELINE.get(args.game)
     if not baseline_spec:
         raise HarnessRefusal(f"no default baseline embedding for {args.game!r}; pass --baseline")
-    baseline = build_arm("baseline", (baseline_spec,), None)
-    candidate = build_arm("candidate", sources, weights)
+    baseline = build_arm(
+        "baseline",
+        (baseline_spec,),
+        None,
+        game=args.game,
+        metadata=args.heuristic_metadata,
+    )
+    candidate = build_arm(
+        "candidate", sources, weights, game=args.game, metadata=args.heuristic_metadata
+    )
     judged, label_counters = judged_pairs(test_set, args.task)
     return {
         "test_set_path": test_set_path,
@@ -764,6 +817,14 @@ def reason_counts(excluded: Sequence[Mapping[str, str]]) -> dict[str, int]:
     return dict(counts.most_common())
 
 
+def arm_scale(scorer: Scorer) -> str:
+    """How to describe an arm's score space in the plan printout."""
+    source = scorer.sources[0]
+    if getattr(source, "dim", 0) == 0:
+        return f"heuristic, {len(source.keys)} cards"
+    return f"dim {source.dim}"
+
+
 def plan_lines(
     resolved: Mapping[str, Any],
     args: argparse.Namespace,
@@ -780,9 +841,9 @@ def plan_lines(
         f"excluded_records={info['excluded_records']}",
         f"  gate        {resolved['gate']['status']}: {resolved['gate']['summary']}",
         f"  baseline    {' + '.join(f'{s.name}*{w:g}' for s, w in zip(baseline.sources, baseline.weights, strict=True))}"
-        f" (dim {baseline.sources[0].dim})",
+        f" ({arm_scale(baseline)})",
         f"  candidate   {' + '.join(f'{s.name}*{w:g}' for s, w in zip(candidate.sources, candidate.weights, strict=True))}"
-        f" (dim {candidate.sources[0].dim})",
+        f" ({arm_scale(candidate)})",
         f"  retrieval   depth {args.depth} from the baseline, shared by both arms",
         f"  metrics     nDCG@{args.k} and recall@{args.k}, relevant at >= {args.relevance_threshold:g}",
         f"  stats       paired bootstrap {args.bootstrap_resamples} resamples, seed {args.seed}",
