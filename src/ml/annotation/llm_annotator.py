@@ -189,7 +189,7 @@ class CardSimilarityAnnotation(BaseModel):
     # Provenance fingerprint
     model_name: str | None = Field(
         default=None,
-        description="Full model ID on provider (e.g., 'anthropic/claude-sonnet-4-6')",
+        description="Full model ID on provider (e.g., 'anthropic/claude-sonnet-4.6')",
     )
     model_params: dict[str, Any] | None = Field(
         default=None, description="Model parameters (temperature, max_tokens, etc.)"

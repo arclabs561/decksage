@@ -4,13 +4,14 @@
 # dependencies = [
 #     "numpy>=1.24.0",
 #     "gensim>=4.3.0",
+#     "pydantic>=2.0.0",
 # ]
 # ///
 """
 Compare nDCG using raw scores vs Dawid-Skene consensus-weighted scores.
 
-Tests whether probabilistic aggregation of multi-judge annotations
-produces better ground truth than naive averaging.
+Compares metrics under two different label weightings. This cannot determine
+which labels are more accurate without an independent reference.
 
 Uses per-model reliability from Dawid-Skene (experiment 0027):
 - claude_sonnet_4_6: 0.831 (most reliable)
@@ -35,6 +36,8 @@ from gensim.models import KeyedVectors
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 # Per-model reliability weights from Dawid-Skene analysis
 MODEL_RELIABILITY = {
@@ -48,8 +51,11 @@ MODEL_RELIABILITY = {
     "openai/gpt-4o-mini": 0.636,
     "openai/gpt-4.1-nano": 0.636,
     "gemini_3_1_pro": 0.536,
+    # Measured on a model OpenRouter no longer serves. The key names the model the
+    # number came from; it is not a callable pin. Replacement: google/gemini-2.5-flash-lite.
     "google/gemini-2.0-flash-lite": 0.536,
     "deepseek_v3_2": 0.495,
+    # Same: retired slug, recorded measurement. Replacement: deepseek/deepseek-chat-v3-0324.
     "deepseek/deepseek-chat-v3": 0.495,
 }
 
@@ -76,6 +82,11 @@ def eval_game(game: str, embedding_name: str, k: int = 10) -> dict:
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     with open(test_path) as f:
         test_data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    test_data, excluded = curate_evaluation_data(test_data)
+    if excluded:
+        print(f"Excluded {excluded} ineligible judgments", file=sys.stderr)
 
     emb_path = DATA_DIR / "embeddings" / f"{embedding_name}.wv"
     kv = KeyedVectors.load(str(emb_path))
@@ -129,13 +140,13 @@ def eval_game(game: str, embedding_name: str, k: int = 10) -> dict:
         # nDCG with raw scores
         raw_rel = [raw_gt_final.get(c, 0.0) for c, _ in neighbors]
         raw_ideal = sorted(raw_gt_final.values(), reverse=True)
-        if max(raw_ideal[:k]) > 0:
+        if raw_ideal and max(raw_ideal[:k]) > 0:
             raw_ndcg_scores.append(ndcg(raw_rel, raw_ideal, k))
 
         # nDCG with weighted scores
         w_rel = [weighted_gt_final.get(c, 0.0) for c, _ in neighbors]
         w_ideal = sorted(weighted_gt_final.values(), reverse=True)
-        if max(w_ideal[:k]) > 0:
+        if w_ideal and max(w_ideal[:k]) > 0:
             weighted_ndcg_scores.append(ndcg(w_rel, w_ideal, k))
 
     return {
@@ -166,12 +177,7 @@ def main() -> int:
     print(f"Delta:            {result['delta']:+.4f}")
     print()
 
-    if abs(result["delta"]) < 0.005:
-        print("Conclusion: negligible difference -- single-model annotations dominate")
-    elif result["delta"] > 0:
-        print("Conclusion: reliability weighting IMPROVES nDCG")
-    else:
-        print("Conclusion: reliability weighting HURTS nDCG (check weights)")
+    print("These metrics use different labels; their delta does not establish label accuracy.")
 
     # Also test with MetaPath2Vec
     mp_emb = f"{args.game}_metapath2vec"

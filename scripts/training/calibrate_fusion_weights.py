@@ -64,8 +64,8 @@ FULL_GRID = {
 }
 
 
-def load_test_set(game: str) -> dict:
-    """Load annotated test set for a game."""
+def load_test_set(game: str, allow_contradictions: bool = False) -> dict:
+    """Load annotated test set for a game, refusing self-contradictory labels."""
     path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     if not path.exists():
         log.error(f"Test set not found: {path}")
@@ -73,10 +73,17 @@ def load_test_set(game: str) -> dict:
     with open(path) as f:
         data = json.load(f)
     from ml.contracts.annotations import curate_evaluation_data
+    from ml.evaluation.label_gate import gate_or_refuse
 
     data, excluded = curate_evaluation_data(data)
     if excluded:
         log.warning("Excluded %s failed, synthetic, or fallback judgments", excluded)
+    try:
+        gate = gate_or_refuse(path, allow=allow_contradictions)
+        log.info("Label gate: %s", gate.summary())
+    except ValueError as exc:
+        log.error("%s", exc)
+        return {}
     return data
 
 
@@ -193,6 +200,88 @@ def evaluate_weights(
     return float(np.mean(ndcg_scores)) if ndcg_scores else None
 
 
+def evaluate_weights_partial(
+    game: str,
+    w_embed: float,
+    w_jaccard: float,
+    w_functional: float,
+    w_text: float,
+    w_visual: float,
+    test_data: dict,
+    graph,
+    wv,
+    text_index_matrix,
+    text_index_names,
+    visual_index_matrix,
+    visual_index_names,
+    k: int = 10,
+) -> dict | None:
+    """Score on the queries that are actually judgeable, and report how many.
+
+    The strict scorer returns None when a single eligible query lacks a judged
+    result, which made the objective unmeasurable on the canonical set. This one
+    scores the judgeable subset and returns the denominator with the score, so a
+    published number always travels with its coverage. A caller that hides the
+    coverage would be back to the 0065 mistake.
+    """
+    from ml.similarity.fusion import FusionWeights, WeightedLateFusion
+
+    total = w_embed + w_jaccard + w_functional + w_text + w_visual
+    if total <= 0:
+        return None
+
+    weights = FusionWeights(
+        embed=w_embed,
+        jaccard=w_jaccard,
+        functional=w_functional,
+        text_embed=w_text,
+        visual_embed=w_visual,
+        archetype=0.0,
+    )
+    fusion = WeightedLateFusion(
+        embeddings=wv, adj=graph, weights=weights, aggregator="rrf", game=game
+    )
+    if text_index_matrix is not None:
+        fusion._text_index_matrix = text_index_matrix
+        fusion._text_index_names = text_index_names
+        fusion._text_name_to_idx = {n: i for i, n in enumerate(text_index_names)}
+    if visual_index_matrix is not None:
+        fusion._visual_index_matrix = visual_index_matrix
+        fusion._visual_index_names = visual_index_names
+        fusion._visual_name_to_idx = {n: i for i, n in enumerate(visual_index_names)}
+
+    eligible = scored = 0
+    ndcg_scores: list[float] = []
+    per_query: dict[str, float] = {}
+    for query_card, labels in test_data.get("queries", {}).items():
+        if query_card not in wv and (not graph or query_card not in graph):
+            continue
+        gt = _ground_truth(labels)
+        if not gt or max(gt.values()) <= 0:
+            continue
+        eligible += 1
+        results = fusion.similar(query_card, k=k)
+        relevances = [gt[card] for card, _ in results if card in gt]
+        if not relevances:
+            continue
+        scored += 1
+        value = float(compute_ndcg(relevances, list(gt.values()), k))
+        ndcg_scores.append(value)
+        per_query[query_card] = value
+
+    if not ndcg_scores:
+        return None
+    return {
+        "ndcg_at_10": float(np.mean(ndcg_scores)),
+        "queries_eligible": eligible,
+        "queries_scored": scored,
+        "coverage": scored / eligible if eligible else 0.0,
+        # Per-query values so two arms can be compared on their intersection
+        # instead of each on its own convenient subset.
+        "per_query": per_query,
+    }
+
+
 def calibrate(game: str, quick: bool = False) -> dict | None:
     """Grid-search fusion weights for a game."""
     out_path = DATA_DIR / "embeddings" / f"fusion_weights_{game}.json"
@@ -206,7 +295,7 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
 
     # Load resources
     log.info("Loading resources...")
-    test_data = load_test_set(game)
+    test_data = load_test_set(game, allow_contradictions=ALLOW_CONTRADICTIONS)
     if not test_data:
         return None
 
@@ -299,17 +388,16 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     best_weights = None
     t0 = time.time()
 
-    for i, combo in enumerate(combos):
-        vals = dict.fromkeys(grid, 0.0)
-        vals.update(zip(keys, combo))
-        score = evaluate_weights(
+    def run_eval(data, vals):
+        """Score one weight vector; partial mode reports its own coverage."""
+        args = (
             game,
             vals["embed"],
             vals["jaccard"],
             vals["functional"],
             vals["text_embed"],
             vals["visual_embed"],
-            train_data,
+            data,
             graph,
             wv,
             text_matrix,
@@ -317,6 +405,20 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
             vis_matrix,
             vis_names,
         )
+        if ALLOW_PARTIAL_COVERAGE:
+            return evaluate_weights_partial(*args)
+        strict = evaluate_weights(*args)
+        if strict is None:
+            return None
+        return {"ndcg_at_10": strict, "coverage": 1.0, "queries_scored": 0, "queries_eligible": 0}
+
+    for i, combo in enumerate(combos):
+        vals = dict.fromkeys(grid, 0.0)
+        vals.update(zip(keys, combo))
+        outcome = run_eval(train_data, vals)
+        if outcome is not None and outcome["coverage"] < MIN_COVERAGE:
+            outcome = None
+        score = outcome["ndcg_at_10"] if outcome else None
         if score is not None and score > best_score:
             best_score = score
             best_weights = vals
@@ -329,7 +431,13 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
 
     elapsed = time.time() - t0
     holdout_score = None
-    if best_weights is not None:
+    holdout_coverage = 0.0
+    if best_weights is not None and ALLOW_PARTIAL_COVERAGE:
+        outcome = run_eval(holdout_data, best_weights)
+        if outcome is not None and outcome["coverage"] >= MIN_COVERAGE:
+            holdout_score = outcome["ndcg_at_10"]
+            holdout_coverage = outcome["coverage"]
+    elif best_weights is not None:
         holdout_score = evaluate_weights(
             game,
             best_weights["embed"],
@@ -348,7 +456,11 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     log.info(f"\nCalibration done in {elapsed:.0f}s")
     log.info(f"Fit nDCG@10: {best_score:.4f}")
     if best_weights is None or holdout_score is None:
-        log.error("Refusing to publish weights: comparable judged coverage is unavailable")
+        log.error(
+            "Refusing to publish weights: comparable judged coverage is unavailable "
+            "(strict mode; pass --allow-partial-coverage with --min-coverage to score "
+            "the judgeable subset and publish its denominator)"
+        )
         return None
     log.info(f"Holdout nDCG@10: {holdout_score:.4f}")
     log.info(f"Best weights: {best_weights}")
@@ -367,6 +479,10 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
         "has_text_index": text_matrix is not None,
         "signals_used": keys,
         "signals_excluded": excluded,
+        "objective": "partial-coverage-v1" if ALLOW_PARTIAL_COVERAGE else "strict-coverage-v1",
+        "holdout_coverage": round(holdout_coverage, 4),
+        "min_coverage": MIN_COVERAGE if ALLOW_PARTIAL_COVERAGE else 1.0,
+        "experiment": "0067",
     }
 
     # Save
@@ -377,12 +493,38 @@ def calibrate(game: str, quick: bool = False) -> dict | None:
     return result
 
 
+ALLOW_CONTRADICTIONS = False
+ALLOW_PARTIAL_COVERAGE = False
+MIN_COVERAGE = 0.5
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Calibrate fusion weights")
     parser.add_argument("--game", default="magic")
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--quick", action="store_true", help="Smaller grid for fast iteration")
+    parser.add_argument(
+        "--allow-partial-coverage",
+        action="store_true",
+        help="Score the judgeable subset and publish its coverage instead of refusing",
+    )
+    parser.add_argument(
+        "--min-coverage",
+        type=float,
+        default=0.5,
+        help="Refuse to publish when scored/eligible falls below this (partial mode)",
+    )
+    parser.add_argument(
+        "--allow-contradictions",
+        action="store_true",
+        help="Calibrate even when labels contradict shipped card metadata (records the override)",
+    )
     args = parser.parse_args()
+
+    global ALLOW_CONTRADICTIONS, ALLOW_PARTIAL_COVERAGE, MIN_COVERAGE
+    ALLOW_CONTRADICTIONS = args.allow_contradictions
+    ALLOW_PARTIAL_COVERAGE = args.allow_partial_coverage
+    MIN_COVERAGE = args.min_coverage
 
     games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game]
     results = {}

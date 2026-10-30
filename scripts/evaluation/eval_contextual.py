@@ -3,6 +3,7 @@
 # requires-python = ">=3.11"
 # dependencies = [
 #     "httpx>=0.25.0",
+#     "pydantic>=2.0.0",
 # ]
 # ///
 """
@@ -23,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -31,6 +33,8 @@ import httpx
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 
 def load_test_set(game: str) -> dict:
@@ -38,7 +42,13 @@ def load_test_set(game: str) -> dict:
     if not path.exists():
         return {}
     with open(path) as f:
-        return json.load(f)
+        data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    data, excluded = curate_evaluation_data(data)
+    if excluded:
+        print(f"Excluded {excluded} ineligible judgments", file=sys.stderr)
+    return data
 
 
 def get_contextual(base_url: str, card: str, game: str, top_k: int = 5) -> dict:

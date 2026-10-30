@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """
-Create proper ground truth for card similarity evaluation.
+Create an illustrative mixed-task card-similarity baseline.
 
-Current problem: We evaluate edge prediction but want functional similarity.
-Solution: Manual annotation of true card similarities.
+The author and review history of these labels are not recorded here. They mix
+replacement, synergy, and archetype relationships, so they are not a
+task-specific human-validated gold set.
 """
 
 from pathlib import Path

@@ -164,7 +164,7 @@ def make_meta_judge_agent() -> Agent[MetaJudgment]:
     model = (
         os.getenv("META_JUDGE_MODEL")
         or os.getenv("ANNOTATOR_MODEL_VALIDATOR")
-        or "anthropic/claude-3.5-sonnet"  # Claude 3.5 Sonnet (reliable model ID for OpenRouter)
+        or "anthropic/claude-sonnet-4.6"  # current OpenRouter slug; 3.5 Sonnet is no longer served
     )
 
     # Use openrouter provider for model

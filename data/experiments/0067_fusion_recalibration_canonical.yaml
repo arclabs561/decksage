@@ -1,0 +1,89 @@
+id: "0067"
+date: "2026-10-29"
+title: "Fusion recalibration on canonical labels (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  Recalibrating with the dead-signal guard — every weight in the grid must prove it
+  varies across candidates, or it is refused — produces weights whose nDCG@10 on the
+  canonical test set beats uniform 1/3 weighting, and the improvement survives the
+  paired-bootstrap interval from the comparison harness.
+
+method:
+  type: fusion_calibration
+  script: scripts/training/calibrate_fusion_weights.py
+  args: "--game magic --quick"
+  grid: "embed/jaccard/functional/text_embed/visual at step 0.05-0.1"
+  objective: "nDCG@10 against judged substitution labels, unjudged results counted as zero against the full judged ideal"
+  guard: "label_gate refuses structurally contradictory labels; superseded-content refusal is active"
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    sha256: 229e9f82a5cdb9af7476be921674bdb1c91d5e2455d81fefaef335ab89d33240
+    queries: 3047
+    gate: "passed: bucket_mismatch=593, score_evidence_conflict=154, duplicate_conflict=94"
+  embeddings:
+    primary: data/embeddings/magic_v7_spectral_mu35.wv
+    text: data/cache/text_embeddings (encoder-keyed)
+  graph: data/processed/pairs_large.csv
+
+prior_evidence:
+  - "Experiment 0065 withdrawn: its objective normalised against retrieved labels while counting unjudged results as zero."
+  - "Weighted-fusion comparison 2026-10-29: adding magic_v7_fused to the baseline shortlist made nDCG@10 worse (0.5228 -> 0.5094, CI [-0.0179, -0.0090])."
+
+preregistered_expectation: >
+  If the calibrated weights do not beat uniform weighting by more than the bootstrap
+  interval, the honest outcome is to keep uniform weights and record that the grid
+  found nothing — not to publish the best grid point.
+
+results:
+  ran: "2026-10-29"
+  mode: "partial-coverage (--allow-partial-coverage --min-coverage 0.5)"
+  grid_size: 27
+  signals_used: ["embed", "jaccard", "text_embed"]
+  signals_excluded:
+    functional: "no tagger is constructed in this script"
+    visual_embed: "visual index missing or all-zero"
+  fit_queries: 2437
+  holdout_queries: 610
+  fit_ndcg_at_10: 0.5036
+  holdout_ndcg_at_10: 0.5088
+  holdout_coverage: 0.8973
+  elapsed_seconds: 1112
+  best_weights: {embed: 0.25, jaccard: 0.0, functional: 0.0, text_embed: 0.0, visual_embed: 0.0}
+  outcome: "published to data/embeddings/fusion_weights_magic.json with objective, coverage and experiment id"
+  finding: |
+    The grid's optimum sets every weight to zero except the co-occurrence
+    embedding. In other words, on the canonical substitution labels, "fusion"
+    reduces to embedding similarity: jaccard and text contributed nothing that
+    survived the search, and functional/visual were never computed.
+
+  conflict: |
+    That optimum contradicts the substitution task preset, which deliberately
+    zeroes co-occurrence ("Co-occurrence anti-correlates substitutes") and leans
+    on text/functional. Applying the preset on top of these weights produced an
+    all-zero vector and a 500 at the fusion endpoint. The preset is now bypassed
+    when calibrated weights are served, and WeightedLateFusion falls back to the
+    supplied weights if a preset zeroes them. Recorded rather than silently
+    averaged: one of the two is wrong for this data, and this run says the preset
+    is wrong for these labels.
+
+  side_effects_fixed:
+    - "pydantic refused numpy.float32 in scores and score_breakdown; both are coerced at the response boundary (fusion 500 -> 200)"
+    - "RRF returns rank-based scores (~0.016), so the UI percentage is not a similarity magnitude; unresolved"
+
+notes: >
+  Predecessor weights archived to
+  data-local/fusion-weights-withdrawn-20261029/fusion_weights_magic.json
+  (sha256 00800dac39abe07d0de005eafb61152f9d730e89aba4dc807ced2f116867dafc)
+  before this run could overwrite them.
+
+conclusion: >
+  The hypothesis is not supported: on canonical labels the calibrated optimum
+  collapses fusion to the co-occurrence embedding, so the other signals added
+  nothing measurable. Weights were published with their coverage, and the
+  substitution preset was overridden because it contradicts what these labels
+  say. Next: decide the coverage rule before any further calibration, and do not
+  read this as evidence that jaccard or text embeddings are useless in general.

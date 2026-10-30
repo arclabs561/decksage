@@ -116,19 +116,34 @@ SCORING SCALE (use the FULL range):
 - 0.40: Moderate. Same function AND similar cost, or strong co-occurrence.
 - 0.65: Strong similarity. Competitive alternatives, similar efficiency.
 - 0.80: Near-substitute. Functionally interchangeable, minor differences.
-- 1.00: Functional reprint or strictly-better/worse pair.
+- 1.00: Functionally equivalent in the stated context.
 
-CALIBRATION ANCHORS:
-- Lightning Bolt vs Shock = 0.70 (same function, different damage)
-- Path to Exile vs Swords to Plowshares = 0.80 (near-identical effect)
-- Counterspell vs Mana Leak = 0.50 (same function, different late-game)
-- Lightning Bolt vs Counterspell = 0.10 (both instants, different functions)
-- Sol Ring vs Wrath of God = 0.05 (unrelated)
+{anchors}
+
+Score replacement, synergy, and meta relevance independently. Do not infer
+deck context or metagame facts that are not provided.
 
 Think step by step in 1-2 sentences, then provide scores.
 
 Respond ONLY with JSON:
 {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}"""
+
+
+def build_annotation_prompt(card_a_context: str, card_b_context: str, game: str) -> str:
+    anchors = ""
+    if game.lower() == "magic":
+        anchors = """CALIBRATION EXAMPLES (Magic only):
+- Lightning Bolt vs Shock = 0.70 (same function, different damage)
+- Path to Exile vs Swords to Plowshares = 0.80 (similar removal, different tradeoffs)
+- Counterspell vs Mana Leak = 0.50 (same function, different late-game)
+- Lightning Bolt vs Counterspell = 0.10 (different functions)
+- Sol Ring vs Wrath of God = 0.05 (unrelated functions)"""
+    return ANNOTATION_PROMPT.format(
+        game=game.upper(),
+        card_a_context=card_a_context,
+        card_b_context=card_b_context,
+        anchors=anchors,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -151,11 +166,7 @@ async def call_model(
         logger.warning(f"No API key for {model_cfg['name']} ({model_cfg['api_key_env']})")
         return None
 
-    prompt = ANNOTATION_PROMPT.format(
-        game=game.upper(),
-        card_a_context=card_a_ctx,
-        card_b_context=card_b_ctx,
-    )
+    prompt = build_annotation_prompt(card_a_ctx, card_b_ctx, game)
 
     session = requests.Session()
     session.trust_env = False
@@ -200,8 +211,12 @@ async def call_model(
         scores = {}
         for dim in SCORE_DIMS:
             val = parsed.get(dim)
-            if val is not None:
-                scores[dim] = float(val)
+            if val is None:
+                return None
+            score = float(val)
+            if not np.isfinite(score) or not 0 <= score <= 1:
+                return None
+            scores[dim] = score
         scores["_model"] = model_cfg["name"]
         return scores
     except Exception as e:
@@ -333,9 +348,15 @@ async def annotate_pair(
     card_a_ctx: str,
     card_b_ctx: str,
     game: str,
-) -> dict:
+) -> dict | None:
     """Full cascading annotation for one pair."""
+    if "Text: " not in card_a_ctx or "Text: " not in card_b_ctx:
+        logger.warning("Skipping pair with missing card rules: %s / %s", card_a, card_b)
+        return None
     t1 = await tier1_annotate(card_a, card_b, card_a_ctx, card_b_ctx, game)
+    if not t1["n_samples"] or any(dim not in t1["scores"] for dim in SCORE_DIMS):
+        logger.warning("No valid judge output for %s / %s", card_a, card_b)
+        return None
 
     final_scores = t1["scores"]
     tier_used = "tier1"
@@ -386,7 +407,7 @@ async def annotate_pair(
             "tier_used": tier_used,
             "confidence": t1["confidence"],
             "per_dim_std": t1.get("per_dim_std", {}),
-            "prompt_version": "enriched_cascade_v1",
+            "prompt_version": "enriched_cascade_v2",
             "temperature_tier1": 0.5,
             "temperature_tier2": 0.3,
             "game": game,

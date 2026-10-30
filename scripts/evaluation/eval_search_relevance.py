@@ -8,14 +8,14 @@
 """
 Search relevance evaluation for DeckSage.
 
-Generates natural-language search queries with ground-truth relevant cards,
-then scores the API's search results against that ground truth.
+Scores the API's search results against illustrative relevance candidates.
+The candidates have unknown annotator provenance and are not exhaustive ground truth.
 
 Two evaluation modes:
 1. Oracle text matching: queries derived from card text (e.g., "destroy all
    creatures" should return Day of Judgment). This tests MeiliSearch quality.
 2. Semantic queries: conceptual queries (e.g., "cheap red burn spells")
-   with hand-curated relevant sets. This tests hybrid search quality.
+   with fixed relevant sets. This probes hybrid search quality.
 
 Outputs: precision@K, recall@K, nDCG@K, and MRR for each query.
 
@@ -39,10 +39,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 TEST_SETS_DIR = DATA_DIR / "test_sets"
 
-# Hand-curated search relevance queries with ground truth.
+# Illustrative relevance candidates; annotator provenance and completeness are unknown.
 # Each query has:
 # - query: the search string a user would type
-# - relevant: cards that SHOULD appear in results (order = ideal ranking)
+# - relevant: binary relevance candidates (list order has no relevance grade)
 # - game: which game
 # - type: "oracle" (text derived from card text) or "semantic" (conceptual)
 SEARCH_QUERIES = {
@@ -236,22 +236,18 @@ def search_api(base_url: str, query: str, game: str, limit: int = 10) -> list[di
     """Call the search API and return results."""
     url = f"{base_url}/v1/search"
     params = {"game": game, "q": query, "limit": limit}
-    try:
-        resp = httpx.get(url, params=params, timeout=10)
-        resp.raise_for_status()
-        data = resp.json()
-        return data.get("results", [])
-    except Exception as e:
-        print(f"  Search failed: {e}")
-        return []
+    resp = httpx.get(url, params=params, timeout=10)
+    resp.raise_for_status()
+    data = resp.json()
+    return data["results"]
 
 
 def precision_at_k(retrieved: list[str], relevant: set[str], k: int) -> float:
     """Precision@K."""
     top_k = retrieved[:k]
-    if not top_k:
+    if k <= 0:
         return 0.0
-    return len(set(top_k) & relevant) / len(top_k)
+    return len(set(top_k) & relevant) / k
 
 
 def recall_at_k(retrieved: list[str], relevant: set[str], k: int) -> float:
@@ -271,23 +267,21 @@ def mrr(retrieved: list[str], relevant: set[str]) -> float:
 
 
 def ndcg_at_k(retrieved: list[str], relevant_ordered: list[str], k: int) -> float:
-    """nDCG@K with graded relevance based on position in ideal list."""
+    """Binary nDCG@K; a repeated result gets credit only on its first occurrence."""
     import math
 
-    # Assign relevance scores: position 0 in relevant_ordered gets highest
-    rel_scores = {}
-    for i, card in enumerate(relevant_ordered):
-        rel_scores[card] = len(relevant_ordered) - i
+    relevant = set(relevant_ordered)
 
     # DCG of actual ranking
     dcg = 0.0
+    seen = set()
     for i, card in enumerate(retrieved[:k]):
-        rel = rel_scores.get(card, 0)
+        rel = int(card in relevant and card not in seen)
+        seen.add(card)
         dcg += rel / math.log2(i + 2)
 
     # Ideal DCG
-    ideal_rels = sorted(rel_scores.values(), reverse=True)[:k]
-    idcg = sum(r / math.log2(i + 2) for i, r in enumerate(ideal_rels))
+    idcg = sum(1 / math.log2(i + 2) for i in range(min(k, len(relevant))))
 
     return dcg / idcg if idcg > 0 else 0.0
 
@@ -342,6 +336,7 @@ def eval_game(game: str, base_url: str, k: int = 10) -> dict:
 
     return {
         "game": game,
+        "reference": "illustrative binary labels; provenance and completeness unverified",
         "n_queries": len(results),
         "k": k,
         "overall": {
@@ -383,7 +378,7 @@ def main():
     if args.generate_only:
         out_path = TEST_SETS_DIR / "search_relevance_queries.json"
         out_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(out_path, "w") as f:
+        with open(out_path, "x") as f:
             json.dump(SEARCH_QUERIES, f, indent=2)
         print(f"Saved search queries to {out_path}")
         total = sum(len(qs) for qs in SEARCH_QUERIES.values())

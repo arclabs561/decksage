@@ -48,6 +48,7 @@ class AssetStatus:
     loadable: bool = False
     details: str = ""
     critical: bool = True  # True = server won't work without it
+    withdrawn: bool = False  # exists and parses, but its provenance was withdrawn
 
 
 @dataclass
@@ -222,9 +223,15 @@ def check_game(game: str) -> GameReport:
         try:
             with open(fw_path) as f:
                 data = json.load(f)
-            status.loadable = True
-            data.get("best_weights", {})
-            status.details = f"nDCG={data.get('ndcg_at_10', '?'):}"
+            # The file parses, but its calibration is withdrawn (experiment 0065)
+            # and nothing reads it at serving time. Reporting it as a passing
+            # asset made a dead artifact look validated.
+            status.loadable = True  # it parses; that is not the same as valid
+            status.withdrawn = True
+            status.details = (
+                f"WITHDRAWN calibration (experiment 0065); not read at serving time. "
+                f"File nDCG={data.get('ndcg_at_10', '?')} is historical, not a validation"
+            )
         except Exception as e:
             status.details = f"JSON error: {e}"
     report.assets.append(status)
@@ -291,7 +298,10 @@ def print_report(reports: list[GameReport], json_output: bool = False) -> int:
     has_warnings = False
 
     for r in reports:
-        status_char = "OK" if r.ok else "FAIL"
+        if getattr(r, "withdrawn", False):
+            status_char = "WDRAWN"
+        else:
+            status_char = "OK" if r.ok else "FAIL"
         log.info(f"\n{'=' * 60}")
         log.info(
             f"  {r.game.upper()}  [{status_char}]  {r.passed} pass, {r.failed} fail, {r.warnings} warn"
@@ -299,7 +309,10 @@ def print_report(reports: list[GameReport], json_output: bool = False) -> int:
         log.info(f"{'=' * 60}")
 
         for a in r.assets:
-            if a.exists and a.loadable:
+            if a.withdrawn:
+                icon = "WDRAWN"
+                has_warnings = True
+            elif a.exists and a.loadable:
                 icon = "  OK"
             elif a.exists:
                 icon = "WARN"

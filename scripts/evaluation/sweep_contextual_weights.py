@@ -4,15 +4,14 @@
 # dependencies = [
 #     "numpy>=1.24.0",
 #     "gensim>=4.3.0",
+#     "pydantic>=2.0.0",
 # ]
 # ///
 """
-Sweep fusion weights to maximize contextual alternatives recall.
+Compare embedding-only contextual alternatives recall.
 
-Tests different weight combinations for the substitution task (alternatives)
-using annotated test sets. The key insight: co-occurrence anti-correlates
-substitution (Functional AUC = 0.317), so the sweep should find configs
-that reduce embed/jaccard and boost text_embed/functional.
+This historical script compares existing embeddings; it does not sweep weights
+or estimate a fusion ceiling.
 
 Usage:
     uv run scripts/evaluation/sweep_contextual_weights.py --game magic
@@ -25,8 +24,13 @@ import argparse
 import json
 import sys
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
+
+
+if TYPE_CHECKING:
+    from gensim.models import KeyedVectors
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
@@ -34,13 +38,17 @@ DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
-from gensim.models import KeyedVectors
-
 
 def load_test_set(game: str) -> dict:
     path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     with open(path) as f:
-        return json.load(f)
+        data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    data, excluded = curate_evaluation_data(data)
+    if excluded:
+        print(f"Excluded {excluded} ineligible judgments", file=sys.stderr)
+    return data
 
 
 def evaluate_substitution_recall(
@@ -110,6 +118,8 @@ def evaluate_substitution_recall(
 
 def sweep_fusion_weights(game: str) -> list[dict]:
     """Sweep weight combinations for contextual alternatives."""
+    from gensim.models import KeyedVectors
+
     # Load embeddings
     emb_map = {
         "magic": "magic_v7_spectral_mu35",
@@ -129,10 +139,7 @@ def sweep_fusion_weights(game: str) -> list[dict]:
     print(f"  Recall@10: {baseline['recall']:.3f} ({baseline['found']}/{baseline['expected']})")
     print(f"  nDCG@10: {baseline['ndcg']:.3f}")
 
-    # Note: This sweep evaluates pure embedding recall. The real improvement
-    # comes from the fusion weight fix in fusion.py (task_type switching).
-    # This script measures the ceiling: what recall is achievable if we
-    # had perfect weight switching?
+    # These embedding-only results cannot establish a fusion ceiling.
 
     # Check LightGCN if available
     lgcn_path = DATA_DIR / "embeddings" / f"{game}_lightgcn_best.wv"

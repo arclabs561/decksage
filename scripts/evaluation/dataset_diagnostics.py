@@ -106,7 +106,7 @@ def diagnose_edges(game: str) -> dict:
             ratio = largest_count / smallest_count
             results["warnings"].append(
                 f"IMBALANCE: {largest_name} ({largest_count:,}) is {ratio:.0f}x larger than "
-                f"{smallest_name} ({smallest_count:,}). MetaPath2Vec walks will be dominated by {largest_name}."
+                f"{smallest_name} ({smallest_count:,}). Check the walk sampling policy for imbalance."
             )
 
     # Check MetaPath2Vec viability
@@ -121,6 +121,8 @@ def diagnose_edges(game: str) -> dict:
 
 def diagnose_annotations(game: str) -> dict:
     """Analyze annotation quality and coverage."""
+    from ml.contracts.annotations import is_evaluation_record
+
     results = {"warnings": []}
 
     # Test set
@@ -136,9 +138,13 @@ def diagnose_annotations(game: str) -> dict:
         source_counts: dict[str, int] = defaultdict(int)
         model_counts: dict[str, int] = defaultdict(int)
         dup_count = 0
+        ineligible = 0
+        missing_provenance = 0
         for q in queries.values():
             seen_candidates = set()
             for ann in q.get("annotations", []):
+                ineligible += not is_evaluation_record(ann)
+                missing_provenance += not bool(ann.get("_provenance"))
                 s = ann.get("similarity_score")
                 if s is not None:
                     all_scores.append(float(s))
@@ -162,6 +168,8 @@ def diagnose_annotations(game: str) -> dict:
             "score_mean": round(np.mean(all_scores), 3) if all_scores else 0,
             "score_std": round(np.std(all_scores), 3) if all_scores else 0,
             "duplicate_annotations": dup_count,
+            "ineligible_judgments": ineligible,
+            "missing_provenance": missing_provenance,
             "sources": dict(source_counts),
             "models": dict(model_counts),
         }
@@ -171,6 +179,14 @@ def diagnose_annotations(game: str) -> dict:
             results["warnings"].append(
                 f"DUPLICATE ANNOTATIONS: {dup_count} ({dup_rate:.1%}). "
                 f"Same (query, candidate) pair annotated multiple times."
+            )
+        if ineligible:
+            results["warnings"].append(
+                f"INELIGIBLE JUDGMENTS: {ineligible} failed, synthetic, fallback, or malformed records."
+            )
+        if missing_provenance:
+            results["warnings"].append(
+                f"MISSING PROVENANCE: {missing_provenance} judgments lack structured provenance."
             )
         if np.mean(ann_counts) < 3:
             results["warnings"].append(
@@ -249,10 +265,11 @@ def diagnose_annotations(game: str) -> dict:
 
 
 BUCKET_BANDS = {
-    "highly_relevant": (0.70, 1.01),
+    "highly_relevant": (0.70, float("inf")),
     "relevant": (0.50, 0.70),
     "somewhat_relevant": (0.30, 0.50),
     "marginally_relevant": (0.15, 0.30),
+    "irrelevant": (0.0, 0.15),
 }
 
 
@@ -284,7 +301,7 @@ def diagnose_bucket_consistency(game: str) -> dict:
                 if score is None:
                     continue
                 results["checked"] += 1
-                if not low <= float(score) < high:
+                if not (0.0 <= float(score) <= 1.0 and low <= float(score) < high):
                     results["contradictions"] += 1
                     if len(results["examples"]) < 5:
                         results["examples"].append(
@@ -445,6 +462,11 @@ def main():
     parser.add_argument("--game", default="magic", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--all-games", action="store_true")
     parser.add_argument("--json", action="store_true")
+    parser.add_argument(
+        "--fail-ineligible",
+        action="store_true",
+        help="Exit nonzero when an evaluation set is missing or has ineligible judgments",
+    )
     args = parser.parse_args()
 
     games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game]
@@ -455,6 +477,12 @@ def main():
 
     if args.json:
         print(json.dumps(all_results, indent=2, default=str))
+    if args.fail_ineligible:
+        for result in all_results.values():
+            test_set = result.get("annotations", {}).get("test_set", {})
+            if test_set.get("ineligible_judgments") != 0:
+                return 1
+    return 0
 
 
 if __name__ == "__main__":

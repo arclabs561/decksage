@@ -33,6 +33,32 @@ Run `scripts/evaluation/judge_audit.py --game <game>`.
    Invariance is necessary, not sufficient: a judge can be perfectly invariant
    and systematically wrong.
 
+## Gate: structural contradictions block scoring
+
+`src/ml/evaluation/label_gate.py` screens a test set with the rules in
+`scripts/annotation/screen_contradictions.py` before a metric is computed. Three
+rules block: a card judged against itself, a creature judged against a
+Trainer/Energy/Spell/Trap as a substitute, and different Pokemon evolution stages
+treated as substitutes. A cross-type substitute, a duplicate round, a bucket
+mismatch or an evidence-poor record is reported but not blocked: some are
+legitimate and the rest need a human.
+
+`calibrate_fusion_weights.py` runs the gate and exits without calibrating when a
+blocking hit exists. `--allow-contradictions` calibrates anyway and logs the
+override; using it means the resulting weights describe labels the repository's
+own metadata contradicts.
+
+Current state (2026-10-29): the canonical test sets pass the gate. The repair
+removed 162 Magic, 197 Pokemon (126 evolution, 66 kind, 5 self) and 263 Yu-Gi-Oh
+structurally contradictory judgments, archived the originals under
+`data-local/test-set-archive-20261029/` and recorded both hashes in
+`data/test_sets/REPAIR-LEDGER.json`.
+
+Passing the gate means no *structural* contradiction remains against shipped card
+metadata. It does not mean the labels are correct: duplicate rounds, bucket
+mismatches and evidence-poor records are still reported, and a judgment can be
+wrong in ways metadata cannot express.
+
 ## Stage 1: 50-100 human pairs
 
 Prepare a local, blinded review batch with:

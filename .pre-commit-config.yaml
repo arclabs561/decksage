@@ -141,6 +141,10 @@ repos:
           )
       - id: check-yaml
         stages: [pre-commit]
+        # docker-compose.dev.yml uses Compose's !override tag, which the plain
+        # YAML loader rejects; --unsafe allows unknown tags without disabling
+        # the structural check.
+        args: [--unsafe]
         exclude: |
           (?x)^(
             \.git/|

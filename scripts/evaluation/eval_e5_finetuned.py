@@ -8,6 +8,7 @@
 #     "gensim>=4.3.0",
 #     "datasets>=2.0.0",
 #     "accelerate>=1.1.0",
+#     "pydantic>=2.0.0",
 # ]
 # ///
 """
@@ -40,6 +41,8 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from ml.utils.paths import PATHS
 
 
 def dcg(scores: list[float], k: int) -> float:
@@ -159,14 +162,37 @@ def load_card_data(game: str) -> dict:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--game", default="magic")
-    parser.add_argument("--finetuned-model", default="data/embeddings/e5_finetuned_magic_multitask")
+    parser.add_argument(
+        "--finetuned-model", default=str(PATHS.embeddings / "e5_finetuned_magic_multitask")
+    )
     parser.add_argument("--base-model", default="intfloat/e5-base-v2")
+    parser.add_argument(
+        "--allow-invalid-legacy",
+        action="store_true",
+        help="Run the retired exploratory metric despite known validity defects",
+    )
     args = parser.parse_args()
+
+    if not args.allow_invalid_legacy:
+        parser.error(
+            "retired evaluator: missing scores and failed encodings bias its metrics; "
+            "use the canonical task-scoped evaluator instead"
+        )
+    print(
+        "Warning: exploratory within-annotation ranking; missing labels and failed encodings "
+        "can bias the results. Task-specific metrics are not validated.",
+        file=sys.stderr,
+    )
 
     # Load test set
     test_path = DATA_DIR / "test_sets" / f"annotated_{args.game}_v2.json"
     with open(test_path) as f:
         test_data = json.load(f)
+    from ml.contracts.annotations import curate_evaluation_data
+
+    test_data, excluded = curate_evaluation_data(test_data)
+    if excluded:
+        print(f"Excluded {excluded} ineligible judgments", file=sys.stderr)
     print(f"Test set: {len(test_data.get('queries', {}))} queries")
 
     # Load card data

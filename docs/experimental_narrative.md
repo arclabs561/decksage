@@ -20,18 +20,15 @@ Three kinds of figure appear below, and they are not interchangeable:
   by exp 0061), spectral propagation and PPMI (exp 0056), the cascade
   calibration (exp 0057), the fusion-path coverage gap (exp 0060). These are the
   numbers to present today.
-- **Pre-dedup** -- any nDCG from an experiment dated before the 2026-03-22
-  dedup correction (exp 0052). Duplicate annotations inflated the ideal
-  ranking, so these values are comparable only with other pre-dedup values,
-  never with post-dedup ones. They are kept because they explain why later
-  choices were made, and they are labelled where the narrative compares them
-  with later results.
+- **Pre-dedup** -- nDCG measured before the 2026-03-22 correction (exp 0052).
+  Some recorded comparisons were inflated by duplicate annotations; other
+  results and within-period comparisons need snapshot-specific reassessment.
+  These figures are historical, not current evidence.
 - **Withdrawn** -- an inline `[withdrawn: exp NNNN -- one clause on why]` tag.
-  Five experiments carry it: exp 0004 (inline sweep evaluator), exp 0039
-  (annotation edges leaked into training), exp 0051 (pre-dedup epoch sweep),
-  exp 0062 and exp 0063 (models trained on the evaluation set). The history is
-  kept so a reader can see why the line of work ended; the number must not be
-  reused as a current result.
+  The index's validity markers are authoritative and may include records that
+  have not yet been annotated inline in this narrative. The history is kept so
+  a reader can see why the line of work ended; withdrawn numbers must not be
+  reused as current results.
 
 Where a figure has been superseded, this document names the experiment id
 instead of restating the newer value. Read that id's YAML for the current
@@ -104,7 +101,7 @@ Multi-model IAA (4 LLM judges) produced Krippendorff alpha = 0.43. The judges di
 
 On 2026-03-22, diagnostic tooling revealed that multi-model IAA had produced **43-76% duplicate annotations** in the test sets (multiple judges producing separate entries for the same query-candidate pair).
 
-**Impact**: all nDCG numbers from experiments 0031-0046 were inflated by 78-101% (84/78/101 per game, exp 0052). True baselines after dedup:
+**Impact**: experiment 0052 reports three selected pre/post-dedup comparisons with 78-101% differences relative to the post-dedup scores. Its snapshot provenance is incomplete, so the impact on other runs needs separate verification. Historical post-dedup baselines:
 
 | Embedding | Magic | Pokemon | YuGiOh |
 |-----------|-------|---------|--------|
@@ -115,8 +112,8 @@ On 2026-03-22, diagnostic tooling revealed that multi-model IAA had produced **4
 re-measurement of exp 0039: that experiment's 160-epoch result is
 **[withdrawn: exp 0039, annotation edges leaked into training]**, and the row
 above is the post-dedup MetaPath2Vec entry (selective 160ep / v2 all-types).
-Exp 0052 records the leak-free post-dedup MetaPath2Vec baseline -- cite it by id
-rather than reading this row as a surviving 0039 number.*
+Experiment 0052 reports a different selection of post-dedup comparisons; this
+table's original run and snapshot need verification before reuse.*
 
 A week of experimental results were invalidated. The fix: consensus-average numeric scores by (query, candidate) before computing any ranking metric. Added as a pre-eval gate in `dataset_diagnostics.py`.
 
@@ -208,7 +205,7 @@ Exp 0061 later added text_e5 candidates and concluded the "saturated" values
 overstate substitute quality, so this table is a historical phase transition, not
 the current quality of the shipped embedding: quote exp 0061 by id instead.*
 
-When standard nDCG converges to condensed nDCG (gap < 0.005), annotation coverage is **saturated** and the metric reflects true ranking quality.
+When standard nDCG converges to condensed nDCG (gap < 0.005), this is a coverage diagnostic for the evaluated ranking; it does not establish label accuracy or true ranking quality.
 
 **Phase transition**: before saturation, nDCG measures how many of the embedding's top-10 items have been annotated. After saturation, it measures whether the annotated items are ranked correctly. Total cost: ~$23 for 89K annotations across 3 games.
 
@@ -341,7 +338,7 @@ Filled 6K text_e5 annotation holes ($2.40). Co-occurrence embedding nDCG dropped
 | YuGiOh | 0.465 | **0.532** | +14% |
 
 **[withdrawn: exp 0062 -- the E5 model was fine-tuned on the annotated test
-sets, so the text_e5 column is an upper bound, not a measurement, and the
+sets, so the text_e5 column is not a held-out measurement, and the
 "zero-shot" description is wrong]**
 
 Text embeddings (E5-base-v2 on card oracle text, no training data, zero-shot) beat 60 experiments of co-occurrence embedding engineering by 14-25%. **[withdrawn: exp 0062, same contamination -- the 14-25% margins do not establish that ranking quality; the motivation for text signals rests on the divergence evidence in exp 0061, not on this table]**
@@ -358,7 +355,7 @@ YuGiOh has the smallest gap because archetype naming provides natural overlap be
 
 ## Phase 12: Cross-Encoder Reranker Training
 
-Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three games to learn TCG-specific pairwise similarity scoring. **[withdrawn as a result: exp 0063, the training pairs come from the annotated evaluation sets, so every correlation in this phase is an upper bound and the model was never served]**
+Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three games to learn TCG-specific pairwise similarity scoring. **[withdrawn as a result: exp 0063, the training pairs come from the annotated evaluation sets, so these correlations are not held-out estimates; the model was never served]**
 
 ### Three iterations, each fixing problems found in the previous
 
@@ -379,7 +376,7 @@ Trained a cross-encoder (MiniLM) on ~100K annotation pairs across all three game
 
 | Issue | v1/v2 | v3 fix |
 |-------|-------|--------|
-| Train/eval leakage | Training on eval annotations | Documented as upper bound |
+| Train/eval leakage | Training on eval annotations | Withdrawn as a held-out estimate |
 | Pair-level split | Same card in train+val | Query-level split |
 | 51% zero scores | 3x positive oversampling | Downsample zeros to 20% |
 | No provenance | All annotations equal | Noted for future filtering |

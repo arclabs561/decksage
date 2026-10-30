@@ -40,8 +40,7 @@ been committed.
 
 ## Configuration for other people
 
-A fresh clone needs its own data and configuration, and the README states that
-the demo archive is not publicly available. Others can still run the code path
-by supplying their own corpora under `data/` and their own `.env` copied from
-`.env.example`, whose defaults point at relative paths. `DECKSAGE_DEVICE`
-selects the compute device (MPS by default, `cpu` or `cuda` otherwise).
+A fresh clone needs its own data and configuration. The repository does not
+provide a public artifact download or a verified end-to-end build procedure;
+see the README for the current setup limitation. `DECKSAGE_DEVICE` selects
+the compute device (MPS by default, `cpu` or `cuda` otherwise).

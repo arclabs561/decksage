@@ -56,7 +56,7 @@ def make_agent() -> Agent[QueryDraft]:
 
     from .utils.pydantic_ai_helpers import make_agent as _make
 
-    model = os.getenv("ANNOTATOR_MODEL_BOOTSTRAP", "anthropic/claude-4.5-sonnet")
+    model = os.getenv("ANNOTATOR_MODEL_BOOTSTRAP", "anthropic/claude-sonnet-4.5")
 
     system = (
         "You are an expert TCG annotator (Magic-first).\n"

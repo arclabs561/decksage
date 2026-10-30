@@ -97,32 +97,20 @@ except ImportError:
 logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-# Relevance label thresholds (cosine similarity -> graded relevance)
-RELEVANCE_THRESHOLDS = {
-    "highly_relevant": 0.80,
-    "relevant": 0.60,
-    "somewhat_relevant": 0.40,
-    "marginally_relevant": 0.20,
-}
-
 # Similarity mode definitions for LLM prompt
 MODE_PROMPT = """
 In addition to judging relevance, classify the PRIMARY MODE of similarity
 between the query card and each candidate. Choose exactly one:
 
 - **synergy**: Cards that work well TOGETHER in the same deck. They
-  complement each other (e.g., Thassa's Oracle + Demonic Consultation,
-  Pikachu V + Pikachu VMAX, Ash Blossom + Called by the Grave).
+  complement each other.
 
 - **substitution**: Cards that serve the SAME ROLE and can REPLACE each
-  other. A deckbuilder choosing between them weighs meta tradeoffs
-  (e.g., Lightning Bolt vs Shock, Path to Exile vs Swords to Plowshares,
-  Ultra Ball vs Nest Ball).
+  other. A deckbuilder choosing between them weighs tradeoffs.
 
 - **meta**: Cards that appear together due to the competitive metagame
   rather than direct synergy or substitution. Same archetype staples,
-  format-defining pairs, sideboard companions
-  (e.g., Thoughtseize + Fatal Push in Modern black decks).
+  format-defining pairs, sideboard companions.
 
 If uncertain, prefer the mode that best explains WHY a deckbuilder would
 search for the candidate after seeing the query card.
@@ -317,14 +305,6 @@ def get_top_k_neighbors(kv: KeyedVectors, query: str, k: int = 10) -> list[tuple
     return [(card, float(sim)) for card, sim in kv.most_similar(query, topn=k)]
 
 
-def sim_to_relevance(sim: float) -> str:
-    """Map cosine similarity to graded relevance label."""
-    for label, threshold in RELEVANCE_THRESHOLDS.items():
-        if sim >= threshold:
-            return label
-    return "irrelevant"
-
-
 def _card_context(name: str, card_data: dict[str, dict] | None) -> str:
     """Build card context string from metadata (oracle text, type, mana cost)."""
     if not card_data:
@@ -337,8 +317,8 @@ def _card_context(name: str, card_data: dict[str, dict] | None) -> str:
         parts.append(f"  Type: {info.get('type_line') or info.get('type')}")
     if info.get("mana_cost"):
         parts.append(f"  Mana cost: {info['mana_cost']}")
-    if info.get("oracle_text") or info.get("text"):
-        text = str(info.get("oracle_text") or info.get("text"))[:300]
+    if info.get("oracle_text") or info.get("text") or info.get("effect"):
+        text = str(info.get("oracle_text") or info.get("text") or info.get("effect"))
         parts.append(f"  Text: {text}")
     if info.get("power") and info.get("toughness"):
         parts.append(f"  P/T: {info['power']}/{info['toughness']}")
@@ -365,6 +345,13 @@ async def annotate_pair_with_mode(
     """
     q_ctx = _card_context(query_card, card_data)
     c_ctx = _card_context(candidate_card, card_data)
+    if "Text: " not in q_ctx or "Text: " not in c_ctx:
+        return {
+            "query": query_card,
+            "candidate": candidate_card,
+            "error": True,
+            "reasoning": "Missing card rules",
+        }
 
     prompt = f"""Judge the similarity between these two {game.upper()} cards:
 
@@ -374,19 +361,18 @@ Card 1 (query):
 Card 2 (candidate):
 {c_ctx}
 
-Their embedding cosine similarity is {cosine_sim:.3f}.
-
 {MODE_PROMPT}
 
-IMPORTANT: Base your judgment on the card text and attributes above, NOT on the cosine similarity score. The score may be misleading -- cards with high co-occurrence similarity may serve completely different roles.
+Base your judgment on the card text and attributes above. Do not infer missing
+deck context or metagame facts from the names alone.
 
 **CALIBRATION ANCHORS** (use these to anchor your similarity_score):
-- 1.0: Functional reprint (e.g., Lightning Bolt = Chain Lightning for damage-to-face)
-- 0.8: Same role, minor differences (e.g., Counterspell vs Mana Leak)
-- 0.6: Related function, different power level (e.g., Counterspell vs Cancel)
-- 0.4: Same archetype, different role (e.g., Lightning Bolt vs Monastery Swiftspear)
-- 0.2: Tangential connection (e.g., both red, both cheap, but different functions)
-- 0.0: Unrelated (e.g., Lightning Bolt vs Birds of Paradise)
+- 1.0: Functionally equivalent in the stated context
+- 0.8: Same role, minor differences
+- 0.6: Related function, meaningful differences
+- 0.4: Related but different role
+- 0.2: Tangential connection
+- 0.0: Unrelated
 
 Rate the candidate's relevance to the query and classify the similarity mode.
 """
@@ -430,6 +416,12 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "llm_model": model_name,
             "embedding_version": embedding_version,
             "game": game,
+            "_provenance": {
+                "model": model_name,
+                "prompt_version": "scale_rules_v2",
+                "selection": "embedding_topk",
+                "embedding_version": embedding_version,
+            },
             "timestamp": datetime.now(UTC).isoformat(),
         }
     except Exception as e:
@@ -438,9 +430,6 @@ Rate the candidate's relevance to the query and classify the similarity mode.
             "query": query_card,
             "candidate": candidate_card,
             "cosine_similarity": cosine_sim,
-            "relevance": sim_to_relevance(cosine_sim),
-            "mode": "unknown",
-            "similarity_score": cosine_sim,
             "reasoning": f"LLM annotation failed: {e}",
             "error": True,
             "llm_model": model_name,
@@ -521,6 +510,9 @@ async def annotate_query(
 
     tasks = [_annotate_one(card, sim) for card, sim in neighbors]
     results = await asyncio.gather(*tasks)
+    from ml.contracts.annotations import is_evaluation_record
+
+    results = [record for record in results if is_evaluation_record(record)]
 
     # Organize by relevance level
     by_relevance: dict[str, list[str]] = {
@@ -542,47 +534,6 @@ async def annotate_query(
         **by_relevance,
         "modes": modes,
         "annotations": results,
-    }
-
-
-def build_fallback_query(
-    query_card: str,
-    neighbors: list[tuple[str, float]],
-    embedding_version: str = "unknown",
-    game: str = "magic",
-) -> dict[str, Any]:
-    """Build a query entry using cosine similarity thresholds (no LLM)."""
-    by_relevance: dict[str, list[str]] = {
-        "highly_relevant": [],
-        "relevant": [],
-        "somewhat_relevant": [],
-        "marginally_relevant": [],
-        "irrelevant": [],
-    }
-    annotations = []
-
-    for card, sim in neighbors:
-        label = sim_to_relevance(sim)
-        by_relevance[label].append(card)
-        annotations.append(
-            {
-                "query": query_card,
-                "candidate": card,
-                "cosine_similarity": sim,
-                "relevance": label,
-                "mode": "unknown",
-                "similarity_score": sim,
-                "llm_model": "cosine_fallback",
-                "embedding_version": embedding_version,
-                "game": game,
-                "timestamp": datetime.now(UTC).isoformat(),
-            }
-        )
-
-    return {
-        **by_relevance,
-        "modes": {},  # No mode labels without LLM
-        "annotations": annotations,
     }
 
 
@@ -826,9 +777,10 @@ async def run_pipeline(
     if not has_keys:
         logger.warning(
             "No API keys found. Set one of: OPENAI_API_KEY, ANTHROPIC_API_KEY, "
-            "GOOGLE_API_KEY, OPENROUTER_API_KEY. "
-            "Falling back to cosine-similarity-only labels (no mode classification)."
+            "GOOGLE_API_KEY, OPENROUTER_API_KEY."
         )
+    if not use_llm:
+        return {"error": "No judge available; cosine similarity is not a judgment"}
 
     agent = None
     agent_pool: list[tuple[str, Any]] = []  # (model_name, agent) for rotation
@@ -851,9 +803,6 @@ async def run_pipeline(
             logger.info(
                 f"Model rotation enabled for IAA: {len(agent_pool)} models, rotating per-query"
             )
-    else:
-        logger.info("Building annotations from cosine similarity (no LLM)")
-        model_name = "cosine_fallback"
 
     # 8b. Re-annotate bucket-only queries (seed data without per-pair annotations)
     bucket_only_queries: dict[str, list[tuple[str, float]]] = {}
@@ -930,14 +879,8 @@ async def run_pipeline(
                 # Skip the query entirely -- it can be retried on next run.
                 continue
         else:
-            fallback = build_fallback_query(
-                q,
-                neighbors,
-                embedding_version=embedding_version,
-                game=game,
-            )
-            fallback["use_case"] = "embedding"
-            merged_queries[q] = fallback
+            logger.warning("Skipping %s: no judge is available; cosine is not a judgment", q)
+            continue
 
         # Update mode counts
         q_modes = merged_queries[q].get("modes", {})

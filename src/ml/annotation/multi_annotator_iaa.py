@@ -112,7 +112,7 @@ DEFAULT_ANNOTATORS = [
     # -- Tier 1: Frontier reasoning (anchor judges) --
     AnnotatorConfig(
         name="claude_sonnet_4_6",
-        model="anthropic/claude-sonnet-4-6",
+        model="anthropic/claude-sonnet-4.6",
         temperature=0.3,
         max_tokens=2500,
         description="Claude Sonnet 4.6 - Frontier reasoning, strong structured output (Anthropic) $3.00/$15.00",
@@ -150,11 +150,11 @@ DEFAULT_ANNOTATORS = [
     ),
     # -- Tier 3: Fast/cheap tiebreaker --
     AnnotatorConfig(
-        name="grok_4_1_fast",
-        model="x-ai/grok-4.1-fast",
+        name="grok_4_3",
+        model="x-ai/grok-4.3",
         temperature=0.3,
         max_tokens=2500,
-        description="Grok 4.1 Fast - 2M context, very cheap, fast (xAI) $0.20/$0.50",
+        description="Grok 4.3 - fast general tier (xAI); 4.1-fast is no longer served",
     ),
 ]
 

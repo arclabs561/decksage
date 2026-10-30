@@ -55,6 +55,8 @@ logger = logging.getLogger(__name__)
 
 def load_diverse_pairs(game: str) -> list[dict]:
     """Load diverse pairs JSONL."""
+    from ml.contracts.annotations import is_evaluation_record
+
     path = DATA_DIR / "annotations" / f"diverse_pairs_{game}.jsonl"
     if not path.exists():
         return []
@@ -62,7 +64,9 @@ def load_diverse_pairs(game: str) -> list[dict]:
     with open(path) as f:
         for line in f:
             if line.strip():
-                pairs.append(json.loads(line))
+                pair = json.loads(line)
+                if is_evaluation_record(pair):
+                    pairs.append(pair)
     return pairs
 
 
@@ -91,12 +95,20 @@ def _card_context(name: str, card_data: dict[str, dict]) -> str:
     if not info:
         return name
     parts = [name]
-    if info.get("type"):
-        parts.append(f"  Type: {info['type']}")
+    card_type = info.get("type_line") or info.get("type")
+    if card_type:
+        parts.append(f"  Type: {card_type}")
     if info.get("mana_cost"):
         parts.append(f"  Mana cost: {info['mana_cost']}")
-    if info.get("oracle_text"):
-        parts.append(f"  Text: {str(info['oracle_text'])[:300]}")
+    if info.get("power") and info.get("toughness"):
+        parts.append(f"  Power/toughness: {info['power']}/{info['toughness']}")
+    if info.get("hp"):
+        parts.append(f"  HP: {info['hp']}")
+    if info.get("atk") is not None and info.get("def_stat") is not None:
+        parts.append(f"  ATK/DEF: {info['atk']}/{info['def_stat']}")
+    rules = info.get("oracle_text") or info.get("text") or info.get("effect")
+    if rules:
+        parts.append(f"  Text: {rules}")
     return "\n".join(parts)
 
 
@@ -155,11 +167,11 @@ Card B:
 **SCORING GUIDE** (rate each dimension independently):
 
 similarity_score (overall, 0-1):
-  1.0 = Functional reprint (e.g., Lightning Bolt vs Lightning Strike minus the extra mana)
-  0.7 = Same role with meaningful differences (e.g., Swords to Plowshares vs Path to Exile)
-  0.4 = Related function, different power/context (e.g., Lightning Bolt vs Fireball)
-  0.1 = Tangential connection only (e.g., Lightning Bolt vs Furnace of Rath)
-  0.0 = Unrelated (e.g., Lightning Bolt vs Island)
+  1.0 = Functionally equivalent in the specified context
+  0.7 = Same role with meaningful differences
+  0.4 = Related function, different power or context
+  0.1 = Tangential connection only
+  0.0 = Unrelated
 
 functional_score (can one replace the other in a deck? 0-1):
   High = same mana cost, same effect, same deck slot
@@ -189,6 +201,11 @@ async def annotate_pair(
     prompt_variant: str = DEFAULT_PROMPT_VARIANT,
 ) -> dict:
     """Annotate a single diverse pair."""
+    for name in (card1, card2):
+        info = card_data.get(name, {})
+        if not (info.get("oracle_text") or info.get("text") or info.get("effect")):
+            logger.warning("Skipping pair with missing card rules: %s", name)
+            return None
     c1_ctx = _card_context(card1, card_data)
     c2_ctx = _card_context(card2, card_data)
     source = pair_meta.get("source", "unknown")
@@ -295,6 +312,8 @@ def _load_checkpoint(game: str) -> set[tuple[str, str, str, str]]:
     Keys are (query, candidate, llm_model, prompt_variant) 4-tuples
     to support multi-model x multi-prompt IAA without duplicates.
     """
+    from ml.contracts.annotations import is_evaluation_record
+
     path = _checkpoint_path(game)
     if not path.exists():
         return set()
@@ -303,6 +322,8 @@ def _load_checkpoint(game: str) -> set[tuple[str, str, str, str]]:
         for line in f:
             if line.strip():
                 d = json.loads(line)
+                if not is_evaluation_record(d):
+                    continue
                 done.add(
                     (
                         d.get("query", ""),
@@ -319,6 +340,47 @@ def _save_to_checkpoint(game: str, result: dict) -> None:
     path = _checkpoint_path(game)
     with open(path, "a") as f:
         f.write(json.dumps(result) + "\n")
+
+
+def consensus_annotations(annotations: list[dict]) -> list[dict]:
+    """Average each score over available values and retain judge provenance."""
+    groups: dict[str, list[dict]] = {}
+    for ann in annotations:
+        groups.setdefault(ann.get("candidate", ""), []).append(ann)
+    results = []
+    fields = (
+        "similarity_score",
+        "functional_score",
+        "synergy_score",
+        "substitutability",
+        "meta_relevance",
+        "confidence",
+    )
+    for records in groups.values():
+        consensus = dict(records[0])
+        counts = {}
+        for field in fields:
+            values = [float(record[field]) for record in records if record.get(field) is not None]
+            if values:
+                consensus[field] = round(sum(values) / len(values), 4)
+                counts[field] = len(values)
+        consensus["n_annotators"] = len(records)
+        if len(records) > 1:
+            consensus["llm_model"] = "consensus"
+            consensus["_provenance"] = {
+                "aggregation": "mean_per_available_field",
+                "field_counts": counts,
+                "contributors": [
+                    {
+                        "model": record.get("llm_model"),
+                        "prompt_variant": record.get("prompt_variant"),
+                        "provenance": record.get("_provenance"),
+                    }
+                    for record in records
+                ],
+            }
+        results.append(consensus)
+    return results
 
 
 async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10) -> dict:
@@ -442,6 +504,12 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             if result:
                 result["llm_model"] = model_name
                 result["prompt_variant"] = variant
+                result["_provenance"] = {
+                    "model": model_name,
+                    "prompt_version": "diverse_rules_v2",
+                    "prompt_variant": variant,
+                    "selection": result.get("pair_source", "unknown"),
+                }
                 annotations_by_query.setdefault(result["query"], []).append(result)
                 _save_to_checkpoint(game, result)
                 n_done += 1
@@ -476,6 +544,10 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
             for line in f:
                 if line.strip():
                     ann = json.loads(line)
+                    from ml.contracts.annotations import is_evaluation_record
+
+                    if not is_evaluation_record(ann):
+                        continue
                     q = ann.get("query", "")
                     if not q:
                         continue
@@ -517,31 +589,7 @@ async def run_annotation(game: str, dry_run: bool = False, concurrency: int = 10
     n_augmented = 0
 
     for query_card, anns in annotations_by_query.items():
-        # Deduplicate by candidate: aggregate multi-model scores into consensus
-        deduped_anns: dict[str, dict] = {}
-        for ann in anns:
-            cand = ann.get("candidate", "")
-            if cand in deduped_anns:
-                existing = deduped_anns[cand]
-                for field in [
-                    "similarity_score",
-                    "functional_score",
-                    "synergy_score",
-                    "substitutability",
-                    "meta_relevance",
-                    "confidence",
-                ]:
-                    old_val = existing.get(field)
-                    new_val = ann.get(field)
-                    if old_val is not None and new_val is not None:
-                        n = existing.get("n_annotators", 1)
-                        existing[field] = round((float(old_val) * n + float(new_val)) / (n + 1), 4)
-                existing["n_annotators"] = existing.get("n_annotators", 1) + 1
-            else:
-                deduped_anns[cand] = dict(ann)
-                deduped_anns[cand]["n_annotators"] = 1
-
-        consensus_anns = list(deduped_anns.values())
+        consensus_anns = consensus_annotations(anns)
 
         if query_card in queries:
             # Merge with existing query -- update consensus for known candidates

@@ -298,6 +298,16 @@ async def annotate_pairs(
     - Pairs with no card context are skipped (saves ~10% of calls)
     - Structured output avoids wasted tokens on reasoning
     """
+    eligible = [
+        pair
+        for pair in pairs
+        if "Text: " in card_context.get(pair[0], "") and "Text: " in card_context.get(pair[1], "")
+    ]
+    if len(eligible) != len(pairs):
+        logger.warning("Skipping %s pairs with missing card rules", len(pairs) - len(eligible))
+    pairs = eligible
+    if not pairs:
+        return []
     try:
         from ml.annotation.llm_annotator import CardSimilarityAnnotation
         from ml.utils.pydantic_ai_helpers import make_agent
@@ -313,7 +323,7 @@ async def annotate_pairs(
         if models_str:
             model_name = models_str.split(",")[0].strip()
         else:
-            model_name = "anthropic/claude-haiku-4-5-20251001"
+            model_name = "anthropic/claude-haiku-4.5"
 
     # Multi-model cascade (Groq 70B + Cerebras 235B, calibrated)
     use_multi = model_name == "multi"
@@ -383,8 +393,10 @@ async def annotate_pairs(
     # Cost estimation
     est_tokens = len(pairs) * 400  # ~300 input + 100 output per pair
     cost_estimates = {
-        "groq/llama-3.1-8b-instant": est_tokens * 0.065 / 1_000_000,  # $0.05 in + $0.08 out avg
-        "groq/llama-3.3-70b-versatile": est_tokens * 0.69 / 1_000_000,
+        # Groq retired the Llama 3.x lineup; these are the current hosted models.
+        # Rates are rough per-million estimates, not a quoted price sheet.
+        "groq/openai/gpt-oss-20b": est_tokens * 0.10 / 1_000_000,
+        "groq/openai/gpt-oss-120b": est_tokens * 0.60 / 1_000_000,
         "openrouter": est_tokens * 1.0 / 1_000_000,  # varies by model
         "local": 0.0,
     }
@@ -507,7 +519,7 @@ async def annotate_pairs(
                 c_ctx = card_context.get(candidate, candidate)
 
                 # Richer prompt for smaller/faster models; compact for frontier
-                if use_groq or use_ollama or use_local:
+                if use_groq or use_cerebras or use_ollama or use_local:
                     prompt = f"""Rate these {game.upper()} cards on similarity (0.0-1.0).
 
 Card A: {q_ctx}
@@ -520,9 +532,10 @@ SCORING SCALE:
 - 0.26-0.50: Moderate. Same function AND similar cost, or strong co-occurrence.
 - 0.51-0.75: Strong similarity. Competitive alternatives, similar efficiency.
 - 0.76-0.90: Near-substitute. Functionally interchangeable, minor differences.
-- 0.91-1.0: Functional reprint or strictly-better/worse pair.
+- 0.91-1.0: Functionally equivalent in the stated context.
 
-CALIBRATION: Lightning Bolt vs Shock = 0.70. Path to Exile vs Swords = 0.80. Sol Ring vs Wrath of God = 0.05. Most random pairs = 0.05-0.15.
+Assess functional replacement, synergy and competitive relevance independently.
+Do not infer deck or metagame facts that are not provided.
 
 Respond ONLY with JSON:
 {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_score": 0.0, "meta_relevance": 0.0}}
@@ -553,6 +566,8 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     from multi_model_annotate import annotate_pair
 
                     result = await annotate_pair(query, candidate, q_ctx, c_ctx, game)
+                    if result is None:
+                        return None
                     ann = {
                         dim: result.get(dim, 0)
                         for dim in [
@@ -590,6 +605,10 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                     logger.warning(f"No JSON parsed for {query} vs {candidate}")
                     return None
 
+                from ml.contracts.annotations import JudgeScores
+
+                JudgeScores.model_validate(ann)
+
                 ann["query"] = query
                 ann["candidate"] = candidate
                 ann["discovery_source"] = source
@@ -612,9 +631,9 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                         "backend": backend,
                         "model": model_name,
                         "temperature": 0.3,
-                        "prompt_version": "enriched_v1"
+                        "prompt_version": "enriched_v2"
                         if (use_groq or use_cerebras or use_ollama or use_local)
-                        else "compact_v1",
+                        else "compact_v2",
                         "concurrency": effective_concurrency,
                         "game": game,
                         "has_card_context": bool(card_context.get(query)),
@@ -652,8 +671,11 @@ def merge_annotations(
     queries = test_set.get("queries", {})
     added = 0
     deduped = 0
+    from ml.contracts.annotations import is_evaluation_record
 
     for ann in new_annotations:
+        if not is_evaluation_record(ann):
+            continue
         query = ann.get("card_a", ann.get("query", ""))
         candidate = ann.get("card_b", ann.get("candidate", ""))
         if not query or not candidate:
@@ -782,29 +804,9 @@ def save_test_set(test_set: dict, game: str) -> Path:
 
 def load_card_context(game: str) -> dict[str, str]:
     """Load card text context for LLM prompts."""
-    import csv
+    from ml.annotation.card_context import load_card_context as load_context
 
-    game_attrs = {
-        "magic": "card_attributes_enriched.csv",
-        "pokemon": "card_attributes_pokemon.csv",
-        "yugioh": "card_attributes_yugioh.csv",
-    }
-    csv_path = DATA_DIR / "processed" / game_attrs.get(game, "")
-    context = {}
-    if csv_path.exists():
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                name = row.get("name", "").strip()
-                if name:
-                    parts = [f"Type: {row.get('type', 'unknown')}"]
-                    mc = row.get("mana_cost", "")
-                    if mc:
-                        parts.append(f"Mana cost: {mc}")
-                    text = row.get("oracle_text", "")
-                    if text and text != "nan":
-                        parts.append(f"Text: {text}")
-                    context[name] = "\n".join(parts)
-    return context
+    return load_context(DATA_DIR, game)
 
 
 # ---------------------------------------------------------------------------

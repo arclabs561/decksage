@@ -181,29 +181,9 @@ def _find_holes_fusion(kv, queries: dict, game: str, k: int = 10) -> list[tuple[
 
 def load_card_context(game: str) -> dict[str, str]:
     """Load card text context for LLM prompts."""
-    import csv
+    from ml.annotation.card_context import load_card_context as load_context
 
-    game_attrs = {
-        "magic": "card_attributes_enriched.csv",
-        "pokemon": "card_attributes_pokemon.csv",
-        "yugioh": "card_attributes_yugioh.csv",
-    }
-    csv_path = DATA_DIR / "processed" / game_attrs.get(game, "")
-    context = {}
-    if csv_path.exists():
-        with open(csv_path, newline="", encoding="utf-8") as f:
-            for row in csv.DictReader(f):
-                name = row.get("name", "").strip()
-                if name:
-                    parts = [f"Type: {row.get('type', 'unknown')}"]
-                    mc = row.get("mana_cost", "")
-                    if mc:
-                        parts.append(f"Mana cost: {mc}")
-                    text = row.get("oracle_text", "")
-                    if text and text != "nan":
-                        parts.append(f"Text: {text}")
-                    context[name] = "\n".join(parts)
-    return context
+    return load_context(DATA_DIR, game)
 
 
 async def annotate_holes(
@@ -248,9 +228,16 @@ async def annotate_holes(
             try:
                 q_ctx = card_context.get(query, query)
                 c_ctx = card_context.get(candidate, candidate)
+                if "Text: " not in q_ctx or "Text: " not in c_ctx:
+                    logger.warning(
+                        "Skipping pair with missing card rules: %s / %s", query, candidate
+                    )
+                    return None
 
                 if use_multi:
                     ann = await annotate_pair(query, candidate, q_ctx, c_ctx, game)
+                    if ann is None:
+                        return None
                 else:
                     prompt = f"""Rate these {game.upper()} cards (0.0-1.0):
 
@@ -297,6 +284,9 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
                         else:
                             return None
 
+                from ml.contracts.annotations import JudgeScores
+
+                JudgeScores.model_validate(ann)
                 ann["query"] = query
                 ann["candidate"] = candidate
                 ann["model_name"] = model
@@ -332,6 +322,8 @@ Respond with JSON: {{"similarity_score": 0.0, "functional_score": 0.0, "synergy_
 
 def merge_into_test_set(game: str, annotations: list[dict], discovery: dict | None = None) -> int:
     """Merge hole-fill annotations into the test set."""
+    from ml.contracts.annotations import is_evaluation_record
+
     test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
     with open(test_path) as f:
         data = json.load(f)
@@ -346,7 +338,7 @@ def merge_into_test_set(game: str, annotations: list[dict], discovery: dict | No
         # Evaluation data must stay human- or judge-labeled real pairs.
         # ADR-0002 keeps augmented and synthetic pairs training-only; letting
         # one in would raise scores for reasons that do not transfer.
-        if ann.get("synthetic") or (ann.get("_provenance") or {}).get("augmentation"):
+        if not is_evaluation_record(ann):
             continue
 
         qdata = queries[query]
@@ -386,6 +378,15 @@ def merge_into_test_set(game: str, annotations: list[dict], discovery: dict | No
             bucket = "marginally_relevant"
         else:
             bucket = "irrelevant"
+        for old_bucket in (
+            "highly_relevant",
+            "relevant",
+            "somewhat_relevant",
+            "marginally_relevant",
+            "irrelevant",
+        ):
+            if old_bucket != bucket and old_bucket in qdata:
+                qdata[old_bucket] = [name for name in qdata[old_bucket] if name != candidate]
         if candidate not in qdata.get(bucket, []):
             qdata.setdefault(bucket, []).append(candidate)
 

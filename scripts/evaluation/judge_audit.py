@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""Resolution and agreement audit for annotation scores.
+"""Resolution audit for annotation scores.
 
-Stage 0 of docs/JUDGE-CALIBRATION.md: free checks that decide whether buying
-human labels is worth it.
+Stage 0 of docs/JUDGE-CALIBRATION.md: a distribution screen. It does not
+measure agreement or establish whether labels are accurate.
 
 Usage:
     uv run scripts/evaluation/judge_audit.py --game magic
@@ -22,6 +22,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 if str(PROJECT_ROOT / "src") not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
+from ml.contracts.annotations import is_evaluation_record
 from ml.utils.paths import PATHS
 
 
@@ -34,13 +35,15 @@ FIELDS = [
 ]
 
 
-def load_annotations(game: str) -> list[dict]:
+def load_annotations(game: str, *, exclude_ineligible: bool = False) -> list[dict]:
     path = PATHS.data / "test_sets" / f"annotated_{game}_v2.json"
     with open(path) as f:
         data = json.load(f)
     out = []
     for query, entry in data.get("queries", {}).items():
         for ann in entry.get("annotations", []):
+            if exclude_ineligible and not is_evaluation_record(ann):
+                continue
             out.append({"query": query, **ann})
     return out
 
@@ -75,7 +78,7 @@ def field_stats(values: list[float]) -> dict:
 
 
 def resolution_verdict(values: list[float], bin_share: float) -> str:
-    """Judge usability from the distribution, not from the raw tie count.
+    """Screen score resolution, not label accuracy, from the distribution.
 
     tie_rate mostly reflects score quantization (two decimals), so it is
     reported but not decisive. Compression shows up as low spread, heavy mass
@@ -89,11 +92,11 @@ def resolution_verdict(values: list[float], bin_share: float) -> str:
         return "deflated: most pairs scored zero, ranking power lost"
     if bin_share > 0.6:
         return "concentrated: most mass in one bin"
-    return "usable"
+    return "no concentration flagged"
 
 
-def audit(game: str) -> dict:
-    anns = load_annotations(game)
+def audit(game: str, *, exclude_ineligible: bool = False) -> dict:
+    anns = load_annotations(game, exclude_ineligible=exclude_ineligible)
     result: dict = {"game": game, "annotations": len(anns), "fields": {}}
     for field in FIELDS:
         vals = [float(a[field]) for a in anns if a.get(field) is not None]
@@ -105,11 +108,18 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Judge score resolution audit")
     parser.add_argument("--game", choices=["magic", "pokemon", "yugioh"])
     parser.add_argument("--all-games", action="store_true")
+    parser.add_argument(
+        "--exclude-ineligible",
+        action="store_true",
+        help="Drop failed, synthetic and cosine-fallback records before measuring "
+        "(they carry pseudo-scores; see docs/JUDGE-CALIBRATION.md). Off by default so "
+        "existing reports stay comparable.",
+    )
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args()
 
     games = ["magic", "pokemon", "yugioh"] if args.all_games else [args.game or "magic"]
-    results = [audit(g) for g in games]
+    results = [audit(g, exclude_ineligible=args.exclude_ineligible) for g in games]
 
     if args.json:
         print(json.dumps(results, indent=2))
@@ -119,7 +129,7 @@ def main() -> int:
         print(f"\n{res['game']}: {res['annotations']:,} annotations")
         print(
             f"  {'field':18s} {'n':>6s} {'mean':>6s} {'sd':>6s} {'distinct':>8s} "
-            f"{'ties':>6s} {'zero':>6s}  verdict"
+            f"{'repeat':>6s} {'zero':>6s}  resolution screen"
         )
         for field, st in res["fields"].items():
             if st["status"] == "absent":
@@ -129,6 +139,7 @@ def main() -> int:
                 f"  {field:18s} {st['n']:>6d} {st['mean']:>6.3f} {st['sd']:>6.3f} "
                 f"{st['distinct']:>8d} {st['tie_rate']:>6.2f} {st['zero_share']:>6.2f}  {st['verdict']}"
             )
+        print("  repeat = 1 - distinct/n; this screen does not assess label accuracy")
     return 0
 
 
