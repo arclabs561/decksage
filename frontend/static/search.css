@@ -1,0 +1,220 @@
+/* ==========================================================================
+   DeckSage — search page composition.
+   Loaded after brand.css. The brand layer owns tokens, type and components;
+   this file owns the first screen: the two-column hero, the live card fan,
+   and the small set of legacy-token remaps that the page's inline sheet
+   declares on <body> and would otherwise win with.
+   ========================================================================== */
+
+/* The inline sheet declares the legacy --color-* tokens on <body>, so the
+   :root remap in brand.css never reaches them. Repeat the remap here, later
+   in the cascade, to make the brand the single source of colour. */
+:root {
+  /* a cooler bone for the paper plates: the crest's ivory is the mark, not
+     the whole page, and the neutral ground lets the gold stay the warm note */
+  --ds-paper:   #ECE9E2;
+  --ds-paper-2: #DFDBD1;
+  /* off-white rather than yellow-cream body text; the gold stays the warm note */
+  --ds-cream:   #E9E7E2;
+}
+
+body {
+  --color-bg-primary:       var(--ds-void);
+  --color-bg-secondary:     var(--ds-deep);
+  --color-bg-tertiary:      var(--ds-raised);
+  --color-bg-elevated:      var(--ds-raised);
+  --color-border-default:   #2A3654;
+  --color-border-focus:     var(--ds-gold);
+  --color-text-primary:     var(--ds-cream);
+  --color-text-secondary:   var(--ds-cream-soft);
+  --color-text-muted:       #8C95AE;
+  --color-text-link:        var(--ds-gold);
+  --color-accent-primary:   var(--ds-gold);
+  --color-accent-secondary: var(--ds-violet);
+  --btn-bg:                 var(--ds-gold);
+  --btn-bg-hover:           var(--ds-gold-hi);
+  --btn-text:               var(--ds-gold-ink);
+  --search-bg:              var(--ds-paper);
+  --search-border:          #C9BC9C;
+  --search-focus-shadow:    none;
+  --card-bg:                var(--ds-paper);
+  --card-border-accent:     #D8CBAB;
+  --card-hover-bg:          #FFF9EC;
+  --card-hover-border:      var(--ds-gold);
+  --card-hover-shadow:      none;
+  --tab-active-color:       var(--ds-gold-ink);
+  --tab-active-border:      var(--ds-gold);
+  --skeleton-bg:            #D9CEB4;
+  --match-color:            var(--ds-ink);
+  --similarity-fill:        var(--ds-violet);
+  --section-gradient:       none;
+  --color-error:            var(--ds-bad);
+}
+
+/* ---------- first screen ---------- */
+
+.ds-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 0.7fr);
+  gap: 44px;
+  align-items: center;
+  max-width: none;
+  padding: 40px 0 20px;
+}
+
+.ds-hero-copy { max-width: 700px; min-width: 0; }
+
+.ds-title {
+  font-family: var(--ds-display);
+  font-weight: 700;
+  font-size: clamp(36px, 4.62vw, 66px);
+  line-height: 0.96;
+  letter-spacing: -0.045em;
+  color: var(--ds-cream);
+  margin: 0 0 20px;
+  text-wrap: balance;
+}
+
+.ds-lede {
+  font-size: 18px;
+  line-height: 1.45;
+  color: var(--ds-cream-soft);
+  margin: 0;
+  max-width: 44ch;
+}
+
+/* the product's own material: one real card from each game */
+.ds-hero-art {
+  position: relative;
+  min-height: 430px;
+  min-width: 0;
+}
+
+.ds-card {
+  position: absolute;
+  margin: 0;
+  width: 160px;
+  border-radius: 10px;
+  overflow: hidden;
+  transform-origin: 50% 100%;
+  transition: transform 240ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ds-card img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.ds-card-4 { left: -4%; top: 18%; transform: rotate(-16deg); z-index: 0; }
+.ds-card-1 { left: 12%; top: 7%;  transform: rotate(-8deg);  z-index: 3; }
+.ds-card-2 { left: 37%; top: 0;   transform: rotate(1deg);   z-index: 2; }
+.ds-card-3 { left: 62%; top: 9%;  transform: rotate(9deg);   z-index: 1; }
+
+.ds-hero-art:hover .ds-card-1 { transform: rotate(-11deg) translateY(-6px); }
+.ds-hero-art:hover .ds-card-2 { transform: rotate(1deg) translateY(-10px); }
+.ds-hero-art:hover .ds-card-3 { transform: rotate(12deg) translateY(-6px); }
+.ds-hero-art:hover .ds-card-4 { transform: rotate(-19deg) translateY(-4px); }
+
+/* the skip link was white on gold; the crest ink reads on the same gold */
+.skip-link { background: var(--ds-gold) !important; color: var(--ds-gold-ink) !important; }
+
+/* the starter was the page's one 1px outlined box */
+.ds-starter { border: 0 !important; background: var(--ds-deep); }
+.ds-starter:hover { background: var(--ds-paper); color: var(--ds-ink); }
+
+/* the legacy sheet kept a hairline under the tab row */
+.nav-tabs { border: 0 !important; }
+
+/* a closed drawer must not intercept the page: opacity 0 still hit-tests */
+.card-drawer-overlay { visibility: hidden; }
+.card-drawer-overlay.open { visibility: visible; }
+
+/* the drawer separates by tone; no edge line is needed */
+.card-drawer { border: 0 !important; }
+.drawer-close { border: 0 !important; background: var(--ds-raised); }
+
+/* autofocus made the form's gold ring read as a resting shadow (taste-skill-ignore: this removes it) */
+.search-form:focus-within {
+  box-shadow: none !important; /* taste-skill-ignore: removing brand.css's resting ring */
+  outline: 2px solid var(--ds-gold);
+  outline-offset: -3px;
+}
+
+/* the ivory plate needs ink, not the cream-on-navy secondary colour */
+body.game-magic .result-oracle,
+body.game-yugioh .result-oracle,
+body.game-pokemon .result-oracle {
+  color: var(--ds-ink-soft) !important;
+}
+
+/* ---------- motion ---------- */
+
+@keyframes ds-rise {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: none; }
+}
+
+@keyframes ds-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.ds-masthead { animation: ds-rise 520ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ds-hero-copy > * { animation: ds-rise 620ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ds-hero-copy > *:nth-child(2) { animation-delay: 80ms; }
+.ds-hero-art { animation: ds-rise 700ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ds-hero-art { animation-delay: 60ms; }
+.ds-card { animation: ds-fade 640ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ds-card-4 { animation-delay: 20ms; }
+.ds-card-1 { animation-delay: 80ms; }
+.ds-card-2 { animation-delay: 140ms; }
+.ds-card-3 { animation-delay: 200ms; }
+.nav-tabs { animation: ds-rise 560ms 120ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.search-section { animation: ds-rise 560ms 180ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.game-btn { animation: ds-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.game-btn:nth-of-type(1) { animation-delay: 220ms; }
+.game-btn:nth-of-type(2) { animation-delay: 260ms; }
+.game-btn:nth-of-type(3) { animation-delay: 300ms; }
+.ds-starter { animation: ds-rise 420ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+.ds-starter:nth-of-type(1) { animation-delay: 20ms; }
+.ds-starter:nth-of-type(2) { animation-delay: 70ms; }
+.ds-starter:nth-of-type(3) { animation-delay: 120ms; }
+.ds-starter:nth-of-type(4) { animation-delay: 170ms; }
+.result-item { animation: ds-rise 380ms cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ds-masthead,
+  .ds-hero-copy > *,
+  .ds-hero-art,
+  .nav-tabs,
+  .search-section,
+  .result-item {
+    animation: none !important;
+  }
+  .ds-card { transition: none; }
+}
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 900px) {
+  .ds-hero {
+    grid-template-columns: 1fr;
+    gap: 20px;
+    padding: 24px 0 8px;
+  }
+  .ds-title { font-size: clamp(34px, 8.4vw, 52px); }
+  .ds-lede { font-size: 16px; }
+  .ds-hero-art { min-height: 220px; }
+  .ds-card { width: 118px; }
+  .ds-card-4 { left: 0;  top: 12%; }
+  .ds-card-1 { left: 16%; top: 4%; }
+  .ds-card-2 { left: 37%; top: 0; }
+  .ds-card-3 { left: 58%; top: 6%; }
+}
+
+@media (max-width: 640px) {
+  /* the phone works the search, not the poster */
+  .ds-hero-art { display: none; }
+  .ds-hero { padding: 18px 0 4px; }
+}
