@@ -39,6 +39,16 @@ uv run uvicorn src.ml.api.api:app --port 8001     # ~40s startup, loads all 3 ga
 
 Open `http://localhost:8001` for the UI, or `/docs` for interactive API docs.
 
+For the whole stack in Linux containers with source watching and hot reload, use
+the dev override instead; it also publishes the UI on the tailnet for device
+checks. See `docs/dev-compose.md`.
+
+```bash
+just dev-up      # docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
+just dev-watch   # keep running; syncs src/ and frontend/ and reloads uvicorn
+just dev-tailnet # tailscale serve --bg --https=11443 http://127.0.0.1:8000
+```
+
 ## API
 
 | Endpoint | Method | Description |

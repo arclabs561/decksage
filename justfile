@@ -70,6 +70,7 @@ check-schema:
 # Run all architecture checks
 check-architecture:
     #!/usr/bin/env bash
+    set -e
     echo "Checking hardcoded paths..."
     just check-paths
     echo ""
@@ -99,7 +100,7 @@ check-all:
     just typecheck
     echo ""
     echo "=== Go lint ==="
-    just lint-go || true
+    just lint-go
     echo ""
     echo "=== Architecture checks ==="
     just check-architecture
@@ -317,6 +318,33 @@ serve-local:
     #!/usr/bin/env bash
     . .venv/bin/activate
     exec uv run uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000
+
+# Dev stack with source watching and hot reload (see docs/dev-compose.md)
+dev-up:
+    #!/usr/bin/env bash
+    exec docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
+
+# Keep this running while editing; Ctrl-C stops watching, not the services
+dev-watch:
+    #!/usr/bin/env bash
+    exec docker compose -f docker-compose.yml -f docker-compose.dev.yml watch --prune=false
+
+dev-logs:
+    #!/usr/bin/env bash
+    exec docker compose -f docker-compose.yml -f docker-compose.dev.yml logs -f api
+
+dev-down:
+    #!/usr/bin/env bash
+    exec docker compose -f docker-compose.yml -f docker-compose.dev.yml down
+
+# Publish the loopback dev API on the tailnet (HTTPs, tailnet only)
+dev-tailnet:
+    #!/usr/bin/env bash
+    exec tailscale serve --bg --https=11443 http://127.0.0.1:8000
+
+dev-tailnet-off:
+    #!/usr/bin/env bash
+    exec tailscale serve --https=11443 off
 
 # Enrichment
 enrich-mtg:
@@ -1230,3 +1258,8 @@ qa-deps-down:
 # Location: archive/2025-01-01-cleanup/packages/decksage-ts/
 #
 # If needed for future frontend/Node.js work, restore from archive.
+
+# Verify learned artefacts: exists, dimension matches, and a producer could rebuild it
+verify-artifacts:
+    #!/usr/bin/env bash
+    uv run python scripts/maintenance/verify_artifacts.py

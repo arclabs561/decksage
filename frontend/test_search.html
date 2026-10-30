@@ -5,11 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>DeckSage - Card Similarity Search</title>
     <meta name="description" content="Search Magic: The Gathering, Pokemon, and Yu-Gi-Oh cards by name or text">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='12' fill='%23282840'/><text x='50' y='68' font-size='60' text-anchor='middle' fill='%23c8a84b'>DS</text></svg>">
+    <link rel="icon" type="image/png" href="/static/crest.png">
+    <link rel="apple-touch-icon" href="/static/crest.png">
     <link rel="stylesheet" href="/static/common.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Lato:wght@300;400;700&family=Nunito:wght@400;600;700;800;900&family=Outfit:wght@400;600;700;800;900&family=Rajdhani:wght@400;500;600;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Playfair+Display:wght@400;600;700&family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -1190,19 +1188,22 @@
         .card-drawer {
             position: fixed;
             top: 0;
-            right: -420px;
+            /* Off-screen by transform, not by a negative offset: a negative
+               right extended the document and produced horizontal scroll. */
+            right: 0;
+            transform: translateX(105%);
             width: 400px;
             height: 100vh;
             background: var(--color-bg-primary);
             border-left: 1px solid var(--color-border-default);
             z-index: 1001;
-            transition: right 0.25s ease;
+            transition: transform 0.25s ease;
             overflow-y: auto;
             padding: 24px;
             box-shadow: -4px 0 12px rgba(0,0,0,0.08), -16px 0 40px rgba(0,0,0,0.12);
         }
         .card-drawer.open {
-            right: 0;
+            transform: translateX(0);
         }
         .drawer-close {
             position: absolute;
@@ -1770,175 +1771,42 @@
                 grid-template-columns: 1fr !important;
             }
         }
-        /* === Unified theme override: neutralize all per-game styles === */
-        body.game-magic,
-        body.game-pokemon,
-        body.game-yugioh {
-            /* Reset to base theme variables */
-            --color-bg-primary:      #ffffff;
-            --color-bg-secondary:    #f5f5f7;
-            --color-bg-tertiary:     #e8e8ed;
-            --color-bg-elevated:     #ffffff;
-            --color-border-default:  #d2d2d7;
-            --color-border-focus:    #0071e3;
-            --color-text-primary:    #1d1d1f;
-            --color-text-secondary:  #6e6e73;
-            --color-text-muted:      #86868b;
-            --color-text-link:       #0071e3;
-            --color-accent-primary:  #0071e3;
-            --color-accent-secondary:#1d1d1f;
-            --btn-bg:                #0071e3;
-            --btn-bg-hover:          #0077ed;
-            --btn-text:              #fff;
-            --search-bg:             #f5f5f7;
-            --search-border:         #d2d2d7;
-            --search-focus-shadow:   0 0 0 4px rgba(0, 113, 227, 0.15);
-            --card-bg:               #ffffff;
-            --card-border-accent:    #d2d2d7;
-            --card-hover-bg:         #f5f5f7;
-            --card-hover-border:     #0071e3;
-            --card-hover-shadow:     0 4px 16px rgba(0, 0, 0, 0.08);
-            --tab-active-color:      #1d1d1f;
-            --tab-active-border:     #1d1d1f;
-            --skeleton-bg:           #e8e8ed;
-            --match-color:           #1d1d1f;
-            --similarity-fill:       #0071e3;
-            --section-gradient:      linear-gradient(90deg, #0071e3, #1d1d1f);
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-            background: #ffffff !important;
-        }
-        body.game-magic::before,
-        body.game-pokemon::before,
-        body.game-yugioh::before {
-            background: linear-gradient(90deg, #0071e3, #5856d6) !important;
-            height: 3px !important;
-        }
-        body.game-magic h1,
-        body.game-pokemon h1,
-        body.game-yugioh h1 {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif !important;
-            color: var(--color-text-primary) !important;
-            text-transform: none !important;
-            letter-spacing: -0.01em !important;
-            font-size: 32px !important;
-        }
-        body.game-magic .result-name,
-        body.game-pokemon .result-name,
-        body.game-yugioh .result-name {
-            font-family: inherit !important;
-            color: var(--color-text-primary) !important;
-            font-size: 18px !important;
-            font-weight: 600 !important;
-            letter-spacing: -0.01em !important;
-        }
-        body.game-magic .result-item,
-        body.game-pokemon .result-item,
-        body.game-yugioh .result-item {
-            background: var(--card-bg) !important;
-            border: 1px solid var(--card-border-accent) !important;
-            border-left: none !important;
-            border-radius: 12px !important;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.04), 0 1px 2px rgba(0,0,0,0.06) !important;
-        }
-        body.game-magic .result-item:hover,
-        body.game-pokemon .result-item:hover,
-        body.game-yugioh .result-item:hover {
-            background: var(--card-hover-bg) !important;
-            border-color: var(--card-hover-border) !important;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.04), 0 10px 20px rgba(0,0,0,0.06) !important;
-            transform: translateY(-2px) !important;
-        }
-        body.game-magic .similarity-percent,
-        body.game-pokemon .similarity-percent,
-        body.game-yugioh .similarity-percent {
-            color: var(--color-accent-primary) !important;
-            font-family: inherit !important;
-        }
-        body.game-magic .search-button,
-        body.game-pokemon .search-button,
-        body.game-yugioh .search-button {
-            font-family: inherit !important;
-            text-transform: none !important;
-        }
-        body.game-magic .nav-tab,
-        body.game-pokemon .nav-tab,
-        body.game-yugioh .nav-tab {
-            font-family: inherit !important;
-            text-transform: none !important;
-        }
-        body.game-magic .search-input,
-        body.game-pokemon .search-input,
-        body.game-yugioh .search-input {
-            font-family: inherit !important;
-        }
-        body.game-pokemon .result-item[data-energy-type] {
-            border-left: none !important;
-        }
-        /* Typography refinements for result cards */
-        .result-oracle {
-            margin-top: 8px !important;
-            font-style: normal !important;
-            font-size: 13px !important;
-            color: var(--color-text-secondary) !important;
-            line-height: 1.55 !important;
-            max-width: 55ch !important;
-        }
-        .result-name {
-            font-size: 17px !important;
-            font-weight: 600 !important;
-            line-height: 1.25 !important;
-        }
-        .similarity-percent {
-            font-size: 15px !important;
-            font-weight: 700 !important;
-        }
-        .similarity-label {
-            font-size: 12px !important;
-            color: var(--color-text-muted) !important;
-        }
-        .result-meta {
-            font-size: 13px !important;
-            color: var(--color-text-secondary) !important;
-        }
-        /* Neutralize per-game query card name styling */
-        body.game-magic .query-card-info .query-card-name,
-        body.game-pokemon .query-card-info .query-card-name,
-        body.game-yugioh .query-card-info .query-card-name {
-            font-family: inherit !important;
-            color: var(--color-text-primary) !important;
-        }
-        /* Tone down the top accent bar */
-        body::before {
-            height: 2px !important;
-            opacity: 0.6;
-        }
     </style>
+    <link rel="stylesheet" href="/static/brand.css">
 </head>
 <body>
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container">
-        <h1>DeckSage</h1>
+        <header class="ds-masthead">
+            <img class="ds-crest" src="/static/crest.png" alt="" width="44" height="44">
+            <p class="ds-wordmark">Deck<span>Sage</span></p>
+            <p class="ds-scope">Magic &middot; Pok&eacute;mon &middot; Yu-Gi-Oh!</p>
+        </header>
+        <h1>DeckSage &mdash; card similarity search</h1>
+        <section class="ds-hero">
+            <img class="ds-hero-crest" src="/static/crest.png" alt="" width="132" height="132">
+            <div class="ds-hero-copy">
+                <h2>Find the card that does the same thing.</h2>
+                <p>Type a card name, or describe the effect you want. The sage finds functional matches, not just similar wording.</p>
+            </div>
+        </section>
 
         <nav class="nav-tabs" role="tablist" aria-label="Main navigation">
             <button class="nav-tab active" role="tab" aria-selected="true" aria-controls="unified-search-tab" id="unified-search-tab-btn" onclick="switchTab('unified-search')">Search</button>
             <button class="nav-tab" role="tab" aria-selected="false" aria-controls="contextual-tab" id="contextual-tab-btn" onclick="switchTab('contextual')">Contextual</button>
-            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Completion</button>
-            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="compare-tab" id="compare-tab-btn" onclick="switchTab('compare')">Compare</button>
+            <button class="nav-tab" role="tab" aria-selected="false" aria-controls="deck-tab" id="deck-tab-btn" onclick="switchTab('deck')">Deck Building</button>
         </nav>
 
         <main id="main-content">
             <!-- Unified Search Tab -->
             <div id="unified-search-tab" class="tab-content active" role="tabpanel" aria-labelledby="unified-search-tab-btn">
                 <div class="search-section">
-                    <p style="text-align: center; color: var(--color-text-muted); font-size: 14px; margin-bottom: 24px; max-width: 600px; margin-left: auto; margin-right: auto;">
-                        Search by card name or description. Enter a card name to find similar cards, or describe what you're looking for.
-                    </p>
                     <div class="game-selector" role="radiogroup" aria-label="Game selection">
-                        <button type="button" class="game-btn" data-game="magic" role="radio" aria-checked="false">Magic</button>
+                        <button type="button" class="game-btn active" data-game="magic" role="radio" aria-checked="true">Magic</button>
                         <button type="button" class="game-btn" data-game="pokemon" role="radio" aria-checked="false">Pokemon</button>
-                        <button type="button" class="game-btn active" data-game="yugioh" role="radio" aria-checked="true">Yu-Gi-Oh!</button>
+                        <button type="button" class="game-btn" data-game="yugioh" role="radio" aria-checked="false">Yu-Gi-Oh!</button>
                     </div>
-                    <form class="search-form" id="unifiedSearchForm" onsubmit="unifiedSearch(event)">
+                    <form class="search-form" id="unifiedSearchForm">
                         <div class="search-input-wrapper">
                             <input type="text" id="unifiedInput" placeholder="Card name or description..." required autofocus aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
                             <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
@@ -1950,8 +1818,15 @@
                         <option value="yugioh">Yu-Gi-Oh!</option>
                         <option value="pokemon">Pokemon</option>
                     </select>
-                    <div class="advanced-toggle" style="display: none;">
-                        <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Advanced options</button>
+                    <div class="ds-starters" aria-label="Example searches">
+                        <span class="ds-starters-label">Try</span>
+                        <button type="button" class="ds-starter" data-query="Lightning Bolt">Lightning Bolt</button>
+                        <button type="button" class="ds-starter" data-query="Counterspell">Counterspell</button>
+                        <button type="button" class="ds-starter" data-query="draw two cards">Draw two cards</button>
+                        <button type="button" class="ds-starter" data-query="destroy all creatures">Destroy all creatures</button>
+                    </div>
+                    <div class="advanced-toggle">
+                        <button type="button" onclick="toggleAdvanced()" aria-expanded="false" aria-controls="advancedOptions">Refine</button>
                     </div>
                     <div class="advanced-options" id="advancedOptions">
                         <div class="options">
@@ -1998,7 +1873,7 @@
 
                 <div class="results-section" id="resultsSection" style="display: none;">
                     <div style="margin-bottom: 20px;">
-                        <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: var(--color-text-secondary); letter-spacing: 0.02em;">Results</h2>
+                        <h2 class="ds-results-title">Results</h2>
                     </div>
                     <!-- Dev tools (Why similar / Feedback) hidden for presentation -->
                     <div style="display: none;">
@@ -2029,11 +1904,11 @@
                     <div class="advanced-options" style="display: grid;">
                         <div class="option-group">
                             <label for="textWeight">Text Weight:</label>
-                            <input type="number" id="textWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Text search weight">
+                            <input type="number" id="hybridTextWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Text search weight">
                         </div>
                         <div class="option-group">
                             <label for="vectorWeight">Vector Weight:</label>
-                            <input type="number" id="vectorWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Vector search weight">
+                            <input type="number" id="hybridVectorWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Vector search weight">
                         </div>
                         <div class="option-group">
                             <label for="hybridLimit">Results:</label>
@@ -2087,7 +1962,7 @@
                 </div>
             </div>
 
-            <!-- Deck Completion Tab -->
+            <!-- Deck Building Tab -->
             <div id="deck-tab" class="tab-content" role="tabpanel" aria-labelledby="deck-tab-btn">
                 <div class="search-section">
                     <form id="deckCompletionForm">
@@ -2099,7 +1974,8 @@
                                 <option value="pokemon">Pokemon</option>
                             </select>
                         </div>
-                        <label for="deckInput" style="display: block; margin-bottom: 8px; color: var(--color-text-secondary); font-size: 13px;">Deck list:</label>
+                        <div class="ds-starters" id="deckQuickStart" aria-label="Build around a card"></div>
+                        <label for="deckInput">Deck list</label>
                         <div class="deck-format-toggle">
                             <button type="button" class="deck-format-btn active" data-format="text" onclick="setDeckFormat('text')">Text</button>
                             <button type="button" class="deck-format-btn" data-format="json" onclick="setDeckFormat('json')">JSON</button>
@@ -2133,13 +2009,13 @@
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="search-button" style="margin-top: 16px; width: 100%; border-radius: 6px; border: none;">Complete Deck</button>
+                        <button type="submit" class="search-button">Build deck</button>
                     </form>
                 </div>
                 <div id="deckStatusMessage" class="status hidden" role="status" aria-live="polite"></div>
                 <div class="results-section" id="deckResultsSection" style="display: none;">
                     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
-                        <h2 style="margin: 0; font-size: 20px; font-weight: 600;">Completed Deck</h2>
+                        <h2 class="ds-results-title">Your deck</h2>
                         <button type="button" class="expand-action-btn primary" onclick="saveDeckPrompt()">Save Deck</button>
                     </div>
                     <div id="deckResultsContainer"></div>
@@ -2553,11 +2429,24 @@
             }
         }
 
+        function clearSkeleton(container) {
+            if (!container) return;
+            container.innerHTML = '';
+        }
+
         function showStatus(message, type = 'info', dismissible = true, containerId = 'statusMessage') {
             const statusEl = document.getElementById(containerId);
             if (!statusEl) return;
 
-            statusEl.innerHTML = message + (dismissible ? '<button class="status-close" onclick="this.parentElement.classList.add(\'hidden\')" aria-label="Dismiss">×</button>' : '');
+            statusEl.textContent = message;
+            if (dismissible) {
+                const close = document.createElement('button');
+                close.className = 'status-close';
+                close.setAttribute('aria-label', 'Dismiss');
+                close.textContent = '\u00d7';
+                close.addEventListener('click', () => statusEl.classList.add('hidden'));
+                statusEl.appendChild(close);
+            }
             statusEl.className = `status ${type} ${dismissible ? 'dismissible' : ''}`;
             statusEl.classList.remove('hidden');
             statusEl.setAttribute('role', 'status');
@@ -2619,14 +2508,18 @@
                 btn.classList.remove('active');
                 btn.setAttribute('aria-selected', 'false');
             });
-            document.getElementById(`${tabName}-tab-btn`).classList.add('active');
-            document.getElementById(`${tabName}-tab-btn`).setAttribute('aria-selected', 'true');
+            const tabBtn = document.getElementById(`${tabName}-tab-btn`);
+            if (tabBtn) {
+                tabBtn.classList.add('active');
+                tabBtn.setAttribute('aria-selected', 'true');
+            }
 
             // Update tab content
             document.querySelectorAll('.tab-content').forEach(content => {
                 content.classList.remove('active');
             });
-            document.getElementById(`${tabName}-tab`).classList.add('active');
+            const tabPanel = document.getElementById(`${tabName}-tab`);
+            if (tabPanel) tabPanel.classList.add('active');
 
             // Carry query to compare tab when switching
             if (tabName === 'compare') {
@@ -2637,19 +2530,22 @@
                 }
             }
 
+            if (tabName === 'deck') renderDeckQuickStart();
             if (pushHistory) pushURL(getCurrentURLState());
         }
 
         function toggleAdvanced() {
             const advanced = document.getElementById('advancedOptions');
-            const isVisible = advanced.style.display !== 'none';
-            advanced.style.display = isVisible ? 'none' : 'grid';
+            const open = advanced.classList.toggle('ds-open');
             const button = document.querySelector('.advanced-toggle button');
-            button.setAttribute('aria-expanded', !isVisible);
+            if (button) button.setAttribute('aria-expanded', String(open));
         }
 
         // Unified search: intelligently routes to similarity or hybrid search
         async function unifiedSearch(event) {
+            if (event && event.preventDefault) event.preventDefault();
+            hideAutocomplete();
+            document.body.classList.add('ds-searched');
             event.preventDefault();
             const query = document.getElementById('unifiedInput').value.trim();
 
@@ -2690,11 +2586,11 @@
 
                 if (isCardName) {
                     // Use similarity search
-                    indicator.textContent = 'Using similarity search (card name detected)';
+                    indicator.textContent = 'Cards closest to this one';
                     await searchCards(query);
                 } else {
                     // Use hybrid search
-                    indicator.textContent = 'Using hybrid search (description detected)';
+                    indicator.textContent = 'Cards matching that effect';
                     await hybridSearch(query);
                 }
             } catch (error) {
@@ -2768,12 +2664,17 @@
             const startTime = performance.now();
             trackEvent('search_start', { query: cardName, method: method, useCase: useCase });
 
+            const controller = new AbortController();
+            const previousController = currentSearchController;
+            if (previousController && previousController !== controller) {
+                previousController.abort('superseded');
+            }
+            currentSearchController = controller;
+
             try {
                 const useLLMIntent = localStorage.getItem('decksage_use_llm_intent') === 'true';
                 const url = `${API_BASE}/v1/similar${useLLMIntent ? '?use_llm_intent=true' : ''}`;
-                const controller = new AbortController();
-                currentSearchController = controller;
-                const timeoutId = setTimeout(() => controller.abort(), 60000);
+                const timeoutId = setTimeout(() => controller.abort('timeout'), 60000);
 
                 const response = await fetch(url, {
                     method: 'POST',
@@ -2791,14 +2692,14 @@
                 });
 
                 clearTimeout(timeoutId);
-                currentSearchController = null;
 
                 if (!response.ok) {
                     // Handle rate limiting specifically
                     if (response.status === 429) {
-                        const error = await response.json();
+                        const error = await response.json().catch(() => ({}));
                         const errorMsg = error.detail || 'Rate limit exceeded';
-                        showStatus(`Rate limit: ${errorMsg}. Please wait before trying again.`, 'error');
+                        clearSkeleton(resultsContainer);
+                        showStatus(`Rate limit: ${errorMsg}. Please wait before trying again.`, 'error', true);
                         return;
                     }
                     const error = await response.json();
@@ -2824,25 +2725,25 @@
                 // Cache the result
                 setCachedResult(cacheKey, data);
 
+                currentSearchController = null;
+                document.body.classList.add('ds-searched');
+
                 if (currentResults.length === 0) {
                     showStatus('No results found', 'info');
+                    document.getElementById('resultsSection').style.display = 'block';
                     resultsContainer.innerHTML = `
                         <div class="empty-state">
-                            <div class="empty-state-icon">🔍</div>
                             <div class="empty-state-title">No cards found</div>
-                            <div class="empty-state-message">Try a different search term or adjust your filters</div>
+                            <div class="empty-state-message">Nothing matched "${escapeHtml(cardName)}". Try a different name, a shorter fragment, or describe the effect instead.</div>
                             <div class="empty-state-suggestions">
-                                <div class="suggestion">• Check spelling</div>
-                                <div class="suggestion">• Try a partial card name</div>
-                                <div class="suggestion">• Use a different search method</div>
+                                <div class="suggestion" onclick="document.getElementById('unifiedInput').value='Lightning Bolt'">Lightning Bolt</div>
+                                <div class="suggestion" onclick="document.getElementById('unifiedInput').value='Counterspell'">Counterspell</div>
                             </div>
                         </div>
                     `;
                 } else {
-                    // No green bar -- results speak for themselves
+                    displayResults(data, cardName);
                 }
-
-                displayResults(data);
                 pushURL(getCurrentURLState());
                 trackEvent('search_complete', {
                     query: cardName,
@@ -2853,17 +2754,21 @@
                     cached: false,
                 });
             } catch (error) {
-                // Don't show error if request was cancelled (user started new search)
-                if (error.name === 'AbortError' && currentSearchController === null) {
-                    return; // New search started, ignore this error
+                // A newer search aborted this one: that is cancellation, not failure.
+                if (controller.signal.aborted && controller.signal.reason !== 'timeout') {
+                    return;
+                }
+                if (controller !== currentSearchController) {
+                    return;
                 }
 
                 const friendlyError = getUserFriendlyError(error.message);
-                if (error.name === 'AbortError') {
-                    showStatus('Request timed out. Try a different method or fewer results.', 'error');
-                } else {
-                    showStatus(`Error: ${friendlyError}`, 'error');
-                }
+                showStatus(
+                    error.name === 'AbortError'
+                        ? 'That search took too long. Try again, or narrow it down.'
+                        : `Error: ${friendlyError}`,
+                    'error',
+                );
                 resultsContainer.innerHTML = `<div class="status error">${escapeHtml(friendlyError)}</div>`;
                 currentSearchController = null;
             }
@@ -2969,8 +2874,10 @@
 
         async function hybridSearch(queryOverride = null) {
             const query = queryOverride || document.getElementById('hybridInput')?.value.trim() || document.getElementById('unifiedInput')?.value.trim();
-            const textWeight = parseFloat(document.getElementById('textWeight')?.value || 0.5);
-            const vectorWeight = parseFloat(document.getElementById('vectorWeight')?.value || 0.5);
+            const weightId = (id, fallbackId) =>
+                document.getElementById(id)?.value || document.getElementById(fallbackId)?.value || 0.5;
+            const textWeight = parseFloat(weightId('hybridTextWeight', 'textWeight'));
+            const vectorWeight = parseFloat(weightId('hybridVectorWeight', 'vectorWeight'));
             const limit = parseInt(document.getElementById('hybridLimit')?.value || document.getElementById('kInput')?.value || 10);
 
             if (!query) {
@@ -2998,8 +2905,13 @@
 
             addToSearchHistory(query);
 
-            const resultsSection = document.getElementById('hybridResultsSection') || document.getElementById('resultsSection');
-            const resultsContainer = document.getElementById('hybridResultsContainer') || document.getElementById('resultsContainer');
+            // Description searches started from the main box must render in the
+            // main results area; the hybrid panel has no nav button and is hidden.
+            const inUnified = currentTab === 'unified-search';
+            const resultsSection = document.getElementById(inUnified ? 'resultsSection' : 'hybridResultsSection')
+                || document.getElementById('resultsSection');
+            const resultsContainer = document.getElementById(inUnified ? 'resultsContainer' : 'hybridResultsContainer')
+                || document.getElementById('resultsContainer');
 
             if (resultsSection) resultsSection.style.display = 'block';
             if (resultsContainer) {
@@ -3043,7 +2955,7 @@
                 const data = await response.json();
                 if (data.results && data.results.length > 0) {
                     // No status bar for result count
-                    displayHybridResults(data);
+                    displayHybridResults(data, resultsContainer.id);
                     pushURL({ tab: currentTab, game: document.getElementById('searchGame')?.value, q: query });
                 } else {
                     showStatus('No results found', 'info', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
@@ -3057,16 +2969,46 @@
             }
         }
 
-        function displayHybridResults(data) {
-            const container = document.getElementById('hybridResultsContainer');
-            container.innerHTML = data.results.map(result => `
+        function displayHybridResults(data, containerId = 'hybridResultsContainer') {
+            const container = document.getElementById(containerId);
+            if (!container) return;
+
+            // Same rule as the similarity list: a name the card table does not
+            // know is not a result. Semantic neighbours also arrive for queries
+            // that mean nothing, so a floor keeps 47%-similarity noise out.
+            const MIN_SCORE = 0.55;
+            const all = Array.isArray(data.results) ? data.results : [];
+            const kept = all.filter(r => r.metadata && (r.score ?? 0) >= MIN_SCORE);
+            const dropped = all.length - kept.length;
+            if (dropped > 0) console.info(`hid ${dropped} low-confidence or unknown search hit(s)`);
+
+            if (!kept.length) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-title">Nothing matched that</div>
+                        <div class="empty-state-message">No card looked like "${escapeHtml(data.query || '')}". Try a card name, or describe the effect in plain words.</div>
+                    </div>`;
+                return;
+            }
+
+            container.innerHTML = kept.map(result => {
+                const meta = result.metadata || {};
+                const art = meta.image_url
+                    ? `<div class="result-image-wrapper"><img src="${escapeHtml(meta.image_url)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
+                    : '';
+                const bits = [meta.type || meta.type_line, meta.mana_cost, meta.rarity].filter(Boolean).map(escapeHtml).join(' · ');
+                return `
                 <div class="result-item">
                     <div class="result-info">
-                        <div class="result-name">${escapeHtml(result.card_name)}</div>
-                        <div class="result-meta">Score: ${(result.score * 100).toFixed(1)}% · Source: ${escapeHtml(result.source || 'unknown')}</div>
+                        ${art}
+                        <div class="result-content">
+                            <div class="result-name">${escapeHtml(result.card_name)}</div>
+                            ${bits ? `<div class="result-meta">${bits}</div>` : ''}
+                            <div class="result-meta">${(result.score * 100).toFixed(0)}% match</div>
+                        </div>
                     </div>
-                </div>
-            `).join('');
+                </div>`;
+            }).join('');
         }
 
         async function contextualSearch() {
@@ -3172,6 +3114,47 @@
             return { valid: false, error: 'Deck must have either "partitions" array or "Main" array' };
         }
 
+        // ---- deck building quick start -------------------------------------
+        // The common case is "build around the card I just looked at", so the
+        // seeds come from what the user already searched instead of a blank box.
+        function deckSeedCards() {
+            const seeds = [];
+            const seen = new Set();
+            const add = (name) => {
+                const key = String(name || '').trim().toLowerCase();
+                if (!key || seen.has(key)) return;
+                seen.add(key);
+                seeds.push(String(name).trim());
+            };
+            add(document.getElementById('unifiedInput')?.value || '');
+            for (const r of (currentResults || []).slice(0, 4)) add(r.card || r.card_name);
+            return seeds.slice(0, 5);
+        }
+
+        function renderDeckQuickStart() {
+            const host = document.getElementById('deckQuickStart');
+            if (!host) return;
+            const seeds = deckSeedCards();
+            // The whole point of "build around" is not typing a list first:
+            // if the box is empty, seed it from what the user already searched.
+            const input = document.getElementById('deckInput');
+            if (input && !input.value.trim() && seeds.length) {
+                input.value = `1 ${seeds[0]}`;
+            }
+            if (!seeds.length) { host.innerHTML = ''; return; }
+            host.innerHTML = '<span class="ds-starters-label">Build around</span>' + seeds.map(name =>
+                `<button type="button" class="ds-starter" data-seed="${escapeHtml(name)}">${escapeHtml(name)}</button>`
+            ).join('');
+            host.querySelectorAll('.ds-starter').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById('deckInput');
+                    if (!input) return;
+                    input.value = `1 ${btn.dataset.seed}`;
+                    document.getElementById('deckCompletionForm')?.requestSubmit();
+                });
+            });
+        }
+
         async function completeDeck() {
             const game = document.getElementById('deckGame').value;
             const deckText = document.getElementById('deckInput').value.trim();
@@ -3243,7 +3226,7 @@
                 }
 
                 const data = await response.json();
-                showStatus('Deck completed successfully', 'success', true, 'deckStatusMessage');
+                showStatus('Deck built', 'success', true, 'deckStatusMessage');
                 displayDeckResults(data);
             } catch (error) {
                 const friendlyError = getUserFriendlyError(error.message);
@@ -3468,8 +3451,29 @@
             </div>`;
         }
 
-        function displayResults(data) {
+        function displayResults(data, queryCard = null) {
             const resultsContainer = document.getElementById('resultsContainer');
+            if (queryCard && Array.isArray(data?.results)) {
+                const q = String(queryCard).trim().toLowerCase();
+                data = { ...data, results: data.results.filter(
+                    r => String(r.card || r.card_name || '').trim().toLowerCase() !== q
+                )};
+                currentResults = data.results;
+            }
+
+            // A result with no metadata is a name the card table does not know:
+            // localised printings (稲妻, Foudre) and unresolved imports. They
+            // render as a bare title with no art or type line, so they are noise
+            // dressed as results. Count them rather than showing them silently.
+            if (Array.isArray(data?.results)) {
+                const known = data.results.filter(r => r.metadata);
+                const dropped = data.results.length - known.length;
+                if (dropped > 0) {
+                    console.info(`hid ${dropped} result(s) with no card metadata`);
+                }
+                data = { ...data, results: known };
+                currentResults = known;
+            }
             const modelInfo = document.getElementById('modelInfo');
             const resultsSection = document.getElementById('resultsSection');
 
@@ -3652,7 +3656,10 @@
                         .sort((a, b) => b[1] - a[1])
                         .slice(0, 2);
                     if (formats.length > 0) {
-                        const labels = formats.map(([f, n]) => `${f} (${n.toLocaleString()})`).join(', ');
+                        // `${f}` is card metadata and was interpolated raw.
+                        const labels = formats
+                            .map(([f, n]) => `${escapeHtml(String(f))} (${Number(n).toLocaleString()})`)
+                            .join(', ');
                         deckPopularityHtml = `<div class="deck-popularity">Played in ${labels}</div>`;
                     }
                 }
@@ -3661,7 +3668,7 @@
                 let cooccurrenceChipsHtml = '';
                 if (meta.top_cooccurrence && Array.isArray(meta.top_cooccurrence) && meta.top_cooccurrence.length > 0) {
                     const chips = meta.top_cooccurrence.map(c =>
-                        `<span class="cooccur-chip" onclick="event.stopPropagation();findSimilarFromCard('${escapeHtml(String(c)).replace(/'/g, "\\'")}')" title="Find similar to ${escapeHtml(String(c))}">${escapeHtml(String(c))}</span>`
+                        `<span class="cooccur-chip" data-act="similar" data-card="${escapeHtml(String(c))}" title="Find similar to ${escapeHtml(String(c))}">${escapeHtml(String(c))}</span>`
                     ).join('');
                     cooccurrenceChipsHtml = `<div class="cooccurrence-chips"><span style="font-size:11px;color:var(--color-text-muted);margin-right:2px">Often with:</span>${chips}</div>`;
                 }
@@ -3801,9 +3808,9 @@
                             ${cooccurrenceChipsHtml}
                             ${expandStatsHtml}
                             <div class="expand-actions">
-                                <button class="expand-action-btn primary" onclick="event.stopPropagation();findSimilarFromCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Find Similar</button>
-                                <button class="expand-action-btn" onclick="event.stopPropagation();viewContextualForCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">View Contextual</button>
-                                <button class="expand-action-btn" onclick="event.stopPropagation();addCardToDeck('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Add to Deck</button>
+                                <button class="expand-action-btn primary" data-act="similar" data-card="${escapeHtml(result.card)}">Find Similar</button>
+                                <button class="expand-action-btn" data-act="contextual" data-card="${escapeHtml(result.card)}">View Contextual</button>
+                                <button class="expand-action-btn" data-act="add-to-deck" data-card="${escapeHtml(result.card)}">Add to Deck</button>
                                 <button class="expand-action-btn" onclick="event.stopPropagation();openCardDrawer(${index})">Details</button>
                             </div>
                         </div>
@@ -4025,6 +4032,8 @@
         }
 
         let autocompleteController = null;
+        let autocompleteGeneration = 0;
+        let autocompleteSuppressed = false;
         let autocompleteRequestId = 0;
 
         async function fetchAutocomplete(query) {
@@ -4040,6 +4049,9 @@
 
             // Cancel previous in-flight request
             if (autocompleteController) autocompleteController.abort();
+            const generation = ++autocompleteGeneration;
+            // Do not clear the submit-suppression here: a debounced request that
+            // starts after Enter used to re-open the dropdown with "No results".
             autocompleteController = new AbortController();
             const myId = ++autocompleteRequestId;
 
@@ -4062,7 +4074,7 @@
                     if (response.status === 503) {
                         const dropdown = document.getElementById('autocompleteDropdown');
                         dropdown.innerHTML = '<div class="autocomplete-no-results">Autocomplete requires embeddings to be loaded</div>';
-                        dropdown.classList.add('visible');
+                        if (!autocompleteSuppressed) dropdown.classList.add('visible');
                         return;
                     }
                     return;
@@ -4081,14 +4093,14 @@
                 } else {
                     const dropdown = document.getElementById('autocompleteDropdown');
                     dropdown.innerHTML = `<div class="autocomplete-no-results">No results for "${escapeHtml(query)}"</div>`;
-                    dropdown.classList.add('visible');
+                    if (!autocompleteSuppressed) dropdown.classList.add('visible');
                 }
             } catch (error) {
                 if (error.name === 'AbortError') return; // Expected cancellation
                 wrapper?.classList.remove('loading');
                 const dropdown = document.getElementById('autocompleteDropdown');
                 dropdown.innerHTML = '<div class="autocomplete-no-results" style="color: var(--color-error, #ef4444);">Connection error</div>';
-                dropdown.classList.add('visible');
+                if (!autocompleteSuppressed) dropdown.classList.add('visible');
                 setTimeout(() => hideAutocomplete(), 2000);
             }
         }
@@ -4185,7 +4197,7 @@
             dropdown.innerHTML = html;
             dropdown.setAttribute('role', 'listbox');
             dropdown.setAttribute('aria-label', 'Search suggestions');
-            dropdown.classList.add('visible');
+            if (!autocompleteSuppressed) dropdown.classList.add('visible');
             cardInput.setAttribute('aria-expanded', 'true');
             cardInput.removeAttribute('aria-activedescendant');
             autocompleteItems = nameList;
@@ -4193,9 +4205,14 @@
         }
 
         function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
+            // Attribute-safe: textContent/innerHTML escapes <, > and & but leaves
+            // quotes, which is enough to break out of alt="…" and onclick="…".
+            return String(text ?? '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
         }
 
         function escapeRegex(text) {
@@ -4203,6 +4220,12 @@
         }
 
         function hideAutocomplete() {
+            autocompleteSuppressed = true;
+            autocompleteGeneration++;
+            if (autocompleteController) {
+                autocompleteController.abort('dismissed');
+                autocompleteController = null;
+            }
             const dropdown = document.getElementById('autocompleteDropdown');
             const cardInput = document.getElementById('cardInput') || document.getElementById('unifiedInput');
             if (dropdown) {
@@ -4239,6 +4262,7 @@
             if (!inputElement) return;
 
             inputElement.addEventListener('input', (e) => {
+                autocompleteSuppressed = false;
                 const query = e.target.value.trim();
 
                 if (autocompleteTimeout) {
@@ -4427,6 +4451,16 @@
             if (pushHistory) pushURL(getCurrentURLState());
         }
 
+        // Example searches
+        document.querySelectorAll('.ds-starter').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const input = document.getElementById('unifiedInput');
+                if (!input) return;
+                input.value = btn.dataset.query || '';
+                document.getElementById('unifiedSearchForm')?.requestSubmit();
+            });
+        });
+
         // Pill button click handlers
         document.querySelectorAll('.game-btn').forEach(btn => {
             btn.addEventListener('click', () => syncGameSelectors(btn.dataset.game));
@@ -4438,8 +4472,8 @@
             if (el) el.addEventListener('change', () => syncGameSelectors(el.value));
         }
 
-        // Restore persisted game or default to yugioh (no history push on init)
-        syncGameSelectors(localStorage.getItem('decksage_game') || 'yugioh', false);
+        // Restore persisted game, else the server default (no history push on init)
+        syncGameSelectors(localStorage.getItem('decksage_game') || 'magic', false);
 
         // Keyboard shortcuts help (shown on focus)
         document.addEventListener('keydown', (e) => {
@@ -4580,9 +4614,9 @@
                 <div class="drawer-card-name">${escapeHtml(result.card)}</div>
                 <table class="drawer-meta-table"><tbody>${rows.join('')}</tbody></table>
                 <div class="expand-actions" style="margin-top: 16px;">
-                    <button class="expand-action-btn primary" onclick="findSimilarFromCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Find Similar</button>
-                    <button class="expand-action-btn" onclick="viewContextualForCard('${escapeHtml(result.card).replace(/'/g, "\\'")}')">View Contextual</button>
-                    <button class="expand-action-btn" onclick="addCardToDeck('${escapeHtml(result.card).replace(/'/g, "\\'")}')">Add to Deck</button>
+                    <button class="expand-action-btn primary" data-act="similar" data-card="${escapeHtml(result.card)}">Find Similar</button>
+                    <button class="expand-action-btn" data-act="contextual" data-card="${escapeHtml(result.card)}">View Contextual</button>
+                    <button class="expand-action-btn" data-act="add-to-deck" data-card="${escapeHtml(result.card)}">Add to Deck</button>
                 </div>
             `;
 
@@ -4604,6 +4638,19 @@
         });
 
         // Cross-tab navigation
+        // Delegated handler for card actions. The name travels in a data
+        // attribute, so the browser never parses it as JavaScript.
+        document.addEventListener('click', (event) => {
+            const target = event.target.closest('[data-act][data-card]');
+            if (!target) return;
+            const card = target.dataset.card;
+            const act = target.dataset.act;
+            event.stopPropagation();
+            if (act === 'similar') findSimilarFromCard(card);
+            else if (act === 'contextual') viewContextualForCard(card);
+            else if (act === 'add-to-deck') addCardToDeck(card);
+        });
+
         function findSimilarFromCard(cardName) {
             closeCardDrawer();
             switchTab('unified-search', false);

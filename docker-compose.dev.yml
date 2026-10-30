@@ -1,0 +1,88 @@
+# Development override: source watching, hot reload, loopback-only ingress.
+#
+# Never the default stack. Name this file explicitly:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml watch --no-up --prune=false
+#
+# Source reaches the container through Compose Watch instead of host bind
+# mounts, so the read-only ./src and ./frontend mounts in docker-compose.yml are
+# replaced here with !override. ./data stays a read-only host mount: it is large,
+# generated elsewhere, and not edited during a dev session.
+services:
+  api:
+    command:
+      - uvicorn
+      - src.ml.api.api:app
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8000"
+      - --reload
+      - --reload-dir
+      - /app/src
+    # Loopback only. The tailnet reaches it through `tailscale serve` on the
+    # host; publishing on 0.0.0.0 would also advertise it on the LAN.
+    ports: !override
+      - "127.0.0.1:${API_PORT:-8000}:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DECKSAGE_GAMES=${DECKSAGE_GAMES:-magic,pokemon,yugioh}
+      # .env carries the extraction proxy for host-side scrapers. Inside the
+      # container it hijacks calls to meilisearch and qdrant and disables both
+      # backends, so the API runs without it.
+      - HTTP_PROXY=
+      - HTTPS_PROXY=
+      - http_proxy=
+      - https_proxy=
+      - PROXY_URL=
+      - NO_PROXY=localhost,127.0.0.1,meilisearch,qdrant
+      - no_proxy=localhost,127.0.0.1,meilisearch,qdrant
+      # .env leaves MEILISEARCH_KEY empty, and the bundled client then fails
+      # with invalid_api_key against a master-key-less server. Run the dev
+      # backend with a key both sides agree on; not a secret, loopback only.
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
+      # Model weights come from the host's Hugging Face cache, read-only, so
+      # the container never downloads them and never needs egress for them.
+      - HF_HOME=/root/.cache/huggingface
+      - HF_HUB_OFFLINE=1
+    volumes: !override
+      - ./data:/app/data:ro
+      # built signals (archetype staples/cooccurrence) live outside data/
+      - ./experiments/signals:/app/experiments/signals:ro
+      # The text-embedding cache is written beside the mounted data, which is
+      # read-only. Without this, every restart re-embeds ~26k cards (~19 min
+      # on this host) before the first search can answer.
+      - ./data/cache:/app/data/cache
+      # The host's ~/.cache/huggingface/hub is a symlink to a volume Docker
+      # Desktop cannot share. Two model dirs are copied into data-local/hf-hub
+      # instead, so the container loads them offline.
+      - ${HF_CACHE:-./data-local/hf-hub}:/root/.cache/huggingface/hub:ro
+    develop:
+      watch:
+        - action: sync
+          path: ./src
+          target: /app/src
+          initial_sync: true
+        - action: sync
+          path: ./frontend
+          target: /app/frontend
+          initial_sync: true
+        - action: rebuild
+          path: ./pyproject.toml
+        - action: rebuild
+          path: ./uv.lock
+        - action: rebuild
+          path: ./Dockerfile
+
+  # Backends stay reachable for local debugging, but only from this host.
+  # The API uses the compose network, not these published ports.
+  meilisearch:
+    environment:
+      - MEILI_MASTER_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
+    ports: !override
+      - "127.0.0.1:${MEILISEARCH_PORT:-7700}:7700"
+
+  qdrant:
+    ports: !override
+      - "127.0.0.1:${QDRANT_PORT:-6333}:6333"

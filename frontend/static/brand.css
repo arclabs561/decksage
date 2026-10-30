@@ -1,0 +1,1465 @@
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/static/fonts/BricolageGrotesque-600-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 600;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/static/fonts/BricolageGrotesque-600-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/static/fonts/BricolageGrotesque-700-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Bricolage Grotesque';
+  font-style: normal;
+  font-weight: 700;
+  font-stretch: 100%;
+  font-display: swap;
+  src: url(/static/fonts/BricolageGrotesque-700-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/static/fonts/Inter-400-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/static/fonts/Inter-400-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/static/fonts/Inter-500-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/static/fonts/Inter-500-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/static/fonts/Inter-600-latin-ext.woff2) format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C4, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url(/static/fonts/Inter-600-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+/* ==========================================================================
+   DeckSage — "Scrying table"
+   Brand layer. Loaded after the page's inline styles, so it owns colour,
+   type and the search surface. Flat fills only: no gradients, no glass,
+   no shadows at rest. Gold is the action colour. Violet marks similarity.
+   ========================================================================== */
+
+:root {
+  /* ground: night, taken from the crest's navy */
+  --ds-void:        #0B1020;
+  --ds-deep:        #111A30;
+  --ds-raised:      #17223C;
+
+  /* paper: the warm ivory the crest is set on */
+  --ds-paper:       #F7F0E1;
+  --ds-paper-2:     #EFE6D2;
+
+  --ds-ink:         #141B2D;
+  --ds-ink-soft:    #55607A;
+
+  /* on the night ground */
+  --ds-cream:       #F7F0E1;
+  --ds-cream-soft:  #AEB6CC;
+
+  /* one action colour */
+  --ds-gold:        #E3B44E;
+  --ds-gold-hi:     #F0C463;
+  --ds-gold-ink:    #1A1408;
+
+  /* data: similarity and its secondary signal */
+  --ds-violet:      #9B7BFF;
+  --ds-cyan:        #58D3E8;
+
+  --ds-bad:         #E4695B;
+  --ds-good:        #66C48F;
+
+  --ds-display: 'Bricolage Grotesque', 'Iowan Old Style', Georgia, serif;
+  --ds-text: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+
+  --ds-r: 10px;
+  --ds-r-sm: 6px;
+
+  /* Remap the page's own tokens so every existing component inherits the brand. */
+  --color-bg-primary:      var(--ds-void);
+  --color-bg-secondary:    var(--ds-deep);
+  --color-bg-tertiary:     var(--ds-raised);
+  --color-bg-elevated:     var(--ds-raised);
+  --color-border-default:  #2A3654;
+  --color-border-focus:    var(--ds-gold);
+  --color-text-primary:    var(--ds-cream);
+  --color-text-secondary:  var(--ds-cream-soft);
+  --color-text-muted:      #8C95AE;
+  --color-text-link:       var(--ds-gold);
+  --color-accent-primary:  var(--ds-gold);
+  --color-accent-secondary:var(--ds-violet);
+  --btn-bg:                var(--ds-gold);
+  --btn-bg-hover:          var(--ds-gold-hi);
+  --btn-text:              var(--ds-gold-ink);
+  --search-bg:             var(--ds-paper);
+  --search-border:         #C9BC9C;
+  --search-focus-shadow:   0 0 0 3px rgba(227, 180, 78, 0.45);
+  --card-bg:               var(--ds-paper);
+  --card-border-accent:    #D8CBAB;
+  --card-hover-bg:         #FFF9EC;
+  --card-hover-border:     var(--ds-gold);
+  --card-hover-shadow:     none;
+  --tab-active-color:      var(--ds-gold-ink);
+  --tab-active-border:     var(--ds-gold);
+  --skeleton-bg:           #D9CEB4;
+  --match-color:           var(--ds-ink);
+  --similarity-fill:       var(--ds-violet);
+  --section-gradient:      none;
+  --color-error:           var(--ds-bad);
+}
+
+html { background: var(--ds-void); }
+
+body {
+  background: var(--ds-void);
+  color: var(--ds-cream);
+  font-family: var(--ds-text);
+  font-size: 15px;
+  line-height: 1.5;
+  padding: 0 0 96px;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* The old 2px accent bar becomes the crest's gold rule. */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: 3px !important;
+  opacity: 1 !important;
+  background: var(--ds-gold);
+  z-index: 60;
+}
+
+.container {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ---------- masthead ---------- */
+
+.ds-masthead {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 22px 0 18px;
+}
+
+.ds-crest {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+  flex: none;
+}
+
+.ds-wordmark {
+  font-family: var(--ds-display);
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: -0.02em;
+  color: var(--ds-cream);
+  margin: 0;
+  line-height: 1;
+}
+
+.ds-wordmark span { color: var(--ds-gold); }
+
+.ds-scope {
+  margin-left: auto;
+  font-size: 13px;
+  color: var(--ds-cream-soft);
+  white-space: nowrap;
+}
+
+/* the stock h1 is replaced by the masthead; keep it for a11y but visually flat */
+.container > h1 {
+  position: absolute;
+  width: 1px; height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ---------- hero ---------- */
+
+.ds-hero {
+  padding: 40px 0 8px;
+  max-width: 720px;
+}
+
+.ds-hero h2 {
+  font-family: var(--ds-display);
+  font-weight: 700;
+  font-size: clamp(30px, 5.2vw, 52px);
+  line-height: 1.02;
+  letter-spacing: -0.03em;
+  color: var(--ds-cream);
+  margin: 0 0 14px;
+}
+
+.ds-hero p {
+  font-size: 16px;
+  color: var(--ds-cream-soft);
+  margin: 0;
+  max-width: 46ch;
+}
+
+/* ---------- tabs ---------- */
+
+.nav-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 0 !important;
+  margin: 26px 0 22px;
+  padding: 4px;
+  background: var(--ds-deep);
+  border-radius: var(--ds-r);
+  width: fit-content;
+  max-width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.nav-tabs::-webkit-scrollbar { display: none; }
+
+.nav-tab {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-cream-soft);
+  font-family: var(--ds-text);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 9px 16px;
+  border-radius: var(--ds-r-sm);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.nav-tab:hover { color: var(--ds-cream); background: var(--ds-raised); }
+
+.nav-tab.active,
+.nav-tab[aria-selected="true"] {
+  background: var(--ds-gold);
+  color: var(--ds-gold-ink);
+  font-weight: 600;
+  border-bottom: 0 !important;
+}
+
+/* ---------- game selector ---------- */
+
+.game-selector {
+  display: inline-flex;
+  gap: 2px;
+  padding: 3px;
+  background: var(--ds-deep);
+  border-radius: var(--ds-r);
+  margin-bottom: 14px;
+}
+
+.game-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: var(--ds-cream-soft);
+  font-family: var(--ds-text);
+  font-size: 14px;
+  font-weight: 500;
+  padding: 8px 16px;
+  border-radius: var(--ds-r-sm);
+  cursor: pointer;
+  transition: background-color 120ms ease, color 120ms ease;
+}
+
+.game-btn:hover { color: var(--ds-cream); background: var(--ds-raised); }
+
+.game-btn.active,
+.game-btn[aria-checked="true"] {
+  background: var(--ds-cream);
+  color: var(--ds-ink);
+  font-weight: 600;
+}
+
+/* ---------- search ---------- */
+
+.search-section { padding-bottom: 8px; }
+
+.search-form {
+  border: 0 !important;
+  display: flex;
+  gap: 8px;
+  background: var(--ds-paper);
+  border-radius: var(--ds-r);
+  padding: 6px;
+  align-items: stretch;
+  max-width: 760px;
+}
+
+.search-input-wrapper { flex: 1 1 auto; position: relative; min-width: 0; }
+
+#unifiedInput,
+#hybridInput {
+  width: 100%;
+  height: 52px;
+  border: 0 !important;
+  border-radius: var(--ds-r-sm);
+  background: transparent !important;
+  color: var(--ds-ink) !important;
+  font-family: var(--ds-text);
+  font-size: 16px;
+  padding: 0 14px;
+  box-shadow: none !important;
+}
+
+#unifiedInput::placeholder,
+#hybridInput::placeholder { color: #7C8093; }
+
+#unifiedInput:focus,
+#hybridInput:focus { outline: 0; box-shadow: none !important; }
+.search-form:focus-within { box-shadow: 0 0 0 3px rgba(227, 180, 78, 0.55); }
+
+.search-button {
+  flex: none;
+  border: 0;
+  border-radius: var(--ds-r-sm);
+  background: var(--ds-gold);
+  color: var(--ds-gold-ink);
+  font-family: var(--ds-text);
+  font-size: 15px;
+  font-weight: 600;
+  padding: 0 26px;
+  min-height: 52px;
+  cursor: pointer;
+  transition: background-color 120ms ease, transform 60ms ease;
+}
+
+.search-button:hover { background: var(--ds-gold-hi); }
+.search-button:active { transform: translateY(1px); }
+
+.autocomplete-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--ds-paper);
+  border-radius: var(--ds-r-sm);
+  overflow: hidden;
+  z-index: 40;
+  display: none;
+}
+.autocomplete-dropdown.visible { display: block; }
+
+.autocomplete-item,
+.ac-item {
+  padding: 10px 14px;
+  color: var(--ds-ink);
+  font-size: 14px;
+  cursor: pointer;
+  border-bottom: 1px solid var(--ds-paper-2);
+}
+.autocomplete-item:hover,
+.ac-item:hover { background: #FFF9EC; }
+.autocomplete-no-results {
+  padding: 12px 14px;
+  color: var(--ds-ink-soft) !important;
+  font-size: 13px;
+  font-style: normal;
+}
+
+/* ---------- advanced / refine ---------- */
+
+.advanced-toggle { margin: 14px 0 0; text-align: left; }
+.advanced-toggle button {
+  appearance: none;
+  text-decoration: none !important;
+  background: transparent;
+  border: 1px solid #2A3654;
+  color: var(--ds-cream-soft);
+  font-family: var(--ds-text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 7px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 120ms ease, border-color 120ms ease;
+}
+.advanced-toggle button:hover { color: var(--ds-cream); border-color: var(--ds-gold); }
+.advanced-toggle button[aria-expanded="true"] {
+  color: var(--ds-gold-ink);
+  background: var(--ds-gold);
+  border-color: var(--ds-gold);
+}
+
+.advanced-options {
+  display: none !important;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+  padding: 18px;
+  background: var(--ds-deep);
+  border: 1px solid #222E4A !important;
+  border-radius: var(--ds-r) !important;
+  max-width: 760px;
+}
+.advanced-options.ds-open { display: grid !important; }
+
+.option-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.option-group label {
+  flex: 0 0 auto;
+  font-size: 13px;
+  color: var(--ds-cream-soft);
+  white-space: normal;
+}
+
+.option-group select,
+.option-group input[type="number"] {
+  flex: 1 1 120px;
+  min-width: 0;
+  height: 40px;
+  background: var(--ds-raised);
+  color: var(--ds-cream);
+  border: 1px solid #2A3654;
+  border-radius: var(--ds-r-sm);
+  font-family: var(--ds-text);
+  font-size: 14px;
+  padding: 0 10px;
+}
+
+.option-group input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--ds-gold);
+}
+
+/* ---------- status ---------- */
+
+.status,
+#statusMessage,
+#searchModeIndicator {
+  font-family: var(--ds-text);
+}
+
+#searchModeIndicator {
+  color: var(--ds-cream-soft) !important;
+  font-size: 13px !important;
+  margin-top: 12px;
+}
+
+.status.error,
+.status-message.error {
+  color: var(--ds-bad);
+  background: transparent;
+}
+
+/* ---------- results ---------- */
+
+#resultsSection,
+#hybridResultsSection { margin-top: 30px; }
+
+.results-header,
+.results-title {
+  font-family: var(--ds-display);
+  font-weight: 600;
+  font-size: 20px;
+  color: var(--ds-cream);
+  letter-spacing: -0.01em;
+}
+
+#resultsContainer,
+#hybridResultsContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.result-item {
+  background: var(--ds-paper);
+  border-radius: var(--ds-r);
+  padding: 12px;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+.result-item:hover { background: #FFF9EC; }
+
+.result-info {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.result-image-wrapper {
+  flex: none;
+  width: 68px;
+  height: 95px;
+  border-radius: var(--ds-r-sm);
+  overflow: hidden;
+  background: var(--ds-paper-2);
+}
+.result-image-wrapper img { width: 100%; height: 100%; object-fit: cover; }
+
+.result-content { flex: 1 1 auto; min-width: 0; }
+
+.result-name {
+  font-family: var(--ds-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--ds-ink);
+  letter-spacing: -0.01em;
+  overflow-wrap: anywhere;
+}
+
+.result-meta,
+.result-oracle {
+  color: var(--ds-ink-soft);
+  font-size: 13px;
+  line-height: 1.45;
+}
+.result-oracle { margin-top: 4px; }
+
+.similarity-header {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.similarity-percent {
+  font-family: var(--ds-display);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ds-ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.similarity-label { font-size: 12px; color: var(--ds-ink-soft); }
+
+.similarity-bar {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--ds-paper-2);
+  overflow: hidden;
+  margin-top: 4px;
+  max-width: 320px;
+}
+
+.similarity-fill { height: 100%; background: var(--ds-violet); border-radius: 3px; }
+
+.expand-chevron { color: var(--ds-ink-soft); width: 18px; height: 18px; }
+.expand-stats-grid { gap: 6px 18px; }
+.stat-key { color: var(--ds-ink-soft); }
+.stat-val { color: var(--ds-ink); }
+
+/* ---------- empty state ---------- */
+
+.empty-state {
+  background: var(--ds-deep);
+  border-radius: var(--ds-r);
+  padding: 30px 24px;
+  text-align: left;
+  color: var(--ds-cream-soft);
+}
+.empty-state-icon { display: none; }
+.empty-state-title {
+  font-family: var(--ds-display);
+  font-weight: 600;
+  font-size: 18px;
+  color: var(--ds-cream);
+  margin-bottom: 6px;
+}
+.empty-state-message { font-size: 14px; margin-bottom: 14px; }
+.empty-state-suggestions { display: flex; flex-wrap: wrap; gap: 8px; }
+.empty-state-suggestions .suggestion {
+  background: var(--ds-raised);
+  color: var(--ds-cream);
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.empty-state-suggestions .suggestion:hover { background: var(--ds-gold); color: var(--ds-gold-ink); }
+
+/* ---------- phone ---------- */
+
+@media (max-width: 720px) {
+  .container { padding: 0 16px; }
+  .ds-hero { padding: 24px 0 4px; }
+  .ds-hero h2 { font-size: clamp(26px, 8vw, 34px); }
+  .search-form { gap: 6px; padding: 5px; }
+  .search-button { padding: 0 18px; min-height: 48px; }
+  #unifiedInput { height: 48px; font-size: 16px; }
+  .nav-tabs { width: 100%; margin: 18px 0 16px; }
+  .game-selector { display: flex; width: 100%; }
+  .game-btn { flex: 1; padding: 10px 6px; }
+  .result-image-wrapper { width: 56px; height: 78px; }
+  .ds-scope { display: none; }
+}
+
+/* ---------- first-run examples ---------- */
+
+.ds-starters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.ds-starters-label {
+  font-size: 13px;
+  color: #8C95AE;
+  margin-right: 2px;
+}
+
+.ds-starter {
+  appearance: none;
+  border: 1px solid #2A3654;
+  background: transparent;
+  color: var(--ds-cream);
+  font-family: var(--ds-text);
+  font-size: 13px;
+  padding: 7px 13px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+}
+
+.ds-starter:hover {
+  background: var(--ds-paper);
+  border-color: var(--ds-paper);
+  color: var(--ds-ink);
+}
+
+/* after a search the hero steps aside; results are the subject */
+body.ds-searched .ds-hero { display: none; }
+body.ds-searched .ds-masthead { padding: 14px 0 6px; }
+body.ds-searched .nav-tabs { margin-top: 12px; }
+
+.results-title,
+.results-header,
+#resultsTitle {
+  color: var(--ds-cream) !important;
+  font-size: 22px !important;
+  letter-spacing: -0.01em;
+}
+
+/* one left edge for the whole page */
+.search-form,
+.advanced-options { margin-left: 0; margin-right: auto; }
+body.ds-searched #unified-search-tab .ds-starters { display: none; }
+
+/* the searched card is context, not a result */
+.query-card-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: transparent !important;
+  border: 0 !important;
+  padding: 6px 0 14px;
+  border-bottom: 0 !important;
+  box-shadow: none !important;
+}
+.query-card-banner::before {
+  content: "You searched for";
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: #8C95AE;
+  text-transform: none;
+}
+.query-card-banner .query-image-wrapper {
+  width: 32px; height: 45px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex: none;
+}
+.query-card-banner .query-card-name {
+  font-family: var(--ds-text) !important;
+  font-weight: 600;
+  font-size: 15px !important;
+  color: var(--ds-cream) !important;
+}
+.query-card-banner .query-card-meta,
+.query-card-banner .query-card-stats { color: var(--ds-cream-soft) !important; font-size: 13px !important; }
+.query-card-banner .query-card-info { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+
+/* the score breakdown is a diagnostic, not a pitch: keep it behind the row */
+.result-item .score-breakdown { display: none; }
+.result-item.expanded .score-breakdown { display: block; }
+body:not(.ds-searched) #searchModeIndicator { display: none; }
+#searchModeIndicator {
+  text-align: left !important;
+  margin: 4px 0 0;
+  font-size: 12px !important;
+  color: #8C95AE !important;
+}
+
+/* the result row stays a row at every width */
+.result-item .result-info { flex-direction: row !important; align-items: flex-start !important; }
+.result-item .result-image-wrapper { flex: 0 0 auto !important; }
+
+/* the mode line and the banner art are noise on a phone */
+#searchModeIndicator { display: none !important; }
+
+@media (max-width: 720px) {
+  .query-card-banner { gap: 8px; padding: 2px 0 10px; }
+  .query-card-banner::before { content: "Searched"; font-size: 11px; }
+  .query-card-banner .query-image-wrapper { display: none; }
+  .query-card-banner .query-card-info { gap: 6px; }
+  .query-card-banner .query-card-name { font-size: 14px !important; }
+  .result-item { padding: 10px; }
+  .result-item .result-image-wrapper { width: 56px !important; height: 78px !important; }
+  #resultsSection { margin-top: 10px !important; }
+  .nav-tabs { margin-bottom: 12px; }
+  .ds-starters { margin-top: 12px; }
+}
+
+/* the row that actually holds art + text */
+.result-item .result-header {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: flex-start !important;
+  gap: 12px;
+}
+.result-item .result-content { flex: 1 1 auto; min-width: 0; }
+
+@media (max-width: 720px) {
+  .query-card-banner { flex-wrap: wrap; row-gap: 2px; }
+  .query-card-banner::before { display: none; }
+  .query-card-banner .query-card-stats .stat { font-size: 12px; }
+}
+
+.ds-results-title {
+  font-family: var(--ds-display);
+  font-weight: 600 !important;
+  font-size: 20px !important;
+  color: var(--ds-cream) !important;
+  letter-spacing: -0.01em !important;
+  margin: 0 0 10px !important;
+}
+.result-item .result-oracle {
+  font-family: var(--ds-text);
+  font-size: 13px;
+  font-style: normal;
+  color: var(--ds-ink-soft);
+  margin-top: 8px;
+}
+.similarity-label { white-space: nowrap; }
+
+/* ==========================================================================
+   One system, not many widgets
+   Every surface, chip, field and button in the app resolves to five
+   primitives. Nothing here invents a component: it maps the page's existing
+   classes onto the same surface step, the same radius, the same chip and the
+   same focus ring, so pages read as one product.
+   ========================================================================== */
+
+:root {
+  --ds-surface:   var(--ds-deep);
+  --ds-surface-2: var(--ds-raised);
+  --ds-line:      #24314E;
+  --ds-radius:    8px;   /* panels, rows, fields  */
+  --ds-radius-xs: 4px;   /* media, inline marks   */
+  --ds-pill:      999px; /* chips only            */
+  --ds-space-1: 4px; --ds-space-2: 8px; --ds-space-3: 12px;
+  --ds-space-4: 16px; --ds-space-5: 24px; --ds-space-6: 32px;
+}
+
+/* ---------- 1. surface ---------- */
+
+.advanced-options,
+.empty-state,
+.result-item,
+.card-drawer,
+#resultsContainer .status,
+.query-card-banner {
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius);
+  box-shadow: none !important;
+}
+
+.result-item { background: var(--ds-paper); border-color: #E2D6BC; }
+
+/* ---------- 2. chip ---------- */
+
+.stat,
+.stat-badge,
+.archetype-badge,
+.keyword-tag,
+.keyword-tags span,
+.ac-ban-pill,
+.rarity-badge,
+.deck-stat-value,
+.tag-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ds-space-1);
+  padding: 3px 9px !important;
+  border-radius: var(--ds-pill) !important;
+  border: 1px solid transparent;
+  background: var(--ds-surface-2) !important;
+  color: var(--ds-cream) !important;
+  font-family: var(--ds-text) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  line-height: 1.5;
+  letter-spacing: 0;
+  text-transform: none !important;
+}
+
+/* a chip on the ivory plate inverts to the paper palette */
+.result-item .stat,
+.result-item .stat-badge,
+.result-item .keyword-tag,
+.result-item .keyword-tags span,
+.result-item .archetype-badge,
+.result-item .deck-stat-value {
+  background: var(--ds-paper-2) !important;
+  color: var(--ds-ink) !important;
+  border-color: #DED2B6;
+}
+
+/* status still reads as status, through the chip's own colour only */
+.ac-ban-pill.banned,
+.ac-ban-pill.restricted { color: var(--ds-bad) !important; }
+.ac-ban-pill.legal { color: var(--ds-good) !important; }
+
+/* ---------- 3. field ---------- */
+
+input[type="text"]:not(#unifiedInput):not(#hybridInput),
+input[type="number"],
+input[type="search"],
+select,
+textarea {
+  background: var(--ds-surface-2) !important;
+  color: var(--ds-cream) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-radius) !important;
+  font-family: var(--ds-text) !important;
+  font-size: 14px;
+  min-height: 38px;
+  padding: 0 var(--ds-space-3);
+}
+
+select {
+  appearance: none;
+  padding-right: 32px;
+  background-image: linear-gradient(45deg, transparent 50%, var(--ds-cream-soft) 50%),
+                    linear-gradient(135deg, var(--ds-cream-soft) 50%, transparent 50%);
+  background-position: calc(100% - 17px) 17px, calc(100% - 12px) 17px;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+
+input[type="checkbox"] {
+  width: 18px; height: 18px;
+  accent-color: var(--ds-gold);
+}
+
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--ds-gold);
+  outline-offset: 2px;
+  border-radius: var(--ds-radius-xs);
+}
+
+/* ---------- 4. button ---------- */
+
+button:not(.nav-tab):not(.game-btn):not(.search-button):not(.ds-starter):not(.advanced-toggle button) {
+  background: var(--ds-surface-2);
+  color: var(--ds-cream);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius);
+  font-family: var(--ds-text);
+  font-size: 13px;
+  font-weight: 500;
+  padding: 8px 14px;
+  cursor: pointer;
+}
+button:not(.nav-tab):not(.game-btn):not(.search-button):not(.ds-starter):not(.advanced-toggle button):hover {
+  border-color: var(--ds-gold);
+  color: var(--ds-cream);
+}
+
+/* ---------- 5. type scale ---------- */
+
+.ds-hero h2,
+.result-name,
+.ds-results-title,
+.empty-state-title,
+.query-card-banner .query-card-name {
+  letter-spacing: -0.015em;
+}
+
+.result-meta,
+.stat-key,
+.deck-stat-label,
+.tag-label {
+  color: var(--ds-ink-soft) !important;
+  font-size: 12px !important;
+  text-transform: none !important;
+  letter-spacing: 0;
+}
+
+/* kill the last of the old look: no blue, no glow, no coloured dots */
+* { text-shadow: none !important; }
+.rarity-dot { background: var(--ds-ink-soft) !important; }
+
+/* no hairlines inside a row: one card edge is the only rule */
+.result-item *,
+.result-item *::before,
+.result-item *::after { border-color: transparent; }
+.result-item .result-oracle { padding-top: 2px; }
+.result-item .result-expand-panel {
+  margin-top: var(--ds-space-3);
+  padding-top: var(--ds-space-3);
+  border-top: 0 !important;
+}
+
+/* ==========================================================================
+   Review surface
+   The review page names its tokens differently from the search page. Map
+   those names onto the same system instead of restyling the page: one ground,
+   one surface step, one accent, one radius.
+   ========================================================================== */
+
+:root {
+  --bg-primary:    var(--ds-void);
+  --bg-secondary:  var(--ds-surface-2);
+  --bg-tertiary:   var(--ds-surface-2);
+  --bg-elevated:   var(--ds-surface);
+  --border-default: var(--ds-line);
+  --border-strong:  #33415F;
+  --text-primary:  var(--ds-cream);
+  --text-secondary: var(--ds-cream-soft);
+  --text-muted:    #8C95AE;
+  --accent-primary: var(--ds-gold);
+  --accent-hover:   var(--ds-gold-hi);
+  --accent-text:    var(--ds-gold-ink);
+  --shadow-sm:     none;
+  --shadow-md:     none;
+  --success: var(--ds-good);
+  --danger:  var(--ds-bad);
+  --warning: var(--ds-gold);
+}
+
+body { background: var(--ds-void) !important; }
+
+.header h1 {
+  font-family: var(--ds-display) !important;
+  font-weight: 700 !important;
+  font-size: clamp(26px, 3.4vw, 36px) !important;
+  letter-spacing: -0.02em;
+  color: var(--ds-cream) !important;
+}
+
+.header { border-bottom: 0 !important; }
+.subtitle { color: var(--ds-cream-soft) !important; font-size: 15px !important; }
+
+.header-controls,
+.legend,
+.stats,
+.items-panel,
+.annotation-panel {
+  background: var(--ds-surface) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-radius) !important;
+  box-shadow: none !important;
+}
+
+/* scoped: this block leaked onto every button in the app before */
+.ds-review button,
+.ds-review button.secondary {
+  background: var(--ds-gold) !important;
+  color: var(--ds-gold-ink) !important;
+  border: 0 !important;
+  border-radius: var(--ds-radius) !important;
+  font-family: var(--ds-text) !important;
+  font-weight: 600 !important;
+}
+.ds-review button.secondary,
+.ds-review button:disabled {
+  background: var(--ds-surface-2) !important;
+  color: var(--ds-cream-soft) !important;
+  border: 1px solid var(--ds-line) !important;
+}
+
+.legend h3 {
+  font-family: var(--ds-display) !important;
+  font-weight: 600 !important;
+  font-size: 16px !important;
+  color: var(--ds-cream) !important;
+  margin-bottom: var(--ds-space-3) !important;
+}
+
+/* the five rating cards are one scale, not five widgets */
+.legend-grid {
+  display: flex !important;
+  flex-wrap: wrap;
+  gap: var(--ds-space-2) !important;
+}
+
+.legend-item {
+  background: var(--ds-surface-2) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-pill) !important;
+  padding: 6px 14px !important;
+  font-size: 12px !important;
+  color: var(--ds-cream-soft) !important;
+}
+
+.legend-item strong { color: var(--ds-cream) !important; font-weight: 600; }
+
+.legend-rating {
+  width: 18px !important;
+  height: 18px !important;
+  background: var(--ds-gold) !important;
+  color: var(--ds-gold-ink) !important;
+  border-radius: 50% !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+}
+
+/* the review page's title is a page title, not a hero */
+.header h1 { font-size: clamp(22px, 2.4vw, 28px) !important; }
+.header { padding-bottom: var(--ds-space-3) !important; }
+
+/* ==========================================================================
+   Craft pass: hierarchy through weight and space, not through fill
+   One gold action per view. Controls are quiet. Tabs are a row of words with
+   a single marker, not three buttons competing for attention.
+   ========================================================================== */
+
+/* tabs: quiet text, one marker */
+.nav-tabs {
+  gap: 2px !important;
+  background: transparent !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  border-bottom: 1px solid var(--ds-line) !important;
+  width: 100% !important;
+  max-width: none !important;
+  margin: 18px 0 22px !important;
+}
+
+.nav-tab,
+.nav-tabs .nav-tab {
+  background: transparent !important;
+  color: var(--ds-cream-soft) !important;
+  border: 0 !important;
+  border-bottom: 2px solid transparent !important;
+  border-radius: 0 !important;
+  padding: 10px 14px 9px !important;
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  margin-bottom: -1px;
+}
+
+.nav-tabs .nav-tab:hover {
+  color: var(--ds-cream) !important;
+  background: transparent !important;
+}
+
+.nav-tabs .nav-tab.active,
+.nav-tabs .nav-tab[aria-selected="true"] {
+  background: transparent !important;
+  color: var(--ds-cream) !important;
+  border-bottom-color: var(--ds-gold) !important;
+  font-weight: 600 !important;
+}
+
+/* controls: one quiet shape */
+.deck-input,
+textarea.deck-input {
+  background: var(--ds-surface) !important;
+  color: var(--ds-cream) !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-radius) !important;
+  font-family: var(--ds-text) !important;
+  font-size: 14px !important;
+  line-height: 1.7 !important;
+  padding: 14px !important;
+  min-height: 200px;
+  width: 100%;
+  resize: vertical;
+}
+
+.deck-input::placeholder { color: #6E7793 !important; }
+
+.deck-format-toggle {
+  display: inline-flex !important;
+  gap: 2px !important;
+  background: var(--ds-surface-2) !important;
+  border-radius: var(--ds-radius) !important;
+  padding: 2px !important;
+  margin-bottom: 10px !important;
+  width: auto !important;
+}
+
+.deck-format-btn {
+  background: transparent !important;
+  color: var(--ds-cream-soft) !important;
+  border: 0 !important;
+  border-radius: var(--ds-radius-xs) !important;
+  padding: 6px 14px !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  flex: 0 0 auto !important;
+}
+
+.deck-format-btn.active {
+  background: var(--ds-raised) !important;
+  color: var(--ds-cream) !important;
+}
+
+/* the primary action is a button, not a banner */
+#deckCompletionForm .search-button,
+#deckCompletionForm button[type="submit"] {
+  width: auto !important;
+  min-width: 0 !important;
+  margin-top: 18px !important;
+  padding: 0 24px !important;
+  border-radius: var(--ds-radius) !important;
+  font-size: 14px !important;
+}
+
+/* saved decks is a quiet disclosure, not a white bar */
+.saved-decks-panel {
+  background: transparent !important;
+  border: 1px solid var(--ds-line) !important;
+  border-radius: var(--ds-radius) !important;
+  margin-top: 22px !important;
+}
+
+.saved-decks-header {
+  background: transparent !important;
+  color: var(--ds-cream-soft) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  padding: 12px 14px !important;
+  border: 0 !important;
+}
+
+/* the deck tab repeated the app-level game switcher */
+#deckCompletionForm .option-group:has(#deckGame) { display: none !important; }
+
+/* form labels are quiet, above the control */
+#deckCompletionForm label {
+  color: var(--ds-cream-soft) !important;
+  font-size: 12px !important;
+  font-weight: 500 !important;
+  text-transform: none;
+  letter-spacing:  0;
+}
+
+/* ---------- critique pass ---------- */
+
+/* Refine is a quiet disclosure, not another chip in the example row */
+.advanced-toggle button {
+  border: 0 !important;
+  background: transparent !important;
+  padding: 8px 0 !important;
+  color: var(--ds-cream-soft) !important;
+  font-size: 13px !important;
+  border-radius: 0 !important;
+}
+.advanced-toggle button::after {
+  content: " ▾";
+  font-size: 10px;
+  opacity: 0.8;
+}
+.advanced-toggle button[aria-expanded="true"] {
+  background: transparent !important;
+  color: var(--ds-cream) !important;
+}
+.advanced-toggle button:hover { color: var(--ds-cream) !important; }
+
+/* card names get the width; the chevron sits at the edge, not in the title */
+.result-item .result-header { position: relative; }
+.result-item .result-name { flex: 1 1 auto; padding-right: 28px; }
+.result-item .expand-chevron {
+  position: absolute;
+  top: 0;
+  right: 0;
+  flex: none;
+}
+
+/* deck labels stack above their control instead of sharing a line */
+#deckCompletionForm > label,
+#deckCompletionForm .option-group label { display: block; margin-bottom: 6px; }
+#deckCompletionForm .option-group { display: block; }
+#deckInput::placeholder { color: #8C95AE !important; }
+
+@media (max-width: 720px) {
+  #deckCompletionForm button[type="submit"] { width: 100% !important; }
+}
+
+/* review: say what to do when the list is empty, and let the scale wrap evenly */
+.ds-review-empty {
+  margin-top: var(--ds-space-4);
+  padding: 28px 24px;
+  background: var(--ds-surface);
+  border: 1px solid var(--ds-line);
+  border-radius: var(--ds-radius);
+  color: var(--ds-cream-soft);
+  font-size: 14px;
+}
+.ds-review-empty strong { color: var(--ds-cream); font-weight: 600; }
+
+.legend-grid {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: var(--ds-space-2) !important;
+}
+@media (max-width: 1024px) {
+  .legend-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+}
+.legend-item { border-radius: var(--ds-radius) !important; }
+
+/* phone: every interactive target clears 44px */
+@media (max-width: 720px) {
+  .nav-tabs .nav-tab { min-height: 44px; display: inline-flex; align-items: center; }
+  .game-btn { min-height: 44px; }
+  .ds-starter { min-height: 44px; padding: 0 16px; display: inline-flex; align-items: center; }
+  .advanced-toggle button { min-height: 44px; }
+  .deck-format-btn { min-height: 40px; }
+  .search-button { min-height: 48px; }
+}
+
+/* the skip link and any close button also need a real target */
+.skip-link { min-height: 44px; display: inline-flex; align-items: center; padding: 0 12px; }
+.status-close,
+[aria-label="Close"],
+.close-btn { min-width: 44px !important; min-height: 44px !important; }
+
+/* ---------- the mark in the composition ---------- */
+
+.ds-hero {
+  display: grid;
+  grid-template-columns: 132px minmax(0, 1fr);
+  align-items: center;
+  gap: 28px;
+  max-width: 860px;
+}
+
+.ds-hero-crest {
+  width: 132px;
+  height: 132px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 28px rgba(155, 123, 255, 0.22));
+}
+
+.ds-hero-copy { min-width: 0; }
+
+@media (max-width: 720px) {
+  .ds-hero {
+    grid-template-columns: 72px minmax(0, 1fr);
+    gap: 14px;
+    align-items: start;
+  }
+  .ds-hero-crest { width: 72px; height: 72px; }
+}
+
+/* card plates echo the filigree edge of the crest's cards */
+.result-item {
+  border: 1px solid #D9C89E !important;
+  box-shadow: inset 0 0 0 1px rgba(227, 180, 78, 0.16) !important;
+}
+
+.result-item .result-image-wrapper {
+  border: 1px solid #C9B481;
+  background: #121A2C;
+}
+
+/* ---------- adopt the mark's language: gold filigree on card plates ---------- */
+
+.result-item { position: relative; }
+
+.result-item::before,
+.result-item::after {
+  content: "";
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border: 1px solid rgba(201, 180, 129, 0.85);
+  pointer-events: none;
+}
+.result-item::before {
+  top: 5px; left: 5px;
+  border-right: 0; border-bottom: 0;
+}
+.result-item::after {
+  bottom: 5px; right: 5px;
+  border-left: 0; border-top: 0;
+}
+
+/* match strength carries the crest's two magic hues, not one flat accent */
+.similarity-bar { background: #E4D7B8; }
+.similarity-fill {
+  background: var(--ds-violet);
+  position: relative;
+}
+.similarity-fill::after {
+  content: "";
+  position: absolute;
+  right: 0; top: 0; bottom: 0;
+  width: 10px;
+  background: var(--ds-cyan);
+  border-radius: 0 3px 3px 0;
+}
+
+/* the empty state introduces the sage instead of apologising */
+.empty-state { position: relative; padding-left: 92px; min-height: 96px; }
+.empty-state::before {
+  content: "";
+  position: absolute;
+  left: 20px; top: 50%;
+  width: 56px; height: 58px;
+  transform: translateY(-50%);
+  background: url("/static/crest.png") center/contain no-repeat;
+  opacity: 0.9;
+}
+
+/* ---------- one mark, two sizes ----------
+   On the landing screen the crest belongs to the composition, so the masthead
+   drops it. Once results take the screen the hero is gone and the masthead
+   carries the mark instead. Same asset, never twice at once. */
+
+.ds-masthead .ds-crest { display: none; }
+body.ds-searched .ds-masthead .ds-crest { display: block; }
+
+@media (max-width: 720px) {
+  .ds-hero { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .ds-hero-crest { width: 64px; height: 64px; }
+  .ds-hero h2 { font-size: clamp(27px, 7.6vw, 32px); }
+  .ds-masthead { padding: 16px 0 10px; }
+}
+
+/* deck form rhythm: seeds, then a labelled field, then the action */
+#deckCompletionForm .ds-starters { margin: 0 0 18px; }
+#deckCompletionForm > label {
+  display: block;
+  margin: 0 0 10px;
+  color: var(--ds-cream-soft);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+#deckCompletionForm .deck-format-toggle { margin-bottom: 12px; }
+#deckCompletionForm .deck-input { min-height: 168px; }
+
+/* the model info line ends the page; a rule there reads as an unfinished section */
+.model-info,
+#modelInfo { border-top: 0 !important; }
+
+/* The result row is one column: the expandable panel is a sibling of the
+   summary row, so a flex parent made it share the width and reserved a large
+   empty right-hand block. */
+.result-item {
+  display: block !important;
+  min-width: 0;
+}
+.result-item > .result-info { width: 100%; }
+.result-item > .result-expand-panel {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+}
+@media (max-width: 720px) {
+  .result-item { padding: 12px !important; }
+  .result-item .result-info { gap: 10px; }
+}
+
+/* .result-info is the wrapper for BOTH the summary row and the expandable
+   panel, so it must not be a flex row itself: that put the collapsed panel
+   beside the text and reserved half the card. */
+.result-item > .result-info {
+  display: block !important;
+}
+.result-item > .result-info > .result-header {
+  display: flex !important;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+/* the drawer inherits the page ink; #1d1d1f on navy was unreadable */
+.card-drawer,
+.card-drawer * { color: var(--ds-cream); }
+.card-drawer { background: var(--ds-surface) !important; }
+.card-drawer .drawer-meta,
+.card-drawer .drawer-label { color: var(--ds-cream-soft); }
+
+/* the drawer was 400px fixed: wider than a 390px phone */
+@media (max-width: 720px) {
+  .card-drawer { width: 100% !important; right: -100% !important; }
+  .card-drawer.open, .card-drawer.visible { right: 0 !important; }
+}
+
+/* A 2,000-character query used to widen the document to 16,016px: the empty
+   state and status text are unbroken strings with no wrap opportunity. */
+.empty-state,
+.status,
+#statusMessage,
+.results-section,
+.result-name,
+.result-meta,
+.query-card-banner { overflow-wrap: anywhere; word-break: break-word; }
+.container { max-width: min(1120px, 100%); }
+main, .tab-content { max-width: 100%; }

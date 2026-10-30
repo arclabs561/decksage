@@ -7,6 +7,9 @@ models/
 *.h5
 *.ckpt
 
+# Go extraction tooling and its local corpora; the image runs the Python API only
+src/backend/
+
 # Version control
 .git/
 .gitignore
@@ -44,8 +47,8 @@ htmlcov/
 .DS_Store
 
 # Documentation (not needed in image)
-!README.md
 *.md
+!README.md
 docs/
 *.rst
 

@@ -86,7 +86,7 @@ The `export_annotation_edges.py` script exists for potential future use but its 
 - **Run diagnostics before trusting any eval number**: `uv run scripts/evaluation/dataset_diagnostics.py --all-games` checks for duplicate edges, annotation duplication, edge imbalance, and metadata gaps.
 - **Graph schema changes break downstream scripts**: `IncrementalCardGraph` edge keys are 3-tuples `(card1, card2, source_type)`. Scripts that unpack as 2-tuples will crash silently. After schema changes, test the export pipeline end-to-end.
 - **Run annotation QC after adding annotations from a new model**: `uv run scripts/annotation/multi_model_annotate.py qc --game <game>` catches zero-score deflation and score inflation.
-- **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG is systematically biased downward when annotation coverage is sparse -- it measures coverage, not ranking quality. When standard nDCG converges to condensed nDCG (gap < 0.05), annotation coverage is saturated *for the current embedding* and the metric reflects true ranking quality.
+- **Condensed nDCG is the primary ranking quality metric** (Sakai 2007). Standard nDCG treats unjudged results as irrelevant and can be biased downward with sparse labels. A small standard-versus-condensed gap is a coverage diagnostic for the evaluated ranking, not proof of label accuracy or true ranking quality.
 - **Saturation is embedding-specific AND retrieval-method-specific**: new embeddings reshuffle top-K, surfacing unjudged cards that may be better matches. Changing retrieval method (cosine -> fusion) also surfaces entirely different candidates. "Saturated" means the current method's top-K is fully judged. Exp 0060: switching substitute from cosine to fusion created 24K new holes; filling 5K moved nDCG from 0.031 to 0.035 (gap 0.238). The outer loop is: fill holes -> get true quality -> train better embedding OR switch method -> fill new holes -> repeat.
 - **Unified graph DB uses short game codes**: `IncrementalCardGraph` stores game as MTG/PKM/YGO, not magic/pokemon/yugioh. Use `graph_loading.GAME_DB_CODES` for mapping. Passing full game names to `query_edges(game=...)` silently returns 0 edges.
 - **Prioritize eval-time hole filling** (`fill_eval_holes.py`) over random pair annotation. Filling top-K holes has 5-10x the nDCG impact per annotation dollar. Monitor the standard-vs-condensed gap: when it closes for the current embedding, train a new one and re-fill.
@@ -104,16 +104,16 @@ Best embeddings per game (canonical eval_per_mode.py, all top-10 holes filled, e
 - YuGiOh: **v7_spectral_mu3 sub nDCG 0.478** (condensed 0.482, gap 0.004) [SATURATED]
 - Total annotations: Magic 36K / Pokemon 25K / YuGiOh 27K (~89K total, ~$23)
 - Saturation is embedding-specific: new embeddings will create new holes to fill
-- All nDCG numbers before 2026-03-22 were inflated by test set duplication.
+- Experiment 0052 records three pre/post-dedup nDCG comparisons; assess other prior numbers against their own dataset snapshots and provenance.
 
 ### Known contaminated results
 
 - **Exp 0062 (text_e5 beats co-occurrence by 14-25%) is contaminated.** `train_e5_lora.py`
   trained the E5 model on `annotated_*_v2.json`, the evaluation set, so 0.613/0.518/0.532
-  are upper bounds. Rerun on self-supervised pairs before citing them; the trainer now
+  do not measure held-out quality. Rerun on self-supervised pairs before citing them; the trainer now
   refuses eval data and has no override flag.
 - **Exp 0063 (cross-encoder)** also trained on eval annotations. Its Pearson numbers are
-  upper bounds, and the trained model is not served. `train_cross_encoder.py` now requires
+  not held-out estimates, and the trained model is not served. `train_cross_encoder.py` now requires
   `data/annotations/<game>_train.json`.
 - Eval measures raw cosine by default while the API serves a linear multi-source reranker,
   so eval_per_mode.py numbers do not describe production. Measure the served path before

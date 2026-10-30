@@ -47,6 +47,7 @@ venv/
 
 # Data -- all large/derived data lives on S3, not in git
 /data/raw/
+/data-local/
 /data/archive/
 /data/checkpoints/
 /data/logs/
