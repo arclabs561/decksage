@@ -1,0 +1,73 @@
+id: "0069"
+date: "2026-10-30"
+title: "Logical composition over co-occurrence and embedding graphs (heyting)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  Composing a card-retrieval graph with logical constraints (a cheap filter, a
+  creature filter, a type filter) produces more functional substitutes than the
+  one-hop scorer alone. If it does, the heyting crate adds signal beyond the
+  atomic scorer; if it only reproduces the scorer on 1p and degrades under every
+  constraint, the scorer is the whole signal for substitution.
+
+method:
+  type: graph_query_experiment
+  script: data-local/crates-experiment-20261030/heyting-probe (Rust binary)
+  crate: "heyting 0.17.0"
+  args: >
+    heyting-probe <dir>; shapes: 1p anchor(q, cooccurs); 1p_then
+    anchor(q).then(cooccurs); 2i_cheap intersection(1p, cmc<=3);
+    2i_creature_cheap intersection(1p, creature, cmc<=3); 2i_is
+    intersection(1p, instant-or-sorcery)
+  truth_algebra: Godel
+  top_k: 10
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+    selected_with_graph_and_labels: 120
+  graphs:
+    cooccurrence:
+      path: data/graphs/pairs_large.edg
+      edges: 8748
+      entities: 5028
+      construction: "top 80 neighbours per query, weight = count / per-query max"
+    embedding_knn:
+      path: data/embeddings/magic_v7_spectral_mu35.wv
+      edges: 12000
+      entities: 7180
+      construction: "top 100 neighbours per query, weight = cosine"
+  labels: "functional_score; unjudged = 0; IDCG from judged scores"
+
+results:
+  ndcg_at_10:
+    cooccurrence:
+      "1p": 0.0566
+      "1p_then": 0.0450
+      "2i_cheap": 0.0495
+      "2i_creature_cheap": 0.0642
+      "2i_is": 0.0595
+    embedding_knn:
+      "1p": 0.3542
+      "1p_then": 0.0677
+      "2i_cheap": 0.2636
+      "2i_creature_cheap": 0.1550
+      "2i_is": 0.1358
+    embedding_full_retrieval: 0.3542
+  verdict: "not_supported"
+
+artifacts:
+  - data/results/crates/heyting_logical_composition.json
+
+conclusion: >
+  The hypothesis is not supported. On the embedding's own kNN graph, heyting's
+  1p query reproduces the embedding exactly (0.3542), and every attribute
+  constraint reduces nDCG (cheap 0.2636, creature+cheap 0.1550, instant/sorcery
+  0.1358). On the co-occurrence graph every shape is six times worse than the
+  embedding. The atomic scorer carries the signal; logical composition adds none
+  for substitution. heyting may still be the right engine for genuine
+  multi-constraint deck-building queries, but not as a substitute retriever.
+  Next: exercise it where the constraint is the user's real question, or do not
+  add the Rust boundary.

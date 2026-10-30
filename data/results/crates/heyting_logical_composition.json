@@ -1,0 +1,30 @@
+{
+  "crate": "heyting 0.17.0",
+  "date": "2026-10-30",
+  "queries": 120,
+  "test_set": "data/test_sets/annotated_magic_v2.json",
+  "labels": "functional_score, unjudged = 0, IDCG from judged scores",
+  "graphs": {
+    "cooccurrence": "data/graphs/pairs_large.edg, top 80 neighbours per query, weight = count / per-query max",
+    "embedding_knn": "magic_v7_spectral_mu35, top 100 neighbours per query, weight = cosine"
+  },
+  "ndcg_at_10": {
+    "cooccurrence": {
+      "1p": 0.0566,
+      "1p_then": 0.0450,
+      "2i_cheap": 0.0495,
+      "2i_creature_cheap": 0.0642,
+      "2i_is": 0.0595
+    },
+    "embedding_knn": {
+      "1p": 0.3542,
+      "1p_then": 0.0677,
+      "2i_cheap": 0.2636,
+      "2i_creature_cheap": 0.1550,
+      "2i_is": 0.1358
+    },
+    "embedding_full": 0.3542
+  },
+  "verdict": "not_supported",
+  "note": "1p on the embedding kNN reproduces the embedding exactly; every attribute constraint reduces nDCG. The atomic scorer carries the signal; logical composition adds none for substitution. The co-occurrence graph is six times worse than the embedding."
+}
