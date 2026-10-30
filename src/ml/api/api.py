@@ -224,6 +224,13 @@ def load_embeddings_to_state(
             if not weights_path.exists():
                 weights_path = PATHS.experiments / "fusion_grid_search_latest.json"
 
+        if not weights_path or not weights_path.exists():
+            calibrated = _load_fusion_weights_file(game)
+            if calibrated is not None:
+                state.fusion_default_weights = calibrated
+                state.model_info["fusion_default_weights_source"] = "calibrated"
+                weights_path = None
+
         if weights_path and weights_path.exists():
             with open(weights_path) as fh:
                 data = json.load(fh)
@@ -267,6 +274,47 @@ def load_embeddings_to_state(
             )
     except (OSError, json.JSONDecodeError, KeyError, ValueError):
         logger.debug("No tuned fusion weights loaded", exc_info=True)
+
+
+def _describe_loaded_signals(game: str, signal_status: dict[str, bool], state: Any) -> str:
+    """Render the startup signal line so it cannot overstate what the blend uses.
+
+    Three separate claims that the audit found conflated:
+    how many signals loaded, which are missing, and which loaded signals carry
+    zero weight and therefore contribute nothing to a fusion score.
+
+    An archetype weight stays 0.0 until item 4 calibrates fusion on the repaired
+    labels, so the card counts are printed next to the index size: the signal is
+    sparse per game by construction and "loaded" alone would hide that.
+    """
+    loaded = [name for name, ok in signal_status.items() if ok]
+    missing = [name for name, ok in signal_status.items() if not ok]
+
+    defaults = state.fusion_default_weights or FusionWeights()
+    signal_weights = {
+        "text_embedder": defaults.text_embed,
+        "visual_embedder": defaults.visual_embed,
+        "archetype": defaults.archetype,
+    }
+    unweighted = [name for name in loaded if signal_weights.get(name, 0.0) <= 0.0]
+
+    coverage = ""
+    if signal_status.get("archetype"):
+        arch_cards = len(state.archetype_staples or {})
+        index_cards = len(state.card_attrs or state.card_metadata or {})
+        coverage = (
+            f" ArchetypeCards={arch_cards}/{index_cards}"
+            if index_cards
+            else f" ArchetypeCards={arch_cards}"
+        )
+
+    return (
+        f"Game={game} signals: {len(loaded)}/{len(signal_status)} loaded. "
+        f"Available={', '.join(loaded) if loaded else 'none'} "
+        f"Missing={', '.join(missing) if missing else 'none'} "
+        f"Unweighted={', '.join(unweighted) if unweighted else 'none'}"
+        f"{coverage}"
+    )
 
 
 # API app with lifespan
@@ -478,6 +526,14 @@ async def lifespan(app: FastAPI):
                             for _fk in ("colors", "cmc", "rarity", "set_name"):
                                 _fv = _meta.get(_fk)
                                 if _fv is not None and _fv != "":
+                                    # Enriched metadata carries numpy scalars, which
+                                    # the JSON payload rejects; store plain values.
+                                    if hasattr(_fv, "item"):
+                                        _fv = _fv.item()
+                                    if isinstance(_fv, float) and (
+                                        _fv != _fv or _fv in (float("inf"), float("-inf"))
+                                    ):
+                                        continue
                                     _doc[_fk] = _fv
                             _docs.append(_doc)
                         for _i in range(0, len(_docs), 500):
@@ -638,16 +694,7 @@ async def lifespan(app: FastAPI):
                 signal_status["visual_embedder"] = True
             state.signal_status = signal_status
 
-            loaded_signals = [name for name, loaded in signal_status.items() if loaded]
-            missing_signals = [name for name, loaded in signal_status.items() if not loaded]
-            logger.info(
-                "Game=%s signals: %d/%d loaded. Available=%s Missing=%s",
-                game,
-                len(loaded_signals),
-                len(signal_status),
-                (", ".join(loaded_signals) if loaded_signals else "none"),
-                (", ".join(missing_signals) if missing_signals else "none"),
-            )
+            logger.info("%s", _describe_loaded_signals(game, signal_status, state))
         except (ImportError, OSError, ValueError, KeyError):
             logger.debug(
                 "Failed to load additional signals for game=%s (optional)", game, exc_info=True
@@ -658,9 +705,20 @@ async def lifespan(app: FastAPI):
     # ------------------------------------------------------------------
     _emb_dir = PATHS.project_root / "data" / "embeddings"
     _logs_dir = PATHS.project_root / "data" / "logs"
+    # The served linear reranker is off by default: its producer now raises,
+    # it was fitted on withdrawn experiment 0063 labels, and its route-side
+    # weight rewrite made it disagree with its own artifact. Opt in only to
+    # reproduce a historical comparison.
     for game in games:
         reranker_path = _logs_dir / f"{game}_reranker_run.json"
         if not reranker_path.exists():
+            continue
+        if not _linear_reranker_enabled():
+            logger.info(
+                "Linear reranker present but not served for %s "
+                "(set DECKSAGE_ENABLE_LINEAR_RERANKER=1 to reproduce a historical run)",
+                game,
+            )
             continue
         try:
             rc = RerankerConfig.from_json(reranker_path)
@@ -670,9 +728,26 @@ async def lifespan(app: FastAPI):
             # "primary" (or legacy "v5_fused") maps to the already-loaded embeddings.
             reranker_embs: dict[str, Any] = {}
             for feat in rc.features:
-                if feat in ("primary", "v5_fused"):
+                if feat == "primary":
                     if state.embeddings is not None:
                         reranker_embs[feat] = state.embeddings
+                    continue
+                if feat == "v5_fused":
+                    # Never alias a config feature onto a different embedding:
+                    # the historical config claimed v5_fused, the server loaded
+                    # a spectral model under that name.
+                    wv_alias = _emb_dir / f"{game}_v5_fused.wv"
+                    if wv_alias.exists() and HAS_GENSIM:
+                        reranker_embs[feat] = KeyedVectors.load(str(wv_alias))
+                    else:
+                        logger.warning(
+                            "Refusing to alias v5_fused to the primary embedding for %s; "
+                            "no %s on disk. Reranker not enabled for this game.",
+                            game,
+                            wv_alias.name,
+                        )
+                        reranker_embs = {}
+                        break
                     continue
                 wv_path = _emb_dir / f"{game}_{feat}.wv"
                 if wv_path.exists() and HAS_GENSIM:
@@ -1106,6 +1181,70 @@ def _lookup_ban_status(card_name: str, banlist: dict | None) -> dict[str, str] |
     return ban or None
 
 
+def _linear_reranker_enabled() -> bool:
+    """Whether to serve the historical linear reranker. Default: no."""
+    return os.getenv("DECKSAGE_ENABLE_LINEAR_RERANKER", "0").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
+def _load_fusion_weights_file(game: str):
+    """Load calibrated fusion weights, refusing anything that hides its evidence.
+
+    A weights file is only usable if it carries the objective it was fitted under,
+    the coverage it achieved and the experiment that produced it. Files written
+    before those fields existed (including the withdrawn 0065 artefact) are
+    ignored rather than trusted by default.
+    """
+    path = PATHS.project_root / "data" / "embeddings" / f"fusion_weights_{game}.json"
+    if not path.exists():
+        return None
+    try:
+        payload = json.loads(path.read_text())
+    except (OSError, json.JSONDecodeError):
+        logger.warning("Fusion weights for %s are unreadable; ignoring %s", game, path.name)
+        return None
+    required = ("best_weights", "objective", "holdout_coverage", "experiment")
+    missing = [key for key in required if key not in payload]
+    if missing:
+        logger.info(
+            "Fusion weights for %s ignored: no %s recorded (pre-0067 artefact)",
+            game,
+            ", ".join(missing),
+        )
+        return None
+    coverage = float(payload.get("holdout_coverage") or 0.0)
+    minimum = float(payload.get("min_coverage") or 0.0)
+    if coverage < minimum or coverage <= 0.0:
+        logger.warning(
+            "Fusion weights for %s ignored: coverage %.2f below its own floor %.2f",
+            game,
+            coverage,
+            minimum,
+        )
+        return None
+    weights = payload["best_weights"]
+    logger.info(
+        "Fusion weights for %s: experiment %s, objective %s, holdout coverage %.2f, nDCG@10 %.4f",
+        game,
+        payload.get("experiment"),
+        payload.get("objective"),
+        coverage,
+        float(payload.get("ndcg_at_10") or 0.0),
+    )
+    return FusionWeights(
+        embed=float(weights.get("embed", 0.0)),
+        jaccard=float(weights.get("jaccard", 0.0)),
+        functional=float(weights.get("functional", 0.0)),
+        text_embed=float(weights.get("text_embed", 0.0)),
+        visual_embed=float(weights.get("visual_embed", 0.0)),
+        archetype=float(weights.get("archetype", 0.0)),
+    )
+
+
 def _enrich_similar_card(
     card_name: str,
     similarity: float,
@@ -1345,8 +1484,11 @@ def _similar_fusion(
     task_type = use_case_to_task.get(request.use_case, "substitution")
 
     # If user provided explicit weights, skip task-specific weight adjustment
-    # (explicit weights should override, not be overridden by task presets)
-    effective_task_type = task_type if not w else None
+    # (explicit weights should override, not be overridden by task presets).
+    # Calibrated weights are explicit evidence too: the substitution preset zeroes
+    # co-occurrence, which would discard a vector that measured better than the preset.
+    calibrated = state.model_info.get("fusion_default_weights_source") == "calibrated"
+    effective_task_type = task_type if (not w and not calibrated) else None
 
     fusion = WeightedLateFusion(
         state.embeddings,
@@ -1374,7 +1516,9 @@ def _similar_fusion(
     else:
         similar = fusion.similar(query, k, task_type=task_type)
 
-    results = [_enrich_similar_card(card, sim, state, game=game) for card, sim in similar]
+    # Coerce at the response boundary: several signals hand back numpy scalars and
+    # pydantic refuses to serialise them, which turned every fusion query into a 500.
+    results = [_enrich_similar_card(card, float(sim), state, game=game) for card, sim in similar]
 
     # Inject per-signal breakdown from fusion modality scores
     modality_scores = getattr(fusion, "_last_modality_scores", None)
@@ -1391,9 +1535,9 @@ def _similar_fusion(
             raw = modality_scores.get(sc.card, {})
             if raw and sc.metadata is not None:
                 sc.metadata["score_breakdown"] = {
-                    signal_labels.get(sig, sig): round(v, 4)
-                    for sig, v in sorted(raw.items(), key=lambda x: -x[1])
-                    if v > 0.0
+                    signal_labels.get(sig, sig): round(float(v), 4)
+                    for sig, v in sorted(raw.items(), key=lambda x: -float(x[1]))
+                    if float(v) > 0.0
                 }
 
     return results
@@ -1540,6 +1684,9 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
                         if not (
                             s == "visual_embed" and getattr(state, "visual_embedder", None) is None
                         )
+                        # Only advertise archetype once its artefacts are loaded:
+                        # an unloaded signal contributes nothing to the response.
+                        if not (s == "archetype" and not getattr(state, "archetype_staples", None))
                     ],
                 }
                 if method == "fusion"
@@ -2251,6 +2398,18 @@ if _search_html.exists():
     def search_html():
         """Serve the main search interface."""
         return FileResponse(str(_search_html))
+
+    @app.get("/review_similarities.html")
+    def review_html():
+        """Serve the similarity review surface.
+
+        It lives beside the search page but had no route, so the annotation
+        review path was a 404. Both surfaces share one stylesheet.
+        """
+        review = PATHS.project_root / "frontend" / "review_similarities.html"
+        if not review.exists():
+            raise HTTPException(status_code=404, detail="review surface not installed")
+        return FileResponse(str(review))
 
     # Also serve at root if no other root handler
     @app.get("/search")

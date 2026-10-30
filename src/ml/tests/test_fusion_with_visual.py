@@ -12,10 +12,7 @@ import pytest
 pytest.importorskip("gensim")
 
 try:
-    from PIL import Image
-
     from ml.similarity.fusion import FusionWeights, WeightedLateFusion
-    from ml.similarity.visual_embeddings import CardVisualEmbedder
 
     VISUAL_EMBEDDINGS_AVAILABLE = True
 except ImportError:
@@ -46,7 +43,7 @@ def test_fusion_weights_with_visual():
 @pytest.mark.skipif(not VISUAL_EMBEDDINGS_AVAILABLE, reason="Visual embeddings not available")
 def test_fusion_with_visual_embedder():
     """Test WeightedLateFusion accepts visual_embedder."""
-    visual_embedder = CardVisualEmbedder()
+    visual_embedder = object()
 
     fusion = WeightedLateFusion(
         embeddings=None,
@@ -63,17 +60,19 @@ def test_fusion_with_visual_embedder():
 @pytest.mark.skipif(not VISUAL_EMBEDDINGS_AVAILABLE, reason="Visual embeddings not available")
 def test_get_visual_embedding_similarity():
     """Test visual embedding similarity computation."""
-    visual_embedder = CardVisualEmbedder()
-
-    # Create test images
-    img1 = Image.new("RGB", (224, 224), color="red")
-    img2 = Image.new("RGB", (224, 224), color="red")
-
     # Create card data dict
     card_data = {
         "Card1": {"name": "Card1", "image_url": "test1"},
         "Card2": {"name": "Card2", "image_url": "test2"},
     }
+
+    class FakeVisualEmbedder:
+        def similarity(self, query, candidate):
+            assert query == card_data["Card1"]
+            assert candidate == card_data["Card2"]
+            return 0.75
+
+    visual_embedder = FakeVisualEmbedder()
 
     fusion = WeightedLateFusion(
         embeddings=None,
@@ -84,11 +83,8 @@ def test_get_visual_embedding_similarity():
         card_data=card_data,
     )
 
-    # Test similarity computation (will use PIL images directly)
-    # Note: This tests the method exists and handles inputs correctly
     similarity = fusion._get_visual_embedding_similarity("Card1", "Card2")
-    # Should return 0.0 when cards not in card_data or images unavailable
-    assert 0.0 <= similarity <= 1.0
+    assert similarity == 0.75
 
 
 @pytest.mark.skipif(not VISUAL_EMBEDDINGS_AVAILABLE, reason="Visual embeddings not available")

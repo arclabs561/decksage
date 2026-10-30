@@ -42,7 +42,7 @@ def make_agent(
     Create a Pydantic AI agent with consistent configuration.
 
     Args:
-        model_name: Model name (e.g., "gpt-4o-mini", "claude-4.5-sonnet")
+        model_name: Model name (e.g., "gpt-4o-mini", "claude-sonnet-4.6")
         result_cls: Pydantic model for structured output
         system_prompt: System prompt for the agent
         provider: Provider prefix (default: from env or "openrouter")

@@ -49,32 +49,7 @@ def load_annotation_pairs(game: str) -> list[tuple[str, str, str]]:
     - 'b_upgrades_a': B subsumes A
     - 'substitute': high mutual containment
     """
-    path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    if not path.exists():
-        return []
-
-    with open(path) as f:
-        data = json.load(f)
-
-    pairs = []
-    queries = data.get("queries", {})
-    for qname, qdata in queries.items():
-        for ann in qdata.get("annotations", []):
-            candidate = ann.get("candidate", "")
-            if not candidate:
-                continue
-
-            ud = ann.get("upgrade_direction")
-            sub_score = ann.get("substitutability")
-
-            if ud == "a_upgrades_b":
-                pairs.append((qname, candidate, "a_upgrades_b"))
-            elif ud == "b_upgrades_a":
-                pairs.append((qname, candidate, "b_upgrades_a"))
-            elif sub_score is not None and float(sub_score) > 0.7:
-                pairs.append((qname, candidate, "substitute"))
-
-    return pairs
+    raise RuntimeError("retired: evaluation judgments cannot be used as training data")
 
 
 def load_deck_subset_pairs(

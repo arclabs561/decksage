@@ -197,6 +197,11 @@ def main():
     parser.add_argument("--mode", choices=MODES, help="Evaluate single mode")
     parser.add_argument("--verbose", "-v", action="store_true")
     parser.add_argument("--json", action="store_true", help="Machine-readable output")
+    parser.add_argument(
+        "--include-legacy-mixed-labels",
+        action="store_true",
+        help="Include the illustrative, unattributed mixed-task baseline (not gold labels)",
+    )
     args = parser.parse_args()
 
     project_root = Path(__file__).resolve().parent.parent
@@ -208,7 +213,11 @@ def main():
 
     # Load ground truth YAML (baseline queries)
     gt_path = project_root / "data" / "annotations" / "ground_truth_v1.yaml"
-    if gt_path.exists():
+    if gt_path.exists() and args.include_legacy_mixed_labels:
+        print(
+            "WARNING: legacy baseline mixes tasks and lacks verified annotator provenance",
+            file=sys.stderr,
+        )
         gt_entries = load_ground_truth(gt_path)
         for entry in gt_entries:
             query = entry.get("query", "")

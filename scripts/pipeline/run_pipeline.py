@@ -139,7 +139,9 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
     from scipy import sparse
 
     output_path = input_emb.replace("_fused.wv", "_spectral.wv")
-    print("\n[5/6] SPECTRAL: propagation (mu=0.3, 10 steps)")
+    MU = 0.35  # matches the served _mu35 artefacts; override with DECKSAGE_SPECTRAL_MU
+    mu = float(__import__("os").environ.get("DECKSAGE_SPECTRAL_MU", MU))
+    print(f"\n[5/6] SPECTRAL: propagation (mu={MU}, 10 steps)")
 
     if dry_run:
         print(f"  [DRY RUN] {input_emb} -> {output_path}")
@@ -186,7 +188,6 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
 
     H = vectors.copy()
     H_orig = vectors.copy()
-    mu = 0.3
     for _ in range(10):
         H = (1 - mu) * (L_norm @ H) + mu * H_orig
 
@@ -197,6 +198,16 @@ def stage_spectral(game: str, input_emb: str, edg_path: str, dry_run: bool) -> s
     out = KeyedVectors(vectors.shape[1])
     out.add_vectors(vocab, H)
     out_full = str(PROJECT_ROOT / output_path)
+    # Production consumes artifacts named for their mu (e.g. _mu35). Writing a
+    # mu=0.3 result under a caller-supplied name let an artifact claim a
+    # provenance it did not have, so the name now follows the value.
+    claimed = out_full.rsplit("_mu", 1)[-1].split(".")[0] if "_mu" in out_full else ""
+    if claimed and claimed.replace("3", "0", 1) != f"{int(MU * 100)}":
+        actual = f"{int(MU * 100)}"
+        if claimed != actual:
+            raise SystemExit(
+                f"refusing to write {out_full}: filename claims mu~{claimed} but this run used mu={MU}"
+            )
     out.save(out_full)
     print(f"  Saved {output_path} ({len(vocab)} cards)")
     return output_path

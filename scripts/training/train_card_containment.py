@@ -13,12 +13,8 @@ If card B is a strict upgrade over card A, then B's "use-case box" should
 contain A's box (B can do everything A does, plus more). This is a partial
 order -- not all pairs have an upgrade direction.
 
-Uses upgrade_direction annotations from the test sets as training signal.
-NOTE: This uses eval annotations for training, which violates the train/eval
-separation rule. This is acceptable here because:
-1. We're training a DIFFERENT model (box embeddings, not MetaPath2Vec)
-2. The box embeddings are not evaluated via nDCG on the same test set
-3. The evaluation is containment_prob quality, not card retrieval ranking
+Retired: this trainer used evaluation annotations as a training signal.
+Different models or metrics do not establish independent evaluation.
 
 Usage:
     PYTHONPATH=src .venv/bin/python scripts/training/train_card_containment.py --game magic
@@ -28,7 +24,6 @@ Usage:
 from __future__ import annotations
 
 import argparse
-import json
 import random
 import sys
 import time
@@ -43,45 +38,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 def load_upgrade_pairs(game: str) -> list[dict]:
     """Load upgrade_direction annotations from test set."""
-    test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    if not test_path.exists():
-        return []
-
-    with open(test_path) as f:
-        data = json.load(f)
-
-    pairs = []
-    for q, qdata in data.get("queries", {}).items():
-        for ann in qdata.get("annotations", []):
-            ud = ann.get("upgrade_direction", "neither")
-            sub = float(ann.get("substitutability", 0) or 0)
-            if ud in ("a_upgrades_b", "b_upgrades_a"):
-                # Normalize: "better" card is always head, "worse" is tail
-                # head's box should contain tail's box
-                if ud == "a_upgrades_b":
-                    head, tail = q, ann["candidate"]
-                else:
-                    head, tail = ann["candidate"], q
-                pairs.append(
-                    {
-                        "head": head,
-                        "tail": tail,
-                        "substitutability": sub,
-                        "source": "upgrade",
-                    }
-                )
-            elif sub > 0.7:
-                # High substitutability = symmetric containment (sidegrade)
-                pairs.append(
-                    {
-                        "head": q,
-                        "tail": ann["candidate"],
-                        "substitutability": sub,
-                        "source": "sidegrade",
-                    }
-                )
-
-    return pairs
+    raise RuntimeError("retired: evaluation judgments cannot be used as training data")
 
 
 def build_triples(

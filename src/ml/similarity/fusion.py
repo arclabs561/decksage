@@ -188,7 +188,26 @@ class WeightedLateFusion:
             try:
                 from .fusion_improvements import create_task_specific_weights
 
-                self.weights = create_task_specific_weights(task_type, base_weights).normalized()
+                try:
+                    task_weights = create_task_specific_weights(task_type, base_weights)
+                except ValueError:
+                    # The preset zeroed every supplied signal; fall back below.
+                    task_weights = base_weights.normalized()
+                # A task preset zeroes the signals it distrusts. If the supplied
+                # base weights only carry a signal the preset removes (a calibrated
+                # embedding-only vector under the "substitution" preset), the result
+                # is all zeros and fusion cannot rank anything. Falling back keeps
+                # the measured weights rather than crashing or inventing a mix.
+                if sum(task_weights.to_dict().values()) <= 0:
+                    import logging as _logging
+
+                    _logging.getLogger(__name__).warning(
+                        "task preset %r zeroed every supplied weight; using the given weights unchanged",
+                        task_type,
+                    )
+                    self.weights = base_weights.normalized()
+                else:
+                    self.weights = task_weights.normalized()
             except ImportError:
                 # Fallback if fusion_improvements not available
                 self.weights = base_weights.normalized()
@@ -751,7 +770,9 @@ class WeightedLateFusion:
         if self.mmr_lambda > 0.0:
             results = self._apply_mmr(sorted_candidates, fused_scores, k)
         else:
-            results = [(c, fused_scores[c]) for c in sorted_candidates[:k]]
+            # Scores arrive as numpy scalars from several signals; the API
+            # serialises them and refuses numpy types. Coerce at the boundary.
+            results = [(c, float(fused_scores[c])) for c in sorted_candidates[:k]]
 
         # Restore original weights if they were temporarily overridden
         if saved_weights_dict is not None:

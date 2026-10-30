@@ -28,8 +28,10 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
 import logging
+import sys
 from collections import defaultdict
 from pathlib import Path
 
@@ -38,6 +40,7 @@ import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+sys.path.insert(0, str(PROJECT_ROOT / "src"))
 
 logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
@@ -174,6 +177,9 @@ def compute_similarity(row_a: dict, row_b: dict) -> float:
 
 def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
     """Generate self-supervised training pairs from card attributes."""
+    from ml.contracts.training_pairs import evaluation_pairs
+
+    held_out = evaluation_pairs(DATA_DIR, game)
     rows = _load_cards(game)
     if not rows:
         log.warning(f"No cards found for {game}")
@@ -214,7 +220,7 @@ def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
         candidates.update(int(j) for j in random_indices if j != i)
 
         # Sample up to 10 candidates per card
-        cand_list = list(candidates)
+        cand_list = sorted(candidates)
         if len(cand_list) > 10:
             cand_list = [cand_list[j] for j in rng.choice(len(cand_list), size=10, replace=False)]
 
@@ -225,6 +231,10 @@ def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
             seen.add(key)
 
             row_b = rows[j]
+            name_a = row_a.get("name", "")
+            name_b = row_b.get("name", "")
+            if frozenset((name_a, name_b)) in held_out:
+                continue
             text_b = _card_text(row_b)
             if not text_b:
                 continue
@@ -237,8 +247,13 @@ def generate_pairs(game: str, max_pairs: int = 50000) -> list[dict]:
                     "score": round(score, 4),
                     "query": row_a.get("name", ""),
                     "candidate": row_b.get("name", ""),
+                    "game": game,
+                    "source": "card_attributes",
+                    "task": "attribute_similarity",
                 }
             )
+            if len(pairs) >= max_pairs:
+                break
 
         if len(pairs) >= max_pairs:
             break
@@ -263,6 +278,9 @@ def main():
     parser.add_argument("--max-pairs", type=int, default=50000)
     parser.add_argument("--output", default=None)
     args = parser.parse_args()
+    out_path = args.output or str(DATA_DIR / "training" / "selfsupervised_pairs.json")
+    if Path(out_path).exists():
+        parser.error(f"output already exists: {out_path}; choose a new path")
 
     games = (
         ["magic", "pokemon", "yugioh"]
@@ -277,10 +295,26 @@ def main():
         pairs = generate_pairs(game, max_pairs=args.max_pairs)
         all_pairs.extend(pairs)
 
-    out_path = args.output or str(DATA_DIR / "training" / "selfsupervised_pairs.json")
     Path(out_path).parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump({"pairs": all_pairs, "count": len(all_pairs)}, f)
+    inputs = {}
+    for game in games:
+        source = next(
+            p
+            for p in (
+                DATA_DIR / "processed" / f"card_attributes_{game}_enriched.csv",
+                DATA_DIR / "processed" / f"card_attributes_{game}.csv",
+            )
+            if p.exists()
+        )
+        evaluation = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
+        inputs[game] = {
+            "card_source": str(source),
+            "card_source_sha256": hashlib.sha256(source.read_bytes()).hexdigest(),
+            "evaluation_source": str(evaluation),
+            "evaluation_sha256": hashlib.sha256(evaluation.read_bytes()).hexdigest(),
+        }
+    with open(out_path, "x") as f:
+        json.dump({"pairs": all_pairs, "count": len(all_pairs), "inputs": inputs, "seed": 42}, f)
     log.info(f"\nSaved {len(all_pairs)} pairs to {out_path}")
 
 

@@ -44,23 +44,7 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 def load_upgrade_pairs(game: str) -> list[tuple[str, str, float]]:
     """Load upgrade_direction annotations. Returns (better, worse, substitutability)."""
-    test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    if not test_path.exists():
-        return []
-
-    with open(test_path) as f:
-        data = json.load(f)
-
-    pairs = []
-    for q, qdata in data.get("queries", {}).items():
-        for ann in qdata.get("annotations", []):
-            ud = ann.get("upgrade_direction", "neither")
-            sub = float(ann.get("substitutability", 0) or 0)
-            if ud == "a_upgrades_b":
-                pairs.append((q, ann["candidate"], sub))
-            elif ud == "b_upgrades_a":
-                pairs.append((ann["candidate"], q, sub))
-    return pairs
+    raise RuntimeError("retired: evaluation judgments cannot be used as training data")
 
 
 def load_card_roles(game: str) -> dict[str, str]:

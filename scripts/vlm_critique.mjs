@@ -98,12 +98,15 @@ async function main() {
         ],
       };
 
+      // Pin the model: the package default is a slug OpenRouter no longer serves,
+      // which silently returns a null score instead of failing loudly.
       const result = await validateWithRubric(
         path,
         gamePrompt(gameKey),
         CARD_GAME_RUBRIC,
         { testType: 'visual-quality', anchors: gameAnchors },
         { enforceZeroTolerance: false },
+        { provider: process.env.VLM_PROVIDER || 'openrouter', model: process.env.VLM_MODEL || 'google/gemini-3.8-flash' },
       );
 
       const score = result.score ?? 0;

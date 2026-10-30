@@ -14,9 +14,8 @@ Takes embedding cosine similarities as features, learns to predict
 the actual substitutability/similarity score from annotations.
 This bridges the gap between embedding space and human judgment.
 
-Uses a dedicated annotation split: 80% train, 20% eval (held out
-from the embedding eval). This is NOT the same eval set used for
-embedding nDCG -- it's a separate annotation-supervised reranker.
+Retired: this script reads the evaluation set as training data. Its internal
+split cannot make subsequent evaluation on that same set independent.
 
 Usage:
     uv run scripts/training/train_reranker.py --game magic
@@ -30,11 +29,15 @@ import json
 import sys
 import traceback
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 import numpy as np
-from gensim.models import KeyedVectors
 from sklearn.linear_model import Ridge
 from sklearn.model_selection import train_test_split
+
+
+if TYPE_CHECKING:
+    from gensim.models import KeyedVectors
 
 
 if not sys.stdout.isatty():
@@ -46,32 +49,8 @@ DATA_DIR = PROJECT_ROOT / "data"
 
 
 def load_pairs(game: str) -> list[dict]:
-    """Load annotated pairs with similarity scores."""
-    path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-    if not path.exists():
-        return []
-
-    with open(path) as f:
-        data = json.load(f)
-
-    pairs = []
-    for qname, qdata in data.get("queries", {}).items():
-        for ann in qdata.get("annotations", []):
-            candidate = ann.get("candidate", "")
-            sim = ann.get("similarity_score")
-            func = ann.get("functional_score")
-            sub = ann.get("substitutability")
-            if candidate and sim is not None:
-                pairs.append(
-                    {
-                        "query": qname,
-                        "candidate": candidate,
-                        "similarity": float(sim),
-                        "functional": float(func) if func is not None else None,
-                        "substitutability": float(sub) if sub is not None else None,
-                    }
-                )
-    return pairs
+    """Refuse the former evaluation-set training source."""
+    raise RuntimeError("retired: this loader reads the evaluation set as training data")
 
 
 def compute_features(
@@ -104,6 +83,10 @@ def main() -> int:
         help="Which annotation score to predict",
     )
     args = parser.parse_args()
+
+    parser.error("retired: this trainer reads evaluation judgments as training data")
+
+    from gensim.models import KeyedVectors
 
     emb_names = [e.strip() for e in args.embeddings.split(",")]
 

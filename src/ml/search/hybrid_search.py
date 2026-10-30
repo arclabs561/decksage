@@ -12,14 +12,20 @@ import hashlib
 import json as _json
 import logging
 import os
+import threading
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 import numpy as np
 
+from ..utils.paths import PATHS
+
 
 logger = logging.getLogger("decksage.search")
+
+# One text-index build at a time, shared by every HybridSearch instance.
+_text_cache_lock = threading.Lock()
 
 try:
     from meilisearch import Client as MeilisearchClient  # type: ignore[import-not-found]
@@ -367,11 +373,15 @@ class HybridSearch:
             logger.info(f"Meilisearch index '{self.index_name}' already exists")
         except MeilisearchApiError as e:
             if "index_not_found" in str(e).lower():
-                # Create index
-                self.meilisearch.create_index(
+                # Index creation is asynchronous; wait for the task, otherwise
+                # the first settings call races it and fails on a fresh volume.
+                task = self.meilisearch.create_index(
                     uid=self.index_name,
                     options={"primaryKey": "id"},
                 )
+                task_uid = getattr(task, "task_uid", None)
+                if task_uid is not None:
+                    self.meilisearch.wait_for_task(task_uid, timeout_in_ms=30_000)
                 logger.info(f"Created Meilisearch index '{self.index_name}'")
             else:
                 logger.error(f"Failed to initialize Meilisearch: {e}")
@@ -825,11 +835,18 @@ class HybridSearch:
         if not embed_fn:
             return []
 
-        # Lazily build card text embedding cache (check disk first)
+        # Lazily build card text embedding cache (check disk first).
+        # The build embeds ~26k cards and takes minutes, so a second request
+        # arriving mid-build must wait for it rather than start its own: without
+        # the lock, concurrent searches each rebuilt the cache and every one of
+        # them blocked for the full duration.
         if not hasattr(self, "_text_emb_cache") or self._text_emb_cache is None:
-            self._text_emb_cache = (
-                self._load_text_embedding_cache() or self._build_text_embedding_cache(embed_fn)
-            )
+            with _text_cache_lock:
+                if not hasattr(self, "_text_emb_cache") or self._text_emb_cache is None:
+                    self._text_emb_cache = (
+                        self._load_text_embedding_cache()
+                        or self._build_text_embedding_cache(embed_fn)
+                    )
 
         if self._text_emb_cache is None:
             return []
@@ -936,12 +953,24 @@ class HybridSearch:
 
         return result
 
+    def _encoder_id(self) -> str:
+        """Identity of the encoder that produced (or would produce) the cache."""
+        embedder = getattr(self, "text_embedder", None)
+        name = getattr(embedder, "model_name", None)
+        return str(name) if name else "unknown"
+
     def _cache_path(self) -> Path | None:
-        """Get the disk cache path for text embeddings."""
+        """Disk cache path for text embeddings, keyed by encoder identity.
+
+        Two 768-D text matrices with no encoder recorded is how the repo ended
+        up with two caches that disagreed on 41% of top-10 neighbours. The
+        encoder belongs in the name, not in somebody's memory.
+        """
         try:
-            cache_dir = Path("data/cache")
+            cache_dir = PATHS.data / "cache"
             cache_dir.mkdir(parents=True, exist_ok=True)
-            return cache_dir / f"text_emb_cache_{self.index_name}.npz"
+            slug = "".join(ch if ch.isalnum() else "-" for ch in self._encoder_id())[-60:]
+            return cache_dir / f"text_emb_cache_{self.index_name}_{slug}.npz"
         except Exception:
             return None
 
@@ -965,6 +994,9 @@ class HybridSearch:
             names_path = path.with_suffix(".names.json")
             with open(names_path, "w") as f:
                 _json.dump(names, f)
+            meta_path = path.with_suffix(".meta.json")
+            with open(meta_path, "w") as f:
+                _json.dump({"encoder": self._encoder_id(), "dim": int(matrix.shape[1])}, f)
             logger.info("Saved text embedding cache to %s (%d cards)", path, len(names))
         except Exception as e:
             logger.debug(f"Failed to save text embedding cache: {e}")
@@ -983,12 +1015,21 @@ class HybridSearch:
             return None
 
         try:
-            # Check staleness: cache older than 7 days -> rebuild
-            import time
-
-            age_days = (time.time() - path.stat().st_mtime) / 86400
-            if age_days > 7:
-                logger.info("Text embedding cache stale (%.1f days), rebuilding", age_days)
+            # Reuse depends on the encoder matching, not on the file being young:
+            # a week-old cache from the same encoder is fine, and a fresh cache
+            # from a different encoder is not.
+            meta_path = path.with_suffix(".meta.json")
+            if not meta_path.exists():
+                logger.info("Text embedding cache has no encoder record; rebuilding")
+                return None
+            with open(meta_path) as f:
+                meta = _json.load(f)
+            if meta.get("encoder") != self._encoder_id():
+                logger.info(
+                    "Text embedding cache was built by %s, this process uses %s; rebuilding",
+                    meta.get("encoder"),
+                    self._encoder_id(),
+                )
                 return None
 
             data = _np.load(path)
@@ -997,9 +1038,17 @@ class HybridSearch:
             with open(names_path) as f:
                 names = _json.load(f)
 
-            # Sanity check
+            # Sanity checks: names line up and the matrix is the dimension the
+            # encoder recorded.
             if len(names) != matrix.shape[0]:
                 logger.warning("Cache size mismatch, rebuilding")
+                return None
+            if meta.get("dim") and int(meta["dim"]) != int(matrix.shape[1]):
+                logger.warning(
+                    "Cache is %sD but its record says %sD; rebuilding",
+                    matrix.shape[1],
+                    meta.get("dim"),
+                )
                 return None
 
             logger.info(

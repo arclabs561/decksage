@@ -45,10 +45,10 @@ logging.basicConfig(level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
 
 
-def load_pairs(source: str = "selfsupervised") -> list[dict]:
+def load_pairs(source: str = "selfsupervised", pairs_path: Path | None = None) -> list[dict]:
     """Load training pairs from specified source."""
     if source == "selfsupervised":
-        ss_path = DATA_DIR / "training" / "selfsupervised_pairs.json"
+        ss_path = pairs_path or DATA_DIR / "training" / "selfsupervised_pairs.json"
         if not ss_path.exists():
             log.error(f"Self-supervised pairs not found: {ss_path}")
             log.error(
@@ -57,12 +57,16 @@ def load_pairs(source: str = "selfsupervised") -> list[dict]:
             return []
         with open(ss_path) as f:
             data = json.load(f)
-        pairs = data.get("pairs", [])
+        from ml.contracts.training_pairs import verified_pairs
+
+        entries = data.get("pairs", [])
+        games = sorted({entry.get("game") for entry in entries if entry.get("game")})
+        pairs = verified_pairs(entries, DATA_DIR, games)
         log.info(f"Loaded {len(pairs)} self-supervised pairs")
         return pairs
     else:
         # Load from annotations (with leakage warning)
-        log.warning("Loading annotation pairs -- eval metrics will be upper bounds")
+        log.warning("Loading annotation pairs -- verify independence from evaluation data")
         from train_cross_encoder import load_training_pairs
 
         all_pairs = []
@@ -214,14 +218,19 @@ def main():
     parser.add_argument("--model", default="intfloat/e5-base-v2")
     parser.add_argument("--output", default=None)
     parser.add_argument(
+        "--pairs", type=Path, help="Explicit provenance-tagged self-supervised pairs"
+    )
+    parser.add_argument(
         "--max-pairs",
         type=int,
         default=20000,
         help="Subsample to N pairs (default 20K, faster training)",
     )
     args = parser.parse_args()
+    if args.pairs and args.source != "selfsupervised":
+        parser.error("--pairs requires --source selfsupervised")
 
-    pairs = load_pairs(args.source)
+    pairs = load_pairs(args.source, args.pairs)
     if not pairs:
         return
 

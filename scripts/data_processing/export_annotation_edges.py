@@ -1,15 +1,13 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = []
+# dependencies = ["pydantic>=2.0.0"]
 # ///
 """
 Export high-confidence annotation pairs as graph edges.
 
-Reads annotated test sets and exports pairs with high similarity scores
-as edgelist entries that can be fed into the unified graph builder.
-This closes the loop: annotations improve the graph, which improves
-embeddings, which produce better candidates for annotation.
+Reads non-evaluation annotation sources and exports edges, excluding exact
+evaluation pairs. This does not prove independence from related examples.
 
 Edge weight is derived from annotation scores:
 - functional_score > 0.5 -> weight = functional_score * 5
@@ -27,11 +25,16 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = PROJECT_ROOT / "data"
+if str(PROJECT_ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT / "src"))
+
+from ml.contracts.training_pairs import evaluation_pairs
 
 
 def export_edges(game: str, exclude_eval: bool = True) -> dict:
@@ -50,17 +53,9 @@ def export_edges(game: str, exclude_eval: bool = True) -> dict:
     ]
 
     # Build eval pair set for exclusion
-    eval_pairs: set[tuple[str, str]] = set()
-    if exclude_eval:
-        test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-        if test_path.exists():
-            with open(test_path) as f:
-                test_data = json.load(f)
-            for q, qdata in test_data.get("queries", {}).items():
-                for ann in qdata.get("annotations", []):
-                    c = ann.get("candidate", "")
-                    if c:
-                        eval_pairs.add((min(q, c), max(q, c)))
+    if not exclude_eval:
+        raise ValueError("evaluation annotations cannot be exported as training edges")
+    eval_pairs = evaluation_pairs(DATA_DIR, game)
 
     # Collect annotations from non-eval sources
     all_annotations = []
@@ -87,16 +82,6 @@ def export_edges(game: str, exclude_eval: bool = True) -> dict:
             elif "pairs" in src_data:
                 all_annotations.extend(src_data["pairs"])
 
-    # Also include test set annotations but ONLY from training-safe queries
-    # (bucket-only queries that don't have per-pair LLM annotations)
-    if not exclude_eval:
-        test_path = DATA_DIR / "test_sets" / f"annotated_{game}_v2.json"
-        if test_path.exists():
-            with open(test_path) as f:
-                data = json.load(f)
-            for qdata in data.get("queries", {}).values():
-                all_annotations.extend(qdata.get("annotations", []))
-
     edges: dict[tuple[str, str], float] = {}
     n_functional = 0
     n_synergy = 0
@@ -113,7 +98,7 @@ def export_edges(game: str, exclude_eval: bool = True) -> dict:
         key = (min(card1, card2), max(card1, card2))
 
         # Exclude eval pairs to prevent train/eval leakage
-        if exclude_eval and key in eval_pairs:
+        if frozenset(key) in eval_pairs:
             n_excluded += 1
             continue
 
@@ -121,7 +106,7 @@ def export_edges(game: str, exclude_eval: bool = True) -> dict:
 
         # Handle both v4 (consensus nested) and v2/v3 (flat) formats
         consensus = ann.get("consensus", ann)
-        func = float(consensus.get("functional_score") or consensus.get("similarity_score") or 0)
+        func = float(consensus.get("functional_score") or 0)
         syn = float(consensus.get("synergy_score") or 0)
         sub = float(consensus.get("substitutability") or ann.get("substitutability") or 0)
 

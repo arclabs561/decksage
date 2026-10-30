@@ -520,9 +520,9 @@ def _eval_ranking(model, val_pairs: list[dict]) -> None:
         log.info("  No queries with 2+ candidates in val set")
 
 
-def load_selfsupervised_pairs() -> list[dict]:
+def load_selfsupervised_pairs(games: list[str], pairs_path: Path | None = None) -> list[dict]:
     """Load self-supervised pairs from attribute overlap generator."""
-    ss_path = DATA_DIR / "training" / "selfsupervised_pairs.json"
+    ss_path = pairs_path or DATA_DIR / "training" / "selfsupervised_pairs.json"
     if not ss_path.exists():
         log.warning(f"Self-supervised pairs not found at {ss_path}")
         log.warning(
@@ -531,7 +531,9 @@ def load_selfsupervised_pairs() -> list[dict]:
         return []
     with open(ss_path) as f:
         data = json.load(f)
-    pairs = data.get("pairs", [])
+    from ml.contracts.training_pairs import verified_pairs
+
+    pairs = verified_pairs(data.get("pairs", []), DATA_DIR, games)
     log.info(f"Loaded {len(pairs)} self-supervised pairs from {ss_path}")
     return pairs
 
@@ -551,9 +553,14 @@ def main():
     parser.add_argument(
         "--selfsupervised",
         action="store_true",
-        help="Use self-supervised pairs instead of annotations (no eval leakage)",
+        help="Use attribute-derived pairs with exact evaluation-pair exclusion",
+    )
+    parser.add_argument(
+        "--pairs", type=Path, help="Explicit provenance-tagged self-supervised pairs"
     )
     args = parser.parse_args()
+    if args.pairs and not args.selfsupervised:
+        parser.error("--pairs requires --selfsupervised")
 
     games = (
         ["magic", "pokemon", "yugioh"]
@@ -564,11 +571,11 @@ def main():
     )
 
     if args.selfsupervised:
-        ss_pairs = load_selfsupervised_pairs()
+        ss_pairs = load_selfsupervised_pairs(games, args.pairs)
         if not ss_pairs:
             return
         # Override the annotation loading -- pass pairs directly
-        log.info("Using self-supervised pairs (no annotation leakage)")
+        log.info("Using attribute-derived pairs with exact evaluation-pair exclusion")
         train_selfsupervised(
             ss_pairs,
             epochs=args.epochs,
@@ -593,7 +600,7 @@ def train_selfsupervised(
     model_name: str = "cross-encoder/ms-marco-MiniLM-L-6-v2",
     max_length: int = 384,
 ):
-    """Train cross-encoder on self-supervised pairs (no eval leakage)."""
+    """Train on attribute-derived pairs after exact evaluation-pair exclusion."""
     from sentence_transformers import InputExample
     from sentence_transformers.cross_encoder import CrossEncoder
 
@@ -608,7 +615,7 @@ def train_selfsupervised(
     log.info("=" * 60)
     log.info("Cross-encoder training (self-supervised, v4)")
     log.info(f"Model: {model_name}, max_length: {max_length}")
-    log.info("NO eval leakage -- training on attribute-derived pairs")
+    log.info("Exact evaluation pairs excluded; other overlap still needs assessment")
     log.info("=" * 60)
 
     # Query-level split first, then symmetric pairs for training only

@@ -53,7 +53,7 @@ MODE_INSTRUCTION = {
 }
 
 
-def load_training_data(game: str) -> list[tuple[str, str, float]]:
+def load_training_data(game: str, path: Path | None = None) -> list[tuple[str, str, float]]:
     """Load self-supervised card-text pairs.
 
     Annotations under data/test_sets/ are evaluation data (CLAUDE.md,
@@ -61,14 +61,21 @@ def load_training_data(game: str) -> list[tuple[str, str, float]]:
     override this: a model trained on the eval set cannot be evaluated against
     it, so the option should not exist.
     """
-    path = DATA_DIR / "training" / "selfsupervised_pairs.json"
+    path = path or DATA_DIR / "training" / "selfsupervised_pairs.json"
     if not path.exists():
         raise SystemExit(
             f"Missing {path}; run scripts/training/generate_selfsupervised_pairs.py first"
         )
     data = json.loads(path.read_text())
     pairs = []
-    for entry in data.get("pairs", []):
+    entries = data.get("pairs", [])
+    from ml.contracts.training_pairs import verified_pairs
+
+    try:
+        selected = verified_pairs(entries, DATA_DIR, [game])
+    except (ValueError, FileNotFoundError) as exc:
+        raise SystemExit(str(exc)) from exc
+    for entry in selected:
         query_text = entry.get("query_text", "")
         candidate_text = entry.get("candidate_text", "")
         if query_text and candidate_text:
@@ -88,7 +95,11 @@ def main() -> int:
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--lr", type=float, default=1e-4)
     parser.add_argument("--batch-size", type=int, default=16)
+    parser.add_argument("--pairs", type=Path, help="Explicit provenance-tagged training-pair file")
     args = parser.parse_args()
+    if args.task != "all":
+        parser.error("attribute-similarity proxy pairs do not provide task-specific labels")
+    pairs = load_training_data(args.game, args.pairs)
 
     try:
         from peft import LoraConfig, TaskType, get_peft_model
@@ -124,12 +135,6 @@ def main() -> int:
 
     # Replace the transformer with LoRA version
     model[0].auto_model = peft_model
-
-    # Load training data
-    pairs = load_training_data(args.game)
-    if not pairs:
-        logger.error("No training pairs found")
-        return 1
 
     instruction = MODE_INSTRUCTION.get(args.task, "query: Find similar cards to")
 
