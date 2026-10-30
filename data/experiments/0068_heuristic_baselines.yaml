@@ -1,0 +1,76 @@
+id: "0068"
+date: "2026-10-30"
+title: "Non-learned baselines for substitute scoring (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  A learned embedding beats non-learned lexical and structured heuristics on the
+  canonical substitution labels, both when both arms rerank the same embedding
+  candidates and when the heuristic retrieves its own candidates over an
+  intersected vocabulary. If a heuristic wins either comparison, the ML claim is
+  unsupported and the heuristic is the baseline to beat.
+
+method:
+  type: baseline_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --candidate-sources heuristic:b1 --output
+    data/results/heuristic_baselines/b1_vs_ml_rerank.json ;
+    --game magic --candidate-sources heuristic:b2 --output
+    data/results/heuristic_baselines/b2_vs_ml_rerank.json ;
+    --game magic --baseline heuristic:b2 --candidate-sources
+    magic_v7_spectral_mu35 --heuristic-vocabulary magic_v7_spectral_mu35
+    --output data/results/heuristic_baselines/b2_retrieval_intersected.json
+  baseline_definition: >
+    B1 is BM25 over oracle text (k1=1.2, b=0.75, positive Lucene IDF). B2 adds
+    type, mana value, colour and keyword matching with fixed weights. Neither is
+    fitted on annotations.
+  retrieval_contract: >
+    Reranking runs share the embedding's fixed candidate set. The retrieval run
+    intersects the heuristic's 36,453-card table with the embedding's 25,131 keys
+    before scoring, so both arms see the same vocabulary and the heuristic's
+    coverage advantage is removed.
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    sha256: 229e9f82a5cdb9af7476be921674bdb1c91d5e2455d81fefaef335ab89d33240
+    queries: 3047
+    gate: "passed: bucket_mismatch=593, score_evidence_conflict=154, duplicate_conflict=94"
+  embeddings:
+    primary: data/embeddings/magic_v7_spectral_mu35.wv
+  metadata: data/processed/card_attributes_magic_enriched.csv
+
+results:
+  reranking:
+    queries: 969
+    embedding_ndcg_at_10: 0.5089
+    strongest_heuristic_ndcg_at_10: 0.3268
+    delta: 0.1821
+    delta_ci_95: [0.165, 0.198]
+    note: "fixed-candidate-set comparison; the heuristic's larger vocabulary is not measured here"
+  retrieval:
+    queries: 1324
+    embedding_ndcg_at_10: 0.2265
+    b2_ndcg_at_10: 0.0835
+    delta: 0.1430
+    delta_ci_95: [0.1299, 0.1573]
+    recall_at_10: {embedding: 0.4043, b2: 0.1820}
+    coverage: "25131 intersected cards; 500 queries missing from a required embedding, 1223 with no judged candidate at >= 0.5"
+    note: "retrieval is much harder than reranking; the absolute embedding score is not a product quality claim"
+  verdict: "candidate_better in both directions"
+
+artifacts:
+  - data/results/heuristic_baselines/b1_vs_ml_rerank.json
+  - data/results/heuristic_baselines/b2_vs_ml_rerank.json
+  - data/results/heuristic_baselines/b2_retrieval_vs_ml.json
+  - data/results/heuristic_baselines/b2_retrieval_intersected.json
+
+conclusion: >
+  The hypothesis holds in both directions: the embedding beats the strongest
+  non-learned baseline by +0.182 nDCG@10 when reranking the same candidates and
+  by +0.143 when the heuristic retrieves its own intersected candidate set. The
+  retrieval numbers are low in absolute terms, and the intersection removes B2's
+  vocabulary advantage, so this is not evidence about B2 over all 36,453 cards.
+  Next: log B3 (role/co-occurrence) only if it can be built without annotations.

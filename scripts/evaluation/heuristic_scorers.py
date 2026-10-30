@@ -33,7 +33,7 @@ import re
 import sys
 import unicodedata
 from collections import Counter
-from collections.abc import Mapping, Sequence
+from collections.abc import Collection, Mapping, Sequence
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
@@ -348,10 +348,26 @@ def _bm25_rows(
     )
 
 
-def build_lexical(game: str, metadata: Path | None = None) -> LexicalIndex:
+def _restrict(
+    attributes: dict[str, CardAttributes],
+    order: tuple[str, ...],
+    allowed: Collection[str] | None,
+) -> tuple[dict[str, CardAttributes], tuple[str, ...]]:
+    """Intersect the table with another arm's vocabulary, preserving file order."""
+    if allowed is None:
+        return attributes, order
+    keep = set(allowed)
+    kept = tuple(name for name in order if name in keep)
+    return {name: attributes[name] for name in kept}, kept
+
+
+def build_lexical(
+    game: str, metadata: Path | None = None, allowed: Collection[str] | None = None
+) -> LexicalIndex:
     """B1 arm: one BM25 row per card in the enriched table."""
     path = metadata_path_for(game, metadata)
     attributes, order = load_attributes(str(path))
+    attributes, order = _restrict(attributes, order, allowed)
     texts = tuple(attributes[name].oracle_text for name in order)
     documents = [tokenize(text) for text in texts]
     vocabulary: dict[str, int] = {}
@@ -528,16 +544,19 @@ def _multi_hot(order: Sequence[str], attributes: Mapping[str, CardAttributes], f
     )
 
 
-def build_structured(game: str, metadata: Path | None = None) -> StructuredIndex:
+def build_structured(
+    game: str, metadata: Path | None = None, allowed: Collection[str] | None = None
+) -> StructuredIndex:
     """B2 arm: B1 plus type, mana value, colour and keyword matching."""
     path = metadata_path_for(game, metadata)
     attributes, order = load_attributes(str(path))
+    attributes, order = _restrict(attributes, order, allowed)
     return StructuredIndex(
         name=f"heuristic:b2:{game}",
         path=path,
         keys=order,
         positions={name: index for index, name in enumerate(order)},
-        lexical=build_lexical(game, path),
+        lexical=build_lexical(game, path, allowed),
         primary=np.array([attributes[name].primary_type for name in order], dtype=object),
         type_matrix=_multi_hot(order, attributes, "type_words"),
         mana_value=np.array([attributes[name].mana_value for name in order], dtype=np.float64),
@@ -549,13 +568,18 @@ def build_structured(game: str, metadata: Path | None = None) -> StructuredIndex
     )
 
 
-def build_heuristic(spec: str, game: str, metadata: Path | None = None) -> Any:
-    """Build the heuristic index named by ``spec``."""
+def build_heuristic(
+    spec: str,
+    game: str,
+    metadata: Path | None = None,
+    allowed: Collection[str] | None = None,
+) -> Any:
+    """Build the heuristic index named by ``spec``, optionally restricted to a vocabulary."""
     name = spec.strip().lower()
     if name.startswith(HEURISTIC_PREFIX):
         name = name[len(HEURISTIC_PREFIX) :]
     if name == "b1":
-        return build_lexical(game, metadata)
+        return build_lexical(game, metadata, allowed)
     if name == "b2":
-        return build_structured(game, metadata)
+        return build_structured(game, metadata, allowed)
     raise HeuristicError(f"unknown heuristic {spec!r}; expected one of {HEURISTIC_NAMES}")

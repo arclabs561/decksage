@@ -319,6 +319,7 @@ def build_arm(
     *,
     game: str | None = None,
     metadata: Path | None = None,
+    heuristic_vocabulary: str | None = None,
 ) -> Scorer:
     """One arm: an embedding source, or a non-learned heuristic source.
 
@@ -338,8 +339,19 @@ def build_arm(
             )
         if game is None:
             raise HarnessRefusal(f"arm {arm!r} needs a game to resolve heuristic metadata")
+        allowed = None
+        if heuristic_vocabulary:
+            allowed = tuple(
+                getattr(
+                    load_vectors(resolve_embedding_path(heuristic_vocabulary)), "index_to_key", ()
+                )
+            )
+            if not allowed:
+                raise HarnessRefusal(
+                    f"--heuristic-vocabulary {heuristic_vocabulary!r} exposes no keys"
+                )
         try:
-            source = build_heuristic(heuristic_specs[0], game, metadata)
+            source = build_heuristic(heuristic_specs[0], game, metadata, allowed)
         except HeuristicError as exc:
             raise HarnessRefusal(str(exc)) from exc
         return Scorer(arm=arm, sources=(source,), weights=(1.0,))
@@ -704,6 +716,15 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--heuristic-vocabulary",
+        default=None,
+        help=(
+            "embedding name or path whose keys define a heuristic arm's vocabulary; "
+            "intersects the heuristic's cards with the embedding's keys so the "
+            "heuristic can be measured as a retriever"
+        ),
+    )
+    parser.add_argument(
         "--allow-contradictions",
         action="store_true",
         help="record an explicit override and score labels the gate blocks",
@@ -757,9 +778,15 @@ def resolve_inputs(args: argparse.Namespace) -> dict[str, Any]:
         None,
         game=args.game,
         metadata=args.heuristic_metadata,
+        heuristic_vocabulary=args.heuristic_vocabulary,
     )
     candidate = build_arm(
-        "candidate", sources, weights, game=args.game, metadata=args.heuristic_metadata
+        "candidate",
+        sources,
+        weights,
+        game=args.game,
+        metadata=args.heuristic_metadata,
+        heuristic_vocabulary=args.heuristic_vocabulary,
     )
     judged, label_counters = judged_pairs(test_set, args.task)
     return {

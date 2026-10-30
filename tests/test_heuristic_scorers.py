@@ -205,3 +205,15 @@ def test_build_heuristic_dispatches_by_name(module, metadata):
 
     with pytest.raises(module.HeuristicError, match="unknown heuristic"):
         module.build_heuristic("b3", "magic", metadata)
+
+
+def test_allowed_vocabulary_restricts_b1(module, metadata):
+    index = module.build_heuristic("b1", "magic", metadata, allowed={"Bolt", "Counter"})
+    assert set(index.keys) == {"Bolt", "Counter"}
+    assert index.positions == {"Bolt": 0, "Counter": 1}
+
+
+def test_allowed_vocabulary_restricts_b2_and_its_lexical_half(module, metadata):
+    index = module.build_heuristic("b2", "magic", metadata, allowed={"Bolt", "Shock"})
+    assert set(index.keys) == {"Bolt", "Shock"}
+    assert set(index.lexical.keys) == {"Bolt", "Shock"}
