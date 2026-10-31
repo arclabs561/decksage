@@ -1,0 +1,61 @@
+id: "0071"
+date: "2026-10-30"
+title: "External label anchor: Scryfall Oracle Tag overlap (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  If the substitution labels are externally valid, functional_score should
+  correlate positively with an independent role/function proxy: the Jaccard
+  overlap of Scryfall Oracle Tags. Pre-registered reading: mean within-query
+  Spearman >= 0.30 is external support, <= 0.10 is internally coherent but
+  unvalidated, and the middle is partial support.
+
+method:
+  type: label_validity_anchor
+  script: data-local/label-anchor-20261030/anchor.py
+  args: "inline; joins oracle-cards.json names to oracle_id, then oracle-tags taggings"
+  test: "within-query Spearman between functional_score and tag Jaccard; IDF-weighted variant"
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    annotations: 41602
+    mapped_to_oracle_id: 41104
+  tags:
+    source: "Scryfall Oracle Tags bulk, 2026-10-30T21:00:36Z"
+    size: "5.8 MB gzip; 36,444 tagged oracle ids"
+  pairs_with_tags: 40339
+  queries_with_at_least_5_pairs: 2513
+
+results:
+  within_query_spearman:
+    tag_jaccard:
+      mean: 0.2004
+      median: 0.2096
+      positive_share: 0.7119
+    idf_weighted_tag_jaccard:
+      mean: 0.1991
+      median: 0.2121
+      positive_share: 0.7031
+    same_role_field:
+      mean: 0.3469
+      median: 0.4153
+      positive_share: 0.7785
+  verdict: "partial external support"
+  note: >
+    Oracle Tags are a card-level role/function proxy, not a pair-level
+    substitution label. The score tracks shared roles but the correlation is
+    well below the 0.30 support line; tag sparsity and coarse tags attenuate it.
+
+artifacts:
+  - data/results/label_anchor_scryfall_tags_20261030.json
+
+conclusion: >
+  The labels have partial external support: functional_score tracks independent
+  role tags at mean rho 0.200 (71% of queries positive), not the 0.30 that would
+  support pair-level validity and not the 0.10 that would mark the labels as
+  internally coherent only. This is evidence about role agreement, not about
+  whether one card can replace another; a 50-100 pair human or PPI anchor is
+  still the pair-level test. Next: add tag overlap as a candidate signal and run
+  that pair anchor before another model architecture.

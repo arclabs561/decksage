@@ -76,6 +76,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0068 | 2026-10-30 | Non-learned baselines for substitute scoring (magic) | magic | data/processed/card_attributes_magic_enriched.csv | -- | verdict candidate_better in both directions | [0068](0068_heuristic_baselines.yaml) |
 | 0069 | 2026-10-30 | Logical composition over co-occurrence and embedding graphs (heyting) | magic | functional_score; unjudged = 0; IDCG from judged scores | -- | verdict not_supported | [0069](0069_heyting_logical_composition.yaml) |
 | 0070 | 2026-10-30 | tranz DistMult on the co-occurrence graph (magic) | magic | -- | -- | final_loss 5.7179; ndcg_at_10 0.072; verdict not_supported | [0070](0070_tranz_kge_cooccurrence.yaml) |
+| 0071 | 2026-10-30 | External label anchor: Scryfall Oracle Tag overlap (magic) | magic | Scryfall Oracle Tags bulk, 2026-10-30T21:00:36Z | -- | verdict partial external support; note Oracle Tags are a card-level role/function proxy, not a pair-level substitution label. The score tracks shared roles but the correlation is well below the 0.30 support line; tag sparsity and coarse tags attenuate it. | [0071](0071_label_anchor_scryfall_tags.yaml) |
 
 ## Key Insights (cross-cutting)
 

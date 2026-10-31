@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-30",
+  "source": "Scryfall Oracle Tags (bulk 2026-10-30T21:00:36Z) joined to oracle-cards.json",
+  "test_set": "data/test_sets/annotated_magic_v2.json",
+  "annotations_total": 41602,
+  "annotations_mapped_to_oracle_id": 41104,
+  "tag_pairs": 40339,
+  "within_query_spearman": {
+    "tag_jaccard": {
+      "n": 2513,
+      "mean": 0.2004,
+      "median": 0.2096,
+      "positive_share": 0.7119
+    },
+    "idf_weighted_tag_jaccard": {
+      "n": 2513,
+      "mean": 0.1991,
+      "median": 0.2121,
+      "positive_share": 0.7031
+    },
+    "same_role_field": {
+      "n": 650,
+      "mean": 0.3469,
+      "median": 0.4153,
+      "positive_share": 0.7785
+    }
+  },
+  "thresholds": {
+    "external_support": "mean rho >= 0.30",
+    "unvalidated": "mean rho <= 0.10",
+    "between": "partial"
+  },
+  "verdict": "partial external support",
+  "caveat": "Oracle Tags are a card-level role/function proxy, not a pair-level substitution label. The anchor shows the scores track shared roles; it does not prove B can replace A."
+}
