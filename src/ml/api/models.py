@@ -25,7 +25,7 @@ except ImportError:
 
 SUPPORTED_GAMES: set[str] = {"magic", "pokemon", "yugioh"}
 GameName = Literal["magic", "pokemon", "yugioh"]
-SimilarityMode = Literal["embedding", "jaccard", "jaccard_faceted", "fusion", "meta"]
+SimilarityMode = Literal["embedding", "jaccard", "jaccard_faceted", "fusion", "meta", "text"]
 ActionType = Literal["add", "remove", "replace", "suggest"]
 CompletionMethod = Literal["greedy", "beam", "ot"]
 
@@ -63,7 +63,7 @@ class SimilarityRequest(BaseModel):
     )
     mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
+        description="Optional override: 'embedding', 'text', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     weights: dict[str, float] | None = Field(
         None,
@@ -120,7 +120,7 @@ class BatchSimilarityRequest(BaseModel):
     game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
     mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
+        description="Optional override: 'embedding', 'text', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     use_case: UseCaseEnum = Field(UseCaseEnum.substitute, description="Use case preset")
     weights: dict[str, float] | None = Field(None, description="Optional fusion weights")

@@ -1110,7 +1110,7 @@ def ready():
 
 def _resolve_method(request: SimilarityRequest) -> str:
     forced_mode = (request.mode or "").lower().strip()
-    if forced_mode in {"embedding", "jaccard", "jaccard_faceted", "fusion", "meta"}:
+    if forced_mode in {"embedding", "text", "jaccard", "jaccard_faceted", "fusion", "meta"}:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
         return "embedding"  # Cosine until fusion-specific annotations exist (exp 0060)
@@ -1679,6 +1679,10 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
             if hasattr(request.use_case, "value")
             else str(request.use_case),
         )
+    elif method == "text":
+        client = _get_search_client(game)
+        pairs = client.text_similar(query, k) if client is not None else []
+        results = [_enrich_similar_card(card, score, state, game=game) for card, score in pairs]
     elif method == "jaccard":
         results = _similar_jaccard(state, query, k, game=game)
     elif method == "jaccard_faceted":

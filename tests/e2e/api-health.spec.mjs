@@ -107,6 +107,19 @@ test.describe('API search endpoints', () => {
   });
 });
 
+test.describe('Text retrieval mode', () => {
+  test('mode=text returns a text-ranked pool', async ({ request }) => {
+    const resp = await request.post('/v1/similar', {
+      data: { game: 'magic', query: 'Lightning Bolt', top_k: 5, mode: 'text' },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(body.model_info.method_used).toBe('text');
+    expect(body.results.length).toBeGreaterThanOrEqual(3);
+    expect(body.results[0].card).toBeTruthy();
+  });
+});
+
 test.describe('Index coverage', () => {
   test('index status reports catalog and backend counts', async ({ request }) => {
     const resp = await request.get('/v1/index/status');

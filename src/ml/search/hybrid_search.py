@@ -885,6 +885,56 @@ class HybridSearch:
             limit=limit,
         )
 
+    def text_similar(self, query: str, limit: int = 10) -> list[tuple[str, float]]:
+        """Rank catalog cards by E5 document cosine to ``query``.
+
+        This is the candidate retriever the 0082 probe validated: for both
+        exact reprints and judged functional positives it finds far more than
+        the co-occurrence graph. It uses the persisted document vectors, so it
+        needs no encoder call for a card-name query.
+        """
+        import numpy as _np
+
+        if not self.text_embedder or not self.embeddings:
+            return []
+        if getattr(self, "_text_emb_cache", None) is None:
+            with _text_cache_lock:
+                if getattr(self, "_text_emb_cache", None) is None:
+                    self._text_emb_cache = (
+                        self._load_text_embedding_cache()
+                        or self._build_text_embedding_cache(self.text_embedder.embed_card)
+                    )
+        cache = getattr(self, "_text_emb_cache", None)
+        if cache is None:
+            return []
+        names, matrix, norms = cache
+        position = getattr(self, "_text_positions", None)
+        if position is None:
+            position = {name: index for index, name in enumerate(names)}
+            self._text_positions = position
+        index = position.get(query)
+        if index is None:
+            lower = getattr(self, "_text_positions_lower", None)
+            if lower is None:
+                lower = {name.lower(): i for name, i in position.items()}
+                self._text_positions_lower = lower
+            index = lower.get(query.lower())
+        if index is None:
+            return []
+        vector = matrix[index]
+        denom = _np.maximum(norms * float(norms[index]), 1e-9)
+        scores = (matrix @ vector) / denom
+        top = _np.argsort(scores)[::-1]
+        out: list[tuple[str, float]] = []
+        for i in top:
+            name = names[int(i)]
+            if name == query:
+                continue
+            out.append((name, float(scores[int(i)])))
+            if len(out) >= limit:
+                break
+        return out
+
     def _should_embed_semantics(self, query: str) -> bool:
         """Whether this query justifies the semantic arm.
 
