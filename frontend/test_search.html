@@ -1822,6 +1822,7 @@
 
         function displayResults(data, queryCard = null) {
             const resultsContainer = document.getElementById('resultsContainer');
+            let hiddenForDisplay = 0;
             if (queryCard && Array.isArray(data?.results)) {
                 const q = String(queryCard).trim().toLowerCase();
                 data = { ...data, results: data.results.filter(
@@ -1842,6 +1843,7 @@
                 }
                 data = { ...data, results: known };
                 currentResults = known;
+                hiddenForDisplay = dropped;
             }
             const modelInfo = document.getElementById('modelInfo');
             const resultsSection = document.getElementById('resultsSection');
@@ -1891,6 +1893,13 @@
                 : 1;
             // Display raw API scores (API handles normalization server-side)
             const normalizeScore = (s) => s;
+
+            if (hiddenForDisplay > 0) {
+                const note = document.createElement('p');
+                note.className = 'results-note';
+                note.textContent = `${hiddenForDisplay} more match${hiddenForDisplay === 1 ? '' : 'es'} hidden: no card data for them.`;
+                resultsContainer.appendChild(note);
+            }
 
             currentResults.forEach((result, index) => {
                 const item = document.createElement('div');

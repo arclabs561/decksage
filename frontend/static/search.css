@@ -766,6 +766,14 @@ body {
 .result-view-card:focus-visible { color: var(--ds-ink); border-color: currentColor; }
 
 .result-similarity { margin-top: 6px; }
+
+/* Rows are dropped when the card table has no metadata for a name; say so
+   instead of letting a 10-result request quietly render 8. */
+.results-note {
+  margin: 10px 0 2px;
+  font-size: 12px;
+  color: var(--ds-ink-soft);
+}
 .similarity-header { display: flex; align-items: baseline; gap: 8px; }
 .similarity-percent {
   font-family: var(--ds-display);
