@@ -1,0 +1,59 @@
+id: "0070"
+date: "2026-10-30"
+title: "tranz DistMult on the co-occurrence graph (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  A DistMult KGE trained with tranz on the co-occurrence graph produces
+  substitute retrieval competitive with the spectral embedding
+  (magic_v7_spectral_mu35, 0.3542 nDCG@10 on the 120-query set). If it does,
+  the KGE path is worth wiring into the representation surface; if it does not,
+  the dense co-occurrence graph needs a different objective before tranz is
+  useful.
+
+method:
+  type: kge_training
+  script: tranz (0.8.0) CLI
+  args: >
+    tranz train --triples triples_sub.tsv --model distmult --dim 100
+    --epochs 30 --batch-size 512 --lr 0.001 --label-smoothing 0.1
+    --output data-local/crates-experiment-20261030/tranz/output30
+  backend: burn-ndarray (CPU)
+  objective: 1-N (1vsAll) cross-entropy, AdamW
+
+data:
+  graph:
+    path: data/graphs/pairs_large.edg
+    construction: >
+      subgraph covering the 120-query heyting set and its neighbours, both
+      directions, relation "co"
+    triples: 367216
+    entities: 3021
+    relations: 1
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 120
+    labels: functional_score; unjudged = 0; IDCG from judged scores
+
+results:
+  final_loss: 5.7179
+  ndcg_at_10: 0.0720
+  baselines:
+    embedding_knn: 0.3542
+    raw_cooccurrence_1p: 0.0566
+  verdict: "not_supported"
+
+artifacts:
+  - data/results/crates/tranz_kge.json
+
+conclusion: >
+  The hypothesis is not supported: 0.0720 nDCG@10 versus 0.3542 for the
+  spectral embedding, barely above the 0.0566 raw co-occurrence baseline.
+  Thirty epochs moved the loss only from 5.87 to 5.72 because 1vsAll CE treats
+  every non-target entity as negative, and in a dense co-occurrence graph most
+  non-targets are true neighbours. The crate is correct for sparse KGs; this
+  graph needs a contrastive/positive-sampling objective, or the existing
+  embedding should stay. The w2v export bug found during this run is fixed in
+  tranz commit 24b682e (binary+vocab export), but the objective mismatch
+  remains.

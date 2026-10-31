@@ -1,0 +1,20 @@
+{
+  "crate": "tranz 0.8.0",
+  "date": "2026-10-30",
+  "model": "DistMult",
+  "dim": 100,
+  "epochs": 30,
+  "batch_size": 512,
+  "lr": 0.001,
+  "label_smoothing": 0.1,
+  "backend": "burn-ndarray (CPU)",
+  "train_triples": 367216,
+  "entities": 3021,
+  "relations": 1,
+  "final_loss": 5.7179,
+  "queries": 120,
+  "ndcg_at_10": 0.0720,
+  "baselines": {"embedding_knn": 0.3542, "raw_cooccurrence_1p": 0.0566},
+  "verdict": "not_supported",
+  "note": "30 epochs barely moved the loss (5.87 at 5 epochs to 5.72). 1vsAll CE treats every non-target entity as negative, and in a dense co-occurrence graph most of those are true neighbours. The model is not fit for this graph without a contrastive/positive-sampling objective. The w2v export bug that broke the first attempt is fixed in tranz commit 24b682e (binary+vocab export)."
+}
