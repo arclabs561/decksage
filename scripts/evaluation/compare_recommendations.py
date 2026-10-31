@@ -44,6 +44,15 @@ per-query nDCG@10 delta excludes zero, ``no_difference`` when it does not, and
 usable. Nothing here decides whether either representation is *correct*: a
 retrieval that only serves its own training queries wins this harness too.
 
+Coverage gate
+-------------
+nDCG counts an unjudged candidate as irrelevant. When the median judged pool is
+below ``max(k, depth/2)`` the comparison is biased against any arm that moves
+away from the annotated neighbourhood, so the harness refuses unless
+``--judged-only`` or ``--allow-sparse-labels`` is explicit. ``--judged-only``
+ranks only labelled candidates; ``--exclude-pairs`` removes pairs whose label is
+definitionally impossible from both relevance and the candidate pool.
+
 Usage:
     uv run scripts/evaluation/compare_recommendations.py --game magic \
         --candidate-sources magic_v7_fused,text_e5 --dry-run

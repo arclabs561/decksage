@@ -125,6 +125,7 @@ def run_harness(
     weights: str | None = None,
     label: str,
     extra: list[str] | None = None,
+    sparse_ok: bool = True,
 ) -> tuple[int, Path, str]:
     world = write_world(tmp_path, n_queries)
     monkeypatch.setattr(harness, "screen", lambda *args, **kwargs: dict(PASSING_GATE))
@@ -145,6 +146,10 @@ def run_harness(
     ]
     if weights is not None:
         argv += ["--candidate-weights", weights]
+    if sparse_ok:
+        # The fixture judges 4 of 20 candidates; the coverage gate is exercised
+        # by its own test, not by every verdict test.
+        argv += ["--allow-sparse-labels"]
     code = harness.main(argv + list(extra or []))
     return code, output, label
 
@@ -221,6 +226,22 @@ def test_identical_arms_report_no_difference(harness, monkeypatch, tmp_path):
     interval = result["bootstrap"]["ndcg_at_10"]
     assert (interval["ci_low"], interval["ci_high"]) == (0.0, 0.0)
     assert interval["excludes_zero"] is False
+
+
+def test_sparse_labels_are_refused_without_an_override(harness, monkeypatch, tmp_path, capsys):
+    code, output, _ = run_harness(
+        harness,
+        monkeypatch,
+        tmp_path,
+        n_queries=32,
+        sources="{base}",
+        label="sparse",
+        sparse_ok=False,
+    )
+
+    assert code != 0
+    assert not output.exists()
+    assert "median judged pool" in capsys.readouterr().err
 
 
 def test_below_query_floor_reports_insufficient_evidence(harness, monkeypatch, tmp_path, capsys):
