@@ -9,6 +9,7 @@
     "test:e2e:deck": "npx playwright test tests/e2e/deck.spec.mjs",
     "test:e2e:visual": "npx playwright test tests/e2e/visual.spec.mjs",
     "test:e2e:all": "npx playwright test",
+    "test:e2e:compose": "scripts/testing/e2e_compose.sh",
     "vlm-critique": "node scripts/vlm_critique.mjs",
     "vlm-critique:clear": "node scripts/vlm_critique.mjs --clear"
   },

@@ -1416,5 +1416,5 @@ body.ds-searched .ds-hero { display: none; }
 body.ds-searched .ds-masthead { padding-top: 12px; }
 body.ds-searched .nav-tabs { margin-top: 14px; }
 body.ds-searched .search-section { margin-bottom: 10px; }
-body.ds-searched .ds-index,
-body.ds-searched .advanced-toggle { display: none; }
+body.ds-searched .ds-index { display: none; }
+/* Refine stays reachable after a search: filters are most useful then. */

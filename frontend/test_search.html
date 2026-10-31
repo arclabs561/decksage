@@ -70,7 +70,7 @@
                     </div>
                     <form class="search-form" id="unifiedSearchForm">
                         <div class="search-input-wrapper">
-                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required autofocus aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
+                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
                             <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
                         </div>
                         <button type="submit" class="search-button" aria-label="Search">Search</button>
@@ -393,8 +393,8 @@
     </div>
 
     <!-- Card detail drawer -->
-    <div class="card-drawer-overlay" id="cardDrawerOverlay" onclick="closeCardDrawer()"></div>
-    <div class="card-drawer" id="cardDrawer">
+    <div class="card-drawer-overlay" id="cardDrawerOverlay" onclick="closeCardDrawer()" aria-hidden="true"></div>
+    <div class="card-drawer" id="cardDrawer" role="dialog" aria-modal="true" aria-label="Card details">
         <button class="drawer-close" onclick="closeCardDrawer()" aria-label="Close card details">&times;</button>
         <div id="drawerContent"></div>
     </div>
@@ -722,6 +722,7 @@
 
         function clearSkeleton(container) {
             if (!container) return;
+            container.removeAttribute('aria-busy');
             container.innerHTML = '';
         }
 
@@ -755,7 +756,10 @@
             const container = document.getElementById(containerId);
             if (!container) return;
 
-            container.innerHTML = Array(count).fill(0).map(() => `
+            // A 100-result request should not paint 100 skeletons below the fold.
+            const shown = Math.min(count, 8);
+            container.setAttribute('aria-busy', 'true');
+            container.innerHTML = Array(shown).fill(0).map(() => `
                 <div class="skeleton-result" style="display:flex;gap:16px;align-items:flex-start">
                     <div style="flex-shrink:0;width:140px;height:196px;border-radius:8px;overflow:hidden" class="skeleton"></div>
                     <div style="flex:1">
@@ -2721,6 +2725,13 @@
         const unifiedInput = document.getElementById('unifiedInput');
         if (unifiedInput) {
             setupAutocomplete(unifiedInput);
+            // Focus the box without moving the first screen: the old
+            // `autofocus` attribute scrolled the masthead and hero out of view
+            // on load (459px at 390w, 36px at 1440w). Skip it on touch widths
+            // so no on-screen keyboard opens over the page.
+            if (window.matchMedia('(min-width: 761px)').matches) {
+                unifiedInput.focus({ preventScroll: true });
+            }
         }
 
         // Setup for legacy cardInput (backward compatibility)
@@ -3026,7 +3037,13 @@
                 yugioh: ['cmc','power','toughness','hp','retreat_cost','mana_cost','color_identity_str','weakness_type','resistance_type','regulation_mark'],
                 magic: ['hp','retreat_cost','atk','def_stat','level_rank_link','attribute','race','weakness_type','resistance_type','regulation_mark']
             };
-            const game = document.querySelector('input[name="game"]:checked')?.value || 'magic';
+            // The selected game lives in the hidden select and the body class;
+            // there is no radio input with name="game".
+            const game = (
+                document.getElementById('searchGame')?.value ||
+                (document.body.className.match(/game-(\w+)/) || [])[1] ||
+                'magic'
+            ).toLowerCase();
             const drawerHide = new Set(['image_url', 'oracle_text_full', ...(drawerHideByGame[game] || [])]);
             for (const [k, v] of Object.entries(meta)) {
                 if (drawerHide.has(k)) continue;
@@ -3055,12 +3072,43 @@
 
             document.getElementById('cardDrawerOverlay').classList.add('open');
             document.getElementById('cardDrawer').classList.add('open');
+            drawerReturnFocus = document.activeElement;
+            document.querySelector('#cardDrawer .drawer-close')?.focus();
         }
 
         function closeCardDrawer() {
+            const drawer = document.getElementById('cardDrawer');
+            const wasOpen = drawer.classList.contains('open');
             document.getElementById('cardDrawerOverlay').classList.remove('open');
-            document.getElementById('cardDrawer').classList.remove('open');
+            drawer.classList.remove('open');
+            if (wasOpen && drawerReturnFocus && typeof drawerReturnFocus.focus === 'function') {
+                drawerReturnFocus.focus();
+            }
+            drawerReturnFocus = null;
         }
+
+        let drawerReturnFocus = null;
+
+        // Keep Tab inside the open dialog; the overlay covers the page but
+        // focus would still walk the results behind it.
+        document.addEventListener('keydown', (event) => {
+            if (event.key !== 'Tab') return;
+            const drawer = document.getElementById('cardDrawer');
+            if (!drawer.classList.contains('open')) return;
+            const focusable = drawer.querySelectorAll(
+                'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+            );
+            if (!focusable.length) return;
+            const first = focusable[0];
+            const last = focusable[focusable.length - 1];
+            if (event.shiftKey && document.activeElement === first) {
+                event.preventDefault();
+                last.focus();
+            } else if (!event.shiftKey && document.activeElement === last) {
+                event.preventDefault();
+                first.focus();
+            }
+        });
 
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {

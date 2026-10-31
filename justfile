@@ -166,6 +166,12 @@ test-e2e:
     #!/usr/bin/env bash
     uv run python scripts/e2e_testing/run_all_tests.py
 
+# Playwright against the composed stack, rebuilt from the working tree.
+# Catches stale container assets and reports real API/UI behavior.
+test-e2e-compose *SPECS:
+    #!/usr/bin/env bash
+    scripts/testing/e2e_compose.sh {{SPECS}}
+
 test-e2e-browser:
     #!/usr/bin/env bash
     uv run python scripts/e2e_testing/run_all_tests.py --suites test_browser_comprehensive test_edge_cases

@@ -29,7 +29,7 @@ body.retro {
   font-size: 14px;
 }
 
-body.retro .container { max-width: 1120px; }
+body.retro .container { max-width: 1120px; margin-inline: auto; }
 
 /* ---------- masthead ---------- */
 
@@ -122,7 +122,7 @@ body.retro .retro-ticker {
   font-size: 13px;
   letter-spacing: 0.04em;
   padding: 5px 0;
-  margin: 12px 0 18px;
+  margin: 10px 0 14px;
   white-space: nowrap;
 }
 
@@ -159,7 +159,9 @@ body.retro .ds-hero-art {
   top: auto;
   right: auto;
   width: auto;
-  height: 500px;
+  /* Scale with viewport height so the search controls stay on the first
+     screen on 800px-tall laptops, where a fixed 430px pushed them below. */
+  height: clamp(280px, 34vh, 360px);
 }
 
 body.retro .ds-title {
@@ -483,6 +485,9 @@ body.retro .retro-counter span {
   body.retro .retro-speech { display: none; }
   body.retro .ds-title { font-size: clamp(30px, 8.2vw, 44px); }
   body.retro .ds-hero { padding: 12px; }
+  /* search.css sizes the fan at 196px for this width; the desktop 430px would
+     leave a tall empty panel above the search box. */
+  body.retro .ds-hero-art { height: 196px; }
   body.retro .nav-tabs { width: 100%; }
   body.retro .game-selector { width: 100%; }
   body.retro .game-btn { flex: 1; padding: 8px 4px; }
