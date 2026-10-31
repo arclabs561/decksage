@@ -1,0 +1,200 @@
+{
+  "version": "refined-v1",
+  "games": {
+    "magic": {
+      "game": "magic",
+      "pairs": 4299,
+      "sources": {
+        "v4": {
+          "path": "data/annotations/magic_2000_v4.json",
+          "pairs": 2000,
+          "sha256": "507e304824078a05ee89f62aa0555dccf9768daccf1fe61f6fd920758596cd1b"
+        },
+        "diverse": {
+          "path": "data/annotations/diverse_checkpoint_magic.jsonl",
+          "pairs": 2299,
+          "rows": 48499,
+          "sha256": "eff8757cc8a3d1ff426a98b0390c7ce16733df3eb53ed7f83777906e1b67556a"
+        }
+      },
+      "bands": {
+        "highly_relevant": 131,
+        "irrelevant": 2929,
+        "marginally_relevant": 650,
+        "relevant": 202,
+        "somewhat_relevant": 387
+      },
+      "confidence": {
+        "high": 3851,
+        "low": 53,
+        "medium": 395
+      },
+      "substitutes": 245,
+      "flags": {
+        "bucket_flip": 104,
+        "high_score_not_substitute": 95,
+        "high_spread": 53
+      },
+      "median_spread": 0.05,
+      "new_pairs": 2299,
+      "shared_pairs": 0,
+      "judge_reliability": {
+        "claude_haiku_4_5": {
+          "n": 9073,
+          "mean_abs_deviation": 0.0605
+        },
+        "deepseek_chat_v3_0324": {
+          "n": 7510,
+          "mean_abs_deviation": 0.0809
+        },
+        "gemini_2_5_flash_lite": {
+          "n": 9090,
+          "mean_abs_deviation": 0.0643
+        },
+        "glm_5": {
+          "n": 6833,
+          "mean_abs_deviation": 0.1706
+        },
+        "gpt_4_1_nano": {
+          "n": 9106,
+          "mean_abs_deviation": 0.083
+        },
+        "qwen3_5_397b_a17b": {
+          "n": 6887,
+          "mean_abs_deviation": 0.0411
+        }
+      }
+    },
+    "pokemon": {
+      "game": "pokemon",
+      "pairs": 3683,
+      "sources": {
+        "v4": {
+          "path": "data/annotations/pokemon_2000_v4.json",
+          "pairs": 2000,
+          "sha256": "ea39a0571b7c190e62741a6e80f2edcbf394160a0b5c69ffa18dfceb5cbb94eb"
+        },
+        "diverse": {
+          "path": "data/annotations/diverse_checkpoint_pokemon.jsonl",
+          "pairs": 1683,
+          "rows": 39627,
+          "sha256": "23560ca45272009729f802900b0cce4bc51863289589d60eb01a1b7959c7097d"
+        }
+      },
+      "bands": {
+        "highly_relevant": 110,
+        "irrelevant": 1508,
+        "marginally_relevant": 843,
+        "relevant": 449,
+        "somewhat_relevant": 773
+      },
+      "confidence": {
+        "high": 2946,
+        "low": 54,
+        "medium": 683
+      },
+      "substitutes": 236,
+      "flags": {
+        "bucket_flip": 260,
+        "few_judges": 2,
+        "high_score_not_substitute": 335,
+        "high_spread": 52
+      },
+      "median_spread": 0.082,
+      "new_pairs": 1683,
+      "shared_pairs": 0,
+      "judge_reliability": {
+        "claude_haiku_4_5": {
+          "n": 6702,
+          "mean_abs_deviation": 0.0627
+        },
+        "deepseek_chat_v3_0324": {
+          "n": 6670,
+          "mean_abs_deviation": 0.0861
+        },
+        "gemini_2_5_flash_lite": {
+          "n": 6647,
+          "mean_abs_deviation": 0.0829
+        },
+        "glm_5": {
+          "n": 6243,
+          "mean_abs_deviation": 0.1348
+        },
+        "gpt_4_1_nano": {
+          "n": 6672,
+          "mean_abs_deviation": 0.0904
+        },
+        "qwen3_5_397b_a17b": {
+          "n": 6693,
+          "mean_abs_deviation": 0.0491
+        }
+      }
+    },
+    "yugioh": {
+      "game": "yugioh",
+      "pairs": 3912,
+      "sources": {
+        "v4": {
+          "path": "data/annotations/yugioh_2000_v4.json",
+          "pairs": 2000,
+          "sha256": "88f880a1c29d9b860cda39e79a19e102631f16376645d24b334a4295c359a845"
+        },
+        "diverse": {
+          "path": "data/annotations/diverse_checkpoint_yugioh.jsonl",
+          "pairs": 1913,
+          "rows": 45524,
+          "sha256": "273d3939d43ed1b998182fa821d044ed3c28c37b3f05a11dd69a7c6715a2c18b"
+        }
+      },
+      "bands": {
+        "highly_relevant": 209,
+        "irrelevant": 1595,
+        "marginally_relevant": 730,
+        "relevant": 499,
+        "somewhat_relevant": 879
+      },
+      "confidence": {
+        "high": 3306,
+        "low": 46,
+        "medium": 560
+      },
+      "substitutes": 184,
+      "flags": {
+        "bucket_flip": 265,
+        "few_judges": 3,
+        "high_score_not_substitute": 531,
+        "high_spread": 43,
+        "substitute_low_score": 1
+      },
+      "median_spread": 0.0796,
+      "new_pairs": 1912,
+      "shared_pairs": 1,
+      "judge_reliability": {
+        "claude_haiku_4_5": {
+          "n": 7609,
+          "mean_abs_deviation": 0.0696
+        },
+        "deepseek_chat_v3_0324": {
+          "n": 7650,
+          "mean_abs_deviation": 0.0952
+        },
+        "gemini_2_5_flash_lite": {
+          "n": 7437,
+          "mean_abs_deviation": 0.0717
+        },
+        "glm_5": {
+          "n": 7560,
+          "mean_abs_deviation": 0.136
+        },
+        "gpt_4_1_nano": {
+          "n": 7647,
+          "mean_abs_deviation": 0.0763
+        },
+        "qwen3_5_397b_a17b": {
+          "n": 7621,
+          "mean_abs_deviation": 0.0467
+        }
+      }
+    }
+  }
+}
