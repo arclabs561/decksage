@@ -746,6 +746,25 @@ body {
 .result-item { position: relative; }
 .result-header { position: relative; }
 
+/* Opening the card was only discoverable by double-clicking the art or
+   expanding the row; touch users had no affordance at all. */
+.result-view-card {
+  position: absolute;
+  top: 10px;
+  right: 42px;
+  padding: 4px 9px;
+  border: 1px solid var(--ds-line);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ds-ink-soft);
+  font: inherit;
+  font-size: 12px;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.result-view-card:hover,
+.result-view-card:focus-visible { color: var(--ds-ink); border-color: currentColor; }
+
 .result-similarity { margin-top: 6px; }
 .similarity-header { display: flex; align-items: baseline; gap: 8px; }
 .similarity-percent {
@@ -1378,6 +1397,8 @@ body {
   .nav-tab { min-height: 44px; padding: 0 13px; display: inline-flex; align-items: center; font-size: 13px; }
   .game-selector { display: flex; width: 100%; border-radius: 10px; }
   .game-btn { flex: 1; min-height: 44px; padding: 0 6px; font-size: 13px; }
+  /* Touch target: the pill was ~28px tall on phones. */
+  .result-view-card { top: 6px; right: 38px; min-height: 44px; padding: 10px 12px; font-size: 12px; }
   .search-form { gap: 6px; padding: 5px; }
   #unifiedInput, #hybridInput, #contextualCardInput, #compareInput { height: 50px; font-size: 16px; }
   .search-button { min-height: 50px; padding: 0 18px; }

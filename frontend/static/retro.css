@@ -485,6 +485,10 @@ body.retro .retro-counter span {
   body.retro .retro-speech { display: none; }
   body.retro .ds-title { font-size: clamp(30px, 8.2vw, 44px); }
   body.retro .ds-hero { padding: 12px; }
+  /* One column on phones: the two-column grid squeezed the headline to 173px
+     and shrank the fan to 121px beside it. */
+  body.retro .ds-hero { grid-template-columns: minmax(0, 1fr); }
+  body.retro .ds-hero-art { width: 100%; }
   /* search.css sizes the fan at 196px for this width; the desktop 430px would
      leave a tall empty panel above the search box. */
   body.retro .ds-hero-art { height: 196px; }
@@ -493,6 +497,8 @@ body.retro .retro-counter span {
   body.retro .game-btn { flex: 1; padding: 8px 4px; }
   body.retro .other-game-hint { font-size: 13px; }
   body.retro .retro-ticker { font-size: 11px; }
+  /* 74x32 was under the 44px touch minimum. */
+  body.retro .theme-toggle { min-height: 44px; padding: 10px 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

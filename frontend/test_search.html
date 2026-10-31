@@ -70,7 +70,7 @@
                     </div>
                     <form class="search-form" id="unifiedSearchForm">
                         <div class="search-input-wrapper">
-                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required aria-label="Unified search" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
+                            <input type="text" id="unifiedInput" placeholder="Card name or description..." required aria-label="Unified search" role="combobox" aria-haspopup="listbox" aria-autocomplete="list" aria-expanded="false" aria-controls="autocompleteDropdown" autocomplete="off" spellcheck="false">
                             <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
                         </div>
                         <button type="submit" class="search-button" aria-label="Search">Search</button>
@@ -836,6 +836,35 @@
             if (button) button.setAttribute('aria-expanded', String(open));
         }
 
+        // Visible progress for the primary action: the skeleton alone renders
+        // below the fold, so a slow query looked like nothing had happened.
+        function setSearching(busy) {
+            const button = document.querySelector('#unifiedSearchForm button[type="submit"]');
+            const statusEl = document.getElementById('statusMessage');
+            if (button) {
+                if (busy) {
+                    if (!button.dataset.label) button.dataset.label = button.textContent.trim();
+                    button.textContent = 'Searching…';
+                    button.disabled = true;
+                    button.setAttribute('aria-busy', 'true');
+                } else {
+                    if (button.dataset.label) button.textContent = button.dataset.label;
+                    button.disabled = false;
+                    button.removeAttribute('aria-busy');
+                }
+            }
+            if (statusEl) {
+                if (busy) {
+                    statusEl.dataset.searching = '1';
+                    statusEl.textContent = 'Searching…';
+                    statusEl.classList.remove('hidden');
+                } else if (statusEl.dataset.searching) {
+                    delete statusEl.dataset.searching;
+                    if (statusEl.textContent.trim() === 'Searching…') statusEl.classList.add('hidden');
+                }
+            }
+        }
+
         // Unified search: intelligently routes to similarity or hybrid search
         async function unifiedSearch(event) {
             if (event && event.preventDefault) event.preventDefault();
@@ -848,6 +877,7 @@
                 showStatus('Please enter a search query', 'error');
                 return;
             }
+            setSearching(true);
 
             // Check if query is a card name by checking autocomplete results
             // If autocomplete shows exact match, use similarity search
@@ -906,6 +936,8 @@
                     indicator.textContent = 'Using hybrid search (fallback)';
                     await hybridSearch(query);
                 }
+            } finally {
+                setSearching(false);
             }
         }
 
@@ -1285,6 +1317,9 @@
         function displayHybridResults(data, containerId = 'hybridResultsContainer') {
             const container = document.getElementById(containerId);
             if (!container) return;
+            // Drop the skeleton state (and its aria-busy) before painting rows.
+            container.removeAttribute('aria-busy');
+            container.innerHTML = '';
 
             // Same rule as the similarity list: a name the card table does not
             // know is not a result. Semantic neighbours also arrive for queries
@@ -1811,7 +1846,9 @@
             const modelInfo = document.getElementById('modelInfo');
             const resultsSection = document.getElementById('resultsSection');
 
-            resultsContainer.innerHTML = '';
+            // clearSkeleton also drops aria-busy; setting innerHTML directly
+            // left the results container permanently busy for screen readers.
+            clearSkeleton(resultsContainer);
 
             // Query card banner
             const qm = data?.query_metadata;
@@ -2112,6 +2149,7 @@
                             <div class="result-content">
                                 <div style="display:flex;align-items:center;justify-content:space-between;">
                                     <div class="result-name">${rarityDotHtml}${cardNameEscaped}</div>
+                                    <button type="button" class="result-view-card" onclick="event.stopPropagation();openCardDrawer(${index})" aria-label="View card details for ${cardNameEscaped}">View card</button>
                                     <svg class="expand-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
                                 </div>
                                 <div class="result-similarity">
@@ -2637,8 +2675,8 @@
             const cardInput = document.getElementById('cardInput') || document.getElementById('unifiedInput');
             if (dropdown) {
                 dropdown.classList.remove('visible');
-                dropdown.removeAttribute('role');
-                dropdown.removeAttribute('aria-label');
+                // Keep role="listbox" on the (now display:none) popup: stripping
+                // it left a combobox whose popup had no listbox semantics.
                 autocompleteItems = [];
                 selectedAutocompleteIndex = -1;
             }
@@ -2670,6 +2708,9 @@
 
             inputElement.addEventListener('input', (e) => {
                 autocompleteSuppressed = false;
+                // Mid-composition (IME: Japanese, Chinese, Korean) the value is
+                // a partial candidate; querying it produces junk suggestions.
+                if (e.isComposing) return;
                 const query = e.target.value.trim();
 
                 if (autocompleteTimeout) {
