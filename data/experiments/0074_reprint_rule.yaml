@@ -74,11 +74,9 @@ amendment:
   revised_verdict: "measurement_artifact"
   original_verdict: "candidate_worse"
   retest: >
-    0076 judged-only reprint arm: -0.0140 nDCG (CI [-0.0266, -0.0000]) but
-    +0.0503 recall on 906 queries. The -0.37 nDCG was coverage. Reprints raise
-    recall without deserving first place, and 14 judged reprints with identical
-    oracle text are labelled 0.0, so the residual negative is not trustworthy
-    until those labels are fixed.
+    0076 judged-only: -0.0140 nDCG, +0.0503 recall. 0079 with the 31 blocked
+    pairs restored: -0.0065 nDCG (CI [-0.0205, +0.0075]), +0.0553 recall. The
+    -0.37 was coverage plus labels; the arm is a recall tool, not a re-ranker.
 
 artifacts:
   - data/results/functional_reprint_probe_20261030.json

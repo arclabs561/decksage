@@ -84,7 +84,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0076 | 2026-10-31 | Judged-only re-test of the tag and reprint arms (magic) | magic | median 11 per query in the full pool; judged-only pool reported per query | -- | -- | [0076](0076_judged_only_retest.yaml) |
 | 0077 | 2026-10-31 | Reprint boost on judged candidates only (magic) | magic | data/raw/scryfall/oracle-cards.json | -- | queries 2554; judged_pool_mean 11.52; reprint_covered 22; baseline_ndcg_at_10 0.5034; boosted_ndcg_at_10 0.5035; delta 0.0; covered_baseline_ndcg_at_10 0.6198; covered_boosted_ndcg_at_10 0.6228; covered_delta 0.003; baseline_recall_at_10 0.3362; boosted_recall_at_10 0.3362; recall_delta 0.0; verdict neutral | [0077](0077_reprint_boost_judged_only.yaml) |
 | 0078 | 2026-10-31 | Reprint verdict after removing definitional label conflicts (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | queries 906; excluded_pairs 14; baseline_ndcg_at_10 0.5355; candidate_ndcg_at_10 0.5216; delta -0.014; recall_delta 0.0503; verdict no_difference | [0078](0078_reprint_conflict_exclusion.yaml) |
-| 0079 | 2026-10-31 | Reprint arms with the 31 missing/mislabelled pairs restored (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | pre-registered; run in the results commit **[incomplete]** | [0079](0079_reprint_restored_labels.yaml) |
+| 0079 | 2026-10-31 | Reprint arms with the 31 missing/mislabelled pairs restored (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | -- | [0079](0079_reprint_restored_labels.yaml) |
 
 ## Key Insights (cross-cutting)
 

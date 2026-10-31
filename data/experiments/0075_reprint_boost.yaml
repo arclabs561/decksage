@@ -78,10 +78,11 @@ amendment:
   revised_verdict: "measurement_artifact"
   original_verdict: "candidate_worse"
   retest: >
-    0077 judged-only: delta 0.0000 (CI [-0.0003, 0.0003]) on 2,554 queries and
-    +0.0030 on the 22 covered queries, recall unchanged. The covered -0.0466
-    was entirely the unjudged penalty. The rule is neutral and too rare to
-    matter; annotate the reprint queue before judging it again.
+    0077 judged-only: 0.0000 (CI [-0.0003, 0.0003]); the covered -0.0466 was the
+    unjudged penalty. 0079 with the 31 blocked pairs restored: +0.0033 (CI
+    [+0.0018, +0.0049]) and +0.2421 on the 35 covered queries. The rule is
+    positive where it fires but fires on only 1.4% of queries; the next problem
+    is candidate generation, not the promotion rule.
 
 artifacts:
   - scripts/evaluation/reprint_boost.py

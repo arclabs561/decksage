@@ -1,0 +1,254 @@
+{
+ "purpose": "Correct the 31 reprint pairs the test set missed or mislabelled; 3-judge unanimous 1.0.",
+ "source": "OpenRouter claude-sonnet-4-6, gpt-5.2, gemini-2.5-flash; prompt multi_model_annotate.ANNOTATION_PROMPT",
+ "pairs": [
+  {
+   "query": "Palace Familiar",
+   "candidate": "Kingfisher",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Palace Familiar",
+   "candidate": "Runewing",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Tranquil Cove",
+   "candidate": "Sejiri Refuge",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Stone Rain",
+   "candidate": "Craterize",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Vodalian Merchant",
+   "candidate": "Merfolk Traders",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Waterveil Cavern",
+   "candidate": "Rootwater Depths",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Unsummon",
+   "candidate": "Drown in Shapelessness",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Separatist Voidmage",
+   "candidate": "Voidwielder",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Touch of Brilliance",
+   "candidate": "Counsel of the Soratami",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "A-Tanazir Quandrix",
+   "candidate": "Tanazir Quandrix",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Cerodon Yearling",
+   "candidate": "Bull Cerodon",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "March of the Returned",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "Dutiful Return",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "Morbid Plunder",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Red Cliffs Armada",
+   "candidate": "Wu Warship",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Gustcloak Harrier",
+   "candidate": "Gustcloak Skirmisher",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Sage Owl",
+   "candidate": "Spire Owl",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Wall of Pine Needles",
+   "candidate": "Wall of Brambles",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Psionic Gift",
+   "candidate": "Power of Fire",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Serendib Sorcerer",
+   "candidate": "Sorceress Queen",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Expedite",
+   "candidate": "Accelerate",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Coast Watcher",
+   "candidate": "Treetop Sentinel",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Boiling Seas",
+   "candidate": "Tsunami",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Tel-Jilad Outrider",
+   "candidate": "Tel-Jilad Chosen",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Retraction Helix",
+   "candidate": "Banishing Knack",
+   "functional_score": 1.0,
+   "old_score": 0.0,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Horizon Scholar",
+   "candidate": "Cloudreader Sphinx",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Keening Apparition",
+   "candidate": "Kami of Ancient Law",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Wild Guess",
+   "candidate": "Tormenting Voice",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Dutiful Return",
+   "candidate": "Soul Salvage",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Banishing Light",
+   "candidate": "Hieromancer's Cage",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  },
+  {
+   "query": "Molting Skin",
+   "candidate": "Broken Fall",
+   "functional_score": 1.0,
+   "old_score": null,
+   "n_judges": 3,
+   "spread": 0.0
+  }
+ ]
+}
