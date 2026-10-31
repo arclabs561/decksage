@@ -1,0 +1,69 @@
+id: "0086"
+date: "2026-10-31"
+title: "Shared trunk with three heads vs three separate models (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  The unified-model question is whether one shared representation can serve
+  functional, synergy and meta without losing per-facet quality. At the feature
+  level, a shared MLP trunk with three output heads should match three separate
+  MLPs; if it does, unification is viable and the next step is a shared text
+  encoder. If a facet degrades, negative transfer is real and the facets need
+  separate capacity or task conditioning.
+
+method:
+  type: architecture_comparison
+  script: scripts/evaluation/multitask_probe.py
+  features: [e5_cosine, graph_cosine, tag_jaccard, same_type, color_jaccard, mana_delta, text_jaccard]
+  targets: [functional_score, synergy_score, meta_relevance]
+  models:
+    shared: "MLPRegressor(hidden=(64,32)) with three outputs"
+    separate: "three MLPRegressor(hidden=(64,32)), one per target"
+  validation: "GroupKFold(5) by query; identical rows for both"
+  metrics: "per-target MAE and Spearman on out-of-fold predictions"
+  commit: "244f511"
+  threshold: >
+    Shared is viable if mean MAE is within +0.01 of separate and no target
+    degrades by more than 0.02. A shared win on any target strengthens the
+    case; a loss on substitution is the negative-transfer warning that matters
+    most for the product.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+  tags: data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+
+results:
+  rows: 41056
+  queries: 3046
+  shared:
+    functional: {mae: 0.1426, spearman: 0.2979}
+    synergy: {mae: 0.1300, spearman: 0.2567}
+    meta: {mae: 0.1296, spearman: 0.2732}
+  separate:
+    functional: {mae: 0.1425, spearman: 0.2964}
+    synergy: {mae: 0.1303, spearman: 0.2578}
+    meta: {mae: 0.1293, spearman: 0.2741}
+  mean_mae_shared: 0.1341
+  mean_mae_separate: 0.1340
+  mean_delta: 0.0001
+  verdict: "shared_matches_separate"
+
+conclusion: >
+  The unified trunk does not lose anything on the same features: shared MAE
+  0.1341 vs separate 0.1340, every target within 0.001, and shared is
+  marginally better on functional Spearman (0.2979 vs 0.2964). The
+  pre-registered threshold is met, so there is no evidence of negative
+  transfer at this feature level.
+
+  This supports the shared-trunk-plus-heads design, but it is not proof that a
+  single representation suffices: both models saw the same seven features, so
+  the comparison isolates the sharing architecture, not representation
+  learning. The next test is a shared text encoder with three heads and
+  held-out per-facet evaluation; the labels remain the binding constraint
+  (MAE ~0.19 against fresh judges).
+
+artifacts:
+  - data/results/multitask_probe.json

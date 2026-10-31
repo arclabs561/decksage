@@ -1,0 +1,35 @@
+{
+  "rows": 41056,
+  "queries": 3046,
+  "shared": {
+    "functional_score": {
+      "mae": 0.1426,
+      "spearman": 0.2979
+    },
+    "synergy_score": {
+      "mae": 0.13,
+      "spearman": 0.2567
+    },
+    "meta_relevance": {
+      "mae": 0.1296,
+      "spearman": 0.2732
+    }
+  },
+  "separate": {
+    "functional_score": {
+      "mae": 0.1425,
+      "spearman": 0.2964
+    },
+    "synergy_score": {
+      "mae": 0.1303,
+      "spearman": 0.2578
+    },
+    "meta_relevance": {
+      "mae": 0.1293,
+      "spearman": 0.2741
+    }
+  },
+  "mean_mae_shared": 0.1341,
+  "mean_mae_separate": 0.134,
+  "mean_delta_shared_minus_separate": 0.0
+}
