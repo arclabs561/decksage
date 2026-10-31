@@ -2063,14 +2063,29 @@ def get_contextual_suggestions(
     )
 
 
-def _exact_card_match(state: Any, query: str) -> bool:
-    """Case-insensitive membership of the query in the card vocabulary."""
-    names = getattr(state, "_lower_card_names", None)
+def _catalog_names(state: Any) -> list[str]:
+    """Every card the API knows, not just the graph vocabulary.
+
+    The co-occurrence vocabulary omits cards without graph edges (Dark Magician
+    among them), so autocomplete and exact-match must read the metadata
+    catalog as well; otherwise a card the search endpoint returns cannot be
+    completed or recognised.
+    """
+    names = getattr(state, "_catalog_names", None)
     if names is None:
-        keys = state.embeddings.index_to_key if state.embeddings is not None else []
-        names = {str(name).lower() for name in keys}
-        state._lower_card_names = names
-    return " ".join(query.split()).lower() in names
+        keys = set(state.embeddings.index_to_key) if state.embeddings is not None else set()
+        if state.card_metadata:
+            keys |= set(state.card_metadata)
+        names = sorted(keys)
+        state._catalog_names = names
+    return names
+
+
+def _exact_card_match(state: Any, query: str) -> bool:
+    """Case-insensitive membership of the query in the card catalog."""
+    if state.card_metadata and query in state.card_metadata:
+        return True
+    return " ".join(query.split()).lower() in {str(name).lower() for name in _catalog_names(state)}
 
 
 def _name_alignment(name: str, needle: str) -> tuple[float, float]:
@@ -2108,7 +2123,7 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
     prefix matches too few names, ask Meilisearch for its typo-tolerant
     completions before falling back to a local close-match scan.
     """
-    names = list(state.embeddings.index_to_key)
+    names = _catalog_names(state)
     needle = prefix.lower().strip()
     if not needle:
         return names
@@ -2199,11 +2214,7 @@ def list_cards_v1(
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
 
-    all_cards = (
-        _prefix_card_names(g, state, prefix, limit)
-        if prefix
-        else list(state.embeddings.index_to_key)
-    )
+    all_cards = _prefix_card_names(g, state, prefix, limit) if prefix else _catalog_names(state)
 
     total = len(all_cards)
     start = max(0, offset)
