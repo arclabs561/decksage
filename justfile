@@ -1286,3 +1286,8 @@ bootstrap:
 dev-doctor *ARGS:
     #!/usr/bin/env bash
     scripts/dev/stack_doctor.sh {{ARGS}}
+
+# Refresh artifacts/caches, restart the API, and run the doctor (host MPS).
+refresh:
+    #!/usr/bin/env bash
+    scripts/ops/refresh_all.sh

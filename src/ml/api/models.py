@@ -25,7 +25,9 @@ except ImportError:
 
 SUPPORTED_GAMES: set[str] = {"magic", "pokemon", "yugioh"}
 GameName = Literal["magic", "pokemon", "yugioh"]
-SimilarityMode = Literal["embedding", "jaccard", "jaccard_faceted", "fusion", "meta", "text"]
+SimilarityMode = Literal[
+    "embedding", "text", "union", "jaccard", "jaccard_faceted", "fusion", "meta"
+]
 ActionType = Literal["add", "remove", "replace", "suggest"]
 CompletionMethod = Literal["greedy", "beam", "ot"]
 
@@ -63,7 +65,7 @@ class SimilarityRequest(BaseModel):
     )
     mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'text', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
+        description="Optional override: 'embedding', 'text', 'union', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     weights: dict[str, float] | None = Field(
         None,
@@ -120,7 +122,7 @@ class BatchSimilarityRequest(BaseModel):
     game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
     mode: SimilarityMode | None = Field(
         None,
-        description="Optional override: 'embedding', 'text', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
+        description="Optional override: 'embedding', 'text', 'union', 'jaccard', 'jaccard_faceted', 'fusion', or 'meta'",
     )
     use_case: UseCaseEnum = Field(UseCaseEnum.substitute, description="Use case preset")
     weights: dict[str, float] | None = Field(None, description="Optional fusion weights")
@@ -342,6 +344,8 @@ class ApiState:
         self.price_data: dict[str, dict[str, str | None]] | None = (
             None  # {card: {usd: "1.23", ...}}
         )
+        self.tag_index: Any = None  # TagNeighborIndex (Magic)
+        self.reprint_groups: dict[str, str] | None = None
         # Reranker: multi-source embedding reranking with learned weights
         self.reranker: RerankerConfig | None = None
         self.reranker_embeddings: dict[str, Any] | None = None  # {source_name: KeyedVectors}

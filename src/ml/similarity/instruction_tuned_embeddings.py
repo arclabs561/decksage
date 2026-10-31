@@ -63,6 +63,7 @@ class InstructionTunedCardEmbedder:
         model_name: str = "intfloat/e5-base-v2",  # Options: e5-base-v2, intfloat/e5-mistral-7b-instruct, BAAI/bge-m3
         cache_dir: Path | str | None = None,
         default_instruction: str = "substitution",
+        device: str | None = None,
     ):
         """
         Initialize the card embedder.
@@ -81,7 +82,9 @@ class InstructionTunedCardEmbedder:
 
         logger.debug(f"Loading instruction-tuned model: {model_name}")
         self.model = SentenceTransformer(
-            model_name, cache_folder=str(self.cache_dir) if self.cache_dir else None
+            model_name,
+            cache_folder=str(self.cache_dir) if self.cache_dir else None,
+            device=device,
         )
         logger.debug("Model loaded")
 

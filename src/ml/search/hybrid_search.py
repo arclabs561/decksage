@@ -992,6 +992,37 @@ class HybridSearch:
                 break
         return out
 
+    def union_similar(self, query: str, limit: int = 10) -> list[tuple[str, float]]:
+        """RRF of the text and graph candidate lists, normalized to [0, 1].
+
+        The 0085 probe showed a union pool lifts recall@10 by ~6 points over
+        text alone. This is the serving version: each retriever contributes its
+        top 50, reciprocal-rank fusion orders them, and the top score is scaled
+        to 1.0 so the response remains a similarity-like percentage.
+        """
+        text = self.text_similar(query, 50)
+        graph: list[tuple[str, float]] = []
+        if self.embeddings is not None and query in self.embeddings:
+            graph = [
+                (name, float(score))
+                for name, score in self.embeddings.most_similar(query, topn=50)
+                if name != query
+            ]
+        tag_list = []
+        if getattr(self, "tag_neighbors", None) is not None:
+            tag_list = self.tag_neighbors.top(query, 50)
+        fused: dict[str, float] = {}
+        for ranked in (text, graph):
+            for rank, (name, _score) in enumerate(ranked, 1):
+                fused[name] = fused.get(name, 0.0) + 1.0 / (60 + rank)
+        for rank, name in enumerate(tag_list, 1):
+            fused[name] = fused.get(name, 0.0) + 1.0 / (60 + rank)
+        ordered = sorted(fused.items(), key=lambda pair: (-pair[1], pair[0]))[:limit]
+        if not ordered:
+            return []
+        ceiling = ordered[0][1] or 1.0
+        return [(name, score / ceiling) for name, score in ordered]
+
     def _should_embed_semantics(self, query: str) -> bool:
         """Whether this query justifies the semantic arm.
 

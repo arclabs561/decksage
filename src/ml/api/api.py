@@ -494,6 +494,22 @@ async def lifespan(app: FastAPI):
                     game,
                     len(state.card_metadata),
                 )
+                if game == "magic":
+                    from ..search.tag_neighbors import TagNeighborIndex
+
+                    tags_path = PATHS.data / "processed" / "magic_tags.json"
+                    reprints_path = PATHS.data / "processed" / "magic_reprints.json"
+                    if tags_path.exists():
+                        state.tag_index = TagNeighborIndex(
+                            __import__("json").loads(tags_path.read_text())
+                        )
+                        logger.info("Loaded tag index for magic: %d cards", len(state.tag_index))
+                    if reprints_path.exists():
+                        state.reprint_groups = __import__("json").loads(reprints_path.read_text())
+                        logger.info(
+                            "Loaded reprint groups for magic: %d cards",
+                            len(state.reprint_groups),
+                        )
             except (OSError, ValueError, KeyError, ImportError):
                 logger.debug(
                     "Failed to load enriched card metadata for game=%s", game, exc_info=True
@@ -1147,7 +1163,15 @@ def ready():
 
 def _resolve_method(request: SimilarityRequest) -> str:
     forced_mode = (request.mode or "").lower().strip()
-    if forced_mode in {"embedding", "text", "jaccard", "jaccard_faceted", "fusion", "meta"}:
+    if forced_mode in {
+        "embedding",
+        "text",
+        "union",
+        "jaccard",
+        "jaccard_faceted",
+        "fusion",
+        "meta",
+    }:
         return forced_mode
     if request.use_case is UseCaseEnum.substitute:
         return "embedding"  # Cosine until fusion-specific annotations exist (exp 0060)
@@ -1719,6 +1743,10 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     elif method == "text":
         client = _get_search_client(game)
         pairs = client.text_similar(query, k) if client is not None else []
+        results = [_enrich_similar_card(card, score, state, game=game) for card, score in pairs]
+    elif method == "union":
+        client = _get_search_client(game)
+        pairs = client.union_similar(query, k) if client is not None else []
         results = [_enrich_similar_card(card, score, state, game=game) for card, score in pairs]
     elif method == "jaccard":
         results = _similar_jaccard(state, query, k, game=game)
@@ -2451,6 +2479,7 @@ def _get_search_client(game: str) -> HybridSearch | None:
         )
         # Pass card metadata for semantic search oracle text enrichment
         client.card_metadata = getattr(state, "card_metadata", None) or {}
+        client.tag_neighbors = getattr(state, "tag_index", None)
         has_text = getattr(client, "meilisearch", None) is not None
         has_vector = getattr(client, "qdrant", None) is not None and state.embeddings is not None
 

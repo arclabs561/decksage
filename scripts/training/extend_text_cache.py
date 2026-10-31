@@ -51,6 +51,12 @@ def main() -> int:
     parser.add_argument("--cache-dir", type=Path, default=Path("/app/data/cache"))
     parser.add_argument("--model", default="intfloat/e5-base-v2")
     parser.add_argument("--batch-size", type=int, default=64)
+    parser.add_argument(
+        "--device",
+        default="auto",
+        choices=("auto", "cpu", "mps", "cuda"),
+        help="Embedding device; MPS is host-only (Docker cannot expose Metal).",
+    )
     args = parser.parse_args()
 
     from ml.similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
@@ -78,7 +84,20 @@ def main() -> int:
     if not missing:
         return 0
 
-    embedder = InstructionTunedCardEmbedder(model_name=args.model)
+    import torch
+
+    if args.device == "auto":
+        device = (
+            "mps"
+            if torch.backends.mps.is_available()
+            else "cuda"
+            if torch.cuda.is_available()
+            else "cpu"
+        )
+    else:
+        device = args.device
+    print(f"embedding device: {device}", flush=True)
+    embedder = InstructionTunedCardEmbedder(model_name=args.model, device=device)
     added = 0
     batch = 256
     for start in range(0, len(missing), batch):
