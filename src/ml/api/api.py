@@ -1645,7 +1645,8 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     """Find similar cards based on resolved method and return normalized response."""
     game = _require_game(request.game)
     state = get_state(game)
-    query = request.query
+    original_query = request.query
+    query = _canonical_card_name(state, request.query) or request.query
     k = request.top_k
     method = _resolve_method(request)
     # A card can exist in the catalog without a graph vector (11,322 Magic
@@ -1657,7 +1658,7 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
         and _exact_card_match(state, query)
     ):
         return SimilarityResponse(
-            query=query,
+            query=original_query,
             exact_match=True,
             query_metadata=dict((state.card_metadata or {}).get(query, {}) or {}) or None,
             results=[],
@@ -1713,8 +1714,8 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     query_meta = query_enriched.metadata
 
     return SimilarityResponse(
-        query=query,
-        exact_match=_exact_card_match(state, query),
+        query=original_query,
+        exact_match=_exact_card_match(state, original_query),
         query_metadata=query_meta,
         results=results,
         model_info={
@@ -2136,6 +2137,16 @@ def _catalog_names(state: Any) -> list[str]:
         names = sorted(keys)
         state._catalog_names = names
     return names
+
+
+def _canonical_card_name(state: Any, query: str) -> str | None:
+    """Resolve a differently-cased card name to its vocabulary key."""
+    names = getattr(state, "_lower_vocab_names", None)
+    if names is None:
+        keys = state.embeddings.index_to_key if state.embeddings is not None else []
+        names = {str(name).lower(): str(name) for name in keys}
+        state._lower_vocab_names = names
+    return names.get(" ".join(query.split()).lower())
 
 
 def _exact_card_match(state: Any, query: str) -> bool:
