@@ -1,0 +1,15 @@
+{
+  "game": "pokemon",
+  "queries": 390,
+  "positives": 559,
+  "graph_recall_at_10": 0.2212,
+  "graph_recall_at_50": 0.4666,
+  "text_recall_at_10": 0.5138,
+  "text_recall_at_50": 0.6827,
+  "recall50_delta_text_minus_graph": 0.2162,
+  "delta_ci_95": [
+    0.1443,
+    0.2862
+  ],
+  "text_cache_names": 4384
+}

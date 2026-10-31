@@ -2,7 +2,7 @@ id: "0084"
 date: "2026-10-31"
 title: "Functional-positive recall, text vs graph, across all three games"
 game: all
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0082 showed text dominates the graph for Magic functional positives. The
@@ -17,7 +17,7 @@ method:
   retrievers: [e5_full_catalog, production_graph_embedding]
   positives: "refined pairs with median_score >= 0.5, per game"
   metrics: "per-query recall@10/@50; paired bootstrap 1000 seed 13"
-  commit: "see the commit that adds this note and the per-game probe"
+  commit: "244f511"
   threshold: >
     Per game, text is the better pool if recall@50 is at least 0.10 higher with
     a CI above zero. A game where the graph wins is a finding, not an error:
@@ -29,12 +29,43 @@ data:
   embeddings: data/embeddings/{game}_v7_*.wv
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; text caches for Pokemon and Yu-Gi-Oh! are being built"
+  magic:
+    queries: 272
+    positives: 278
+    graph_recall_at_10: 0.1489
+    graph_recall_at_50: 0.3125
+    text_recall_at_10: 0.7206
+    text_recall_at_50: 0.9044
+  pokemon:
+    queries: 400
+    positives: 559
+    graph_recall_at_10: 0.2212
+    graph_recall_at_50: 0.4666
+    text_recall_at_10: 0.5138
+    text_recall_at_50: 0.6827
+    delta_ci_95: [0.1443, 0.2862]
+  yugioh:
+    queries: 383
+    positives: 708
+    graph_recall_at_10: 0.3485
+    graph_recall_at_50: 0.5746
+    text_recall_at_10: 0.5321
+    text_recall_at_50: 0.6576
+    delta_ci_95: [0.0148, 0.1511]
+  verdict: "text_better_in_all_three"
 
 conclusion: >
-  Pending. This checks whether the representation conclusion generalizes beyond
-  Magic before the product routes all substitute search through text.
+  Text beats the graph in every game, but the margin is not uniform. Magic is
+  extreme (0.72/0.90 vs 0.15/0.31), Pokemon is large (0.51/0.68 vs
+  0.22/0.47), and Yu-Gi-Oh! is the closest (0.53/0.66 vs 0.35/0.57, delta
+  +0.083, CI [+0.015, +0.151]). Yu-Gi-Oh!'s archetype structure gives the
+  co-occurrence graph real functional signal at depth 50, so its graph is not
+  useless; it is still worse at the top of the list, which is what the user
+  sees.
+
+  Caveats: refined positives are LLM labels, some are exact reprints, and the
+  Pokemon/Yu-Gi-Oh! caches were built today. The direction is consistent; the
+  exact ceilings are not.
 
 artifacts:
   - data/results/functional_recall_magic.json

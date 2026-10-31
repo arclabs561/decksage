@@ -90,6 +90,10 @@ services:
     container_name: decksage-bootstrap
     profiles: ["bootstrap"]
     command: ["python", "/app/scripts/data/bootstrap_index.py", "--all", "--text"]
+    # One-shot job, not a server: the image healthcheck curls :8000 and always
+    # fails here, marking a working job unhealthy.
+    healthcheck:
+      disable: true
     environment:
       - MEILISEARCH_URL=http://meilisearch:7700
       - QDRANT_URL=http://qdrant:6333
