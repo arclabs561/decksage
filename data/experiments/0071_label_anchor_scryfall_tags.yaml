@@ -16,12 +16,13 @@ method:
   script: scripts/evaluation/label_anchor_tags.py
   args: "script defaults; joins oracle-cards.json names to oracle_id, then oracle-tags taggings"
   commit: "991501a"
+  note: "Script moved from scratch to scripts/evaluation at this commit; the result was produced from the same logic before the move."
   test: "within-query Spearman between functional_score and tag Jaccard; IDF-weighted variant"
 
 data:
   test_set:
     path: data/test_sets/annotated_magic_v2.json
-    annotations: 41602
+    annotations_with_functional_score: 41602
     mapped_to_oracle_id: 41104
   tags:
     source: "Scryfall Oracle Tags bulk, 2026-10-30T21:00:36Z"

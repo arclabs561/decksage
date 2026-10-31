@@ -21,6 +21,7 @@ method:
     --output data-local/crates-experiment-20261030/tranz/output30
   backend: burn-ndarray (CPU)
   crate_commit: "24b682e"
+  note: "Training used tranz 0.8.0; 24b682e is the later binary-export fix. The training path is unchanged by that commit."
   objective: 1-N (1vsAll) cross-entropy, AdamW
 
 data:

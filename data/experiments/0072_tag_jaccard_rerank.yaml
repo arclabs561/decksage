@@ -22,6 +22,7 @@ method:
   metrics: "nDCG@10 and recall@10, paired bootstrap 1000 resamples, seed 13"
   task: substitute
   commit: "991501a"
+  note: "Heuristic tag code was committed at 991501a after the run; the result was produced from the same logic."
 
 data:
   test_set:
