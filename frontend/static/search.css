@@ -399,6 +399,22 @@ body {
 .search-button:hover { background: var(--ds-gold-hi); }
 .search-button:active { transform: scale(0.985); }
 
+/* Cancel is the escape hatch for a slow or hung search. */
+.search-cancel {
+  flex: none;
+  min-height: 56px;
+  padding: 0 10px;
+  border: 1px solid var(--ds-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ds-ink-soft);
+  font-family: var(--ds-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.search-cancel:hover,
+.search-cancel:focus-visible { color: var(--ds-ink); border-color: currentColor; }
+
 /* starters: quiet words, not chips in a second toolbar */
 .ds-starters {
   display: flex;
@@ -1026,6 +1042,14 @@ body {
 }
 .query-image-wrapper img { width: 100%; height: 100%; object-fit: cover; display: block; }
 .query-card-info { min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.query-card-label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ds-ink-soft);
+  margin-bottom: 2px;
+}
+.query-card-banner.is-inexact .query-card-label { color: var(--ds-gold); }
 .query-card-name { font-family: var(--ds-display); font-weight: 600; font-size: 16px; color: var(--ds-cream); }
 .query-card-meta,
 .query-card-stats { font-size: 13px; color: var(--ds-cream-soft); }
@@ -1450,3 +1474,39 @@ body.ds-searched .nav-tabs { margin-top: 14px; }
 body.ds-searched .search-section { margin-bottom: 10px; }
 body.ds-searched .ds-index { display: none; }
 /* Refine stays reachable after a search: filters are most useful then. */
+
+/* ---------- floating "edit search" (phones) ---------- */
+
+.edit-search-fab {
+  position: fixed;
+  right: 16px;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  z-index: 70;
+  min-height: 44px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ds-gold);
+  color: var(--ds-gold-ink);
+  font-family: var(--ds-text);
+  font-size: 14px;
+  font-weight: 600;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+  cursor: pointer;
+}
+.edit-search-fab:hover,
+.edit-search-fab:focus-visible { background: var(--ds-gold-hi); }
+@media (min-width: 761px) { .edit-search-fab { display: none; } }
+
+/* A fuzzy suggestion must say why it is there. */
+.ac-reason {
+  margin-left: 8px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--ds-raised);
+  color: var(--ds-ink-soft);
+  font-size: 11px;
+  font-weight: 500;
+  vertical-align: middle;
+  white-space: nowrap;
+}

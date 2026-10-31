@@ -440,6 +440,9 @@ body::before {
   max-width: 760px;
 }
 .advanced-options.ds-open { display: grid !important; }
+/* Contextual and Deck keep their fields on screen; only the Search tab's
+   panel is a disclosure. The blanket rule above had hidden them all. */
+.advanced-options.is-static { display: grid !important; }
 
 .option-group {
   display: flex;

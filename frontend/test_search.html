@@ -74,6 +74,7 @@
                             <div class="autocomplete-dropdown" id="autocompleteDropdown" role="listbox" aria-label="Card suggestions"></div>
                         </div>
                         <button type="submit" class="search-button" aria-label="Search">Search</button>
+                        <button type="button" class="search-cancel" id="cancelSearchBtn" hidden aria-label="Cancel search">Cancel</button>
                     </form>
                     <select id="searchGame" aria-label="Game selection" style="display:none;">
                         <option value="magic">Magic: The Gathering</option>
@@ -178,7 +179,7 @@
                         </div>
                         <button type="submit" class="search-button">Search</button>
                     </form>
-                    <div class="advanced-options" style="display: grid;">
+                    <div class="advanced-options is-static" style="display: grid;">
                         <div class="option-group">
                             <label for="textWeight">Text Weight:</label>
                             <input type="number" id="hybridTextWeight" value="0.5" min="0" max="1" step="0.1" aria-label="Text search weight">
@@ -211,7 +212,7 @@
                         </div>
                         <button type="submit" class="search-button">Get Suggestions</button>
                     </form>
-                    <div class="advanced-options" style="display: grid;">
+                    <div class="advanced-options is-static" style="display: grid;">
                         <div class="option-group">
                             <label for="contextualGame">Game:</label>
                             <select id="contextualGame" aria-label="Game selection">
@@ -272,7 +273,7 @@
                             <button type="button" class="deck-export-btn" onclick="exportDeckJSON()">Copy as JSON</button>
                             <button type="button" class="deck-export-btn" onclick="downloadDeckFile()">Download .txt</button>
                         </div>
-                        <div class="advanced-options" style="display: grid; margin-top: 16px;">
+                        <div class="advanced-options is-static" style="display: grid; margin-top: 16px;">
                             <div class="option-group">
                                 <label for="targetSize">Target Main Size:</label>
                                 <input type="number" id="targetSize" value="60" min="1" max="200" placeholder="60" aria-label="Target deck size">
@@ -380,6 +381,7 @@
             </div>
 
         </main>
+        <button type="button" class="edit-search-fab" id="editSearchFab" hidden>Edit search</button>
         <footer class="retro-footer">
             <div class="retro-badges" aria-hidden="true">
                 <span class="retro-badge">Valid HTML 4.01</span>
@@ -425,6 +427,8 @@
         let selectedAutocompleteIndex = -1;
         let currentTab = 'unified-search';
         let currentSearchController = null; // For canceling in-flight searches
+        let currentHybridController = null; // The effect arm had none: a hung
+                                            // /v1/search left skeletons forever.
 
         // ============================================================
         // URL STATE MANAGEMENT (History API)
@@ -842,6 +846,7 @@
         // below the fold, so a slow query looked like nothing had happened.
         function setSearching(busy) {
             const button = document.querySelector('#unifiedSearchForm button[type="submit"]');
+            const cancel = document.getElementById('cancelSearchBtn');
             const statusEl = document.getElementById('statusMessage');
             if (button) {
                 if (busy) {
@@ -855,6 +860,7 @@
                     button.removeAttribute('aria-busy');
                 }
             }
+            if (cancel) cancel.hidden = !busy;
             if (statusEl) {
                 if (busy) {
                     statusEl.dataset.searching = '1';
@@ -866,6 +872,24 @@
                 }
             }
         }
+
+        // Stop whatever is in flight and put the page back in a usable state.
+        function cancelSearch() {
+            let cancelled = false;
+            for (const controller of [currentSearchController, currentHybridController]) {
+                if (controller && !controller.signal.aborted) {
+                    controller.abort('user');
+                    cancelled = true;
+                }
+            }
+            for (const id of ['resultsContainer', 'hybridResultsContainer']) {
+                const container = document.getElementById(id);
+                if (container) clearSkeleton(container);
+            }
+            setSearching(false);
+            if (cancelled) showStatus('Search cancelled.', 'info', true);
+        }
+        document.getElementById('cancelSearchBtn')?.addEventListener('click', cancelSearch);
 
         // Unified search: intelligently routes to similarity or hybrid search
         async function unifiedSearch(event) {
@@ -1088,7 +1112,7 @@
                     `;
                     suggestOtherGame(cardName, 'otherGameHint');
                 } else {
-                    displayResults(data, cardName);
+                    displayResults(data, cardName, data.exact_match === true);
                 }
                 pushURL(getCurrentURLState());
                 trackEvent('search_complete', {
@@ -1265,6 +1289,14 @@
                 showSkeletonLoading(containerId, limit);
             }
 
+            // Same contract as searchCards(): a newer query cancels this one, a
+            // real timeout says so. Without this a hung /v1/search left the
+            // skeletons on screen forever with no way to stop it.
+            if (currentHybridController) currentHybridController.abort('superseded');
+            const controller = new AbortController();
+            currentHybridController = controller;
+            const timeoutId = setTimeout(() => controller.abort('timeout'), 30000);
+
             try {
                 const response = await fetch(`${API_BASE}/v1/search`, {
                     method: 'POST',
@@ -1278,7 +1310,9 @@
                         text_weight: textWeight,
                         vector_weight: vectorWeight,
                     }),
+                    signal: controller.signal,
                 });
+                clearTimeout(timeoutId);
 
                 if (!response.ok) {
                     const status = response.status;
@@ -1309,10 +1343,19 @@
                     suggestOtherGame(query, 'otherGameHintHybrid');
                 }
             } catch (error) {
-                const friendlyError = getUserFriendlyError(error.message);
+                clearTimeout(timeoutId);
+                // A newer query aborted this one: cancellation, not failure.
+                if (controller.signal.aborted && controller.signal.reason !== 'timeout') return;
+                const timedOut = controller.signal.aborted && controller.signal.reason === 'timeout';
+                const friendlyError = timedOut
+                    ? 'Search is taking longer than usual. Try again, or narrow the description.'
+                    : getUserFriendlyError(error.message);
                 const statusContainer = currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage';
-                showStatus(`Error: ${friendlyError}`, 'error', true, statusContainer);
-                resultsContainer.innerHTML = `<div class="status error">${escapeHtml(friendlyError)}</div>`;
+                if (resultsContainer) clearSkeleton(resultsContainer);
+                showStatus(timedOut ? friendlyError : `Error: ${friendlyError}`, timedOut ? 'info' : 'error', true, statusContainer);
+                if (resultsContainer) {
+                    resultsContainer.innerHTML = `<div class="status ${timedOut ? '' : 'error'}">${escapeHtml(friendlyError)}</div>`;
+                }
             }
         }
 
@@ -1343,7 +1386,15 @@
                 return;
             }
 
-            container.innerHTML = kept.map(result => {
+            // Same labelling rule as the similarity list: say whether the typed
+            // name is in the list or whether these are only neighbours.
+            const wanted = String(data.query || '').trim().toLowerCase();
+            const containsExact = data.exact_match === true
+                || kept.some((r) => String(r.card_name || r.card || '').trim().toLowerCase() === wanted);
+            const labelHtml = wanted
+                ? `<div class="query-card-banner ${containsExact ? 'is-exact' : 'is-inexact'}"><div class="query-card-info"><div class="query-card-label">${containsExact ? 'You searched for' : 'No exact match \u2014 closest functional matches for'}</div><div class="query-card-name">${escapeHtml(data.query)}</div></div></div>`
+                : '';
+            container.innerHTML = labelHtml + kept.map(result => {
                 const meta = result.metadata || {};
                 const art = meta.image_url
                     ? `<div class="result-image-wrapper"><img src="${escapeHtml(meta.image_url)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
@@ -1822,14 +1873,13 @@
             </div>`;
         }
 
-        function displayResults(data, queryCard = null) {
+        function displayResults(data, queryCard = null, isExactMatch = false) {
             const resultsContainer = document.getElementById('resultsContainer');
             let hiddenForDisplay = 0;
             if (queryCard && Array.isArray(data?.results)) {
                 const q = String(queryCard).trim().toLowerCase();
-                data = { ...data, results: data.results.filter(
-                    r => String(r.card || r.card_name || '').trim().toLowerCase() !== q
-                )};
+                const nameOf = (r) => String(r.card || r.card_name || '').trim().toLowerCase();
+                data = { ...data, results: data.results.filter(r => nameOf(r) !== q) };
                 currentResults = data.results;
             }
 
@@ -1856,32 +1906,33 @@
 
             // Query card banner
             const qm = data?.query_metadata;
-            if (qm && data.query) {
+            if (data.query && (qm || queryCard || isExactMatch)) {
                 const qName = escapeHtml(data.query);
-                const qImg = qm.image_url ? `<div class="query-image-wrapper"><img src="${escapeHtml(qm.image_url)}" alt="${qName}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : '';
+                const qImg = qm && qm.image_url ? `<div class="query-image-wrapper"><img src="${escapeHtml(qm.image_url)}" alt="${qName}" loading="lazy" onerror="this.parentElement.style.display='none'"></div>` : '';
                 const qParts = [];
-                if (qm.type) qParts.push(escapeHtml(qm.type));
-                if (qm.colors) qParts.push(escapeHtml(String(qm.colors)));
-                if (qm.rarity) qParts.push(escapeHtml(qm.rarity));
+                if (qm && qm.type) qParts.push(escapeHtml(qm.type));
+                if (qm && qm.colors) qParts.push(escapeHtml(String(qm.colors)));
+                if (qm && qm.rarity) qParts.push(escapeHtml(qm.rarity));
                 const qStats = [];
                 const qGame = (data?.model_info?.game || 'magic').toLowerCase();
-                if (qGame === 'magic') {
+                if (qm && qGame === 'magic') {
                     if (qm.cmc !== undefined && qm.cmc !== null) qStats.push(`<span class="stat">Mana ${qm.cmc}</span>`);
                     if (qm.power && qm.toughness) qStats.push(`<span class="stat">${escapeHtml(String(qm.power))}/${escapeHtml(String(qm.toughness))}</span>`);
-                } else if (qGame === 'pokemon') {
+                } else if (qm && qGame === 'pokemon') {
                     const isPokemon = !qm.type || /pok[eé]mon/i.test(qm.type);
                     if (isPokemon && qm.hp) qStats.push(`<span class="stat">HP ${qm.hp}</span>`);
                     if (isPokemon && qm.retreat_cost) qStats.push(`<span class="stat">Retreat ${qm.retreat_cost}</span>`);
-                } else if (qGame === 'yugioh') {
+                } else if (qm && qGame === 'yugioh') {
                     if (qm.atk !== undefined && qm.atk !== null) qStats.push(`<span class="stat">ATK ${qm.atk}</span>`);
                     if (qm.def_stat !== undefined && qm.def_stat !== null) qStats.push(`<span class="stat">DEF ${qm.def_stat}</span>`);
                     if (qm.level_rank_link) qStats.push(`<span class="stat">Lv.${qm.level_rank_link}</span>`);
                 }
                 const banner = document.createElement('div');
-                banner.className = 'query-card-banner';
+                banner.className = 'query-card-banner' + (isExactMatch ? ' is-exact' : ' is-inexact');
                 banner.innerHTML = `
                     ${qImg}
                     <div class="query-card-info">
+                        <div class="query-card-label">${isExactMatch ? 'You searched for' : 'No exact match \u2014 closest functional matches for'}</div>
                         <div class="query-card-name">${qName}</div>
                         ${qParts.length ? `<div class="query-card-meta">${qParts.join(' · ')}</div>` : ''}
                         ${qStats.length ? `<div class="query-card-stats">${qStats.join('')}</div>` : ''}
@@ -2557,6 +2608,28 @@
                         if (item.rarity) metaParts.push(escapeHtml(item.rarity));
                         const metaLine = metaParts.length ? `<div class="ac-card-meta">${metaParts.join(' \u00b7 ')}</div>` : '';
 
+                        // Why did this row match? A straight prefix needs no
+                        // explanation; a partial or fuzzy hit does, and the two
+                        // are not the same thing.
+                        const norm = (text) => String(text).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+                        const wanted = norm(query);
+                        const words = norm(cardName).split(' ').filter(Boolean);
+                        const tokens = wanted.split(' ').filter(Boolean);
+                        const matchedTokens = tokens.filter((token) => words.some((word) => word.startsWith(token)));
+                        let reasonText = '';
+                        if (wanted && !norm(cardName).startsWith(wanted)) {
+                            if (matchedTokens.length === tokens.length) {
+                                reasonText = 'words match';
+                            } else if (matchedTokens.length) {
+                                reasonText = `matched \u201c${matchedTokens.join(' ')}\u201d`;
+                            } else {
+                                reasonText = 'similar spelling';
+                            }
+                        }
+                        const reasonHtml = reasonText
+                            ? `<span class="ac-reason">${escapeHtml(reasonText)}</span>`
+                            : '';
+
                         let statsHtml = '';
                         const statParts = [];
                         if (item.total_decks) {
@@ -2575,7 +2648,7 @@
                         html += `<div class="autocomplete-item rich-card" id="${id}" data-index="${globalIndex}" data-value="${escapeHtml(cardName)}" role="option" aria-selected="false">
                             ${thumbHtml}
                             <div class="ac-card-info">
-                                <div class="ac-card-name">${highlightMatch(cardName)}</div>
+                                <div class="ac-card-name">${highlightMatch(cardName)}${reasonHtml}</div>
                                 ${metaLine}
                                 ${statsHtml}
                             </div>
@@ -2980,6 +3053,15 @@
             // Apply game body class for theming
             document.body.classList.remove('game-magic', 'game-pokemon', 'game-yugioh');
             document.body.classList.add(`game-${game}`);
+            // The sample deck must match the selected game: an MTG sample under
+            // a Yu-Gi-Oh! selector teaches the wrong format.
+            const deckPlaceholders = {
+                magic: '4 Lightning Bolt\n4 Mountain\n2 Goblin Guide\n\n// Sideboard\n2 Pyroblast',
+                yugioh: '1 Dark Magician\n2 Magician\'s Rod\n3 Dark Magical Circle',
+                pokemon: '4 Pikachu\n2 Raichu\n4 Professor\'s Research'
+            };
+            const deckInputEl = document.getElementById('deckInput');
+            if (deckInputEl) deckInputEl.placeholder = deckPlaceholders[game] || deckPlaceholders.magic;
             // Update deck target size default
             const targetInput = document.getElementById('targetSize');
             if (targetInput) {
@@ -2997,6 +3079,68 @@
         }
 
         // 2000s / modern toggle. Retro is the default; the saved choice wins.
+        // Composite widgets take one tab stop and move with arrow keys, per the
+        // ARIA APG. Every tab and game pill used to be a separate Tab press.
+        (function setupRovingGroups() {
+            const groups = [
+                { container: '.nav-tabs', item: '.nav-tab' },
+                { container: '.game-selector', item: '.game-btn' }
+            ];
+            const isActive = (el) => el.classList.contains('active')
+                || el.getAttribute('aria-selected') === 'true'
+                || el.getAttribute('aria-checked') === 'true';
+            for (const group of groups) {
+                const container = document.querySelector(group.container);
+                if (!container) continue;
+                const items = () => Array.from(container.querySelectorAll(group.item));
+                const sync = () => {
+                    const list = items();
+                    const activeIndex = Math.max(0, list.findIndex(isActive));
+                    list.forEach((el, index) => { el.tabIndex = index === activeIndex ? 0 : -1; });
+                };
+                sync();
+                container.addEventListener('keydown', (event) => {
+                    if (!['ArrowRight', 'ArrowLeft', 'Home', 'End'].includes(event.key)) return;
+                    const list = items();
+                    const current = list.indexOf(document.activeElement);
+                    if (current < 0) return;
+                    event.preventDefault();
+                    let next = current;
+                    if (event.key === 'ArrowRight') next = (current + 1) % list.length;
+                    if (event.key === 'ArrowLeft') next = (current - 1 + list.length) % list.length;
+                    if (event.key === 'Home') next = 0;
+                    if (event.key === 'End') next = list.length - 1;
+                    list[next].focus();
+                });
+                container.addEventListener('click', () => setTimeout(sync, 0));
+                new MutationObserver(sync).observe(container, {
+                    subtree: true, attributes: true, attributeFilter: ['class', 'aria-selected', 'aria-checked']
+                });
+            }
+        })();
+
+        // On a phone, ten results are several screens of scrolling; changing the
+        // query meant going back to the top. This pill follows the form's
+        // visibility and jumps back to it.
+        (function setupEditSearchPill() {
+            const fab = document.getElementById('editSearchFab');
+            const form = document.getElementById('unifiedSearchForm');
+            if (!fab || !form) return;
+            const jump = () => {
+                form.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                const input = document.getElementById('unifiedInput');
+                if (input) input.focus({ preventScroll: true });
+            };
+            fab.addEventListener('click', jump);
+            if ('IntersectionObserver' in window) {
+                const io = new IntersectionObserver((entries) => {
+                    const visible = entries[0]?.isIntersecting;
+                    fab.hidden = !!visible;
+                }, { threshold: 0 });
+                io.observe(form);
+            }
+        })();
+
         const themeToggle = document.getElementById('themeToggle');
         function applyTheme(theme) {
             const retro = theme !== 'modern';
