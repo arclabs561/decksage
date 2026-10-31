@@ -90,6 +90,12 @@ def main() -> int:
         "--cards", type=Path, default=PATHS.data / "raw" / "scryfall" / "oracle-cards.json"
     )
     parser.add_argument(
+        "--exclude-pairs",
+        type=Path,
+        default=None,
+        help="JSON list of [query, candidate] pairs whose label is definitionally impossible.",
+    )
+    parser.add_argument(
         "--judged-only",
         action="store_true",
         help=(
@@ -107,6 +113,13 @@ def main() -> int:
 
     test_set = json.loads(args.test_set.read_text(encoding="utf-8"))
     judged = judged_scores(test_set)
+    if args.exclude_pairs:
+        dropped = 0
+        for query, candidate in json.loads(args.exclude_pairs.read_text(encoding="utf-8")):
+            if candidate in judged.get(query, {}):
+                judged[query].pop(candidate)
+                dropped += 1
+        print(f"excluded {dropped} conflicted pairs")
     groups = reprint_groups(args.cards)
     by_group: dict[str, set[str]] = {}
     for name, group in groups.items():

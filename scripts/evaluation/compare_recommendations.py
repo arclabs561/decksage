@@ -766,6 +766,25 @@ def build_parser() -> argparse.ArgumentParser:
         help="continue when the gate could not be applied (metadata or tool missing)",
     )
     parser.add_argument(
+        "--exclude-pairs",
+        type=Path,
+        default=None,
+        help=(
+            "JSON list of [query, candidate] pairs to drop from relevance "
+            "before scoring. Use for pairs whose label is definitionally "
+            "impossible (e.g. identical reprints scored 0)."
+        ),
+    )
+    parser.add_argument(
+        "--allow-sparse-labels",
+        action="store_true",
+        help=(
+            "score even when the median judged pool is below k. nDCG counts "
+            "unjudged candidates as 0, so a sparse pool biases the comparison "
+            "against any arm that moves away from the annotated neighbourhood."
+        ),
+    )
+    parser.add_argument(
         "--judged-only",
         action="store_true",
         help=(
@@ -939,6 +958,17 @@ def plan_lines(
 
 def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
     resolved = resolve_inputs(args)
+    if args.exclude_pairs:
+        dropped = 0
+        for entry in json.loads(args.exclude_pairs.read_text(encoding="utf-8")):
+            query, candidate = (
+                entry if isinstance(entry, (list, tuple)) else (entry["query"], entry["candidate"])
+            )
+            if recovered := resolved["judged"].get(query):
+                if candidate in recovered:
+                    recovered.pop(candidate)
+                    dropped += 1
+        print(f"  excluded pairs {dropped} from {args.exclude_pairs}")
     usable, excluded = usability(
         resolved["judged"], resolved["baseline"], resolved["candidate"], args.relevance_threshold
     )
@@ -995,6 +1025,27 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
         record["judged_in_pool"] = sum(1 for card in candidates if card in judged[query])
         per_query.append(record)
 
+    pool_sizes = [record["judged_in_pool"] for record in per_query]
+    coverage = {
+        "median_judged_in_pool": float(np.median(pool_sizes)) if pool_sizes else 0.0,
+        "min_judged_in_pool": int(min(pool_sizes)) if pool_sizes else 0,
+    }
+    threshold = max(args.k, args.depth // 2)
+    coverage["required_judged_in_pool"] = threshold
+    if (
+        pool_sizes
+        and coverage["median_judged_in_pool"] < threshold
+        and not args.judged_only
+        and not args.allow_sparse_labels
+    ):
+        raise HarnessRefusal(
+            f"median judged pool {coverage['median_judged_in_pool']:.0f} of "
+            f"{args.depth} candidates (need {threshold}): nDCG counts every "
+            "unjudged candidate as 0, so an arm that moves away from the "
+            "annotated neighbourhood loses by construction. Rerun with "
+            "--judged-only, or pass --allow-sparse-labels to record the biased "
+            "comparison explicitly."
+        )
     assertion = assert_fixed_candidate_sets(observations)
     print(
         f"  candidate set fixed: PASS — {assertion['queries_checked']} queries, one "
@@ -1059,6 +1110,7 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
         "queries_skipped": skipped,
         "skipped_by_reason": reason_counts(skipped),
         "per_query": per_query,
+        "coverage": coverage,
         "summary": {
             "mean": means,
             "mean_delta": {metric: intervals[metric]["mean_delta"] for metric in METRICS},

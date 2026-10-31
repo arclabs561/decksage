@@ -1,0 +1,52 @@
+id: "0078"
+date: "2026-10-31"
+title: "Reprint verdict after removing definitional label conflicts (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  0076 left the reprint arm at -0.0140 nDCG and +0.0503 recall on judged
+  pools. Fourteen of those judged reprints have identical normalized oracle
+  text and type but are labelled 0.0. If that definitional conflict drives the
+  residual negative, dropping exactly those pairs should move the nDCG delta to
+  neutral. If the arm is still negative without them, reprints genuinely harm
+  ordering even when they are relevant.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --judged-only --candidate-sources reprint:exact
+    --reprint-cards data/raw/scryfall/oracle-cards.json
+    --exclude-pairs data-local/annotation-queue-20261031/reprint_conflicts.json
+  secondary:
+    script: scripts/evaluation/reprint_boost.py
+    args: >
+      --judged-only --exclude-pairs data-local/annotation-queue-20261031/reprint_conflicts.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10 on judged pools, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+  commit: "see the commit that adds this note"
+  threshold: >
+    Label explanation if the excluded-run nDCG CI includes zero. Genuine
+    ordering harm if the CI stays below zero. The 14 pairs are fixed by the
+    identical-text rule and were listed before this run, so this is label
+    hygiene, not a search over exclusions.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  exclusions: data-local/annotation-queue-20261031/reprint_conflicts.json
+  exclusion_rule: "identical normalized oracle_text + type_line, judged 0.0"
+  pairs_excluded: 14
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run in the results commit"
+
+conclusion: >
+  Pending. This decides whether the reprint family's residual loss is a label
+  defect or a real ordering effect.
+
+artifacts:
+  - data/results/reprint_judged_only_no_conflicts.json
