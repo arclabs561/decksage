@@ -12,6 +12,7 @@ import hashlib
 import json as _json
 import logging
 import os
+import re
 import threading
 from dataclasses import dataclass
 from pathlib import Path
@@ -141,7 +142,29 @@ def parse_query_filters(query: str) -> tuple[str, str | None]:
 
     query_lower = query.lower().strip()
     filters = []
-    remaining_words = query_lower.split()
+
+    # Numeric attributes now indexed in Meilisearch: "power 4+",
+    # "toughness <= 3", "hp 100+", "atk >= 2000". Without this the fields
+    # were filterable but unreachable from a natural-language query.
+    numeric_fields = {
+        "power": "power",
+        "toughness": "toughness",
+        "hp": "hp",
+        "atk": "atk",
+        "def": "def_stat",
+        "defense": "def_stat",
+    }
+    numeric_query = query_lower
+    for match in re.finditer(
+        r"\b(power|toughness|hp|atk|def|defense)\s*(>=|<=|>|<|=)?\s*(\d+)\s*(\+)?",
+        query_lower,
+    ):
+        field = numeric_fields[match.group(1)]
+        operator = ">=" if match.group(4) else (match.group(2) or "=")
+        filters.append(f"{field} {operator} {match.group(3)}")
+        numeric_query = numeric_query.replace(match.group(0), " ")
+
+    remaining_words = numeric_query.split()
 
     # Color extraction
     color_map = {
@@ -245,6 +268,7 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
             "text",
             "type_line",
             "keywords",
+            "archetype",
         ],
         # Attributes returned in search results.
         "displayedAttributes": ["*"],
@@ -256,11 +280,28 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
             "cmc",
             "rarity",
             "set_name",
+            "power",
+            "toughness",
+            "hp",
+            "atk",
+            "def_stat",
+            "level_rank_link",
+            "archetype",
+            "attribute",
+            "race",
+            "card_category",
+            "supertype",
+            "regulation_mark",
         ],
         # Attributes available for sorting.
         "sortableAttributes": [
             "name",
             "cmc",
+            "power",
+            "toughness",
+            "hp",
+            "atk",
+            "def_stat",
         ],
         # Typo tolerance: allow 1 typo for 5+ char words, 2 for 8+ chars.
         "typoTolerance": {

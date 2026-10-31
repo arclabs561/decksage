@@ -388,3 +388,35 @@ class TestHybridSearchDegradation:
         hs.qdrant.search.side_effect = RuntimeError("also down")
         results = hs.search("Lightning Bolt", text_weight=0.5, vector_weight=0.5)
         assert results == []
+
+
+class TestNumericQueryFilters:
+    """Numeric attributes are now indexed and reachable from a query."""
+
+    def test_power_plus(self):
+        from ml.search.hybrid_search import parse_query_filters
+
+        cleaned, filters = parse_query_filters("power 4+ dragon")
+        assert filters == "power >= 4"
+        assert "dragon" in cleaned
+
+    def test_toughness_bound(self):
+        from ml.search.hybrid_search import parse_query_filters
+
+        _, filters = parse_query_filters("toughness <= 3")
+        assert filters == "toughness <= 3"
+
+    def test_hp_and_atk(self):
+        from ml.search.hybrid_search import parse_query_filters
+
+        _, hp = parse_query_filters("hp 100+")
+        _, atk = parse_query_filters("atk >= 2000")
+        assert hp == "hp >= 100"
+        assert atk == "atk >= 2000"
+
+    def test_color_and_cost_still_work(self):
+        from ml.search.hybrid_search import parse_query_filters
+
+        cleaned, filters = parse_query_filters("cheap red burn")
+        assert cleaned == "burn"
+        assert "colors" in filters and "cmc <= 2" in filters

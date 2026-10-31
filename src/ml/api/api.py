@@ -95,10 +95,12 @@ from .state import _configured_games, _default_game, _require_game, get_state
 # Search integration
 try:
     from ..search import HybridSearch
+    from ..search.meili_docs import card_document
 
     HAS_SEARCH = True
 except ImportError:
     HybridSearch = None
+    card_document = None
     HAS_SEARCH = False
 
 # Optional dependencies with graceful degradation
@@ -510,32 +512,15 @@ async def lifespan(app: FastAPI):
                     _idx = _hs.meilisearch.index(idx_name)
                     _stats = _idx.get_stats()
                     if _stats.number_of_documents == 0:
-                        _docs = []
-                        for _i_card, (_name, _meta) in enumerate(state.card_metadata.items()):
-                            _doc: dict[str, Any] = {
-                                "id": str(_i_card),
-                                "name": _name,
-                                "game": game,
-                                "text": str(_meta.get("oracle_text") or _meta.get("text") or "")[
-                                    :2000
-                                ],
-                                "type_line": str(_meta.get("type_line") or _meta.get("type") or ""),
-                                "keywords": str(_meta.get("keywords") or ""),
-                            }
-                            # Filterable fields (present when enriched CSV has them)
-                            for _fk in ("colors", "cmc", "rarity", "set_name"):
-                                _fv = _meta.get(_fk)
-                                if _fv is not None and _fv != "":
-                                    # Enriched metadata carries numpy scalars, which
-                                    # the JSON payload rejects; store plain values.
-                                    if hasattr(_fv, "item"):
-                                        _fv = _fv.item()
-                                    if isinstance(_fv, float) and (
-                                        _fv != _fv or _fv in (float("inf"), float("-inf"))
-                                    ):
-                                        continue
-                                    _doc[_fk] = _fv
-                            _docs.append(_doc)
+                        _docs = [
+                            card_document(
+                                _name,
+                                _meta,
+                                game,
+                                str(_i_card),
+                            )
+                            for _i_card, (_name, _meta) in enumerate(state.card_metadata.items())
+                        ]
                         for _i in range(0, len(_docs), 500):
                             _idx.add_documents(_docs[_i : _i + 500])
                         logger.info(
