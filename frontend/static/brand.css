@@ -221,15 +221,6 @@ body::before {
   white-space: nowrap;
 }
 
-/* the stock h1 is replaced by the masthead; keep it for a11y but visually flat */
-.container > h1 {
-  position: absolute;
-  width: 1px; height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
-
 /* ---------- hero ---------- */
 
 .ds-hero {
@@ -358,15 +349,13 @@ body::before {
   font-family: var(--ds-text);
   font-size: 16px;
   padding: 0 14px;
-  box-shadow: none !important;
 }
 
 #unifiedInput::placeholder,
 #hybridInput::placeholder { color: #7C8093; }
 
 #unifiedInput:focus,
-#hybridInput:focus { outline: 0; box-shadow: none !important; }
-.search-form:focus-within { box-shadow: 0 0 0 3px rgba(227, 180, 78, 0.55); }
+#hybridInput:focus { outline: 0; }
 
 .search-button {
   flex: none;
@@ -405,7 +394,6 @@ body::before {
   color: var(--ds-ink);
   font-size: 14px;
   cursor: pointer;
-  border-bottom: 1px solid var(--ds-paper-2);
 }
 .autocomplete-item:hover,
 .ac-item:hover { background: #FFF9EC; }
@@ -714,7 +702,6 @@ body.ds-searched #unified-search-tab .ds-starters { display: none; }
   border: 0 !important;
   padding: 6px 0 14px;
   border-bottom: 0 !important;
-  box-shadow: none !important;
 }
 .query-card-banner::before {
   content: "You searched for";
@@ -830,9 +817,7 @@ body:not(.ds-searched) #searchModeIndicator { display: none; }
 #resultsContainer .status,
 .query-card-banner {
   background: var(--ds-surface);
-  border: 1px solid var(--ds-line);
   border-radius: var(--ds-radius);
-  box-shadow: none !important;
 }
 
 .result-item { background: var(--ds-paper); border-color: #E2D6BC; }
@@ -883,7 +868,7 @@ body:not(.ds-searched) #searchModeIndicator { display: none; }
 
 /* ---------- 3. field ---------- */
 
-input[type="text"]:not(#unifiedInput):not(#hybridInput),
+input[type="text"]:not(#unifiedInput):not(#hybridInput):not(#contextualCardInput):not(#compareInput),
 input[type="number"],
 input[type="search"],
 select,
@@ -901,10 +886,9 @@ textarea {
 select {
   appearance: none;
   padding-right: 32px;
-  background-image: linear-gradient(45deg, transparent 50%, var(--ds-cream-soft) 50%),
-                    linear-gradient(135deg, var(--ds-cream-soft) 50%, transparent 50%);
-  background-position: calc(100% - 17px) 17px, calc(100% - 12px) 17px;
-  background-size: 5px 5px, 5px 5px;
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M1 1l4 4 4-4' fill='none' stroke='%23AEB6CC' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-position: calc(100% - 14px) 17px;
+  background-size: 10px 6px;
   background-repeat: no-repeat;
 }
 
@@ -920,22 +904,7 @@ input[type="checkbox"] {
 }
 
 /* ---------- 4. button ---------- */
-
-button:not(.nav-tab):not(.game-btn):not(.search-button):not(.ds-starter):not(.advanced-toggle button) {
-  background: var(--ds-surface-2);
-  color: var(--ds-cream);
-  border: 1px solid var(--ds-line);
-  border-radius: var(--ds-radius);
-  font-family: var(--ds-text);
-  font-size: 13px;
-  font-weight: 500;
-  padding: 8px 14px;
-  cursor: pointer;
-}
-button:not(.nav-tab):not(.game-btn):not(.search-button):not(.ds-starter):not(.advanced-toggle button):hover {
-  border-color: var(--ds-gold);
-  color: var(--ds-cream);
-}
+/* each page styles its own controls; brand.css only carries the focus ring */
 
 /* ---------- 5. type scale ---------- */
 
@@ -957,8 +926,7 @@ button:not(.nav-tab):not(.game-btn):not(.search-button):not(.ds-starter):not(.ad
   letter-spacing: 0;
 }
 
-/* kill the last of the old look: no blue, no glow, no coloured dots */
-* { text-shadow: none !important; }
+/* kill the last of the old look: no coloured dots */
 .rarity-dot { background: var(--ds-ink-soft) !important; }
 
 /* no hairlines inside a row: one card edge is the only rule */
@@ -1020,7 +988,6 @@ body { background: var(--ds-void) !important; }
   background: var(--ds-surface) !important;
   border: 1px solid var(--ds-line) !important;
   border-radius: var(--ds-radius) !important;
-  box-shadow: none !important;
 }
 
 /* scoped: this block leaked onto every button in the app before */
@@ -1086,43 +1053,7 @@ body { background: var(--ds-void) !important; }
    a single marker, not three buttons competing for attention.
    ========================================================================== */
 
-/* tabs: quiet text, one marker */
-.nav-tabs {
-  gap: 2px !important;
-  background: transparent !important;
-  padding: 0 !important;
-  border-radius: 0 !important;
-  border-bottom: 1px solid var(--ds-line) !important;
-  width: 100% !important;
-  max-width: none !important;
-  margin: 18px 0 22px !important;
-}
-
-.nav-tab,
-.nav-tabs .nav-tab {
-  background: transparent !important;
-  color: var(--ds-cream-soft) !important;
-  border: 0 !important;
-  border-bottom: 2px solid transparent !important;
-  border-radius: 0 !important;
-  padding: 10px 14px 9px !important;
-  font-size: 14px !important;
-  font-weight: 500 !important;
-  margin-bottom: -1px;
-}
-
-.nav-tabs .nav-tab:hover {
-  color: var(--ds-cream) !important;
-  background: transparent !important;
-}
-
-.nav-tabs .nav-tab.active,
-.nav-tabs .nav-tab[aria-selected="true"] {
-  background: transparent !important;
-  color: var(--ds-cream) !important;
-  border-bottom-color: var(--ds-gold) !important;
-  font-weight: 600 !important;
-}
+/* the search page's tab row is defined in search.css */
 
 /* controls: one quiet shape */
 .deck-input,
@@ -1302,7 +1233,6 @@ textarea.deck-input {
   width: 132px;
   height: 132px;
   object-fit: contain;
-  filter: drop-shadow(0 0 28px rgba(155, 123, 255, 0.22));
 }
 
 .ds-hero-copy { min-width: 0; }
@@ -1316,52 +1246,9 @@ textarea.deck-input {
   .ds-hero-crest { width: 72px; height: 72px; }
 }
 
-/* card plates echo the filigree edge of the crest's cards */
-.result-item {
-  border: 1px solid #D9C89E !important;
-  box-shadow: inset 0 0 0 1px rgba(227, 180, 78, 0.16) !important;
-}
-
+/* card plates separate by tone, not by filigree */
 .result-item .result-image-wrapper {
-  border: 1px solid #C9B481;
   background: #121A2C;
-}
-
-/* ---------- adopt the mark's language: gold filigree on card plates ---------- */
-
-.result-item { position: relative; }
-
-.result-item::before,
-.result-item::after {
-  content: "";
-  position: absolute;
-  width: 10px;
-  height: 10px;
-  border: 1px solid rgba(201, 180, 129, 0.85);
-  pointer-events: none;
-}
-.result-item::before {
-  top: 5px; left: 5px;
-  border-right: 0; border-bottom: 0;
-}
-.result-item::after {
-  bottom: 5px; right: 5px;
-  border-left: 0; border-top: 0;
-}
-
-/* match strength carries the crest's two magic hues, not one flat accent */
-.similarity-bar { background: #E4D7B8; }
-.similarity-fill {
-  background: var(--ds-violet);
-  position: relative;
-}
-.similarity-fill::after {
-  content: "";
-  position: absolute;
-  right: 0; top: 0; bottom: 0;
-  width: 10px;
-  background: var(--ds-cyan);
-  border-radius: 0 3px 3px 0;
 }
 
 /* the empty state introduces the sage instead of apologising */
@@ -1381,8 +1268,7 @@ textarea.deck-input {
    drops it. Once results take the screen the hero is gone and the masthead
    carries the mark instead. Same asset, never twice at once. */
 
-.ds-masthead .ds-crest { display: none; }
-body.ds-searched .ds-masthead .ds-crest { display: block; }
+.ds-masthead .ds-crest { display: block; }
 
 @media (max-width: 720px) {
   .ds-hero { grid-template-columns: minmax(0, 1fr); gap: 10px; }
