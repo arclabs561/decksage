@@ -1,0 +1,41 @@
+id: "0083"
+date: "2026-10-31"
+title: "Precision of the text candidate pool on fresh judgments (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  0082 measured recall: text finds functional positives. It did not measure
+  precision, and the Lightning Bolt example suggests E5 sometimes ranks names
+  that share words ("Lightning Strike") above cards that share function. Fresh
+  judgments of the text top-10 will show whether the pool is usable as-is or
+  needs the functional re-ranker before the user sees it.
+
+method:
+  type: fresh_judgment_precision
+  sampling: "12 test queries, all 10 E5 candidates each, excluding already-judged pairs"
+  annotator: scripts/annotation/annotate_pairs_openrouter.py
+  judges: [claude-sonnet-4-6, gpt-5.2, gemini-2.5-flash]
+  metrics: >
+    share of candidates with median functional_score >= 0.5 (precision@10),
+    share >= 0.7, and the same for graph top-10 on existing labels
+  commit: "see the commit that adds this note and the batch"
+  threshold: >
+    Text is usable without a re-ranker if precision@10 is at least the graph's.
+    If it is below by more than 0.10, the re-ranker is required before display.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  batch: data-local/text-pool-20261031/review.json
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; batch is generated and annotated next"
+
+conclusion: >
+  Pending. This is the precision half of the text-pool story; 0082 measured
+  recall only.
+
+artifacts:
+  - data/results/text_precision.json
