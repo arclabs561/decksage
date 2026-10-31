@@ -107,6 +107,26 @@ test.describe('API search endpoints', () => {
   });
 });
 
+test.describe('Card detail tools', () => {
+  test('card info returns metadata and ban status', async ({ request }) => {
+    const resp = await request.get('/v1/cards/Lightning%20Bolt', { params: { game: 'magic' } });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(body.card).toBe('Lightning Bolt');
+    expect(body.metadata).toBeTruthy();
+    expect(body.metadata.type || body.metadata.type_line).toBeTruthy();
+  });
+
+  test('legality returns per-format status', async ({ request }) => {
+    const resp = await request.get('/v1/cards/Lightning%20Bolt/legality', {
+      params: { game: 'magic' },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(Object.keys(body.legalities).length).toBeGreaterThan(0);
+  });
+});
+
 test.describe('Graph query', () => {
   test('neighbors returns weighted co-occurrence edges', async ({ request }) => {
     const resp = await request.get('/v1/graph/neighbors', {

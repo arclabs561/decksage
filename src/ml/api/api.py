@@ -2319,6 +2319,40 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
     return ordered
 
 
+@router.get("/cards/{card}")
+def card_info(card: str, game: str | None = Query(None)) -> dict:
+    """Metadata for one card, for agents and UI detail panes."""
+    g = _require_game(game)
+    state = get_state(g)
+    if not _exact_card_match(state, card):
+        raise HTTPException(status_code=404, detail=f"Card {card!r} not found")
+    return {
+        "game": g,
+        "card": card,
+        "metadata": (state.card_metadata or {}).get(card),
+        "ban_status": _lookup_ban_status(card, state.banlist),
+    }
+
+
+@router.get("/cards/{card}/legality")
+def card_legality(card: str, game: str | None = Query(None)) -> dict:
+    """Format legality and ban status for one card.
+
+    Kept separate from metadata so an agent can cite a legality answer without
+    inventing one from prose.
+    """
+    g = _require_game(game)
+    state = get_state(g)
+    if not _exact_card_match(state, card):
+        raise HTTPException(status_code=404, detail=f"Card {card!r} not found")
+    return {
+        "game": g,
+        "card": card,
+        "legalities": (state.legality_data or {}).get(card, {}),
+        "ban_status": _lookup_ban_status(card, state.banlist),
+    }
+
+
 @router.get("/cards", response_model=CardsResponse)
 def list_cards_v1(
     game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
