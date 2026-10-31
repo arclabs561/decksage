@@ -107,6 +107,20 @@ test.describe('API search endpoints', () => {
   });
 });
 
+test.describe('Index coverage', () => {
+  test('index status reports catalog and backend counts', async ({ request }) => {
+    const resp = await request.get('/v1/index/status');
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    for (const game of ['magic', 'pokemon', 'yugioh']) {
+      const entry = body.games[game];
+      expect(entry.catalog).toBeGreaterThan(0);
+      expect(entry.meilisearch_coverage).toBe(1);
+      expect(entry.qdrant_coverage).toBeGreaterThan(0.6);
+    }
+  });
+});
+
 test.describe('Exact-match and catalog coverage', () => {
   test('search reports exact_match for a real card and not for a miss', async ({ request }) => {
     const hit = await request.post('/v1/search', {

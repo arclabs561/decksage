@@ -979,6 +979,43 @@ def health_v1(game: str | None = Query(None, description="Game name (magic, yugi
     )
 
 
+@router.get("/index/status")
+def index_status() -> dict:
+    """Per-game catalog and backend coverage, for the stack doctor and the UI.
+
+    Counts only: no documents are returned. A gap here means the index is
+    incomplete, not that the search is wrong.
+    """
+    games = _configured_games()
+    report: dict[str, dict] = {}
+    for game in games:
+        state = get_state(game)
+        catalog = len(state.card_metadata or {})
+        entry: dict[str, object] = {"catalog": catalog}
+        client = _get_search_client(game)
+        if client is not None and client.meilisearch is not None:
+            try:
+                entry["meilisearch"] = (
+                    client.meilisearch.index(client.index_name).get_stats().number_of_documents
+                )
+            except Exception:
+                entry["meilisearch"] = None
+        else:
+            entry["meilisearch"] = None
+        if client is not None and client.qdrant is not None:
+            try:
+                entry["qdrant"] = client.qdrant.get_collection(client.collection_name).points_count
+            except Exception:
+                entry["qdrant"] = None
+        else:
+            entry["qdrant"] = None
+        for key in ("meilisearch", "qdrant"):
+            value = entry[key]
+            entry[f"{key}_coverage"] = round(value / catalog, 4) if catalog and value else None
+        report[game] = entry
+    return {"games": report}
+
+
 @router.get("/games")
 def games_v1():
     """
@@ -1611,6 +1648,26 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     query = request.query
     k = request.top_k
     method = _resolve_method(request)
+    # A card can exist in the catalog without a graph vector (11,322 Magic
+    # cards do). That is "no neighbours", not "not a card": return an honest
+    # empty result with exact_match so the UI can tell the two apart.
+    if (
+        state.embeddings is not None
+        and query not in state.embeddings
+        and _exact_card_match(state, query)
+    ):
+        return SimilarityResponse(
+            query=query,
+            exact_match=True,
+            query_metadata=dict((state.card_metadata or {}).get(query, {}) or {}) or None,
+            results=[],
+            model_info={
+                **state.model_info,
+                "method_used": method,
+                "game": game,
+                "no_vector": True,
+            },
+        )
     if method == "embedding":
         results = _similar_embedding(
             state,
