@@ -1,0 +1,43 @@
+{
+  "pairs": 60,
+  "mae": 0.1936,
+  "median_abs_error": 0.15,
+  "within_0p1": 0.4167,
+  "sign_flips": 15,
+  "sign_flip_share": 0.25,
+  "material_flips": 8,
+  "material_flip_share": 0.1333,
+  "per_band": {
+    "0.0-0.15": {
+      "n": 12,
+      "mean_old": 0.011,
+      "mean_new": 0.129,
+      "mean_abs_error": 0.124
+    },
+    "0.15-0.3": {
+      "n": 12,
+      "mean_old": 0.185,
+      "mean_new": 0.156,
+      "mean_abs_error": 0.126
+    },
+    "0.3-0.5": {
+      "n": 12,
+      "mean_old": 0.384,
+      "mean_new": 0.348,
+      "mean_abs_error": 0.199
+    },
+    "0.5-0.7": {
+      "n": 12,
+      "mean_old": 0.594,
+      "mean_new": 0.435,
+      "mean_abs_error": 0.284
+    },
+    "0.7-1.01": {
+      "n": 12,
+      "mean_old": 0.795,
+      "mean_new": 0.561,
+      "mean_abs_error": 0.236
+    }
+  },
+  "judge_spread_mean": 0.0536
+}

@@ -1,0 +1,492 @@
+{
+ "purpose": "Stratified 60-pair sample used to estimate label noise (seed 20261031).",
+ "bands": [
+  "0-0.15",
+  "0.15-0.3",
+  "0.3-0.5",
+  "0.5-0.7",
+  "0.7-1.0"
+ ],
+ "pairs": [
+  {
+   "query": "Wydwen, the Biting Gale",
+   "candidate": "Souvenir Snatcher",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Legendary Creature \u2014 Faerie Wizard | Flash\nFlying\n{U}{B}, Pay 1 life: Return Wydwen to its owner's hand.",
+   "candidate_context": "Creature \u2014 Bird | Mutate {5}{U} (If you cast this spell for its mutate cost, put it over or under target non-Human creature you own. They mutate into the creature on top plus all abilities from under it.)\nFlying\nWhenever this creature mutates, gain control of target noncreature artifact."
+  },
+  {
+   "query": "Castle Ardenvale",
+   "candidate": "Outlaws' Merriment",
+   "old_score": 0.1,
+   "mode": "synergy",
+   "query_context": "Land | This land enters tapped unless you control a Plains.\n{T}: Add {W}.\n{2}{W}{W}, {T}: Create a 1/1 white Human creature token.",
+   "candidate_context": "Enchantment | At the beginning of your upkeep, choose one at random. Create a red and white creature token with those characteristics.\n\u2022 3/1 Human Warrior with trample and haste.\n\u2022 2/1 Human Cleric with lifelink and haste.\n\u2022 1/2 Human Rogue with haste and \"When this token enters, it deals 1 damage to any target.\""
+  },
+  {
+   "query": "Heir of the Ancient Fang",
+   "candidate": "Eiganjo Exemplar",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Creature \u2014 Snake Samurai | This creature enters with a +1/+1 counter on it if you control a modified creature. (Equipment, Auras you control, and counters are modifications.)",
+   "candidate_context": "Enchantment Creature \u2014 Human Samurai | Whenever a Samurai or Warrior you control attacks alone, it gets +1/+1 until end of turn."
+  },
+  {
+   "query": "Congregation at Dawn",
+   "candidate": "Marauding Dreadship",
+   "old_score": 0.0,
+   "mode": "synergy",
+   "query_context": "Instant | Search your library for up to three creature cards, reveal them, then shuffle and put those cards on top in any order.",
+   "candidate_context": "Artifact \u2014 Vehicle | Haste\nWhen this Vehicle enters, incubate 2. (Create an Incubator token with two +1/+1 counters on it and \"{2}: Transform this token.\" It transforms into a 0/0 Phyrexian artifact creature.)\nCrew 2 (Tap any number of creatures you control with total power 2 or more: This Vehicle becomes an artifact creature until end of turn.)"
+  },
+  {
+   "query": "Woodland Mystic",
+   "candidate": "Knotvine Mystic",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Creature \u2014 Elf Druid | {T}: Add {G}.",
+   "candidate_context": "Creature \u2014 Elf Druid | {1}, {T}: Add {R}{G}{W}."
+  },
+  {
+   "query": "Vogar, Necropolis Tyrant",
+   "candidate": "Soulless One",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Legendary Creature \u2014 Zombie Giant | Menace\nWhenever another creature dies during your turn, put a +1/+1 counter on Vogar.\nWhen Vogar dies, draw a card for each +1/+1 counter on it.",
+   "candidate_context": "Creature \u2014 Zombie Avatar | Soulless One's power and toughness are each equal to the number of Zombies on the battlefield plus the number of Zombie cards in all graveyards."
+  },
+  {
+   "query": "Pack Leader",
+   "candidate": "Desert of the Indomitable",
+   "old_score": 0.0375,
+   "mode": null,
+   "query_context": "Creature \u2014 Dog | Other Dogs you control get +1/+1.\nWhenever this creature attacks, prevent all combat damage that would be dealt this turn to Dogs you control.",
+   "candidate_context": "Land \u2014 Desert | This land enters tapped.\n{T}: Add {G}.\nCycling {1}{G} ({1}{G}, Discard this card: Draw a card.)"
+  },
+  {
+   "query": "Whiplash Trap",
+   "candidate": "Carom",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Instant \u2014 Trap | If an opponent had two or more creatures enter the battlefield under their control this turn, you may pay {U} rather than pay this spell's mana cost.\nReturn two target creatures to their owners' hands.",
+   "candidate_context": "Instant | The next 1 damage that would be dealt to target creature this turn is dealt to another target creature instead.\nDraw a card."
+  },
+  {
+   "query": "Raise Dead",
+   "candidate": "Vampiric Feast",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Sorcery | Return target creature card from your graveyard to your hand.",
+   "candidate_context": "Sorcery | Vampiric Feast deals 4 damage to any target and you gain 4 life."
+  },
+  {
+   "query": "Swirling Torrent",
+   "candidate": "Uproot",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Sorcery | Choose one or both \u2014\n\u2022 Put target creature on top of its owner's library.\n\u2022 Return target creature to its owner's hand.",
+   "candidate_context": "Sorcery \u2014 Arcane | Put target land on top of its owner's library."
+  },
+  {
+   "query": "Mind's Dilation",
+   "candidate": "Stitcher's Graft",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Enchantment | Whenever an opponent casts their first spell each turn, that player exiles the top card of their library. If it's a nonland card, you may cast it without paying its mana cost.",
+   "candidate_context": "Artifact \u2014 Equipment | Equipped creature gets +3/+3.\nWhenever equipped creature attacks, it doesn't untap during its controller's next untap step.\nWhenever this Equipment becomes unattached from a permanent, sacrifice that permanent.\nEquip {2}"
+  },
+  {
+   "query": "Ruin Grinder",
+   "candidate": "Guardian Archon",
+   "old_score": 0.0,
+   "mode": null,
+   "query_context": "Artifact Creature \u2014 Construct | Menace\nWhen this creature dies, each player may discard their hand and draw seven cards.\nMountaincycling {2} ({2}, Discard this card: Search your library for a Mountain card, reveal it, put it into your hand, then shuffle.)",
+   "candidate_context": "Creature \u2014 Archon | Flying\nAs this creature enters, secretly choose an opponent.\nReveal the player you chose: You and target permanent you control each gain protection from the chosen player until end of turn. Activate only once."
+  },
+  {
+   "query": "Flameskull",
+   "candidate": "Kathari Remnant",
+   "old_score": 0.16999999999999998,
+   "mode": null,
+   "query_context": "Creature \u2014 Skeleton | Flying\nThis creature can't block.\nRejuvenation \u2014 When this creature dies, exile it. If you do, exile the top card of your library. Until the end of your next turn, you may play one of those cards. (If you cast Flameskull this way, you can't play the other card, and vice versa.)",
+   "candidate_context": "Creature \u2014 Bird Skeleton | Flying\n{B}: Regenerate this creature.\nCascade (When you cast this spell, exile cards from the top of your library until you exile a nonland card that costs less. You may cast it without paying its mana cost. Put the exiled cards on the bottom in a random order.)"
+  },
+  {
+   "query": "Titania's Command",
+   "candidate": "Kayla's Command",
+   "old_score": 0.18,
+   "mode": null,
+   "query_context": "Sorcery | Choose two \u2014\n\u2022 Exile target player's graveyard. You gain 1 life for each card exiled this way.\n\u2022 Search your library for up to two land cards, put them onto the battlefield tapped, then shuffle.\n\u2022 Create two 2/2 green Bear creature tokens.\n\u2022 Put two +1/+1 counters on each creature you control.",
+   "candidate_context": "Sorcery | Choose two \u2014\n\u2022 Create a 2/2 colorless Construct artifact creature token.\n\u2022 Put a +1/+1 counter on a creature you control. It gains double strike until end of turn.\n\u2022 Search your library for a basic Plains card, reveal it, put it into your hand, then shuffle.\n\u2022 You gain 2 life and scry 2."
+  },
+  {
+   "query": "Eye of Vecna",
+   "candidate": "The Book of Vile Darkness",
+   "old_score": 0.18000000000000002,
+   "mode": null,
+   "query_context": "Legendary Artifact | When Eye of Vecna enters, you draw a card and you lose 2 life.\nAt the beginning of your upkeep, you may pay {2}. If you do, you draw a card and you lose 2 life.",
+   "candidate_context": "Legendary Artifact | At the beginning of your end step, if you lost 2 or more life this turn, create a 2/2 black Zombie creature token.\n{T}, Exile The Book of Vile Darkness and artifacts you control named Eye of Vecna and Hand of Vecna: Create Vecna, a legendary 8/8 black Zombie God creature token with indestructible and all triggered abilities of the exiled cards."
+  },
+  {
+   "query": "Verdant Mastery",
+   "candidate": "Culmination of Studies",
+   "old_score": 0.2,
+   "mode": "synergy",
+   "query_context": "Sorcery | You may pay {3}{G} rather than pay this spell's mana cost.\nSearch your library for up to four basic land cards and reveal them. Put one of them onto the battlefield tapped under an opponent's control if the {3}{G} cost was paid. Put two of them onto the battlefield tapped under your control and the rest into your hand. Then shuffle.",
+   "candidate_context": "Sorcery | Exile the top X cards of your library. For each land card exiled this way, create a Treasure token. For each blue card exiled this way, draw a card. For each red card exiled this way, Culmination of Studies deals 1 damage to each opponent."
+  },
+  {
+   "query": "Mavinda, Students' Advocate",
+   "candidate": "Pestilent Cauldron // Restorative Burst",
+   "old_score": 0.2,
+   "mode": "synergy",
+   "query_context": "Legendary Creature \u2014 Bird Advisor | Flying\n{0}: You may cast target instant or sorcery card from your graveyard this turn. If that spell doesn't target a creature you control, it costs {8} more to cast this way. If that spell would be put into your graveyard, exile it instead. Activate only once each turn. (You still pay the spell's costs. Timing rules for the spell still apply.)",
+   "candidate_context": "Artifact // Sorcery"
+  },
+  {
+   "query": "Orcus, Prince of Undeath",
+   "candidate": "Asmodeus the Archfiend",
+   "old_score": 0.15,
+   "mode": null,
+   "query_context": "Legendary Creature \u2014 Demon | Flying, trample\nWhen Orcus enters, choose one \u2014\n\u2022 Each other creature gets -X/-X until end of turn. You lose X life.\n\u2022 Return up to X target creature cards with total mana value X or less from your graveyard to the battlefield. They gain haste until end of turn.",
+   "candidate_context": "Legendary Creature \u2014 Devil God | Binding Contract \u2014 If you would draw a card, exile the top card of your library face down instead.\n{B}{B}{B}: Draw seven cards.\n{B}: Return all cards exiled with Asmodeus to their owner's hand and you lose that much life."
+  },
+  {
+   "query": "Blacklance Paragon",
+   "candidate": "Worthy Knight",
+   "old_score": 0.28,
+   "mode": null,
+   "query_context": "Creature \u2014 Human Knight | Flash\nWhen this creature enters, target Knight gains deathtouch and lifelink until end of turn.",
+   "candidate_context": "Creature \u2014 Human Knight | Whenever you cast a Knight spell, create a 1/1 white Human creature token."
+  },
+  {
+   "query": "Sarcatog",
+   "candidate": "Glissa's Scorn",
+   "old_score": 0.2,
+   "mode": "substitution",
+   "query_context": "Creature \u2014 Atog | Exile two cards from your graveyard: This creature gets +1/+1 until end of turn.\nSacrifice an artifact: This creature gets +1/+1 until end of turn.",
+   "candidate_context": "Instant | Destroy target artifact. Its controller loses 1 life."
+  },
+  {
+   "query": "Spitebellows",
+   "candidate": "Disaster Radius",
+   "old_score": 0.15,
+   "mode": "synergy",
+   "query_context": "Creature \u2014 Elemental | When this creature leaves the battlefield, it deals 6 damage to target creature.\nEvoke {1}{R}{R} (You may cast this spell for its evoke cost. If you do, it's sacrificed when it enters.)",
+   "candidate_context": "Sorcery | As an additional cost to cast this spell, reveal a creature card from your hand.\nDisaster Radius deals X damage to each creature your opponents control, where X is the revealed card's mana value."
+  },
+  {
+   "query": "Displacer Beast",
+   "candidate": "Goblin Javelineer",
+   "old_score": 0.15,
+   "mode": null,
+   "query_context": "Creature \u2014 Cat Beast | When this creature enters, venture into the dungeon. (Enter the first room or advance to the next room.)\nDisplacement \u2014 {3}{U}: Return this creature to its owner's hand.",
+   "candidate_context": "Creature \u2014 Goblin Warrior | Haste\nWhenever this creature becomes blocked, it deals 1 damage to target creature blocking it."
+  },
+  {
+   "query": "Gem of Becoming",
+   "candidate": "Political Trickery",
+   "old_score": 0.15,
+   "mode": null,
+   "query_context": "Artifact | {3}, {T}, Sacrifice this artifact: Search your library for an Island card, a Swamp card, and a Mountain card. Reveal those cards, put them into your hand, then shuffle.",
+   "candidate_context": "Sorcery | Exchange control of target land you control and target land an opponent controls. (This effect lasts indefinitely.)"
+  },
+  {
+   "query": "Frenzied Arynx",
+   "candidate": "Skyship Stalker",
+   "old_score": 0.205,
+   "mode": null,
+   "query_context": "Creature \u2014 Cat Beast | Riot (This creature enters with your choice of a +1/+1 counter or haste.)\nTrample\n{4}{R}{G}: This creature gets +3/+0 until end of turn.",
+   "candidate_context": "Creature \u2014 Cat Dragon | Flying\n{R}: This creature gets +1/+0 until end of turn.\n{R}: This creature gains first strike until end of turn.\n{R}: This creature gains haste until end of turn."
+  },
+  {
+   "query": "Dawn of the Dead",
+   "candidate": "Akuta, Born of Ash",
+   "old_score": 0.31333333333333335,
+   "mode": null,
+   "query_context": "Enchantment | At the beginning of your upkeep, you lose 1 life.\nAt the beginning of your upkeep, you may return target creature card from your graveyard to the battlefield. That creature gains haste until end of turn. Exile it at the beginning of the next end step.",
+   "candidate_context": "Legendary Creature \u2014 Spirit | Haste\nAt the beginning of your upkeep, if you have more cards in hand than each opponent, you may sacrifice a Swamp. If you do, return Akuta from your graveyard to the battlefield."
+  },
+  {
+   "query": "Bristling Hydra",
+   "candidate": "Multiform Wonder",
+   "old_score": 0.475,
+   "mode": null,
+   "query_context": "Creature \u2014 Hydra | When this creature enters, you get {E}{E}{E} (three energy counters).\nPay {E}{E}{E}: Put a +1/+1 counter on this creature. It gains hexproof until end of turn.",
+   "candidate_context": "Artifact Creature \u2014 Construct | When this creature enters, you get {E}{E}{E} (three energy counters).\nPay {E}: This creature gains your choice of flying, vigilance, or lifelink until end of turn.\nPay {E}: This creature gets +2/-2 or -2/+2 until end of turn."
+  },
+  {
+   "query": "Display of Dominance",
+   "candidate": "Aven Liberator",
+   "old_score": 0.3,
+   "mode": "substitution",
+   "query_context": "Instant | Choose one \u2014\n\u2022 Destroy target blue or black noncreature permanent.\n\u2022 Permanents you control can't be the targets of blue or black spells your opponents control this turn.",
+   "candidate_context": "Creature \u2014 Bird Soldier | Flying\nMorph {3}{W} (You may cast this card face down as a 2/2 creature for {3}. Turn it face up any time for its morph cost.)\nWhen this creature is turned face up, target creature you control gains protection from the color of your choice until end of turn."
+  },
+  {
+   "query": "Archpriest of Iona",
+   "candidate": "Nimble Trapfinder",
+   "old_score": 0.3,
+   "mode": null,
+   "query_context": "Creature \u2014 Human Cleric | Archpriest of Iona's power is equal to the number of creatures in your party. (Your party consists of up to one each of Cleric, Rogue, Warrior, and Wizard.)\nAt the beginning of combat on your turn, if you have a full party, target creature gets +1/+1 and gains flying until end of turn.",
+   "candidate_context": "Creature \u2014 Human Rogue | This creature can't be blocked if you had another Cleric, Rogue, Warrior, or Wizard enter the battlefield under your control this turn.\nAt the beginning of combat on your turn, if you have a full party, creatures you control gain \"Whenever this creature deals combat damage to a player, draw a card\" until end of turn."
+  },
+  {
+   "query": "Demon's Jester",
+   "candidate": "Tinybones, Bauble Burglar",
+   "old_score": 0.3625,
+   "mode": null,
+   "query_context": "Creature \u2014 Imp | Flying\nHellbent \u2014 This creature gets +2/+1 as long as you have no cards in hand.",
+   "candidate_context": "Legendary Creature \u2014 Skeleton Rogue | Whenever an opponent discards a card, exile it from their graveyard with a stash counter on it.\nDuring your turn, you may play cards you don't own with stash counters on them from exile, and mana of any type can be spent to cast those spells.\n{3}{B}, {T}: Each opponent discards a card. Activate only as a sorcery."
+  },
+  {
+   "query": "Maul of the Skyclaves",
+   "candidate": "Mask of Griselbrand",
+   "old_score": 0.37,
+   "mode": null,
+   "query_context": "Artifact \u2014 Equipment | When this Equipment enters, attach it to target creature you control.\nEquipped creature gets +2/+2 and has flying and first strike.(It deals combat damage before creatures without first strike.)\nEquip {2}{W}{W}",
+   "candidate_context": "Legendary Artifact \u2014 Equipment | Equipped creature has flying and lifelink.\nWhenever equipped creature dies, you may pay X life, where X is its power. If you do, draw X cards.\nEquip {3}"
+  },
+  {
+   "query": "Lord of the Accursed",
+   "candidate": "Spark Reaper",
+   "old_score": 0.4,
+   "mode": "synergy",
+   "query_context": "Creature \u2014 Zombie | Other Zombies you control get +1/+1.\n{1}{B}, {T}: All Zombies gain menace until end of turn.",
+   "candidate_context": "Creature \u2014 Zombie | {3}, Sacrifice a creature or planeswalker: You gain 1 life and draw a card."
+  },
+  {
+   "query": "Setessan Griffin",
+   "candidate": "Putrid Leech",
+   "old_score": 0.4866666666666667,
+   "mode": null,
+   "query_context": "Creature \u2014 Griffin | Flying\n{2}{G}{G}: This creature gets +2/+2 until end of turn. Activate only once each turn.",
+   "candidate_context": "Creature \u2014 Zombie Leech | Pay 2 life: This creature gets +2/+2 until end of turn. Activate only once each turn."
+  },
+  {
+   "query": "Bookwurm",
+   "candidate": "Dosan's Oldest Chant",
+   "old_score": 0.48,
+   "mode": null,
+   "query_context": "Creature \u2014 Wurm | Trample\nWhen this creature enters, you gain 3 life and draw a card.\n{2}{G}: Put this card from your graveyard into your library third from the top.",
+   "candidate_context": "Sorcery | You gain 6 life.\nDraw a card."
+  },
+  {
+   "query": "Airdrop Aeronauts",
+   "candidate": "Starry-Eyed Skyrider",
+   "old_score": 0.47500000000000003,
+   "mode": null,
+   "query_context": "Creature \u2014 Dwarf Scout | Flying\nRevolt \u2014 When this creature enters, if a permanent left the battlefield under your control this turn, you gain 5 life.",
+   "candidate_context": "Creature \u2014 Human Scout | Flying\nWhenever this creature attacks, another target creature you control gains flying until end of turn.\nAttacking tokens you control have flying."
+  },
+  {
+   "query": "Thwart",
+   "candidate": "Fierce Guardianship",
+   "old_score": 0.35,
+   "mode": "substitution",
+   "query_context": "Instant | You may return three Islands you control to their owner's hand rather than pay this spell's mana cost.\nCounter target spell.",
+   "candidate_context": "Instant | If you control a commander, you may cast this spell without paying its mana cost.\nCounter target noncreature spell."
+  },
+  {
+   "query": "Fire-Belly Changeling",
+   "candidate": "Dauntless Dourbark",
+   "old_score": 0.3,
+   "mode": "substitution",
+   "query_context": "Creature \u2014 Shapeshifter | Changeling (This card is every creature type.)\n{R}: This creature gets +1/+0 until end of turn. Activate no more than twice each turn.",
+   "candidate_context": "Creature \u2014 Treefolk Warrior | Dauntless Dourbark's power and toughness are each equal to the number of Forests you control plus the number of Treefolk you control.\nThis creature has trample as long as you control another Treefolk."
+  },
+  {
+   "query": "Surgical Extraction",
+   "candidate": "Infinite Obliteration",
+   "old_score": 0.55,
+   "mode": "substitution",
+   "query_context": "Instant | ({B/P} can be paid with either {B} or 2 life.)\nChoose target card in a graveyard other than a basic land card. Search its owner's graveyard, hand, and library for any number of cards with the same name as that card and exile them. Then that player shuffles.",
+   "candidate_context": "Sorcery | Choose a creature card name. Search target opponent's graveyard, hand, and library for any number of cards with that name and exile them. Then that player shuffles."
+  },
+  {
+   "query": "Skymarch Bloodletter",
+   "candidate": "Marauding Blight-Priest",
+   "old_score": 0.5,
+   "mode": null,
+   "query_context": "Creature \u2014 Vampire Soldier | Flying\nWhen this creature enters, target opponent loses 1 life and you gain 1 life.",
+   "candidate_context": "Creature \u2014 Vampire Cleric | Whenever you gain life, each opponent loses 1 life."
+  },
+  {
+   "query": "The Reaper, King No More",
+   "candidate": "Descendants' Fury",
+   "old_score": 0.5,
+   "mode": "synergy",
+   "query_context": "Legendary Artifact Creature \u2014 Scarecrow | When The Reaper enters, put a -1/-1 counter on each of up to two target creatures.\nWhenever a creature an opponent controls with a -1/-1 counter on it dies, you may put that card onto the battlefield under your control. Do this only once each turn.",
+   "candidate_context": "Enchantment | Whenever one or more creatures you control deal combat damage to a player, you may sacrifice one of them. If you do, reveal cards from the top of your library until you reveal a creature card that shares a creature type with the sacrificed creature. Put that card onto the battlefield and the rest on the bottom of your library in a random order."
+  },
+  {
+   "query": "Cryptbreaker",
+   "candidate": "Cemetery Reaper",
+   "old_score": 0.6,
+   "mode": null,
+   "query_context": "Creature \u2014 Zombie | {1}{B}, {T}, Discard a card: Create a 2/2 black Zombie creature token.\nTap three untapped Zombies you control: You draw a card and you lose 1 life.",
+   "candidate_context": "Creature \u2014 Zombie | Other Zombie creatures you control get +1/+1.\n{2}{B}, {T}: Exile target creature card from a graveyard. Create a 2/2 black Zombie creature token."
+  },
+  {
+   "query": "Thraxodemon",
+   "candidate": "Destructive Digger",
+   "old_score": 0.675,
+   "mode": null,
+   "query_context": "Creature \u2014 Demon | {3}, {T}, Sacrifice another creature or artifact: Draw a card.",
+   "candidate_context": "Creature \u2014 Goblin | {3}, {T}, Sacrifice an artifact or land: Draw a card."
+  },
+  {
+   "query": "Circle of Dreams Druid",
+   "candidate": "True Polymorph",
+   "old_score": 0.6,
+   "mode": null,
+   "query_context": "Creature \u2014 Elf Druid | {T}: Add {G} for each creature you control.",
+   "candidate_context": "Instant | Target artifact or creature becomes a copy of another target artifact or creature."
+  },
+  {
+   "query": "Shapers of Nature",
+   "candidate": "Simic Fluxmage",
+   "old_score": 0.625,
+   "mode": null,
+   "query_context": "Creature \u2014 Merfolk Shaman | {3}{G}: Put a +1/+1 counter on target creature.\n{2}{U}, Remove a +1/+1 counter from a creature you control: Draw a card.",
+   "candidate_context": "Creature \u2014 Merfolk Wizard | Evolve (Whenever a creature you control enters, if that creature has greater power or toughness than this creature, put a +1/+1 counter on this creature.)\n{1}{U}, {T}: Move a +1/+1 counter from this creature onto target creature."
+  },
+  {
+   "query": "Angrath's Marauders",
+   "candidate": "Dinosaur Hunter",
+   "old_score": 0.6,
+   "mode": null,
+   "query_context": "Creature \u2014 Human Pirate | If a source you control would deal damage to a permanent or player, it deals double that damage to that permanent or player instead.",
+   "candidate_context": "Creature \u2014 Human Pirate | Whenever this creature deals damage to a Dinosaur, destroy that creature."
+  },
+  {
+   "query": "Ragavan, Nimble Pilferer",
+   "candidate": "Profane Tutor",
+   "old_score": 0.65,
+   "mode": "meta",
+   "query_context": "Legendary Creature \u2014 Monkey Pirate | Whenever Ragavan deals combat damage to a player, create a Treasure token and exile the top card of that player's library. Until end of turn, you may cast that card.\nDash {1}{R} (You may cast this spell for its dash cost. If you do, it gains haste, and it's returned from the battlefield to its owner's hand at the beginning of the next end step.)",
+   "candidate_context": "Sorcery | Suspend 2\u2014{1}{B} (Rather than cast this card from your hand, pay {1}{B} and exile it with two time counters on it. At the beginning of your upkeep, remove a time counter. When the last is removed, you may cast it without paying its mana cost.)\nSearch your library for a card, put that card into your hand, then shuffle."
+  },
+  {
+   "query": "Murky Sewer",
+   "candidate": "Peculiar Lighthouse",
+   "old_score": 0.6794,
+   "mode": "substitution",
+   "query_context": "Land | This land enters tapped unless a player has 13 or less life.\n{T}: Add {U} or {B}.",
+   "candidate_context": "Land | This land enters tapped unless a player has 13 or less life.\n{T}: Add {U} or {R}."
+  },
+  {
+   "query": "Walking Bulwark",
+   "candidate": "Felothar the Steadfast",
+   "old_score": 0.6,
+   "mode": "synergy",
+   "query_context": "Artifact Creature \u2014 Golem | Defender\n{2}: Until end of turn, target creature with defender gains haste, can attack as though it didn't have defender, and assigns combat damage equal to its toughness rather than its power. Activate only as a sorcery.",
+   "candidate_context": "Legendary Creature \u2014 Human Warrior | Each creature you control assigns combat damage equal to its toughness rather than its power.\nCreatures you control can attack as though they didn't have defender.\n{3}, {T}, Sacrifice another creature: Draw cards equal to the sacrificed creature's toughness, then discard cards equal to its power."
+  },
+  {
+   "query": "Michiko's Reign of Truth // Portrait of Michiko",
+   "candidate": "The Rise of Sozin // Fire Lord Sozin",
+   "old_score": 0.55,
+   "mode": null,
+   "query_context": "Enchantment \u2014 Saga // Enchantment Creature \u2014 Human Noble",
+   "candidate_context": "Enchantment \u2014 Saga // Legendary Creature \u2014 Human Noble"
+  },
+  {
+   "query": "Haunting Voyage",
+   "candidate": "Battle for Bretagard",
+   "old_score": 0.8,
+   "mode": "meta",
+   "query_context": "Sorcery | Choose a creature type. Return up to two creature cards of that type from your graveyard to the battlefield. If this spell was foretold, return all creature cards of that type from your graveyard to the battlefield instead.\nForetell {5}{B}{B} (During your turn, you may pay {2} and exile this card from your hand face down. Cast it on a later turn for its foretell cost.)",
+   "candidate_context": "Enchantment \u2014 Saga | (As this Saga enters and after your draw step, add a lore counter. Sacrifice after III.)\nI \u2014 Create a 1/1 white Human Warrior creature token.\nII \u2014 Create a 1/1 green Elf Warrior creature token.\nIII \u2014 Choose any number of artifact tokens and/or creature tokens you control with different names. For each of them, create a token that's a copy of it."
+  },
+  {
+   "query": "Filigree Attendant",
+   "candidate": "Darksteel Juggernaut",
+   "old_score": 0.7,
+   "mode": null,
+   "query_context": "Artifact Creature \u2014 Homunculus | Flying\nFiligree Attendant's power is equal to the number of artifacts you control.",
+   "candidate_context": "Artifact Creature \u2014 Juggernaut | Indestructible\nDarksteel Juggernaut's power and toughness are each equal to the number of artifacts you control.\nThis creature attacks each combat if able."
+  },
+  {
+   "query": "Amped Up",
+   "candidate": "Traitorous Instinct",
+   "old_score": 0.9,
+   "mode": null,
+   "query_context": "Sorcery | This spell costs {1} less to cast for each electrical socket in a wall or floor you can see from your seat.\nGain control of target creature until end of turn. Untap that creature. Until end of turn, it gets +3/+0 and gains haste.",
+   "candidate_context": "Sorcery | Gain control of target creature until end of turn. Untap that creature. Until end of turn, it gets +2/+0 and gains haste."
+  },
+  {
+   "query": "Meteor Swarm",
+   "candidate": "Meteor Blast",
+   "old_score": 0.8500000000000001,
+   "mode": null,
+   "query_context": "Sorcery | Meteor Swarm deals 8 damage divided as you choose among X target creatures and/or planeswalkers.",
+   "candidate_context": "Sorcery | Meteor Blast deals 4 damage to each of X targets."
+  },
+  {
+   "query": "Festival Crasher",
+   "candidate": "Storm Skreelix",
+   "old_score": 0.9,
+   "mode": null,
+   "query_context": "Creature \u2014 Devil | Whenever you cast an instant or sorcery spell, this creature gets +2/+0 until end of turn.",
+   "candidate_context": "Creature \u2014 Drake Horror | Flying\nInstant and sorcery spells you cast cost {1} less to cast.\nWhenever you cast an instant or sorcery spell, this creature gets +2/+0 until end of turn."
+  },
+  {
+   "query": "Manifestation Sage",
+   "candidate": "Body of Research",
+   "old_score": 0.7375,
+   "mode": null,
+   "query_context": "Creature \u2014 Human Wizard | When this creature enters, create a 0/0 green and blue Fractal creature token. Put X +1/+1 counters on it, where X is the number of cards in your hand.",
+   "candidate_context": "Sorcery | Create a 0/0 green and blue Fractal creature token. Put X +1/+1 counters on it, where X is the number of cards in your library."
+  },
+  {
+   "query": "Worn Powerstone",
+   "candidate": "Marble Diamond",
+   "old_score": 0.7625000000000001,
+   "mode": null,
+   "query_context": "Artifact | This artifact enters tapped.\n{T}: Add {C}{C}.",
+   "candidate_context": "Artifact | This artifact enters tapped.\n{T}: Add {W}."
+  },
+  {
+   "query": "Mana Maze",
+   "candidate": "Pathway Arrows",
+   "old_score": 0.8,
+   "mode": null,
+   "query_context": "Enchantment | Players can't cast spells that share a color with the spell most recently cast this turn.",
+   "candidate_context": "Artifact \u2014 Equipment | Equipped creature has \"{2}, {T}: This creature deals 1 damage to target creature. If a colorless creature is dealt damage this way, tap it.\"\nEquip {2}"
+  },
+  {
+   "query": "Apothecary Geist",
+   "candidate": "Goldnight Redeemer",
+   "old_score": 0.8,
+   "mode": null,
+   "query_context": "Creature \u2014 Spirit | Flying\nWhen this creature enters, if you control another Spirit, you gain 3 life.",
+   "candidate_context": "Creature \u2014 Angel | Flying\nWhen this creature enters, you gain 2 life for each other creature you control."
+  },
+  {
+   "query": "Hallowed Healer",
+   "candidate": "Split-Tail Miko",
+   "old_score": 0.8,
+   "mode": null,
+   "query_context": "Creature \u2014 Human Cleric | {T}: Prevent the next 2 damage that would be dealt to any target this turn.\nThreshold \u2014 {T}: Prevent the next 4 damage that would be dealt to any target this turn. Activate only if there are seven or more cards in your graveyard.",
+   "candidate_context": "Creature \u2014 Fox Cleric | {W}, {T}: Prevent the next 2 damage that would be dealt to any target this turn."
+  },
+  {
+   "query": "Vivien of the Arkbow",
+   "candidate": "Vivien, Nature's Avenger",
+   "old_score": 0.7875,
+   "mode": null,
+   "query_context": "Legendary Planeswalker \u2014 Vivien | +2: Put two +1/+1 counters on up to one target creature.\n\u22123: Target creature you control deals damage equal to its power to target creature you don't control.\n\u22129: Creatures you control get +4/+4 and gain trample until end of turn.",
+   "candidate_context": "Legendary Planeswalker \u2014 Vivien | +1: Put three +1/+1 counters on up to one target creature.\n\u22121: Reveal cards from the top of your library until you reveal a creature card. Put that card into your hand and the rest on the bottom of your library in a random order.\n\u22126: Target creature gets +10/+10 and gains trample until end of turn."
+  },
+  {
+   "query": "Snapdax, Apex of the Hunt",
+   "candidate": "Dirge Bat",
+   "old_score": 0.7,
+   "mode": null,
+   "query_context": "Legendary Creature \u2014 Dinosaur Cat Nightmare | Mutate {2}{B/R}{W}{W} (If you cast this spell for its mutate cost, put it over or under target non-Human creature you own. They mutate into the creature on top plus all abilities from under it.)\nDouble strike\nWhenever this creature mutates, it deals 4 damage to target creature or planeswalker an opponent controls and you gain 4 life.",
+   "candidate_context": "Creature \u2014 Bat | Mutate {4}{B}{B} (If you cast this spell for its mutate cost, put it over or under target non-Human creature you own. They mutate into the creature on top plus all abilities from under it.)\nFlash\nFlying\nWhenever this creature mutates, destroy target creature or planeswalker an opponent controls."
+  }
+ ]
+}

@@ -1269,3 +1269,9 @@ qa-deps-down:
 verify-artifacts:
     #!/usr/bin/env bash
     uv run python scripts/maintenance/verify_artifacts.py
+
+# Automated evidence loop: label-noise audit, judged-only arm comparison, memo.
+# See scripts/evaluation/evidence_loop.py for the subcommands.
+evidence-loop *ARGS:
+    #!/usr/bin/env bash
+    uv run scripts/evaluation/evidence_loop.py {{ARGS}}
