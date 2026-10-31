@@ -77,6 +77,8 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0069 | 2026-10-30 | Logical composition over co-occurrence and embedding graphs (heyting) | magic | functional_score; unjudged = 0; IDCG from judged scores | -- | verdict not_supported | [0069](0069_heyting_logical_composition.yaml) |
 | 0070 | 2026-10-30 | tranz DistMult on the co-occurrence graph (magic) | magic | -- | -- | final_loss 5.7179; ndcg_at_10 0.072; verdict not_supported | [0070](0070_tranz_kge_cooccurrence.yaml) |
 | 0071 | 2026-10-30 | External label anchor: Scryfall Oracle Tag overlap (magic) | magic | Scryfall Oracle Tags bulk, 2026-10-30T21:00:36Z | -- | verdict partial external support; note Oracle Tags are a card-level role/function proxy, not a pair-level substitution label. The score tracks shared roles but the correlation is well below the 0.30 support line; tag sparsity and coarse tags attenuate it. | [0071](0071_label_anchor_scryfall_tags.yaml) |
+| 0072 | 2026-10-30 | Scryfall tag Jaccard as a substitute re-ranker (magic) | magic | Scryfall Oracle Tags bulk 2026-10-30T21:00:36Z | -- | baseline_ndcg_at_10 0.4942; tag_ndcg_at_10 0.3142; delta -0.1799; baseline_recall_at_10 0.6543; tag_recall_at_10 0.4989; recall_delta -0.1554; verdict candidate_worse | [0072](0072_tag_jaccard_rerank.yaml) |
+| 0073 | 2026-10-30 | Functional-reprint known-item probe (magic) | magic | data/raw/scryfall/oracle-cards.json | -- | embedding_queries 898; recall_at_10 0.3307; recall_at_50 0.5434; median_rank 37.0; judged_mean_functional_score 0.573; verdict weak known-item recall | [0073](0073_functional_reprint_probe.yaml) |
 
 ## Key Insights (cross-cutting)
 

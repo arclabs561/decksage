@@ -1,0 +1,44 @@
+id: "0073"
+date: "2026-10-30"
+title: "Functional-reprint known-item probe (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  If the embedding captures functional substitutes, cards with identical
+  normalized oracle text and type should be retrieved in its top-10. A low
+  recall is a necessary-condition failure: the model misses the strongest
+  possible substitutes.
+
+method:
+  type: known_item_probe
+  script: data-local/label-anchor-20261030/reprint_probe.py
+  args: "inline; group oracle cards by normalized oracle_text + type_line; most_similar topn=50"
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+
+data:
+  source: data/raw/scryfall/oracle-cards.json
+  groups: 483
+  pairs: 843
+  cards_in_groups: 1100
+  judged_pairs_in_test_set: 36
+
+results:
+  embedding_queries: 898
+  recall_at_10: 0.3307
+  recall_at_50: 0.5434
+  median_rank: 37.0
+  judged_mean_functional_score: 0.573
+  verdict: "weak known-item recall"
+
+artifacts:
+  - data/results/functional_reprint_probe_20261030.json
+
+conclusion: >
+  The embedding retrieves an exact functional reprint in top-10 only 33% of the
+  time (top-50 54%, median rank 37). Exact reprints are the strongest possible
+  substitutes and a high-precision rule the model currently misses. Add an
+  exact-text/type reprint rule as a candidate signal and test it; the pair-level
+  label anchor is still needed for the broader substitution claim. The 36 judged
+  pairs average functional_score 0.573, consistent with reprints being strong
+  substitutes, but the sample is too small to validate the labels.

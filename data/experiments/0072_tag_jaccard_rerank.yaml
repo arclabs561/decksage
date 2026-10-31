@@ -1,0 +1,53 @@
+id: "0072"
+date: "2026-10-30"
+title: "Scryfall tag Jaccard as a substitute re-ranker (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  Scryfall Oracle Tag Jaccard is an independent role/function signal. If it
+  re-ranks the embedding's fixed candidate set better than the embedding alone,
+  tag overlap is a usable fusion component; if it is worse, the external label
+  correlation (rho 0.20) does not translate into ranking value.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --candidate-sources tag:jaccard
+    --tag-data data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+    --tag-cards data/raw/scryfall/oracle-cards.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+    usable: 1313
+  tag_source: "Scryfall Oracle Tags bulk 2026-10-30T21:00:36Z"
+  tag_cards: 33854
+  scored_queries: 763
+
+results:
+  baseline_ndcg_at_10: 0.4942
+  tag_ndcg_at_10: 0.3142
+  delta: -0.1799
+  delta_ci_95: [-0.1971, -0.1621]
+  baseline_recall_at_10: 0.6543
+  tag_recall_at_10: 0.4989
+  recall_delta: -0.1554
+  verdict: "candidate_worse"
+
+artifacts:
+  - data/results/tag_jaccard_rerank.json
+
+conclusion: >
+  The hypothesis is not supported for re-ranking: tag Jaccard scores 0.3142
+  against the embedding's 0.4942 on the 763 tag-covered queries (delta -0.1799,
+  CI [-0.1971, -0.1621]). The external anchor's positive 0.20 correlation is a
+  role-level signal, not a substitute-ranking signal. Keep Scryfall tags as a
+  validity anchor and a possible feature for a later fusion test; do not use
+  tag overlap alone as a product re-ranker.

@@ -1,0 +1,11 @@
+{
+  "groups": 483,
+  "pairs": 843,
+  "cards": 1100,
+  "judged_pairs": 36,
+  "judged_mean_functional": 0.5734,
+  "embedding_queries": 898,
+  "recall_at_10": 0.3307,
+  "recall_at_50": 0.5434,
+  "median_rank": 37.0
+}
