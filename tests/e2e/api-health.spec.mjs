@@ -107,6 +107,27 @@ test.describe('API search endpoints', () => {
   });
 });
 
+test.describe('Graph query', () => {
+  test('neighbors returns weighted co-occurrence edges', async ({ request }) => {
+    const resp = await request.get('/v1/graph/neighbors', {
+      params: { game: 'magic', card: 'Lightning Bolt', limit: 3 },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(body.card).toBe('Lightning Bolt');
+    expect(body.neighbors.length).toBeGreaterThan(0);
+    expect(typeof body.neighbors[0].weight).toBe('number');
+  });
+
+  test('an unknown card returns an empty neighbourhood, not an error', async ({ request }) => {
+    const resp = await request.get('/v1/graph/neighbors', {
+      params: { game: 'magic', card: 'Xyzzy Nonexistent', limit: 3 },
+    });
+    expect(resp.ok()).toBeTruthy();
+    expect((await resp.json()).neighbors).toEqual([]);
+  });
+});
+
 test.describe('Text retrieval mode', () => {
   test('mode=text returns a text-ranked pool', async ({ request }) => {
     const resp = await request.post('/v1/similar', {

@@ -979,6 +979,36 @@ def health_v1(game: str | None = Query(None, description="Game name (magic, yugi
     )
 
 
+@router.get("/graph/neighbors")
+def graph_neighbors(
+    game: str | None = Query(None),
+    card: str = Query(..., min_length=1),
+    limit: int = Query(20, ge=1, le=100),
+) -> dict:
+    """Co-occurrence neighbours for one card, for agents exploring the graph.
+
+    Weights are deck co-occurrence counts; a missing card or an empty
+    neighbourhood returns an empty list rather than a 404 so an agent can
+    continue without special-casing.
+    """
+    g = _require_game(game)
+    state = get_state(g)
+    adj = (state.graph_data or {}).get("adj") or {}
+    weights = (state.graph_data or {}).get("weights") or {}
+    neighbours = adj.get(card)
+    if not neighbours:
+        return {"game": g, "card": card, "neighbors": []}
+    scored = sorted(
+        ((name, float(weights.get((card, name), 1.0))) for name in neighbours),
+        key=lambda pair: (-pair[1], pair[0]),
+    )[:limit]
+    return {
+        "game": g,
+        "card": card,
+        "neighbors": [{"card": name, "weight": weight} for name, weight in scored],
+    }
+
+
 @router.get("/index/status")
 def index_status() -> dict:
     """Per-game catalog and backend coverage, for the stack doctor and the UI.
