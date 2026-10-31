@@ -85,11 +85,20 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import numpy as np
 from eval_per_mode import DEFAULT_EMBEDDINGS as DEFAULT_BASELINE
+from pydantic import ValidationError
 from task_labels import TASK_SCORE_FIELD, TASKS
+
+from ml.contracts.evaluation import (
+    Coverage,
+    LabelPatchEntry,
+    LabelPolicy,
+    SparseLabelsError,
+    Verdict,
+)
 
 
 SCHEMA = "decksage.recommendation_comparison/1"
-VERDICTS = ("candidate_better", "no_difference", "candidate_worse", "insufficient_evidence")
+VERDICTS = tuple(verdict.value for verdict in Verdict)
 PRIMARY_METRIC = "ndcg_at_10"
 METRICS = (PRIMARY_METRIC, "recall_at_10")
 CONFIDENCE = 0.95
@@ -628,28 +637,28 @@ def paired_bootstrap(
 
 def decide_verdict(
     usable_queries: int, min_queries: int, interval: Mapping[str, Any]
-) -> tuple[str, str]:
+) -> tuple[Verdict, str]:
     """The pre-registered decision rule, applied once."""
     if usable_queries < min_queries:
         return (
-            "insufficient_evidence",
+            Verdict.INSUFFICIENT_EVIDENCE,
             f"{usable_queries} usable queries is below the pre-registered floor of "
             f"{min_queries}; no verdict is reported",
         )
     if interval["ci_low"] > 0:
         return (
-            "candidate_better",
+            Verdict.CANDIDATE_BETTER,
             f"paired 95% CI for the {PRIMARY_METRIC} delta is "
             f"[{interval['ci_low']:+.4f}, {interval['ci_high']:+.4f}], above zero",
         )
     if interval["ci_high"] < 0:
         return (
-            "candidate_worse",
+            Verdict.CANDIDATE_WORSE,
             f"paired 95% CI for the {PRIMARY_METRIC} delta is "
             f"[{interval['ci_low']:+.4f}, {interval['ci_high']:+.4f}], below zero",
         )
     return (
-        "no_difference",
+        Verdict.NO_DIFFERENCE,
         f"paired 95% CI for the {PRIMARY_METRIC} delta is "
         f"[{interval['ci_low']:+.4f}, {interval['ci_high']:+.4f}], which contains zero",
     )
@@ -984,20 +993,22 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
                 entry if isinstance(entry, (list, tuple)) else (entry["query"], entry["candidate"])
             )
             excluded_pairs.add((str(query), str(candidate)))
-            if recovered := resolved["judged"].get(query):
-                recovered.pop(candidate, None)
         print(f"  excluded pairs {len(excluded_pairs)} from {args.exclude_pairs}")
-    patched = 0
+    patch_entries: list[LabelPatchEntry] = []
     if args.label_patch:
         raw_patch = json.loads(args.label_patch.read_text(encoding="utf-8"))
         entries = raw_patch.get("pairs", raw_patch) if isinstance(raw_patch, dict) else raw_patch
-        for entry in entries:
-            query = str(entry["query"])
-            candidate = str(entry["candidate"])
-            score = float(entry["functional_score"])
-            resolved["judged"].setdefault(query, {})[candidate] = score
-            patched += 1
-        print(f"  patched labels {patched} from {args.label_patch}")
+        try:
+            patch_entries = [LabelPatchEntry.model_validate(entry) for entry in entries]
+            LabelPolicy(patches=tuple(patch_entries), excluded=tuple(sorted(excluded_pairs)))
+        except ValidationError as exc:
+            raise HarnessRefusal(f"invalid label policy: {exc}") from exc
+        for entry in patch_entries:
+            resolved["judged"].setdefault(entry.query, {})[entry.candidate] = entry.functional_score
+        print(f"  patched labels {len(patch_entries)} from {args.label_patch}")
+    for query, candidate in excluded_pairs:
+        if recovered := resolved["judged"].get(query):
+            recovered.pop(candidate, None)
     usable, excluded = usability(
         resolved["judged"], resolved["baseline"], resolved["candidate"], args.relevance_threshold
     )
@@ -1065,20 +1076,16 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
     }
     threshold = max(args.k, args.depth // 2)
     coverage["required_judged_in_pool"] = threshold
-    if (
-        pool_sizes
-        and coverage["median_judged_in_pool"] < threshold
-        and not args.judged_only
-        and not args.allow_sparse_labels
-    ):
-        raise HarnessRefusal(
-            f"median judged pool {coverage['median_judged_in_pool']:.0f} of "
-            f"{args.depth} candidates (need {threshold}): nDCG counts every "
-            "unjudged candidate as 0, so an arm that moves away from the "
-            "annotated neighbourhood loses by construction. Rerun with "
-            "--judged-only, or pass --allow-sparse-labels to record the biased "
-            "comparison explicitly."
-        )
+    if pool_sizes:
+        try:
+            Coverage(
+                k=args.k,
+                depth=args.depth,
+                median_judged=coverage["median_judged_in_pool"],
+                min_judged=coverage["min_judged_in_pool"],
+            ).check(judged_only=args.judged_only, allow_sparse=args.allow_sparse_labels)
+        except SparseLabelsError as exc:
+            raise HarnessRefusal(str(exc)) from exc
     assertion = assert_fixed_candidate_sets(observations)
     print(
         f"  candidate set fixed: PASS — {assertion['queries_checked']} queries, one "
@@ -1112,7 +1119,7 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
         f"delta {intervals['recall_at_10']['mean_delta']:+.4f}",
         f"  nDCG@{args.k} delta 95% CI "
         f"[{intervals['ndcg_at_10']['ci_low']:+.4f}, {intervals['ndcg_at_10']['ci_high']:+.4f}]",
-        f"  verdict: {verdict} — {verdict_reason}",
+        f"  verdict: {verdict.value} — {verdict_reason}",
     ):
         print(line)
 
@@ -1150,7 +1157,7 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
             "elapsed_seconds": round(time.time() - started, 2),
         },
         "bootstrap": intervals,
-        "verdict": verdict,
+        "verdict": verdict.value,
         "verdict_reason": verdict_reason,
     }
     output = args.output or default_output_path(args)
