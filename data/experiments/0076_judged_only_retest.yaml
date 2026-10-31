@@ -1,0 +1,58 @@
+id: "0076"
+date: "2026-10-31"
+title: "Judged-only re-test of the tag and reprint arms (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  The negative verdicts for 0072 and 0074 are confounded by annotation
+  coverage: the fixed pool is the embedding top-50 but only a median of 11-13
+  candidates per query are judged, and nDCG counts unjudged cards as 0. If the
+  arm's loss is mostly that artifact, restricting both arms to judged candidates
+  should move the delta toward zero. If the tag prior is genuinely insufficient
+  (0071: rho 0.20), the tag delta stays clearly negative even on judged pools.
+  For reprints, judged-only may leave too few queries to decide anything; that
+  outcome is recorded as insufficient evidence, not as support.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --judged-only
+    --candidate-sources tag:jaccard
+    --tag-data data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+    --tag-cards data/raw/scryfall/oracle-cards.json
+  secondary:
+    args: >
+      --game magic --judged-only --candidate-sources reprint:exact
+      --reprint-cards data/raw/scryfall/oracle-cards.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10 over judged candidates only, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+  commit: "see the commit that adds this note and the --judged-only flag"
+  threshold: >
+    Coverage artifact is sufficient if the tag judged-only 95% CI includes zero
+    or the mean delta is above -0.05 (less than a third of the original -0.18).
+    The tag prior is genuinely worse if the CI is below zero and the mean is at
+    or below -0.10. Between those, record inconclusive. Reprint judges-only is
+    expected to fall below the 30-query floor; report the count and stop.
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+  judged_coverage: "median 11 per query in the full pool; judged-only pool reported per query"
+  tags: data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+  cards: data/raw/scryfall/oracle-cards.json
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run in the results commit"
+
+conclusion: >
+  Pending. The decision rule is fixed before the run: this experiment exists to
+  separate a measurement artifact from a weak prior, not to rescue either arm.
+
+artifacts:
+  - .agents/reports/2026-10-31-negative-results-postmortem.md

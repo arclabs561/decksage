@@ -57,7 +57,21 @@ results:
       "2i_creature_cheap": 0.1550
       "2i_is": 0.1358
     embedding_full_retrieval: 0.3542
-  verdict: "not_supported"
+  original_verdict: "not_supported"
+  verdict: "inconclusive_measurement"
+  measurement_caveat: >
+    The constrained arms rank a shrunken subset of the embedding top-80; the Magic test set annotates a median of 11 candidates per query, so most constrained candidates are unjudged and scored 0. The unconstrained 1p arm is unaffected and stands.
+
+amendment:
+  date: "2026-10-31"
+  reason: >
+    Annotation coverage makes the original verdict uninterpretable. The Magic
+    test set annotates a median of 11 candidates per query while the fixed
+    candidate pool is the embedding top-50, and nDCG counts unjudged candidates
+    as 0. Any arm that promotes an unjudged card is penalised by construction.
+    Full diagnosis: .agents/reports/2026-10-31-negative-results-postmortem.md.
+  revised_verdict: "inconclusive_measurement"
+  original_verdict: "not_supported"
 
 artifacts:
   - data/results/crates/heyting_logical_composition.json

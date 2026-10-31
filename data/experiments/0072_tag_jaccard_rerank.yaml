@@ -41,7 +41,21 @@ results:
   baseline_recall_at_10: 0.6543
   tag_recall_at_10: 0.4989
   recall_delta: -0.1554
-  verdict: "candidate_worse"
+  original_verdict: "candidate_worse"
+  verdict: "inconclusive_measurement"
+  measurement_caveat: >
+    nDCG@10 counts unjudged candidates as 0. The tag arm promotes candidates outside the embedding neighbourhood, which the annotations mostly do not cover: delta is -0.121 where >=20 candidates are judged and -0.219 where <20 (Spearman +0.23). The tag prior is also weak (rho 0.20), so this arm is unmeasured rather than refuted.
+
+amendment:
+  date: "2026-10-31"
+  reason: >
+    Annotation coverage makes the original verdict uninterpretable. The Magic
+    test set annotates a median of 11 candidates per query while the fixed
+    candidate pool is the embedding top-50, and nDCG counts unjudged candidates
+    as 0. Any arm that promotes an unjudged card is penalised by construction.
+    Full diagnosis: .agents/reports/2026-10-31-negative-results-postmortem.md.
+  revised_verdict: "inconclusive_measurement"
+  original_verdict: "candidate_worse"
 
 artifacts:
   - data/results/tag_jaccard_rerank.json

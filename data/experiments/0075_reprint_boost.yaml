@@ -50,7 +50,10 @@ results:
   covered_baseline_ndcg_at_10: 0.6083
   covered_boosted_ndcg_at_10: 0.5617
   covered_delta: -0.0466
-  verdict: "candidate_worse"
+  original_verdict: "candidate_worse"
+  verdict: "inconclusive_measurement"
+  measurement_caveat: >
+    Of 43 reprint instances in the 35 covered queries, 17 are unjudged and therefore scored 0 (their baseline ranks are 11-46). Of the 26 judged instances, four identical reprints are labelled 0.0 and others 0.86-1.0. A 35-query subset with this label noise cannot decide the rule; the negative is a measurement artifact, not evidence about reprints.
 
 conclusion: >
   The hypothesis is not supported even in the weak, never-removes-a-candidate
@@ -63,6 +66,17 @@ conclusion: >
   exact oracle-text identity is not a substitute for the judged functional
   relation. Next signal must be human pair judgments or a learned text
   re-ranker, not another reprint rule.
+
+amendment:
+  date: "2026-10-31"
+  reason: >
+    Annotation coverage makes the original verdict uninterpretable. The Magic
+    test set annotates a median of 11 candidates per query while the fixed
+    candidate pool is the embedding top-50, and nDCG counts unjudged candidates
+    as 0. Any arm that promotes an unjudged card is penalised by construction.
+    Full diagnosis: .agents/reports/2026-10-31-negative-results-postmortem.md.
+  revised_verdict: "inconclusive_measurement"
+  original_verdict: "candidate_worse"
 
 artifacts:
   - scripts/evaluation/reprint_boost.py

@@ -765,6 +765,16 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="continue when the gate could not be applied (metadata or tool missing)",
     )
+    parser.add_argument(
+        "--judged-only",
+        action="store_true",
+        help=(
+            "restrict both arms to candidates that carry a label. nDCG counts "
+            "an unjudged candidate as 0, so an arm that promotes one records a "
+            "loss by construction; this removes that bias and reports the "
+            "judged pool size per query."
+        ),
+    )
     parser.add_argument("--output", type=Path, default=None, help="result JSON path")
     parser.add_argument(
         "--dry-run", action="store_true", help="resolve and print the plan without scoring"
@@ -948,6 +958,13 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
     started = time.time()
     for query in usable:
         candidates = retrieve(baseline, query, args.depth)
+        if args.judged_only:
+            candidates = tuple(card for card in candidates if card in judged[query])
+            if len(candidates) < 2:
+                skipped.append(
+                    {"query": query, "reason": "fewer than 2 judged candidates in the pool"}
+                )
+                continue
         if not candidates:
             skipped.append({"query": query, "reason": "empty candidate set"})
             continue
@@ -975,6 +992,7 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
             args.relevance_threshold,
         )
         observations.append(record.pop("assertion"))
+        record["judged_in_pool"] = sum(1 for card in candidates if card in judged[query])
         per_query.append(record)
 
     assertion = assert_fixed_candidate_sets(observations)
