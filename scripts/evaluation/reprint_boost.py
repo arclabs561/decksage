@@ -113,13 +113,13 @@ def main() -> int:
 
     test_set = json.loads(args.test_set.read_text(encoding="utf-8"))
     judged = judged_scores(test_set)
+    excluded_pairs: set[tuple[str, str]] = set()
     if args.exclude_pairs:
-        dropped = 0
         for query, candidate in json.loads(args.exclude_pairs.read_text(encoding="utf-8")):
+            excluded_pairs.add((str(query), str(candidate)))
             if candidate in judged.get(query, {}):
                 judged[query].pop(candidate)
-                dropped += 1
-        print(f"excluded {dropped} conflicted pairs")
+        print(f"excluded {len(excluded_pairs)} conflicted pairs")
     groups = reprint_groups(args.cards)
     by_group: dict[str, set[str]] = {}
     for name, group in groups.items():
@@ -136,6 +136,8 @@ def main() -> int:
         if query not in vectors:
             continue
         pool = [name for name, _ in vectors.most_similar(query, topn=50) if name != query]
+        if excluded_pairs:
+            pool = [name for name in pool if (query, name) not in excluded_pairs]
         if args.judged_only:
             pool = [name for name in pool if name in rel]
             if len(pool) < 2:

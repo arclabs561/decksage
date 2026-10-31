@@ -958,17 +958,16 @@ def plan_lines(
 
 def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
     resolved = resolve_inputs(args)
+    excluded_pairs: set[tuple[str, str]] = set()
     if args.exclude_pairs:
-        dropped = 0
         for entry in json.loads(args.exclude_pairs.read_text(encoding="utf-8")):
             query, candidate = (
                 entry if isinstance(entry, (list, tuple)) else (entry["query"], entry["candidate"])
             )
+            excluded_pairs.add((str(query), str(candidate)))
             if recovered := resolved["judged"].get(query):
-                if candidate in recovered:
-                    recovered.pop(candidate)
-                    dropped += 1
-        print(f"  excluded pairs {dropped} from {args.exclude_pairs}")
+                recovered.pop(candidate, None)
+        print(f"  excluded pairs {len(excluded_pairs)} from {args.exclude_pairs}")
     usable, excluded = usability(
         resolved["judged"], resolved["baseline"], resolved["candidate"], args.relevance_threshold
     )
@@ -988,6 +987,10 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
     started = time.time()
     for query in usable:
         candidates = retrieve(baseline, query, args.depth)
+        if excluded_pairs:
+            # A conflicted label is not evidence; remove the card from the
+            # query's pool as well, or the metric keeps scoring it 0.
+            candidates = tuple(card for card in candidates if (query, card) not in excluded_pairs)
         if args.judged_only:
             candidates = tuple(card for card in candidates if card in judged[query])
             if len(candidates) < 2:
