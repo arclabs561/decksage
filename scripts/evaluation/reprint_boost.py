@@ -90,6 +90,16 @@ def main() -> int:
         "--cards", type=Path, default=PATHS.data / "raw" / "scryfall" / "oracle-cards.json"
     )
     parser.add_argument(
+        "--label-patch",
+        type=Path,
+        default=None,
+        help=(
+            "JSON list of {query, candidate, functional_score} pairs to add or "
+            "override in relevance. Use for a targeted label correction with "
+            "recorded provenance."
+        ),
+    )
+    parser.add_argument(
         "--exclude-pairs",
         type=Path,
         default=None,
@@ -120,6 +130,14 @@ def main() -> int:
             if candidate in judged.get(query, {}):
                 judged[query].pop(candidate)
         print(f"excluded {len(excluded_pairs)} conflicted pairs")
+    if args.label_patch:
+        patched = 0
+        for entry in json.loads(args.label_patch.read_text(encoding="utf-8")):
+            judged.setdefault(str(entry["query"]), {})[str(entry["candidate"])] = float(
+                entry["functional_score"]
+            )
+            patched += 1
+        print(f"patched {patched} labels")
     groups = reprint_groups(args.cards)
     by_group: dict[str, set[str]] = {}
     for name, group in groups.items():

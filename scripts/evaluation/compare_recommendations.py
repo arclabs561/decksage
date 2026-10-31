@@ -775,6 +775,16 @@ def build_parser() -> argparse.ArgumentParser:
         help="continue when the gate could not be applied (metadata or tool missing)",
     )
     parser.add_argument(
+        "--label-patch",
+        type=Path,
+        default=None,
+        help=(
+            "JSON list of {query, candidate, functional_score} pairs to add or "
+            "override in relevance. Use for a targeted label correction with "
+            "recorded provenance."
+        ),
+    )
+    parser.add_argument(
         "--exclude-pairs",
         type=Path,
         default=None,
@@ -977,6 +987,15 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
             if recovered := resolved["judged"].get(query):
                 recovered.pop(candidate, None)
         print(f"  excluded pairs {len(excluded_pairs)} from {args.exclude_pairs}")
+    patched = 0
+    if args.label_patch:
+        for entry in json.loads(args.label_patch.read_text(encoding="utf-8")):
+            query = str(entry["query"])
+            candidate = str(entry["candidate"])
+            score = float(entry["functional_score"])
+            resolved["judged"].setdefault(query, {})[candidate] = score
+            patched += 1
+        print(f"  patched labels {patched} from {args.label_patch}")
     usable, excluded = usability(
         resolved["judged"], resolved["baseline"], resolved["candidate"], args.relevance_threshold
     )

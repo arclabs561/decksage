@@ -1,0 +1,506 @@
+{
+ "version": "reprint-label-check-v1",
+ "models": [
+  "claude_sonnet_4_6",
+  "gpt_5_2",
+  "gemini_2_5_flash"
+ ],
+ "pairs": [
+  {
+   "query": "Palace Familiar",
+   "candidate": "Kingfisher",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 17,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Palace Familiar",
+   "candidate": "Runewing",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 24,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Tranquil Cove",
+   "candidate": "Sejiri Refuge",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 10,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Stone Rain",
+   "candidate": "Craterize",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 9,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Vodalian Merchant",
+   "candidate": "Merfolk Traders",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 2,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Waterveil Cavern",
+   "candidate": "Rootwater Depths",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 8,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Unsummon",
+   "candidate": "Drown in Shapelessness",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Separatist Voidmage",
+   "candidate": "Voidwielder",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Touch of Brilliance",
+   "candidate": "Counsel of the Soratami",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 11,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "A-Tanazir Quandrix",
+   "candidate": "Tanazir Quandrix",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Cerodon Yearling",
+   "candidate": "Bull Cerodon",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 11,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "March of the Returned",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 3,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "Dutiful Return",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 4,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Soul Salvage",
+   "candidate": "Morbid Plunder",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 13,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Red Cliffs Armada",
+   "candidate": "Wu Warship",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Gustcloak Harrier",
+   "candidate": "Gustcloak Skirmisher",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 4,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Sage Owl",
+   "candidate": "Spire Owl",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 46,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Wall of Pine Needles",
+   "candidate": "Wall of Brambles",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 18,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Psionic Gift",
+   "candidate": "Power of Fire",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 18,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Serendib Sorcerer",
+   "candidate": "Sorceress Queen",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 30,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Expedite",
+   "candidate": "Accelerate",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 26,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Coast Watcher",
+   "candidate": "Treetop Sentinel",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 3,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Boiling Seas",
+   "candidate": "Tsunami",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 33,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Tel-Jilad Outrider",
+   "candidate": "Tel-Jilad Chosen",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Retraction Helix",
+   "candidate": "Banishing Knack",
+   "status": "mislabeled_zero",
+   "old_score": 0.0,
+   "embedding_rank": 1,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Horizon Scholar",
+   "candidate": "Cloudreader Sphinx",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 35,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Keening Apparition",
+   "candidate": "Kami of Ancient Law",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 14,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Wild Guess",
+   "candidate": "Tormenting Voice",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 44,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Dutiful Return",
+   "candidate": "Soul Salvage",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 13,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Banishing Light",
+   "candidate": "Hieromancer's Cage",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 26,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  },
+  {
+   "query": "Molting Skin",
+   "candidate": "Broken Fall",
+   "status": "unjudged",
+   "old_score": null,
+   "embedding_rank": 29,
+   "median_functional": 1.0,
+   "spread": 0.0,
+   "judges": {
+    "claude_sonnet_4_6": 1.0,
+    "gpt_5_2": 1.0,
+    "gemini_2_5_flash": 1.0
+   },
+   "min_judge": 1.0,
+   "max_judge": 1.0
+  }
+ ]
+}

@@ -48,7 +48,9 @@ from dotenv import load_dotenv
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-load_dotenv(PROJECT_ROOT / ".env", override=True)  # explicit project .env, not parent
+load_dotenv(
+    PROJECT_ROOT / ".env", override=False
+)  # launcher-injected credentials win over the file
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
 DATA_DIR = PROJECT_ROOT / "data"
 CALIBRATION_DIR = DATA_DIR / "calibration"

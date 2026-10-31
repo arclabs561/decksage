@@ -1,0 +1,51 @@
+id: "0079"
+date: "2026-10-31"
+title: "Reprint arms with the 31 missing/mislabelled pairs restored (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  Three independent judges scored all 31 blocked reprint pairs 1.0: 14 judged
+  pairs had been labelled 0.0 and 17 were unjudged. If those labels were the
+  remaining defect, restoring them should raise the reprint arm's nDCG above
+  zero and widen its recall advantage; the boost should become positive on the
+  covered queries instead of neutral.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --judged-only --candidate-sources reprint:exact
+    --reprint-cards data/raw/scryfall/oracle-cards.json
+    --label-patch data/annotations/refined/magic_label_patch.json
+  secondary:
+    script: scripts/evaluation/reprint_boost.py
+    args: >
+      --judged-only --label-patch data/annotations/refined/magic_label_patch.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10 on judged pools, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+  commit: "see the commit that adds this note"
+  threshold: >
+    Genuine win if the nDCG CI is above zero and recall is not lower. Useful
+    recall tool if the nDCG CI includes zero and recall improves by at least
+    0.05. Harmful if the nDCG CI is below zero. The patch provenance is three
+    unanimous judges; it is a label repair, not an independent arm.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  patch: data/annotations/refined/magic_label_patch.json
+  patch_pairs: 31
+  patch_source: "claude-sonnet-4-6, gpt-5.2, gemini-2.5-flash; all 1.0, spread 0.0"
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run in the results commit"
+
+conclusion: >
+  Pending. This is the reprint verdict with the label defect repaired; it is the
+  first run in the family where the strongest positives are actually labelled.
+
+artifacts:
+  - data/results/reprint_judged_only_patched.json
