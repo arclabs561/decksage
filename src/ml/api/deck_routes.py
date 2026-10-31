@@ -610,6 +610,25 @@ def complete_deck(req: CompleteRequest):
     # Late import to avoid circular dependency
     from .models import _require_game
 
+    if req.deck is None and req.cards:
+        req.deck = {
+            "partitions": [
+                {
+                    "name": "Main",
+                    "cards": [{"name": c.name, "count": c.count} for c in req.cards],
+                }
+            ]
+        }
+    if req.deck is None:
+        from ..utils.deck_parser import parse_deck_text
+
+        parsed = parse_deck_text(req.deck_text or "", game=req.game)
+        if "error" in parsed:
+            from fastapi import HTTPException
+
+            raise HTTPException(status_code=400, detail=parsed["error"])
+        req.deck = {"partitions": parsed["partitions"]}
+
     # Log query for analytics
     try:
         from .query_history import log_query

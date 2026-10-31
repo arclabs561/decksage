@@ -39,7 +39,7 @@ Not indexed, still available:
 A persisted **unified graph** now exists for Magic
 (`data/graphs/unified_magic.db`, 2,096,101 edges: 744,280 text, 675,682 tag,
 433,466 attribute, 242,673 cooccurrence). `/v1/graph/neighbors` serves typed
-edges with a `relations=` filter. Qdrant payload is still
+edges with a `relations=` filter; `/v1/graph/stats` reports counts and weights. Qdrant payload is still
 `{name, text, type_line, image_url}` with **no payload indexes**. That is fine for unfiltered ANN + API enrichment, but filtered vector
 search would be impossible without adding payload fields and indexes.
 

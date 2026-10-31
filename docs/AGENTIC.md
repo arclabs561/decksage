@@ -20,6 +20,32 @@ signal, not a substitute signal. An agent should use each for what it measures.
 evidence sections out (functional candidates, co-play neighbours, graph edges,
 contextual sections).
 
+## Contract probes and agent review
+
+- `scripts/agentic/api_critique.py` walks the API the way an agent does and
+  asserts shape, status and latency. 21 checks, deterministic, no model.
+- `scripts/agentic/api_critique_agent.py` is the opinionated half: a headless
+  tool-calling loop over OpenRouter that only sees the API and writes a review.
+- `scripts/agentic/agent_review.py` probes each claim from that review and marks
+  it confirmed, refuted, or partly true before it becomes work. The checked
+  report is `docs/API-AGENT-REVIEW.md`.
+
+A review is a hypothesis. Two of five claims in the 2026-10-31 pass were wrong
+(`/v1/similar` is shape-consistent across modes; `graph_neighbors` defaults to
+every relation), so claims land only after a probe. Treat an LLM reviewer the
+same way the experiments treat a judge.
+
+### What that pass changed
+
+- Game aliases (`mtg`, `mtg arena`, `pkmn`, `ptcg`, `ygo`, `yu gi oh`) normalise
+  at the boundary; unknown games return `Unknown game: 'x'. Valid games: ...`.
+- `/health` mirrors `/live`; orchestrators probe `/health` first.
+- `/v1/search` takes `offset` and returns `next_offset`; `total` counts the
+  current page window, not the corpus.
+- `/v1/deck/complete` accepts `cards=[{name, count}]`, `deck_text`, or `deck`.
+- `/v1/graph/neighbors` rejects unknown relations instead of returning `[]`.
+- Request-validation errors keep FastAPI's `detail` list and add `message`.
+
 ## Agent patterns, in increasing autonomy
 
 1. **Deterministic brief (shipped).** Compose tools and return JSON. No model in

@@ -54,8 +54,9 @@ from typing import Any
 
 from dotenv import load_dotenv
 from fastapi import APIRouter, FastAPI, HTTPException, Query, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from ..similarity.fusion import FusionWeights, WeightedLateFusion
@@ -912,6 +913,30 @@ if (not _parsed) or ("*" in _parsed):
 else:
     _cors_origins = _parsed
 _allow_credentials = _cors_origins != ["*"] and len(_cors_origins) > 0
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(request: Request, exc: RequestValidationError) -> JSONResponse:
+    """Keep FastAPI's `detail` list, add a one-line `message` for agents.
+
+    Tool-calling agents read `detail` as prose and choke on a list of field
+    errors. Both consumers get their shape; nothing is dropped.
+    """
+    errors = exc.errors()
+    parts = []
+    for error in errors[:3]:
+        location = ".".join(str(item) for item in error.get("loc", ()) if item != "body")
+        parts.append(
+            f"{location}: {error.get('msg', 'invalid value')}"
+            if location
+            else error.get("msg", "invalid value")
+        )
+    return JSONResponse(
+        status_code=422,
+        content={"detail": errors, "message": "; ".join(parts) or "Invalid request"},
+    )
+
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_cors_origins,
@@ -1012,7 +1037,16 @@ def graph_neighbors(
     """
     g = _require_game(game)
     state = get_state(g)
+    known = {"cooccurrence", "text", "tag", "attribute"}
     selected = [part.strip() for part in relations.split(",") if part.strip()] if relations else []
+    unknown = sorted(set(selected) - known)
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                f"Unknown relation(s): {', '.join(unknown)}. Valid: {', '.join(sorted(known))}"
+            ),
+        )
     if state.unified_graph is not None:
         query = "SELECT dst, relation, weight FROM edges WHERE src = ?"
         params: list[object] = [card]
@@ -1048,6 +1082,38 @@ def graph_neighbors(
         "neighbors": [
             {"card": name, "relation": "cooccurrence", "weight": weight} for name, weight in scored
         ],
+    }
+
+
+@router.get("/graph/stats")
+def graph_stats(game: str | None = Query(None)) -> dict:
+    """Edge counts per relation in the unified graph."""
+    g = _require_game(game)
+    state = get_state(g)
+    if state.unified_graph is None:
+        adj = (state.graph_data or {}).get("adj") or {}
+        return {
+            "game": g,
+            "source": "cooccurrence",
+            "nodes": len(adj),
+            "relations": {"cooccurrence": sum(len(v) for v in adj.values())},
+        }
+    rows = state.unified_graph.execute(
+        "SELECT relation, COUNT(*), AVG(weight), MAX(weight) FROM edges GROUP BY relation"
+    ).fetchall()
+    nodes = state.unified_graph.execute("SELECT COUNT(DISTINCT src) FROM edges").fetchone()[0]
+    return {
+        "game": g,
+        "source": "unified",
+        "nodes": nodes,
+        "relations": {
+            relation: {
+                "edges": count,
+                "mean_weight": round(float(mean), 4),
+                "max_weight": round(float(maximum), 4),
+            }
+            for relation, count, mean, maximum in rows
+        },
     }
 
 
@@ -1127,6 +1193,12 @@ def games_v1():
 
 @app.get("/live")
 def live():
+    return {"status": "live"}
+
+
+@app.get("/health")
+def health_alias():
+    """Agents and orchestrators expect /health; /live is the same probe."""
     return {"status": "live"}
 
 
@@ -2568,14 +2640,20 @@ def search_cards_v1(request: SearchRequest):
             ),
         )
 
+    # Fetch offset+limit so the page is a slice of the fused ranking, not a
+    # re-query that can reorder behind the caller's back.
+    # +1 so the response can say whether another page exists.
+    fetch = min(request.offset + request.limit + 1, 500)
     try:
         results = client.search(
             query=request.query,
-            limit=request.limit,
+            limit=fetch,
             text_weight=request.text_weight,
             vector_weight=request.vector_weight,
             filters=request.filters,
         )
+        has_more = len(results) > request.offset + request.limit
+        results = results[request.offset : request.offset + request.limit]
     except Exception as exc:
         raise HTTPException(
             status_code=503,
@@ -2674,7 +2752,9 @@ def search_cards_v1(request: SearchRequest):
         query=request.query,
         exact_match=_exact_card_match(state, request.query),
         results=enriched,
-        total=len(enriched),
+        total=len(results),
+        offset=request.offset,
+        next_offset=request.offset + len(results) if has_more else None,
     )
 
 

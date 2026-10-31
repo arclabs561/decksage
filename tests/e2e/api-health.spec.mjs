@@ -180,6 +180,26 @@ test.describe('Text retrieval mode', () => {
   });
 });
 
+test.describe('Deck completion input shapes', () => {
+  test('accepts structured card lists', async ({ request }) => {
+    const resp = await request.post('/v1/deck/complete', {
+      data: {
+        game: 'magic',
+        cards: [
+          { name: 'Lightning Bolt', count: 4 },
+          { name: 'Mountain', count: 20 },
+        ],
+        target_main_size: 30,
+        max_steps: 3,
+        method: 'greedy',
+      },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(Array.isArray(body.steps)).toBe(true);
+  });
+});
+
 test.describe('Index coverage', () => {
   test('index status reports catalog and backend counts', async ({ request }) => {
     const resp = await request.get('/v1/index/status');
@@ -244,6 +264,66 @@ test.describe('API cards endpoint', () => {
     const body = await resp.json();
     expect(body.items?.length).toBe(5);
     expect(body.next_offset).toBeDefined();
+  });
+
+  test('accepts game aliases', async ({ request }) => {
+    for (const alias of ['mtg', 'MTG']) {
+      const resp = await request.get('/v1/cards', {
+        params: { game: alias, prefix: 'bolt', limit: '3' },
+      });
+      expect(resp.ok()).toBeTruthy();
+      const names = (await resp.json()).items?.map(i => i.name) || [];
+      expect(names.length).toBeGreaterThan(0);
+    }
+    const ygo = await request.post('/v1/search', {
+      data: { game: 'ygo', query: 'Dark Magician', limit: 1 },
+    });
+    expect(ygo.ok()).toBeTruthy();
+    expect((await ygo.json()).exact_match).toBe(true);
+  });
+
+  test('unknown game errors name the valid games', async ({ request }) => {
+    const resp = await request.post('/v1/search', {
+      data: { game: 'nope', query: 'x', limit: 1 },
+    });
+    expect(resp.status()).toBe(400);
+    const body = await resp.json();
+    expect(typeof body.detail).toBe('string');
+    expect(body.detail).toContain('Valid games');
+  });
+
+  test('validation errors carry a readable message', async ({ request }) => {
+    const resp = await request.post('/v1/similar', {
+      data: { game: 'magic', query: 'Lightning Bolt', top_k: 'five' },
+    });
+    expect(resp.status()).toBe(422);
+    const body = await resp.json();
+    expect(Array.isArray(body.detail)).toBe(true);
+    expect(typeof body.message).toBe('string');
+  });
+
+  test('search paginates without repeating a page', async ({ request }) => {
+    const page = async (offset) => {
+      const resp = await request.post('/v1/search', {
+        data: { game: 'magic', query: 'dragon', limit: 2, offset },
+      });
+      expect(resp.ok()).toBeTruthy();
+      return resp.json();
+    };
+    const first = await page(0);
+    const second = await page(2);
+    expect(first.next_offset).toBe(2);
+    const firstNames = first.results.map(r => r.card_name);
+    const secondNames = second.results.map(r => r.card_name);
+    expect(secondNames.some(name => firstNames.includes(name))).toBe(false);
+  });
+
+  test('rejects unknown graph relations', async ({ request }) => {
+    const resp = await request.get('/v1/graph/neighbors', {
+      params: { game: 'magic', card: 'Lightning Bolt', relations: 'tagg' },
+    });
+    expect(resp.status()).toBe(400);
+    expect((await resp.json()).detail).toContain('Valid');
   });
 
   test('prefix filter returns matching cards', async ({ request }) => {

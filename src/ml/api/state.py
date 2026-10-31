@@ -5,18 +5,19 @@ Extracted from models.py to break the circular import between models.py and api.
 models.py defines types; state.py accesses runtime state (app.state).
 """
 
+import difflib
 import os
 
 from fastapi import HTTPException
 
-from .models import SUPPORTED_GAMES, ApiState
+from .models import SUPPORTED_GAMES, ApiState, canonical_game
 
 
 def _normalize_game(game: str | None) -> str | None:
     if game is None:
         return None
-    g = str(game).strip().lower()
-    return g or None
+    normalized = canonical_game(game)
+    return normalized or None
 
 
 def _default_game() -> str:
@@ -65,7 +66,13 @@ def _require_game(game: str | None) -> str:
                 detail=f"game is required (configured_games={cfg})",
             )
     if g not in SUPPORTED_GAMES:
-        raise HTTPException(status_code=400, detail=f"Unknown game: {game}")
+        valid = sorted(SUPPORTED_GAMES)
+        closest = difflib.get_close_matches(g, valid, n=1, cutoff=0.6)
+        suffix = f" Did you mean {closest[0]!r}?" if closest else ""
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown game: {game!r}. Valid games: {', '.join(valid)}.{suffix}",
+        )
     return g
 
 

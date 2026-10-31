@@ -6,10 +6,12 @@ endpoint handlers remain in api.py.
 """
 
 import os
+import re
+import unicodedata
 from enum import StrEnum
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import BaseModel, Field, computed_field
+from pydantic import BaseModel, BeforeValidator, Field, computed_field, model_validator
 
 
 # deck_patch module - optional dependency (needed for PatchRequest type annotation)
@@ -24,7 +26,50 @@ except ImportError:
 # ---------------------------------------------------------------------------
 
 SUPPORTED_GAMES: set[str] = {"magic", "pokemon", "yugioh"}
-GameName = Literal["magic", "pokemon", "yugioh"]
+
+# Agents guess at game identifiers ("mtg", "pkmn", "ygo"). Accept the common
+# spellings rather than failing a whole tool call on a naming difference.
+GAME_ALIASES: dict[str, str] = {
+    "mtg": "magic",
+    "mtg arena": "magic",
+    "magic the gathering": "magic",
+    "magic gathering": "magic",
+    "pokemon tcg": "pokemon",
+    "pokemon tcg live": "pokemon",
+    "pokemon tcg online": "pokemon",
+    "pokemon tcg pocket": "pokemon",
+    "ptcg": "pokemon",
+    "ptcgp": "pokemon",
+    "ptcgo": "pokemon",
+    "pkmn": "pokemon",
+    "pkmn tcg": "pokemon",
+    "ygo": "yugioh",
+    "yu gi oh": "yugioh",
+    "yu gi oh tcg": "yugioh",
+}
+
+
+def canonical_game(value: str) -> str:
+    """Normalise a game name or common alias to a canonical key."""
+    text = str(value or "").strip().lower()
+    ascii_text = "".join(
+        ch for ch in unicodedata.normalize("NFKD", text) if not unicodedata.combining(ch)
+    )
+    key = re.sub(r"[^a-z0-9 ]+", " ", ascii_text)
+    key = re.sub(r"\s+", " ", key).strip()
+    if not key:
+        return ""
+    if key in GAME_ALIASES:
+        return GAME_ALIASES[key]
+    if key in SUPPORTED_GAMES:
+        return key
+    squashed = key.replace(" ", "")
+    if squashed in GAME_ALIASES:
+        return GAME_ALIASES[squashed]
+    return key
+
+
+GameName = Annotated[Literal["magic", "pokemon", "yugioh"], BeforeValidator(canonical_game)]
 SimilarityMode = Literal[
     "embedding", "text", "union", "jaccard", "jaccard_faceted", "fusion", "meta"
 ]
@@ -188,6 +233,7 @@ class SearchRequest(BaseModel):
     game: str | None = Field(None, description="Game name (magic, yugioh, pokemon)")
     query: str = Field(..., description="Search query text")
     limit: int = Field(10, ge=1, le=100, description="Maximum number of results")
+    offset: int = Field(0, ge=0, le=1000, description="Results to skip (pagination)")
     text_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for text search (0-1)")
     vector_weight: float = Field(0.5, ge=0.0, le=1.0, description="Weight for vector search (0-1)")
     format: str | None = Field(
@@ -216,7 +262,9 @@ class SearchResponse(BaseModel):
         False, description="True when the query is a card name in this game's vocabulary"
     )
     results: list[SearchResultItem] = Field(..., description="Search results")
-    total: int = Field(..., description="Total number of results")
+    total: int = Field(..., description="Results in this page window (not corpus size)")
+    offset: int = Field(0, description="Offset applied to this page")
+    next_offset: int | None = Field(None, description="Offset for the next page, if any")
 
 
 class PatchRequest(BaseModel):
@@ -269,9 +317,20 @@ class SuggestActionsResponse(BaseModel):
     feedback_url: str | None = Field(None, description="URL for submitting feedback on suggestions")
 
 
+class CardCount(BaseModel):
+    name: str = Field(..., min_length=1)
+    count: int = Field(1, ge=1, le=99)
+
+
 class CompleteRequest(BaseModel):
     game: GameName
-    deck: dict
+    deck: dict | None = None
+    deck_text: str | None = Field(
+        None, description="Raw deck list; parsed server-side when deck is omitted"
+    )
+    cards: list[CardCount] | None = Field(
+        None, description="Structured list of {name, count}; alternative to deck/deck_text"
+    )
     target_main_size: int | None = None
     mode: str | None = None
     max_steps: int = Field(60, le=200)
@@ -280,6 +339,13 @@ class CompleteRequest(BaseModel):
     strict_size: bool | None = None
     check_legality: bool | None = None
     method: CompletionMethod = "greedy"  # "greedy", "beam", or "ot"
+
+    @model_validator(mode="after")
+    def deck_source(self) -> "CompleteRequest":
+        if self.deck is None and not (self.deck_text or "").strip() and not self.cards:
+            raise ValueError("provide deck, deck_text, or cards")
+        return self
+
     beam_width: int = Field(5, ge=1, le=50)  # For beam search
     # Format-aware constraints (OT method)
     format: str | None = Field(
