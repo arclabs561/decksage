@@ -2,7 +2,7 @@ id: "0080"
 date: "2026-10-31"
 title: "Supervised text/tag/co-occurrence ranker vs tag Jaccard (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   The co-occurrence embedding orders substitutes poorly (within-query rho
@@ -24,7 +24,7 @@ method:
   validation: GroupKFold(5) by query; test-set queries removed from training
   evaluation: nDCG@10 on the judged candidates inside the v7 top-50
   baseline: tag:jaccard on the same pools
-  commit: "see the commit that adds this note"
+  commit: "55092db"
   threshold: >
     Support if the paired 95% CI for model-minus-tag is above zero. If it
     includes zero, record no_difference and inspect feature importances; if it
@@ -38,12 +38,35 @@ data:
   cards: data/raw/scryfall/oracle-cards.json
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run in the results commit"
+  train_pairs: 1651
+  test_queries_excluded: 2648
+  oof_spearman: 0.5877
+  oof_mae: 0.0344
+  eval_queries: 2550
+  ndcg_at_10:
+    model: 0.5680
+    tag_jaccard: 0.5519
+    embedding: 0.5006
+    e5_text_alone: 0.5686
+  model_minus_tag: 0.0160
+  delta_ci_95: [0.0108, 0.0216]
+  verdict: "candidate_better_vs_tag_but_equal_to_e5"
 
 conclusion: >
-  Pending. This is the first direct test of whether a learned model trained on
-  the pair labels beats a hand-built role prior on the same judged pools.
+  The supervised model beats the tag prior by +0.0160 nDCG (CI
+  [+0.0108, +0.0216]) on 2,550 judged-pool queries, so the first direct test
+  of "learned beats heuristic" is positive but small. The important nuance is
+  that E5 text cosine alone scores 0.5686, statistically the same as the
+  model (0.5680): the gain comes from the text representation, not from the
+  supervised combination or the co-occurrence feature. Tags remain close
+  (0.5519) and the embedding is last (0.5006).
+
+  Read together with 0071/0076: a functional text signal is the lever, and a
+  gradient-boosted fusion of it adds nothing measurable on these labels. The
+  next step is a text cross-encoder or a contrastive fine-tune, not more
+  features. Caveat: OOF MAE 0.034 is against median LLM labels, which are
+  smooth and correlated; it is not evidence of label truth. The label-noise
+  audit (MAE 0.194 vs fresh judges) still bounds every number here.
 
 artifacts:
   - data/results/functional_ranker.json

@@ -1,0 +1,19 @@
+{
+  "game": "magic",
+  "train_pairs": 1651,
+  "oof_spearman": 0.5877,
+  "oof_mae": 0.0344,
+  "eval_queries": 2550,
+  "mean_ndcg_at_10": {
+    "model": 0.568,
+    "tag": 0.5519,
+    "emb": 0.5006,
+    "e5": 0.5686
+  },
+  "model_minus_tag": 0.016,
+  "delta_ci_95": [
+    0.0108,
+    0.0216
+  ],
+  "seed": 13
+}
