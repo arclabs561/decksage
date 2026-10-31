@@ -2127,20 +2127,17 @@
                 };
                 const hideFields = new Set([
                     'image_url','oracle_text','oracle_text_full','type','summoning_requirements','effect_types',
+                    'top_cooccurrence','archetype_names',
                     ...(hideByGame[game] || [])
                 ]);
                 for (const [k, v] of Object.entries(meta)) {
                     if (hideFields.has(k)) continue;
                     if (v === null || v === undefined || v === 0 || v === '0' || v === '') continue;
-                    const val = Array.isArray(v) ? v.join(', ')
-                        : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) =>
-                            `${pk}: ${typeof pv === 'object' && pv !== null ? JSON.stringify(pv) : pv}`).join(', ')
-                        : String(v);
-                    expandStats.push({key: k.replace(/_/g, ' '), val});
+                    expandStats.push({key: humanMetaLabel(k), val: formatMetaValue(k, v)});
                 }
                 const expandStatsHtml = expandStats.length > 0
                     ? `<div class="expand-stats-grid">${expandStats.slice(0, 12).map(s =>
-                        `<div class="expand-stat-item"><span class="stat-key">${escapeHtml(s.key)}</span> <span class="stat-val">${escapeHtml(s.val.length > 60 ? s.val.substring(0, 60) + '...' : s.val)}</span></div>`
+                        `<div class="expand-stat-item"><span class="stat-key">${escapeHtml(s.key)}</span> <span class="stat-val">${escapeHtml(s.val.length > 90 ? s.val.substring(0, 90) + '...' : s.val)}</span></div>`
                     ).join('')}</div>` : '';
 
                 // Build relevance snippet (instant, from metadata)
@@ -2598,6 +2595,60 @@
 
         function escapeRegex(text) {
             return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // Raw metadata reads like a database dump ("color identity str",
+        // "total_decks: 61, by_format: {...}"). The drawer and the expanded row
+        // share one human vocabulary so the same field never reads two ways.
+        const META_LABELS = {
+            mana_cost: 'Mana cost', cmc: 'Mana value', colors: 'Colors',
+            color_identity_str: 'Color identity', color_identity: 'Color identity',
+            archetype_names: 'Archetype', deck_popularity: 'Decks', legalities: 'Legality',
+            prices: 'Prices', type_line: 'Type', oracle_text: 'Oracle text',
+            atk: 'ATK', def_stat: 'DEF', level_rank_link: 'Level', hp: 'HP',
+            retreat_cost: 'Retreat cost', total_decks: 'Decks', by_format: 'By format',
+            usd: 'USD', usd_foil: 'USD foil', eur: 'EUR', eur_foil: 'EUR foil', tix: 'MTGO tix'
+        };
+        function humanMetaLabel(key) {
+            if (META_LABELS[key]) return META_LABELS[key];
+            const words = String(key).replace(/_/g, ' ');
+            return words.charAt(0).toUpperCase() + words.slice(1);
+        }
+        function formatMetaValue(key, v) {
+            const brief = (list, n) => list.slice(0, n).join(', ') + (list.length > n ? ` +${list.length - n}` : '');
+            if (key === 'legalities' && v && typeof v === 'object') {
+                const legal = Object.entries(v).filter(([, s]) => s === 'legal').map(([f]) => f);
+                const blocked = Object.entries(v).filter(([, s]) => s !== 'legal').map(([f]) => f);
+                const parts = [];
+                if (legal.length) parts.push(`Legal in ${brief(legal, 5)}`);
+                if (blocked.length) parts.push(`not in ${brief(blocked, 3)}`);
+                return parts.join(' \u00b7 ');
+            }
+            if (key === 'prices' && v && typeof v === 'object') {
+                return ['usd', 'usd_foil', 'eur', 'eur_foil', 'tix'].filter((k) => v[k])
+                    .map((k) => {
+                        const label = (k === 'usd_foil' || k === 'eur_foil') ? 'foil ' : '';
+                        const amount = k.startsWith('usd') ? `$${v[k]}`
+                            : k.startsWith('eur') ? `\u20ac${v[k]}` : `${v[k]} tix`;
+                        return `${label}${amount}`;
+                    })
+                    .join(' \u00b7 ');
+            }
+            if (key === 'deck_popularity' && v && typeof v === 'object') {
+                const byFormat = v.by_format && typeof v.by_format === 'object'
+                    ? Object.entries(v.by_format).sort((a, b) => b[1] - a[1]).slice(0, 3)
+                        .map(([f, n]) => `${f} ${n}`).join(', ')
+                    : '';
+                return [v.total_decks ? `${v.total_decks} decks` : '', byFormat].filter(Boolean).join(' \u00b7 ');
+            }
+            if (Array.isArray(v)) return v.filter(Boolean).join(', ');
+            if (v && typeof v === 'object') {
+                return Object.entries(v)
+                    .filter(([, pv]) => pv !== null && pv !== undefined && pv !== '')
+                    .map(([pk, pv]) => `${humanMetaLabel(pk).toLowerCase()} ${typeof pv === 'object' ? JSON.stringify(pv) : pv}`)
+                    .join(' \u00b7 ');
+            }
+            return String(v);
         }
 
         const GAME_NAMES = { magic: 'Magic', pokemon: 'Pok\u00e9mon', yugioh: 'Yu-Gi-Oh!' };
@@ -3094,18 +3145,15 @@
                 (document.body.className.match(/game-(\w+)/) || [])[1] ||
                 'magic'
             ).toLowerCase();
-            const drawerHide = new Set(['image_url', 'oracle_text_full', ...(drawerHideByGame[game] || [])]);
+            const drawerHide = new Set(['image_url', 'oracle_text_full', 'top_cooccurrence', ...(drawerHideByGame[game] || [])]);
             for (const [k, v] of Object.entries(meta)) {
                 if (drawerHide.has(k)) continue;
                 if (v === null || v === undefined || v === 0 || v === '0' || v === '') continue;
-                const val = Array.isArray(v) ? v.join(', ')
-                    : (typeof v === 'object') ? Object.entries(v).map(([pk, pv]) =>
-                        `${pk}: ${typeof pv === 'object' && pv !== null ? JSON.stringify(pv) : pv}`).join(', ')
-                    : String(v);
+                const val = formatMetaValue(k, v);
                 if (val.length > 200) {
-                    rows.push(`<tr><td>${escapeHtml(k.replace(/_/g, ' '))}</td><td style="white-space:pre-wrap;">${escapeHtml(val)}</td></tr>`);
+                    rows.push(`<tr><td>${escapeHtml(humanMetaLabel(k))}</td><td style="white-space:pre-wrap;">${escapeHtml(val)}</td></tr>`);
                 } else {
-                    rows.push(`<tr><td>${escapeHtml(k.replace(/_/g, ' '))}</td><td>${escapeHtml(val)}</td></tr>`);
+                    rows.push(`<tr><td>${escapeHtml(humanMetaLabel(k))}</td><td>${escapeHtml(val)}</td></tr>`);
                 }
             }
 
