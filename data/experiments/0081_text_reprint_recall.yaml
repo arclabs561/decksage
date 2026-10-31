@@ -2,7 +2,7 @@ id: "0081"
 date: "2026-10-31"
 title: "Full-catalog text retrieval recall for functional reprints (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   The graph embedding finds a functional reprint in its top-10 for 33% of
@@ -20,7 +20,7 @@ method:
     - magic_v7_spectral_mu35 (top-50 most_similar)
   query_set: "test-set queries whose exact reprint group is in the catalog"
   metrics: "recall@10 and recall@50 over the same queries for both retrievers"
-  commit: "see the commit that adds this note and the probe"
+  commit: "4bbc09f"
   threshold: >
     Text retrieval is a meaningfully better candidate generator if recall@50 is
     at least 0.70 and recall@10 at least 0.45. If it is within 0.05 of the
@@ -33,12 +33,24 @@ data:
   embedding: data/embeddings/magic_v7_spectral_mu35.wv
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run after the cache extension completes"
+  queries: 69
+  graph_recall_at_10: 0.3188
+  graph_recall_at_50: 0.5072
+  text_recall_at_10: 0.9710
+  text_recall_at_50: 1.0000
+  text_cache_names: 37214
+  verdict: "text_retriever_better"
 
 conclusion: >
-  Pending. This measures candidate generation, the ceiling the re-rankers
-  cannot move.
+  Text retrieval nearly solves the reprint candidate problem: recall@10 is
+  0.971 and recall@50 1.0 on the 69 queries where both retrievers and a
+  reprint group exist, against 0.319/0.507 for the graph. This passes the
+  pre-registered threshold and confirms the representation story: a reprint
+  shares oracle text, which E5 encodes, while the co-occurrence graph does
+  not. It is not evidence for functional substitutes with different text, and
+  the sample is 69 queries, so the next probe must vary the wording. The
+  practical step is text retrieval for the candidate pool, then re-rank with
+  the judged functional signal.
 
 artifacts:
   - data/results/text_reprint_recall.json
