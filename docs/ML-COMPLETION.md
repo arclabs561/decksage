@@ -146,6 +146,15 @@ text retrieval, then the judged functional signal as a re-ranker.
 `/v1/index/status` now reports per-game catalog, Meilisearch and Qdrant coverage
 (Magic Qdrant is 71% by construction; Meilisearch is 100%).
 
+**0082 (2026-10-31) — text is also the functional-positive retriever.** On 272
+refined queries and 278 positives (median judge score >= 0.5), E5 reaches
+**0.721 recall@10 / 0.904 @50** against **0.149 / 0.313** for the co-occurrence
+graph (delta +0.592, CI [+0.531, +0.660]). The refined pairs were sampled from
+several sources, so this is not the graph's own neighbourhood. The graph does
+not belong in the substitute candidate pool; text retrieves, the judged
+functional signal re-ranks. Caveat: 278 LLM-labelled positives, some exact
+reprints.
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface

@@ -2,7 +2,7 @@ id: "0082"
 date: "2026-10-31"
 title: "Functional-positive recall: text vs graph on refined pairs (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0081 showed text finds exact reprints almost perfectly, but reprints share
@@ -20,7 +20,7 @@ method:
     - magic_v7_spectral_mu35
   positives: "refined magic pairs with median_score >= 0.5"
   metrics: "per-query recall@10 and recall@50 over that query's positives; paired bootstrap 1000"
-  commit: "see the commit that adds this note and the probe"
+  commit: "5018890"
   threshold: >
     Text is the better candidate generator if recall@50 is at least 0.10 higher
     with a CI above zero. The graph is carrying functional signal if it wins by
@@ -32,12 +32,29 @@ data:
   embedding: data/embeddings/magic_v7_spectral_mu35.wv
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run in the results commit"
+  queries: 272
+  positives: 278
+  graph_recall_at_10: 0.1489
+  graph_recall_at_50: 0.3125
+  text_recall_at_10: 0.7206
+  text_recall_at_50: 0.9044
+  recall50_delta_text_minus_graph: 0.5919
+  delta_ci_95: [0.5312, 0.6599]
+  verdict: "text_retriever_better"
 
 conclusion: >
-  Pending. This separates exact-text retrieval from functional retrieval and
-  decides whether the graph still earns a place in the candidate pool.
+  Text is not only the reprint retriever; it is the functional-positive
+  retriever. On 272 queries and 278 judged positives (median score >= 0.5),
+  E5 reaches 0.721 recall@10 and 0.904 @50, against 0.149/0.313 for the
+  co-occurrence graph (delta +0.592, CI [+0.531, +0.660]). The refined pairs
+  were sampled from several sources, so this is not the graph's own annotated
+  neighbourhood.
+
+  The graph earns no place in the candidate pool for substitution. Use text
+  retrieval, then re-rank with the judged functional signal (0080). Caveats:
+  the refined positives are LLM labels; 278 positives over 272 queries is a
+  small set; and some positives are exact reprints. The direction is
+  unambiguous, the precise ceiling is not.
 
 artifacts:
   - data/results/functional_recall.json
