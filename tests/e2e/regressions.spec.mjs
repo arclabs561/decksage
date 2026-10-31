@@ -82,6 +82,18 @@ test.describe('search API regressions', () => {
     expect(prefixNames[0]).toBe('Lightning Bolt');
   });
 
+  test('an effect query is not defeated by an auto-parsed type filter', async ({ request }) => {
+    // "creatures" used to be parsed into type_line=Creature, which excludes
+    // the Sorcery that actually destroys them and returned zero results.
+    const resp = await request.post('/v1/search', {
+      data: { game: 'magic', query: 'destroy all creatures', limit: 5 },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const names = (await resp.json()).results.map((r) => r.card_name);
+    expect(names.length).toBeGreaterThan(0);
+    expect(names.some((name) => /^(Day of Judgment|Damnation|Wrath of God|Plague Wind)$/.test(name))).toBe(true);
+  });
+
   test('the API is still live after a free-text query', async ({ request }) => {
     const resp = await request.post('/v1/search', {
       data: { game: 'magic', query: 'deal 3 damage to any target', limit: 5 },

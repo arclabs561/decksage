@@ -695,6 +695,7 @@ class HybridSearch:
         text_weight: float = 0.5,
         vector_weight: float = 0.5,
         filters: str | None = None,
+        _auto_filter: bool = True,
     ) -> list[SearchResult]:
         """
         Hybrid search combining text and vector results.
@@ -711,13 +712,15 @@ class HybridSearch:
         Returns:
             List of SearchResult sorted by combined score
         """
+        original_query = query
         query = self._canonical_query(query)
         results: dict[str, SearchResult] = {}
 
         # Parse structured filters from natural language queries
         # (e.g., "cheap red burn" -> query="burn", filter="colors=R AND cmc<=2")
         is_card_name = self.embeddings is not None and query in self.embeddings
-        if not is_card_name and not filters:
+        auto_filters: str | None = None
+        if _auto_filter and not is_card_name and not filters:
             query, auto_filters = parse_query_filters(query)
             if auto_filters:
                 filters = auto_filters
@@ -834,6 +837,22 @@ class HybridSearch:
 
         # Sort by combined score and return top results
         sorted_results = sorted(results.values(), key=lambda x: x.score, reverse=True)
+
+        # An auto-parsed filter is a guess. "destroy all creatures" guesses
+        # type_line=Creature and then returns nothing, because the card that
+        # does the destroying is a Sorcery. A guess must never beat an answer:
+        # retry the original query unfiltered before returning empty.
+        if not sorted_results and auto_filters and _auto_filter:
+            logger.debug("Auto-filter %r matched nothing; retrying unfiltered", auto_filters)
+            return self.search(
+                original_query,
+                limit=limit,
+                text_weight=text_weight,
+                vector_weight=vector_weight,
+                filters=None,
+                _auto_filter=False,
+            )
+
         return sorted_results[:limit]
 
     def _qdrant_points(self, query_vector: list[float], limit: int) -> list[Any]:
