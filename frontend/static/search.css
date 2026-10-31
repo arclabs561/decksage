@@ -1510,3 +1510,21 @@ body.ds-searched .ds-index { display: none; }
   vertical-align: middle;
   white-space: nowrap;
 }
+
+/* Windowing control for long result sets. */
+.result-show-more {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin: 14px 0 4px;
+  border: 1px solid var(--ds-line);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ds-ink);
+  font-family: var(--ds-text);
+  font-size: 13px;
+  cursor: pointer;
+}
+.result-show-more:hover,
+.result-show-more:focus-visible { border-color: currentColor; }
+.result-item[hidden] { display: none !important; }

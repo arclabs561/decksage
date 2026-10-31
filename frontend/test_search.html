@@ -1394,7 +1394,8 @@
             const labelHtml = wanted
                 ? `<div class="query-card-banner ${containsExact ? 'is-exact' : 'is-inexact'}"><div class="query-card-info"><div class="query-card-label">${containsExact ? 'You searched for' : 'No exact match \u2014 closest functional matches for'}</div><div class="query-card-name">${escapeHtml(data.query)}</div></div></div>`
                 : '';
-            container.innerHTML = labelHtml + kept.map(result => {
+            const otherGameSlot = containsExact || !wanted ? '' : '<div class="empty-state-other" id="otherGameHintHybridTop"></div>';
+            container.innerHTML = labelHtml + otherGameSlot + kept.map(result => {
                 const meta = result.metadata || {};
                 const art = meta.image_url
                     ? `<div class="result-image-wrapper"><img src="${escapeHtml(meta.image_url)}" alt="" loading="lazy" onerror="this.parentElement.style.display='none'"></div>`
@@ -1412,6 +1413,7 @@
                     </div>
                 </div>`;
             }).join('');
+            if (!containsExact && wanted) suggestOtherGame(data.query || '', 'otherGameHintHybridTop');
         }
 
         async function contextualSearch() {
@@ -1873,6 +1875,31 @@
             </div>`;
         }
 
+        const RESULT_WINDOW = 25;
+
+        function applyResultWindow(container, startIndex = 0) {
+            const rows = Array.from(container.querySelectorAll('.result-item'));
+            const existing = container.querySelector('.result-show-more');
+            if (existing) existing.remove();
+            rows.forEach((row, index) => { row.hidden = index >= RESULT_WINDOW; });
+            if (rows.length <= RESULT_WINDOW) return;
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'result-show-more';
+            button.textContent = `Show ${Math.min(RESULT_WINDOW, rows.length - RESULT_WINDOW)} more (${RESULT_WINDOW} of ${rows.length} shown)`;
+            button.addEventListener('click', () => {
+                const shown = rows.filter((row) => !row.hidden).length;
+                rows.slice(shown, shown + RESULT_WINDOW).forEach((row) => { row.hidden = false; });
+                const nowShown = Math.min(rows.length, shown + RESULT_WINDOW);
+                if (nowShown >= rows.length) {
+                    button.remove();
+                } else {
+                    button.textContent = `Show ${Math.min(RESULT_WINDOW, rows.length - nowShown)} more (${nowShown} of ${rows.length} shown)`;
+                }
+            });
+            container.appendChild(button);
+        }
+
         function displayResults(data, queryCard = null, isExactMatch = false) {
             const resultsContainer = document.getElementById('resultsContainer');
             let hiddenForDisplay = 0;
@@ -1939,6 +1966,15 @@
                     </div>
                 `;
                 resultsContainer.appendChild(banner);
+                // A near miss in the wrong game still looks like a result list, so
+                // the switch offer must not wait for an empty response.
+                if (!isExactMatch) {
+                    const hint = document.createElement('div');
+                    hint.className = 'empty-state-other';
+                    hint.id = 'otherGameHintTop';
+                    resultsContainer.appendChild(hint);
+                    suggestOtherGame(data.query || queryCard || '', 'otherGameHintTop');
+                }
             }
             // Normalize scores when raw values are very small (e.g. fusion mode ~0.007)
             const maxScore = currentResults.length > 0
@@ -2250,6 +2286,11 @@
                 `;
                 resultsContainer.appendChild(item);
             });
+
+            // A 100-result request used to paint one 130k-pixel document. Rows
+            // past the window stay in the DOM but hidden, so height and paint
+            // cost follow what is on screen.
+            applyResultWindow(resultsContainer);
 
             if (feedbackModeEnabled) {
                 document.querySelectorAll('.rating-btn[data-rating]').forEach(btn => {

@@ -146,6 +146,84 @@ test.describe('search UI regressions', () => {
     await expect(page.locator('body')).not.toHaveClass(/retro/);
   });
 
+
+  test('an exact name is labelled as the card that was searched', async ({ page }) => {
+    await page.fill('#unifiedInput', 'Lightning Bolt');
+    await page.click('#unifiedSearchForm button[type="submit"]');
+
+    await page.waitForSelector('.result-item', { timeout: 15_000 });
+    const banner = page.locator('.query-card-banner');
+    await expect(banner).toBeVisible();
+    await expect(banner).toHaveClass(/is-exact/);
+    await expect(banner.locator('.query-card-label')).toHaveText(/you searched for/i);
+  });
+
+  test('a hung search can be cancelled and leaves no skeletons', async ({ page }) => {
+    // Hold the effect arm open: this is the failure that used to leave the page
+    // in a permanent loading state with no way out.
+    await page.route('**/v1/search', () => { /* never fulfil */ });
+    await page.fill('#unifiedInput', 'draw two cards');
+    await page.click('#unifiedSearchForm button[type="submit"]');
+
+    const cancel = page.locator('#cancelSearchBtn');
+    await expect(cancel).toBeVisible({ timeout: 10_000 });
+    await cancel.click();
+
+    await expect(page.locator('.skeleton')).toHaveCount(0);
+    await expect(cancel).toBeHidden();
+    await expect(page.locator('#unifiedSearchForm button[type="submit"]')).toHaveText('Search');
+    await expect(page.locator('#resultsContainer')).not.toHaveAttribute('aria-busy', 'true');
+  });
+
+  test('long result sets render in windows with a show-more control', async ({ page }) => {
+    await page.evaluate(() => { document.getElementById('kInput').value = '100'; });
+    await page.fill('#unifiedInput', 'Lightning Bolt');
+    await page.click('#unifiedSearchForm button[type="submit"]');
+    await page.waitForSelector('.result-item', { timeout: 20_000 });
+
+    const rows = page.locator('.result-item');
+    const total = await rows.count();
+    expect(total).toBeGreaterThan(25);
+
+    const visible = async () => rows.evaluateAll((els) => els.filter((el) => !el.hidden).length);
+    expect(await visible()).toBe(25);
+
+    const more = page.locator('.result-show-more');
+    await expect(more).toBeVisible();
+    await expect(more).toContainText(`of ${total} shown`);
+
+    await more.click();
+    expect(await visible()).toBe(Math.min(50, total));
+
+    const height = await page.evaluate(() => document.documentElement.scrollHeight);
+    expect(height).toBeLessThan(20_000);
+  });
+
+  test('contextual and deck controls are actually rendered', async ({ page }) => {
+    await page.click('#contextual-tab-btn');
+    const format = await page.locator('#contextualFormat').boundingBox();
+    expect(format).not.toBeNull();
+    expect(format.width).toBeGreaterThan(80);
+
+    // The pills live on the Search tab; switching game there updates the deck
+    // form, so check the placeholder after coming back.
+    await page.click('#unified-search-tab-btn');
+    await page.click('.game-btn[data-game="yugioh"]');
+    await page.click('#deck-tab-btn');
+    const placeholder = await page.locator('#deckInput').getAttribute('placeholder');
+    expect(placeholder).toContain('Dark Magician');
+    expect(placeholder).not.toContain('Lightning Bolt');
+  });
+
+  test('tabs and game pills are one tab stop with arrow keys', async ({ page }) => {
+    const tabIndexes = await page.locator('.nav-tab').evaluateAll((els) => els.map((el) => el.tabIndex));
+    expect(tabIndexes.filter((v) => v === 0)).toHaveLength(1);
+
+    await page.locator('.nav-tab[aria-selected="true"]').focus();
+    await page.keyboard.press('ArrowRight');
+    await expect(page.locator('.nav-tab[aria-selected="false"]').first()).toBeFocused();
+  });
+
   test('the search field is above the fold at 1440x900', async ({ page }) => {
     await page.setViewportSize({ width: 1440, height: 900 });
     await page.reload();
