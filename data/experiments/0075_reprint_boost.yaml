@@ -75,8 +75,13 @@ amendment:
     candidate pool is the embedding top-50, and nDCG counts unjudged candidates
     as 0. Any arm that promotes an unjudged card is penalised by construction.
     Full diagnosis: .agents/reports/2026-10-31-negative-results-postmortem.md.
-  revised_verdict: "inconclusive_measurement"
+  revised_verdict: "measurement_artifact"
   original_verdict: "candidate_worse"
+  retest: >
+    0077 judged-only: delta 0.0000 (CI [-0.0003, 0.0003]) on 2,554 queries and
+    +0.0030 on the 22 covered queries, recall unchanged. The covered -0.0466
+    was entirely the unjudged penalty. The rule is neutral and too rare to
+    matter; annotate the reprint queue before judging it again.
 
 artifacts:
   - scripts/evaluation/reprint_boost.py

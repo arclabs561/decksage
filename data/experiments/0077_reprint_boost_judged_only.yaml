@@ -2,7 +2,7 @@ id: "0077"
 date: "2026-10-31"
 title: "Reprint boost on judged candidates only (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0075 promoted reprints from the embedding top-50 but 17 of 43 promoted
@@ -24,7 +24,7 @@ method:
   depth: 50
   metrics: "nDCG@10 and recall@10 on judged pools, paired bootstrap 1000 resamples, seed 13"
   task: substitute
-  commit: "see the commit that adds this note and the --judged-only flag"
+  commit: "d75a172"
   threshold: >
     Neutral-or-better if the nDCG@10 delta CI includes zero and recall is not
     lower; harmful if the nDCG CI is below zero; beneficial if the nDCG CI is
@@ -39,12 +39,29 @@ data:
   judged_coverage: "judged pool mean reported by the script"
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run in the results commit"
+  queries: 2554
+  judged_pool_mean: 11.52
+  reprint_covered: 22
+  baseline_ndcg_at_10: 0.5034
+  boosted_ndcg_at_10: 0.5035
+  delta: 0.0000
+  delta_ci_95: [-0.0003, 0.0003]
+  covered_baseline_ndcg_at_10: 0.6198
+  covered_boosted_ndcg_at_10: 0.6228
+  covered_delta: 0.0030
+  baseline_recall_at_10: 0.3362
+  boosted_recall_at_10: 0.3362
+  recall_delta: 0.0000
+  verdict: "neutral"
 
 conclusion: >
-  Pending. This closes the 0075 measurement question on the same rule, with the
-  pool restricted to what the labels can see.
+  The boost is neutral once unjudged candidates are removed: delta 0.0000
+  (CI [-0.0003, 0.0003]) on 2,554 queries and +0.0030 on the 22 covered
+  queries, with no recall change. 0075's covered delta of -0.0466 was the
+  unjudged-candidate penalty, not a property of reprints. The rule neither helps
+  nor hurts on what the labels can see, and it fires on only 22 queries, so the
+  remaining problem is coverage: reprints need labels before the rule can be
+  judged. Do not ship the boost; do annotate the reprint queue.
 
 artifacts:
   - data/results/reprint_judged_only.json

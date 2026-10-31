@@ -69,6 +69,15 @@ def ndcg(ranked: list[str], rel: dict[str, float], k: int = 10) -> float:
     return dcg / idcg if idcg else 0.0
 
 
+def recall_at_10(
+    ranked: list[str], rel: dict[str, float], k: int = 10, threshold: float = 0.5
+) -> float:
+    relevant = {name for name, score in rel.items() if score >= threshold}
+    if not relevant:
+        return 0.0
+    return len(set(ranked[:k]) & relevant) / min(k, len(relevant))
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -106,6 +115,8 @@ def main() -> int:
 
     baseline_scores: dict[str, float] = {}
     boosted_scores: dict[str, float] = {}
+    baseline_recall: dict[str, float] = {}
+    boosted_recall: dict[str, float] = {}
     covered: dict[str, bool] = {}
     judged_pool_sizes: list[int] = []
     for query, rel in judged.items():
@@ -125,6 +136,8 @@ def main() -> int:
         boosted = present + [name for name in pool if name not in present]
         baseline_scores[query] = ndcg(pool[:10], rel)
         boosted_scores[query] = ndcg(boosted[:10], rel)
+        baseline_recall[query] = recall_at_10(pool, rel)
+        boosted_recall[query] = recall_at_10(boosted, rel)
 
     queries = sorted(baseline_scores)
     covered_queries = [query for query in queries if covered[query]]
@@ -150,6 +163,9 @@ def main() -> int:
         "covered_delta": round(
             mean(boosted_scores, covered_queries) - mean(baseline_scores, covered_queries), 4
         ),
+        "baseline_recall_at_10": round(mean(baseline_recall, queries), 4),
+        "boosted_recall_at_10": round(mean(boosted_recall, queries), 4),
+        "recall_delta": round(mean(boosted_recall, queries) - mean(baseline_recall, queries), 4),
         "judged_pool_mean": round(statistics.mean(judged_pool_sizes), 2)
         if judged_pool_sizes
         else None,

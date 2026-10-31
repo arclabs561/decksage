@@ -54,8 +54,13 @@ amendment:
     candidate pool is the embedding top-50, and nDCG counts unjudged candidates
     as 0. Any arm that promotes an unjudged card is penalised by construction.
     Full diagnosis: .agents/reports/2026-10-31-negative-results-postmortem.md.
-  revised_verdict: "inconclusive_measurement"
+  revised_verdict: "measurement_artifact"
   original_verdict: "candidate_worse"
+  retest: >
+    0076 judged-only: +0.0787 nDCG (CI [+0.0684, +0.0905]) on 1,124 queries,
+    66% win rate, positive in every pool-size stratum. The original -0.18 was
+    the unjudged-candidate penalty. Tags are a usable re-ranker inside the
+    embedding top-10; tag-based candidate generation is still untested.
 
 artifacts:
   - data/results/tag_jaccard_rerank.json
