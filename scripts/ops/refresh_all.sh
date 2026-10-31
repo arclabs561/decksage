@@ -29,6 +29,9 @@ for game in magic pokemon yugioh; do
     --game "$game" --data-dir data --cache-dir data/cache --device auto
 done
 
+echo "==> unified graph (magic)"
+uv run python scripts/graph/build_unified_graph.py --game magic
+
 echo "==> meilisearch gaps"
 MEILISEARCH_URL="http://127.0.0.1:${MEILISEARCH_PORT:-7700}" \
 MEILISEARCH_KEY="${MEILISEARCH_KEY:-decksage-dev-meili-key}" \

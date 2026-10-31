@@ -27,9 +27,10 @@ The split is:
 
 1. Rebuilds `data/processed/magic_tags.json` and `magic_reprints.json`.
 2. Tops up the E5 caches for all games (no-op when complete).
-3. Fills Meilisearch gaps (`bootstrap_index.py`) without deleting documents.
-4. Restarts the API so it loads the new artifacts.
-5. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
+3. Rebuilds the Magic unified graph (`scripts/graph/build_unified_graph.py`).
+4. Fills Meilisearch gaps (`bootstrap_index.py`) without deleting documents.
+5. Restarts the API so it loads the new artifacts.
+6. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
 
 `just refresh` is the manual entry point. For a schedule, install the daily
 LaunchAgent:

@@ -504,6 +504,14 @@ async def lifespan(app: FastAPI):
                             __import__("json").loads(tags_path.read_text())
                         )
                         logger.info("Loaded tag index for magic: %d cards", len(state.tag_index))
+                    unified_path = PATHS.graphs / "unified_magic.db"
+                    if unified_path.exists():
+                        import sqlite3
+
+                        state.unified_graph = sqlite3.connect(
+                            f"file:{unified_path}?mode=ro", uri=True, check_same_thread=False
+                        )
+                        logger.info("Loaded unified graph: %s", unified_path)
                     if reprints_path.exists():
                         state.reprint_groups = __import__("json").loads(reprints_path.read_text())
                         logger.info(
@@ -992,20 +1000,43 @@ def graph_neighbors(
     game: str | None = Query(None),
     card: str = Query(..., min_length=1),
     limit: int = Query(20, ge=1, le=100),
+    relations: str | None = Query(
+        None, description="Comma-separated: cooccurrence,text,tag,attribute (default all)"
+    ),
 ) -> dict:
-    """Co-occurrence neighbours for one card, for agents exploring the graph.
+    """Typed neighbours for one card, from the unified graph when present.
 
-    Weights are deck co-occurrence counts; a missing card or an empty
-    neighbourhood returns an empty list rather than a 404 so an agent can
-    continue without special-casing.
+    The unified store keeps relation and weight per edge; the co-occurrence
+    fallback keeps old deployments working. A missing card or empty
+    neighbourhood returns an empty list, not a 404, so an agent can continue.
     """
     g = _require_game(game)
     state = get_state(g)
+    selected = [part.strip() for part in relations.split(",") if part.strip()] if relations else []
+    if state.unified_graph is not None:
+        query = "SELECT dst, relation, weight FROM edges WHERE src = ?"
+        params: list[object] = [card]
+        if selected:
+            query += f" AND relation IN ({','.join('?' for _ in selected)})"
+            params.extend(selected)
+        query += " ORDER BY weight DESC LIMIT ?"
+        params.append(limit)
+        rows = state.unified_graph.execute(query, params).fetchall()
+        return {
+            "game": g,
+            "card": card,
+            "source": "unified",
+            "relations": selected or ["cooccurrence", "text", "tag", "attribute"],
+            "neighbors": [
+                {"card": dst, "relation": relation, "weight": round(float(weight), 4)}
+                for dst, relation, weight in rows
+            ],
+        }
     adj = (state.graph_data or {}).get("adj") or {}
     weights = (state.graph_data or {}).get("weights") or {}
     neighbours = adj.get(card)
     if not neighbours:
-        return {"game": g, "card": card, "neighbors": []}
+        return {"game": g, "card": card, "source": "cooccurrence", "neighbors": []}
     scored = sorted(
         ((name, float(weights.get((card, name), 1.0))) for name in neighbours),
         key=lambda pair: (-pair[1], pair[0]),
@@ -1013,7 +1044,10 @@ def graph_neighbors(
     return {
         "game": g,
         "card": card,
-        "neighbors": [{"card": name, "weight": weight} for name, weight in scored],
+        "source": "cooccurrence",
+        "neighbors": [
+            {"card": name, "relation": "cooccurrence", "weight": weight} for name, weight in scored
+        ],
     }
 
 

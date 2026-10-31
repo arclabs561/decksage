@@ -12,7 +12,7 @@ signal, not a substitute signal. An agent should use each for what it measures.
 | `similar` | `POST /v1/similar` | card-name neighbours; `mode=text` for function, `mode=embedding` for co-play | `exact_match`, `model_info.method_used`, `no_vector` |
 | `autocomplete` | `GET /v1/cards` | prefix/typo completion over the full catalog | `items[].name`, `total` |
 | `contextual` | `GET /v1/cards/{card}/contextual` | curated synergy / alternatives / upgrades / downgrades | per-section `score`, `reasoning` |
-| `graph_neighbors` | `GET /v1/graph/neighbors` | weighted deck co-occurrence edges | `neighbors[].weight` (count, not a probability) |
+| `graph_neighbors` | `GET /v1/graph/neighbors` | typed edges from the unified graph (text/tag/attribute/cooccurrence) | `neighbors[].relation`, `.weight` |
 | `deck_complete` | `POST /v1/deck/complete` | fill a partial deck | `steps`, `metrics`, partitions |
 | `index_status` | `GET /v1/index/status` | catalog / Meili / Qdrant coverage | `*_coverage` |
 

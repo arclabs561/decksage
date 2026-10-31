@@ -127,6 +127,25 @@ test.describe('Card detail tools', () => {
   });
 });
 
+test.describe('Unified graph query', () => {
+  test('neighbors are typed by relation', async ({ request }) => {
+    const text = await request.get('/v1/graph/neighbors', {
+      params: { game: 'magic', card: 'Lightning Bolt', relations: 'text', limit: 3 },
+    });
+    expect(text.ok()).toBeTruthy();
+    const textBody = await text.json();
+    expect(textBody.source).toBe('unified');
+    expect(textBody.neighbors.length).toBeGreaterThan(0);
+    expect(textBody.neighbors.every((n) => n.relation === 'text')).toBe(true);
+
+    const coplay = await request.get('/v1/graph/neighbors', {
+      params: { game: 'magic', card: 'Lightning Bolt', relations: 'cooccurrence', limit: 3 },
+    });
+    const coBody = await coplay.json();
+    expect(coBody.neighbors.every((n) => n.relation === 'cooccurrence')).toBe(true);
+  });
+});
+
 test.describe('Graph query', () => {
   test('neighbors returns weighted co-occurrence edges', async ({ request }) => {
     const resp = await request.get('/v1/graph/neighbors', {

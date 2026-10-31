@@ -345,6 +345,7 @@ class ApiState:
             None  # {card: {usd: "1.23", ...}}
         )
         self.tag_index: Any = None  # TagNeighborIndex (Magic)
+        self.unified_graph: Any = None  # sqlite3 connection to the multi-relation graph
         self.reprint_groups: dict[str, str] | None = None
         # Reranker: multi-source embedding reranking with learned weights
         self.reranker: RerankerConfig | None = None

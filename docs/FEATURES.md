@@ -36,8 +36,11 @@ Not indexed, still available:
 | `legalities`, `prices`, `set_name` (Magic) | Scryfall raw | not joined into the Magic enriched CSV |
 | tags, reprint groups, fusion weights | data-local / experiments | offline arms only; not loaded by the API |
 
-Qdrant payload is still `{name, text, type_line, image_url}` with **no payload
-indexes**. That is fine for unfiltered ANN + API enrichment, but filtered vector
+A persisted **unified graph** now exists for Magic
+(`data/graphs/unified_magic.db`, 2,096,101 edges: 744,280 text, 675,682 tag,
+433,466 attribute, 242,673 cooccurrence). `/v1/graph/neighbors` serves typed
+edges with a `relations=` filter. Qdrant payload is still
+`{name, text, type_line, image_url}` with **no payload indexes**. That is fine for unfiltered ANN + API enrichment, but filtered vector
 search would be impossible without adding payload fields and indexes.
 
 ## Utilized vs merely loaded
