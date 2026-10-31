@@ -808,6 +808,22 @@ class HybridSearch:
             except Exception as e:
                 logger.error(f"Meilisearch query failed: {e}")
 
+        # If the auto-parsed filter matched nothing in text search, retry
+        # unfiltered *before* the vector/semantic arms. Otherwise a semantic
+        # neighbour can make the result non-empty and suppress the fail-open,
+        # leaving the answer (Day of Judgment for "destroy all creatures")
+        # out of the list.
+        if auto_filters and not results and _auto_filter:
+            logger.debug("Auto-filter %r matched nothing; retrying unfiltered", auto_filters)
+            return self.search(
+                original_query,
+                limit=limit,
+                text_weight=text_weight,
+                vector_weight=vector_weight,
+                filters=None,
+                _auto_filter=False,
+            )
+
         # Vector search via Qdrant
         if self.qdrant and vector_weight > 0 and self.embeddings is not None:
             try:
