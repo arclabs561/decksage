@@ -1,0 +1,42 @@
+id: "0084"
+date: "2026-10-31"
+title: "Functional-positive recall, text vs graph, across all three games"
+game: all
+status: "pre-registered"
+
+hypothesis: >
+  0082 showed text dominates the graph for Magic functional positives. The
+  mechanism (text matches oracle text; the graph encodes co-play) is not
+  Magic-specific, so the same ordering should hold for Pokemon and Yu-Gi-Oh!
+  If a game reverses, the graph is carrying something the text misses there.
+
+method:
+  type: known_item_recall
+  script: scripts/evaluation/functional_recall_probe.py
+  games: [magic, pokemon, yugioh]
+  retrievers: [e5_full_catalog, production_graph_embedding]
+  positives: "refined pairs with median_score >= 0.5, per game"
+  metrics: "per-query recall@10/@50; paired bootstrap 1000 seed 13"
+  commit: "see the commit that adds this note and the per-game probe"
+  threshold: >
+    Per game, text is the better pool if recall@50 is at least 0.10 higher with
+    a CI above zero. A game where the graph wins is a finding, not an error:
+    inspect its text cache coverage and pair sampling before concluding.
+
+data:
+  pairs: data/annotations/refined/{game}_pairs.json
+  caches: data/cache/text_emb_cache_cards_{game}_*
+  embeddings: data/embeddings/{game}_v7_*.wv
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; text caches for Pokemon and Yu-Gi-Oh! are being built"
+
+conclusion: >
+  Pending. This checks whether the representation conclusion generalizes beyond
+  Magic before the product routes all substitute search through text.
+
+artifacts:
+  - data/results/functional_recall_magic.json
+  - data/results/functional_recall_pokemon.json
+  - data/results/functional_recall_yugioh.json

@@ -9,6 +9,7 @@ chosen from the embedding's own neighbours.
 
 from __future__ import annotations
 
+import argparse
 import json
 import sys
 from pathlib import Path
@@ -18,9 +19,23 @@ from gensim.models import KeyedVectors
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PAIRS = ROOT / "data/annotations/refined/magic_pairs.json"
-CACHE = ROOT / "data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2"
-EMBEDDING = ROOT / "data/embeddings/magic_v7_spectral_mu35.wv"
+DEFAULTS = {
+    "magic": (
+        "data/annotations/refined/magic_pairs.json",
+        "data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2",
+        "data/embeddings/magic_v7_spectral_mu35.wv",
+    ),
+    "pokemon": (
+        "data/annotations/refined/pokemon_pairs.json",
+        "data/cache/text_emb_cache_cards_pokemon_intfloat-e5-base-v2",
+        "data/embeddings/pokemon_v7_fused.wv",
+    ),
+    "yugioh": (
+        "data/annotations/refined/yugioh_pairs.json",
+        "data/cache/text_emb_cache_cards_yugioh_intfloat-e5-base-v2",
+        "data/embeddings/yugioh_v7_spectral_mu3.wv",
+    ),
+}
 
 
 def bootstrap(values: list[float], seed: int = 13, resamples: int = 1000) -> tuple[float, float]:
@@ -34,17 +49,21 @@ def bootstrap(values: list[float], seed: int = 13, resamples: int = 1000) -> tup
 
 
 def main() -> int:
-    pairs = json.loads(PAIRS.read_text(encoding="utf-8"))["pairs"]
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--game", choices=sorted(DEFAULTS), default="magic")
+    args = parser.parse_args()
+    pairs_path, cache_path, embedding_path = (ROOT / part for part in DEFAULTS[args.game])
+    pairs = json.loads(pairs_path.read_text(encoding="utf-8"))["pairs"]
     positives: dict[str, set[str]] = {}
     for pair in pairs:
         if pair["median_score"] >= 0.5:
             positives.setdefault(pair["query"], set()).add(pair["candidate"])
 
-    names = json.loads(Path(f"{CACHE}.names.json").read_text(encoding="utf-8"))
-    matrix = np.load(f"{CACHE}.npz")["matrix"].astype(np.float32)
-    norms = np.load(f"{CACHE}.npz")["norms"].astype(np.float32)
+    names = json.loads(Path(f"{cache_path}.names.json").read_text(encoding="utf-8"))
+    matrix = np.load(f"{cache_path}.npz")["matrix"].astype(np.float32)
+    norms = np.load(f"{cache_path}.npz")["norms"].astype(np.float32)
     position = {name: index for index, name in enumerate(names)}
-    wv = KeyedVectors.load(str(EMBEDDING))
+    wv = KeyedVectors.load(str(embedding_path))
 
     rows = []
     for query, expected in positives.items():
@@ -71,6 +90,7 @@ def main() -> int:
     delta = [row["text_at_50"] - row["graph_at_50"] for row in rows]
     low, high = bootstrap(delta)
     result = {
+        "game": args.game,
         "queries": len(rows),
         "positives": sum(row["positives"] for row in rows),
         "graph_recall_at_10": mean("graph_at_10"),
@@ -81,7 +101,7 @@ def main() -> int:
         "delta_ci_95": [round(low, 4), round(high, 4)],
         "text_cache_names": len(names),
     }
-    output = ROOT / "data/results/functional_recall.json"
+    output = ROOT / f"data/results/functional_recall_{args.game}.json"
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(result, indent=2))
