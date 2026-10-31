@@ -1,0 +1,53 @@
+id: "0074"
+date: "2026-10-30"
+title: "Exact functional reprints as a fixed-candidate-set arm (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  Exact functional reprints (identical normalized oracle text and type, different
+  name) are the strongest possible substitutes. If a reprint is present in the
+  embedding's fixed candidate set, a deterministic reprint arm should rank it
+  first and improve nDCG@10 over the embedding baseline on the queries where a
+  reprint is retrievable. If it does not, the 33% top-10 known-item recall is a
+  coverage failure, not a ranking failure, and the rule belongs in candidate
+  generation rather than re-scoring.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/compare_recommendations.py
+  args: >
+    --game magic --candidate-sources reprint:exact
+    --reprint-cards data/raw/scryfall/oracle-cards.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+  threshold: >
+    Support only if the paired 95% CI for the nDCG@10 delta is above zero on the
+    reprint-covered queries; otherwise record a negative.
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+  groups: 483
+  pairs: 843
+  cards_in_groups: 1100
+  source: data/raw/scryfall/oracle-cards.json
+  grouping: "normalized oracle_text + type_line, text non-empty and >=10 chars"
+
+results:
+  status: "pending"
+  note: >
+    Pre-registered 2026-10-30 before the run. The thresholds and metric above
+    are fixed in this commit; the result is filled in a second commit.
+
+conclusion: >
+  Pending. Pre-registered decision: the reprint arm must beat the embedding
+  baseline with a paired interval above zero on reprint-covered queries. A
+  negative means the exact-reprint signal belongs in candidate generation or a
+  product rule, not in the learned re-ranker.
+
+artifacts:
+  - data/results/functional_reprint_probe_20261030.json

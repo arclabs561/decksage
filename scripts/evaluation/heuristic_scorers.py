@@ -28,6 +28,8 @@ probabilities and must never be thresholded as such.
 from __future__ import annotations
 
 import csv
+import gzip
+import json
 import math
 import re
 import sys
@@ -49,7 +51,9 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 #: A spec of the form ``b1``, ``b2`` or ``heuristic:b1`` names a heuristic arm.
 HEURISTIC_PREFIX = "heuristic:"
-HEURISTIC_NAMES = ("b1", "b2")
+HEURISTIC_NAMES = ("b1", "b2", "tag", "reprint")
+TAG_CARDS = PATHS.project_root / "data" / "raw" / "scryfall" / "oracle-cards.json"
+TAG_DATA = PATHS.project_root / "data-local" / "label-anchor-20261030" / "oracle-tags.jsonl.gz"
 METADATA_PATTERN = str(PATHS.processed / "card_attributes_{game}_enriched.csv")
 
 #: Supertype words that say nothing about which slot a card fills.
@@ -94,7 +98,7 @@ def is_heuristic_spec(spec: str) -> bool:
     name = spec.strip().lower()
     if name.startswith(HEURISTIC_PREFIX):
         name = name[len(HEURISTIC_PREFIX) :]
-    return name in HEURISTIC_NAMES
+    return name in HEURISTIC_NAMES or name.startswith(("tag:", "reprint:"))
 
 
 def metadata_path_for(game: str, override: Path | None = None) -> Path:
@@ -568,11 +572,175 @@ def build_structured(
     )
 
 
+@dataclass(frozen=True)
+class TagIndex:
+    """Scryfall Oracle Tag overlap as a non-learned role signal.
+
+    Missing tags mean "no tag evidence" and score 0, not a refusal: the
+    harness's fixed candidate set comes from the baseline, and most cards carry
+    no tag for a given role.
+    """
+
+    name: str
+    path: Path
+    keys: tuple[str, ...]
+    positions: Mapping[str, int]
+    tag_sets: tuple[frozenset[str], ...]
+    idf: Mapping[str, float]
+
+    @property
+    def dim(self) -> int:
+        """No embedding dimension; 0 is how the harness recognises a heuristic."""
+        return 0
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.positions
+
+    def cosines(self, query: str, candidates: Sequence[str]) -> np.ndarray:
+        """IDF-weighted tag Jaccard between ``query`` and each candidate."""
+        out = np.zeros(len(candidates), dtype=np.float64)
+        query_position = self.positions.get(query)
+        if query_position is None:
+            return out
+        query_tags = self.tag_sets[query_position]
+        if not query_tags:
+            return out
+        for index, candidate in enumerate(candidates):
+            position = self.positions.get(candidate)
+            if position is None:
+                continue
+            tags = self.tag_sets[position]
+            if not tags:
+                continue
+            union = query_tags | tags
+            denominator = sum(self.idf.get(tag, 1.0) for tag in union)
+            if denominator:
+                common = sum(self.idf.get(tag, 1.0) for tag in (query_tags & tags))
+                out[index] = common / denominator
+        return out
+
+
+def build_tag(game: str, tags_path: Path | None = None, cards_path: Path | None = None) -> TagIndex:
+    """Build the tag-overlap index for one game (currently Magic)."""
+    if game != "magic":
+        raise HeuristicError(f"tag overlap is Magic-only for now; got {game!r}")
+    tags_path = Path(tags_path) if tags_path else TAG_DATA
+    cards_path = Path(cards_path) if cards_path else TAG_CARDS
+    if not tags_path.exists():
+        raise HeuristicError(f"Scryfall tag bulk not found: {tags_path}")
+    if not cards_path.exists():
+        raise HeuristicError(f"Scryfall oracle cards not found: {cards_path}")
+    cards = json.loads(cards_path.read_text(encoding="utf-8"))
+    name_to_oid = {
+        card["name"]: card["oracle_id"]
+        for card in cards
+        if card.get("name") and card.get("oracle_id")
+    }
+    by_oid: dict[str, set[str]] = {}
+    with gzip.open(tags_path, "rt", encoding="utf-8") as handle:
+        for line in handle:
+            tag = json.loads(line)
+            label = tag.get("label")
+            if not label:
+                continue
+            for tagging in tag.get("taggings", []):
+                oid = tagging.get("oracle_id")
+                if oid:
+                    by_oid.setdefault(oid, set()).add(label)
+    ordered = sorted(name for name, oid in name_to_oid.items() if by_oid.get(oid))
+    tag_sets = tuple(frozenset(by_oid[name_to_oid[name]]) for name in ordered)
+    document_frequency: Counter[str] = Counter()
+    for tags in tag_sets:
+        document_frequency.update(tags)
+    total = max(1, len(tag_sets))
+    idf = {
+        tag: math.log((total + 1) / (count + 1)) + 1.0 for tag, count in document_frequency.items()
+    }
+    return TagIndex(
+        name=f"tag:jaccard:{game}",
+        path=tags_path,
+        keys=tuple(ordered),
+        positions={name: index for index, name in enumerate(ordered)},
+        tag_sets=tag_sets,
+        idf=idf,
+    )
+
+
+def _normalize_card_text(text: str) -> str:
+    text = re.sub(r"\([^)]*\)", "", text or "")
+    return re.sub(r"[^a-z0-9]+", " ", text.lower()).strip()
+
+
+def _normalize_type_line(text: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", (text or "").lower()).strip()
+
+
+@dataclass(frozen=True)
+class ReprintIndex:
+    """Exact functional reprints: identical normalized text and type, different name."""
+
+    name: str
+    path: Path
+    keys: tuple[str, ...]
+    positions: Mapping[str, int]
+    groups: tuple[str, ...]
+
+    @property
+    def dim(self) -> int:
+        """No embedding dimension; 0 is how the harness recognises a heuristic."""
+        return 0
+
+    def __contains__(self, key: str) -> bool:
+        return key in self.positions
+
+    def cosines(self, query: str, candidates: Sequence[str]) -> np.ndarray:
+        out = np.zeros(len(candidates), dtype=np.float64)
+        position = self.positions.get(query)
+        if position is None:
+            return out
+        group = self.groups[position]
+        for index, candidate in enumerate(candidates):
+            candidate_position = self.positions.get(candidate)
+            if candidate_position is not None and self.groups[candidate_position] == group:
+                out[index] = 1.0
+        return out
+
+
+def build_reprint(game: str, cards_path: Path | None = None) -> ReprintIndex:
+    """Build the exact-reprint index for one game (currently Magic)."""
+    if game != "magic":
+        raise HeuristicError(f"reprint matching is Magic-only for now; got {game!r}")
+    cards_path = Path(cards_path) if cards_path else TAG_CARDS
+    if not cards_path.exists():
+        raise HeuristicError(f"Scryfall oracle cards not found: {cards_path}")
+    cards = json.loads(cards_path.read_text(encoding="utf-8"))
+    groups: dict[tuple[str, str], str] = {}
+    rows: list[tuple[str, str]] = []
+    for card in cards:
+        name = card.get("name")
+        text = _normalize_card_text(card.get("oracle_text") or "")
+        if not name or not text or len(text) < 10:
+            continue
+        key = (text, _normalize_type_line(card.get("type_line") or ""))
+        group = groups.setdefault(key, f"g{len(groups)}")
+        rows.append((name, group))
+    rows.sort()
+    return ReprintIndex(
+        name=f"reprint:exact:{game}",
+        path=cards_path,
+        keys=tuple(name for name, _ in rows),
+        positions={name: index for index, (name, _) in enumerate(rows)},
+        groups=tuple(group for _, group in rows),
+    )
+
+
 def build_heuristic(
     spec: str,
     game: str,
     metadata: Path | None = None,
     allowed: Collection[str] | None = None,
+    tag_data: Path | None = None,
+    tag_cards: Path | None = None,
 ) -> Any:
     """Build the heuristic index named by ``spec``, optionally restricted to a vocabulary."""
     name = spec.strip().lower()
@@ -582,4 +750,8 @@ def build_heuristic(
         return build_lexical(game, metadata, allowed)
     if name == "b2":
         return build_structured(game, metadata, allowed)
+    if name == "tag" or name.startswith("tag:"):
+        return build_tag(game, tag_data, tag_cards)
+    if name == "reprint" or name.startswith("reprint:"):
+        return build_reprint(game, tag_cards)
     raise HeuristicError(f"unknown heuristic {spec!r}; expected one of {HEURISTIC_NAMES}")

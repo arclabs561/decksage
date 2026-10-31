@@ -320,6 +320,9 @@ def build_arm(
     game: str | None = None,
     metadata: Path | None = None,
     heuristic_vocabulary: str | None = None,
+    tag_data: Path | None = None,
+    tag_cards: Path | None = None,
+    reprint_cards: Path | None = None,
 ) -> Scorer:
     """One arm: an embedding source, or a non-learned heuristic source.
 
@@ -351,7 +354,14 @@ def build_arm(
                     f"--heuristic-vocabulary {heuristic_vocabulary!r} exposes no keys"
                 )
         try:
-            source = build_heuristic(heuristic_specs[0], game, metadata, allowed)
+            source = build_heuristic(
+                heuristic_specs[0],
+                game,
+                metadata,
+                allowed,
+                tag_data=tag_data,
+                tag_cards=tag_cards or reprint_cards,
+            )
         except HeuristicError as exc:
             raise HarnessRefusal(str(exc)) from exc
         return Scorer(arm=arm, sources=(source,), weights=(1.0,))
@@ -725,6 +735,27 @@ def build_parser() -> argparse.ArgumentParser:
         ),
     )
     parser.add_argument(
+        "--tag-data",
+        type=Path,
+        default=None,
+        help=(
+            "Scryfall Oracle Tags JSONL(.gz) for the tag:jaccard heuristic "
+            "(default: data-local/label-anchor-20261030/oracle-tags.jsonl.gz)"
+        ),
+    )
+    parser.add_argument(
+        "--tag-cards",
+        type=Path,
+        default=None,
+        help="Scryfall oracle-cards.json used to map card names to oracle ids",
+    )
+    parser.add_argument(
+        "--reprint-cards",
+        type=Path,
+        default=None,
+        help="Scryfall oracle-cards.json for the reprint:exact heuristic",
+    )
+    parser.add_argument(
         "--allow-contradictions",
         action="store_true",
         help="record an explicit override and score labels the gate blocks",
@@ -779,6 +810,9 @@ def resolve_inputs(args: argparse.Namespace) -> dict[str, Any]:
         game=args.game,
         metadata=args.heuristic_metadata,
         heuristic_vocabulary=args.heuristic_vocabulary,
+        tag_data=args.tag_data,
+        tag_cards=args.tag_cards,
+        reprint_cards=args.reprint_cards,
     )
     candidate = build_arm(
         "candidate",
@@ -787,6 +821,9 @@ def resolve_inputs(args: argparse.Namespace) -> dict[str, Any]:
         game=args.game,
         metadata=args.heuristic_metadata,
         heuristic_vocabulary=args.heuristic_vocabulary,
+        tag_data=args.tag_data,
+        tag_cards=args.tag_cards,
+        reprint_cards=args.reprint_cards,
     )
     judged, label_counters = judged_pairs(test_set, args.task)
     return {

@@ -95,6 +95,31 @@ artifacts:
 - Commit experiment files WITH the code changes, not separately.
 - Per-game metrics always. A single "overall" number hides domain-specific results.
 
+## Diligence checklist (non-training experiments)
+
+Write the record in two commits when the result is not already known:
+
+1. **Pre-register** before running: hypothesis, fixed method/args, data source
+   and counts, the metric and its denominator, the decision threshold, and
+   `results.status: pending`. Commit the code, the script and the record
+   together. The first commit is the evidence that the threshold was not chosen
+   after seeing the result.
+2. **Measure** with a fixed seed/hash seed, and record coverage, query counts,
+   excluded queries and any paired interval, not only the headline mean.
+3. **Fill** `results` and `conclusion` in a second commit. State whether the
+   hypothesis held, what would change the reading, and the next decision. Keep
+   negative results; do not delete the pre-registration.
+4. **Artifacts**: commit the small result JSON and the script that produced it.
+   Bulk inputs (Scryfall dumps, model weights, corpus files) stay in
+   `data-local/` and are named by source URL, date and hash where practical.
+5. **Provenance**: add `method.commit` once the code commit exists; if the code
+   changed after the run, say so rather than implying the later code produced
+   the number.
+
+The schema checker enforces the required fields and `results.status:
+incomplete` reasons; it does not enforce pre-registration. That is a human
+commitment, visible in the history.
+
 ## Index
 
 See `SUMMARY.md` for a chronological table of all experiments.

@@ -12,7 +12,7 @@ hypothesis: >
 
 method:
   type: known_item_probe
-  script: data-local/label-anchor-20261030/reprint_probe.py
+  script: scripts/evaluation/functional_reprint_probe.py
   args: "inline; group oracle cards by normalized oracle_text + type_line; most_similar topn=50"
   embedding: data/embeddings/magic_v7_spectral_mu35.wv
 
