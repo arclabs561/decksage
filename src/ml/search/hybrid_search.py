@@ -983,7 +983,13 @@ class HybridSearch:
         if not self.embeddings:
             return None
 
+        # Build from the full catalog, not just the graph vocabulary: cards
+        # without co-occurrence edges (11,322 Magic cards) are searchable but
+        # absent from index_to_key, and a vocabulary-only rebuild would drop
+        # them from semantic search again.
         card_names = list(self.embeddings.key_to_index.keys())
+        if self.card_metadata:
+            card_names = sorted(set(card_names) | set(self.card_metadata))
         if len(card_names) > 50000:
             import random
 
