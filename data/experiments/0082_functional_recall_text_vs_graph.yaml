@@ -1,0 +1,43 @@
+id: "0082"
+date: "2026-10-31"
+title: "Functional-positive recall: text vs graph on refined pairs (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  0081 showed text finds exact reprints almost perfectly, but reprints share
+  oracle text. The open question is whether text also retrieves *functional*
+  positives whose wording differs. On the refined pair corpus (which was
+  sampled diversely, not only from the graph neighbourhood), text should retain
+  an advantage if the representation-target story is right; if the graph wins
+  here, co-occurrence carries real functional signal that E5 misses.
+
+method:
+  type: known_item_recall
+  script: scripts/evaluation/functional_recall_probe.py
+  retrievers:
+    - e5_full_catalog
+    - magic_v7_spectral_mu35
+  positives: "refined magic pairs with median_score >= 0.5"
+  metrics: "per-query recall@10 and recall@50 over that query's positives; paired bootstrap 1000"
+  commit: "see the commit that adds this note and the probe"
+  threshold: >
+    Text is the better candidate generator if recall@50 is at least 0.10 higher
+    with a CI above zero. The graph is carrying functional signal if it wins by
+    the same margin. Between those, record no_difference and keep both pools.
+
+data:
+  pairs: data/annotations/refined/magic_pairs.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run in the results commit"
+
+conclusion: >
+  Pending. This separates exact-text retrieval from functional retrieval and
+  decides whether the graph still earns a place in the candidate pool.
+
+artifacts:
+  - data/results/functional_recall.json

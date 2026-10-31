@@ -87,6 +87,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0079 | 2026-10-31 | Reprint arms with the 31 missing/mislabelled pairs restored (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | -- | [0079](0079_reprint_restored_labels.yaml) |
 | 0080 | 2026-10-31 | Supervised text/tag/co-occurrence ranker vs tag Jaccard (magic) | magic | data/annotations/refined/magic_pairs.json | -- | train_pairs 1651; test_queries_excluded 2648; oof_spearman 0.5877; oof_mae 0.0344; eval_queries 2550; model_minus_tag 0.016; verdict candidate_better_vs_tag_but_equal_to_e5 | [0080](0080_functional_ranker.yaml) |
 | 0081 | 2026-10-31 | Full-catalog text retrieval recall for functional reprints (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | queries 69; graph_recall_at_10 0.3188; graph_recall_at_50 0.5072; text_recall_at_10 0.971; text_recall_at_50 1.0; text_cache_names 37214; verdict text_retriever_better | [0081](0081_text_reprint_recall.yaml) |
+| 0082 | 2026-10-31 | Functional-positive recall: text vs graph on refined pairs (magic) | magic | data/annotations/refined/magic_pairs.json | -- | pre-registered; run in the results commit **[incomplete]** | [0082](0082_functional_recall_text_vs_graph.yaml) |
 
 ## Key Insights (cross-cutting)
 
