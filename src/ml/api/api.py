@@ -2195,7 +2195,18 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
                 seen.add(name)
                 ordered.append(name)
 
-    ordered.sort(key=lambda c: (-aligned(c)[0], -aligned(c)[1], -popularity(c), c))
+    # Coverage, then a true prefix, then popularity, then overall similarity:
+    # a one-token prefix like "light" should lead with Lightning Bolt, not a
+    # short card whose whole name happens to resemble the token.
+    ordered.sort(
+        key=lambda c: (
+            -aligned(c)[0],
+            0 if c.lower().startswith(needle) else 1,
+            -popularity(c),
+            -aligned(c)[1],
+            c,
+        )
+    )
     return ordered
 
 
