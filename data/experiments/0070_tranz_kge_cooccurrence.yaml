@@ -20,6 +20,7 @@ method:
     --epochs 30 --batch-size 512 --lr 0.001 --label-smoothing 0.1
     --output data-local/crates-experiment-20261030/tranz/output30
   backend: burn-ndarray (CPU)
+  crate_commit: "24b682e"
   objective: 1-N (1vsAll) cross-entropy, AdamW
 
 data:

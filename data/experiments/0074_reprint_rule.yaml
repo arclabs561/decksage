@@ -2,7 +2,7 @@ id: "0074"
 date: "2026-10-30"
 title: "Exact functional reprints as a fixed-candidate-set arm (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   Exact functional reprints (identical normalized oracle text and type, different
@@ -23,6 +23,7 @@ method:
   depth: 50
   metrics: "nDCG@10 and recall@10, paired bootstrap 1000 resamples, seed 13"
   task: substitute
+  commit: "991501a"
   threshold: >
     Support only if the paired 95% CI for the nDCG@10 delta is above zero on the
     reprint-covered queries; otherwise record a negative.
@@ -38,16 +39,26 @@ data:
   grouping: "normalized oracle_text + type_line, text non-empty and >=10 chars"
 
 results:
-  status: "pending"
-  note: >
-    Pre-registered 2026-10-30 before the run. The thresholds and metric above
-    are fixed in this commit; the result is filled in a second commit.
+  usable_queries: 1282
+  scored_queries: 441
+  baseline_ndcg_at_10: 0.5002
+  reprint_ndcg_at_10: 0.1266
+  delta: -0.3736
+  delta_ci_95: [-0.3989, -0.3487]
+  baseline_recall_at_10: 0.6567
+  reprint_recall_at_10: 0.1853
+  recall_delta: -0.4714
+  verdict: "candidate_worse"
 
 conclusion: >
-  Pending. Pre-registered decision: the reprint arm must beat the embedding
-  baseline with a paired interval above zero on reprint-covered queries. A
-  negative means the exact-reprint signal belongs in candidate generation or a
-  product rule, not in the learned re-ranker.
+  The hypothesis is not supported as a standalone re-ranker: the reprint arm
+  scores 0.1266 against the embedding's 0.5002 on 441 shared queries (delta
+  -0.3736, CI [-0.3989, -0.3487]). The pre-registered alternative is the
+  correct reading: exact reprints are a candidate-generation/coverage problem,
+  not a re-ranking problem. A reprint arm that zeroes every non-reprint
+  candidate cannot rank a normal query. Next: test a boost rule (keep the
+  embedding score, promote exact reprints when present) before any product
+  wiring; do not replace the embedding with this arm.
 
 artifacts:
   - data/results/functional_reprint_probe_20261030.json

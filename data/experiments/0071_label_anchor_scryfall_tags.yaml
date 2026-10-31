@@ -14,7 +14,8 @@ hypothesis: >
 method:
   type: label_validity_anchor
   script: scripts/evaluation/label_anchor_tags.py
-  args: "inline; joins oracle-cards.json names to oracle_id, then oracle-tags taggings"
+  args: "script defaults; joins oracle-cards.json names to oracle_id, then oracle-tags taggings"
+  commit: "991501a"
   test: "within-query Spearman between functional_score and tag Jaccard; IDF-weighted variant"
 
 data:

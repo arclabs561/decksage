@@ -21,6 +21,7 @@ method:
     2i_creature_cheap intersection(1p, creature, cmc<=3); 2i_is
     intersection(1p, instant-or-sorcery)
   truth_algebra: Godel
+  crate_commit: "21bc0ac"
   top_k: 10
 
 data:

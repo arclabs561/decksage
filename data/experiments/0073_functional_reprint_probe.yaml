@@ -13,7 +13,9 @@ hypothesis: >
 method:
   type: known_item_probe
   script: scripts/evaluation/functional_reprint_probe.py
-  args: "inline; group oracle cards by normalized oracle_text + type_line; most_similar topn=50"
+  args: "script defaults; group oracle cards by normalized oracle_text + type_line; most_similar topn=50"
+  commit: "991501a"
+  note: "Script moved from scratch to scripts/evaluation at this commit; the result was produced from the same logic before the move."
   embedding: data/embeddings/magic_v7_spectral_mu35.wv
 
 data:

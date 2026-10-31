@@ -21,6 +21,7 @@ method:
   depth: 50
   metrics: "nDCG@10 and recall@10, paired bootstrap 1000 resamples, seed 13"
   task: substitute
+  commit: "991501a"
 
 data:
   test_set:
