@@ -398,14 +398,21 @@ async def lifespan(app: FastAPI):
     except (ImportError, OSError, RuntimeError):
         logger.warning("Failed to load shared text embedder", exc_info=True)
 
-    try:
-        from .load_signals import HAS_VISUAL_EMBED, CardVisualEmbedder
+    # The visual signal carries zero fusion weight and has no index; loading
+    # SigLIP on every boot costs memory for no served effect. Opt in when the
+    # visual path is actually wired and calibrated.
+    visual_enabled = os.getenv("DECKSAGE_ENABLE_VISUAL", "0").lower() in {"1", "true", "yes"}
+    if not visual_enabled:
+        logger.info("Visual embedder disabled (DECKSAGE_ENABLE_VISUAL=0)")
+    else:
+        try:
+            from .load_signals import HAS_VISUAL_EMBED, CardVisualEmbedder
 
-        if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
-            _shared_visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
-            logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
-    except (ImportError, OSError, RuntimeError):
-        logger.warning("Failed to load shared visual embedder", exc_info=True)
+            if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
+                _shared_visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
+                logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
+        except (ImportError, OSError, RuntimeError):
+            logger.warning("Failed to load shared visual embedder", exc_info=True)
 
     # Load resources per game
     for game in games:
@@ -1027,6 +1034,21 @@ def index_status() -> dict:
         for key in ("meilisearch", "qdrant"):
             value = entry[key]
             entry[f"{key}_coverage"] = round(value / catalog, 4) if catalog and value else None
+        # Text cache coverage: the E5 candidate retriever reads this file, and
+        # a missing or partial cache is invisible in the other counts.
+        text_count = None
+        if client is not None:
+            cache_path = client._cache_path()
+            names_path = cache_path.with_suffix(".names.json") if cache_path else None
+            if names_path and names_path.exists():
+                try:
+                    text_count = len(__import__("json").loads(names_path.read_text()))
+                except Exception:
+                    text_count = None
+        entry["text_cache"] = text_count
+        entry["text_cache_coverage"] = (
+            round(min(1.0, text_count / catalog), 4) if catalog and text_count else None
+        )
         report[game] = entry
     return {"games": report}
 

@@ -13,7 +13,13 @@ cd "$(dirname "$0")/../.."
 COMPOSE=(docker compose -f docker-compose.yml -f docker-compose.dev.yml)
 BASE_URL="${BASE_URL:-http://127.0.0.1:${API_PORT:-8000}}"
 BUILD=0
-[ "${1:-}" = "--build" ] && BUILD=1
+FILL=0
+for arg in "$@"; do
+  case "$arg" in
+    --build) BUILD=1 ;;
+    --fill) FILL=1 ;;
+  esac
+done
 
 wait_live() {
   for _ in $(seq 1 30); do
@@ -66,6 +72,11 @@ if compgen -G "data/cache/*.partial.npz" >/dev/null; then
   echo "       Resume with: docker cp scripts/training/extend_text_cache.py decksage-api:/app/extend_text_cache.py && docker exec decksage-api python /app/extend_text_cache.py"
 else
   echo "  ok   no partial cache"
+fi
+
+if [ "$FILL" = "1" ]; then
+  echo "==> filling indexes (meili + text caches)"
+  "${COMPOSE[@]}" --profile bootstrap run --rm bootstrap
 fi
 
 echo "==> services"

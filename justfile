@@ -1275,3 +1275,14 @@ verify-artifacts:
 evidence-loop *ARGS:
     #!/usr/bin/env bash
     uv run scripts/evaluation/evidence_loop.py {{ARGS}}
+
+# Fill missing Meilisearch docs and E5 text caches (idempotent, one-shot).
+bootstrap:
+    #!/usr/bin/env bash
+    docker compose -f docker-compose.yml -f docker-compose.dev.yml --profile bootstrap run --rm bootstrap
+
+# Repair the dev stack: health-gated up, restart/rebuild if needed, asset check.
+# Pass --fill to run the one-shot index bootstrap as part of the repair.
+dev-doctor *ARGS:
+    #!/usr/bin/env bash
+    scripts/dev/stack_doctor.sh {{ARGS}}

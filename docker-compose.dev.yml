@@ -81,3 +81,31 @@ services:
     restart: unless-stopped
     ports: !override
       - "127.0.0.1:${QDRANT_PORT:-6333}:6333"
+
+  # One-shot self-fill: Meilisearch docs + missing E5 caches. Run explicitly
+  # (`just bootstrap`) or via `just dev-doctor --fill`; a profile keeps it out
+  # of the normal `up --wait` path.
+  bootstrap:
+    build: .
+    container_name: decksage-bootstrap
+    profiles: ["bootstrap"]
+    command: ["python", "/app/scripts/data/bootstrap_index.py", "--all", "--text"]
+    environment:
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - QDRANT_URL=http://qdrant:6333
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
+      - HF_HOME=/root/.cache/huggingface
+      - HF_HUB_OFFLINE=1
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      - ./data:/app/data:ro
+      - ./data/cache:/app/data/cache
+      - ${HF_CACHE:-./data-local/hf-hub}:/root/.cache/huggingface/hub:ro
+    depends_on:
+      meilisearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - decksage

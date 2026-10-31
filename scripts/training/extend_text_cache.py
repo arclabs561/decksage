@@ -64,9 +64,14 @@ def main() -> int:
         matrix = np.load(partial)["matrix"].astype(np.float32)
         names = json.loads(partial_names.read_text())
         print(f"resuming from {len(names)} names", flush=True)
-    else:
+    elif Path(f"{prefix}.npz").exists():
         names = json.loads(Path(f"{prefix}.names.json").read_text())
         matrix = np.load(f"{prefix}.npz")["matrix"].astype(np.float32)
+    else:
+        # No cache yet (Pokemon, Yu-Gi-Oh!): build the whole catalog.
+        names = []
+        matrix = np.zeros((0, 768), dtype=np.float32)
+        print("no cache yet; building from the full catalog", flush=True)
     texts = catalog_text(args.game, args.data_dir)
     missing = [name for name in texts if name not in set(names)]
     print(f"cache {len(names)} catalog {len(texts)} missing {len(missing)}", flush=True)
@@ -94,8 +99,9 @@ def main() -> int:
         print(f"embedded {added}/{len(missing)}", flush=True)
 
     norms = np.linalg.norm(matrix, axis=1)
-    shutil.copy(f"{prefix}.npz", f"{prefix}.npz.vocab-backup")
-    shutil.copy(f"{prefix}.names.json", f"{prefix}.names.json.vocab-backup")
+    if Path(f"{prefix}.npz").exists():
+        shutil.copy(f"{prefix}.npz", f"{prefix}.npz.vocab-backup")
+        shutil.copy(f"{prefix}.names.json", f"{prefix}.names.json.vocab-backup")
     np.savez_compressed(f"{prefix}.npz", matrix=matrix, norms=norms)
     Path(f"{prefix}.names.json").write_text(json.dumps(names))
     Path(f"{prefix}.meta.json").write_text(
