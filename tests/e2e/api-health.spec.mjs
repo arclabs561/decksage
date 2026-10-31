@@ -180,6 +180,40 @@ test.describe('Text retrieval mode', () => {
   });
 });
 
+test.describe('Semantic filters', () => {
+  test('vector-only search honours a colour filter', async ({ request }) => {
+    const resp = await request.post('/v1/search', {
+      data: {
+        game: 'magic',
+        query: 'Lightning Bolt',
+        text_weight: 0,
+        vector_weight: 1,
+        filters: 'colors = "R"',
+        limit: 5,
+      },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(body.results.length).toBeGreaterThan(0);
+    expect(body.results.every(r => (r.metadata?.colors || '').includes('R'))).toBe(true);
+  });
+
+  test('vector-only search honours a numeric filter', async ({ request }) => {
+    const resp = await request.post('/v1/search', {
+      data: {
+        game: 'magic',
+        query: 'Lightning Bolt',
+        text_weight: 0,
+        vector_weight: 1,
+        filters: 'cmc <= 2',
+        limit: 5,
+      },
+    });
+    const body = await resp.json();
+    expect(body.results.every(r => Number(r.metadata?.cmc) <= 2)).toBe(true);
+  });
+});
+
 test.describe('Deck completion input shapes', () => {
   test('accepts structured card lists', async ({ request }) => {
     const resp = await request.post('/v1/deck/complete', {
@@ -197,6 +231,31 @@ test.describe('Deck completion input shapes', () => {
     expect(resp.ok()).toBeTruthy();
     const body = await resp.json();
     expect(Array.isArray(body.steps)).toBe(true);
+  });
+});
+
+test.describe('Artifact self-report', () => {
+  test('index status reports tags, reprints and graph per game', async ({ request }) => {
+    const resp = await request.get('/v1/index/status');
+    expect(resp.ok()).toBeTruthy();
+    const games = (await resp.json()).games;
+    for (const game of ['magic', 'pokemon', 'yugioh']) {
+      expect(games[game]).toBeDefined();
+      expect(games[game].tags).toBeGreaterThan(0);
+      expect(games[game].reprint_groups).toBeGreaterThan(0);
+      expect(games[game].unified_graph).not.toBeNull();
+    }
+  });
+
+  test('derived tag neighbours exist for pokemon and yugioh', async ({ request }) => {
+    for (const [game, card] of [['pokemon', 'Pikachu'], ['yugioh', 'Dark Magician']]) {
+      const resp = await request.get('/v1/graph/neighbors', {
+        params: { game, card, relations: 'tag', limit: 5 },
+      });
+      expect(resp.ok()).toBeTruthy();
+      const body = await resp.json();
+      expect(body.source).toBe('unified');
+    }
   });
 });
 

@@ -29,13 +29,24 @@ for game in magic pokemon yugioh; do
     --game "$game" --data-dir data --cache-dir data/cache --device auto
 done
 
-echo "==> unified graph (magic)"
-uv run python scripts/graph/build_unified_graph.py --game magic
+echo "==> signal artifacts (tags, reprints)"
+uv run python scripts/data/build_signal_artifacts.py --all
+
+for game in magic pokemon yugioh; do
+  echo "==> unified graph (${game})"
+  uv run python scripts/graph/build_unified_graph.py --game "${game}"
+done
 
 echo "==> meilisearch gaps"
 MEILISEARCH_URL="http://127.0.0.1:${MEILISEARCH_PORT:-7700}" \
 MEILISEARCH_KEY="${MEILISEARCH_KEY:-decksage-dev-meili-key}" \
 uv run python scripts/data/bootstrap_index.py --all
+
+# Payloads carry the fields the semantic arm filters on; the backfill is
+# idempotent and skips points already at the current schema version.
+echo "==> qdrant payload backfill"
+uv run python scripts/embed/payload_backfill.py --game all || \
+  echo "qdrant payload backfill skipped (qdrant unavailable?)"
 
 if [ "$RESTART" = "1" ]; then
   echo "==> restarting api to load artifacts"

@@ -495,30 +495,32 @@ async def lifespan(app: FastAPI):
                     game,
                     len(state.card_metadata),
                 )
-                if game == "magic":
-                    from ..search.tag_neighbors import TagNeighborIndex
+                from ..search.tag_neighbors import TagNeighborIndex
 
-                    tags_path = PATHS.data / "processed" / "magic_tags.json"
-                    reprints_path = PATHS.data / "processed" / "magic_reprints.json"
-                    if tags_path.exists():
-                        state.tag_index = TagNeighborIndex(
-                            __import__("json").loads(tags_path.read_text())
-                        )
-                        logger.info("Loaded tag index for magic: %d cards", len(state.tag_index))
-                    unified_path = PATHS.graphs / "unified_magic.db"
-                    if unified_path.exists():
-                        import sqlite3
+                tags_path = PATHS.data / "processed" / f"{game}_tags.json"
+                reprints_path = PATHS.data / "processed" / f"{game}_reprints.json"
+                if tags_path.exists():
+                    state.tag_index = TagNeighborIndex(
+                        __import__("json").loads(tags_path.read_text())
+                    )
+                    logger.info("Loaded tag index for %s: %d cards", game, len(state.tag_index))
+                if reprints_path.exists():
+                    state.reprint_groups = __import__("json").loads(reprints_path.read_text())
+                    logger.info(
+                        "Loaded reprint groups for %s: %d cards",
+                        game,
+                        len(state.reprint_groups),
+                    )
+                # Unified multi-relation graph is per game; absent artifacts fall
+                # back to the co-occurrence adjacency the API already holds.
+                unified_path = PATHS.graphs / f"unified_{game}.db"
+                if unified_path.exists():
+                    import sqlite3
 
-                        state.unified_graph = sqlite3.connect(
-                            f"file:{unified_path}?mode=ro", uri=True, check_same_thread=False
-                        )
-                        logger.info("Loaded unified graph: %s", unified_path)
-                    if reprints_path.exists():
-                        state.reprint_groups = __import__("json").loads(reprints_path.read_text())
-                        logger.info(
-                            "Loaded reprint groups for magic: %d cards",
-                            len(state.reprint_groups),
-                        )
+                    state.unified_graph = sqlite3.connect(
+                        f"file:{unified_path}?mode=ro", uri=True, check_same_thread=False
+                    )
+                    logger.info("Loaded unified graph: %s", unified_path)
             except (OSError, ValueError, KeyError, ImportError):
                 logger.debug(
                     "Failed to load enriched card metadata for game=%s", game, exc_info=True
@@ -1053,7 +1055,13 @@ def graph_neighbors(
         if selected:
             query += f" AND relation IN ({','.join('?' for _ in selected)})"
             params.extend(selected)
-        query += " ORDER BY weight DESC LIMIT ?"
+        # Weights live on different scales per relation (co-occurrence counts vs
+        # cosine vs Jaccard), so ordering by weight alone lets attribute ties at
+        # 1.0 crowd out the useful neighbours. Order by relation, then weight.
+        query += (
+            " ORDER BY CASE relation WHEN 'cooccurrence' THEN 0 WHEN 'text' THEN 1"
+            " WHEN 'tag' THEN 2 ELSE 3 END, weight DESC LIMIT ?"
+        )
         params.append(limit)
         rows = state.unified_graph.execute(query, params).fetchall()
         return {
@@ -1085,6 +1093,30 @@ def graph_neighbors(
     }
 
 
+def _unified_graph_meta(state: Any) -> dict | None:
+    """Relation counts, computed once per process and cached on the state."""
+    if state.unified_graph is None:
+        return None
+    if state.unified_graph_meta is not None:
+        return state.unified_graph_meta
+    rows = state.unified_graph.execute(
+        "SELECT relation, COUNT(*), AVG(weight), MAX(weight) FROM edges GROUP BY relation"
+    ).fetchall()
+    nodes = state.unified_graph.execute("SELECT COUNT(DISTINCT src) FROM edges").fetchone()[0]
+    state.unified_graph_meta = {
+        "nodes": nodes,
+        "relations": {
+            relation: {
+                "edges": count,
+                "mean_weight": round(float(mean), 4),
+                "max_weight": round(float(maximum), 4),
+            }
+            for relation, count, mean, maximum in rows
+        },
+    }
+    return state.unified_graph_meta
+
+
 @router.get("/graph/stats")
 def graph_stats(game: str | None = Query(None)) -> dict:
     """Edge counts per relation in the unified graph."""
@@ -1098,23 +1130,8 @@ def graph_stats(game: str | None = Query(None)) -> dict:
             "nodes": len(adj),
             "relations": {"cooccurrence": sum(len(v) for v in adj.values())},
         }
-    rows = state.unified_graph.execute(
-        "SELECT relation, COUNT(*), AVG(weight), MAX(weight) FROM edges GROUP BY relation"
-    ).fetchall()
-    nodes = state.unified_graph.execute("SELECT COUNT(DISTINCT src) FROM edges").fetchone()[0]
-    return {
-        "game": g,
-        "source": "unified",
-        "nodes": nodes,
-        "relations": {
-            relation: {
-                "edges": count,
-                "mean_weight": round(float(mean), 4),
-                "max_weight": round(float(maximum), 4),
-            }
-            for relation, count, mean, maximum in rows
-        },
-    }
+    meta = _unified_graph_meta(state) or {"nodes": 0, "relations": {}}
+    return {"game": g, "source": "unified", **meta}
 
 
 @router.get("/index/status")
@@ -1164,6 +1181,18 @@ def index_status() -> dict:
         entry["text_cache"] = text_count
         entry["text_cache_coverage"] = (
             round(min(1.0, text_count / catalog), 4) if catalog and text_count else None
+        )
+        # Artifacts the API degrades without: tags, reprints, unified graph.
+        entry["tags"] = len(state.tag_index) if state.tag_index is not None else None
+        entry["reprint_groups"] = len(state.reprint_groups) if state.reprint_groups else None
+        meta = _unified_graph_meta(state) if state.unified_graph is not None else None
+        entry["unified_graph"] = (
+            {
+                "nodes": meta["nodes"],
+                "relations": {name: data["edges"] for name, data in meta["relations"].items()},
+            }
+            if meta
+            else None
         )
         report[game] = entry
     return {"games": report}
@@ -2586,6 +2615,12 @@ def _get_search_client(game: str) -> HybridSearch | None:
         # Pass card metadata for semantic search oracle text enrichment
         client.card_metadata = getattr(state, "card_metadata", None) or {}
         client.tag_neighbors = getattr(state, "tag_index", None)
+        # Indexes are idempotent; doing it per client construction keeps a fresh
+        # collection from silently scanning payloads for every filtered query.
+        try:
+            client.ensure_payload_indexes()
+        except Exception as exc:
+            logger.debug("payload index setup skipped for game=%s: %s", game, exc)
         has_text = getattr(client, "meilisearch", None) is not None
         has_vector = getattr(client, "qdrant", None) is not None and state.embeddings is not None
 
@@ -2763,20 +2798,28 @@ def search_cards_get_v1(
     game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
     q: str = Query(..., description="Search query"),
     limit: int = Query(10, ge=1, le=100, description="Maximum number of results"),
+    offset: int = Query(0, ge=0, le=1000, description="Results to skip"),
     text_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for text search"),
     vector_weight: float = Query(0.5, ge=0.0, le=1.0, description="Weight for vector search"),
-    format: str | None = Query(
-        None, description="Filter by format legality (e.g., standard, modern). Magic-only."
+    format_name: str | None = Query(
+        None,
+        alias="format",
+        description="Filter by format legality (e.g., standard, modern). Magic-only.",
+    ),
+    filters: str | None = Query(
+        None, description="Meili/Qdrant filter expression, e.g. 'colors = \"R\" AND cmc <= 2'"
     ),
 ):
-    """GET version of card search endpoint."""
+    """GET version of card search endpoint, same contract as POST /v1/search."""
     request = SearchRequest(
         game=game,
         query=q,
         limit=limit,
+        offset=offset,
         text_weight=text_weight,
         vector_weight=vector_weight,
-        format=format,
+        format=format_name,
+        filters=filters,
     )
     return search_cards_v1(request)
 

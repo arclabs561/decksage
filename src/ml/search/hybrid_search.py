@@ -25,6 +25,13 @@ from ..utils.paths import PATHS
 
 logger = logging.getLogger("decksage.search")
 
+# Payload fields the semantic arm can filter on. Keyword fields are exact match;
+# numeric fields accept range comparisons. Keep in sync with the payload the
+# indexer writes (see scripts/data/enrich_qdrant_payloads.py).
+_QDRANT_KEYWORD_FIELDS = {"name", "type_line", "rarity", "colors", "set_name", "supertype"}
+_QDRANT_NUMERIC_FIELDS = {"cmc", "power", "toughness", "hp", "atk", "def_stat", "level"}
+_RANGE_OPERATORS = {">=": "gte", "<=": "lte", ">": "gt", "<": "lt"}
+
 # One text-index build at a time, shared by every HybridSearch instance.
 _text_cache_lock = threading.Lock()
 
@@ -127,6 +134,103 @@ _SYNONYMS_BY_GAME: dict[str, dict[str, list[str]]] = {
         "search": ["add 1", "from your Deck to your hand"],
     },
 }
+
+
+def point_id_for(card_name: str) -> int:
+    """Stable Qdrant point ID for a card name; shared by indexers and tools."""
+    hash_bytes = hashlib.sha256(card_name.encode()).digest()[:8]
+    return int.from_bytes(hash_bytes, byteorder="big", signed=False)
+
+
+def parse_filter_clauses(filter_str: str) -> list[dict[str, Any]] | None:
+    """Parse a Meili-style filter string into Qdrant-shaped clauses.
+
+    Supports the subset the API emits: ``field = value``, numeric comparisons,
+    quoted strings, and one level of `(A OR B)` colour groups. Returns None for
+    anything else, and the caller then queries Qdrant unfiltered: a filter we
+    cannot translate must never silently drop the semantic arm.
+    """
+    clauses: list[dict[str, Any]] = []
+    for raw in filter_str.split(" AND "):
+        clause = raw.strip()
+        if not clause:
+            continue
+        if clause.startswith("(") and clause.endswith(")"):
+            options = []
+            for option in clause[1:-1].split(" OR "):
+                parsed = _parse_clause(option)
+                if parsed is None:
+                    return None
+                options.append(parsed)
+            clauses.append({"or": options})
+            continue
+        parsed = _parse_clause(clause)
+        if parsed is None:
+            return None
+        clauses.append(parsed)
+    return clauses or None
+
+
+def _parse_clause(clause: str) -> dict[str, Any] | None:
+    match = re.match(r"^(\w+)\s*(>=|<=|>|<|=)\s*(.+)$", clause.strip())
+    if not match:
+        return None
+    field, operator, raw_value = match.groups()
+    value = raw_value.strip().strip('"').strip("'")
+    if not value:
+        return None
+    return {"field": field, "operator": operator, "value": value}
+
+
+def qdrant_filter_from_string(filter_str: str | None, models_module: Any) -> Any | None:
+    """Translate the supported filter subset into a Qdrant Filter."""
+    if not filter_str or models_module is None:
+        return None
+    clauses = parse_filter_clauses(filter_str)
+    if not clauses:
+        return None
+
+    def condition(clause: dict[str, Any]) -> Any | None:
+        field = clause["field"]
+        operator = clause["operator"]
+        value = clause["value"]
+        if field in _QDRANT_KEYWORD_FIELDS:
+            if operator != "=":
+                return None
+            return models_module.FieldCondition(
+                key=field, match=models_module.MatchValue(value=value)
+            )
+        if field in _QDRANT_NUMERIC_FIELDS:
+            try:
+                number = float(value)
+            except ValueError:
+                return None
+            if operator == "=":
+                return models_module.FieldCondition(
+                    key=field, match=models_module.MatchValue(value=number)
+                )
+            key = _RANGE_OPERATORS.get(operator)
+            if key is None:
+                return None
+            return models_module.FieldCondition(
+                key=field, range=models_module.Range(**{key: number})
+            )
+        return None
+
+    must = []
+    should = []
+    for clause in clauses:
+        if "or" in clause:
+            options = [condition(option) for option in clause["or"]]
+            if any(option is None for option in options):
+                return None
+            should.append(models_module.Filter(should=options))
+        else:
+            built = condition(clause)
+            if built is None:
+                return None
+            must.append(built)
+    return models_module.Filter(must=must or None, should=should or None)
 
 
 def parse_query_filters(query: str) -> tuple[str, str | None]:
@@ -473,6 +577,39 @@ class HybridSearch:
             if "already exists" not in str(e).lower():
                 logger.error(f"Failed to create Qdrant collection: {e}")
 
+    def ensure_payload_indexes(self) -> list[str]:
+        """Create payload indexes the data actually uses; no-ops when present.
+
+        Without these, Qdrant scans payloads for every filtered query and the
+        semantic arm cannot filter on colour, cost, rarity or set at all.
+        """
+        if self.qdrant is None or models is None:
+            return []
+        created: list[str] = []
+        for field in sorted(_QDRANT_KEYWORD_FIELDS):
+            try:
+                self.qdrant.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field,
+                    field_schema=models.PayloadSchemaType.KEYWORD,
+                )
+                created.append(field)
+            except Exception as exc:  # already exists, or server refuses
+                logger.debug("payload index %s: %s", field, exc)
+        for field in sorted(_QDRANT_NUMERIC_FIELDS):
+            try:
+                self.qdrant.create_payload_index(
+                    collection_name=self.collection_name,
+                    field_name=field,
+                    field_schema=models.PayloadSchemaType.FLOAT,
+                )
+                created.append(field)
+            except Exception as exc:
+                logger.debug("payload index %s: %s", field, exc)
+        if created:
+            logger.info("Qdrant payload indexes ready on %s: %s", self.collection_name, created)
+        return created
+
     def configure_settings(self, game: str | None = None) -> bool:
         """Apply ranking rules, searchable/filterable/sortable attributes,
         synonyms, and typo tolerance to the Meilisearch index.
@@ -648,9 +785,7 @@ class HybridSearch:
 
     def _point_id(self, card_name: str) -> int:
         """Generate consistent integer point ID from card name."""
-        # Use first 8 bytes of hash as integer
-        hash_bytes = hashlib.sha256(card_name.encode()).digest()[:8]
-        return int.from_bytes(hash_bytes, byteorder="big", signed=False)
+        return point_id_for(card_name)
 
     def batch_index_qdrant(
         self,
@@ -848,7 +983,11 @@ class HybridSearch:
                         logger.warning(f"Could not generate embedding for query: {query}")
 
                 if query_vector:
-                    qdrant_results = self._qdrant_points(query_vector, limit * 2)
+                    qdrant_results = self._qdrant_points(
+                        query_vector,
+                        limit * 2,
+                        filters=filters,
+                    )
 
                     for result in qdrant_results:
                         payload = result.payload or {}
@@ -912,7 +1051,9 @@ class HybridSearch:
 
         return sorted_results[:limit]
 
-    def _qdrant_points(self, query_vector: list[float], limit: int) -> list[Any]:
+    def _qdrant_points(
+        self, query_vector: list[float], limit: int, filters: str | None = None
+    ) -> list[Any]:
         """Query points across qdrant-client versions.
 
         1.16 removed ``QdrantClient.search`` in favour of ``query_points``. Keep
@@ -920,6 +1061,7 @@ class HybridSearch:
         """
         if self.qdrant is None:
             return []
+        query_filter = qdrant_filter_from_string(filters, models)
         query_points = getattr(self.qdrant, "query_points", None)
         if callable(query_points):
             try:
@@ -927,6 +1069,7 @@ class HybridSearch:
                     collection_name=self.collection_name,
                     query=query_vector,
                     limit=limit,
+                    query_filter=query_filter,
                 )
                 points = getattr(response, "points", None)
                 if isinstance(points, list):
@@ -940,6 +1083,7 @@ class HybridSearch:
             collection_name=self.collection_name,
             query_vector=query_vector,
             limit=limit,
+            query_filter=query_filter,
         )
 
     def text_similar(self, query: str, limit: int = 10) -> list[tuple[str, float]]:

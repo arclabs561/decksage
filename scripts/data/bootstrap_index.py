@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT / "scripts" / "data"))
 
+from build_signal_artifacts import ensure_artifacts
 from rebuild_meilisearch_index import documents
 
 from ml.search.hybrid_search import build_meilisearch_settings
@@ -40,6 +41,11 @@ def main() -> int:
     parser.add_argument("--game", action="append", choices=("magic", "pokemon", "yugioh"))
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--text", action="store_true", help="build missing E5 caches")
+    parser.add_argument(
+        "--payloads",
+        action="store_true",
+        help="enrich Qdrant payloads and create payload indexes (needs Qdrant)",
+    )
     parser.add_argument("--url", default=os.getenv("MEILISEARCH_URL", "http://127.0.0.1:7700"))
     parser.add_argument("--key", default=os.getenv("MEILISEARCH_KEY", ""))
     args = parser.parse_args()
@@ -49,7 +55,23 @@ def main() -> int:
 
     client = Client(args.url, args.key)
     cache_dir = ROOT / "data" / "cache"
+    if args.payloads:
+        print("==> qdrant payload backfill")
+        subprocess.run(
+            [
+                sys.executable,
+                str(ROOT / "scripts" / "embed" / "payload_backfill.py"),
+                "--game",
+                "all",
+            ],
+            check=False,
+        )
+
     for game in games:
+        # Catalog-derived artifacts are cheap and make the tag/reprint
+        # relations available without a separate manual step.
+        if ensure_artifacts(game):
+            print(f"{game}: built tag/reprint artifacts")
         docs = documents(game)
         catalog = len(docs)
         index = client.index(f"cards_{game}")

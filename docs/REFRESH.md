@@ -25,12 +25,22 @@ The split is:
 
 ## What refresh does
 
-1. Rebuilds `data/processed/magic_tags.json` and `magic_reprints.json`.
+1. Rebuilds tag/reprint artifacts for every game
+   (`scripts/data/build_signal_artifacts.py --all`). Magic tags come from the
+   curated tag index; Pokemon and Yu-Gi-Oh! tags are derived from structured
+   columns (subtypes, keywords, race, attribute, archetype) and are labelled as
+   derived where they are served.
 2. Tops up the E5 caches for all games (no-op when complete).
-3. Rebuilds the Magic unified graph (`scripts/graph/build_unified_graph.py`).
+3. Rebuilds the unified graph for each game (`scripts/graph/build_unified_graph.py`).
 4. Fills Meilisearch gaps (`bootstrap_index.py`) without deleting documents.
-5. Restarts the API so it loads the new artifacts.
-6. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
+5. Backfills Qdrant payloads at the current schema (`scripts/embed/payload_backfill.py`),
+   skipping points already enriched, and ensures the payload indexes.
+6. Restarts the API so it loads the new artifacts.
+7. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
+
+Bootstrap is self-filling: `bootstrap_index.py` builds missing tag/reprint
+artifacts itself, so a fresh clone gets the tag relation without a manual step.
+`--payloads` additionally enriches Qdrant payloads and creates their indexes.
 
 `just refresh` is the manual entry point. For a schedule, install the daily
 LaunchAgent:

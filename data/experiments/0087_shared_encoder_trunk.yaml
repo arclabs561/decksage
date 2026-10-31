@@ -1,0 +1,51 @@
+id: "0087"
+date: "2026-10-31"
+title: "Shared text-encoder trunk with three heads vs per-facet encoders (magic)"
+game: magic
+status: "running"
+hypothesis: >
+  0086 showed a shared trunk matches separate models on seven scalar features.
+  Those features are already summaries: e5_cosine, graph cosine, tag Jaccard.
+  If one encoder can serve functional, synergy and meta, it must work from the
+  raw pair representation, not from seven hand-built scalars. Feed the two E5
+  vectors (1536 dims) to (a) three separate per-facet MLPs and (b) one shared
+  trunk with three heads. If shared matches separate on full vectors as well,
+  the unified model is viable at the representation level and can replace the
+  per-facet rankers. If a facet degrades, the facets need separate projections
+  even when the trunk is shared.
+
+method:
+  type: architecture_comparison
+  script: scripts/evaluation/encoder_trunk_probe.py
+  input: "concatenated E5 vectors of query and candidate (2x768), L2-normalised"
+  baselines:
+    scalar_shared: "0086 feature set, shared trunk (reproduced on the same rows)"
+    vector_separate: "three MLPRegressors on the 1536-d pair vector"
+    vector_shared: "one MLPRegressor with three outputs on the same input"
+  models: "MLPRegressor(hidden=(128,64)), early_stopping, random_state=13"
+  validation: "GroupKFold(5) by query on identical rows for every arm"
+  metrics: "per-target MAE and Spearman on out-of-fold predictions"
+  threshold: >
+    Vector-shared is viable if mean MAE is within +0.01 of vector-separate and
+    no target degrades by more than 0.02. A facet that degrades by more than
+    0.02 is negative transfer and forbids a single undifferentiated score. A
+    vector arm that fails to beat scalar_shared means the E5 pair vector
+    carries no information beyond its cosine, and the feature trunk stays.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+  tags: data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+  rows: 41056
+  queries: 3046
+  note: >
+    Labels are LLM annotations with ~0.19 MAE against fresh judges. Any gap
+    smaller than that is not interpretable as model quality.
+
+results: {}
+
+conclusion: >
+  Pending: the probe is running. This entry is a pre-registration so the
+  threshold and the arms are fixed before any number is seen. Replace this
+  paragraph with the verdict and the per-target deltas when the run finishes.

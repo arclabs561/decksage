@@ -36,12 +36,26 @@ Not indexed, still available:
 | `legalities`, `prices`, `set_name` (Magic) | Scryfall raw | not joined into the Magic enriched CSV |
 | tags, reprint groups, fusion weights | data-local / experiments | offline arms only; not loaded by the API |
 
-A persisted **unified graph** now exists for Magic
-(`data/graphs/unified_magic.db`, 2,096,101 edges: 744,280 text, 675,682 tag,
-433,466 attribute, 242,673 cooccurrence). `/v1/graph/neighbors` serves typed
-edges with a `relations=` filter; `/v1/graph/stats` reports counts and weights. Qdrant payload is still
-`{name, text, type_line, image_url}` with **no payload indexes**. That is fine for unfiltered ANN + API enrichment, but filtered vector
-search would be impossible without adding payload fields and indexes.
+A persisted **unified graph** exists for all three games:
+
+| Game | Edges | text | tag | attribute | cooccurrence |
+|---|---|---|---|---|---|
+| Magic | 2.10M | 744k | 676k | 433k | 243k |
+| Pokémon | 349k | 88k | 88k | 86k | 88k |
+| Yu-Gi-Oh! | 1.03M | 284k | 284k | 183k | 283k |
+
+`/v1/graph/neighbors` serves typed edges with a `relations=` filter, ordered by
+relation then weight because weights are not comparable across relations
+(co-occurrence counts vs cosine vs weighted Jaccard). `/v1/graph/stats` reports
+counts, mean and max weight per relation. Basic lands are excluded from Magic
+edges; they dominate co-occurrence without being substitution evidence.
+
+Qdrant payloads now carry the fields the retriever filters on
+(`colors`, `cmc`, `rarity`, `set_name`, `power`/`toughness`, `hp`,
+`atk`/`def_stat`/`level`, `supertype`, `subtypes`, `archetype`) with payload
+indexes on every one of them. The semantic arm translates the same filter
+expression the lexical arm uses; an untranslatable clause falls back to an
+unfiltered vector query rather than dropping the arm.
 
 ## Utilized vs merely loaded
 
@@ -106,7 +120,7 @@ shared trunk must match per-facet baselines on held-out queries.
    loading it. Do not keep paying memory for zero weight.
 5. Join Scryfall set/legalities/prices into the Magic catalog if set, format
    and budget filters are product requirements; today Magic has no `set_name`.
-6. Add Qdrant payload fields and payload indexes only if filtered ANN becomes a
-   requirement; API-side enrichment already covers display.
+6. **Done:** Qdrant payload fields and indexes for filtered ANN; the semantic
+   arm now applies the same filters as the lexical arm.
 7. Before adding more text fields, test `oracle_text_enriched` / `keywords` in
    searchable attributes on the judged pools; do not assume enrichment helps.
