@@ -132,7 +132,9 @@ def main() -> int:
         print(f"excluded {len(excluded_pairs)} conflicted pairs")
     if args.label_patch:
         patched = 0
-        for entry in json.loads(args.label_patch.read_text(encoding="utf-8")):
+        raw_patch = json.loads(args.label_patch.read_text(encoding="utf-8"))
+        entries = raw_patch.get("pairs", raw_patch) if isinstance(raw_patch, dict) else raw_patch
+        for entry in entries:
             judged.setdefault(str(entry["query"]), {})[str(entry["candidate"])] = float(
                 entry["functional_score"]
             )

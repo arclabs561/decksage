@@ -989,7 +989,9 @@ def run(args: argparse.Namespace, argv: Sequence[str]) -> int:
         print(f"  excluded pairs {len(excluded_pairs)} from {args.exclude_pairs}")
     patched = 0
     if args.label_patch:
-        for entry in json.loads(args.label_patch.read_text(encoding="utf-8")):
+        raw_patch = json.loads(args.label_patch.read_text(encoding="utf-8"))
+        entries = raw_patch.get("pairs", raw_patch) if isinstance(raw_patch, dict) else raw_patch
+        for entry in entries:
             query = str(entry["query"])
             candidate = str(entry["candidate"])
             score = float(entry["functional_score"])
