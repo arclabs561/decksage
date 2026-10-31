@@ -136,6 +136,16 @@ nothing over the text representation. The learned gain is real but belongs to
 text; the next step is a cross-encoder or contrastive fine-tune, not more
 features. Label noise (MAE 0.194 vs fresh judges) still bounds the measurement.
 
+**0081 (2026-10-31) — the candidate ceiling is text, not the graph.** With the
+E5 cache extended from 25,892 to 37,214 cards, text retrieval finds a functional
+reprint at **0.971 recall@10 / 1.0 @50**, against **0.319 / 0.507** for
+`magic_v7_spectral_mu35` on the same 69 queries. Reprints share oracle text, so
+this is a text-identity win and does not transfer automatically to differently
+worded substitutes. It does settle where the candidate pool should come from:
+text retrieval, then the judged functional signal as a re-ranker.
+`/v1/index/status` now reports per-game catalog, Meilisearch and Qdrant coverage
+(Magic Qdrant is 71% by construction; Meilisearch is 100%).
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface
