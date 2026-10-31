@@ -1407,6 +1407,9 @@ body {
   .game-btn { flex: 1; min-height: 44px; padding: 0 6px; font-size: 13px; }
   /* Touch target: the pill was ~28px tall on phones. */
   .result-view-card { top: 6px; right: 38px; min-height: 44px; padding: 10px 12px; font-size: 12px; }
+  /* The popup was pinned to the 232px input and ran off the bottom; give it the
+     form's width and an internal scroll. */
+  .autocomplete-dropdown { width: calc(100vw - 52px); right: auto; max-height: min(400px, 60vh); }
   .search-form { gap: 6px; padding: 5px; }
   #unifiedInput, #hybridInput, #contextualCardInput, #compareInput { height: 50px; font-size: 16px; }
   .search-button { min-height: 50px; padding: 0 18px; }

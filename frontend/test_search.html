@@ -781,7 +781,9 @@
                 return 'Service is starting up. Please wait a moment and try again.';
             }
             if (errorLower.includes('404') || errorLower.includes('not found')) {
-                return 'No cards found. Try a different search term or check your spelling.';
+                // A 404 here means the endpoint or the card lookup failed, not
+                // that the query was wrong; call it what it is.
+                return 'Search unavailable: no answer from the search service. Try again in a moment.';
             }
             if (errorLower.includes('400') || errorLower.includes('invalid')) {
                 return 'Invalid request. Please check your input and try again.';
@@ -2452,7 +2454,7 @@
                     if (response.status === 503) {
                         const dropdown = document.getElementById('autocompleteDropdown');
                         dropdown.innerHTML = '<div class="autocomplete-no-results">Autocomplete requires embeddings to be loaded</div>';
-                        if (!autocompleteSuppressed) dropdown.classList.add('visible');
+                        if (!autocompleteSuppressed) { dropdown.classList.add('visible'); fitAutocompleteDropdown(dropdown); }
                         return;
                     }
                     return;
@@ -2471,15 +2473,36 @@
                 } else {
                     const dropdown = document.getElementById('autocompleteDropdown');
                     dropdown.innerHTML = `<div class="autocomplete-no-results">No results for "${escapeHtml(query)}"</div>`;
-                    if (!autocompleteSuppressed) dropdown.classList.add('visible');
+                    if (!autocompleteSuppressed) { dropdown.classList.add('visible'); fitAutocompleteDropdown(dropdown); }
                 }
             } catch (error) {
                 if (error.name === 'AbortError') return; // Expected cancellation
                 wrapper?.classList.remove('loading');
                 const dropdown = document.getElementById('autocompleteDropdown');
                 dropdown.innerHTML = '<div class="autocomplete-no-results" style="color: var(--color-error, #ef4444);">Connection error</div>';
-                if (!autocompleteSuppressed) dropdown.classList.add('visible');
+                if (!autocompleteSuppressed) { dropdown.classList.add('visible'); fitAutocompleteDropdown(dropdown); }
                 setTimeout(() => hideAutocomplete(), 2000);
+            }
+        }
+
+        // Keep the popup inside the viewport: open downward when there is room,
+        // upward when the form sits low on a phone screen.
+        function fitAutocompleteDropdown(dropdown) {
+            if (!dropdown) return;
+            dropdown.style.top = '';
+            dropdown.style.bottom = '';
+            dropdown.style.maxHeight = '';
+            const anchor = (dropdown.parentElement || dropdown).getBoundingClientRect();
+            const roomBelow = window.innerHeight - anchor.bottom - 16;
+            const natural = Math.min(dropdown.scrollHeight, 400);
+            if (natural <= roomBelow) {
+                dropdown.style.maxHeight = `${natural}px`;
+            } else if (anchor.top - 16 > Math.max(160, roomBelow)) {
+                dropdown.style.top = 'auto';
+                dropdown.style.bottom = 'calc(100% + 8px)';
+                dropdown.style.maxHeight = `${Math.max(160, Math.min(400, anchor.top - 20))}px`;
+            } else {
+                dropdown.style.maxHeight = `${Math.max(160, roomBelow)}px`;
             }
         }
 
@@ -2575,7 +2598,7 @@
             dropdown.innerHTML = html;
             dropdown.setAttribute('role', 'listbox');
             dropdown.setAttribute('aria-label', 'Search suggestions');
-            if (!autocompleteSuppressed) dropdown.classList.add('visible');
+            if (!autocompleteSuppressed) { dropdown.classList.add('visible'); fitAutocompleteDropdown(dropdown); }
             cardInput.setAttribute('aria-expanded', 'true');
             cardInput.removeAttribute('aria-activedescendant');
             autocompleteItems = nameList;
@@ -2863,6 +2886,13 @@
                 cardInput.removeAttribute('aria-activedescendant');
             }
         }
+
+        // A floating popup anchored to the input should not follow the page:
+        // on phones it covered the results and swallowed taps.
+        window.addEventListener('scroll', () => {
+            const dropdown = document.getElementById('autocompleteDropdown');
+            if (dropdown && dropdown.classList.contains('visible')) hideAutocomplete();
+        }, { passive: true });
 
         // Single click handler: item selection takes priority over outside-click dismiss
         document.addEventListener('click', (e) => {
