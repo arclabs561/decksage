@@ -1,0 +1,53 @@
+id: "0075"
+date: "2026-10-31"
+title: "Exact-reprint promotion inside the embedding's top-50 (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  0074 showed that replacing the embedding ranking with an exact-reprint arm
+  destroys nDCG, because most queries have no reprint and the arm zeroes every
+  other candidate. The remaining question is narrower: when an exact functional
+  reprint is already inside the embedding's top-50, does promoting it to the
+  front of the top-10 improve nDCG@10 without hurting queries that have no
+  reprint? Because the rule never removes a candidate and never fires without a
+  reprint in the pool, it should be weakly positive overall and clearly positive
+  on the reprint-covered subset.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/reprint_boost.py
+  args: >
+    --test-set data/test_sets/annotated_magic_v2.json
+    --embedding data/embeddings/magic_v7_spectral_mu35.wv
+    --cards data/raw/scryfall/oracle-cards.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10, paired bootstrap over queries, 1000 resamples, seed 13"
+  task: substitute
+  commit: "pre-registered in the commit that adds this note and script"
+  threshold: >
+    Support only if the paired 95% CI for the nDCG@10 delta is above zero on
+    the reprint-covered queries and the overall delta is not negative. If the
+    covered delta is positive but the CI crosses zero, record insufficient
+    support at this sample size rather than a win.
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+  cards: data/raw/scryfall/oracle-cards.json
+  grouping: "normalized oracle_text + type_line, text non-empty and >=10 chars"
+  candidate_pool: "embedding most_similar top-50 per query"
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; the run happens in the results commit"
+
+conclusion: >
+  Pending. This note exists before the run so the decision rule cannot be
+  chosen after seeing the score. The run will fill results and replace this
+  conclusion in a second commit.
+
+artifacts:
+  - scripts/evaluation/reprint_boost.py
