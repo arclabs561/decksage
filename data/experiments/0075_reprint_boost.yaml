@@ -2,7 +2,7 @@ id: "0075"
 date: "2026-10-31"
 title: "Exact-reprint promotion inside the embedding's top-50 (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0074 showed that replacing the embedding ranking with an exact-reprint arm
@@ -25,7 +25,7 @@ method:
   depth: 50
   metrics: "nDCG@10, paired bootstrap over queries, 1000 resamples, seed 13"
   task: substitute
-  commit: "pre-registered in the commit that adds this note and script"
+  commit: "a6afa07"
   threshold: >
     Support only if the paired 95% CI for the nDCG@10 delta is above zero on
     the reprint-covered queries and the overall delta is not negative. If the
@@ -41,13 +41,28 @@ data:
   candidate_pool: "embedding most_similar top-50 per query"
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; the run happens in the results commit"
+  queries: 2556
+  reprint_covered: 35
+  baseline_ndcg_at_10: 0.4978
+  boosted_ndcg_at_10: 0.4972
+  delta: -0.0006
+  delta_ci_95: [-0.0011, -0.0002]
+  covered_baseline_ndcg_at_10: 0.6083
+  covered_boosted_ndcg_at_10: 0.5617
+  covered_delta: -0.0466
+  verdict: "candidate_worse"
 
 conclusion: >
-  Pending. This note exists before the run so the decision rule cannot be
-  chosen after seeing the score. The run will fill results and replace this
-  conclusion in a second commit.
+  The hypothesis is not supported even in the weak, never-removes-a-candidate
+  form. Promotion is slightly negative overall (0.4972 vs 0.4978, CI
+  [-0.0011, -0.0002]) and clearly negative on the 35 reprint-covered queries
+  (0.5617 vs 0.6083, delta -0.0466). Only 35 of 2556 queries have an exact
+  reprint inside the embedding's top-50, so the arm is also too rare to matter;
+  and where it fires, the judges do not rank the reprint above the embedding's
+  picks. Together with 0073 and 0074 this closes the hand-built reprint line:
+  exact oracle-text identity is not a substitute for the judged functional
+  relation. Next signal must be human pair judgments or a learned text
+  re-ranker, not another reprint rule.
 
 artifacts:
   - scripts/evaluation/reprint_boost.py
