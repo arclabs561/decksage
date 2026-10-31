@@ -1,0 +1,44 @@
+id: "0081"
+date: "2026-10-31"
+title: "Full-catalog text retrieval recall for functional reprints (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  The graph embedding finds a functional reprint in its top-10 for 33% of
+  queries and top-50 for 54% (0073), and the text cache covered only the graph
+  vocabulary. Now that E5 covers the full catalog, text retrieval should
+  surface reprints more often: reprint pairs share oracle text almost verbatim,
+  which is exactly what E5 encodes. If text recall at 50 stays near the graph,
+  the bottleneck is the query/candidate set, not the retriever.
+
+method:
+  type: known_item_recall
+  script: scripts/evaluation/text_recall_probe.py
+  retrievers:
+    - e5_full_catalog (cached document embeddings, cosine)
+    - magic_v7_spectral_mu35 (top-50 most_similar)
+  query_set: "test-set queries whose exact reprint group is in the catalog"
+  metrics: "recall@10 and recall@50 over the same queries for both retrievers"
+  commit: "see the commit that adds this note and the probe"
+  threshold: >
+    Text retrieval is a meaningfully better candidate generator if recall@50 is
+    at least 0.70 and recall@10 at least 0.45. If it is within 0.05 of the
+    graph on both, the retriever is not the lever.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  cards: data/raw/scryfall/oracle-cards.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run after the cache extension completes"
+
+conclusion: >
+  Pending. This measures candidate generation, the ceiling the re-rankers
+  cannot move.
+
+artifacts:
+  - data/results/text_reprint_recall.json

@@ -86,6 +86,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0078 | 2026-10-31 | Reprint verdict after removing definitional label conflicts (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | queries 906; excluded_pairs 14; baseline_ndcg_at_10 0.5355; candidate_ndcg_at_10 0.5216; delta -0.014; recall_delta 0.0503; verdict no_difference | [0078](0078_reprint_conflict_exclusion.yaml) |
 | 0079 | 2026-10-31 | Reprint arms with the 31 missing/mislabelled pairs restored (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | -- | [0079](0079_reprint_restored_labels.yaml) |
 | 0080 | 2026-10-31 | Supervised text/tag/co-occurrence ranker vs tag Jaccard (magic) | magic | data/annotations/refined/magic_pairs.json | -- | train_pairs 1651; test_queries_excluded 2648; oof_spearman 0.5877; oof_mae 0.0344; eval_queries 2550; model_minus_tag 0.016; verdict candidate_better_vs_tag_but_equal_to_e5 | [0080](0080_functional_ranker.yaml) |
+| 0081 | 2026-10-31 | Full-catalog text retrieval recall for functional reprints (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | pre-registered; run after the cache extension completes **[incomplete]** | [0081](0081_text_reprint_recall.yaml) |
 
 ## Key Insights (cross-cutting)
 
