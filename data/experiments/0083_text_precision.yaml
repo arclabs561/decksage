@@ -2,7 +2,7 @@ id: "0083"
 date: "2026-10-31"
 title: "Precision of the text candidate pool on fresh judgments (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0082 measured recall: text finds functional positives. It did not measure
@@ -19,7 +19,7 @@ method:
   metrics: >
     share of candidates with median functional_score >= 0.5 (precision@10),
     share >= 0.7, and the same for graph top-10 on existing labels
-  commit: "see the commit that adds this note and the batch"
+  commit: "751444e"
   threshold: >
     Text is usable without a re-ranker if precision@10 is at least the graph's.
     If it is below by more than 0.10, the re-ranker is required before display.
@@ -30,12 +30,29 @@ data:
   batch: data-local/text-pool-20261031/review.json
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; batch is generated and annotated next"
+  queries: 12
+  pairs: 112
+  pairs_with_3_judges: 98
+  text_precision_at_10_0p5: 0.3481
+  text_precision_at_10_0p7: 0.1546
+  graph_precision_judged_subset: 0.1286
+  graph_judged_coverage: 1.0
+  lexical_overlap_share: 0.1964
+  score_with_lexical_overlap: 0.3666
+  score_without_lexical_overlap: 0.3918
+  verdict: "text_precision_better_but_modest"
 
 conclusion: >
-  Pending. This is the precision half of the text-pool story; 0082 measured
-  recall only.
+  Text is the better pool on precision as well as recall: 0.348 of its top-10
+  are functional positives, against 0.129 for the graph's judged cabling on the
+  same 12 queries. The absolute number is modest, so a re-ranker is still
+  justified before display; the pool is right, the order is not yet.
+
+  The lexical-bias worry did not reproduce: only 19.6% of candidates share a
+  token with the query, and scores without lexical overlap (0.392) are slightly
+  higher than with it (0.367). The Lightning Bolt name-match example was
+  anecdotal. Caveat: 12 queries and 112 pairs, all LLM-labeled; precision is a
+  sample, not a population estimate.
 
 artifacts:
   - data/results/text_precision.json
