@@ -22,6 +22,7 @@ Keep `watch` running while you edit. `just dev-up`, `just dev-watch`, and
 | MeiliSearch, Qdrant published on all interfaces | loopback only |
 | MeiliSearch master key from an empty `MEILISEARCH_KEY` | `decksage-dev-meili-key` on both sides |
 | proxy variables inherited from `.env` | proxy cleared, `NO_PROXY` set for the backends |
+| no restart policy | `restart: unless-stopped` on api, MeiliSearch and Qdrant, so a host reboot brings the stack back |
 | no model cache, no text embedder | host Hugging Face cache mounted read-only, `sentence-transformers` installed |
 
 `./data` stays a read-only host mount: it is large, generated elsewhere, and
@@ -87,6 +88,11 @@ tailscale serve --https=11443 off      # when done
 Then open <https://<host>.<tailnet>.ts.net:11443/> on the phone. The UI builds
 its API URLs from `window.location.origin`, so it works unchanged behind the
 proxy. `just dev-tailnet` and `just dev-tailnet-off` wrap these.
+
+The route is registered in Workbench's `config/tailnet-services.toml`, which
+renders <https://charizard.tailf8f94.ts.net/> and is checked by
+`service-index check` and `wb doctor`. If you change the port or origin,
+update that registry in the same change or doctor will report drift.
 
 ### What a phone session exercises
 
