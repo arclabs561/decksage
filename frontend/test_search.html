@@ -10,15 +10,19 @@
     <link rel="stylesheet" href="/static/common.css">
     <link rel="stylesheet" href="/static/brand.css">
     <link rel="stylesheet" href="/static/search.css">
+    <link rel="stylesheet" href="/static/retro.css">
 </head>
-<body>
+<body class="retro">
     <a href="#main-content" class="skip-link">Skip to main content</a>
     <div class="container">
         <header class="ds-masthead">
             <img class="ds-crest" src="/static/crest.png" alt="" width="44" height="44">
             <p class="ds-wordmark">Deck<span>Sage</span></p>
+            <span class="retro-speech" aria-hidden="true">Ask the Sage!</span>
             <p class="ds-scope">Magic &middot; Pok&eacute;mon &middot; Yu-Gi-Oh!</p>
+            <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="true">Modern</button>
         </header>
+        <div class="retro-ticker" aria-hidden="true"><span>&#9733; Welcome to DeckSage &#9733; 25,892 Magic cards &#9733; 4,384 Pok&eacute;mon &#9733; 14,156 Yu-Gi-Oh! &#9733; Best viewed at 1024&times;768 &#9733;</span></div>
         <section class="ds-hero">
             <div class="ds-hero-copy">
                 <h1 class="ds-title">Find the card that does the same thing.</h1>
@@ -376,6 +380,16 @@
             </div>
 
         </main>
+        <footer class="retro-footer">
+            <div class="retro-badges" aria-hidden="true">
+                <span class="retro-badge">Valid HTML 4.01</span>
+                <span class="retro-badge">Best viewed at 1024&times;768</span>
+                <span class="retro-badge retro-badge-new">Under construction</span>
+            </div>
+            <p class="retro-webring" aria-hidden="true">&laquo; prev &nbsp;|&nbsp; <strong>DeckSage Webring</strong> &nbsp;|&nbsp; next &raquo;</p>
+            <p>DeckSage &copy; 2003&ndash;2026 &middot; Made by a sage with too many cards</p>
+            <p class="retro-counter">You are visitor <span>000,042</span></p>
+        </footer>
     </div>
 
     <!-- Card detail drawer -->
@@ -858,7 +872,14 @@
                                             !query.includes(' with ') &&
                                             query.split(' ').length <= 5;
 
-                    isCardName = exactMatch || (looksLikeCardName && autocompleteData.items?.length > 0);
+                    const firstName = autocompleteData.items?.[0];
+                    const nameValue = typeof firstName === 'string' ? firstName : firstName?.name;
+                    const prefixMatch = typeof nameValue === 'string' &&
+                        nameValue.toLowerCase().startsWith(query.toLowerCase());
+
+                    // Fuzzy autocomplete hits are not the card the user typed;
+                    // only an exact or true prefix match belongs in similarity.
+                    isCardName = exactMatch || (looksLikeCardName && prefixMatch);
                 }
 
                 if (isCardName) {
@@ -971,6 +992,14 @@
                 clearTimeout(timeoutId);
 
                 if (!response.ok) {
+                    // A 404 means the name is outside the embedding vocabulary.
+                    // That is a semantic query, not a failure: hand it to the
+                    // hybrid arm before showing an error.
+                    if (response.status === 404) {
+                        clearSkeleton(resultsContainer);
+                        await hybridSearch(cardName);
+                        return;
+                    }
                     // Handle rate limiting specifically
                     if (response.status === 429) {
                         const error = await response.json().catch(() => ({}));
@@ -1016,8 +1045,10 @@
                                 <div class="suggestion" onclick="document.getElementById('unifiedInput').value='Lightning Bolt'">Lightning Bolt</div>
                                 <div class="suggestion" onclick="document.getElementById('unifiedInput').value='Counterspell'">Counterspell</div>
                             </div>
+                            <div class="empty-state-other" id="otherGameHint"></div>
                         </div>
                     `;
+                    suggestOtherGame(cardName, 'otherGameHint');
                 } else {
                     displayResults(data, cardName);
                 }
@@ -1236,7 +1267,8 @@
                     pushURL({ tab: currentTab, game: document.getElementById('searchGame')?.value, q: query });
                 } else {
                     showStatus('No results found', 'info', true, currentTab === 'unified-search' ? 'statusMessage' : 'hybridStatusMessage');
-                    resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No cards found</div></div>';
+                    resultsContainer.innerHTML = '<div class="empty-state"><div class="empty-state-title">No cards found</div><div class="empty-state-other" id="otherGameHintHybrid"></div></div>';
+                    suggestOtherGame(query, 'otherGameHintHybrid');
                 }
             } catch (error) {
                 const friendlyError = getUserFriendlyError(error.message);
@@ -1264,7 +1296,9 @@
                     <div class="empty-state">
                         <div class="empty-state-title">Nothing matched that</div>
                         <div class="empty-state-message">No card looked like "${escapeHtml(data.query || '')}". Try a card name, or describe the effect in plain words.</div>
+                        <div class="empty-state-other" id="otherGameHintHybrid"></div>
                     </div>`;
+                suggestOtherGame(data.query || '', 'otherGameHintHybrid');
                 return;
             }
 
@@ -2515,6 +2549,79 @@
             return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
 
+        const GAME_NAMES = { magic: 'Magic', pokemon: 'Pok\u00e9mon', yugioh: 'Yu-Gi-Oh!' };
+
+        // A miss in the selected game is often a card from another game. Check
+        // the other two indexes once and offer a one-click switch instead of a
+        // dead end. The extra requests only run on an empty result.
+        // Every typed word must prefix a word in the candidate name:
+        // "dark mag" matches "Dark Magician", "dark magician" does not match
+        // "Dark Magical Circle".
+        function nameMatchesQuery(name, query) {
+            const words = String(name).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ');
+            const tokens = String(query).toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim().split(' ').filter(Boolean);
+            if (!tokens.length) return false;
+            return tokens.every(token => words.some(word => word.startsWith(token)));
+        }
+
+        async function findOtherGame(query, current) {
+            const attempts = [query, query.replace(/\b\w/g, (ch) => ch.toUpperCase())]
+                .filter((value, index, all) => value && all.indexOf(value) === index);
+            const checks = ['magic', 'pokemon', 'yugioh']
+                .filter((game) => game !== current)
+                .map(async (game) => {
+                    for (const attempt of attempts) {
+                        const controller = new AbortController();
+                        const timer = setTimeout(() => controller.abort(), 2000);
+                        try {
+                            const response = await fetch(`${API_BASE}/v1/search`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ game, query: attempt, limit: 1 }),
+                                signal: controller.signal,
+                            });
+                            clearTimeout(timer);
+                            if (!response.ok) continue;
+                            const data = await response.json();
+                            const best = Array.isArray(data.results) ? data.results[0] : null;
+                            // Meilisearch's default `last` strategy returns
+                            // something for any query. Require the card name to
+                            // actually contain every typed word (allowing a
+                            // word prefix), or the hint points at noise.
+                            if (best && nameMatchesQuery(best.card_name || '', attempt)) {
+                                return { game, attempt };
+                            }
+                        } catch (error) {
+                            clearTimeout(timer);
+                        }
+                    }
+                    return null;
+                });
+            const hits = await Promise.all(checks);
+            return hits.find(Boolean) || null;
+        }
+
+        async function suggestOtherGame(query, containerId) {
+            const current = document.getElementById('searchGame')?.value || 'magic';
+            const hit = await findOtherGame(query, current);
+            if (!hit) return;
+            const target = document.getElementById(containerId);
+            if (!target) return;
+            target.innerHTML = `
+                <div class="other-game-hint">
+                    No ${GAME_NAMES[current] || current} result for &ldquo;${escapeHtml(query)}&rdquo;.
+                    That card lives in <strong>${GAME_NAMES[hit.game] || hit.game}</strong>.
+                    <button type="button" class="other-game-button">Search ${GAME_NAMES[hit.game] || hit.game}</button>
+                </div>
+            `;
+            target.querySelector('button')?.addEventListener('click', () => {
+                syncGameSelectors(hit.game);
+                const input = document.getElementById('unifiedInput');
+                if (input) input.value = hit.attempt;
+                searchCards(hit.attempt);
+            });
+        }
+
         function hideAutocomplete() {
             autocompleteSuppressed = true;
             autocompleteGeneration++;
@@ -2746,6 +2853,23 @@
 
             if (pushHistory) pushURL(getCurrentURLState());
         }
+
+        // 2000s / modern toggle. Retro is the default; the saved choice wins.
+        const themeToggle = document.getElementById('themeToggle');
+        function applyTheme(theme) {
+            const retro = theme !== 'modern';
+            document.body.classList.toggle('retro', retro);
+            if (themeToggle) {
+                themeToggle.textContent = retro ? 'Modern' : '2000s';
+                themeToggle.setAttribute('aria-pressed', String(retro));
+            }
+        }
+        applyTheme(localStorage.getItem('decksage_theme') || 'retro');
+        themeToggle?.addEventListener('click', () => {
+            const next = document.body.classList.contains('retro') ? 'modern' : 'retro';
+            localStorage.setItem('decksage_theme', next);
+            applyTheme(next);
+        });
 
         // The hero slip is a real example: click it to run that query.
         document.querySelectorAll('.ds-slip[data-query]').forEach(slip => {
