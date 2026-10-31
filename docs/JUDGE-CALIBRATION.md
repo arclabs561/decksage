@@ -183,3 +183,11 @@ resolution, order-swap and two-variant rubric checks with a `--dry-run` fake
 scorer. It still needs an anchor file at `data/audit/anchors.jsonl`, and the
 exemplar-anchored third variant is not built, so the rubric gate falls back to
 variant-to-variant correlation until human labels exist.*
+
+### Judged-only comparisons (2026-10-31)
+
+Slot coverage is 0.203 at k=50, so a fixed-candidate comparison that scores the
+full 50 ranks mostly-unjudged cards against an arm that moves away from the
+annotated neighbourhood. Use `compare_recommendations.py --judged-only`, and
+report the judged pool size with every delta. The harness refuses a pool whose
+median judged count is below `max(k, depth/2)` unless the override is explicit.

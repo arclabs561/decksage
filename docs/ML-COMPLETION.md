@@ -110,6 +110,23 @@ enough to rule out a small gain. Any claim that it improves recommendations now
 needs a different regime (full retrieval, another task, or a different
 combination) to be made at all.
 
+**Correction 2026-10-31 — the harness was scoring coverage, not re-scoring.**
+The Magic test set annotates a median of 11 candidates per query while the fixed
+pool is the top-50, and nDCG counted the other 39 as irrelevant. Every arm that
+promoted a card from ranks 12-50 lost by construction: the 0072 tag delta was
+-0.121 where >=20 candidates were judged and -0.219 where <20 (Spearman +0.23);
+0074 was -0.212 versus -0.490. The harness now refuses a sparse pool
+(`Coverage.check`, typed in `src/ml/contracts/evaluation.py`) and supports
+`--judged-only`.
+
+On judged pools the picture inverts: tag Jaccard is **+0.0787 nDCG**
+(CI [+0.0684, +0.0905]) over the embedding, and the reprint boost is +0.0033
+overall but **+0.2421** on the 35 queries where a reprint is in the pool
+(0076-0079). The test set itself also carries label noise: a stratified 60-pair
+re-judge shows MAE 0.194 and a high band inflated from 0.80 to 0.56
+(`data/results/label_noise.json`). Do not treat the 2026-10-29 fused-embedding
+negative as final until it is re-run judged-only.
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface

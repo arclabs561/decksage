@@ -405,3 +405,27 @@ Qualitative analysis of 60 queries (20/game) identified five failure categories:
 5. Format blindness (5%)
 
 See `docs/failure_taxonomy.md` for details and training implications.
+
+## 2026-10-31: the benchmark was measuring coverage, and the labels were noisy
+
+Three corrections from the ranking post-mortem:
+
+1. **Unjudged was being scored as zero.** The Magic test set annotates a median
+   of 11 candidates per query; the fixed pool is 50. Arms that promoted cards
+   from ranks 12-50 lost by construction. The harness now refuses sparse pools
+   and supports judged-only comparisons (0076-0079).
+2. **The labels are noisy, especially at the top.** A stratified 60-pair
+   re-judge gives MAE 0.194, 42% within 0.1, and deflates the 0.7-1.0 band from
+   0.80 to 0.56. Annotators anchored on the embedding neighbourhood.
+3. **The embedding is a co-play model, not a substitute model.** Within-query
+   Spearman with `functional_score` is -0.041; tag Jaccard reaches +0.20 and
+   +0.0787 nDCG on judged pools. The tag advantage is largest on
+   substitution-heavy queries (+0.115), where the baseline is weakest (0.337).
+
+The reprint family is the clearest case: 31 blocked pairs were all judged 1.0 by
+three independent models, including 14 labelled 0.0. With those restored, the
+boost gains +0.2421 nDCG on the 35 covered queries. Coverage, not the rule, is
+the limit: reprint recall is 33% at 10 and 54% at 50.
+
+Next: train the functional text/tag ranker (0080), then measure candidate
+generation. Do not tune more re-rankers on the noisy high band.
