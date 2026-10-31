@@ -1,0 +1,130 @@
+{
+  "purpose": "Record the promotion of the gate-passing repaired evaluation sets to the canonical paths",
+  "date": "2026-10-29",
+  "blocking_rules": [
+    "evolution_conflict",
+    "kind_conflict",
+    "self_pair"
+  ],
+  "repair_tool": {
+    "path": "scripts/annotation/repair_blocked_labels.py",
+    "arguments": [
+      "uv",
+      "run",
+      "python",
+      "scripts/annotation/repair_blocked_labels.py",
+      "--out-dir",
+      "data-local/label-repair-20261028",
+      "--test-set-dir",
+      "data/test_sets",
+      "--games",
+      "magic",
+      "pokemon",
+      "yugioh",
+      "--metadata-dir",
+      "data/processed"
+    ],
+    "note": "The tool records no argv, so the arguments above are its documented defaults, re-run on 2026-10-29 against the pre-promotion canonical files; outputs reproduced the promoted SHA-256 values byte for byte."
+  },
+  "promotion": {
+    "method": "cp -p from data-local/label-repair-20261028/ over data/test_sets/, then chmod 644",
+    "prior_state_archived": "data-local/test-set-archive-20261029/ (manifest.json, cmp-verified)",
+    "reproduced": true
+  },
+  "gate": {
+    "function": "ml.evaluation.label_gate.gate_or_refuse",
+    "source": "src/ml/evaluation/label_gate.py",
+    "blocking_rule_set": [
+      "evolution_conflict",
+      "kind_conflict",
+      "self_pair"
+    ],
+    "result": "no blocking hits for any game after promotion"
+  },
+  "games": [
+    {
+      "game": "magic",
+      "canonical_path": "data/test_sets/annotated_magic_v2.json",
+      "original": {
+        "sha256": "b2deadd4283db54e8359125b82a216219473a765fa03c0a36d2ffa031ae88a40",
+        "bytes": 36913407,
+        "annotations": 43307,
+        "archive_path": "data-local/test-set-archive-20261029/annotated_magic_v2.json"
+      },
+      "repaired": {
+        "sha256": "229e9f82a5cdb9af7476be921674bdb1c91d5e2455d81fefaef335ab89d33240",
+        "bytes": 36638722,
+        "annotations": 43145,
+        "staged_path": "data-local/label-repair-20261028/annotated_magic_v2.json"
+      },
+      "removed": 162,
+      "removed_by_rule": {
+        "kind_conflict": 162
+      },
+      "blocking_remaining": 0,
+      "gate_examined": 42769,
+      "gate_reported_rules": {
+        "bucket_mismatch": 593,
+        "score_evidence_conflict": 154,
+        "duplicate_conflict": 94
+      }
+    },
+    {
+      "game": "pokemon",
+      "canonical_path": "data/test_sets/annotated_pokemon_v2.json",
+      "original": {
+        "sha256": "f638243227ae41b8a59ebfd580b5d074239e1849e6e8e09fef5dcdea105bee57",
+        "bytes": 23445234,
+        "annotations": 27376,
+        "archive_path": "data-local/test-set-archive-20261029/annotated_pokemon_v2.json"
+      },
+      "repaired": {
+        "sha256": "c8b6de9578193cef1903ad487e6ffd291b61432249e667e08c964ab35b727e24",
+        "bytes": 23116076,
+        "annotations": 27179,
+        "staged_path": "data-local/label-repair-20261028/annotated_pokemon_v2.json"
+      },
+      "removed": 197,
+      "removed_by_rule": {
+        "evolution_conflict": 126,
+        "self_pair": 5,
+        "kind_conflict": 66
+      },
+      "blocking_remaining": 0,
+      "gate_examined": 26923,
+      "gate_reported_rules": {
+        "bucket_mismatch": 311,
+        "type_conflict": 164,
+        "duplicate_conflict": 81
+      }
+    },
+    {
+      "game": "yugioh",
+      "canonical_path": "data/test_sets/annotated_yugioh_v2.json",
+      "original": {
+        "sha256": "f4ee65ecb8e182402505ce96b2008540632af093fa643839ce597d65c9e59801",
+        "bytes": 25419718,
+        "annotations": 29106,
+        "archive_path": "data-local/test-set-archive-20261029/annotated_yugioh_v2.json"
+      },
+      "repaired": {
+        "sha256": "3ab0b5750004c8587eb6507ec07bbaf392e152f9b23231abede6161b3e5600aa",
+        "bytes": 24990813,
+        "annotations": 28843,
+        "staged_path": "data-local/label-repair-20261028/annotated_yugioh_v2.json"
+      },
+      "removed": 263,
+      "removed_by_rule": {
+        "kind_conflict": 263
+      },
+      "blocking_remaining": 0,
+      "gate_examined": 28552,
+      "gate_reported_rules": {
+        "bucket_mismatch": 528,
+        "duplicate_conflict": 292,
+        "type_conflict": 82,
+        "score_evidence_conflict": 5
+      }
+    }
+  ]
+}

@@ -134,12 +134,13 @@ def gate_or_refuse(
     return result
 
 
+TRACKED_LEDGER_PATH = PROJECT_ROOT / "data" / "results" / "REPAIR-LEDGER.json"
 LEDGER_PATH = PROJECT_ROOT / "data" / "test_sets" / "REPAIR-LEDGER.json"
 
 
 def superseded_hashes(ledger_path: Path | None = None) -> set[str]:
     """Hashes of files a repair replaced. Loading one means the repair was undone."""
-    path = ledger_path or LEDGER_PATH
+    path = ledger_path or (TRACKED_LEDGER_PATH if TRACKED_LEDGER_PATH.exists() else LEDGER_PATH)
     if not path.exists():
         return set()
     try:
@@ -172,6 +173,6 @@ def refuse_if_superseded(path: Path, ledger_path: Path | None = None) -> None:
     digest = hashlib.sha256(path.read_bytes()).hexdigest()
     if digest in superseded:
         raise ValueError(
-            f"{path.name} has the content of a set superseded on {LEDGER_PATH.name}. "
+            f"{path.name} has the content of a set superseded by the repair ledger. "
             "It carries judgments the gate removed; use the canonical file or quarantine this copy."
         )
