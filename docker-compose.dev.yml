@@ -100,6 +100,10 @@ services:
       - MEILISEARCH_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
       - HF_HOME=/root/.cache/huggingface
       - HF_HUB_OFFLINE=1
+      # Optional host-native MPS bridge (Docker cannot pass Metal through).
+      - MPS_BRIDGE_URL=${MPS_BRIDGE_URL:-}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     volumes:
       - ./src:/app/src:ro
       - ./scripts:/app/scripts:ro

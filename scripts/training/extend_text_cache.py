@@ -52,6 +52,12 @@ def main() -> int:
     parser.add_argument("--model", default="intfloat/e5-base-v2")
     parser.add_argument("--batch-size", type=int, default=64)
     parser.add_argument(
+        "--bridge-url",
+        default=None,
+        help="Host MPS bridge (e.g. http://host.docker.internal:8765); skips the local model.",
+    )
+    parser.add_argument("--limit", type=int, default=0, help="Debug: embed at most N missing cards")
+    parser.add_argument(
         "--device",
         default="auto",
         choices=("auto", "cpu", "mps", "cuda"),
@@ -80,33 +86,52 @@ def main() -> int:
         print("no cache yet; building from the full catalog", flush=True)
     texts = catalog_text(args.game, args.data_dir)
     missing = [name for name in texts if name not in set(names)]
+    if args.limit:
+        missing = missing[: args.limit]
     print(f"cache {len(names)} catalog {len(texts)} missing {len(missing)}", flush=True)
     if not missing:
         return 0
 
-    import torch
+    if args.bridge_url:
+        import requests
 
-    if args.device == "auto":
-        device = (
-            "mps"
-            if torch.backends.mps.is_available()
-            else "cuda"
-            if torch.cuda.is_available()
-            else "cpu"
-        )
+        print(f"using MPS bridge {args.bridge_url}", flush=True)
+
+        def embed_batch(chunk: list[str]):
+            response = requests.post(
+                f"{args.bridge_url.rstrip('/')}/embed",
+                json={"texts": chunk, "instruction_type": "substitution"},
+                timeout=600,
+            )
+            response.raise_for_status()
+            return np.asarray(response.json()["vectors"], dtype=np.float32)
+
     else:
-        device = args.device
-    print(f"embedding device: {device}", flush=True)
-    embedder = InstructionTunedCardEmbedder(model_name=args.model, device=device)
+        import torch
+
+        if args.device == "auto":
+            device = (
+                "mps"
+                if torch.backends.mps.is_available()
+                else "cuda"
+                if torch.cuda.is_available()
+                else "cpu"
+            )
+        else:
+            device = args.device
+        print(f"embedding device: {device}", flush=True)
+        embedder = InstructionTunedCardEmbedder(model_name=args.model, device=device)
+
+        def embed_batch(chunk: list[str]):
+            return embedder.embed_cards_batch(
+                chunk, instruction_type="substitution", batch_size=args.batch_size
+            )
+
     added = 0
     batch = 256
     for start in range(0, len(missing), batch):
         chunk = missing[start : start + batch]
-        vectors = embedder.embed_cards_batch(
-            [texts[name] for name in chunk],
-            instruction_type="substitution",
-            batch_size=args.batch_size,
-        )
+        vectors = embed_batch([texts[name] for name in chunk])
         matrix = np.vstack([matrix, np.asarray(vectors, dtype=np.float32)])
         names.extend(chunk)
         added += len(chunk)

@@ -78,9 +78,11 @@ def main() -> int:
             else:
                 script = ROOT / "scripts" / "training" / "extend_text_cache.py"
                 print(f"{game}: text cache {cached}/{catalog}; building")
-                completed = subprocess.run(
-                    [sys.executable, str(script), "--game", game], check=False
-                )
+                command = [sys.executable, str(script), "--game", game]
+                bridge = os.getenv("MPS_BRIDGE_URL", "").strip()
+                if bridge:
+                    command += ["--bridge-url", bridge]
+                completed = subprocess.run(command, check=False)
                 if completed.returncode != 0:
                     print(f"{game}: text build failed ({completed.returncode})", file=sys.stderr)
     return 0

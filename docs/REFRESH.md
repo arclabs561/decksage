@@ -1,7 +1,21 @@
 # Refresh and the MPS boundary
 
 Docker Desktop on macOS runs a Linux VM. Metal/MPS is not exposed to Linux
-containers, so a Compose service cannot use the Apple GPU. The split is:
+containers. Docker's own macOS GPU feature (Model Runner with vllm-metal)
+works around this by running the accelerator natively on the host and talking
+to it over TCP; that is the supported pattern. The Podman/krunkit Vulkan
+workaround reaches ~77% of native Metal through MoltenVK but does not apply to
+Docker Desktop. Our equivalent is a small host embedding bridge:
+
+```bash
+scripts/ops/install_mps_bridge_agent.sh   # keeps it alive at login
+# endpoint: http://127.0.0.1:8765/health, POST /embed
+```
+
+`bootstrap` uses it when `MPS_BRIDGE_URL` is set (Compose adds
+`host.docker.internal:host-gateway`), so the CPU fallback remains.
+
+The split is:
 
 - **Host**: embedding, cache builds, tag/reprint artifacts, any training.
   `scripts/ops/refresh_all.sh` uses `uv run --with sentence-transformers --with
