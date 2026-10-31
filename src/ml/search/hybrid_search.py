@@ -241,8 +241,8 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
         # then name for card name lookups. MeiliSearch's "attribute" ranking
         # rule boosts matches in earlier attributes.
         "searchableAttributes": [
-            "text",
             "name",
+            "text",
             "type_line",
             "keywords",
         ],
@@ -671,6 +671,23 @@ class HybridSearch:
         )
         return total
 
+    def _canonical_query(self, query: str) -> str:
+        """Resolve a card name typed in a different case to its vocabulary key.
+
+        The co-occurrence vocabulary is case-sensitive, so "dark magician"
+        misses "Dark Magician" and falls into the slow text-embedder path. A
+        canonical lookup keeps exact-name queries on the fast vector leg and
+        makes case differences harmless.
+        """
+        if self.embeddings is None:
+            return query
+        lower_names = getattr(self, "_lower_names", None)
+        if lower_names is None:
+            keys = getattr(self.embeddings, "index_to_key", None) or []
+            lower_names = {str(name).lower(): str(name) for name in keys}
+            self._lower_names = lower_names
+        return lower_names.get(" ".join(query.split()).lower(), query)
+
     def search(
         self,
         query: str,
@@ -694,6 +711,7 @@ class HybridSearch:
         Returns:
             List of SearchResult sorted by combined score
         """
+        query = self._canonical_query(query)
         results: dict[str, SearchResult] = {}
 
         # Parse structured filters from natural language queries
@@ -716,6 +734,10 @@ class HybridSearch:
                 }
                 if filters:
                     search_params["filter"] = filters
+                # An exact card name is a name lookup, not a description query.
+                # Keep oracle-text matches from outranking the card itself.
+                if self.embeddings is not None and query in self.embeddings:
+                    search_params["attributesToSearchOn"] = ["name"]
                 meilisearch_results = index.search(query, search_params)
                 hits = meilisearch_results.get("hits", [])
                 for hit in hits:
@@ -766,11 +788,7 @@ class HybridSearch:
                         logger.warning(f"Could not generate embedding for query: {query}")
 
                 if query_vector:
-                    qdrant_results = self.qdrant.search(
-                        collection_name=self.collection_name,
-                        query_vector=query_vector,
-                        limit=limit * 2,
-                    )
+                    qdrant_results = self._qdrant_points(query_vector, limit * 2)
 
                     for result in qdrant_results:
                         payload = result.payload or {}
@@ -799,7 +817,7 @@ class HybridSearch:
         # Semantic search fallback: when the query is free-text (not a card name)
         # and we have a text embedder, add semantic results that MeiliSearch missed.
         is_free_text = self.embeddings is None or query not in self.embeddings
-        if is_free_text and self.text_embedder:
+        if is_free_text and self._should_embed_semantics(query):
             try:
                 semantic_results = self._semantic_search(query, limit=limit)
                 for sr in semantic_results:
@@ -817,6 +835,50 @@ class HybridSearch:
         # Sort by combined score and return top results
         sorted_results = sorted(results.values(), key=lambda x: x.score, reverse=True)
         return sorted_results[:limit]
+
+    def _qdrant_points(self, query_vector: list[float], limit: int) -> list[Any]:
+        """Query points across qdrant-client versions.
+
+        1.16 removed ``QdrantClient.search`` in favour of ``query_points``. Keep
+        the old call as a fallback for older clients and for test doubles.
+        """
+        if self.qdrant is None:
+            return []
+        query_points = getattr(self.qdrant, "query_points", None)
+        if callable(query_points):
+            try:
+                response = query_points(
+                    collection_name=self.collection_name,
+                    query=query_vector,
+                    limit=limit,
+                )
+                points = getattr(response, "points", None)
+                if isinstance(points, list):
+                    return points
+            except Exception as exc:
+                logger.warning("Qdrant query_points failed; trying legacy search: %s", exc)
+        legacy = getattr(self.qdrant, "search", None)
+        if not callable(legacy):
+            raise RuntimeError("Qdrant client exposes neither query_points nor search")
+        return legacy(
+            collection_name=self.collection_name,
+            query_vector=query_vector,
+            limit=limit,
+        )
+
+    def _should_embed_semantics(self, query: str) -> bool:
+        """Whether this query justifies the semantic arm.
+
+        A cold text-embedding cache costs seconds to build, and type-ahead
+        traffic is mostly short, misspelt card names that Meilisearch's typo
+        tolerance already answers. Pay that cost only for description-shaped
+        queries (or once the cache is warm, when it is a matrix multiply).
+        """
+        if not self.text_embedder:
+            return False
+        if getattr(self, "_text_emb_cache", None) is not None:
+            return True
+        return len(query.split()) > 4
 
     def _semantic_search(self, query: str, limit: int = 10) -> list[SearchResult]:
         """Semantic search using text embedder against card names.
@@ -913,20 +975,53 @@ class HybridSearch:
         card_meta = getattr(self, "card_metadata", None) or {}
         n_with_text = 0
 
+        texts: list[str] = []
+        for name in card_names:
+            meta = card_meta.get(name, {})
+            oracle = meta.get("oracle_text", "") or meta.get("text", "")
+            if oracle and str(oracle) not in ("nan", "None", ""):
+                texts.append(f"{name}: {str(oracle)[:200]}")
+                n_with_text += 1
+            else:
+                texts.append(name)
+
         logger.info("Building text embedding cache for %d cards...", len(card_names))
+
+        # Batch encode when the encoder supports it: the per-card loop below is
+        # minutes on the full Magic catalog, while one batched call is seconds.
+        # The instruction must match ``embed_card`` so query and document
+        # vectors stay in the same space.
+        batch_fn = getattr(self.text_embedder, "embed_cards_batch", None)
+        if callable(batch_fn):
+            try:
+                batch = batch_fn(
+                    texts,
+                    instruction_type=getattr(self.text_embedder, "default_instruction", None),
+                )
+                matrix = _np.asarray(batch, dtype=_np.float32)
+                if matrix.ndim == 2 and matrix.shape[0] == len(card_names):
+                    norms = _np.linalg.norm(matrix, axis=1)
+                    logger.info(
+                        "Text embedding cache built: %d cards (%d with oracle text), %dD",
+                        len(card_names),
+                        n_with_text,
+                        matrix.shape[1],
+                    )
+                    result = (card_names, matrix, norms)
+                    self._save_text_embedding_cache(result)
+                    return result
+                logger.warning(
+                    "Batch text embedding returned %s for %d cards; using per-card loop",
+                    getattr(matrix, "shape", None),
+                    len(card_names),
+                )
+            except Exception as exc:
+                logger.warning("Batch text embedding failed; using per-card loop: %s", exc)
+
         embeddings_list = []
         valid_names = []
-        for name in card_names:
+        for name, text in zip(card_names, texts, strict=False):
             try:
-                # Build rich text: "Name: oracle_text" for semantic matching
-                meta = card_meta.get(name, {})
-                oracle = meta.get("oracle_text", "") or meta.get("text", "")
-                if oracle and str(oracle) not in ("nan", "None", ""):
-                    text = f"{name}: {str(oracle)[:200]}"
-                    n_with_text += 1
-                else:
-                    text = name
-
                 emb = embed_fn(text)
                 if hasattr(emb, "flatten"):
                     emb = emb.flatten()

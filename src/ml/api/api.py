@@ -2062,6 +2062,56 @@ def get_contextual_suggestions(
     )
 
 
+def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[str]:
+    """Type-ahead card names: frequent prefix matches first, then typo hits.
+
+    A raw ``startswith`` scan returns alphabetical noise on a two-letter prefix
+    ("l" -> "Light-Paws" before "Lightning Bolt"). Deck frequency is the
+    popularity signal the catalog already carries, so rank by it. When the
+    prefix matches too few names, ask Meilisearch for its typo-tolerant
+    completions before falling back to a local close-match scan.
+    """
+    names = list(state.embeddings.index_to_key)
+    needle = prefix.lower().strip()
+    if not needle:
+        return names
+
+    exact = [c for c in names if c.lower().startswith(needle)]
+    freq = state.deck_frequency or {}
+
+    def popularity(card: str) -> int:
+        entry = freq.get(card) or {}
+        return int(entry.get("total_decks") or 0)
+
+    # ``sorted`` is stable, so equal-popularity cards keep catalog order.
+    ordered = sorted(exact, key=lambda c: (-popularity(c), c))
+    seen = set(ordered)
+
+    if len(ordered) < limit:
+        try:
+            client = _get_search_client(game)
+            index = client.meilisearch.index(client.index_name) if client else None
+            if index is not None:
+                response = index.search(
+                    needle,
+                    {"limit": max(limit * 2, 20), "attributesToSearchOn": ["name"]},
+                )
+                for hit in response.get("hits", []):
+                    name = hit.get("name")
+                    if name and name not in seen:
+                        seen.add(name)
+                        ordered.append(name)
+        except Exception as exc:
+            logger.debug("Meilisearch autocomplete failed for %s: %s", game, exc)
+
+    if not ordered and len(needle) >= 3:
+        import difflib
+
+        ordered = difflib.get_close_matches(prefix, names, n=limit, cutoff=0.7)
+
+    return ordered
+
+
 @router.get("/cards", response_model=CardsResponse)
 def list_cards_v1(
     game: str | None = Query(None, description="Game name (magic, yugioh, pokemon)"),
@@ -2077,9 +2127,11 @@ def list_cards_v1(
     if state.embeddings is None:
         raise HTTPException(status_code=503, detail="Embeddings not loaded")
 
-    all_cards = list(state.embeddings.index_to_key)
-    if prefix:
-        all_cards = [c for c in all_cards if c.lower().startswith(prefix.lower())]
+    all_cards = (
+        _prefix_card_names(g, state, prefix, limit)
+        if prefix
+        else list(state.embeddings.index_to_key)
+    )
 
     total = len(all_cards)
     start = max(0, offset)
