@@ -56,9 +56,17 @@ def main() -> int:
     from ml.similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
 
     prefix = args.cache_dir / f"text_emb_cache_cards_{args.game}_intfloat-e5-base-v2"
-    names = json.loads(Path(f"{prefix}.names.json").read_text())
-    matrix = np.load(f"{prefix}.npz")["matrix"].astype(np.float32)
-    norms = np.load(f"{prefix}.npz")["norms"].astype(np.float32)
+    partial = Path(f"{prefix}.partial.npz")
+    partial_names = Path(f"{prefix}.partial.names.json")
+    if partial.exists() and partial_names.exists():
+        # Resume: a container restart must not throw away the embeddings
+        # already computed.
+        matrix = np.load(partial)["matrix"].astype(np.float32)
+        names = json.loads(partial_names.read_text())
+        print(f"resuming from {len(names)} names", flush=True)
+    else:
+        names = json.loads(Path(f"{prefix}.names.json").read_text())
+        matrix = np.load(f"{prefix}.npz")["matrix"].astype(np.float32)
     texts = catalog_text(args.game, args.data_dir)
     missing = [name for name in texts if name not in set(names)]
     print(f"cache {len(names)} catalog {len(texts)} missing {len(missing)}", flush=True)
@@ -78,6 +86,11 @@ def main() -> int:
         matrix = np.vstack([matrix, np.asarray(vectors, dtype=np.float32)])
         names.extend(chunk)
         added += len(chunk)
+        if added % 1024 < batch:
+            # Checkpoint roughly every thousand rows; a killed container
+            # resumes instead of re-embedding from zero.
+            np.savez_compressed(partial, matrix=matrix, norms=np.linalg.norm(matrix, axis=1))
+            partial_names.write_text(json.dumps(names))
         print(f"embedded {added}/{len(missing)}", flush=True)
 
     norms = np.linalg.norm(matrix, axis=1)
@@ -88,6 +101,8 @@ def main() -> int:
     Path(f"{prefix}.meta.json").write_text(
         json.dumps({"encoder": args.model, "dim": int(matrix.shape[1])})
     )
+    partial.unlink(missing_ok=True)
+    partial_names.unlink(missing_ok=True)
     print(f"wrote {len(names)} names, matrix {matrix.shape}")
     return 0
 
