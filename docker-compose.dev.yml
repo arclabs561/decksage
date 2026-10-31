@@ -5,10 +5,11 @@
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml up -d --wait
 #   docker compose -f docker-compose.yml -f docker-compose.dev.yml watch --no-up --prune=false
 #
-# Source reaches the container through Compose Watch instead of host bind
-# mounts, so the read-only ./src and ./frontend mounts in docker-compose.yml are
-# replaced here with !override. ./data stays a read-only host mount: it is large,
-# generated elsewhere, and not edited during a dev session.
+# Source reaches the container through read-only bind mounts, so the stack
+# serves what is on disk even when `docker compose watch` is not running. Watch
+# was the only sync path before; a stopped watcher silently served stale
+# frontend assets and made UI measurements disagree with the tree. ./data stays
+# a read-only host mount: it is large and generated elsewhere.
 services:
   api:
     # Survive a host reboot; `just dev-up` is still needed for a fresh image.
@@ -23,6 +24,11 @@ services:
       - --reload
       - --reload-dir
       - /app/src
+      - --reload-delay
+      - "1"
+      # A reload otherwise waits forever for background tasks to drain.
+      - --timeout-graceful-shutdown
+      - "10"
     # Loopback only. The tailnet reaches it through `tailscale serve` on the
     # host; publishing on 0.0.0.0 would also advertise it on the LAN.
     ports: !override
@@ -49,6 +55,8 @@ services:
       - HF_HOME=/root/.cache/huggingface
       - HF_HUB_OFFLINE=1
     volumes: !override
+      - ./src:/app/src:ro
+      - ./frontend:/app/frontend:ro
       - ./data:/app/data:ro
       # built signals (archetype staples/cooccurrence) live outside data/
       - ./experiments/signals:/app/experiments/signals:ro
@@ -60,23 +68,6 @@ services:
       # Desktop cannot share. Two model dirs are copied into data-local/hf-hub
       # instead, so the container loads them offline.
       - ${HF_CACHE:-./data-local/hf-hub}:/root/.cache/huggingface/hub:ro
-    develop:
-      watch:
-        - action: sync
-          path: ./src
-          target: /app/src
-          initial_sync: true
-        - action: sync
-          path: ./frontend
-          target: /app/frontend
-          initial_sync: true
-        - action: rebuild
-          path: ./pyproject.toml
-        - action: rebuild
-          path: ./uv.lock
-        - action: rebuild
-          path: ./Dockerfile
-
   # Backends stay reachable for local debugging, but only from this host.
   # The API uses the compose network, not these published ports.
   meilisearch:
