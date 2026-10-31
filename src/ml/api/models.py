@@ -100,6 +100,9 @@ class SimilarityRequest(BaseModel):
 
 class SimilarityResponse(BaseModel):
     query: str
+    exact_match: bool = Field(
+        False, description="True when the query is a card name in this game's vocabulary"
+    )
     query_metadata: dict[str, Any] | None = Field(
         None, description="Metadata for the query card (image_url, type, etc.)"
     )
@@ -207,6 +210,9 @@ class SearchResultItem(BaseModel):
 
 class SearchResponse(BaseModel):
     query: str = Field(..., description="Original query")
+    exact_match: bool = Field(
+        False, description="True when the query is a card name in this game's vocabulary"
+    )
     results: list[SearchResultItem] = Field(..., description="Search results")
     total: int = Field(..., description="Total number of results")
 

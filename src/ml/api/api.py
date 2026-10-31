@@ -1657,6 +1657,7 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
 
     return SimilarityResponse(
         query=query,
+        exact_match=_exact_card_match(state, query),
         query_metadata=query_meta,
         results=results,
         model_info={
@@ -2062,6 +2063,42 @@ def get_contextual_suggestions(
     )
 
 
+def _exact_card_match(state: Any, query: str) -> bool:
+    """Case-insensitive membership of the query in the card vocabulary."""
+    names = getattr(state, "_lower_card_names", None)
+    if names is None:
+        keys = state.embeddings.index_to_key if state.embeddings is not None else []
+        names = {str(name).lower() for name in keys}
+        state._lower_card_names = names
+    return " ".join(query.split()).lower() in names
+
+
+def _name_alignment(name: str, needle: str) -> tuple[float, float]:
+    """Token coverage and full-string similarity for prefix ranking.
+
+    ``dark magicain`` should rank ``Dark Magician`` above ``Dark Wings``: the
+    second token matches fuzzily, so coverage is 2/2 rather than 1/2. A plain
+    ``startswith`` cannot express that.
+    """
+    import difflib
+    import re
+
+    words = [word for word in re.split(r"[^a-z0-9]+", name.lower()) if word]
+    tokens = [token for token in re.split(r"[^a-z0-9]+", needle.lower()) if token]
+    if not tokens or not words:
+        return 0.0, 0.0
+    matched = 0
+    for token in tokens:
+        if any(
+            word.startswith(token) or difflib.SequenceMatcher(None, token, word).ratio() >= 0.8
+            for word in words
+        ):
+            matched += 1
+    coverage = matched / len(tokens)
+    full = difflib.SequenceMatcher(None, needle.lower(), name.lower()).ratio()
+    return coverage, full
+
+
 def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[str]:
     """Type-ahead card names: frequent prefix matches first, then typo hits.
 
@@ -2083,8 +2120,12 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
         entry = freq.get(card) or {}
         return int(entry.get("total_decks") or 0)
 
-    # ``sorted`` is stable, so equal-popularity cards keep catalog order.
-    ordered = sorted(exact, key=lambda c: (-popularity(c), c))
+    # Full-query alignment outranks a first-token prefix: "dark magicain"
+    # must put Dark Magician above every "Dark ..." card.
+    def aligned(card: str) -> tuple[float, float]:
+        return _name_alignment(card, needle)
+
+    ordered = sorted(exact, key=lambda c: (-aligned(c)[0], -aligned(c)[1], -popularity(c), c))
     seen = set(ordered)
 
     if len(ordered) < limit:
@@ -2104,11 +2145,42 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
         except Exception as exc:
             logger.debug("Meilisearch autocomplete failed for %s: %s", game, exc)
 
-    if not ordered and len(needle) >= 3:
+    # Meilisearch can drop a token it considers too misspelt ("magicain" vs
+    # "magician"), so fill from the local vocabulary: names whose every word
+    # matches a query token fuzzily. The first-token prefix keeps the scan
+    # bounded instead of running SequenceMatcher over the whole catalog.
+    import re
+
+    tokens = [t for t in re.split(r"[^a-z0-9]+", needle.lower()) if t]
+    if tokens and len(ordered) < limit:
+        first = tokens[0]
+        near = [
+            card
+            for card in names
+            if any(word.startswith(first) for word in re.split(r"[^a-z0-9]+", card.lower()) if word)
+        ]
+        for card in near:
+            if card in seen:
+                continue
+            coverage = aligned(card)[0]
+            if coverage >= 0.999:
+                seen.add(card)
+                ordered.append(card)
+                if len(ordered) >= limit * 2:
+                    break
+
+    # Meilisearch does not typo-correct the last token when it is also a
+    # prefix query ("dark magicain" returns only "Dark ..." cards). Fall back
+    # to a local close-match scan whenever no candidate covers every token.
+    if len(needle) >= 3 and not any(aligned(card)[0] >= 1.0 for card in ordered):
         import difflib
 
-        ordered = difflib.get_close_matches(prefix, names, n=limit, cutoff=0.7)
+        for name in difflib.get_close_matches(prefix, names, n=max(limit * 2, 20), cutoff=0.7):
+            if name not in seen:
+                seen.add(name)
+                ordered.append(name)
 
+    ordered.sort(key=lambda c: (-aligned(c)[0], -aligned(c)[1], -popularity(c), c))
     return ordered
 
 
@@ -2372,6 +2444,7 @@ def search_cards_v1(request: SearchRequest):
 
     return SearchResponse(
         query=request.query,
+        exact_match=_exact_card_match(state, request.query),
         results=enriched,
         total=len(enriched),
     )
