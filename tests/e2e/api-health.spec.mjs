@@ -107,6 +107,47 @@ test.describe('API search endpoints', () => {
   });
 });
 
+test.describe('Exact-match and catalog coverage', () => {
+  test('search reports exact_match for a real card and not for a miss', async ({ request }) => {
+    const hit = await request.post('/v1/search', {
+      data: { game: 'magic', query: 'Lightning Bolt', limit: 1 },
+    });
+    expect((await hit.json()).exact_match).toBe(true);
+
+    const miss = await request.post('/v1/search', {
+      data: { game: 'magic', query: 'Xyzzy Nonexistent Card', limit: 1 },
+    });
+    expect((await miss.json()).exact_match).toBe(false);
+  });
+
+  test('similar reports exact_match and an honest empty result for a catalog-only card', async ({ request }) => {
+    const hit = await request.post('/v1/similar', {
+      data: { game: 'magic', query: 'Lightning Bolt', top_k: 2 },
+    });
+    expect(hit.ok()).toBeTruthy();
+    expect((await hit.json()).exact_match).toBe(true);
+
+    // 1996 World Champion is in the catalog but has no graph vector.
+    const noVector = await request.post('/v1/similar', {
+      data: { game: 'magic', query: '1996 World Champion', top_k: 2 },
+    });
+    expect(noVector.ok()).toBeTruthy();
+    const body = await noVector.json();
+    expect(body.exact_match).toBe(true);
+    expect(body.results).toEqual([]);
+    expect(body.model_info.no_vector).toBe(true);
+  });
+
+  test('autocomplete covers cards absent from the graph vocabulary', async ({ request }) => {
+    const resp = await request.get('/v1/cards', {
+      params: { game: 'magic', prefix: '1996 world', limit: 3 },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const names = (await resp.json()).items.map((item) => item.name);
+    expect(names[0]).toBe('1996 World Champion');
+  });
+});
+
 test.describe('API cards endpoint', () => {
   test('lists cards with pagination', async ({ request }) => {
     const resp = await request.get('/v1/cards', {
