@@ -1,0 +1,66 @@
+id: "0085"
+date: "2026-10-31"
+title: "Does a union candidate pool beat text alone? (magic)"
+game: magic
+status: "complete"
+
+hypothesis: >
+  The graph is co-occurrence-only, not a superset: it has no text or tag edges.
+  If a superset graph would help, the operational version is a union pool:
+  text top-50 + graph top-50 + tag-Jaccard top-50. A union cannot lower the
+  recall ceiling, so the question is whether it adds enough recall to justify
+  the complexity, and whether reciprocal-rank fusion of the union beats text
+  at rank 10 (where dilution would show).
+
+method:
+  type: candidate_pool_comparison
+  script: scripts/evaluation/union_recall_probe.py
+  retrievers: [text_top50, graph_top50, tag_top50, union]
+  union_rank: "reciprocal-rank fusion, k0=60, over the three lists"
+  positives: "refined magic pairs with median_score >= 0.5"
+  metrics: "per-query recall@10/@50 on the 278 positives; paired bootstrap"
+  commit: "244f511"
+  threshold: >
+    Union is worth the complexity if recall@50 rises by at least 0.05 over text
+    AND RRF@10 is not below text@10 (CI includes zero or better). If union only
+    matches text, the extra retrievers are dead weight; if RRF@10 falls below
+    text, naive fusion dilutes the best signal.
+
+data:
+  pairs: data/annotations/refined/magic_pairs.json
+  cache: data/cache/text_emb_cache_cards_magic_intfloat-e5-base-v2.npz
+  embedding: data/embeddings/magic_v7_spectral_mu35.wv
+  tags: data-local/label-anchor-20261030/oracle-tags.jsonl.gz
+
+results:
+  queries: 272
+  positives: 278
+  text_at_10: 0.7206
+  text_at_50: 0.9044
+  graph_at_10: 0.1489
+  graph_at_50: 0.3125
+  tag_at_10: 0.6085
+  tag_at_50: 0.8143
+  rrf_at_10: 0.7831
+  rrf_at_50: 0.9357
+  delta_rrf_minus_text_at_10: 0.0625
+  delta_rrf_minus_text_at_50: 0.0313
+  verdict: "partial_union_helps_top10_only"
+
+conclusion: >
+  The superset intuition is partly right and the graph is not a superset. The
+  production graph has only co-occurrence edges; card attributes are node
+  fields, not retrieval edges, so text and tags are absent from it. A union
+  pool with reciprocal-rank fusion is the operational superset: it lifts
+  recall@10 from 0.721 to 0.783 (+6.3 points) and @50 from 0.904 to 0.936
+  (+3.1). The pre-registered @50 threshold was +0.05, so the depth ceiling gain
+  is below the bar: text already covers 90% at 50.
+
+  Read with 0080 (feature fusion = E5 alone) and the 2026-10-29 fused
+  embedding (0.5094 vs 0.5228): adding signals helps only when the fusion is
+  explicit and evaluated per depth. The product choice is text as the primary
+  retriever plus tag/graph as a recall booster and the functional reranker,
+  not a single graph that claims to contain everything.
+
+artifacts:
+  - data/results/union_recall.json
