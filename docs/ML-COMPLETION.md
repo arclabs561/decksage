@@ -127,6 +127,15 @@ re-judge shows MAE 0.194 and a high band inflated from 0.80 to 0.56
 (`data/results/label_noise.json`). Do not treat the 2026-10-29 fused-embedding
 negative as final until it is re-run judged-only.
 
+**0080 (2026-10-31) — text is the signal, the fusion is not.** A supervised
+pair ranker over E5 text, tags, co-occurrence and card attributes scores
+**0.5680** nDCG@10 on 2,550 judged-pool queries against tag Jaccard **0.5519**
+(delta +0.0160, CI [+0.0108, +0.0216]) and the co-occurrence embedding
+**0.5006**. E5 text cosine alone scores **0.5686**, so the supervised fusion adds
+nothing over the text representation. The learned gain is real but belongs to
+text; the next step is a cross-encoder or contrastive fine-tune, not more
+features. Label noise (MAE 0.194 vs fresh judges) still bounds the measurement.
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface
