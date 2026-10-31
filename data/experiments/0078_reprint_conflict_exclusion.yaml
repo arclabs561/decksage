@@ -2,7 +2,7 @@ id: "0078"
 date: "2026-10-31"
 title: "Reprint verdict after removing definitional label conflicts (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   0076 left the reprint arm at -0.0140 nDCG and +0.0503 recall on judged
@@ -27,7 +27,7 @@ method:
   depth: 50
   metrics: "nDCG@10 and recall@10 on judged pools, paired bootstrap 1000 resamples, seed 13"
   task: substitute
-  commit: "see the commit that adds this note"
+  commit: "abb3d52"
   threshold: >
     Label explanation if the excluded-run nDCG CI includes zero. Genuine
     ordering harm if the CI stays below zero. The 14 pairs are fixed by the
@@ -41,12 +41,30 @@ data:
   pairs_excluded: 14
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run in the results commit"
+  queries: 906
+  excluded_pairs: 14
+  baseline_ndcg_at_10: 0.5355
+  candidate_ndcg_at_10: 0.5216
+  delta: -0.0140
+  delta_ci_95: [-0.0265, 0.0001]
+  recall_delta: 0.0503
+  verdict: "no_difference"
+  boost:
+    queries: 2554
+    reprint_covered: 10
+    delta: 0.0002
+    delta_ci_95: [0.0000, 0.0005]
+    covered_delta: 0.0494
 
 conclusion: >
-  Pending. This decides whether the reprint family's residual loss is a label
-  defect or a real ordering effect.
+  Excluding the 14 definitional conflicts removes the statistical negative but
+  not the direction: nDCG is -0.0140 (CI [-0.0265, +0.0001]) with recall still
+  +0.0503. The conflicted pairs were a real defect but only touched 8 queries,
+  so they were not the main driver. The reprint arm is a recall tool that
+  slightly harms ordering, and the boost stays neutral overall (+0.0002) with a
+  +0.0494 covered delta on just 10 queries. Neither is shippable. The remaining
+  ambiguity is the 17 unjudged reprints in the 31-pair review batch; until those
+  are scored, this is as far as the labels can take the family.
 
 artifacts:
   - data/results/reprint_judged_only_no_conflicts.json
