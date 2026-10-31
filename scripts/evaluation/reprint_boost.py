@@ -14,6 +14,7 @@ import json
 import math
 import random
 import re
+import statistics
 from pathlib import Path
 
 from gensim.models import KeyedVectors
@@ -80,6 +81,15 @@ def main() -> int:
         "--cards", type=Path, default=PATHS.data / "raw" / "scryfall" / "oracle-cards.json"
     )
     parser.add_argument(
+        "--judged-only",
+        action="store_true",
+        help=(
+            "rank only candidates that carry a judged score. nDCG counts an "
+            "unjudged card as 0, so promoting an unjudged reprint is a loss by "
+            "construction; this measures the rule on what the labels can see."
+        ),
+    )
+    parser.add_argument(
         "--output",
         type=Path,
         default=PATHS.project_root / "data-local" / "label-anchor-20261030" / "reprint_boost.json",
@@ -97,10 +107,16 @@ def main() -> int:
     baseline_scores: dict[str, float] = {}
     boosted_scores: dict[str, float] = {}
     covered: dict[str, bool] = {}
+    judged_pool_sizes: list[int] = []
     for query, rel in judged.items():
         if query not in vectors:
             continue
         pool = [name for name, _ in vectors.most_similar(query, topn=50) if name != query]
+        if args.judged_only:
+            pool = [name for name in pool if name in rel]
+            if len(pool) < 2:
+                continue
+            judged_pool_sizes.append(len(pool))
         # A query outside the reprint groups (alternate printing, token) has
         # no reprints; do not let a missing key become group ""
         reprints = by_group.get(groups.get(query), set()) - {query}
@@ -134,6 +150,9 @@ def main() -> int:
         "covered_delta": round(
             mean(boosted_scores, covered_queries) - mean(baseline_scores, covered_queries), 4
         ),
+        "judged_pool_mean": round(statistics.mean(judged_pool_sizes), 2)
+        if judged_pool_sizes
+        else None,
         "seed": 13,
         "bootstrap_resamples": 1000,
     }

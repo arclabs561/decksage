@@ -1,0 +1,50 @@
+id: "0077"
+date: "2026-10-31"
+title: "Reprint boost on judged candidates only (magic)"
+game: magic
+status: "pre-registered"
+
+hypothesis: >
+  0075 promoted reprints from the embedding top-50 but 17 of 43 promoted
+  instances were unjudged, so the metric scored them 0. On judged candidates
+  only, the boost can no longer gain from moving an unjudged card; whatever
+  remains is the real ordering effect. If reprints are as good as the embedding
+  top-10, the delta is neutral; if they are relevant but not most relevant, it
+  is slightly negative with a recall gain, matching the standalone arm in 0076.
+
+method:
+  type: fixed_candidate_set_comparison
+  script: scripts/evaluation/reprint_boost.py
+  args: >
+    --judged-only
+    --test-set data/test_sets/annotated_magic_v2.json
+    --embedding data/embeddings/magic_v7_spectral_mu35.wv
+    --cards data/raw/scryfall/oracle-cards.json
+  baseline: magic_v7_spectral_mu35
+  depth: 50
+  metrics: "nDCG@10 and recall@10 on judged pools, paired bootstrap 1000 resamples, seed 13"
+  task: substitute
+  commit: "see the commit that adds this note and the --judged-only flag"
+  threshold: >
+    Neutral-or-better if the nDCG@10 delta CI includes zero and recall is not
+    lower; harmful if the nDCG CI is below zero; beneficial if the nDCG CI is
+    above zero. A recall gain with a negative nDCG is recorded as a mixed tool,
+    not a win.
+
+data:
+  test_set:
+    path: data/test_sets/annotated_magic_v2.json
+    queries: 3047
+  cards: data/raw/scryfall/oracle-cards.json
+  judged_coverage: "judged pool mean reported by the script"
+
+results:
+  status: "incomplete"
+  reason: "pre-registered; run in the results commit"
+
+conclusion: >
+  Pending. This closes the 0075 measurement question on the same rule, with the
+  pool restricted to what the labels can see.
+
+artifacts:
+  - data/results/reprint_judged_only.json

@@ -2,7 +2,7 @@ id: "0076"
 date: "2026-10-31"
 title: "Judged-only re-test of the tag and reprint arms (magic)"
 game: magic
-status: "pre-registered"
+status: "complete"
 
 hypothesis: >
   The negative verdicts for 0072 and 0074 are confounded by annotation
@@ -30,7 +30,7 @@ method:
   depth: 50
   metrics: "nDCG@10 and recall@10 over judged candidates only, paired bootstrap 1000 resamples, seed 13"
   task: substitute
-  commit: "see the commit that adds this note and the --judged-only flag"
+  commit: "a402827"
   threshold: >
     Coverage artifact is sufficient if the tag judged-only 95% CI includes zero
     or the mean delta is above -0.05 (less than a third of the original -0.18).
@@ -47,12 +47,40 @@ data:
   cards: data/raw/scryfall/oracle-cards.json
 
 results:
-  status: "incomplete"
-  reason: "pre-registered; run in the results commit"
+  tag:
+    queries: 1124
+    baseline_ndcg_at_10: 0.5217
+    candidate_ndcg_at_10: 0.6004
+    delta: 0.0787
+    delta_ci_95: [0.0684, 0.0905]
+    recall_delta: 0.0768
+    win_rate: 0.66
+    delta_when_pool_le_10: 0.048
+    delta_when_pool_11_25: 0.119
+    verdict: "candidate_better"
+  reprint:
+    queries: 906
+    baseline_ndcg_at_10: 0.5349
+    candidate_ndcg_at_10: 0.5210
+    delta: -0.0140
+    delta_ci_95: [-0.0266, -0.0000]
+    recall_delta: 0.0503
+    verdict: "mixed_nDCG_down_recall_up"
 
 conclusion: >
-  Pending. The decision rule is fixed before the run: this experiment exists to
-  separate a measurement artifact from a weak prior, not to rescue either arm.
+  The coverage-artifact explanation is rejected for tags and confirmed for
+  reprints. On judged pools the tag arm is 0.0787 nDCG better (CI
+  [+0.0684, +0.0905], 66% of queries win) and positive in every pool-size
+  stratum, so the 0072 loss of -0.18 was the unjudged-candidate penalty, not a
+  weak tag prior. Tags are a usable re-ranker inside the embedding's top-10,
+  though this says nothing about tag-based candidate generation.
+
+  The reprint arm moves the other way: nDCG -0.0140 (CI [-0.0266, -0.0000]) but
+  recall +0.0503. Reprints are relevant often enough to raise recall, yet
+  placing them first displaces more relevant cards. That is consistent with the
+  label defect: 14 judged reprint instances with identical normalized oracle
+  text are labelled 0.0 in this test set. Fix the reprint labels before treating
+  the -0.014 as a property of reprints.
 
 artifacts:
   - .agents/reports/2026-10-31-negative-results-postmortem.md
