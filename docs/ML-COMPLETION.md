@@ -161,6 +161,13 @@ vs 0.22/0.47, Yu-Gi-Oh! 0.53/0.66 vs 0.35/0.57 (delta +0.083, CI
 [+0.015, +0.151]). Yu-Gi-Oh!'s archetype structure gives co-occurrence real
 functional signal at depth 50, but text still wins at the top of the list.
 
+**0086 (2026-10-31) — shared trunk, no negative transfer.** On 41,056 judged
+pairs / 3,046 queries, one MLP trunk with three heads matches three separate
+MLPs: mean MAE 0.1341 vs 0.1340, every facet within 0.001, and shared is
+marginally better on functional Spearman (0.2979 vs 0.2964). Same features for
+both, so this validates the sharing architecture rather than representation
+learning; the next test is a shared text encoder with three heads.
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface
