@@ -11,7 +11,7 @@ carries the attributes, and several loaded signals still do not affect ranking.
 | Catalog CSV columns | 15 | 21 | 38 |
 | Meilisearch docs (after rebuild) | 36,453 | 4,384 | 14,195 |
 | Qdrant points (128D graph) | 25,892 | 4,384 | 14,156 |
-| E5 text cache | 37,214 | none yet | none yet |
+| E5 text cache | 37,214 | 4,384 | 14,195 |
 
 ## Indexed vs available
 
@@ -55,8 +55,8 @@ search would be impossible without adding payload fields and indexes.
 | deck frequency | yes | autocomplete popularity, meta mode | ordering in autocomplete, meta |
 | archetypes/templates | yes | contextual | contextual only |
 
-Concrete cost: the visual embedder occupies memory on every boot for a signal
-that carries zero weight and has no index.
+Concrete cost fixed: the visual embedder no longer loads unless
+`DECKSAGE_ENABLE_VISUAL=1`; it carries zero fusion weight and has no index.
 
 ## Query reach (the "utilize" gap)
 
@@ -80,6 +80,17 @@ heads is defensible; one undifferentiated score is not, because the labels are
 distinct relations (the embedding that ignores that is exactly the graph model
 that failed substitution). Negative transfer is the thing to measure: the
 shared trunk must match per-facet baselines on held-out queries.
+
+## Status after this pass
+
+- Meili: 36,453 / 4,384 / 14,195, all attributes indexed; power, hp and
+  archetype filters verified end to end through `/v1/search`.
+- Text caches: 37,214 / 4,384 / 14,195, coverage 1.0 in `/v1/index/status`.
+- Visual: disabled by default; opt in only when wired and calibrated.
+- Self-fill: `just bootstrap` (one-shot Compose profile) fills Meili gaps and
+  missing caches; `just dev-doctor --fill` runs it during repair.
+- Qdrant: still graph-limited (Magic 71%); acceptable because text ANN uses the
+  in-memory E5 cache, and API enrichment supplies display attributes.
 
 ## Actions, in order
 

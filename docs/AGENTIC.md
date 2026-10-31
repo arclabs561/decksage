@@ -78,8 +78,8 @@ health/similar/search/list; extend it before adding a new protocol surface.
 ## Next implementation steps
 
 1. `card_brief.py` -> add a `--json`/`--human` switch and a `--budget` flag.
-2. Add `GET /v1/cards/{card}/legality` and `GET /v1/cards/{card}` (metadata),
-   the two tool gaps an agent hits immediately.
+2. Done: `GET /v1/cards/{card}` and `GET /v1/cards/{card}/legality` close the
+   two tool gaps an agent hits immediately.
 3. A bounded LLM loop (`--agent`) behind a feature flag, with the playbook and
    citation requirement above.
 4. Evaluate the brief and the loop on the 20-card/20-deck sets before exposing

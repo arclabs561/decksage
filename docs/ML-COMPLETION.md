@@ -155,6 +155,12 @@ not belong in the substitute candidate pool; text retrieves, the judged
 functional signal re-ranks. Caveat: 278 LLM-labelled positives, some exact
 reprints.
 
+**0084 (2026-10-31) — the text-retriever result generalizes, unevenly.** Text
+beats the graph in every game: Magic 0.72/0.90 vs 0.15/0.31, Pokémon 0.51/0.68
+vs 0.22/0.47, Yu-Gi-Oh! 0.53/0.66 vs 0.35/0.57 (delta +0.083, CI
+[+0.015, +0.151]). Yu-Gi-Oh!'s archetype structure gives co-occurrence real
+functional signal at depth 50, but text still wins at the top of the list.
+
 **Today:** completion uses primary embeddings and the co-occurrence graph. It
 does not consult fusion weights, the text index or a trained re-ranker, so
 "learned representations improve recommendations" is untested for the surface
