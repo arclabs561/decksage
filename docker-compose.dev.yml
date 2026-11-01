@@ -14,21 +14,24 @@ services:
   api:
     # Survive a host reboot; `just dev-up` is still needed for a fresh image.
     restart: unless-stopped
+    # Hot reload is opt-in. The reloader spawns a second worker while the old
+    # one drains; the API holds ~4.4 GB, so an edit during a request could put
+    # two workers over the VM's memory, and the failure we actually saw was a
+    # reloader left alive with no worker: /live hung and nothing restarted it.
+    # Set API_RELOAD=1 when actively editing Python.
     command:
-      - uvicorn
-      - src.ml.api.api:app
-      - --host
-      - 0.0.0.0
-      - --port
-      - "8000"
-      - --reload
-      - --reload-dir
-      - /app/src
-      - --reload-delay
-      - "1"
-      # A reload otherwise waits forever for background tasks to drain.
-      - --timeout-graceful-shutdown
-      - "10"
+      - sh
+      - -c
+      - |
+        set -eu
+        if [ "$${API_RELOAD:-0}" = "1" ]; then
+          echo "api: hot reload enabled"
+          exec uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000 \
+            --reload --reload-dir /app/src --reload-delay 1 \
+            --timeout-graceful-shutdown 10
+        fi
+        exec uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000 \
+          --timeout-graceful-shutdown 10
     # Loopback only. The tailnet reaches it through `tailscale serve` on the
     # host; publishing on 0.0.0.0 would also advertise it on the LAN.
     ports: !override

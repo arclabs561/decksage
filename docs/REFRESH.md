@@ -44,6 +44,16 @@ Bootstrap is self-filling: `bootstrap_index.py` builds missing tag/reprint
 artifacts itself, so a fresh clone gets the tag relation without a manual step.
 `--payloads` additionally enriches Qdrant payloads and creates their indexes.
 
+The dev overlay no longer hot-reloads the API by default. The reloader spawns a
+second worker while the old one drains, and the API holds ~4.7 GB, so an edit
+could put two workers over the VM's memory; the observed failure was a reloader
+left alive with no worker, where `/live` hung and nothing restarted it. Set
+`API_RELOAD=1` while editing Python, or restart the service to pick up changes:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.dev.yml restart api
+```
+
 `just refresh` is the manual entry point. For a schedule, install the daily
 LaunchAgent:
 

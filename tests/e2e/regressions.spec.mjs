@@ -135,15 +135,16 @@ test.describe('search UI regressions', () => {
     await page.waitForSelector('.result-item', { timeout: 15_000 });
   });
 
-  test('the retro skin is default and the toggle persists', async ({ page }) => {
-    await expect(page.locator('body')).toHaveClass(/retro/);
+  test('the modern skin is default and the toggle persists', async ({ page }) => {
+    // The page ships the modern layer; the 2000s skin is one click away.
+    await expect(page.locator('body')).not.toHaveClass(/retro/);
 
     await page.click('#themeToggle');
-    await expect(page.locator('body')).not.toHaveClass(/retro/);
+    await expect(page.locator('body')).toHaveClass(/retro/);
 
     await page.reload();
     await page.waitForLoadState('networkidle');
-    await expect(page.locator('body')).not.toHaveClass(/retro/);
+    await expect(page.locator('body')).toHaveClass(/retro/);
   });
 
 
