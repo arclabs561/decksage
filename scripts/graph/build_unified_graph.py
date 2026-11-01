@@ -103,6 +103,29 @@ def read_edges(path: Path) -> dict[str, list[tuple[str, float]]]:
     return raw
 
 
+def input_paths(game: str) -> list[Path]:
+    config = GAMES[game]
+    paths = [
+        Path(f"{PATHS.data / 'cache' / str(config['cache'])}.npz"),
+        PATHS.processed / str(config["attributes"]),
+    ]
+    tags_name = config.get("tags")
+    if tags_name:
+        paths.append(PATHS.processed / str(tags_name))
+    source = cooccurrence_source(game)
+    if source is not None:
+        paths.append(source)
+    return [path for path in paths if path.exists()]
+
+
+def is_stale(out: Path, game: str) -> bool:
+    """True when the graph is missing or older than any of its inputs."""
+    if not out.exists():
+        return True
+    built = out.stat().st_mtime
+    return any(path.stat().st_mtime > built for path in input_paths(game))
+
+
 def build(
     game: str,
     out: Path,
@@ -301,6 +324,11 @@ def main() -> int:
     parser.add_argument("--skip-cooccurrence", action="store_true")
     parser.add_argument("--skip-text", action="store_true")
     parser.add_argument(
+        "--if-stale",
+        action="store_true",
+        help="Skip when the graph is newer than every input",
+    )
+    parser.add_argument(
         "--only-meta",
         action="store_true",
         help="Write the stats table into an existing graph and exit",
@@ -319,6 +347,9 @@ def main() -> int:
     out = args.out or (PATHS.graphs / f"unified_{args.game}.db")
     if args.only_meta:
         return annotate_existing(out)
+    if args.if_stale and not is_stale(out, args.game):
+        print(f"{out} is newer than its inputs; skipping (drop --if-stale to force)")
+        return 0
     fields = (
         [field.strip() for field in args.attribute_fields.split(",") if field.strip()]
         if args.attribute_fields

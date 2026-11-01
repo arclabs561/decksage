@@ -36,7 +36,7 @@ done
 
 for game in magic pokemon yugioh; do
   echo "==> unified graph (${game})"
-  uv run python scripts/graph/build_unified_graph.py --game "${game}"
+  uv run python scripts/graph/build_unified_graph.py --game "${game}" --if-stale
 done
 
 echo "==> meilisearch gaps"
