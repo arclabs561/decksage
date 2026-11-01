@@ -46,6 +46,13 @@ def test_or_group_inside_parentheses():
     assert not metadata_matches_filter(metadata, '(colors = "W" OR colors = "B")')
 
 
+def test_color_list_reads_the_display_string():
+    """color_list is filter-only; metadata keeps colours as "GU"."""
+    assert metadata_matches_filter({"colors": "GU"}, 'color_list = "U"')
+    assert metadata_matches_filter({"colors": "GU"}, 'color_list = "G"')
+    assert not metadata_matches_filter({"colors": "GU"}, 'color_list = "R"')
+
+
 def test_missing_field_is_dropped_not_passed():
     """A filter the card cannot satisfy is not silently treated as a match."""
     assert not metadata_matches_filter({"name": "Bolt"}, 'set = "clu"')

@@ -215,6 +215,21 @@ test.describe('Scryfall set metadata', () => {
   });
 });
 
+test.describe('Colour filters', () => {
+  test('a two-colour card matches a single-colour filter', async ({ request }) => {
+    const resp = await request.post('/v1/search', {
+      data: { game: 'magic', query: 'draw two cards', limit: 20, filters: 'colors = "U"' },
+    });
+    expect(resp.ok()).toBeTruthy();
+    const colours = (await resp.json()).results.map(r => r.metadata?.colors || '');
+    expect(colours.length).toBeGreaterThan(0);
+    expect(colours.every(value => value.includes('U'))).toBe(true);
+    // GU/BGRUW only match because the filter reads a letter list, not the
+    // concatenated display string.
+    expect(colours.some(value => value.length > 1)).toBe(true);
+  });
+});
+
 test.describe('Semantic filters', () => {
   test('vector-only search honours a colour filter', async ({ request }) => {
     const resp = await request.post('/v1/search', {

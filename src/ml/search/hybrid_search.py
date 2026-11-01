@@ -21,6 +21,7 @@ from typing import Any
 import numpy as np
 
 from ..utils.paths import PATHS
+from .meili_docs import color_values
 
 
 logger = logging.getLogger("decksage.search")
@@ -33,6 +34,7 @@ _QDRANT_KEYWORD_FIELDS = {
     "type_line",
     "rarity",
     "colors",
+    "color_list",
     "set",
     "set_name",
     "supertype",
@@ -190,6 +192,17 @@ def _parse_clause(clause: str) -> dict[str, Any] | None:
     return {"field": field, "operator": operator, "value": value}
 
 
+def translate_color_filter(filter_str: str | None) -> str | None:
+    """Route `colors` filters to `color_list`, the letter-list field.
+
+    The catalogs store Magic colours as "GU"; an equality filter on "U" never
+    matched a two-colour card. Both retrieval backends index `color_list`.
+    """
+    if not filter_str:
+        return filter_str
+    return re.sub(r"\bcolors\b", "color_list", filter_str)
+
+
 def metadata_matches_filter(metadata: dict[str, Any] | None, filter_str: str | None) -> bool:
     """Apply a supported filter clause to one card's metadata.
 
@@ -211,9 +224,15 @@ def metadata_matches_filter(metadata: dict[str, Any] | None, filter_str: str | N
 
     def value_matches(clause: dict[str, Any]) -> bool:
         field = clause["field"]
-        if field not in metadata:
-            return False
-        actual = metadata.get(field)
+        if field == "color_list":
+            # Filter-only field: the metadata keeps colours as a display string.
+            if "colors" not in metadata:
+                return False
+            actual = color_values(metadata.get("colors"))
+        else:
+            if field not in metadata:
+                return False
+            actual = metadata.get(field)
         if isinstance(actual, list):
             actual_values = [str(item).strip().lower() for item in actual]
         else:
@@ -449,6 +468,7 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
         "filterableAttributes": [
             "game",
             "colors",
+            "color_list",
             "type_line",
             "cmc",
             "rarity",
@@ -960,6 +980,7 @@ class HybridSearch:
             List of SearchResult sorted by combined score
         """
         original_query = query
+        filters = translate_color_filter(filters)
         query = self._canonical_query(query)
         results: dict[str, SearchResult] = {}
 

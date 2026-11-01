@@ -2,7 +2,7 @@ id: "0087"
 date: "2026-10-31"
 title: "Shared text-encoder trunk with three heads vs per-facet encoders (magic)"
 game: magic
-status: "running"
+status: "complete"
 hypothesis: >
   0086 showed a shared trunk matches separate models on seven scalar features.
   Those features are already summaries: e5_cosine, graph cosine, tag Jaccard.
@@ -50,9 +50,61 @@ data:
     Labels are LLM annotations with ~0.19 MAE against fresh judges. Any gap
     smaller than that is not interpretable as model quality.
 
-results: {}
+results:
+  rows: 40948
+  queries: 3040
+  arms:
+    scalar_shared:
+      functional: {mae: 0.1460, spearman: 0.2757}
+      synergy: {mae: 0.1318, spearman: 0.2391}
+      meta: {mae: 0.1315, spearman: 0.2615}
+    scalar_separate:
+      functional: {mae: 0.1470, spearman: 0.2753}
+      synergy: {mae: 0.1324, spearman: 0.2274}
+      meta: {mae: 0.1299, spearman: 0.2584}
+    vector_shared:
+      functional: {mae: 0.1835, spearman: 0.1242}
+      synergy: {mae: 0.1458, spearman: 0.1182}
+      meta: {mae: 0.1502, spearman: 0.1168}
+    vector_separate:
+      functional: {mae: 0.1872, spearman: 0.1189}
+      synergy: {mae: 0.1568, spearman: 0.0997}
+      meta: {mae: 0.1610, spearman: 0.0991}
+  mean_mae:
+    scalar_shared: 0.1364
+    scalar_separate: 0.1364
+    vector_shared: 0.1598
+    vector_separate: 0.1683
+  delta_shared_minus_separate: -0.0085
+  per_target_delta:
+    functional_score: -0.0037
+    synergy_score: -0.0110
+    meta_relevance: -0.0108
+  vector_beats_scalar_shared: false
+  verdict: "shared_matches_separate"
+  artifact: data/results/encoder_trunk_0087.json
 
 conclusion: >
-  Pending: the probe is running. This entry is a pre-registration so the
-  threshold and the arms are fixed before any number is seen. Replace this
-  paragraph with the verdict and the per-target deltas when the run finishes.
+  The shared trunk holds at the representation level: vector_shared beats
+  vector_separate on mean MAE (0.1598 vs 0.1683, delta -0.0085) and on every
+  target, so there is still no negative transfer when the shared layer sees
+  raw pair vectors instead of seven scalars. That is the third independent
+  check in the same direction (0086 features, 0087 vectors).
+
+  The important negative is that the raw-vector arms are worse than the scalar
+  arm (0.1598 vs 0.1364 mean MAE; Spearman 0.12 vs 0.27). Two readings, and
+  the data cannot separate them: PCA-128 (the tractability amendment) may
+  discard the informative directions, or the E5 pair vector simply carries
+  less usable signal than the engineered scalars that the earlier feature set
+  encodes (cosine, tag Jaccard, type/colour/mana deltas). Either way, the
+  conclusion for the product is unchanged: keep the scalar feature trunk and
+  do not replace it with raw embeddings on this evidence.
+
+  This does not test fine-tuning a text encoder, only whether the frozen E5
+  pair representation carries the facet signal. A real encoder sharing test
+  needs task-head training through the encoder, which is a larger run than
+  this probe.
+
+  Caveat: labels are LLM judgments with ~0.19 MAE against fresh judges. The
+  within-arm gaps (0.0085) are well inside that noise; the scalar-vs-vector gap
+  (0.023) is not large either, so treat the direction as suggestive.

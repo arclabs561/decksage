@@ -16,6 +16,7 @@ from typing import Any
 # index with enrichment-only text.
 CARD_FIELDS = (
     "colors",
+    "color_list",
     "cmc",
     "rarity",
     "set",
@@ -59,6 +60,29 @@ def plain(value: Any) -> Any:
     return value
 
 
+def color_values(value: Any) -> list[str]:
+    """Colours as a list of single letters.
+
+    The catalogs store Magic colours as a concatenated string ("GU"), so an
+    equality filter on "U" never matched a two-colour card. Keep `colors` as the
+    display string and add `color_list` for filtering.
+    """
+    if isinstance(value, list | tuple | set):
+        letters = []
+        for item in value:
+            letters.extend(color_values(item))
+        return letters
+    text = str(value or "").strip().upper()
+    if not text:
+        return []
+    if "," in text or " " in text:
+        parts = [part for part in text.replace(",", " ").split() if part]
+        return [part for part in parts if part]
+    if all(character in "WUBRG" for character in text):
+        return list(text)
+    return [text]
+
+
 def card_document(name: str, meta: dict[str, Any], game: str, id_value: str) -> dict[str, Any]:
     document: dict[str, Any] = {
         "id": id_value,
@@ -68,6 +92,8 @@ def card_document(name: str, meta: dict[str, Any], game: str, id_value: str) -> 
         "type_line": str(meta.get("type_line") or meta.get("type") or ""),
         "keywords": str(meta.get("keywords") or ""),
     }
+    if "color_list" not in meta and meta.get("colors"):
+        meta = {**meta, "color_list": color_values(meta.get("colors"))}
     for field in CARD_FIELDS:
         value = plain(meta.get(field))
         if value is not None:

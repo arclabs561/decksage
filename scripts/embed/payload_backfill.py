@@ -36,10 +36,11 @@ from ml.search.hybrid_search import (
     _QDRANT_NUMERIC_FIELDS,
     point_id_for,
 )
+from ml.search.meili_docs import color_values
 from ml.utils.paths import PATHS
 
 
-SCHEMA_VERSION = 4  # 4 adds set/set_name from the Scryfall lookup
+SCHEMA_VERSION = 5  # 5 adds color_list; 4 added set/set_name
 PROCESSED = PATHS.processed
 
 
@@ -66,6 +67,7 @@ def payload_for(game: str, row: dict[str, str]) -> dict[str, Any]:
         "image_url": row.get("image_url") or "",
         "rarity": (row.get("rarity") or "").lower(),
         "colors": split_list(row.get("colors") or ""),
+        "color_list": color_values(row.get("colors") or ""),
         "cmc": numeric(row.get("cmc") or ""),
         "set": row.get("set") or "",
         "set_name": row.get("set_name") or "",
