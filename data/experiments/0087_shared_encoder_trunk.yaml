@@ -22,7 +22,14 @@ method:
     scalar_shared: "0086 feature set, shared trunk (reproduced on the same rows)"
     vector_separate: "three MLPRegressors on the 1536-d pair vector"
     vector_shared: "one MLPRegressor with three outputs on the same input"
-  models: "MLPRegressor(hidden=(128,64)), early_stopping, random_state=13"
+  models: "MLPRegressor(hidden=(64,32)), early_stopping, random_state=13"
+  amendments:
+    - at: "2026-11-01"
+      change: >
+        Raw 1536-d MLPs were replaced by PCA(128) fitted inside each fold plus a
+        64x32 MLP. The raw version ran over an hour at ~400% CPU without
+        finishing; reduction is fit on training rows only, so no fold leaks.
+      why: "Tractability; no change to the comparison or the threshold."
   validation: "GroupKFold(5) by query on identical rows for every arm"
   metrics: "per-target MAE and Spearman on out-of-fold predictions"
   threshold: >

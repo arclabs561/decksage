@@ -15,6 +15,7 @@ from pathlib import Path
 
 import numpy as np
 from scipy.stats import spearmanr
+from sklearn.decomposition import PCA
 from sklearn.model_selection import GroupKFold
 from sklearn.neural_network import MLPRegressor
 from sklearn.pipeline import make_pipeline
@@ -96,35 +97,49 @@ def main() -> int:
 
     folds = list(GroupKFold(n_splits=5).split(X_vector, Y, groups))
 
-    def fit_arm(X: np.ndarray, hidden: tuple[int, ...]) -> tuple[np.ndarray, np.ndarray]:
-        shared = np.zeros_like(Y)
-        for train, valid in folds:
-            model = make_pipeline(
-                StandardScaler(),
-                MLPRegressor(
-                    hidden_layer_sizes=hidden, max_iter=300, early_stopping=True, random_state=13
-                ),
-            )
-            model.fit(X[train], Y[train])
-            shared[valid] = model.predict(X[valid])
-        separate = np.zeros_like(Y)
-        for index in range(Y.shape[1]):
-            for train, valid in folds:
-                model = make_pipeline(
-                    StandardScaler(),
+    def fit_arm(
+        X: np.ndarray, hidden: tuple[int, ...], pca_components: int | None = None
+    ) -> tuple[np.ndarray, np.ndarray]:
+        """Shared trunk and per-target models on identical folds.
+
+        The 1536-d pair vector is reduced inside each fold (fit on training rows
+        only) because 20 MLP fits on the raw matrix thrashed for an hour without
+        completing. The reduction is recorded in 0087 as an amendment.
+        """
+
+        def model():
+            steps: list[tuple[str, object]] = [("scale", StandardScaler())]
+            if pca_components:
+                steps.append(("pca", PCA(n_components=pca_components, random_state=13)))
+            steps.append(
+                (
+                    "mlp",
                     MLPRegressor(
                         hidden_layer_sizes=hidden,
-                        max_iter=300,
+                        max_iter=150,
                         early_stopping=True,
+                        n_iter_no_change=8,
                         random_state=13,
                     ),
                 )
-                model.fit(X[train], Y[train, index])
-                separate[valid, index] = model.predict(X[valid])
+            )
+            return make_pipeline(*[step for _, step in steps])
+
+        shared = np.zeros_like(Y)
+        for train, valid in folds:
+            pipe = model()
+            pipe.fit(X[train], Y[train])
+            shared[valid] = pipe.predict(X[valid])
+        separate = np.zeros_like(Y)
+        for index in range(Y.shape[1]):
+            for train, valid in folds:
+                pipe = model()
+                pipe.fit(X[train], Y[train, index])
+                separate[valid, index] = pipe.predict(X[valid])
         return shared, separate
 
     scalar_shared, scalar_separate = fit_arm(X_scalar, (64, 32))
-    vector_shared, vector_separate = fit_arm(X_vector, (128, 64))
+    vector_shared, vector_separate = fit_arm(X_vector, (64, 32), pca_components=128)
 
     def metrics(prediction: np.ndarray) -> dict[str, dict[str, float]]:
         return {
