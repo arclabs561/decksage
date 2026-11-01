@@ -39,7 +39,9 @@ PROCESSED = PATHS.processed
 
 # Columns that carry real categorical labels, per game.
 DERIVED_FIELDS = {
-    "pokemon": ("supertype", "subtypes", "keywords", "type"),
+    # "type" repeats supertype+subtypes ("Pokémon Basic"), so it adds tokens
+    # without adding information.
+    "pokemon": ("supertype", "subtypes", "keywords"),
     "yugioh": ("keywords", "race_enriched", "attribute_enriched", "monster_type", "archetype"),
 }
 
