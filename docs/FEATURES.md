@@ -40,7 +40,7 @@ A persisted **unified graph** exists for all three games:
 
 | Game | Edges | text | tag | attribute | cooccurrence |
 |---|---|---|---|---|---|
-| Magic | 2.10M | 744k | 676k | 433k | 243k |
+| Magic | 2.38M | 744k | 676k | 433k | 531k |
 | Pokémon | 349k | 88k | 88k | 86k | 88k |
 | Yu-Gi-Oh! | 1.03M | 284k | 284k | 183k | 283k |
 
