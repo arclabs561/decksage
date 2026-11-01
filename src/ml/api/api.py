@@ -481,50 +481,21 @@ async def lifespan(app: FastAPI):
             except (OSError, ValueError, KeyError):
                 logger.exception("Failed to load attributes CSV for game=%s: %s", game, attrs_path)
 
-        # Load enriched card metadata (with image URLs) for API responses.
-        # Uses the enriched CSV which preserves all columns including image_url.
-        enriched_path = PATHS.processed / f"card_attributes_{game}_enriched.csv"
-        if enriched_path.exists():
-            try:
-                from ..utils.data_loading import load_card_attributes
-
-                state = get_state(game)
-                state.card_metadata = load_card_attributes(attrs_path=enriched_path, game=game)
+        # Catalog-derived artifacts: metadata, tags, reprints, set/legality/
+        # prices, unified graph. Shared with POST /v1/admin/reload.
+        try:
+            loaded = _load_artifacts_for_game(game)
+            if loaded.get("loaded"):
                 logger.info(
-                    "Loaded enriched card metadata for %s: %d cards (with image URLs)",
+                    "Loaded artifacts for %s: metadata=%s tags=%s reprints=%s graph=%s",
                     game,
-                    len(state.card_metadata),
+                    loaded.get("metadata"),
+                    loaded.get("tags"),
+                    loaded.get("reprints"),
+                    loaded.get("unified_graph"),
                 )
-                from ..search.tag_neighbors import TagNeighborIndex
-
-                tags_path = PATHS.data / "processed" / f"{game}_tags.json"
-                reprints_path = PATHS.data / "processed" / f"{game}_reprints.json"
-                if tags_path.exists():
-                    state.tag_index = TagNeighborIndex(
-                        __import__("json").loads(tags_path.read_text())
-                    )
-                    logger.info("Loaded tag index for %s: %d cards", game, len(state.tag_index))
-                if reprints_path.exists():
-                    state.reprint_groups = __import__("json").loads(reprints_path.read_text())
-                    logger.info(
-                        "Loaded reprint groups for %s: %d cards",
-                        game,
-                        len(state.reprint_groups),
-                    )
-                # Unified multi-relation graph is per game; absent artifacts fall
-                # back to the co-occurrence adjacency the API already holds.
-                unified_path = PATHS.graphs / f"unified_{game}.db"
-                if unified_path.exists():
-                    import sqlite3
-
-                    state.unified_graph = sqlite3.connect(
-                        f"file:{unified_path}?mode=ro", uri=True, check_same_thread=False
-                    )
-                    logger.info("Loaded unified graph: %s", unified_path)
-            except (OSError, ValueError, KeyError, ImportError):
-                logger.debug(
-                    "Failed to load enriched card metadata for game=%s", game, exc_info=True
-                )
+        except (OSError, ValueError, KeyError, ImportError):
+            logger.debug("Failed to load artifacts for game=%s", game, exc_info=True)
 
         # ------------------------------------------------------------------
         # Configure MeiliSearch settings + auto-populate if index is empty
@@ -665,44 +636,6 @@ async def lifespan(app: FastAPI):
                 )
             except (OSError, ValueError, KeyError):
                 logger.debug("Failed to load archetype templates for game=%s", game, exc_info=True)
-
-        # Scryfall legality + prices (Magic-only, shared across games but only useful for magic)
-        if game == "magic":
-            legality_path = PATHS.data / "processed" / "scryfall_legality.json"
-            if legality_path.exists():
-                try:
-                    with open(legality_path, encoding="utf-8") as f:
-                        state.legality_data = json.load(f)
-                    logger.info("Loaded Scryfall legality data: %d cards", len(state.legality_data))
-                except (OSError, ValueError, KeyError):
-                    logger.debug("Failed to load Scryfall legality data", exc_info=True)
-
-            sets_path = PATHS.data / "processed" / "scryfall_sets.json"
-            if sets_path.exists():
-                try:
-                    with open(sets_path, encoding="utf-8") as f:
-                        state.set_data = json.load(f)
-                    logger.info("Loaded Scryfall set data: %d cards", len(state.set_data))
-                    # Attach set fields to card metadata once: result post-filters
-                    # and the detail pane both read them from here.
-                    for card_name, info in state.set_data.items():
-                        meta = (state.card_metadata or {}).get(card_name)
-                        if meta is None:
-                            continue
-                        for key in ("set", "set_name"):
-                            if info.get(key):
-                                meta[key] = info[key]
-                except (OSError, ValueError, KeyError):
-                    logger.debug("Failed to load Scryfall set data", exc_info=True)
-
-            prices_path = PATHS.data / "processed" / "scryfall_prices.json"
-            if prices_path.exists():
-                try:
-                    with open(prices_path, encoding="utf-8") as f:
-                        state.price_data = json.load(f)
-                    logger.info("Loaded Scryfall price data: %d cards", len(state.price_data))
-                except (OSError, ValueError, KeyError):
-                    logger.debug("Failed to load Scryfall price data", exc_info=True)
 
         # Additional signals (per game) -- shared embedders, per-game data signals
         try:
@@ -2519,6 +2452,85 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
         )
     )
     return ordered
+
+
+def _load_artifacts_for_game(game: str) -> dict[str, object]:
+    """(Re)load catalog-derived artifacts for one game from disk.
+
+    Used at startup and by POST /v1/admin/reload, so a refresh container can
+    rebuild artifacts and make them live without restarting the API.
+    """
+    enriched_path = PATHS.processed / f"card_attributes_{game}_enriched.csv"
+    if not enriched_path.exists():
+        return {"game": game, "loaded": False, "reason": "no enriched metadata"}
+    from ..search.tag_neighbors import TagNeighborIndex
+    from ..utils.data_loading import load_card_attributes
+
+    state = get_state(game)
+    state.card_metadata = load_card_attributes(attrs_path=enriched_path, game=game)
+
+    tags_path = PATHS.processed / f"{game}_tags.json"
+    reprints_path = PATHS.processed / f"{game}_reprints.json"
+    if tags_path.exists():
+        state.tag_index = TagNeighborIndex(json.loads(tags_path.read_text()))
+    if reprints_path.exists():
+        state.reprint_groups = json.loads(reprints_path.read_text())
+
+    if game == "magic":
+        for filename, attribute in (
+            ("scryfall_sets.json", "set_data"),
+            ("scryfall_legality.json", "legality_data"),
+            ("scryfall_prices.json", "price_data"),
+        ):
+            path = PATHS.processed / filename
+            if path.exists():
+                setattr(state, attribute, json.loads(path.read_text()))
+        for card_name, info in (state.set_data or {}).items():
+            meta = (state.card_metadata or {}).get(card_name)
+            if meta is None:
+                continue
+            for key in ("set", "set_name"):
+                if info.get(key):
+                    meta[key] = info[key]
+
+    unified_path = PATHS.graphs / f"unified_{game}.db"
+    if unified_path.exists():
+        import sqlite3
+
+        if state.unified_graph is not None:
+            try:
+                state.unified_graph.close()
+            except Exception:
+                pass
+        state.unified_graph = sqlite3.connect(
+            f"file:{unified_path}?mode=ro", uri=True, check_same_thread=False
+        )
+        # Counts live in the graph's meta table; recompute on reload.
+        state.unified_graph_meta = None
+
+    return {
+        "game": game,
+        "loaded": True,
+        "metadata": len(state.card_metadata or {}),
+        "tags": len(state.tag_index) if state.tag_index is not None else None,
+        "reprints": len(state.reprint_groups) if state.reprint_groups else None,
+        "unified_graph": unified_path.exists(),
+    }
+
+
+@router.post("/admin/reload")
+def admin_reload(request: Request, game: str | None = Query(None)) -> dict:
+    """Reload derived artifacts from disk without a restart.
+
+    The refresh container rebuilds tags, reprints, set data and the unified
+    graph, then calls this. Loopback-only in practice; if DECKSAGE_ADMIN_TOKEN
+    is set, the caller must send it as X-Admin-Token.
+    """
+    token = os.getenv("DECKSAGE_ADMIN_TOKEN", "")
+    if token and request.headers.get("x-admin-token") != token:
+        raise HTTPException(status_code=401, detail="invalid admin token")
+    games = [_require_game(game)] if game else _configured_games()
+    return {"reloaded": [_load_artifacts_for_game(name) for name in games]}
 
 
 def _enrich_card_metadata(state: Any, game: str, card_name: str, meta: dict) -> dict:

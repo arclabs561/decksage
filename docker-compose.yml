@@ -68,6 +68,77 @@ services:
     networks:
       - decksage
 
+  # Data-plane refresh, owned by Compose (no host launch agents).
+  # One-shot:  docker compose --profile refresh run --rm refresh
+  # Recurring: docker compose --profile schedule up -d scheduler
+  refresh:
+    build: .
+    container_name: decksage-refresh
+    profiles: ["refresh"]
+    command: ["sh", "/app/scripts/ops/refresh_container.sh"]
+    healthcheck:
+      disable: true
+    environment:
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - QDRANT_URL=http://qdrant:6333
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-}
+      - HF_HOME=/root/.cache/huggingface
+      - HF_HUB_OFFLINE=1
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      # Writable: this service exists to write processed artifacts and graphs.
+      - ./data:/app/data
+      - ./data/cache:/app/data/cache
+      # Curated Magic tag bulk (5.8 MB); data-local as a whole is 8.5 GB.
+      - ./data-local/label-anchor-20261030:/app/data-local/label-anchor-20261030:ro
+      - ${HF_CACHE:-./data-local/hf-hub}:/root/.cache/huggingface/hub:ro
+    depends_on:
+      api:
+        condition: service_healthy
+      meilisearch:
+        condition: service_healthy
+      qdrant:
+        condition: service_healthy
+    networks:
+      - decksage
+
+  scheduler:
+    build: .
+    container_name: decksage-scheduler
+    profiles: ["schedule"]
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        while :; do
+          sh /app/scripts/ops/refresh_container.sh || echo "refresh failed; retrying next interval" >&2
+          sleep "$${REFRESH_INTERVAL:-86400}"
+        done
+    healthcheck:
+      disable: true
+    environment:
+      - MEILISEARCH_URL=http://meilisearch:7700
+      - QDRANT_URL=http://qdrant:6333
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-}
+      - HF_HOME=/root/.cache/huggingface
+      - HF_HUB_OFFLINE=1
+      - REFRESH_INTERVAL=${REFRESH_INTERVAL:-86400}
+    volumes:
+      - ./src:/app/src:ro
+      - ./scripts:/app/scripts:ro
+      - ./data:/app/data
+      - ./data/cache:/app/data/cache
+      - ./data-local/label-anchor-20261030:/app/data-local/label-anchor-20261030:ro
+      - ${HF_CACHE:-./data-local/hf-hub}:/root/.cache/huggingface/hub:ro
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - decksage
+
 volumes:
   meilisearch_data:
   qdrant_data:

@@ -1287,7 +1287,10 @@ dev-doctor *ARGS:
     #!/usr/bin/env bash
     scripts/dev/stack_doctor.sh {{ARGS}}
 
-# Refresh artifacts/caches, restart the API, and run the doctor (host MPS).
+# Refresh artifacts/caches inside Compose, then reload the API (no host agents).
 refresh:
-    #!/usr/bin/env bash
-    scripts/ops/refresh_all.sh
+    docker compose --profile refresh run --rm refresh
+
+# Recurring refresh; REFRESH_INTERVAL seconds between runs (default 86400).
+schedule-refresh:
+    docker compose --profile schedule up -d scheduler
