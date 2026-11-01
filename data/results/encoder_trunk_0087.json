@@ -1,0 +1,76 @@
+{
+  "rows": 40948,
+  "queries": 3040,
+  "arms": {
+    "scalar_shared": {
+      "functional_score": {
+        "mae": 0.146,
+        "spearman": 0.2757
+      },
+      "synergy_score": {
+        "mae": 0.1318,
+        "spearman": 0.2391
+      },
+      "meta_relevance": {
+        "mae": 0.1315,
+        "spearman": 0.2615
+      }
+    },
+    "scalar_separate": {
+      "functional_score": {
+        "mae": 0.147,
+        "spearman": 0.2753
+      },
+      "synergy_score": {
+        "mae": 0.1324,
+        "spearman": 0.2274
+      },
+      "meta_relevance": {
+        "mae": 0.1299,
+        "spearman": 0.2584
+      }
+    },
+    "vector_shared": {
+      "functional_score": {
+        "mae": 0.1835,
+        "spearman": 0.1242
+      },
+      "synergy_score": {
+        "mae": 0.1458,
+        "spearman": 0.1182
+      },
+      "meta_relevance": {
+        "mae": 0.1502,
+        "spearman": 0.1168
+      }
+    },
+    "vector_separate": {
+      "functional_score": {
+        "mae": 0.1872,
+        "spearman": 0.1189
+      },
+      "synergy_score": {
+        "mae": 0.1568,
+        "spearman": 0.0997
+      },
+      "meta_relevance": {
+        "mae": 0.161,
+        "spearman": 0.0991
+      }
+    }
+  },
+  "mean_mae": {
+    "scalar_shared": 0.1364,
+    "scalar_separate": 0.1364,
+    "vector_shared": 0.1598,
+    "vector_separate": 0.1683
+  },
+  "delta_shared_minus_separate": -0.0085,
+  "per_target_delta": {
+    "functional_score": -0.0037,
+    "synergy_score": -0.011,
+    "meta_relevance": -0.0108
+  },
+  "vector_beats_scalar_shared": false,
+  "verdict": "shared_matches_separate"
+}

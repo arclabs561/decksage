@@ -1,0 +1,160 @@
+{
+  "arms": {
+    "embedding": {
+      "mode": "embedding",
+      "added": 45,
+      "judged_pairs": 0,
+      "coverage": 0.0,
+      "mean_functional_score": null,
+      "per_deck": [
+        {
+          "deck": "Red Burn",
+          "added": 15,
+          "judged_pairs": 0,
+          "mean_score": null,
+          "cards": [
+            "Searing Blaze",
+            "Rift Bolt",
+            "Lava Spike",
+            "Skewer the Critics",
+            "Eidolon of the Great Revel",
+            "Skullcrack",
+            "Searing Blood",
+            "Smash to Smithereens",
+            "Barbarian Ring",
+            "Vexing Devil",
+            "Exquisite Firecraft",
+            "Sunbaked Canyon",
+            "Monastery Swiftspear",
+            "Dragon's Rage Channeler",
+            "Unholy Heat"
+          ]
+        },
+        {
+          "deck": "Blue Control",
+          "added": 15,
+          "judged_pairs": 0,
+          "mean_score": null,
+          "cards": [
+            "Spell Snare",
+            "Day's Undoing",
+            "Isochron Scepter",
+            "Mystic Gate",
+            "Hall of Storm Giants",
+            "Geier Reach Sanitarium",
+            "Narset, Parter of Veils",
+            "Remand",
+            "Mystical Dispute",
+            "Subtlety",
+            "Force of Negation",
+            "Hallowed Fountain",
+            "Flooded Strand",
+            "Murktide Regent",
+            "Disrupting Shoal"
+          ]
+        },
+        {
+          "deck": "Green Ramp",
+          "added": 15,
+          "judged_pairs": 0,
+          "mean_score": null,
+          "cards": [
+            "Vivien Reid",
+            "Botanical Sanctum",
+            "Breeding Pool",
+            "Spirebluff Canal",
+            "Hallowed Fountain",
+            "Flooded Strand",
+            "Godless Shrine",
+            "Polluted Delta",
+            "Marsh Flats",
+            "Misty Rainforest",
+            "Arid Mesa",
+            "Watery Grave",
+            "Scalding Tarn",
+            "Scion of Draco",
+            "Wooded Foothills"
+          ]
+        }
+      ]
+    },
+    "text": {
+      "mode": "text",
+      "added": 45,
+      "judged_pairs": 4,
+      "coverage": 0.0889,
+      "mean_functional_score": 0.8063,
+      "per_deck": [
+        {
+          "deck": "Red Burn",
+          "added": 15,
+          "judged_pairs": 0,
+          "mean_score": null,
+          "cards": [
+            "Arc Lightning",
+            "Jagged Lightning",
+            "Lightning Strike",
+            "Chain Lightning",
+            "Forked Lightning",
+            "Cone of Flame",
+            "Thunderbolt",
+            "Wizard's Lightning",
+            "Radiating Lightning",
+            "Rhystic Lightning",
+            "Lightning Storm",
+            "Homing Lightning",
+            "Lightning Blast",
+            "Lightning Dart",
+            "Lightning Javelin"
+          ]
+        },
+        {
+          "deck": "Blue Control",
+          "added": 15,
+          "judged_pairs": 3,
+          "mean_score": 0.8167,
+          "cards": [
+            "Tropical Island",
+            "Volcanic Island",
+            "Savannah",
+            "Tundra",
+            "Scrubland",
+            "Skycloud Expanse",
+            "Seashell Cameo",
+            "Idyllic Beachfront",
+            "Tranquil Expanse",
+            "Arctic Flats",
+            "Arcane Sanctum",
+            "Meandering River",
+            "Tranquil Cove",
+            "Boreal Shelf",
+            "Sunlit Marsh"
+          ]
+        },
+        {
+          "deck": "Green Ramp",
+          "added": 15,
+          "judged_pairs": 1,
+          "mean_score": 0.775,
+          "cards": [
+            "Llanowar Tribe",
+            "Fyndhorn Elves",
+            "Fyndhorn Elder",
+            "Elvish Mystic",
+            "Leaf Gilder",
+            "Taiga",
+            "Gruul Signet",
+            "Simic Signet",
+            "Golgari Signet",
+            "Sungrass Prairie",
+            "Mox Emerald",
+            "Woodland Mystic",
+            "Wirewood Elf",
+            "Elf Druid",
+            "Mossfire Valley"
+          ]
+        }
+      ]
+    }
+  }
+}
