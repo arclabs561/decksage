@@ -221,7 +221,12 @@ def metadata_matches_filter(metadata: dict[str, Any] | None, filter_str: str | N
         expected = str(clause["value"]).strip().lower()
         operator = clause["operator"]
         if operator == "=":
-            return expected in actual_values
+            if expected in actual_values:
+                return True
+            try:
+                return float(expected) in {float(value) for value in actual_values}
+            except ValueError:
+                return False
         try:
             numbers = [float(value) for value in actual_values if value not in ("", "none", "nan")]
         except ValueError:

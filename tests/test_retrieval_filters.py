@@ -19,6 +19,13 @@ def test_equality_is_case_insensitive():
     assert metadata_matches_filter({"rarity": "Rare"}, 'rarity = "rare"')
 
 
+def test_numeric_equality_ignores_float_formatting():
+    """Meilisearch treats 2 and 2.0 as equal; so must the post-filter."""
+    assert metadata_matches_filter({"cmc": 2.0}, "cmc = 2")
+    assert metadata_matches_filter({"cmc": "2.0"}, "cmc = 2")
+    assert not metadata_matches_filter({"cmc": 2.5}, "cmc = 2")
+
+
 def test_numeric_comparisons():
     metadata = {"cmc": 2.0, "power": "4"}
     assert metadata_matches_filter(metadata, "cmc <= 2")
