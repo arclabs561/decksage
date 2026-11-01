@@ -1,0 +1,77 @@
+id: "0088"
+date: "2026-11-01"
+title: "Deck completion candidate mode: graph co-play vs text"
+game: magic
+status: "running"
+
+hypothesis: >
+  Deck completion asks for substitutes ("what else fills this role"), but its
+  default candidate mode is `embedding`, which measures co-play: cards that
+  appear in the same decks. 0082 and 0083 showed text retrieval has far higher
+  functional recall (0.721 vs 0.149 at 10) and precision (0.348 vs 0.129) on
+  judged pairs. If completion's added cards are substitutes, switching the
+  default to `text` should raise the judged functional score of the cards it
+  adds, with the existing size/copy/colour/bad-card guardrails unchanged.
+
+method:
+  type: ab_comparison
+  script: scripts/evaluation/deck_completion_quality.py
+  arms:
+    embedding: "POST /v1/deck/complete with mode=embedding (current default)"
+    text: "POST /v1/deck/complete with mode=text"
+  seeds: "the three magic seed decks in scripts/evaluation/eval_deck_completion.py"
+  metric: >
+    Mean judged functional_score of added cards against the seed cards, over
+    pairs that exist in data/test_sets/annotated_magic_v2.json. Coverage is
+    reported because an unjudged card is not evidence either way.
+  guardrails: "size correct, copy violations, colour violations, bad cards"
+  threshold: >
+    `text` replaces the default when mean judged functional score is at least
+    +0.02 above `embedding` with coverage over at least 30% of added cards, and
+    no guardrail regresses. A smaller difference is within label noise (MAE
+    0.19) and the default stays.
+
+data:
+  test_set: data/test_sets/annotated_magic_v2.json
+  seeds: "scripts/evaluation/eval_deck_completion.py::SEED_DECKS[magic]"
+  note: >
+    Seven seed cards across three decks give a small judged surface; the
+    experiment decides a default, it does not rank models.
+
+results:
+  embedding:
+    added_cards: 45
+    judged_pairs: 0
+    coverage: 0.0
+    mean_functional_score: null
+  text:
+    added_cards: 45
+    judged_pairs: 4
+    coverage: 0.0889
+    mean_functional_score: 0.8063
+  arm_overlap:
+    red_burn: 0
+    blue_control: 0
+    green_ramp: 0
+  verdict: "inconclusive_coverage"
+  artifact: data/results/deck_completion_quality_0088.json
+
+conclusion: >
+  Inconclusive, and the reason is the evaluation, not the arms. Of the 45 cards
+  each arm added, 0 (embedding) and 4 (text) have a judged functional score
+  against the seed cards: the annotated test set is keyed on retrieval queries,
+  so it barely intersects what completion adds. Four judged pairs cannot carry
+  a default. The pre-registered threshold is not met by construction, so the
+  default stays `embedding` and `mode=text` remains available per request.
+
+  Two things are worth keeping. The arms differ completely (0/15 overlap per
+  deck), so `mode` is wired through and is not a no-op. And the cards differ in
+  kind: text adds role substitutes for Red Burn (Chain Lightning, Forked
+  Lightning, Arc Lightning for Lightning Bolt) while embedding adds co-play
+  cards (Eidolon of the Great Revel, Dragon's Rage Channeler); text also adds
+  basic lands to Blue Control, which is a known text-arm bias rather than a
+  completion bug.
+
+  Next step before any default change: a deck-completion judged set, scored on
+  (seed deck, added card) pairs rather than retrieval queries. That is the same
+  coverage defect the nDCG harness had, and it now blocks a product decision.
