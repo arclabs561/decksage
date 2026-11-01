@@ -47,6 +47,7 @@ import dataclasses
 import json
 import logging
 import os
+import time
 from contextlib import asynccontextmanager, suppress
 from datetime import UTC
 from pathlib import Path
@@ -321,6 +322,41 @@ def _describe_loaded_signals(game: str, signal_status: dict[str, bool], state: A
 
 
 # API app with lifespan
+def _load_shared_models(
+    instruction_embedder_model: str, visual_embedder_model: str
+) -> tuple[object | None, object | None]:
+    """Load the process-wide embedders. Runs in a thread during startup.
+
+    Importing torch and reading the weights takes ~29 s on CPU; the per-game
+    artifact load takes ~32 s and touches none of these objects, so the two
+    overlap instead of queueing.
+    """
+    text_embedder = None
+    visual_embedder = None
+    try:
+        from .load_signals import HAS_INSTRUCTION_EMBED, InstructionTunedCardEmbedder
+
+        if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
+            text_embedder = InstructionTunedCardEmbedder(model_name=instruction_embedder_model)
+            logger.info("Loaded shared text embedder: %s", instruction_embedder_model)
+    except (ImportError, OSError, RuntimeError):
+        logger.warning("Failed to load shared text embedder", exc_info=True)
+
+    visual_enabled = os.getenv("DECKSAGE_ENABLE_VISUAL", "0").lower() in {"1", "true", "yes"}
+    if not visual_enabled:
+        logger.info("Visual embedder disabled (DECKSAGE_ENABLE_VISUAL=0)")
+        return text_embedder, None
+    try:
+        from .load_signals import HAS_VISUAL_EMBED, CardVisualEmbedder
+
+        if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
+            visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
+            logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
+    except (ImportError, OSError, RuntimeError):
+        logger.warning("Failed to load shared visual embedder", exc_info=True)
+    return text_embedder, visual_embedder
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """
@@ -383,37 +419,14 @@ async def lifespan(app: FastAPI):
     _shared_text_embedder = None
     _shared_visual_embedder = None
 
-    try:
-        from .load_signals import (
-            HAS_INSTRUCTION_EMBED,
-            HAS_VISUAL_EMBED,
-            CardVisualEmbedder,
-            InstructionTunedCardEmbedder,
-        )
+    # Load models in a worker thread while the catalog artifacts load on this
+    # one; both are independent and previously ran back to back.
+    from concurrent.futures import ThreadPoolExecutor
 
-        if HAS_INSTRUCTION_EMBED and InstructionTunedCardEmbedder is not None:
-            _shared_text_embedder = InstructionTunedCardEmbedder(
-                model_name=instruction_embedder_model
-            )
-            logger.info("Loaded shared text embedder: %s", instruction_embedder_model)
-    except (ImportError, OSError, RuntimeError):
-        logger.warning("Failed to load shared text embedder", exc_info=True)
-
-    # The visual signal carries zero fusion weight and has no index; loading
-    # SigLIP on every boot costs memory for no served effect. Opt in when the
-    # visual path is actually wired and calibrated.
-    visual_enabled = os.getenv("DECKSAGE_ENABLE_VISUAL", "0").lower() in {"1", "true", "yes"}
-    if not visual_enabled:
-        logger.info("Visual embedder disabled (DECKSAGE_ENABLE_VISUAL=0)")
-    else:
-        try:
-            from .load_signals import HAS_VISUAL_EMBED, CardVisualEmbedder
-
-            if HAS_VISUAL_EMBED and CardVisualEmbedder is not None:
-                _shared_visual_embedder = CardVisualEmbedder(model_name=visual_embedder_model)
-                logger.info("Loaded shared visual embedder: %s", visual_embedder_model)
-        except (ImportError, OSError, RuntimeError):
-            logger.warning("Failed to load shared visual embedder", exc_info=True)
+    _model_pool = ThreadPoolExecutor(max_workers=1, thread_name_prefix="model-load")
+    _model_future = _model_pool.submit(
+        _load_shared_models, instruction_embedder_model, visual_embedder_model
+    )
 
     # Load resources per game
     for game in games:
@@ -765,6 +778,23 @@ async def lifespan(app: FastAPI):
         except OSError:
             return "?"
 
+    # Attach the shared embedders now that both halves of startup are done.
+    try:
+        _shared_text_embedder, _shared_visual_embedder = _model_future.result(timeout=600)
+    except Exception:
+        logger.warning("Shared model load failed or timed out", exc_info=True)
+    finally:
+        _model_pool.shutdown(wait=False)
+    for game in games:
+        state = get_state(game)
+        if _shared_text_embedder is not None:
+            state.text_embedder = _shared_text_embedder
+        if _shared_visual_embedder is not None:
+            state.visual_embedder = _shared_visual_embedder
+        if state.signal_status is not None:
+            state.signal_status["text_embedder"] = _shared_text_embedder is not None
+            state.signal_status["visual_embedder"] = _shared_visual_embedder is not None
+
     for game in games:
         state = get_state(game)
         _parts = [f"game={game}"]
@@ -1099,6 +1129,10 @@ def graph_stats(game: str | None = Query(None)) -> dict:
     return {"game": g, "source": "unified", **meta}
 
 
+_INDEX_STATUS_CACHE: dict[str, tuple[float, dict]] = {}
+_INDEX_STATUS_TTL = 10.0
+
+
 @router.get("/index/status")
 def index_status() -> dict:
     """Per-game catalog and backend coverage, for the stack doctor and the UI.
@@ -1107,6 +1141,10 @@ def index_status() -> dict:
     incomplete, not that the search is wrong.
     """
     games = _configured_games()
+    cache_key = ",".join(games)
+    cached = _INDEX_STATUS_CACHE.get(cache_key)
+    if cached is not None and (time.monotonic() - cached[0]) < _INDEX_STATUS_TTL:
+        return cached[1]
     report: dict[str, dict] = {}
     for game in games:
         state = get_state(game)
@@ -1132,6 +1170,22 @@ def index_status() -> dict:
         for key in ("meilisearch", "qdrant"):
             value = entry[key]
             entry[f"{key}_coverage"] = round(value / catalog, 4) if catalog and value else None
+        # E5 text vectors: a second Qdrant collection so cards with no graph
+        # vector still have a vector arm. Graph coverage stays honest; this is
+        # the count that closes the gap.
+        text_collection = getattr(client, "text_collection_name", None) if client else None
+        if client is not None and client.qdrant is not None and text_collection:
+            try:
+                entry["text_vectors"] = client.qdrant.get_collection(text_collection).points_count
+            except Exception:
+                entry["text_vectors"] = None
+        else:
+            entry["text_vectors"] = None
+        entry["text_vector_coverage"] = (
+            round(min(1.0, entry["text_vectors"] / catalog), 4)
+            if catalog and entry["text_vectors"]
+            else None
+        )
         # Text cache coverage: the E5 candidate retriever reads this file, and
         # a missing or partial cache is invisible in the other counts.
         text_count = None
@@ -1160,7 +1214,9 @@ def index_status() -> dict:
             else None
         )
         report[game] = entry
-    return {"games": report}
+    payload = {"games": report}
+    _INDEX_STATUS_CACHE[cache_key] = (time.monotonic(), payload)
+    return payload
 
 
 @router.get("/games")
@@ -1818,23 +1874,34 @@ def _similar_impl(request: SimilarityRequest) -> SimilarityResponse:
     k = request.top_k
     method = _resolve_method(request)
     # A card can exist in the catalog without a graph vector (11,322 Magic
-    # cards do). That is "no neighbours", not "not a card": return an honest
-    # empty result with exact_match so the UI can tell the two apart.
+    # cards do). That is "no neighbours in the co-occurrence graph", not "not
+    # a card": rank it by its E5 text vector instead of returning nothing, and
+    # keep no_vector so the caller can still tell the two sources apart.
     if (
         state.embeddings is not None
         and query not in state.embeddings
         and _exact_card_match(state, query)
     ):
+        client = _get_search_client(game)
+        text_points = client.text_vector_similar(query, k) if client is not None else []
+        results = [
+            _enrich_similar_card(
+                (point.payload or {}).get("name", ""), float(point.score), state, game=game
+            )
+            for point in text_points
+            if (point.payload or {}).get("name")
+        ]
         return SimilarityResponse(
             query=original_query,
             exact_match=True,
             query_metadata=dict((state.card_metadata or {}).get(query, {}) or {}) or None,
-            results=[],
+            results=results,
             model_info={
                 **state.model_info,
-                "method_used": method,
+                "method_used": f"{method}_text_e5" if results else method,
                 "game": game,
                 "no_vector": True,
+                "vector_source": "text_e5" if results else None,
             },
         )
     if method == "embedding":
@@ -2683,6 +2750,7 @@ def _get_search_client(game: str) -> HybridSearch | None:
     # Per-game index/collection naming (override via env)
     idx_env = os.getenv(f"MEILISEARCH_INDEX_{game.upper()}")
     col_env = os.getenv(f"QDRANT_COLLECTION_{game.upper()}")
+    text_col_env = os.getenv(f"QDRANT_TEXT_COLLECTION_{game.upper()}")
     index_name = (idx_env or f"cards_{game}").strip()
     collection_name = (col_env or f"cards_{game}").strip()
 
@@ -2693,6 +2761,7 @@ def _get_search_client(game: str) -> HybridSearch | None:
             text_embedder=getattr(state, "text_embedder", None),
             index_name=index_name,
             collection_name=collection_name,
+            text_collection_name=(text_col_env or None),
         )
         # Pass card metadata for semantic search oracle text enrichment
         client.card_metadata = getattr(state, "card_metadata", None) or {}
