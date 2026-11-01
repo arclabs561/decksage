@@ -102,7 +102,8 @@ def magic_reprints() -> tuple[dict[str, str], int]:
         key = f"{text}|{norm(card.get('type_line') or '')}"
         group = groups.setdefault(key, f"g{len(groups)}")
         members.setdefault(group, set()).add(name)
-    card_group = {name: group for group, names in members.items() for name in names}
+    # Sets iterate in hash order; sort so the file is byte-identical run to run.
+    card_group = {name: group for group, names in members.items() for name in sorted(names)}
     multi = sum(1 for names in members.values() if len(names) > 1)
     return card_group, multi
 
@@ -123,16 +124,35 @@ def reprint_groups(game: str) -> tuple[dict[str, str], int]:
             key = f"{text}|{norm(row.get('type') or '')}"
             group = groups.setdefault(key, f"g{len(groups)}")
             members.setdefault(group, set()).add(name)
-    card_group = {name: group for group, names in members.items() for name in names}
+    # Sets iterate in hash order; sort so the file is byte-identical run to run.
+    card_group = {name: group for group, names in members.items() for name in sorted(names)}
     multi = sum(1 for names in members.values() if len(names) > 1)
     return card_group, multi
 
 
+def write_if_changed(path: Path, payload: str) -> bool:
+    """Write only when the bytes differ.
+
+    Refresh runs this daily; rewriting identical JSON would bump the mtime and
+    make the graph's --if-stale check rebuild three graphs for nothing.
+    """
+    if path.exists() and path.read_text(encoding="utf-8") == payload:
+        return False
+    path.write_text(payload, encoding="utf-8")
+    return True
+
+
 def build(game: str, out_dir: Path) -> tuple[int, int, int]:
     tags = magic_tags() if game == "magic" else derived_tags(game)
-    (out_dir / f"{game}_tags.json").write_text(json.dumps(tags, separators=(",", ":")))
+    changed = write_if_changed(
+        out_dir / f"{game}_tags.json", json.dumps(tags, separators=(",", ":"))
+    )
     card_group, multi = magic_reprints() if game == "magic" else reprint_groups(game)
-    (out_dir / f"{game}_reprints.json").write_text(json.dumps(card_group, separators=(",", ":")))
+    changed |= write_if_changed(
+        out_dir / f"{game}_reprints.json", json.dumps(card_group, separators=(",", ":"))
+    )
+    if not changed:
+        print(f"{game}: artifacts unchanged")
     return len(tags), len(card_group), multi
 
 

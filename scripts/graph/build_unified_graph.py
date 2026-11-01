@@ -108,6 +108,8 @@ def input_paths(game: str) -> list[Path]:
     paths = [
         Path(f"{PATHS.data / 'cache' / str(config['cache'])}.npz"),
         PATHS.processed / str(config["attributes"]),
+        # The builder itself: a fix to the edge logic must invalidate the graph.
+        Path(__file__).resolve(),
     ]
     tags_name = config.get("tags")
     if tags_name:
