@@ -991,7 +991,9 @@ class HybridSearch:
         if _auto_filter and not is_card_name and not filters:
             query, auto_filters = parse_query_filters(query)
             if auto_filters:
-                filters = auto_filters
+                # Same colour translation as a caller-supplied filter, otherwise
+                # "red burn" misses every two-colour red card.
+                filters = translate_color_filter(auto_filters)
                 logger.debug("Auto-parsed filters: query='%s', filters='%s'", query, filters)
 
         # Text search via Meilisearch
