@@ -180,6 +180,41 @@ test.describe('Text retrieval mode', () => {
   });
 });
 
+test.describe('Scryfall set metadata', () => {
+  test('card metadata carries set, prices and legalities', async ({ request }) => {
+    const resp = await request.get('/v1/cards/Lightning Bolt', { params: { game: 'magic' } });
+    expect(resp.ok()).toBeTruthy();
+    const meta = (await resp.json()).metadata;
+    expect(meta.set).toBeTruthy();
+    expect(meta.set_name).toBeTruthy();
+    expect(Object.keys(meta.prices).length).toBeGreaterThan(0);
+    expect(Object.keys(meta.legalities).length).toBeGreaterThan(0);
+  });
+
+  test('set filter works on both arms', async ({ request }) => {
+    const lexical = await request.post('/v1/search', {
+      data: { game: 'magic', query: 'bolt', limit: 5, filters: 'set = "clu"' },
+    });
+    const lexicalSet = (await lexical.json()).results.map(r => r.metadata?.set);
+    expect(lexicalSet.length).toBeGreaterThan(0);
+    expect(lexicalSet.every(value => value === 'clu')).toBe(true);
+
+    const semantic = await request.post('/v1/search', {
+      data: {
+        game: 'magic',
+        query: 'Lightning Bolt',
+        text_weight: 0,
+        vector_weight: 1,
+        limit: 5,
+        filters: 'set = "clu"',
+      },
+    });
+    const semanticSet = (await semantic.json()).results.map(r => r.metadata?.set);
+    expect(semanticSet.length).toBeGreaterThan(0);
+    expect(semanticSet.every(value => value === 'clu')).toBe(true);
+  });
+});
+
 test.describe('Semantic filters', () => {
   test('vector-only search honours a colour filter', async ({ request }) => {
     const resp = await request.post('/v1/search', {

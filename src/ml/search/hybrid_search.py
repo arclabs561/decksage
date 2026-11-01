@@ -28,7 +28,15 @@ logger = logging.getLogger("decksage.search")
 # Payload fields the semantic arm can filter on. Keyword fields are exact match;
 # numeric fields accept range comparisons. Keep in sync with the payload the
 # indexer writes (see scripts/data/enrich_qdrant_payloads.py).
-_QDRANT_KEYWORD_FIELDS = {"name", "type_line", "rarity", "colors", "set_name", "supertype"}
+_QDRANT_KEYWORD_FIELDS = {
+    "name",
+    "type_line",
+    "rarity",
+    "colors",
+    "set",
+    "set_name",
+    "supertype",
+}
 _QDRANT_NUMERIC_FIELDS = {"cmc", "power", "toughness", "hp", "atk", "def_stat", "level"}
 _RANGE_OPERATORS = {">=": "gte", "<=": "lte", ">": "gt", "<": "lt"}
 
@@ -180,6 +188,62 @@ def _parse_clause(clause: str) -> dict[str, Any] | None:
     if not value:
         return None
     return {"field": field, "operator": operator, "value": value}
+
+
+def metadata_matches_filter(metadata: dict[str, Any] | None, filter_str: str | None) -> bool:
+    """Apply a supported filter clause to one card's metadata.
+
+    The lexical arm filters in Meilisearch and the exact-name vector arm filters
+    in Qdrant, but the free-text semantic arm scores a local cache and has no
+    filter of its own. Post-filtering the fused list keeps one contract: a
+    requested attribute filter holds for every result. An unparseable clause
+    passes (the filter string is then advisory), but a card with no value for
+    a filtered field is dropped: the filter cannot be confirmed, and returning
+    it would break the contract the caller asked for.
+    """
+    if not filter_str:
+        return True
+    if not metadata:
+        return False
+    clauses = parse_filter_clauses(filter_str)
+    if not clauses:
+        return True
+
+    def value_matches(clause: dict[str, Any]) -> bool:
+        field = clause["field"]
+        if field not in metadata:
+            return False
+        actual = metadata.get(field)
+        if isinstance(actual, list):
+            actual_values = [str(item).strip().lower() for item in actual]
+        else:
+            actual_values = [str(actual).strip().lower()]
+        expected = str(clause["value"]).strip().lower()
+        operator = clause["operator"]
+        if operator == "=":
+            return expected in actual_values
+        try:
+            numbers = [float(value) for value in actual_values if value not in ("", "none", "nan")]
+        except ValueError:
+            return True
+        if not numbers:
+            return True
+        target = float(expected)
+        number = numbers[0]
+        return {
+            ">=": number >= target,
+            "<=": number <= target,
+            ">": number > target,
+            "<": number < target,
+        }[operator]
+
+    for clause in clauses:
+        if "or" in clause:
+            if not any(value_matches(option) for option in clause["or"]):
+                return False
+        elif not value_matches(clause):
+            return False
+    return True
 
 
 def qdrant_filter_from_string(filter_str: str | None, models_module: Any) -> Any | None:
@@ -383,7 +447,9 @@ def build_meilisearch_settings(game: str | None = None) -> dict[str, Any]:
             "type_line",
             "cmc",
             "rarity",
+            "set",
             "set_name",
+            "released_at",
             "power",
             "toughness",
             "hp",
@@ -1033,6 +1099,13 @@ class HybridSearch:
 
         # Sort by combined score and return top results
         sorted_results = sorted(results.values(), key=lambda x: x.score, reverse=True)
+        if filters:
+            metadata_by_name = self.card_metadata or {}
+            sorted_results = [
+                result
+                for result in sorted_results
+                if metadata_matches_filter(metadata_by_name.get(result.card_name), filters)
+            ]
 
         # An auto-parsed filter is a guess. "destroy all creatures" guesses
         # type_line=Creature and then returns nothing, because the card that

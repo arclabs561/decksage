@@ -25,18 +25,20 @@ The split is:
 
 ## What refresh does
 
-1. Rebuilds tag/reprint artifacts for every game
+1. Rebuilds Scryfall set/legality/price lookups when the bulk file is newer
+   (`scripts/data/build_scryfall_metadata.py`).
+2. Rebuilds tag/reprint artifacts for every game
    (`scripts/data/build_signal_artifacts.py --all`). Magic tags come from the
    curated tag index; Pokemon and Yu-Gi-Oh! tags are derived from structured
    columns (subtypes, keywords, race, attribute, archetype) and are labelled as
    derived where they are served.
-2. Tops up the E5 caches for all games (no-op when complete).
-3. Rebuilds the unified graph for each game (`scripts/graph/build_unified_graph.py`).
-4. Fills Meilisearch gaps (`bootstrap_index.py`) without deleting documents.
-5. Backfills Qdrant payloads at the current schema (`scripts/embed/payload_backfill.py`),
+3. Tops up the E5 caches for all games (no-op when complete).
+4. Rebuilds the unified graph for each game (`scripts/graph/build_unified_graph.py`).
+5. Fills Meilisearch gaps (`bootstrap_index.py`) without deleting documents.
+6. Backfills Qdrant payloads at the current schema (`scripts/embed/payload_backfill.py`),
    skipping points already enriched, and ensures the payload indexes.
-6. Restarts the API so it loads the new artifacts.
-7. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
+7. Restarts the API so it loads the new artifacts.
+8. Runs `dev-doctor` and exits non-zero if the stack is not healthy.
 
 Bootstrap is self-filling: `bootstrap_index.py` builds missing tag/reprint
 artifacts itself, so a fresh clone gets the tag relation without a manual step.

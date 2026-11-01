@@ -33,7 +33,7 @@ Not indexed, still available:
 | `banlist_tcg/ocg/goat`, `pendulum_scale`, `link_markers`, `fusion/synchro/ritual_material`, `fandom_*` | Yu-Gi-Oh! CSV | legality/format and combo queries |
 | `attacks_detail`, `abilities_detail`, `weakness_type`, `resistance_type` | Pokémon CSV | structured combat filtering (text carries a summary) |
 | `image_url` | all | served from `card_metadata`; Qdrant has it, Meili does not |
-| `legalities`, `prices`, `set_name` (Magic) | Scryfall raw | not joined into the Magic enriched CSV |
+| `legalities`, `prices`, `set`, `set_name` (Magic) | Scryfall raw | served and filterable via flat lookups; not columns in the enriched CSV |
 | tags, reprint groups, fusion weights | data-local / experiments | offline arms only; not loaded by the API |
 
 A persisted **unified graph** exists for all three games:
@@ -118,8 +118,9 @@ shared trunk must match per-facet baselines on held-out queries.
    feature; until then they are offline evidence only.
 4. Decide the visual embedder: wire it into fusion and index it, or stop
    loading it. Do not keep paying memory for zero weight.
-5. Join Scryfall set/legalities/prices into the Magic catalog if set, format
-   and budget filters are product requirements; today Magic has no `set_name`.
+5. **Done:** Scryfall set, `set_name`, legalities and prices are joined into the
+   Magic catalog (`scripts/data/build_scryfall_metadata.py`), served on
+   `/v1/cards/{card}` and filterable as `set` / `set_name`.
 6. **Done:** Qdrant payload fields and indexes for filtered ANN; the semantic
    arm now applies the same filters as the lexical arm.
 7. Before adding more text fields, test `oracle_text_enriched` / `keywords` in

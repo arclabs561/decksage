@@ -252,9 +252,43 @@ def build(
     )
     connection.execute("CREATE INDEX idx_edges_src ON edges(src, relation, weight DESC)")
     connection.commit()
+    write_meta(connection)
     counts = connection.execute("SELECT relation, COUNT(*) FROM edges GROUP BY relation").fetchall()
     connection.close()
     print(f"wrote {out}: {len(edges)} edges {dict(counts)}")
+    return 0
+
+
+def write_meta(connection: sqlite3.Connection) -> None:
+    """Store relation counts so serving does not scan 2M edges per request."""
+    rows = connection.execute(
+        "SELECT relation, COUNT(*), AVG(weight), MAX(weight) FROM edges GROUP BY relation"
+    ).fetchall()
+    nodes = connection.execute("SELECT COUNT(DISTINCT src) FROM edges").fetchone()[0]
+    payload = {
+        "nodes": nodes,
+        "relations": {
+            relation: {
+                "edges": count,
+                "mean_weight": round(float(mean), 4),
+                "max_weight": round(float(maximum), 4),
+            }
+            for relation, count, mean, maximum in rows
+        },
+    }
+    connection.execute("CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT)")
+    connection.execute("INSERT OR REPLACE INTO meta VALUES ('stats', ?)", (json.dumps(payload),))
+    connection.commit()
+
+
+def annotate_existing(out: Path) -> int:
+    """Add the meta table to a graph built before it existed."""
+    if not out.exists():
+        raise SystemExit(f"missing graph: {out}")
+    connection = sqlite3.connect(out)
+    write_meta(connection)
+    connection.close()
+    print(f"annotated {out}")
     return 0
 
 
@@ -267,6 +301,11 @@ def main() -> int:
     parser.add_argument("--skip-cooccurrence", action="store_true")
     parser.add_argument("--skip-text", action="store_true")
     parser.add_argument(
+        "--only-meta",
+        action="store_true",
+        help="Write the stats table into an existing graph and exit",
+    )
+    parser.add_argument(
         "--keep-lands",
         action="store_true",
         help="Include basic lands in Magic edges (they dominate co-occurrence)",
@@ -278,6 +317,8 @@ def main() -> int:
     )
     args = parser.parse_args()
     out = args.out or (PATHS.graphs / f"unified_{args.game}.db")
+    if args.only_meta:
+        return annotate_existing(out)
     fields = (
         [field.strip() for field in args.attribute_fields.split(",") if field.strip()]
         if args.attribute_fields

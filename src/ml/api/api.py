@@ -677,6 +677,24 @@ async def lifespan(app: FastAPI):
                 except (OSError, ValueError, KeyError):
                     logger.debug("Failed to load Scryfall legality data", exc_info=True)
 
+            sets_path = PATHS.data / "processed" / "scryfall_sets.json"
+            if sets_path.exists():
+                try:
+                    with open(sets_path, encoding="utf-8") as f:
+                        state.set_data = json.load(f)
+                    logger.info("Loaded Scryfall set data: %d cards", len(state.set_data))
+                    # Attach set fields to card metadata once: result post-filters
+                    # and the detail pane both read them from here.
+                    for card_name, info in state.set_data.items():
+                        meta = (state.card_metadata or {}).get(card_name)
+                        if meta is None:
+                            continue
+                        for key in ("set", "set_name"):
+                            if info.get(key):
+                                meta[key] = info[key]
+                except (OSError, ValueError, KeyError):
+                    logger.debug("Failed to load Scryfall set data", exc_info=True)
+
             prices_path = PATHS.data / "processed" / "scryfall_prices.json"
             if prices_path.exists():
                 try:
@@ -1094,10 +1112,24 @@ def graph_neighbors(
 
 
 def _unified_graph_meta(state: Any) -> dict | None:
-    """Relation counts, computed once per process and cached on the state."""
+    """Relation counts, read from the graph's own meta table.
+
+    Scanning 2.4M edges took seconds and blocked the event loop, so the builder
+    stores the counts at build time. The scan stays as a fallback for a graph
+    built before the meta table existed, cached after the first call.
+    """
     if state.unified_graph is None:
         return None
     if state.unified_graph_meta is not None:
+        return state.unified_graph_meta
+    try:
+        row = state.unified_graph.execute("SELECT value FROM meta WHERE key = 'stats'").fetchone()
+    except Exception:
+        row = None
+    if row:
+        import json as _json
+
+        state.unified_graph_meta = _json.loads(row[0])
         return state.unified_graph_meta
     rows = state.unified_graph.execute(
         "SELECT relation, COUNT(*), AVG(weight), MAX(weight) FROM edges GROUP BY relation"
@@ -1536,6 +1568,13 @@ def _enrich_similar_card(
         freq = state.deck_frequency.get(card_name)
         if freq:
             meta["deck_popularity"] = freq
+
+    # Scryfall set / set_name (Magic-only)
+    if game == "magic" and getattr(state, "set_data", None):
+        set_info = state.set_data.get(card_name) or {}
+        for key in ("set", "set_name", "released_at"):
+            if set_info.get(key):
+                meta[key] = set_info[key]
 
     # Scryfall legalities (Magic-only)
     if game == "magic" and state.legality_data:
@@ -2482,6 +2521,33 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
     return ordered
 
 
+def _enrich_card_metadata(state: Any, game: str, card_name: str, meta: dict) -> dict:
+    """Merge Scryfall set, legality and price lookups into one card's metadata.
+
+    The catalog CSV has no set or price columns; those live in separate flat
+    lookups. Merging here keeps card_info consistent with search results
+    without copying three dicts into every card at load time.
+    """
+    if game != "magic":
+        return meta
+    set_data = getattr(state, "set_data", None)
+    if set_data:
+        set_info = set_data.get(card_name) or {}
+        for key in ("set", "set_name", "released_at"):
+            if set_info.get(key):
+                meta[key] = set_info[key]
+    if getattr(state, "legality_data", None):
+        legality = state.legality_data.get(card_name) or {}
+        if legality:
+            meta["legalities"] = legality
+    if getattr(state, "price_data", None):
+        prices = state.price_data.get(card_name) or {}
+        filtered = {key: value for key, value in prices.items() if value is not None}
+        if filtered:
+            meta["prices"] = filtered
+    return meta
+
+
 @router.get("/cards/{card}")
 def card_info(card: str, game: str | None = Query(None)) -> dict:
     """Metadata for one card, for agents and UI detail panes."""
@@ -2489,10 +2555,11 @@ def card_info(card: str, game: str | None = Query(None)) -> dict:
     state = get_state(g)
     if not _exact_card_match(state, card):
         raise HTTPException(status_code=404, detail=f"Card {card!r} not found")
+    meta = _enrich_card_metadata(state, g, card, dict((state.card_metadata or {}).get(card) or {}))
     return {
         "game": g,
         "card": card,
-        "metadata": (state.card_metadata or {}).get(card),
+        "metadata": meta or None,
         "ban_status": _lookup_ban_status(card, state.banlist),
     }
 
@@ -2508,10 +2575,13 @@ def card_legality(card: str, game: str | None = Query(None)) -> dict:
     state = get_state(g)
     if not _exact_card_match(state, card):
         raise HTTPException(status_code=404, detail=f"Card {card!r} not found")
+    set_info = (getattr(state, "set_data", None) or {}).get(card) or {}
     return {
         "game": g,
         "card": card,
         "legalities": (state.legality_data or {}).get(card, {}),
+        "set": set_info.get("set"),
+        "set_name": set_info.get("set_name"),
         "ban_status": _lookup_ban_status(card, state.banlist),
     }
 
@@ -2741,6 +2811,13 @@ def search_cards_v1(request: SearchRequest):
             freq = state.deck_frequency.get(r.card_name)
             if freq:
                 merged["deck_popularity"] = freq
+
+        # Scryfall set / set_name (Magic-only)
+        if game == "magic" and getattr(state, "set_data", None):
+            set_info = state.set_data.get(r.card_name) or {}
+            for key in ("set", "set_name", "released_at"):
+                if set_info.get(key):
+                    merged[key] = set_info[key]
 
         # Scryfall legalities (Magic-only)
         if game == "magic" and state.legality_data:

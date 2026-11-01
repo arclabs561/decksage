@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import json
 import os
 import sys
 from pathlib import Path
@@ -29,9 +30,18 @@ from ml.search.hybrid_search import build_meilisearch_settings
 from ml.search.meili_docs import card_document
 
 
+def _set_lookup() -> dict[str, dict]:
+    """Scryfall set/set_name by card; the catalog CSV has neither column."""
+    path = ROOT / "data" / "processed" / "scryfall_sets.json"
+    if not path.exists():
+        return {}
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def documents(game: str) -> list[dict]:
     path = ROOT / "data" / "processed" / f"card_attributes_{game}_enriched.csv"
     frame = pd.read_csv(path, low_memory=False)
+    set_lookup = _set_lookup() if game == "magic" else {}
     docs: list[dict] = []
     for _, row in frame.iterrows():
         name = str(row.get("name") or "").strip()
@@ -42,6 +52,11 @@ def documents(game: str) -> list[dict]:
             for key, value in row.to_dict().items()
             if not (isinstance(value, float) and value != value)
         }
+        set_info = set_lookup.get(name)
+        if set_info:
+            for key in ("set", "set_name", "released_at"):
+                if set_info.get(key):
+                    meta[key] = set_info[key]
         doc_id = hashlib.sha1(name.encode()).hexdigest()[:16]
         docs.append(card_document(name, meta, game, doc_id))
     return docs

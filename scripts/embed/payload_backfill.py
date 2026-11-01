@@ -39,7 +39,7 @@ from ml.search.hybrid_search import (
 from ml.utils.paths import PATHS
 
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4  # 4 adds set/set_name from the Scryfall lookup
 PROCESSED = PATHS.processed
 
 
@@ -67,6 +67,7 @@ def payload_for(game: str, row: dict[str, str]) -> dict[str, Any]:
         "rarity": (row.get("rarity") or "").lower(),
         "colors": split_list(row.get("colors") or ""),
         "cmc": numeric(row.get("cmc") or ""),
+        "set": row.get("set") or "",
         "set_name": row.get("set_name") or "",
         "schema": SCHEMA_VERSION,
     }
@@ -92,7 +93,20 @@ def load_rows(game: str) -> dict[str, dict[str, str]]:
     if not path.exists():
         raise SystemExit(f"missing card metadata: {path}")
     with path.open(newline="", encoding="utf-8", errors="replace") as handle:
-        return {row.get("name", ""): row for row in csv.DictReader(handle) if row.get("name")}
+        rows = {row.get("name", ""): row for row in csv.DictReader(handle) if row.get("name")}
+    # The CSV has no set or set_name; merge them so payload filters work.
+    sets_path = PROCESSED / "scryfall_sets.json"
+    if game == "magic" and sets_path.exists():
+        set_data = json.loads(sets_path.read_text(encoding="utf-8"))
+        for name, row in rows.items():
+            info = set_data.get(name)
+            if not info:
+                continue
+            if info.get("set_name"):
+                row["set_name"] = info["set_name"]
+            if info.get("set"):
+                row["set"] = info["set"]
+    return rows
 
 
 def connect(url: str):

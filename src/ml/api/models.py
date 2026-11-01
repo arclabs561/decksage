@@ -407,6 +407,7 @@ class ApiState:
         self.archetype_templates: list[dict] | None = None  # From archetype_templates_{game}.json
         self.deck_frequency: dict[str, dict] | None = None  # {card_name: {total_decks, by_format}}
         self.legality_data: dict[str, dict[str, str]] | None = None  # {card: {format: status}}
+        self.set_data: dict[str, dict] | None = None  # {card: {set, set_name, released_at}}
         self.price_data: dict[str, dict[str, str | None]] | None = (
             None  # {card: {usd: "1.23", ...}}
         )
