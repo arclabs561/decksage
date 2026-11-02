@@ -15,7 +15,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import math
 import re
 import sqlite3
 import sys
@@ -128,6 +127,60 @@ def is_stale(out: Path, game: str) -> bool:
     return any(path.stat().st_mtime > built for path in input_paths(game))
 
 
+def label_neighbours(
+    label_sets: dict[str, set[str]],
+    add,
+    relation: str,
+    top_k: int,
+    chunk: int = 256,
+) -> int:
+    """Top-k weighted-Jaccard neighbours from a card -> label-set map.
+
+    The set-by-set loop this replaces was O(cards x candidates x labels) in
+    Python: magic's 33,854 cards took hours. With the sets as a binary matrix
+    the intersection is a matmul and the union is ``row_a + row_b -
+    intersection``, so the same weighted Jaccard comes out of dense linear
+    algebra in seconds.
+
+    Weights are the same idf as before: 1 / log(1 + document frequency), so a
+    ubiquitous label ("Supporter") is cheap and a rare one is valuable.
+    """
+    import numpy as np
+
+    labels = sorted({label for values in label_sets.values() for label in values})
+    if not labels:
+        return 0
+    position = {label: i for i, label in enumerate(labels)}
+    names = list(label_sets)
+    matrix = np.zeros((len(names), len(labels)), dtype=np.float32)
+    for row, name in enumerate(names):
+        for label in label_sets[name]:
+            matrix[row, position[label]] = 1.0
+
+    frequency = matrix.sum(axis=0)
+    weights = np.where(frequency > 1, 1.0 / np.log1p(frequency), 1.0).astype(np.float32)
+    weighted = matrix * weights
+    row_weight = weighted.sum(axis=1)
+
+    for start in range(0, len(names), chunk):
+        rows = names[start : start + chunk]
+        intersection = weighted[start : start + chunk] @ matrix.T
+        union = row_weight[start : start + chunk, None] + row_weight[None, :] - intersection
+        scores = np.divide(intersection, union, out=np.zeros_like(intersection), where=union > 0)
+        for offset, name in enumerate(rows):
+            row_scores = scores[offset]
+            row_scores[start + offset] = 0.0
+            if top_k < len(row_scores):
+                candidates = np.argpartition(row_scores, -top_k)[-top_k:]
+            else:
+                candidates = np.arange(len(row_scores))
+            for index in candidates:
+                score = float(row_scores[index])
+                if score > 0:
+                    add(name, names[int(index)], relation, score)
+    return len(names)
+
+
 def build(
     game: str,
     out: Path,
@@ -181,15 +234,14 @@ def build(
             rows = [index[name] for name in chunk]
             scores = matrix[rows] @ matrix.T
             for row, name in enumerate(chunk):
-                kept = 0
-                for position in np.argsort(scores[row])[::-1]:
-                    other = all_names[int(position)]
-                    if other == name:
-                        continue
-                    add(name, other, "text", float(scores[row, int(position)]))
-                    kept += 1
-                    if kept >= top_k:
-                        break
+                row_scores = scores[row]
+                row_scores[rows[row]] = -np.inf  # never link a card to itself
+                # argpartition is linear; the full argsort was O(n log n) per
+                # row over 37k columns.
+                candidates = np.argpartition(row_scores, -top_k)[-top_k:]
+                for neighbour in candidates:
+                    if row_scores[neighbour] > -np.inf:
+                        add(name, all_names[int(neighbour)], "text", float(row_scores[neighbour]))
             print(f"text {min(start + 256, len(names))}/{len(names)}", flush=True)
 
     tags_name = config.get("tags")
@@ -197,71 +249,30 @@ def build(
         tags_path = PATHS.processed / str(tags_name)
         if tags_path.exists():
             tag_map = json.loads(tags_path.read_text())
-            keep = set(names)
-            tag_sets = {name: set(tags) for name, tags in tag_map.items() if name in keep}
-            inverted: dict[str, set[str]] = defaultdict(set)
-            for name, tag_values in tag_sets.items():
-                for label in tag_values:
-                    inverted[label].add(name)
-            weights = {
-                label: 1.0 / math.log(1.0 + len(cards))
-                for label, cards in inverted.items()
-                if len(cards) > 1
+            label_sets = {
+                name: set(tag_values) for name, tag_values in tag_map.items() if name in keep
             }
-            for name, tag_values in tag_sets.items():
-                candidates: set[str] = set()
-                for label in tag_values:
-                    candidates |= inverted[label]
-                scored = []
-                for other in candidates:
-                    if other == name:
-                        continue
-                    score = weighted_jaccard(tag_values, tag_sets[other], weights)
-                    if score:
-                        scored.append((score, other))
-                for score, other in sorted(scored, reverse=True)[:top_k]:
-                    add(name, other, "tag", score)
-            print(f"tag neighbours for {len(tag_sets)} cards", flush=True)
+            added = label_neighbours(label_sets, add, "tag", top_k)
+            print(f"tag neighbours for {added} cards", flush=True)
         else:
             print(f"no tag artifact for {game} ({tags_name}); skipping", flush=True)
 
-    fields = attribute_fields or list(config["attribute_fields"])  # type: ignore[arg-type]
+    fields = attribute_fields or [str(field) for field in config["attribute_fields"]]
     attributes_path = PATHS.processed / str(config["attributes"])
     if fields and attributes_path.exists():
+        kind_sets: dict[str, set[str]] = {}
         with attributes_path.open(newline="", encoding="utf-8", errors="replace") as handle:
-            rows = list(csv.DictReader(handle))
-        kind_map: dict[str, set[str]] = {}
-        kind_index: dict[str, set[str]] = defaultdict(set)
-        for row in rows:
-            name = row.get("name", "")
-            if name not in keep:
-                continue
-            kinds: set[str] = set()
-            for field in attribute_fields or [str(f) for f in config["attribute_fields"]]:
-                kinds |= set(tokens(row.get(field, "")))
-            if kinds:
-                kind_map[name] = kinds
-                for kind in kinds:
-                    kind_index[kind].add(name)
-        weights = {
-            kind: 1.0 / math.log(1.0 + len(cards))
-            for kind, cards in kind_index.items()
-            if len(cards) > 1
-        }
-        for name, kinds in kind_map.items():
-            candidates: set[str] = set()
-            for kind in kinds:
-                candidates |= kind_index[kind]
-            scored = []
-            for other in candidates:
-                if other == name:
+            for row in csv.DictReader(handle):
+                name = row.get("name", "")
+                if name not in keep:
                     continue
-                score = weighted_jaccard(kinds, kind_map.get(other, set()), weights)
-                if score:
-                    scored.append((score, other))
-            for score, other in sorted(scored, reverse=True)[:top_k]:
-                add(name, other, "attribute", score)
-        print(f"attribute neighbours for {len(kind_map)} cards", flush=True)
+                kinds: set[str] = set()
+                for field in fields:
+                    kinds |= set(tokens(row.get(field, "")))
+                if kinds:
+                    kind_sets[name] = kinds
+        added = label_neighbours(kind_sets, add, "attribute", top_k)
+        print(f"attribute neighbours for {added} cards via {fields}", flush=True)
 
     out.parent.mkdir(parents=True, exist_ok=True)
     if out.exists():
