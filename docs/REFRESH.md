@@ -25,9 +25,11 @@ docker compose logs -f scheduler
    columns (subtypes, keywords, race, attribute, archetype).
 3. Rebuilds the unified graph for each game, skipping when the graph is newer
    than its inputs (`build_unified_graph.py --if-stale`).
-4. Fills Meilisearch gaps and tops up text caches
+4. Mirrors the E5 caches into `cards_<game>_e5` so catalog cards without a
+   graph vector still have neighbours (`build_text_vector_index.py`, idempotent).
+5. Fills Meilisearch gaps and tops up text caches
    (`bootstrap_index.py --all --payloads --text`).
-5. Calls `POST /v1/admin/reload`, which re-reads metadata, tags, reprints, set
+6. Calls `POST /v1/admin/reload`, which re-reads metadata, tags, reprints, set
    data and the unified graph in place. No restart, so serving is not
    interrupted and the ~4.7 GB startup is paid once.
 

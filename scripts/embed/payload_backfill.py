@@ -19,6 +19,7 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -132,7 +133,7 @@ def backup_index(client, collection: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", default="magic", choices=("magic", "pokemon", "yugioh", "all"))
-    parser.add_argument("--url", default="http://127.0.0.1:6333")
+    parser.add_argument("--url", default=os.getenv("QDRANT_URL", "http://127.0.0.1:6333"))
     parser.add_argument("--batch", type=int, default=256)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument(

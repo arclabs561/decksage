@@ -22,6 +22,11 @@ for game in "${game_list[@]}"; do
 	python scripts/graph/build_unified_graph.py --game "$game" --if-stale
 done
 
+echo "==> E5 text vectors (catalog cards without graph vectors)"
+for game in "${game_list[@]}"; do
+  python scripts/embed/build_text_vector_index.py --game "$game"
+done
+
 echo "==> meilisearch fill + payload backfill"
 python scripts/data/bootstrap_index.py --all --payloads --text
 

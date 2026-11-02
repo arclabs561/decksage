@@ -31,6 +31,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Any
@@ -151,7 +152,7 @@ def payload_lookup(game: str, names: list[str]) -> dict[str, dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--game", default="magic", choices=("magic", "pokemon", "yugioh", "all"))
-    parser.add_argument("--url", default="http://127.0.0.1:6333")
+    parser.add_argument("--url", default=os.getenv("QDRANT_URL", "http://127.0.0.1:6333"))
     parser.add_argument("--data-dir", type=Path, default=PATHS.data)
     parser.add_argument("--cache-dir", type=Path, default=PATHS.data / "cache")
     parser.add_argument("--encoder", default="intfloat-e5-base-v2")
