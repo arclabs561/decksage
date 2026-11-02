@@ -2700,7 +2700,6 @@ def _load_artifacts_uncached(game: str) -> dict[str, object]:
                 if info.get(key):
                     meta[key] = info[key]
 
-    state.artifacts_loaded_at = time.time()
     unified_path = PATHS.graphs / f"unified_{game}.db"
     if unified_path.exists():
         import sqlite3
@@ -2716,6 +2715,10 @@ def _load_artifacts_uncached(game: str) -> dict[str, object]:
         # Counts live in the graph's meta table; recompute on reload.
         state.unified_graph_meta = None
 
+    # Stamp only once every file has been read: stamping at the start made a
+    # graph rewritten during the load look newer than the load, which the
+    # watcher then retried forever.
+    state.artifacts_loaded_at = time.time()
     return {
         "game": game,
         "loaded": True,

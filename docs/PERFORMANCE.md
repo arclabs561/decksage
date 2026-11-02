@@ -57,6 +57,25 @@ parsing, not server work. The Qdrant cut came with `with_payload` selection; the
 Meili cut with `attributesToRetrieve` and dropping the unused
 `showRankingScoreDetails`.
 
+## 2026-11-01, graph build
+
+| | value |
+|---|---|
+| before (tag/attribute phases, magic) | tens of minutes; the refresh job never converged |
+| after (full yugioh rebuild) | **51 s** (text 14,195 cards, tag 14,195, attribute 9,125) |
+| after (magic + pokemon via refresh) | ~2 min for both |
+| 400-card subset, tag + attribute only | 1.4 s |
+
+**Attributable:** the tag and attribute phases did per-candidate set arithmetic
+in Python; they now build a binary label matrix and take the top-k of a chunked
+matmul. Scores are unchanged: verified against an independent weighted-Jaccard
+reference on 12 edges (max diff 1.3e-8) and against cosine on 8 text edges
+(max diff 3e-7). The text phase swapped a full `argsort` per row for
+`argpartition`.
+
+This is what lets the refresh job finish and the topology check pass, which is
+the precondition for every self-healing path that depends on it.
+
 ## Endpoint medians (shared host, 7-9 runs)
 
 Two windows on the same code, to show the spread rather than a single number:
