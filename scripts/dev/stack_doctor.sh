@@ -79,6 +79,13 @@ if [ "$FILL" = "1" ]; then
   "${COMPOSE[@]}" --profile bootstrap run --rm bootstrap
 fi
 
+echo "==> data topology"
+if uv run python scripts/ops/topology.py check; then
+  echo "  ok   artifacts are newer than their inputs"
+else
+  echo "  WARN stale or missing artifacts; run: just refresh" >&2
+fi
+
 echo "==> services"
 "${COMPOSE[@]}" ps
 
