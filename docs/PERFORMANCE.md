@@ -9,7 +9,7 @@ Commands
 
 ```bash
 # endpoint medians (7-9 runs per case)
-uv run python /tmp/bench_api.py 7
+uv run python scripts/dev/bench_api.py -n 7
 # startup: read the lifespan line
 docker logs decksage-api 2>&1 | grep "Serving 3 game"
 ```
