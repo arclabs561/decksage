@@ -1291,6 +1291,10 @@ dev-doctor *ARGS:
 refresh:
     docker compose --profile refresh run --rm refresh
 
+# Check the data-plane DAG for missing or stale artifacts.
+topology:
+    uv run python scripts/ops/topology.py check
+
 # Recurring refresh; REFRESH_INTERVAL seconds between runs (default 86400).
 schedule-refresh:
     docker compose --profile schedule up -d scheduler

@@ -8,6 +8,121 @@ import { test, expect } from '@playwright/test';
  * endpoints return expected shapes before running UI tests.
  */
 
+test.describe('Topology contract', () => {
+  test('serves the DAG with a valid rebuild order', async ({ request }) => {
+    const resp = await request.get('/v1/topology');
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(typeof body.ok).toBe('boolean');
+    expect(Array.isArray(body.nodes)).toBe(true);
+    expect(Array.isArray(body.edges)).toBe(true);
+    expect(body.order.length).toBe(body.nodes.length);
+
+    const ids = new Set(body.nodes.map((n) => n.id));
+    const position = new Map(body.order.map((id, i) => [id, i]));
+    for (const edge of body.edges) {
+      expect(ids.has(edge.from), `edge from ${edge.from}`).toBe(true);
+      expect(ids.has(edge.to), `edge to ${edge.to}`).toBe(true);
+      // Every input must be rebuilt before its consumer.
+      expect(position.get(edge.from)).toBeLessThan(position.get(edge.to));
+    }
+    expect(body.findings.unknown_inputs).toEqual([]);
+    expect(body.findings.cycles).toEqual([]);
+  });
+
+  test('every node names its layer, builder and consumers', async ({ request }) => {
+    const body = await (await request.get('/v1/topology')).json();
+    const layers = new Set(body.nodes.map((n) => n.layer));
+    for (const layer of ['source', 'derived', 'serving']) {
+      expect(layers.has(layer), `layer ${layer}`).toBe(true);
+    }
+    for (const node of body.nodes) {
+      expect(node.builder, `builder for ${node.id}`).toBeTruthy();
+      expect(Array.isArray(node.consumers)).toBe(true);
+      if (node.kind === 'file') {
+        expect(node.exists).toBe(true);
+        expect(typeof node.stale).toBe('boolean');
+      }
+    }
+  });
+
+  test('health agrees with the topology findings', async ({ request }) => {
+    const topology = await (await request.get('/v1/topology')).json();
+    const health = await (await request.get('/health')).json();
+    expect(health.topology.ok).toBe(topology.ok);
+    const findings = Object.values(health.topology.findings).flat();
+    const expected = Object.entries(topology.findings)
+      .filter(([, items]) => items.length > 0)
+      .flatMap(([, items]) => items);
+    expect(findings.sort()).toEqual(expected.sort());
+  });
+});
+
+test.describe('Rich health contract', () => {
+  test('reports status, games, artifacts and backends', async ({ request }) => {
+    const resp = await request.get('/health');
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(['live', 'degraded']).toContain(body.status);
+    expect(Array.isArray(body.games)).toBe(true);
+    expect(body.games.length).toBeGreaterThan(0);
+
+    for (const game of body.games) {
+      const info = body.artifacts[game];
+      expect(info, `artifacts for ${game}`).toBeDefined();
+      expect(typeof info.loaded_at).toBe('number');
+      expect(typeof info.newest_artifact).toBe('number');
+      expect(typeof info.stale).toBe('boolean');
+      expect(Array.isArray(info.missing)).toBe(true);
+    }
+    expect(typeof body.backends.meilisearch).toBe('boolean');
+    expect(typeof body.backends.qdrant).toBe('boolean');
+  });
+
+  test('agrees with the games and index endpoints', async ({ request }) => {
+    const health = await (await request.get('/health')).json();
+    const games = await (await request.get('/v1/games')).json();
+    const status = await (await request.get('/v1/index/status')).json();
+
+    expect([...health.games].sort()).toEqual(Object.keys(games.games).sort());
+    for (const game of health.games) {
+      // A game the index counts as populated must not be reported missing.
+      if (status.games[game]?.catalog > 0) {
+        expect(health.artifacts[game].missing).not.toContain(
+          `card_attributes_${game}_enriched.csv`
+        );
+      }
+    }
+  });
+
+  test('is not stale right after a reload', async ({ request }) => {
+    const reload = await request.post('/v1/admin/reload');
+    expect(reload.ok()).toBeTruthy();
+    const body = await reload.json();
+    expect(Array.isArray(body.reloaded)).toBe(true);
+    for (const entry of body.reloaded) {
+      expect(entry.loaded).toBe(true);
+      expect(entry.metadata).toBeGreaterThan(0);
+      expect(entry.unified_graph).toBe(true);
+    }
+
+    const health = await (await request.get('/health')).json();
+    for (const game of health.games) {
+      expect(health.artifacts[game].stale, `stale after reload: ${game}`).toBe(false);
+    }
+  });
+
+  test('v1 health reports the game vocabulary size', async ({ request }) => {
+    const resp = await request.get('/v1/health', { params: { game: 'pokemon' } });
+    expect(resp.ok()).toBeTruthy();
+    const body = await resp.json();
+    expect(body.status).toBe('ok');
+    expect(body.game).toBe('pokemon');
+    expect(body.num_cards).toBeGreaterThan(1000);
+    expect(body.embedding_dim).toBeGreaterThan(0);
+  });
+});
+
 test.describe('API health', () => {
   test('liveness probe returns live', async ({ request }) => {
     const resp = await request.get('/live');
@@ -306,6 +421,16 @@ test.describe('Artifact self-report', () => {
       const body = await resp.json();
       expect(body.source).toBe('unified');
     }
+  });
+});
+
+test.describe('Vector coverage', () => {
+  test('magic has an E5 vector for every catalog card', async ({ request }) => {
+    const body = await (await request.get('/v1/index/status')).json();
+    const magic = body.games.magic;
+    expect(magic.text_vectors).toBeGreaterThan(0);
+    expect(magic.text_vector_coverage).toBe(1);
+    expect(magic.qdrant_coverage).toBeGreaterThan(0.6);
   });
 });
 

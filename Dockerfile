@@ -34,6 +34,7 @@ WORKDIR /app
 # production build ships it as-is. src/backend (Go tooling) is not part of it.
 COPY src/ml ./src/ml
 COPY frontend ./frontend
+COPY config ./config
 
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \

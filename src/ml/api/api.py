@@ -47,6 +47,7 @@ import dataclasses
 import json
 import logging
 import os
+import threading
 import time
 from contextlib import asynccontextmanager, suppress
 from datetime import UTC
@@ -825,6 +826,13 @@ async def lifespan(app: FastAPI):
             _n_src = len(state.reranker_embeddings) if state.reranker_embeddings else 0
             _parts.append(f"reranker={_n_src}src")
         logger.info("Ready: %s", " ".join(_parts))
+    watch_interval = float(os.getenv("DECKSAGE_WATCH_INTERVAL", "30"))
+    app.state.artifact_watch_stop = (
+        _start_artifact_watcher(games, watch_interval) if watch_interval > 0 else None
+    )
+    if app.state.artifact_watch_stop is not None:
+        logger.info("Artifact watcher: polling every %.0fs", watch_interval)
+
     _elapsed = _time.monotonic() - _t_start
     logger.info(
         "Serving %d game(s) in %.1fs [default=%s, instruction_embedder=%s, visual_embedder=%s]",
@@ -838,6 +846,9 @@ async def lifespan(app: FastAPI):
     try:
         yield
     finally:
+        watcher_stop = getattr(app.state, "artifact_watch_stop", None)
+        if watcher_stop is not None:
+            watcher_stop.set()
         # Best-effort cleanup: null fields then delete entire dicts so
         # hot-reload starts fresh (half-loaded state must not survive).
         by_game = getattr(app.state, "api_by_game", None) or {}
@@ -1246,10 +1257,108 @@ def live():
     return {"status": "live"}
 
 
+_TOPOLOGY_CACHE: dict[str, tuple[float, dict]] = {}
+_TOPOLOGY_TTL = 15.0
+
+
+@router.get("/topology")
+def topology() -> dict:
+    """The data-plane DAG: nodes, edges, rebuild order, and what is stale.
+
+    Same assessment the refresh job gates on (`scripts/ops/topology.py check`),
+    so an agent can see which artifact is missing or older than its inputs
+    without shelling into the box.
+    """
+    now = time.monotonic()
+    cached = _TOPOLOGY_CACHE.get("topology")
+    if cached is not None and (now - cached[0]) < _TOPOLOGY_TTL:
+        return cached[1]
+    from ..utils.topology import assess, load_spec
+
+    report = assess(load_spec())
+    payload = {
+        "ok": report["ok"],
+        "findings": report["findings"],
+        "order": report["order"],
+        "nodes": [
+            {
+                "id": node["id"],
+                "layer": node.get("layer"),
+                "kind": node.get("kind"),
+                "exists": node.get("exists"),
+                "stale": node.get("stale"),
+                "builder": node.get("builder"),
+                "inputs": node.get("inputs", []),
+                "consumers": node.get("consumers", []),
+            }
+            for node in report["nodes"]
+        ],
+        "edges": report["edges"],
+    }
+    _TOPOLOGY_CACHE["topology"] = (now, payload)
+    return payload
+
+
+_HEALTH_CACHE: dict[str, tuple[float, dict]] = {}
+_HEALTH_TTL = 5.0
+
+
 @app.get("/health")
-def health_alias():
-    """Agents and orchestrators expect /health; /live is the same probe."""
-    return {"status": "live"}
+def health_alias() -> dict:
+    """Liveness plus enough state for a human or agent to see degradation.
+
+    Always 200 when the process can answer: an orchestrator should not kill a
+    server because an artifact is stale. The body says whether it is, and which
+    backend is unreachable.
+    """
+    now = time.monotonic()
+    cached = _HEALTH_CACHE.get("health")
+    if cached is not None and (now - cached[0]) < _HEALTH_TTL:
+        return cached[1]
+
+    games = _configured_games()
+    artifacts = {game: _artifact_state(game) for game in games}
+    backends: dict[str, bool] = {}
+    meili = qdrant = True
+    for game in games:
+        client = _get_search_client(game)
+        if client is None:
+            meili = qdrant = False
+            continue
+        if client.meilisearch is not None:
+            try:
+                client.meilisearch.health()
+            except Exception:
+                meili = False
+        if client.qdrant is not None:
+            try:
+                client.qdrant.get_collections()
+            except Exception:
+                qdrant = False
+    backends["meilisearch"] = meili
+    backends["qdrant"] = qdrant
+
+    from ..utils.topology import assess as _assess_topology
+    from ..utils.topology import load_spec as _load_topology_spec
+
+    topology_report = _assess_topology(_load_topology_spec())
+    degraded = (
+        not all(backends.values())
+        or any(info["stale"] or info["missing"] for info in artifacts.values())
+        or not topology_report["ok"]
+    )
+    payload = {
+        "status": "degraded" if degraded else "live",
+        "games": games,
+        "artifacts": artifacts,
+        "backends": backends,
+        "topology": {
+            "ok": topology_report["ok"],
+            "findings": {key: value for key, value in topology_report["findings"].items() if value},
+        },
+    }
+    _HEALTH_CACHE["health"] = (now, payload)
+    return payload
 
 
 @app.get("/ready")
@@ -2560,6 +2669,7 @@ def _load_artifacts_for_game(game: str) -> dict[str, object]:
                 if info.get(key):
                     meta[key] = info[key]
 
+    state.artifacts_loaded_at = time.time()
     unified_path = PATHS.graphs / f"unified_{game}.db"
     if unified_path.exists():
         import sqlite3
@@ -2583,6 +2693,82 @@ def _load_artifacts_for_game(game: str) -> dict[str, object]:
         "reprints": len(state.reprint_groups) if state.reprint_groups else None,
         "unified_graph": unified_path.exists(),
     }
+
+
+def _artifact_paths(game: str) -> list[Path]:
+    """Files whose change means this game's served state is out of date."""
+    paths = [
+        PATHS.processed / f"card_attributes_{game}_enriched.csv",
+        PATHS.processed / f"{game}_tags.json",
+        PATHS.processed / f"{game}_reprints.json",
+        PATHS.graphs / f"unified_{game}.db",
+    ]
+    if game == "magic":
+        paths += [
+            PATHS.processed / "scryfall_sets.json",
+            PATHS.processed / "scryfall_legality.json",
+            PATHS.processed / "scryfall_prices.json",
+        ]
+    return paths
+
+
+def _artifact_state(game: str) -> dict[str, object]:
+    state = get_state(game)
+    newest = 0.0
+    missing: list[str] = []
+    for path in _artifact_paths(game):
+        if not path.exists():
+            missing.append(path.name)
+            continue
+        newest = max(newest, path.stat().st_mtime)
+    loaded = state.artifacts_loaded_at
+    return {
+        "loaded_at": round(loaded, 0) or None,
+        "newest_artifact": round(newest, 0) or None,
+        "stale": bool(loaded and newest > loaded + 1.0),
+        "missing": missing,
+    }
+
+
+_ARTIFACT_RELOAD_LOCK = threading.Lock()
+
+
+def _reload_if_stale(games: list[str]) -> list[str]:
+    """Reload the games whose artifacts changed on disk. Returns their names."""
+    reloaded: list[str] = []
+    with _ARTIFACT_RELOAD_LOCK:
+        for game in games:
+            info = _artifact_state(game)
+            if not info["stale"]:
+                continue
+            try:
+                _load_artifacts_for_game(game)
+                reloaded.append(game)
+                logger.info("watcher: reloaded artifacts for %s", game)
+            except Exception:
+                logger.warning("watcher: reload failed for %s", game, exc_info=True)
+    return reloaded
+
+
+def _start_artifact_watcher(games: list[str], interval: float) -> threading.Event:
+    """Reload artifacts when the refresh job rewrites them, without a restart.
+
+    The refresh container calls /v1/admin/reload, but that call is a single
+    request: if it fails, or someone writes an artifact by hand, the API would
+    serve stale data until the next deploy. A cheap mtime poll closes that gap.
+    """
+    stop = threading.Event()
+
+    def loop() -> None:
+        while not stop.wait(interval):
+            try:
+                _reload_if_stale(games)
+            except Exception:
+                logger.debug("artifact watcher iteration failed", exc_info=True)
+
+    thread = threading.Thread(target=loop, name="artifact-watcher", daemon=True)
+    thread.start()
+    return stop
 
 
 @router.post("/admin/reload")

@@ -16,6 +16,9 @@ services:
       - ./src:/app/src:ro
       - ./data:/app/data:ro
       - ./frontend:/app/frontend:ro
+      # 6 MB curated tag bulk: the topology check needs its mtime, and tag
+      # staleness cannot be judged without it.
+      - ./data-local/label-anchor-20261030:/app/data-local/label-anchor-20261030:ro
     depends_on:
       meilisearch:
         condition: service_healthy
@@ -87,6 +90,7 @@ services:
       - PYTHONUNBUFFERED=1
     volumes:
       - ./src:/app/src:ro
+      - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
       # Writable: this service exists to write processed artifacts and graphs.
       - ./data:/app/data
@@ -128,6 +132,7 @@ services:
       - REFRESH_INTERVAL=${REFRESH_INTERVAL:-86400}
     volumes:
       - ./src:/app/src:ro
+      - ./config:/app/config:ro
       - ./scripts:/app/scripts:ro
       - ./data:/app/data
       - ./data/cache:/app/data/cache

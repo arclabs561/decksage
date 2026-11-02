@@ -1,0 +1,147 @@
+# Data-plane topology: who builds what, from what, and what breaks when it is
+# missing. `scripts/ops/topology.py check` reads this file; the API serves the
+# same assessment at /v1/topology and uses it for /health.
+#
+# Placeholders: {game} expands over `games`. A node with `path` is a file whose
+# mtime decides staleness. A node without `path` is remote (Meili/Qdrant) and is
+# probed by the API, not by this file.
+
+games = ["magic", "pokemon", "yugioh"]
+
+# ---------------------------------------------------------------- sources
+
+[[node]]
+id = "catalog.{game}"
+path = "data/processed/card_attributes_{game}_enriched.csv"
+layer = "source"
+builder = "scrapy / external export"
+consumers = ["tags", "reprints", "graph", "meili", "api"]
+
+[[node]]
+id = "cooccurrence.{game}"
+path = "data/graphs/{game}_merged_all.edg"
+layer = "source"
+builder = "deck co-occurrence pipeline"
+consumers = ["graph"]
+
+[[node]]
+id = "e5_cache.{game}"
+path = "data/cache/text_emb_cache_cards_{game}_intfloat-e5-base-v2.npz"
+layer = "source"
+builder = "scripts/training/extend_text_cache.py"
+inputs = ["catalog.{game}"]
+consumers = ["graph", "qdrant_e5", "text_similar"]
+
+[[node]]
+id = "scryfall.oracle"
+path = "data/raw/scryfall/oracle-cards.json"
+layer = "source"
+builder = "scripts/data/fetch_scryfall_bulk.py"
+consumers = ["scryfall.sets", "scryfall.legalities", "scryfall.prices", "reprints.magic"]
+
+[[node]]
+id = "tag_bulk.magic"
+path = "data-local/label-anchor-20261030/oracle-tags.jsonl.gz"
+layer = "source"
+builder = "curated tag export"
+consumers = ["tags.magic"]
+
+# ---------------------------------------------------------------- derived
+
+[[node]]
+id = "scryfall.sets"
+path = "data/processed/scryfall_sets.json"
+layer = "derived"
+builder = "scripts/data/build_scryfall_metadata.py"
+inputs = ["scryfall.oracle"]
+consumers = ["api", "meili", "qdrant_payload"]
+
+[[node]]
+id = "scryfall.legalities"
+path = "data/processed/scryfall_legality.json"
+layer = "derived"
+builder = "scripts/data/build_scryfall_metadata.py"
+inputs = ["scryfall.oracle"]
+consumers = ["api"]
+
+[[node]]
+id = "scryfall.prices"
+path = "data/processed/scryfall_prices.json"
+layer = "derived"
+builder = "scripts/data/build_scryfall_metadata.py"
+inputs = ["scryfall.oracle"]
+consumers = ["api"]
+
+# Magic tags come from the curated bulk; the other games derive them from
+# structured columns. Same output, different inputs, so the DAG says so.
+[[node]]
+id = "tags.magic"
+path = "data/processed/magic_tags.json"
+layer = "derived"
+builder = "scripts/data/build_signal_artifacts.py"
+inputs = ["catalog.magic", "tag_bulk.magic"]
+consumers = ["graph", "api", "union"]
+only = ["magic"]
+
+[[node]]
+id = "tags.{game}"
+path = "data/processed/{game}_tags.json"
+layer = "derived"
+builder = "scripts/data/build_signal_artifacts.py"
+inputs = ["catalog.{game}"]
+consumers = ["graph", "api", "union"]
+only = ["pokemon", "yugioh"]
+
+# Magic reprints are grouped from the Scryfall bulk so existing group ids stay
+# stable; the other games group from their catalog text.
+[[node]]
+id = "reprints.magic"
+path = "data/processed/magic_reprints.json"
+layer = "derived"
+builder = "scripts/data/build_signal_artifacts.py"
+inputs = ["scryfall.oracle"]
+consumers = ["api"]
+only = ["magic"]
+
+[[node]]
+id = "reprints.{game}"
+path = "data/processed/{game}_reprints.json"
+layer = "derived"
+builder = "scripts/data/build_signal_artifacts.py"
+inputs = ["catalog.{game}"]
+consumers = ["api"]
+only = ["pokemon", "yugioh"]
+
+[[node]]
+id = "graph.{game}"
+path = "data/graphs/unified_{game}.db"
+layer = "derived"
+builder = "scripts/graph/build_unified_graph.py"
+inputs = ["cooccurrence.{game}", "e5_cache.{game}", "tags.{game}", "catalog.{game}"]
+consumers = ["api.graph"]
+
+# ---------------------------------------------------------------- serving
+
+[[node]]
+id = "meili.{game}"
+layer = "serving"
+kind = "remote"
+builder = "scripts/data/bootstrap_index.py"
+inputs = ["catalog.{game}", "scryfall.sets"]
+consumers = ["search"]
+
+[[node]]
+id = "qdrant.graph.{game}"
+layer = "serving"
+kind = "remote"
+builder = "scripts/data/bootstrap_index.py"
+inputs = ["catalog.{game}"]
+consumers = ["similar.embedding"]
+
+[[node]]
+id = "qdrant.e5.{game}"
+layer = "serving"
+kind = "remote"
+builder = "scripts/embed/build_text_vector_index.py"
+inputs = ["e5_cache.{game}", "catalog.{game}"]
+consumers = ["similar.e5"]

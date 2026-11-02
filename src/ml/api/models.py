@@ -414,6 +414,7 @@ class ApiState:
         self.tag_index: Any = None  # TagNeighborIndex (Magic)
         self.unified_graph: Any = None  # sqlite3 connection to the multi-relation graph
         self.unified_graph_meta: Any = None  # cached relation counts (computed once)
+        self.artifacts_loaded_at: float = 0.0  # monotonic-ish wall clock of last load
         self.reprint_groups: dict[str, str] | None = None
         # Reranker: multi-source embedding reranking with learned weights
         self.reranker: RerankerConfig | None = None

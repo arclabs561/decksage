@@ -60,7 +60,9 @@ services:
     volumes: !override
       - ./src:/app/src:ro
       - ./frontend:/app/frontend:ro
+      - ./config:/app/config:ro
       - ./data:/app/data:ro
+      - ./data-local/label-anchor-20261030:/app/data-local/label-anchor-20261030:ro
       # built signals (archetype staples/cooccurrence) live outside data/
       - ./experiments/signals:/app/experiments/signals:ro
       # The text-embedding cache is written beside the mounted data, which is
