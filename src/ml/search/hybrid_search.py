@@ -14,6 +14,7 @@ import logging
 import os
 import re
 import threading
+from collections import OrderedDict
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -573,6 +574,10 @@ class HybridSearch:
         self.index_name = index_name
         self.text_collection_name = text_collection_name or f"{collection_name}_e5"
         self._text_collection_seen: bool | None = None
+        # Free-text encoding is ~30 ms on CPU and deterministic, and a card's
+        # own E5 vector costs a Qdrant round trip; both are worth a small LRU.
+        self._encode_cache: OrderedDict[str, list[float] | None] = OrderedDict()
+        self._e5_vector_cache: OrderedDict[str, list[float] | None] = OrderedDict()
         self.embeddings = embeddings
         self.text_embedder = text_embedder
 
@@ -1294,6 +1299,9 @@ class HybridSearch:
         collection = self._text_collection()
         if collection is None or self.qdrant is None or models is None:
             return None
+        cached, hit = self._lru_get(self._e5_vector_cache, card_name)
+        if hit:
+            return cached
         try:
             points, _ = self.qdrant.scroll(
                 collection_name=collection,
@@ -1313,11 +1321,33 @@ class HybridSearch:
             logger.debug("text collection lookup failed for %r", card_name, exc_info=True)
             return None
         if not points:
+            self._lru_put(self._e5_vector_cache, card_name, None, 1024)
             return None
-        return self._vector_list(getattr(points[0], "vector", None))
+        vector = self._vector_list(getattr(points[0], "vector", None))
+        self._lru_put(self._e5_vector_cache, card_name, vector, 1024)
+        return vector
+
+    @staticmethod
+    def _lru_get(cache: OrderedDict[str, list[float] | None], key: str):
+        if key in cache:
+            cache.move_to_end(key)
+            return cache[key], True
+        return None, False
+
+    @staticmethod
+    def _lru_put(
+        cache: OrderedDict[str, list[float] | None], key: str, value, maxsize: int
+    ) -> None:
+        cache[key] = value
+        cache.move_to_end(key)
+        while len(cache) > maxsize:
+            cache.popitem(last=False)
 
     def _encode_text(self, text: str) -> list[float] | None:
         """Encode free text into the E5 space, or None when there is no encoder."""
+        cached, hit = self._lru_get(self._encode_cache, text)
+        if hit:
+            return cached
         embed_fn = getattr(self.text_embedder, "embed_card", None) or getattr(
             self.text_embedder, "encode", None
         )
@@ -1328,9 +1358,13 @@ class HybridSearch:
         except Exception:
             logger.debug("text encoding failed for %r", text, exc_info=True)
             return None
-        if vector is None:
-            return None
-        return self._vector_list(np.asarray(vector, dtype=np.float32).flatten())
+        encoded = (
+            None
+            if vector is None
+            else self._vector_list(np.asarray(vector, dtype=np.float32).flatten())
+        )
+        self._lru_put(self._encode_cache, text, encoded, 512)
+        return encoded
 
     def text_vector_similar(
         self, card_name: str, limit: int = 10, filters: str | None = None
