@@ -24,8 +24,14 @@ docker logs decksage-api 2>&1 | grep "Serving 3 game"
 
 **Attributable:** the embedder load (torch import + weights) and the per-game
 artifact load are independent and now run concurrently; the model is attached
-after the loop. `lifespan` logs the split, so a regression is visible in one
-line.
+after the loop. The three games' artifacts also preload in parallel, so the
+serial loop joins a future instead of paying the sum of all three. `lifespan`
+logs the total, so a regression is visible in one line.
+
+A later warm run measured 18.7 s with the parallel preload while the refresh
+job held the CPU; that is not comparable to the 15.5 s warm run above and is
+not claimed as a win. Re-measure both on an idle host before adding it to the
+ledger.
 
 ## 2026-11-01, `/v1/index/status`
 
