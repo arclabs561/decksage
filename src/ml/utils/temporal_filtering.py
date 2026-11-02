@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -32,28 +33,55 @@ def parse_timestamp(ts_str: str | None) -> datetime | None:
     if isinstance(ts_str, datetime):
         return ts_str
 
-    try:
-        # ISO format
-        return datetime.fromisoformat(str(ts_str).replace("Z", "+00:00"))
-    except Exception:
-        try:
-            # Try other common formats
-            for fmt in ["%Y-%m-%d", "%Y-%m-%d %H:%M:%S", "%Y-%m-%dT%H:%M:%S"]:
-                try:
-                    return datetime.strptime(str(ts_str), fmt)
-                except ValueError:
-                    continue
-        except Exception:
-            pass
+    text = str(ts_str).strip()
+    if not text:
+        return None
+    # 12,000 Pokemon decks carry "13th February 2026": strip the ordinal before
+    # the format table sees it, otherwise they are silently undated and dropped
+    # from every temporal split.
+    normalised = re.sub(r"(\d+)(st|nd|rd|th)\b", r"\1", text, flags=re.IGNORECASE)
 
+    try:
+        return datetime.fromisoformat(normalised.replace("Z", "+00:00"))
+    except Exception:
+        pass
+
+    for fmt in (
+        "%Y-%m-%d",
+        "%Y-%m-%d %H:%M:%S",
+        "%Y-%m-%dT%H:%M:%S",
+        "%d %B %Y",
+        "%d %b %Y",
+        "%B %d, %Y",
+        "%b %d, %Y",
+        "%d/%m/%Y",
+        "%m/%d/%Y",
+        "%Y/%m/%d",
+    ):
+        try:
+            return datetime.strptime(normalised, fmt)
+        except ValueError:
+            continue
+
+    logger.debug("Unparseable timestamp: %r", ts_str)
     return None
 
 
 def get_deck_timestamp(deck: dict[str, Any]) -> datetime | None:
     """Extract timestamp from deck dict."""
-    for key in ["timestamp", "created_at", "date", "_parsed_timestamp"]:
+    for key in (
+        "timestamp",
+        "created_at",
+        "scraped_at",
+        "published_at",
+        "updated_at",
+        "date",
+        "_parsed_timestamp",
+    ):
         if key in deck:
-            return parse_timestamp(deck[key])
+            parsed = parse_timestamp(deck[key])
+            if parsed is not None:
+                return parsed
     return None
 
 
