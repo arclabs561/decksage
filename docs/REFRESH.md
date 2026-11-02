@@ -29,9 +29,14 @@ docker compose logs -f scheduler
    graph vector still have neighbours (`build_text_vector_index.py`, idempotent).
 5. Fills Meilisearch gaps and tops up text caches
    (`bootstrap_index.py --all --payloads --text`).
-6. Calls `POST /v1/admin/reload`, which re-reads metadata, tags, reprints, set
+6. Runs `scripts/ops/topology.py check`, so a refresh that did not converge
+   fails instead of reporting success.
+7. Calls `POST /v1/admin/reload`, which re-reads metadata, tags, reprints, set
    data and the unified graph in place. No restart, so serving is not
    interrupted and the ~4.7 GB startup is paid once.
+
+Each step runs independently: a failure is counted and the run continues, then
+exits non-zero at the end. One broken backend no longer blocks the others.
 
 Every step is idempotent: a run with unchanged inputs writes nothing and takes
 seconds. `--if-stale` compares the graph against the text cache, attributes,
@@ -41,9 +46,9 @@ tags, the co-occurrence source and the builder script itself.
 
 Docker Desktop cannot expose Metal to a Linux container, so graph and cache
 builds run on container CPU. The graph's text relation reads the cached E5
-matrix (numpy only) and does not re-embed; the expensive step is the tag and
-attribute Jaccard pass. A cold Magic rebuild is tens of minutes, a no-op run is
-seconds.
+matrix (numpy only) and does not re-embed. The tag and attribute relations are a
+chunked matmul, not per-pair Python, so a cold Yu-Gi-Oh! rebuild is ~51 s and a
+no-op run is seconds (11/11 steps in ~38 s measured).
 
 If a host MPS run is genuinely needed, start the bridge by hand — it is not a
 service and there is no agent:
