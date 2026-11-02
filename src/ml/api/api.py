@@ -428,6 +428,7 @@ async def lifespan(app: FastAPI):
     _model_future = _model_pool.submit(
         _load_shared_models, instruction_embedder_model, visual_embedder_model
     )
+    _preload_artifacts(games)
 
     # Load resources per game
     for game in games:
@@ -780,6 +781,8 @@ async def lifespan(app: FastAPI):
             return "?"
 
     # Attach the shared embedders now that both halves of startup are done.
+    if _ARTIFACT_POOL is not None:
+        _ARTIFACT_POOL.shutdown(wait=False)
     try:
         _shared_text_embedder, _shared_visual_embedder = _model_future.result(timeout=600)
     except Exception:
@@ -2630,7 +2633,35 @@ def _prefix_card_names(game: str, state: Any, prefix: str, limit: int) -> list[s
     return ordered
 
 
+_ARTIFACT_PRELOAD: dict[str, Any] = {}
+_ARTIFACT_POOL: Any = None
+
+
+def _preload_artifacts(games: list[str]) -> None:
+    """Start loading every game's artifacts in parallel before the main loop.
+
+    Each game's catalog/metadata load is independent; doing them serially costs
+    the sum (magic ~22 s, yugioh ~7 s, pokemon ~2 s on a cold page cache).
+    """
+    global _ARTIFACT_POOL
+    from concurrent.futures import ThreadPoolExecutor
+
+    _ARTIFACT_POOL = ThreadPoolExecutor(
+        max_workers=max(1, min(3, len(games))), thread_name_prefix="artifact-load"
+    )
+    for game in games:
+        _ARTIFACT_PRELOAD[game] = _ARTIFACT_POOL.submit(_load_artifacts_uncached, game)
+
+
 def _load_artifacts_for_game(game: str) -> dict[str, object]:
+    """Load (or join the preload of) one game's artifacts."""
+    future = _ARTIFACT_PRELOAD.pop(game, None)
+    if future is not None:
+        return future.result()
+    return _load_artifacts_uncached(game)
+
+
+def _load_artifacts_uncached(game: str) -> dict[str, object]:
     """(Re)load catalog-derived artifacts for one game from disk.
 
     Used at startup and by POST /v1/admin/reload, so a refresh container can
@@ -2930,7 +2961,23 @@ def _get_search_client(game: str) -> HybridSearch | None:
             cached_emb = None
         cached_te = getattr(cached, "text_embedder", None)
         if cached_emb is state.embeddings and cached_te is getattr(state, "text_embedder", None):
-            return cached
+            # A backend that was down when this client was built stays None on
+            # the object: nothing retries it, so recovery would need a restart.
+            # Retry construction on a cooldown instead.
+            if (
+                getattr(cached, "qdrant", None) is not None
+                and getattr(cached, "meilisearch", None) is not None
+            ):
+                return cached
+            retry_at = getattr(app.state, "search_retry_at", None)
+            if retry_at is None:
+                retry_at = {}
+                app.state.search_retry_at = retry_at
+            now = time.time()
+            if now - retry_at.get(game, 0.0) < 30.0:
+                return cached
+            retry_at[game] = now
+            logger.info("Retrying search client for %s after a backend outage", game)
         by_game.pop(game, None)
 
     # Per-game index/collection naming (override via env)
