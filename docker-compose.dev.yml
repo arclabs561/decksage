@@ -87,6 +87,15 @@ services:
     ports: !override
       - "127.0.0.1:${QDRANT_PORT:-6333}:6333"
 
+  # The refresh and scheduler run the same scripts as the API, so they need the
+  # same dev Meili key. The base file leaves it empty and Meili rejects that.
+  refresh:
+    environment:
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
+  scheduler:
+    environment:
+      - MEILISEARCH_KEY=${MEILISEARCH_KEY:-decksage-dev-meili-key}
+
   # One-shot self-fill: Meilisearch docs + missing E5 caches. Run explicitly
   # (`just bootstrap`) or via `just dev-doctor --fill`; a profile keeps it out
   # of the normal `up --wait` path.
