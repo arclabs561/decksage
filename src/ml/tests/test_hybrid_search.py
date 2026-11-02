@@ -420,3 +420,62 @@ class TestNumericQueryFilters:
         cleaned, filters = parse_query_filters("cheap red burn")
         assert cleaned == "burn"
         assert "colors" in filters and "cmc <= 2" in filters
+
+
+class TestTextVectorCollection:
+    """Catalog-only cards rank by their E5 text vector, graph cards do not move."""
+
+    @staticmethod
+    def _wire_text_collection(hs, neighbours=("Filler",)):
+        """Qdrant mock exposing a 768-D ``cards_magic_e5`` collection."""
+        hs.qdrant.get_collections.return_value.collections = [MagicMock(name="cards_magic_e5")]
+        hs.qdrant.get_collections.return_value.collections[0].name = "cards_magic_e5"
+        point = MagicMock()
+        point.vector = [0.01] * 768
+        hs.qdrant.scroll.return_value = ([point], None)
+        hs.qdrant.query_points.return_value.points = [
+            _make_scored_point(name, 0.9) for name in neighbours
+        ]
+
+    def _client(self, card_metadata):
+        hs = _build_search(meili_hits=[], qdrant_points=[])
+        hs.collection_name = "cards_magic"
+        hs.text_collection_name = "cards_magic_e5"
+        hs.card_metadata = card_metadata
+        self._wire_text_collection(hs)
+        hs.qdrant.search.return_value = [_make_scored_point("Graph Neighbour", 0.8)]
+        return hs
+
+    def test_catalog_only_card_uses_text_collection(self):
+        hs = self._client({"Orcish Bowmasters": {"type": "Creature"}})
+        results = hs.search("Orcish Bowmasters", limit=5)
+        assert hs.qdrant.query_points.call_args.kwargs["collection_name"] == "cards_magic_e5"
+        assert {r.card_name for r in results} == {"Filler"}
+
+    def test_graph_card_still_uses_graph_collection(self):
+        hs = self._client({"Lightning Bolt": {"type": "Instant"}})
+        hs.qdrant.query_points.return_value.points = [_make_scored_point("Graph Neighbour", 0.8)]
+        results = hs.search("Lightning Bolt", limit=5)
+        assert hs.qdrant.query_points.call_args.kwargs["collection_name"] == "cards_magic"
+        assert [r.card_name for r in results] == ["Graph Neighbour"]
+        hs.qdrant.scroll.assert_not_called()
+
+    def test_free_text_never_looks_up_the_text_collection(self):
+        hs = self._client({"Lightning Bolt": {"type": "Instant"}})
+        hs.search("destroy all creatures", limit=5)
+        hs.qdrant.scroll.assert_not_called()
+
+    def test_text_vector_similar_skips_the_query_card(self):
+        hs = self._client({"Orcish Bowmasters": {}})
+        hs.qdrant.query_points.return_value.points = [
+            _make_scored_point("Orcish Bowmasters", 1.0),
+            _make_scored_point("Ophidian Eye", 0.88),
+        ]
+        names = [p.payload["name"] for p in hs.text_vector_similar("Orcish Bowmasters", 5)]
+        assert names == ["Ophidian Eye"]
+
+    def test_missing_text_collection_degrades_to_no_vector_arm(self):
+        hs = _build_search(meili_hits=[], qdrant_points=[])
+        hs.card_metadata = {"Orcish Bowmasters": {}}
+        hs.qdrant.get_collections.return_value.collections = []
+        assert hs.search("Orcish Bowmasters", limit=5, vector_weight=1.0, text_weight=0.0) == []

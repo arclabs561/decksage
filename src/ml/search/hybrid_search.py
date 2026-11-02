@@ -294,8 +294,11 @@ def qdrant_filter_from_string(filter_str: str | None, models_module: Any) -> Any
             except ValueError:
                 return None
             if operator == "=":
+                # Match is documented for keyword/integer/bool/uuid payloads;
+                # these fields are float-indexed, so equality is a degenerate
+                # Range. MatchValue on float silently matched nothing.
                 return models_module.FieldCondition(
-                    key=field, match=models_module.MatchValue(value=number)
+                    key=field, range=models_module.Range(gte=number, lte=number)
                 )
             key = _RANGE_OPERATORS.get(operator)
             if key is None:
@@ -545,6 +548,7 @@ class HybridSearch:
         text_embedder: Any | None = None,
         collection_name: str = "cards",
         index_name: str = "cards",
+        text_collection_name: str | None = None,
     ):
         """
         Initialize hybrid search.
@@ -560,9 +564,15 @@ class HybridSearch:
                           free-text queries that aren't card names in the vocab.
             collection_name: Qdrant collection name
             index_name: Meilisearch index name
+            text_collection_name: Qdrant collection holding the E5 document
+                          vectors (default: ``<collection_name>_e5``). It is
+                          what gives catalog-only cards, which have no graph
+                          vector, a real vector arm.
         """
         self.collection_name = collection_name
         self.index_name = index_name
+        self.text_collection_name = text_collection_name or f"{collection_name}_e5"
+        self._text_collection_seen: bool | None = None
         self.embeddings = embeddings
         self.text_embedder = text_embedder
 
@@ -1003,7 +1013,9 @@ class HybridSearch:
                 search_params: dict[str, Any] = {
                     "limit": limit * 2,
                     "showRankingScore": True,
-                    "showRankingScoreDetails": True,
+                    # Only name/image_url/ref_url are read from a hit; without
+                    # this every hit carries its 2000-char text and metadata.
+                    "attributesToRetrieve": ["name", "image_url", "ref_url"],
                 }
                 if filters:
                     search_params["filter"] = filters
@@ -1056,31 +1068,58 @@ class HybridSearch:
         # Vector search via Qdrant
         if self.qdrant and vector_weight > 0 and self.embeddings is not None:
             try:
-                # Generate query embedding
+                # Pick the vector and the collection that stores it. Graph
+                # vectors (128D) live in cards_<game>; catalog-only cards have
+                # no graph vector but do have an E5 document vector (768D) in
+                # cards_<game>_e5, so their exact-name queries can rank by
+                # description instead of skipping the vector arm entirely.
+                target: tuple[list[float], str] | None = None
                 if query in self.embeddings:
                     # Exact card name match -- use co-occurrence embedding
-                    query_vector = self.embeddings[query].tolist()
-                elif self.text_embedder is not None:
-                    # Free-text query: co-occurrence embeddings are 128D but
-                    # text embedder produces 384/768D. Can't query Qdrant
-                    # directly. Skip vector search, rely on MeiliSearch +
-                    # text-based re-ranking below.
-                    query_vector = None
+                    target = (self.embeddings[query].tolist(), self.collection_name)
                 else:
-                    # Fallback: try to find similar card name in vocab
-                    try:
-                        similar = self.embeddings.most_similar(query, topn=1)
-                        query_vector = self.embeddings[similar[0][0]].tolist() if similar else None
-                    except KeyError:
-                        query_vector = None
-                    if query_vector is None:
-                        logger.warning(f"Could not generate embedding for query: {query}")
+                    # Resolve the caller's spelling to the catalog's, because
+                    # parse_query_filters lowercases the text leg while payload
+                    # names keep their case. A free-text query resolves to None
+                    # and never pays for a collection lookup.
+                    lookup = self._catalog_name(original_query) or self._catalog_name(query)
+                    if lookup is None and not getattr(self, "card_metadata", None):
+                        # No catalog attached (direct use, tests): the query is
+                        # the only candidate name.
+                        lookup = query
+                    e5_vector = self._e5_query_vector(lookup) if lookup else None
+                    if e5_vector is not None:
+                        target = (e5_vector, self.text_collection_name)
+                    elif self.text_embedder is not None and filters:
+                        # Free text with filters: the in-memory semantic arm
+                        # cannot apply a Qdrant filter, so let the text
+                        # collection rank the filtered set. Unfiltered free
+                        # text keeps the existing in-memory path untouched.
+                        collection = self._text_collection()
+                        encoded = self._encode_text(query) if collection else None
+                        if encoded is not None and collection:
+                            target = (encoded, collection)
+                    elif self.text_embedder is None:
+                        # Fallback: try to find similar card name in vocab
+                        try:
+                            similar = self.embeddings.most_similar(query, topn=1)
+                        except KeyError:
+                            similar = []
+                        if similar:
+                            target = (
+                                self.embeddings[similar[0][0]].tolist(),
+                                self.collection_name,
+                            )
+                        else:
+                            logger.warning(f"Could not generate embedding for query: {query}")
 
-                if query_vector:
+                if target is not None:
+                    query_vector, collection = target
                     qdrant_results = self._qdrant_points(
                         query_vector,
                         limit * 2,
                         filters=filters,
+                        collection_name=collection,
                     )
 
                     for result in qdrant_results:
@@ -1153,7 +1192,11 @@ class HybridSearch:
         return sorted_results[:limit]
 
     def _qdrant_points(
-        self, query_vector: list[float], limit: int, filters: str | None = None
+        self,
+        query_vector: list[float],
+        limit: int,
+        filters: str | None = None,
+        collection_name: str | None = None,
     ) -> list[Any]:
         """Query points across qdrant-client versions.
 
@@ -1162,15 +1205,17 @@ class HybridSearch:
         """
         if self.qdrant is None:
             return []
+        collection = collection_name or self.collection_name
         query_filter = qdrant_filter_from_string(filters, models)
         query_points = getattr(self.qdrant, "query_points", None)
         if callable(query_points):
             try:
                 response = query_points(
-                    collection_name=self.collection_name,
+                    collection_name=collection,
                     query=query_vector,
                     limit=limit,
                     query_filter=query_filter,
+                    with_payload=["name", "image_url", "ref_url"],
                 )
                 points = getattr(response, "points", None)
                 if isinstance(points, list):
@@ -1181,11 +1226,126 @@ class HybridSearch:
         if not callable(legacy):
             raise RuntimeError("Qdrant client exposes neither query_points nor search")
         return legacy(
-            collection_name=self.collection_name,
+            collection_name=collection,
             query_vector=query_vector,
             limit=limit,
             query_filter=query_filter,
+            with_payload=["name", "image_url", "ref_url"],
         )
+
+    def _text_collection(self) -> str | None:
+        """Name of the E5 text collection when it exists, else None.
+
+        Checked once per client: listing collections is cheap, but a search
+        path should not pay a round trip for a collection that never changes
+        at boot.
+        """
+        if not self.text_collection_name:
+            return None
+        if self._text_collection_seen is None:
+            self._text_collection_seen = False
+            if self.qdrant is not None:
+                try:
+                    names = {c.name for c in self.qdrant.get_collections().collections}
+                    self._text_collection_seen = self.text_collection_name in names
+                except Exception:
+                    logger.debug("could not list Qdrant collections", exc_info=True)
+        return self.text_collection_name if self._text_collection_seen else None
+
+    @staticmethod
+    def _vector_list(vector: Any) -> list[float] | None:
+        """Normalize a point vector, which is a dict when a collection uses
+        named vectors, to a plain float list."""
+        if isinstance(vector, dict):
+            vector = next(iter(vector.values()), None)
+        if vector is None:
+            return None
+        if hasattr(vector, "tolist"):
+            vector = vector.tolist()
+        return [float(value) for value in vector]
+
+    def _catalog_name(self, name: str) -> str | None:
+        """Canonical catalog spelling of an exact card name, else None.
+
+        The E5 collection stores payload names verbatim, so a lowercased query
+        from the text leg must be resolved back to the stored spelling before
+        that card's own text vector can be fetched. None also means "not a
+        card name", which is what keeps free text off the lookup path.
+        """
+        meta = getattr(self, "card_metadata", None)
+        if not meta:
+            return None
+        if name in meta:
+            return name
+        lower = getattr(self, "_catalog_lower", None)
+        if lower is None:
+            lower = {str(key).lower(): str(key) for key in meta}
+            self._catalog_lower = lower
+        return lower.get(" ".join(name.split()).lower())
+
+    def _e5_query_vector(self, card_name: str) -> list[float] | None:
+        """The card's own E5 document vector, read back from the text collection.
+
+        Reading it from Qdrant rather than the 105 MB npz cache keeps this path
+        free of a cold cache load and of the encoder: the vector that ranks a
+        card by its own description is the one already stored beside the
+        neighbours.
+        """
+        collection = self._text_collection()
+        if collection is None or self.qdrant is None or models is None:
+            return None
+        try:
+            points, _ = self.qdrant.scroll(
+                collection_name=collection,
+                scroll_filter=models.Filter(
+                    must=[
+                        models.FieldCondition(
+                            key="name",
+                            match=models.MatchValue(value=card_name),
+                        )
+                    ]
+                ),
+                limit=1,
+                with_payload=False,
+                with_vectors=True,
+            )
+        except Exception:
+            logger.debug("text collection lookup failed for %r", card_name, exc_info=True)
+            return None
+        if not points:
+            return None
+        return self._vector_list(getattr(points[0], "vector", None))
+
+    def _encode_text(self, text: str) -> list[float] | None:
+        """Encode free text into the E5 space, or None when there is no encoder."""
+        embed_fn = getattr(self.text_embedder, "embed_card", None) or getattr(
+            self.text_embedder, "encode", None
+        )
+        if not callable(embed_fn):
+            return None
+        try:
+            vector = embed_fn(text)
+        except Exception:
+            logger.debug("text encoding failed for %r", text, exc_info=True)
+            return None
+        if vector is None:
+            return None
+        return self._vector_list(np.asarray(vector, dtype=np.float32).flatten())
+
+    def text_vector_similar(
+        self, card_name: str, limit: int = 10, filters: str | None = None
+    ) -> list[Any]:
+        """Neighbours of ``card_name`` in the E5 text collection.
+
+        This is the arm catalog-only cards get: they have no graph vector, so
+        the graph collection cannot rank them at all.
+        """
+        vector = self._e5_query_vector(card_name)
+        collection = self._text_collection()
+        if vector is None or collection is None:
+            return []
+        points = self._qdrant_points(vector, limit + 1, filters=filters, collection_name=collection)
+        return [point for point in points if (point.payload or {}).get("name") != card_name][:limit]
 
     def text_similar(self, query: str, limit: int = 10) -> list[tuple[str, float]]:
         """Rank catalog cards by E5 document cosine to ``query``.

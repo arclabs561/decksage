@@ -336,22 +336,26 @@ test.describe('Exact-match and catalog coverage', () => {
     expect((await miss.json()).exact_match).toBe(false);
   });
 
-  test('similar reports exact_match and an honest empty result for a catalog-only card', async ({ request }) => {
+  test('similar reports exact_match and E5 neighbours for a catalog-only card', async ({ request }) => {
     const hit = await request.post('/v1/similar', {
       data: { game: 'magic', query: 'Lightning Bolt', top_k: 2 },
     });
     expect(hit.ok()).toBeTruthy();
     expect((await hit.json()).exact_match).toBe(true);
 
-    // 1996 World Champion is in the catalog but has no graph vector.
+    // 1996 World Champion is in the catalog but has no graph vector. It does
+    // have an E5 document vector, so the vector arm answers from
+    // cards_magic_e5 and says so: no_vector stays true (no graph vector),
+    // vector_source names the arm that actually ranked the results.
     const noVector = await request.post('/v1/similar', {
       data: { game: 'magic', query: '1996 World Champion', top_k: 2 },
     });
     expect(noVector.ok()).toBeTruthy();
     const body = await noVector.json();
     expect(body.exact_match).toBe(true);
-    expect(body.results).toEqual([]);
     expect(body.model_info.no_vector).toBe(true);
+    expect(body.model_info.vector_source).toBe('text_e5');
+    expect(body.results.length).toBe(2);
   });
 
   test('autocomplete covers cards absent from the graph vocabulary', async ({ request }) => {
