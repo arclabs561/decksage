@@ -1,0 +1,203 @@
+[
+  {
+    "game": "magic",
+    "n_seeds": 3,
+    "summary": {
+      "size_correct": "3/3",
+      "copy_violations": 0,
+      "color_violations": 0,
+      "bad_cards": 0
+    },
+    "per_seed": [
+      {
+        "name": "Red Burn",
+        "seed": [
+          "Lightning Bolt",
+          "Mountain",
+          "Goblin Guide"
+        ],
+        "total_cards": 60,
+        "unique_cards": 18,
+        "target": 60,
+        "size_correct": true,
+        "copy_limit_violations": [],
+        "color_violations": [],
+        "bad_cards_found": [],
+        "metadata_coverage": "18/18",
+        "median_popularity": 0,
+        "steps": 15,
+        "method": "greedy",
+        "elapsed_ms": 3379,
+        "added_cards": [
+          [
+            "Searing Blaze",
+            4
+          ],
+          [
+            "Rift Bolt",
+            4
+          ],
+          [
+            "Lava Spike",
+            4
+          ],
+          [
+            "Smash to Smithereens",
+            4
+          ],
+          [
+            "Skewer the Critics",
+            4
+          ],
+          [
+            "Eidolon of the Great Revel",
+            4
+          ],
+          [
+            "Skullcrack",
+            4
+          ],
+          [
+            "Searing Blood",
+            4
+          ],
+          [
+            "Barbarian Ring",
+            4
+          ],
+          [
+            "Vexing Devil",
+            4
+          ]
+        ],
+        "latency_ms": 3430.5
+      },
+      {
+        "name": "Blue Control",
+        "seed": [
+          "Counterspell",
+          "Island",
+          "Snapcaster Mage"
+        ],
+        "total_cards": 60,
+        "unique_cards": 18,
+        "target": 60,
+        "size_correct": true,
+        "copy_limit_violations": [],
+        "color_violations": [],
+        "bad_cards_found": [],
+        "metadata_coverage": "18/18",
+        "median_popularity": 0,
+        "steps": 15,
+        "method": "greedy",
+        "elapsed_ms": 4320,
+        "added_cards": [
+          [
+            "Spell Snare",
+            4
+          ],
+          [
+            "Day's Undoing",
+            4
+          ],
+          [
+            "Isochron Scepter",
+            4
+          ],
+          [
+            "Mystic Gate",
+            4
+          ],
+          [
+            "Hall of Storm Giants",
+            4
+          ],
+          [
+            "Geier Reach Sanitarium",
+            4
+          ],
+          [
+            "Narset, Parter of Veils",
+            4
+          ],
+          [
+            "Hallowed Fountain",
+            4
+          ],
+          [
+            "Flooded Strand",
+            4
+          ],
+          [
+            "Mystical Dispute",
+            4
+          ]
+        ],
+        "latency_ms": 4327.5
+      },
+      {
+        "name": "Green Ramp",
+        "seed": [
+          "Llanowar Elves",
+          "Forest",
+          "Craterhoof Behemoth"
+        ],
+        "total_cards": 60,
+        "unique_cards": 18,
+        "target": 60,
+        "size_correct": true,
+        "copy_limit_violations": [],
+        "color_violations": [],
+        "bad_cards_found": [],
+        "metadata_coverage": "18/18",
+        "median_popularity": 0,
+        "steps": 15,
+        "method": "greedy",
+        "elapsed_ms": 3941,
+        "added_cards": [
+          [
+            "Vivien Reid",
+            4
+          ],
+          [
+            "Botanical Sanctum",
+            4
+          ],
+          [
+            "Breeding Pool",
+            4
+          ],
+          [
+            "Spirebluff Canal",
+            4
+          ],
+          [
+            "Hallowed Fountain",
+            4
+          ],
+          [
+            "Watery Grave",
+            4
+          ],
+          [
+            "Godless Shrine",
+            4
+          ],
+          [
+            "Polluted Delta",
+            4
+          ],
+          [
+            "Flooded Strand",
+            4
+          ],
+          [
+            "Mystic Gate",
+            4
+          ]
+        ],
+        "latency_ms": 3948.7
+      }
+    ]
+  }
+]

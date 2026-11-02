@@ -94,6 +94,7 @@ Chronological log of all ML/DS experiments. Each row links to a detailed YAML fi
 | 0086 | 2026-10-31 | Shared trunk with three heads vs three separate models (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | rows 41056; queries 3046; mean_mae_shared 0.1341; mean_mae_separate 0.134; mean_delta 0.0001; verdict shared_matches_separate | [0086](0086_shared_trunk_multitask.yaml) |
 | 0087 | 2026-10-31 | Shared text-encoder trunk with three heads vs per-facet encoders (magic) | magic | data/test_sets/annotated_magic_v2.json | -- | rows 40948; queries 3040; delta_shared_minus_separate -0.0085; vector_beats_scalar_shared false; verdict shared_matches_separate; artifact data/results/encoder_trunk_0087.json | [0087](0087_shared_encoder_trunk.yaml) |
 | 0088 | 2026-11-01 | Deck completion candidate mode: graph co-play vs text | magic | data/test_sets/annotated_magic_v2.json | -- | verdict inconclusive_coverage; artifact data/results/deck_completion_quality_0088.json | [0088](0088_deck_completion_mode.yaml) |
+| 0089 | 2026-11-01 | Deck completion: judged functional score on (seed deck, added card) pairs | magic | scripts/evaluation/eval_deck_completion.py::SEED_DECKS[magic] | -- | delta_text_minus_embedding -0.0748; verdict default_stays_embedding | [0089](0089_deck_completion_judged.yaml) |
 
 ## Key Insights (cross-cutting)
 

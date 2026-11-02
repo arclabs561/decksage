@@ -1,0 +1,125 @@
+id: "0089"
+date: "2026-11-01"
+title: "Deck completion: judged functional score on (seed deck, added card) pairs"
+game: magic
+status: "complete"
+
+hypothesis: >
+  0088 could not decide the completion default because its judged corpus is keyed
+  on retrieval queries: 0 of 45 (embedding) and 4 of 45 (text) added cards had a
+  functional label. If the question is asked directly — is this added card one the
+  seed deck needs — the two candidate modes can finally be compared. 0082 showed
+  text retrieval finds substitutes that co-play retrieval misses, so the prior was
+  that `text` would score at least +0.02 above `embedding`.
+
+method:
+  type: ab_comparison
+  script: scripts/evaluation/deck_completion_judged.py
+  retrospective: >
+    Built to resolve 0088 after the fact; it was not pre-registered, so the
+    threshold below is 0088's own pre-registered threshold applied unchanged, and
+    the labels are LLM judgments with the usual ~0.19 MAE caveat. A gap smaller
+    than that is not readable as a default change.
+  arms:
+    embedding: "POST /v1/deck/complete with mode=embedding (current default)"
+    text: "POST /v1/deck/complete with mode=text"
+  seeds: "the three magic seed decks in scripts/evaluation/eval_deck_completion.py::SEED_DECKS[magic]"
+  sampling: >
+    Up to 12 added cards per deck per arm, taken by an even stride over the API's
+    step order so the sample is not biased to the first cards chosen.
+  judges:
+    ensemble: "3 OpenRouter judges via scripts/annotation/annotate_pairs_openrouter.py"
+    models: ["anthropic/claude-sonnet-4-6", "openai/gpt-5.2", "google/gemini-2.5-flash"]
+    aggregation: "median functional_score across judges; pstdev as spread; confidence = max(0, 1 - 3*spread) as in multi_model_annotate.py"
+    prompt_version: deck_fit_v1
+    prompt: >
+      "Does this card fill a role the seed deck needs?" Scored 0-1 with anchors
+      (0.0 off-colour or unusable, 0.4 plausible role, 0.8 clearly needed role,
+      1.0 the missing piece). The judge sees the seed cards' rules text and the
+      candidate's rules text, and is told not to assume a metagame or card pool.
+  metric: >
+    Mean judged functional_score of the sampled added cards per arm, at the
+    (seed deck, added card) level. Coverage is judged cards / added cards.
+  guardrails: "size correct, copy violations, colour violations, bad cards"
+  amendments:
+    - at: "2026-11-01"
+      change: >
+        Completion payloads are cached in data-local because the shared API
+        restarted repeatedly during the run (a concurrent text-index rebuild);
+        the six payloads were captured once and reused, so both arms come from
+        the same server revision.
+      why: "Reproducibility under a flapping shared service; no change to arms or metric."
+  threshold: >
+    `text` replaces the default when mean judged functional score is at least
+    +0.02 above `embedding` with coverage over at least 30% of added cards, and
+    no guardrail regresses.
+
+data:
+  seeds: "scripts/evaluation/eval_deck_completion.py::SEED_DECKS[magic]"
+  cards_per_arm: 45
+  judged_cards: 72
+  judgments: 216
+  coverage: 0.8
+  card_text: data/processed/card_attributes_magic_enriched.csv
+  raw: data-local/deck-completion-judged-20261101/judgments.json (untracked, 72 pairs)
+  completions: data-local/deck-completion-judged-20261101/completions.json (untracked)
+  note: >
+    Three seed decks of three cards each. That is a small, stylised surface: the
+    question "what fills a role" is easier for a 3-card seed than for a real
+    60-card deck, so the absolute scores are not a product-quality estimate.
+
+results:
+  embedding:
+    added_cards: 45
+    judged_cards: 36
+    coverage: 0.8
+    mean_functional_score: 0.5406
+    sd_across_cards: 0.3418
+    mean_judge_spread: 0.0606
+    mean_confidence: 0.8181
+    per_deck:
+      red_burn: 0.7758
+      blue_control: 0.6542
+      green_ramp: 0.1917
+  text:
+    added_cards: 45
+    judged_cards: 36
+    coverage: 0.8
+    mean_functional_score: 0.4658
+    sd_across_cards: 0.3093
+    mean_judge_spread: 0.0792
+    mean_confidence: 0.7624
+    per_deck:
+      red_burn: 0.4917
+      blue_control: 0.2417
+      green_ramp: 0.6642
+  delta_text_minus_embedding: -0.0748
+  guardrails:
+    embedding: {size_correct: "3/3", copy_violations: 0, color_violations: 0, bad_cards: 0}
+    text: {size_correct: "3/3", copy_violations: 0, color_violations: 0, bad_cards: 0}
+  verdict: "default_stays_embedding"
+  artifacts:
+    - data/results/deck_completion_judged_20261101.json
+    - data/results/deck_completion_guardrails_0089.json
+
+conclusion: >
+  The judged set resolves 0088 in the opposite direction to its hypothesis.
+  With the completion question asked directly, `embedding` scores 0.5406 and
+  `text` 0.4658 (delta -0.0748, coverage 0.80, guardrails identical), so the
+  +0.02 bar is not met and `text` does not become the default. The default stays
+  `embedding`, and `mode=text` stays available per request.
+
+  The aggregate hides the real result: the modes are not better or worse, they
+  are better at different decks. `text` wins Green Ramp by +0.47 (it adds
+  Fyndhorn Elves and Elvish Mystic, exactly the ramp the seed implies) and loses
+  Red Burn by -0.28 and Blue Control by -0.41 (it adds off-colour or off-role
+  cards, including basic lands to the mono-blue control seed). `embedding`'s
+  Green Ramp 0.19 is a genuine weakness of its own: it answers a ramp seed with
+  cards the deck cannot use.
+
+  Two limits keep this from being a routing decision. Three 3-card seeds are not
+  a deck population, and 0.19 MAE means only large gaps are readable — the per
+  deck gaps are large, the aggregate one is not much bigger than noise. What
+  would settle it: the same judged harness over ~30 real 40-60 card seed decks
+  per archetype, with per-deck routing evaluated out of sample. Until then the
+  default is unchanged and the per-deck split is recorded rather than acted on.

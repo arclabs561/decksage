@@ -2,7 +2,7 @@ id: "0088"
 date: "2026-11-01"
 title: "Deck completion candidate mode: graph co-play vs text"
 game: magic
-status: "running"
+status: "complete"
 
 hypothesis: >
   Deck completion asks for substitutes ("what else fills this role"), but its
