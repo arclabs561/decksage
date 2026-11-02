@@ -136,6 +136,12 @@ test.describe('search UI regressions', () => {
   });
 
   test('the modern skin is default and the toggle persists', async ({ page }) => {
+    // A stored choice from an earlier interaction (or a reused context) must not
+    // decide the default under test.
+    await page.evaluate(() => localStorage.removeItem('decksage_theme'));
+    await page.reload();
+    await page.waitForLoadState('networkidle');
+
     // The page ships the modern layer; the 2000s skin is one click away.
     await expect(page.locator('body')).not.toHaveClass(/retro/);
 
