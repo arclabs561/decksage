@@ -36,9 +36,13 @@ COPY src/ml ./src/ml
 COPY frontend ./frontend
 COPY config ./config
 
+# OPENBLAS_NUM_THREADS: OpenBLAS otherwise starts one thread per core for every
+# BLAS call, and the per-query 25k x 128 most_similar product in similarity
+# fusion is too small to amortize that. Override with -e to experiment.
 ENV PYTHONUNBUFFERED=1 \
     PYTHONPATH=/app \
-    PORT=8000
+    PORT=8000 \
+    OPENBLAS_NUM_THREADS=1
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD curl -f http://localhost:${PORT}/live || exit 1
