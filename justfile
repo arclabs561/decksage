@@ -323,6 +323,8 @@ serve:
 serve-local:
     #!/usr/bin/env bash
     . .venv/bin/activate
+    # One BLAS thread per process: see the OPENBLAS_NUM_THREADS note in the Dockerfile.
+    export OPENBLAS_NUM_THREADS="${OPENBLAS_NUM_THREADS:-1}"
     exec uv run uvicorn src.ml.api.api:app --host 0.0.0.0 --port 8000
 
 # Dev stack with source watching and hot reload (see docs/dev-compose.md)
