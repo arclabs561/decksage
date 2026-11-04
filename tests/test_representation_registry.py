@@ -31,6 +31,21 @@ from ml.representations.registry import (
 )
 
 
+def _local_artefacts_present() -> bool:
+    primary = build_manifest().get("magic:card_embedding:primary")
+    return primary is not None and primary.status is Status.PRESENT
+
+
+# Every test here resolves the declaration against the artefacts on this
+# machine: the `.env` paths and the files under data/, neither of which a CI
+# checkout has (most refusal tests also start from a resolvable record).
+# Without them the module is skipped rather than reported as 16 failures.
+pytestmark = pytest.mark.skipif(
+    not _local_artefacts_present(),
+    reason="needs the local .env and the data/ artefacts it names",
+)
+
+
 @pytest.fixture(scope="module")
 def declared() -> RepresentationManifest:
     return build_manifest()
