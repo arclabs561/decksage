@@ -413,6 +413,8 @@ def evaluate_jaccard(
 
 def main() -> int:
     """Evaluate all embedding methods."""
+    from ml.utils.paths import PATHS
+
     parser = argparse.ArgumentParser(description="Evaluate all embedding methods")
     parser.add_argument(
         "--test-set",
@@ -490,8 +492,6 @@ def main() -> int:
     )
 
     args = parser.parse_args()
-
-    from ml.utils.paths import PATHS
 
     # Use PATHS defaults if not provided
     if args.test_set is None:
@@ -649,14 +649,8 @@ def main() -> int:
                     def similarity_func(query: str, k: int, _wv=wv) -> list[tuple[str, float]]:
                         """Similarity function for evaluation."""
                         mapped_query = name_mapper.map_name(query) if name_mapper else query
-                        if mapped_query not in _wv:
-                            # Return empty list if query not in vocabulary
-                            return []
-                        try:
-                            similar = _wv.most_similar(mapped_query, topn=k)
-                            return similar
-                        except KeyError:
-                            return []
+                        # A missing vocabulary entry is skipped. A successful empty ranking scores zero.
+                        return _wv.most_similar(mapped_query, topn=k)
 
                     # Convert canonical format to flat format for evaluate_with_confidence
                     # Canonical: dict[str, dict] -> Flat: dict[str, list[str]]
