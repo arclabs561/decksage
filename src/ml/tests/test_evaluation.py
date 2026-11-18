@@ -150,3 +150,50 @@ def test_evaluate_similarity_skip_missing():
     assert results["num_queries"] == 2
     assert results["num_evaluated"] == 1
     assert results["num_skipped"] == 1
+
+
+def test_duplicate_cards_and_empty_rankings_share_the_same_query_population():
+    from math import log2
+
+    import pytest
+
+    from ..utils.evaluation import evaluate_with_confidence
+
+    labels = {
+        "ranked": {"highly_relevant": ["a", "b"], "relevant": ["a"]},
+        "empty": {"highly_relevant": ["c"]},
+        "missing": {"highly_relevant": ["d"]},
+    }
+
+    def rank(query, k):
+        return {"ranked": [("a", 1.0), ("a", 0.9), ("b", 0.8)], "empty": []}[query]
+
+    # b keeps rank three. The repeated judgment for a is one ideal item.
+    for result in [
+        evaluate_similarity(labels, rank, top_k=3),
+        evaluate_with_confidence(labels, rank, top_k=3, n_bootstrap=5),
+    ]:
+        assert (result["num_evaluated"], result["num_skipped"]) == (2, 1)
+        assert result["p@3"] == pytest.approx(1 / 3)
+        assert result["r@3"] == 0.5
+        assert result["map@3"] == pytest.approx((1 + 2 / 3) / 4)
+        assert result["ndcg@3"] == pytest.approx((1 + 0.5) / (1 + 1 / log2(3)) / 2)
+        assert result["mrr@3"] == 0.5
+
+
+def test_binary_confidence_evaluation_scores_empty_and_skips_missing():
+    import pytest
+
+    pytest.importorskip("numpy")
+    from ..utils.evaluation_with_ci import evaluate_with_confidence, precision_at_k_with_ci
+
+    labels = {"ranked": ["a"], "empty": ["b"], "missing": ["c"]}
+
+    def rank(query, k):
+        return {"ranked": [("a", 1.0), ("a", 0.9)], "empty": []}[query]
+
+    result = evaluate_with_confidence(labels, rank, n_bootstrap=5)
+    assert (result["num_evaluated"], result["num_skipped"]) == (2, 1)
+    assert result["p@10"] == 0.05
+    assert result["mrr@10"] == 0.5
+    assert precision_at_k_with_ci(["a", "a"], {"a"})["mean"] == 0.1

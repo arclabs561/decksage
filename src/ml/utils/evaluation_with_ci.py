@@ -40,8 +40,8 @@ def precision_at_k_with_ci(
         }
 
     top_k = predictions[:k]
-    relevant = sum(1 for pred in top_k if pred in labels)
-    p_at_k = relevant / len(top_k)
+    relevant = len(labels.intersection(top_k))
+    p_at_k = relevant / k if k > 0 else 0.0
 
     # Bootstrap CI (single query, so CI is just the point estimate)
     # For multiple queries, use bootstrap across queries
@@ -61,7 +61,7 @@ def evaluate_with_confidence(
     verbose: bool = False,
 ) -> dict[str, float | list[float]]:
     """
-    Evaluate similarity function on test set with confidence intervals.
+    Evaluate similarity with confidence intervals. Empty rankings score zero. Errors are skipped.
 
     Args:
         test_set: Dict mapping query -> list of relevant labels
@@ -84,28 +84,20 @@ def evaluate_with_confidence(
         try:
             predictions_with_scores = similarity_func(query, top_k)
 
-            if not predictions_with_scores:
-                skipped.append(query)
-                skipped_reasons[query] = "no_predictions"
-                if verbose:
-                    print(f"  {query}: SKIPPED (no predictions)")
-                continue
-
             predictions = [card for card, _ in predictions_with_scores]
 
             # P@k for this query
             top_k_preds = predictions[:top_k]
-            relevant = sum(1 for pred in top_k_preds if pred in labels)
-            p_at_k = relevant / len(top_k_preds) if top_k_preds else 0.0
-
-            scores.append(p_at_k)
+            relevant = len(set(labels).intersection(top_k_preds))
+            p_at_k = relevant / top_k if top_k > 0 else 0.0
 
             # MRR for this query (first hit in labels)
             query_mrr = 0.0
-            for rank, pred in enumerate(predictions, 1):
+            for rank, pred in enumerate(top_k_preds, 1):
                 if pred in labels:
                     query_mrr = 1.0 / rank
                     break
+            scores.append(p_at_k)
             mrrs.append(query_mrr)
 
             if verbose:
@@ -116,8 +108,6 @@ def evaluate_with_confidence(
             # Log error but continue
             skipped.append(query)
             skipped_reasons[query] = f"error: {e!s}"
-            scores.append(0.0)
-            mrrs.append(0.0)
             if verbose:
                 print(f"  {query}: ERROR ({e})")
 
