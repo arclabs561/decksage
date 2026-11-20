@@ -113,13 +113,13 @@ def evaluate_with_confidence(
 
     if not scores:
         return {
-            "p@10": 0.0,
-            "p@10_ci_lower": 0.0,
-            "p@10_ci_upper": 0.0,
-            "p@10_std": 0.0,
-            "mrr@10": 0.0,
-            "mrr@10_ci_lower": 0.0,
-            "mrr@10_ci_upper": 0.0,
+            f"p@{top_k}": 0.0,
+            f"p@{top_k}_ci_lower": 0.0,
+            f"p@{top_k}_ci_upper": 0.0,
+            f"p@{top_k}_std": 0.0,
+            f"mrr@{top_k}": 0.0,
+            f"mrr@{top_k}_ci_lower": 0.0,
+            f"mrr@{top_k}_ci_upper": 0.0,
             "num_queries": len(test_set),
             "num_evaluated": 0,
             "num_skipped": len(skipped),
@@ -161,20 +161,20 @@ def evaluate_with_confidence(
         ci_upper = float(np.percentile(bootstrap_means, 100 * (1 - alpha / 2)))
         return mean_val, ci_lower, ci_upper
 
-    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores, "P@10")
+    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores, f"P@{top_k}")
     mrr_mean, mrr_ci_lower, mrr_ci_upper = bootstrap_ci(mrrs, "MRR")
 
     # Return format compatible with both evaluation.py and calling code
     # Include both formats for compatibility
     result = {
-        # New format (p@10, mrr@10)
-        "p@10": p_mean,
-        "p@10_ci_lower": p_ci_lower,
-        "p@10_ci_upper": p_ci_upper,
-        "p@10_std": float(np.std(scores)) if scores else 0.0,
-        "mrr@10": mrr_mean,
-        "mrr@10_ci_lower": mrr_ci_lower,
-        "mrr@10_ci_upper": mrr_ci_upper,
+        # Keyed by the cut-off actually used (p@10 and mrr@10 for the default top_k)
+        f"p@{top_k}": p_mean,
+        f"p@{top_k}_ci_lower": p_ci_lower,
+        f"p@{top_k}_ci_upper": p_ci_upper,
+        f"p@{top_k}_std": float(np.std(scores)) if scores else 0.0,
+        f"mrr@{top_k}": mrr_mean,
+        f"mrr@{top_k}_ci_lower": mrr_ci_lower,
+        f"mrr@{top_k}_ci_upper": mrr_ci_upper,
         # Legacy format (mean, ci_lower, ci_upper) for ab_testing.py compatibility
         "mean": p_mean,
         "ci_lower": p_ci_lower,
