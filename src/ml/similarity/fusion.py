@@ -473,7 +473,9 @@ class WeightedLateFusion:
                 if self._weights_cache:
                     scored = []
                     for n in neighbors:
-                        w = self._weights_cache.get((query, n), 0)
+                        # Weights are stored once per pair under the sorted key.
+                        key = (query, n) if query <= n else (n, query)
+                        w = self._weights_cache.get(key, 0)
                         scored.append((n, w))
                     scored.sort(key=lambda x: -x[1])
                     candidates.update(n for n, _ in scored[: self.candidate_topn])

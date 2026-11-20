@@ -1075,7 +1075,11 @@ def graph_neighbors(
     if not neighbours:
         return {"game": g, "card": card, "source": "cooccurrence", "neighbors": []}
     scored = sorted(
-        ((name, float(weights.get((card, name), 1.0))) for name in neighbours),
+        (
+            # Weights are stored once per pair under the sorted key.
+            (name, float(weights.get((card, name) if card <= name else (name, card), 1.0)))
+            for name in neighbours
+        ),
         key=lambda pair: (-pair[1], pair[0]),
     )[:limit]
     return {
