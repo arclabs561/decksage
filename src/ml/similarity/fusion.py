@@ -782,7 +782,9 @@ class WeightedLateFusion:
 
         return results
 
-    def _fuse_modality_scores(self, modality_scores: dict[str, dict[str, float]]) -> dict[str, float]:
+    def _fuse_modality_scores(
+        self, modality_scores: dict[str, dict[str, float]]
+    ) -> dict[str, float]:
         """Fuse per-signal scores into one value per candidate with `self.aggregator`.
 
         For rank-based aggregators each signal's scores are first converted to
