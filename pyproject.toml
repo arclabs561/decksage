@@ -19,7 +19,7 @@ dependencies = [
   "qdrant-client>=1.7.0,<1.17",  # server runs 1.16.x; client must stay within one minor
   "meilisearch>=0.32.0",
   "sentencepiece>=0.2.1",
-  "pillow>=12.1.0",
+  "pillow>=13.0.0",
 ]
 
 [project.urls]
@@ -47,7 +47,7 @@ embeddings = ["gensim>=4.3.0"]
 training = ["pecanpy>=2.0.0", "gensim>=4.3.0"]
 viz = ["matplotlib>=3.7.0", "umap-learn>=0.5.4", "plotly>=5.17.0"]
 enrichment = [
-  "pillow>=10.0.0",        # Image processing for vision models
+  "pillow>=13.0.0",        # Image processing for vision models
   "openai>=1.0.0",         # For OpenRouter compatibility
   "transformers>=4.0.0",   # For SigLIP and other vision models
   "sentencepiece>=0.1.99", # Required for SigLIP tokenizer
