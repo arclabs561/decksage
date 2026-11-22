@@ -473,7 +473,9 @@ class WeightedLateFusion:
                 if self._weights_cache:
                     scored = []
                     for n in neighbors:
-                        w = self._weights_cache.get((query, n), 0)
+                        # Weights are stored once per pair under the sorted key.
+                        key = (query, n) if query <= n else (n, query)
+                        w = self._weights_cache.get(key, 0)
                         scored.append((n, w))
                     scored.sort(key=lambda x: -x[1])
                     candidates.update(n for n, _ in scored[: self.candidate_topn])
@@ -780,6 +782,33 @@ class WeightedLateFusion:
 
         return results
 
+    def _fuse_modality_scores(
+        self, modality_scores: dict[str, dict[str, float]]
+    ) -> dict[str, float]:
+        """Fuse per-signal scores into one value per candidate with `self.aggregator`.
+
+        For rank-based aggregators each signal's scores are first converted to
+        ranks among the given candidates (1 is the most similar), as `similar`
+        does.
+        """
+        if self.aggregator not in ("rrf", "isr"):
+            return {
+                cand: self._aggregate(scores, self.aggregator)
+                for cand, scores in modality_scores.items()
+            }
+        ranks: dict[str, dict[str, int]] = {cand: {} for cand in modality_scores}
+        for sig in _SIGNAL_NAMES:
+            if self._weights_dict[sig] <= 0.0:
+                continue
+            ordered = sorted(
+                ((cand, scores[sig]) for cand, scores in modality_scores.items() if sig in scores),
+                key=lambda item: item[1],
+                reverse=True,
+            )
+            for rank, (cand, _) in enumerate(ordered, start=1):
+                ranks[cand][sig] = rank
+        return {cand: self._aggregate(ranks[cand], self.aggregator) for cand in modality_scores}
+
     def similar_multi(self, queries: list[str], k: int = 10) -> list[tuple[str, float]]:
         """
         Find similar cards for multiple queries (multi-query fusion).
@@ -802,23 +831,26 @@ class WeightedLateFusion:
         if not all_candidates:
             return []
 
-        # Compute scores for each query-candidate pair
-        candidate_scores = {}
-        for candidate in all_candidates:
-            scores = []
-            for query in queries:
-                if query not in self.adj and (not self.embeddings or query not in self.embeddings):
-                    continue
+        # Fuse per query over the whole candidate set, then average the fused
+        # values across queries.
+        #
+        # Rank-based aggregators (rrf, isr) need each signal's rank among the
+        # candidates. Scoring one candidate at a time handed `_aggregate` raw
+        # similarities where it expects ranks, so a higher similarity gave a
+        # smaller fused value and, with the default "rrf", results came out
+        # worst-first.
+        per_candidate: dict[str, list[float]] = {}
+        for query in queries:
+            if query not in self.adj and (not self.embeddings or query not in self.embeddings):
+                continue
+            modality_scores = self._compute_similarity_scores(query, all_candidates)
+            for candidate, fused in self._fuse_modality_scores(modality_scores).items():
+                per_candidate.setdefault(candidate, []).append(fused)
 
-                modality_scores = self._compute_similarity_scores(query, {candidate})
-                if candidate in modality_scores:
-                    candidate_modality = modality_scores[candidate]
-                    score = self._aggregate(candidate_modality, self.aggregator)
-                    scores.append(score)
-
-            if scores:
-                # Average across queries
-                candidate_scores[candidate] = sum(scores) / len(scores)
+        candidate_scores = {
+            candidate: float(sum(scores) / len(scores))
+            for candidate, scores in per_candidate.items()
+        }
 
         # Sort and return top-k
         sorted_candidates = sorted(candidate_scores.items(), key=lambda x: x[1], reverse=True)

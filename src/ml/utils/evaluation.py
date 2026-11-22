@@ -1,6 +1,6 @@
 """Shared evaluation utilities."""
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterator
 from math import log2
 from typing import Any
 
@@ -13,6 +13,15 @@ except ImportError:
     HAS_NUMPY = False
 
 from .constants import RELEVANCE_WEIGHTS
+
+
+def _unique_ranked_cards(predictions: list[str], k: int) -> Iterator[tuple[int, str]]:
+    """Yield each card once, at its original one-based rank within the cutoff."""
+    seen = set()
+    for rank, card in enumerate(predictions[:k], 1):
+        if card not in seen:
+            seen.add(card)
+            yield rank, card
 
 
 def compute_precision_at_k(
@@ -37,7 +46,7 @@ def compute_precision_at_k(
         weights = RELEVANCE_WEIGHTS
 
     score = 0.0
-    for pred in predictions[:k]:
+    for _, pred in _unique_ranked_cards(predictions, k):
         for level, weight in weights.items():
             if pred in labels.get(level, []):
                 score += weight
@@ -80,7 +89,7 @@ def compute_recall_at_k(
     retrieved_relevant = 0.0
     total_relevant_weight = sum(all_relevant.values())
 
-    for pred in predictions[:k]:
+    for _, pred in _unique_ranked_cards(predictions, k):
         if pred in all_relevant:
             retrieved_relevant += all_relevant[pred]
 
@@ -120,7 +129,7 @@ def compute_map(
     relevant_retrieved = 0
     precision_sum = 0.0
 
-    for rank, pred in enumerate(predictions[:k], 1):
+    for rank, pred in _unique_ranked_cards(predictions, k):
         if pred in relevant_set:
             relevant_retrieved += 1
             precision_at_rank = relevant_retrieved / rank
@@ -130,6 +139,40 @@ def compute_map(
     return precision_sum / len(relevant_set) if relevant_set else 0.0
 
 
+def _ndcg_at_k(predictions: list[str], labels: dict[str, list[str]], k: int) -> float:
+    gains: dict[str, float] = {}
+    for level, weight in RELEVANCE_WEIGHTS.items():
+        for card in labels.get(level, []):
+            gains[card] = max(gains.get(card, 0.0), weight)
+    ideal = sum(
+        gain / log2(rank + 1)
+        for rank, gain in enumerate(sorted(gains.values(), reverse=True)[:k], 1)
+    )
+    if ideal == 0.0:
+        return 0.0
+    return (
+        sum(
+            gains.get(card, 0.0) / log2(rank + 1)
+            for rank, card in _unique_ranked_cards(predictions, k)
+        )
+        / ideal
+    )
+
+
+def _query_scores(
+    predictions: list[tuple[str, float]] | list[str], labels: dict[str, list[str]], k: int
+) -> tuple[float, float, float, float, float]:
+    pred_cards = [item[0] if isinstance(item, tuple) else item for item in predictions]
+    score = compute_precision_at_k(pred_cards, labels, k=k)
+    recall = compute_recall_at_k(pred_cards, labels, k=k)
+    map_score = compute_map(pred_cards, labels, k=k)
+    ndcg = _ndcg_at_k(pred_cards, labels, k)
+    target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
+    rr = next((1.0 / i for i, card in enumerate(pred_cards[:k], 1) if card in target), 0.0)
+
+    return score, recall, map_score, ndcg, rr
+
+
 def evaluate_similarity(
     test_set: dict[str, Any],
     similarity_func: Callable[[str, int], list[tuple[str, float]]],
@@ -137,7 +180,7 @@ def evaluate_similarity(
     verbose: bool = False,
 ) -> dict[str, float]:
     """
-    Standard evaluation loop.
+    Standard evaluation loop. Empty rankings score zero. Failed lookups are skipped.
 
     Args:
         test_set: Dict mapping queries to relevance labels
@@ -160,65 +203,11 @@ def evaluate_similarity(
             # Get predictions
             predictions = similarity_func(query, top_k)
 
-            if not predictions:
-                skipped.append(query)
-                continue
-
-            # Extract just card names if tuples
-            if isinstance(predictions[0], tuple):
-                pred_cards = [card for card, _ in predictions]
-            else:
-                pred_cards = predictions
-
-            # Compute P@k
-            score = compute_precision_at_k(pred_cards, labels, k=top_k)
+            score, recall, map_score, ndcg, rr = _query_scores(predictions, labels, top_k)
             scores.append(score)
-
-            # Compute R@k
-            recall = compute_recall_at_k(pred_cards, labels, k=top_k)
             recalls.append(recall)
-
-            # Compute MAP@k
-            map_score = compute_map(pred_cards, labels, k=top_k)
             maps.append(map_score)
-
-            # Compute nDCG@k
-            def rel_gain(card: str, _labels: dict[str, Any] = labels) -> float:
-                # Map relevance levels to weights; fall back to RELEVANCE_WEIGHTS
-                if card in _labels.get("highly_relevant", []):
-                    return RELEVANCE_WEIGHTS["highly_relevant"]
-                if card in _labels.get("relevant", []):
-                    return RELEVANCE_WEIGHTS["relevant"]
-                if card in _labels.get("somewhat_relevant", []):
-                    return RELEVANCE_WEIGHTS["somewhat_relevant"]
-                if card in _labels.get("marginally_relevant", []):
-                    return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
-                return 0.0
-
-            def dcg(items: list[str]) -> float:
-                val = 0.0
-                for i, c in enumerate(items[:top_k], 1):
-                    val += rel_gain(c) / (log2(i + 1))
-                return val
-
-            # Build ideal ordering by relevance weights
-            ideal = (
-                labels.get("highly_relevant", [])
-                + labels.get("relevant", [])
-                + labels.get("somewhat_relevant", [])
-                + labels.get("marginally_relevant", [])
-            )
-            idcg = dcg(ideal)
-            ndcg = (dcg(pred_cards) / idcg) if idcg > 0 else 0.0
             ndcgs.append(ndcg)
-
-            # Compute MRR@k (first hit in highly_relevant or relevant)
-            target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
-            rr = 0.0
-            for i, c in enumerate(pred_cards[:top_k], 1):
-                if c in target:
-                    rr = 1.0 / i
-                    break
             mrrs.append(rr)
 
             if verbose:
@@ -270,7 +259,7 @@ def evaluate_with_confidence(
     verbose: bool = False,
 ) -> dict[str, Any]:
     """
-    Evaluate similarity function with bootstrap confidence intervals.
+    Evaluate similarity with bootstrap intervals over scored queries, including empty rankings.
 
     Args:
         test_set: Dict mapping queries to relevance labels
@@ -308,64 +297,11 @@ def evaluate_with_confidence(
             # Get predictions
             predictions = similarity_func(query, top_k)
 
-            if not predictions:
-                skipped.append(query)
-                continue
-
-            # Extract just card names if tuples
-            if isinstance(predictions[0], tuple):
-                pred_cards = [card for card, _ in predictions]
-            else:
-                pred_cards = predictions
-
-            # Compute P@k
-            score = compute_precision_at_k(pred_cards, labels, k=top_k)
+            score, recall, map_score, ndcg, rr = _query_scores(predictions, labels, top_k)
             scores.append(score)
-
-            # Compute R@k
-            recall = compute_recall_at_k(pred_cards, labels, k=top_k)
             recalls.append(recall)
-
-            # Compute MAP@k
-            map_score = compute_map(pred_cards, labels, k=top_k)
             maps.append(map_score)
-
-            # Compute nDCG@k
-            def rel_gain(card: str, _labels: dict[str, Any] = labels) -> float:
-                if card in _labels.get("highly_relevant", []):
-                    return RELEVANCE_WEIGHTS["highly_relevant"]
-                if card in _labels.get("relevant", []):
-                    return RELEVANCE_WEIGHTS["relevant"]
-                if card in _labels.get("somewhat_relevant", []):
-                    return RELEVANCE_WEIGHTS["somewhat_relevant"]
-                if card in _labels.get("marginally_relevant", []):
-                    return RELEVANCE_WEIGHTS.get("marginally_relevant", 0.0)
-                return 0.0
-
-            def dcg(items: list[str]) -> float:
-                val = 0.0
-                for i, c in enumerate(items[:top_k], 1):
-                    val += rel_gain(c) / (log2(i + 1))
-                return val
-
-            # Build ideal ordering
-            ideal = (
-                labels.get("highly_relevant", [])
-                + labels.get("relevant", [])
-                + labels.get("somewhat_relevant", [])
-                + labels.get("marginally_relevant", [])
-            )
-            idcg = dcg(ideal)
-            ndcg = (dcg(pred_cards) / idcg) if idcg > 0 else 0.0
             ndcgs.append(ndcg)
-
-            # Compute MRR@k
-            target = set(labels.get("highly_relevant", [])) | set(labels.get("relevant", []))
-            rr = 0.0
-            for i, c in enumerate(pred_cards[:top_k], 1):
-                if c in target:
-                    rr = 1.0 / i
-                    break
             mrrs.append(rr)
 
             if verbose:

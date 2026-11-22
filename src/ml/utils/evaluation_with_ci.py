@@ -40,8 +40,8 @@ def precision_at_k_with_ci(
         }
 
     top_k = predictions[:k]
-    relevant = sum(1 for pred in top_k if pred in labels)
-    p_at_k = relevant / len(top_k)
+    relevant = len(labels.intersection(top_k))
+    p_at_k = relevant / k if k > 0 else 0.0
 
     # Bootstrap CI (single query, so CI is just the point estimate)
     # For multiple queries, use bootstrap across queries
@@ -61,7 +61,7 @@ def evaluate_with_confidence(
     verbose: bool = False,
 ) -> dict[str, float | list[float]]:
     """
-    Evaluate similarity function on test set with confidence intervals.
+    Evaluate similarity with confidence intervals. Empty rankings score zero. Errors are skipped.
 
     Args:
         test_set: Dict mapping query -> list of relevant labels
@@ -84,28 +84,20 @@ def evaluate_with_confidence(
         try:
             predictions_with_scores = similarity_func(query, top_k)
 
-            if not predictions_with_scores:
-                skipped.append(query)
-                skipped_reasons[query] = "no_predictions"
-                if verbose:
-                    print(f"  {query}: SKIPPED (no predictions)")
-                continue
-
             predictions = [card for card, _ in predictions_with_scores]
 
             # P@k for this query
             top_k_preds = predictions[:top_k]
-            relevant = sum(1 for pred in top_k_preds if pred in labels)
-            p_at_k = relevant / len(top_k_preds) if top_k_preds else 0.0
-
-            scores.append(p_at_k)
+            relevant = len(set(labels).intersection(top_k_preds))
+            p_at_k = relevant / top_k if top_k > 0 else 0.0
 
             # MRR for this query (first hit in labels)
             query_mrr = 0.0
-            for rank, pred in enumerate(predictions, 1):
+            for rank, pred in enumerate(top_k_preds, 1):
                 if pred in labels:
                     query_mrr = 1.0 / rank
                     break
+            scores.append(p_at_k)
             mrrs.append(query_mrr)
 
             if verbose:
@@ -116,20 +108,18 @@ def evaluate_with_confidence(
             # Log error but continue
             skipped.append(query)
             skipped_reasons[query] = f"error: {e!s}"
-            scores.append(0.0)
-            mrrs.append(0.0)
             if verbose:
                 print(f"  {query}: ERROR ({e})")
 
     if not scores:
         return {
-            "p@10": 0.0,
-            "p@10_ci_lower": 0.0,
-            "p@10_ci_upper": 0.0,
-            "p@10_std": 0.0,
-            "mrr@10": 0.0,
-            "mrr@10_ci_lower": 0.0,
-            "mrr@10_ci_upper": 0.0,
+            f"p@{top_k}": 0.0,
+            f"p@{top_k}_ci_lower": 0.0,
+            f"p@{top_k}_ci_upper": 0.0,
+            f"p@{top_k}_std": 0.0,
+            f"mrr@{top_k}": 0.0,
+            f"mrr@{top_k}_ci_lower": 0.0,
+            f"mrr@{top_k}_ci_upper": 0.0,
             "num_queries": len(test_set),
             "num_evaluated": 0,
             "num_skipped": len(skipped),
@@ -171,20 +161,20 @@ def evaluate_with_confidence(
         ci_upper = float(np.percentile(bootstrap_means, 100 * (1 - alpha / 2)))
         return mean_val, ci_lower, ci_upper
 
-    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores, "P@10")
+    p_mean, p_ci_lower, p_ci_upper = bootstrap_ci(scores, f"P@{top_k}")
     mrr_mean, mrr_ci_lower, mrr_ci_upper = bootstrap_ci(mrrs, "MRR")
 
     # Return format compatible with both evaluation.py and calling code
     # Include both formats for compatibility
     result = {
-        # New format (p@10, mrr@10)
-        "p@10": p_mean,
-        "p@10_ci_lower": p_ci_lower,
-        "p@10_ci_upper": p_ci_upper,
-        "p@10_std": float(np.std(scores)) if scores else 0.0,
-        "mrr@10": mrr_mean,
-        "mrr@10_ci_lower": mrr_ci_lower,
-        "mrr@10_ci_upper": mrr_ci_upper,
+        # Keyed by the cut-off actually used (p@10 and mrr@10 for the default top_k)
+        f"p@{top_k}": p_mean,
+        f"p@{top_k}_ci_lower": p_ci_lower,
+        f"p@{top_k}_ci_upper": p_ci_upper,
+        f"p@{top_k}_std": float(np.std(scores)) if scores else 0.0,
+        f"mrr@{top_k}": mrr_mean,
+        f"mrr@{top_k}_ci_lower": mrr_ci_lower,
+        f"mrr@{top_k}_ci_upper": mrr_ci_upper,
         # Legacy format (mean, ci_lower, ci_upper) for ab_testing.py compatibility
         "mean": p_mean,
         "ci_lower": p_ci_lower,

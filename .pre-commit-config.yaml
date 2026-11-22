@@ -394,7 +394,7 @@ repos:
 
       - id: pytest-fast
         name: pytest (fast tests only)
-        entry: bash -c 'cd src/ml && uv run pytest tests/ -v -m "not slow and not integration" --maxfail=1 || true'
+        entry: bash -c 'cd src/ml && uv run pytest tests/ -v -m "not slow and not integration" --maxfail=1'
         language: system
         pass_filenames: false
         always_run: false
@@ -407,7 +407,7 @@ repos:
     hooks:
       - id: pytest-full
         name: pytest (full suite)
-        entry: bash -c 'cd src/ml && uv run pytest tests/ -v || true'
+        entry: bash -c 'cd src/ml && uv run pytest tests/ -v'
         language: system
         pass_filenames: false
         always_run: false

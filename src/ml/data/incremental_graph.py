@@ -508,12 +508,6 @@ class IncrementalCardGraph:
         if not card_metadata:
             return
 
-        # Build card list with counts (for edge weighting)
-        cards_with_counts: list[tuple[str, int, str, str | None]] = []
-        for card_name, count, partition, game in card_metadata:
-            # Expand by count (4-of = 4 entries)
-            cards_with_counts.extend([(card_name, count, partition, game)] * count)
-
         # Add/update nodes
         for card_name, _count, _partition, game in card_metadata:
             if card_name not in self.nodes:
@@ -540,8 +534,17 @@ class IncrementalCardGraph:
                     self.nodes[card_name].attributes.update(self._card_attributes[card_name])
 
         # Add/update edges (all pairs within deck, weighted by counts)
-        for i, (card1, count1, partition1, game1) in enumerate(cards_with_counts):
-            for card2, count2, partition2, game2 in cards_with_counts[i + 1 :]:
+        #
+        # One pass over each pair of distinct cards, with weight count1 * count2.
+        # The list used to be expanded to one entry per copy and then paired, so
+        # a 4-of with a 3-of was visited 12 times at weight 12 (144, not 12),
+        # copies of one card were paired with each other as a self-loop, and
+        # the per-month deck counter went up once per visit.
+        for i, (card1, count1, partition1, game1) in enumerate(card_metadata):
+            for card2, count2, partition2, game2 in card_metadata[i + 1 :]:
+                if card1 == card2:
+                    # The same card in two partitions (main and sideboard).
+                    continue
                 # Use sorted tuple for undirected edges
                 sorted_pair = sorted([card1, card2])
                 edge_key = (sorted_pair[0], sorted_pair[1], "co_occurrence")

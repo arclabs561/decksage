@@ -13,6 +13,7 @@ No external dependencies.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from typing import Any
 
 
@@ -71,6 +72,26 @@ _DEFAULT_PARTITION: dict[str, str] = {
 }
 
 
+def main_partition_name(game: str) -> str:
+    return _DEFAULT_PARTITION[game]
+
+
+def main_partitions(deck: dict, main_name: str) -> Iterator[dict]:
+    """Yield the playable sections for the game's main heading, preserving their rows."""
+    for part in deck.get("partitions", []) or []:
+        key = (part.get("name") or "").strip().casefold()
+        if key in {"deck", "main", "main deck", "maindeck", "mainboard"}:
+            yield part
+        elif main_name == "Deck" and _POKEMON_PARTITIONS.get(key) in {
+            "Pokemon",
+            "Trainer",
+            "Energy",
+        }:
+            yield part
+        elif main_name == "Main Deck" and _YGO_PARTITIONS.get(key) == "Main Deck":
+            yield part
+
+
 # ---------------------------------------------------------------------------
 # Line-level regexes
 # ---------------------------------------------------------------------------
@@ -112,7 +133,7 @@ def _strip_set_codes(name: str, game: str) -> str:
     return name.strip()
 
 
-def _is_section_header(line: str, game: str) -> str | None:
+def parse_section_header(line: str, game: str) -> str | None:
     """Return the canonical partition name if *line* is a section header, else None."""
     pmap = _PARTITION_MAPS.get(game, _MAGIC_PARTITIONS)
 
@@ -205,7 +226,7 @@ def parse_deck_text(text: str, game: str = "magic") -> dict[str, Any]:
             continue
 
         # Check for section header
-        section = _is_section_header(line, game)
+        section = parse_section_header(line, game)
         if section is not None:
             current_partition = section
             continue
