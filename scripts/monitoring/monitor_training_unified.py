@@ -2,10 +2,12 @@
 """Unified training monitoring using structured log parsing. Works with both runctl-managed instances and local training scripts. Parses structured log prefixes ([PROGRESS], [CHECKPOINT], etc.) for reliable monitoring."""
 
 from __future__ import annotations
+
 import argparse
 import sys
 import time
 from pathlib import Path
+
 
 # Add src to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "src"))
@@ -78,16 +80,12 @@ def main() -> int:
         print("-" * 70)
         try:
             if args.instance_id:
-                from ml.utils.log_monitor import RunctlLogMonitor
-
                 monitor = RunctlLogMonitor(
                     instance_id=args.instance_id,
                     log_path=args.log_path_on_instance,
                 )
                 status = monitor.get_status(use_live_logs=args.use_live_logs)
             elif args.log_path:
-                from ml.utils.log_monitor import LocalLogMonitor
-
                 monitor = LocalLogMonitor(args.log_path)
                 status = monitor.get_status()
             else:

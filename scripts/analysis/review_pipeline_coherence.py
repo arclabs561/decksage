@@ -14,10 +14,10 @@ Checks:
 """
 
 from __future__ import annotations
-import json
+
 import os
-import subprocess
 import re
+import subprocess
 import sys
 from collections import defaultdict
 from pathlib import Path

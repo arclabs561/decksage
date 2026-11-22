@@ -91,6 +91,7 @@ from ml.deck_building.deck_completion import (
 )
 from ml.deck_building.deck_quality import assess_deck_quality
 
+
 try:
     from ml.deck_building.deck_refinement import DeckRefiner, RefinementConstraints
 except ImportError:

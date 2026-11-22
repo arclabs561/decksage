@@ -1,12 +1,14 @@
 #!/usr/bin/env python3
 """Training script to run on EC2 instance."""
 
-from pecanpy.pecanpy import SparseOTF
-from gensim.models import Word2Vec
-import pandas as pd
+import os
 import subprocess
 import sys
-import os
+
+import pandas as pd
+from gensim.models import Word2Vec
+from pecanpy.pecanpy import SparseOTF
+
 
 DIM = 128
 OUTPUT_NAME = "magic_128d_test"
