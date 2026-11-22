@@ -76,14 +76,14 @@ def test_similarity_search_with_visual():
         # Note: This will use actual images if available, or return 0.0 for missing
         results = fusion.similar("Card1", k=2)
 
+        assert results, "Similarity search returned no recommendations"
         logger.info(f"  ✓ Similarity search returned {len(results)} results")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Similarity search failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_batch_processing_usage():
@@ -110,10 +110,9 @@ def test_batch_processing_usage():
         assert embeddings.shape[1] > 0
 
         logger.info(f"  ✓ Batch processed {len(cards)} cards, embeddings shape: {embeddings.shape}")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Batch processing failed: {e}")
-        return False
+        raise
 
 
 def test_fusion_aggregation_with_visual():
@@ -147,10 +146,9 @@ def test_fusion_aggregation_with_visual():
         assert result > 0.0  # Should be positive
 
         logger.info(f"  ✓ Fusion aggregation result: {result:.3f}")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Fusion aggregation failed: {e}")
-        return False
+        raise
 
 
 def test_api_like_usage():
@@ -166,8 +164,7 @@ def test_api_like_usage():
 
         # Simulate API endpoint behavior
         if state.embeddings is None:
-            logger.warning("  ⚠ Embeddings not loaded, skipping API-like test")
-            return True
+            raise AssertionError("API usage requires loaded embeddings")
 
         # Get visual embedder (like API does)
         visual_embedder = get_visual_embedder()
@@ -183,13 +180,12 @@ def test_api_like_usage():
         )
 
         logger.info("  ✓ API-like usage pattern works")
-        return True
     except Exception as e:
         logger.error(f"  ✗ API-like usage failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_mixed_modalities():
@@ -234,10 +230,9 @@ def test_mixed_modalities():
         assert abs(total - 1.0) < 0.01  # Should sum to ~1.0
 
         logger.info(f"  ✓ Mixed modalities work, total weight: {total:.3f}")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Mixed modalities test failed: {e}")
-        return False
+        raise
 
 
 def main():
@@ -247,13 +242,21 @@ def main():
     logger.info("=" * 60)
     logger.info("")
 
-    results = {
-        "Similarity Search": test_similarity_search_with_visual(),
-        "Batch Processing": test_batch_processing_usage(),
-        "Fusion Aggregation": test_fusion_aggregation_with_visual(),
-        "API-like Usage": test_api_like_usage(),
-        "Mixed Modalities": test_mixed_modalities(),
+    checks = {
+        "Similarity Search": test_similarity_search_with_visual,
+        "Batch Processing": test_batch_processing_usage,
+        "Fusion Aggregation": test_fusion_aggregation_with_visual,
+        "API-like Usage": test_api_like_usage,
+        "Mixed Modalities": test_mixed_modalities,
     }
+    results = {}
+    for name, check in checks.items():
+        try:
+            check()
+        except Exception:
+            results[name] = False
+        else:
+            results[name] = True
 
     logger.info("")
     logger.info("=" * 60)

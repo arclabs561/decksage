@@ -10,7 +10,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
 RUNCTL_BIN="${RUNCTL_BIN:-$PROJECT_ROOT/../runctl/target/release/runctl}"
 
 INSTANCE_ID="${1:-}"
-CHECK_INTERVAL="${CHECK_INTERVAL:-30}"
+CHECK_INTERVAL="${2:-${CHECK_INTERVAL:-30}}"
 USE_STRUCTURED="${USE_STRUCTURED:-1}"
 
 if [ -z "$INSTANCE_ID" ]; then
@@ -31,12 +31,12 @@ echo "Check interval: ${CHECK_INTERVAL}s"
 echo ""
 
 # Try structured log monitoring first (if Python script available)
-MONITOR_SCRIPT="$PROJECT_ROOT/scripts/monitor_training_unified.py"
+MONITOR_SCRIPT="$SCRIPT_DIR/monitor_training_unified.py"
 if [ -f "$MONITOR_SCRIPT" ] && [ "$USE_STRUCTURED" = "1" ]; then
     python3 "$MONITOR_SCRIPT" \
         --instance-id "$INSTANCE_ID" \
         --interval "$CHECK_INTERVAL" \
-        "${@:2}"
+        "${@:3}"
     exit $?
 fi
 

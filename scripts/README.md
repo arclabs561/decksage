@@ -31,7 +31,7 @@ Analysis and reporting scripts
 - `analyze_*.py` - Data analysis
 - `review_*.py` - Review and audit scripts
 - `compute_*.py` - Metric computation
-- `data_status_report.py` - Data status reporting
+- `analysis/data_status_report.py` - Data status reporting
 - `dataset_health_check.py` - Dataset health checks
 
 ### `generation/`
@@ -98,7 +98,6 @@ Annotation generation
 
 ### `cleanup/`
 Cleanup and maintenance
-- `remove_emojis.py` - Remove emojis from files
 
 ## Top-Level Scripts
 

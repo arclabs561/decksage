@@ -1138,32 +1138,6 @@ def main() -> int:
         for r in critique["recommendations"]:
             logger.info(f"  → {r}")
 
-    # Save results - handle S3 output
-    output_path = Path(args.output)
-    local_output_path = output_path
-
-    # If S3 path, save locally first then upload
-    if str(output_path).startswith("s3://"):
-        import boto3
-
-        s3 = boto3.client("s3")
-        local_output_path = Path("/tmp") / Path(output_path.name)
-        local_output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(local_output_path, "w") as f:
-            json.dump(results, f, indent=2)
-
-        # Upload to S3
-        s3_path = str(output_path).replace("s3://", "")
-        bucket, key = s3_path.split("/", 1)
-        s3.upload_file(str(local_output_path), bucket, key)
-        logger.info(f"\nResults saved to S3: {output_path}")
-        logger.info(f"  Local copy: {local_output_path}")
-    else:
-        output_path.parent.mkdir(parents=True, exist_ok=True)
-        with open(output_path, "w") as f:
-            json.dump(results, f, indent=2)
-        logger.info(f"\nResults saved to {output_path}")
-
     # Run deck quality validation if requested
     if args.validate_deck_quality:
         try:
@@ -1194,17 +1168,46 @@ def main() -> int:
                     game=args.game,
                     num_test_cases=10,
                     similarity_fn=similarity_fn,
+                    tag_set_fn=assets.get("tag_set_fn"),
                 )
                 results["deck_quality_validation"] = quality_results
                 logger.info(
                     f"Deck quality validation: {quality_results['success_rate'] * 100:.1f}% success rate"
                 )
             else:
-                logger.warning(
-                    "Cannot run deck quality validation: similarity function not available"
-                )
+                results["deck_quality_validation"] = {
+                    "valid": False,
+                    "error": "Similarity function unavailable",
+                }
         except Exception as e:
+            results["deck_quality_validation"] = {"valid": False, "error": str(e)}
             logger.warning(f"Deck quality validation failed: {e}")
+
+    # Save results - handle S3 output
+    output_path = Path(args.output)
+    local_output_path = output_path
+
+    # If S3 path, save locally first then upload
+    if str(output_path).startswith("s3://"):
+        import boto3
+
+        s3 = boto3.client("s3")
+        local_output_path = Path("/tmp") / Path(output_path.name)
+        local_output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(local_output_path, "w") as f:
+            json.dump(results, f, indent=2)
+
+        # Upload to S3
+        s3_path = str(output_path).replace("s3://", "")
+        bucket, key = s3_path.split("/", 1)
+        s3.upload_file(str(local_output_path), bucket, key)
+        logger.info(f"\nResults saved to S3: {output_path}")
+        logger.info(f"  Local copy: {local_output_path}")
+    else:
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(output_path, "w") as f:
+            json.dump(results, f, indent=2)
+        logger.info(f"\nResults saved to {output_path}")
 
     # Generate quality dashboard if requested
     if args.generate_dashboard:
@@ -1277,6 +1280,8 @@ def main() -> int:
         # Don't fail evaluation if registry fails
         logger.warning(f"Failed to register evaluation in registry: {e}")
 
+    if args.validate_deck_quality and not results["deck_quality_validation"]["valid"]:
+        return 1
     return 0
 
 
