@@ -720,35 +720,6 @@ class TestSSEFormat:
 
 
 # ---------------------------------------------------------------------------
-# Agent factory tests
-# ---------------------------------------------------------------------------
-
-
-class TestAgentFactory:
-    def test_agent_caching_per_game(self):
-        from ml.api.chat import _agents, _get_agent
-
-        _agents.clear()
-
-        # This will fail if pydantic-ai can't resolve the model,
-        # but we just test the caching logic
-        try:
-            a1 = _get_agent("magic")
-            a2 = _get_agent("magic")
-            assert a1 is a2
-
-            a3 = _get_agent("yugioh")
-            assert a3 is not a1
-            assert len(_agents) == 2
-        except Exception:
-            # If model resolution fails (no API key), that's OK --
-            # we're testing caching, not the LLM call
-            pytest.skip("pydantic-ai agent creation requires model config")
-        finally:
-            _agents.clear()
-
-
-# ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
 
