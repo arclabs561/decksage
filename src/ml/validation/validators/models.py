@@ -15,6 +15,9 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
+from ...deck_building.constants import MAGIC_BASIC_LANDS as BASIC_LANDS
+from ..deck_rules import construction_errors
+
 
 # ---------------------------------------------------------------------------
 # Helpers (Unicode/name hygiene)
@@ -119,6 +122,16 @@ class _DeckBase(BaseModel):
         v = _nfkc_strip(v)
         return v or None
 
+    def _check_construction(self, game: Literal["magic", "pokemon", "yugioh"]) -> None:
+        errors = construction_errors(
+            game,
+            self.format,
+            ((p.name, ((c.name, c.count) for c in p.cards)) for p in self.partitions),
+        )
+        if errors:
+            raise ValueError(errors[0])
+        self.game = game
+
     def get_partition(self, *names: str) -> Partition | None:
         """Return first partition matching any name (case-insensitive)."""
         want = {n.strip().lower() for n in names if n and n.strip()}
@@ -161,103 +174,21 @@ class _DeckBase(BaseModel):
 # ---------------------------------------------------------------------------
 
 
-# MTG: basics exempt from copy limits
-BASIC_LANDS: set[str] = {
-    "Plains",
-    "Island",
-    "Swamp",
-    "Mountain",
-    "Forest",
-    "Wastes",
-    "Snow-Covered Plains",
-    "Snow-Covered Island",
-    "Snow-Covered Swamp",
-    "Snow-Covered Mountain",
-    "Snow-Covered Forest",
-}
-
-
 class MTGDeck(_DeckBase):
     """Magic: The Gathering deck with deterministic construction rules."""
 
     @model_validator(mode="after")
     def _validate_mtg(self) -> MTGDeck:
-        fmt = (self.format or "").strip()
-        fmt_lower = fmt.lower()
-
-        main = self.get_partition("main", "mainboard") or self.partitions[0]
-        side = self.get_partition("sideboard", "side board")
-
-        main_n = main.total_cards()
-        side_n = side.total_cards() if side else 0
-
-        singleton_formats = {"commander", "cedh", "duel commander", "brawl"}
-
-        if fmt_lower in {"commander", "cedh", "duel commander"}:
-            if main_n != 100:
-                raise ValueError(f"{fmt} requires exactly 100 cards in Main (has {main_n})")
-            if side_n != 0:
-                # Commander sideboards exist in some contexts, but treat as invalid for now (be explicit).
-                raise ValueError(f"{fmt} expects no Sideboard (has {side_n})")
-        elif fmt_lower == "brawl":
-            if main_n != 60:
-                raise ValueError(f"Brawl requires exactly 60 cards in Main (has {main_n})")
-            if side_n != 0:
-                raise ValueError(f"Brawl expects no Sideboard (has {side_n})")
-        else:
-            if main_n < 60:
-                raise ValueError(f"Main deck requires at least 60 cards (has {main_n})")
-            if side_n > 15:
-                raise ValueError(f"Sideboard cannot exceed 15 cards (has {side_n})")
-
-        # Copy limits
-        counts = self.all_card_counts()
-        for card, n in counts.items():
-            if card in BASIC_LANDS:
-                continue
-            if fmt_lower in singleton_formats:
-                if n > 1:
-                    raise ValueError(
-                        f"{fmt or 'Singleton format'} allows max 1 copy, but {card} has {n}"
-                    )
-            else:
-                if n > 4:
-                    raise ValueError(f"Modern-style formats allow max 4 copies, but {card} has {n}")
-
-        self.game = "magic"
+        self._check_construction("magic")
         return self
 
 
 class PokemonDeck(_DeckBase):
     """Pokémon TCG deck rules (baseline)."""
 
-    _BASIC_ENERGY: set[str] = {
-        "Grass Energy",
-        "Fire Energy",
-        "Water Energy",
-        "Lightning Energy",
-        "Psychic Energy",
-        "Fighting Energy",
-        "Darkness Energy",
-        "Metal Energy",
-        "Fairy Energy",
-    }
-
     @model_validator(mode="after")
     def _validate_pokemon(self) -> PokemonDeck:
-        # Pokemon decks are 60 cards total; sideboards generally not a thing.
-        total = sum(p.total_cards() for p in self.partitions)
-        if total != 60:
-            raise ValueError(f"Pokémon decks require exactly 60 total cards (has {total})")
-
-        counts = self.all_card_counts()
-        for card, n in counts.items():
-            if card in self._BASIC_ENERGY:
-                continue
-            if n > 4:
-                raise ValueError(f"Pokémon allows max 4 copies per card, but {card} has {n}")
-
-        self.game = "pokemon"
+        self._check_construction("pokemon")
         return self
 
 
@@ -266,27 +197,7 @@ class YugiohDeck(_DeckBase):
 
     @model_validator(mode="after")
     def _validate_yugioh(self) -> YugiohDeck:
-        main = self.get_partition("main deck", "main") or self.partitions[0]
-        extra = self.get_partition("extra deck", "extra")
-        side = self.get_partition("side deck", "side")
-
-        main_n = main.total_cards()
-        extra_n = extra.total_cards() if extra else 0
-        side_n = side.total_cards() if side else 0
-
-        if main_n < 40 or main_n > 60:
-            raise ValueError(f"Yu-Gi-Oh! main deck must be 40-60 cards (has {main_n})")
-        if extra_n > 15:
-            raise ValueError(f"Yu-Gi-Oh! extra deck cannot exceed 15 cards (has {extra_n})")
-        if side_n > 15:
-            raise ValueError(f"Yu-Gi-Oh! side deck cannot exceed 15 cards (has {side_n})")
-
-        counts = self.all_card_counts()
-        for card, n in counts.items():
-            if n > 3:
-                raise ValueError(f"Yu-Gi-Oh! allows max 3 copies per card, but {card} has {n}")
-
-        self.game = "yugioh"
+        self._check_construction("yugioh")
         return self
 
 

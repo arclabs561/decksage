@@ -186,7 +186,10 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
     if len(partitions) > _MAX_PARTITIONS:
         raise HTTPException(status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})")
     if partitions:
-        return {"partitions": partitions}
+        return {
+            **{k: v for k, v in deck.items() if not isinstance(v, list)},
+            "partitions": partitions,
+        }
     return deck
 
 

@@ -16,7 +16,7 @@ from typing import Any, Literal
 
 from ..data.card_resolver import CardResolver
 from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
-from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+from ..validation.deck_rules import canonical_name, copy_limit, partition_key
 
 
 # Align with current validator models; generic Deck/DeckCard types removed
@@ -57,19 +57,21 @@ def _main_partition_name(game: str) -> str:
 
 
 def _current_size(deck: dict, part_name: str) -> int:
-    target = (part_name or "").strip().lower()
-    for p in deck.get("partitions", []) or []:
-        if (p.get("name") or "").strip().lower() == target:
-            return sum(c.get("count", 0) for c in p.get("cards", []) or [])
-    return 0
+    return sum(
+        c.get("count", 0)
+        for p in deck.get("partitions", []) or []
+        if partition_key(p.get("name") or "") == partition_key(part_name)
+        for c in p.get("cards", []) or []
+    )
 
 
 def _cards_in_partition(deck: dict, part_name: str) -> set[str]:
-    target = (part_name or "").strip().lower()
-    for p in deck.get("partitions", []) or []:
-        if (p.get("name") or "").strip().lower() == target:
-            return {c.get("name") for c in p.get("cards", []) or []}
-    return set()
+    return {
+        c["name"]
+        for p in deck.get("partitions", []) or []
+        if partition_key(p.get("name") or "") == partition_key(part_name)
+        for c in p.get("cards", []) or []
+    }
 
 
 def _legal_add(
@@ -85,28 +87,11 @@ def _legal_add(
     total = 0
     for p in deck.get("partitions", []) or []:
         for c in p.get("cards", []) or []:
-            if c.get("name") == card:
+            if canonical_name(c.get("name") or "") == canonical_name(card):
                 total += int(c.get("count", 0))
 
-    # Game-specific copy limits (simplified)
-    if game == "yugioh":
-        return total + 1 <= 3
-
-    if game == "pokemon":
-        # Basic Energy exempt from 4-copy rule
-        if card in POKEMON_BASIC_ENERGY:
-            return True
-        return total + 1 <= 4
-
-    # magic
-    if card in MAGIC_BASIC_LANDS:
-        return True
-
-    fmt = (deck.get("format") or "").strip()
-    singleton_formats = {"Commander", "cEDH", "Brawl", "Duel Commander"}
-    if fmt in singleton_formats:
-        return total + 1 <= 1
-    return total + 1 <= 4
+    limit = copy_limit(game, deck.get("format"), card)
+    return limit is None or total < limit
 
 
 def suggest_additions(
@@ -142,7 +127,7 @@ def suggest_additions(
     if role_aware and tag_set_fn:
         # Count cards by functional role
         for p in deck.get("partitions", []) or []:
-            if p.get("name") != part:
+            if partition_key(p.get("name") or "") != partition_key(part):
                 continue
             for card in p.get("cards", []) or []:
                 card_name = resolver.canonical(str(card.get("name", "")))
@@ -261,7 +246,7 @@ def suggest_additions(
         # Build deck tag set
         deck_tag_set: set[str] = set()
         for p in deck.get("partitions", []) or []:
-            if p.get("name") != part:
+            if partition_key(p.get("name") or "") != partition_key(part):
                 continue
             for card in p.get("cards", []) or []:
                 deck_tag_set |= tag_set_fn(resolver.canonical(str(card.get("name", ""))))
@@ -276,7 +261,7 @@ def suggest_additions(
             hist: dict[int, int] = {}
             total = 0
             for p in deck.get("partitions", []) or []:
-                if p.get("name") != part:
+                if partition_key(p.get("name") or "") != partition_key(part):
                     continue
                 for cc in p.get("cards", []) or []:
                     cmc = cmc_fn(resolver.canonical(str(cc.get("name", ""))))
@@ -432,20 +417,13 @@ def greedy_complete(
         existing = 0
         for p in state.get("partitions", []) or []:
             for c in p.get("cards", []) or []:
-                if c.get("name") == cand:
+                if canonical_name(c.get("name") or "") == canonical_name(cand):
                     existing += int(c.get("count", 0))
-        # Determine max copies allowed by game rules
-        if cand in MAGIC_BASIC_LANDS or cand in POKEMON_BASIC_ENERGY:
-            max_copies = 99  # effectively unlimited
-        elif game == "yugioh":
-            max_copies = 3
-        else:  # magic, pokemon
-            max_copies = 4
-        # How many to add: fill to copy limit, but don't exceed remaining deck space
+        limit = copy_limit(game, state.get("format"), cand)
         remaining = (target_main - _current_size(state, main_name)) if target_main else 1
-        add_count = min(max_copies - existing, remaining)
+        add_count = remaining if limit is None else min(limit - existing, remaining)
         if add_count < 1:
-            add_count = 1  # always try at least 1 (let patch validation catch illegals)
+            break
 
         patch = DeckPatch(
             ops=[{"op": "add_card", "partition": main_name, "card": cand, "count": add_count}],
@@ -572,7 +550,7 @@ def suggest_removals(
     if preserve_roles and tag_set_fn:
         role_cards: dict[str, list[str]] = {}
         for p in deck.get("partitions", []) or []:
-            if p.get("name") != part:
+            if partition_key(p.get("name") or "") != partition_key(part):
                 continue
             for card_obj in p.get("cards", []) or []:
                 # card_obj is a dict with "name" and "count"
