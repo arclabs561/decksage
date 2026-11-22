@@ -46,7 +46,7 @@ from typing import Any, Literal
 import numpy as np
 
 from ..utils.deck_parser import main_partition_name, main_partitions
-from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+from .constants import MAGIC_BASIC_LANDS, MAGIC_COPY_LIMIT_OVERRIDES, POKEMON_BASIC_ENERGY
 from .deck_completion import (
     CandidateFn,
     CMCFn,
@@ -565,9 +565,11 @@ def _round_transport_plan_ilp(
     fc = format_constraints
     for i, name in enumerate(card_pool):
         limit = max_copies
-        # Basics are unlimited in most formats
-        if fc and fc.basics_unlimited and _is_basic(game, name):
-            limit = slots_to_fill  # effectively unlimited
+        if game == "magic" and name in MAGIC_COPY_LIMIT_OVERRIDES:
+            printed_limit = MAGIC_COPY_LIMIT_OVERRIDES[name]
+            limit = np.inf if printed_limit is None else printed_limit
+        elif fc and fc.basics_unlimited and _is_basic(game, name):
+            limit = np.inf
         # Per-card overrides (restricted/limited/semi-limited)
         if per_card_limits and name in per_card_limits:
             limit = min(limit, per_card_limits[name])
@@ -580,7 +582,7 @@ def _round_transport_plan_ilp(
             for c in p.get("cards", []) or []:
                 if c.get("name") == name:
                     existing += int(c.get("count", 0))
-        upper_bounds[i] = max(0, upper_bounds[i] - existing)
+        upper_bounds[i] = min(slots_to_fill, max(0, upper_bounds[i] - existing))
 
     # Variables: x_0..x_{n-1} (integer card counts), t_0..t_{n-1} (abs deviations)
     # Objective: minimize sum(t_i)  (c = [0]*n + [1]*n)

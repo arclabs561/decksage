@@ -328,6 +328,14 @@ class TestILPRounding:
         total_added = sum(c for _, c in additions)
         assert total_added == 5
 
+    def test_ilp_honors_printed_copy_limit(self):
+        name = "Persistent Petitioners"
+        deck = _make_deck([name] * 4, "magic")
+        additions = _round_transport_plan_ilp(
+            np.array([1.0, 0.0]), [name, "Island"], deck, "magic", 2
+        )
+        assert additions == [(name, 2)]
+
     def test_ilp_respects_copy_limit(self):
         pool = ["A", "B"]
         plan = np.array([0.9, 0.1])
