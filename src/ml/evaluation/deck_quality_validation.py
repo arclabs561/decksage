@@ -6,16 +6,19 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import Callable
+from copy import deepcopy
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
 from ..deck_building.deck_completion import CompletionConfig, greedy_complete
+from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
 from ..deck_building.deck_quality import (
     DeckQualityMetrics,
     assess_deck_quality,
 )
 from ..utils.data_loading import load_decks_jsonl
+from ..utils.deck_parser import main_partition_name, main_partitions
 from ..utils.paths import PATHS
 
 
@@ -72,26 +75,30 @@ def create_test_cases(
     game: str = "magic",
     num_cases: int = 10,
 ) -> list[CompletionTestCase]:
-    """Create test cases for deck completion. Uses incomplete tournament decks (missing 10-20 cards)."""
+    """Create test cases for deck completion. Hold out up to 15 physical copies from the main deck, retaining at least 20."""
     decks = load_reference_decks(game, limit=num_cases * 2)
     if not decks:
         logger.warning(f"No reference decks found for {game}")
         return []
     test_cases = []
-    for i, deck in enumerate(decks[:num_cases]):
-        # Create incomplete deck by removing 10-20 cards
-        incomplete = json.loads(json.dumps(deck))
-        # Deep copy
-        # Remove cards from main partition
-        partition_name = "Main" if game == "magic" else "Main Deck"
-        for partition in incomplete.get("partitions", []):
-            if partition.get("name") == partition_name:
-                cards = partition.get("cards", [])
-                if len(cards) > 20:
-                    # Remove 10-20 cards (keep at least 20)
-                    remove_count = min(15, len(cards) - 20)
-                    partition["cards"] = cards[:-remove_count]
-                break
+    for i, deck in enumerate(decks):
+        if len(test_cases) >= num_cases:
+            break
+        incomplete = deepcopy(deck)
+        parts = list(main_partitions(incomplete, main_partition_name(game)))
+        target = sum(card["count"] for part in parts for card in part["cards"])
+        remaining = min(15, target - 20)
+        if remaining <= 0:
+            continue
+        for part in reversed(parts):
+            cards = part["cards"]
+            while remaining and cards:
+                take = min(cards[-1]["count"], remaining)
+                cards[-1]["count"] -= take
+                remaining -= take
+                if cards[-1]["count"] == 0:
+                    cards.pop()
+        incomplete["partitions"] = [part for part in incomplete["partitions"] if part["cards"]]
         test_cases.append(
             CompletionTestCase(
                 name=f"{game}_test_{i + 1}",
@@ -99,7 +106,7 @@ def create_test_cases(
                 game=game,
                 archetype=deck.get("archetype"),
                 format=deck.get("format"),
-                target_size=None,
+                target_size=target,
                 expected_quality_min=6.0,
             )
         )
@@ -129,6 +136,15 @@ def run_completion_test(
             tag_set_fn=tag_set_fn,
             price_fn=price_fn,
         )
+        parts = list(main_partitions(completed, main_partition_name(test_case.game)))
+        size = sum(card["count"] for part in parts for card in part["cards"])
+        errors = apply_deck_patch(
+            test_case.game, completed, DeckPatch(ops=[]), lenient_size=False
+        ).errors
+        if test_case.target_size is not None and size != test_case.target_size:
+            errors.append(f"Expected {test_case.target_size} main-deck cards, got {size}")
+        if errors:
+            return CompletionResult(test_case, completed, None, False, "; ".join(errors))
         # Load reference decks for quality assessment
         reference_decks = load_reference_decks(
             game=test_case.game,
@@ -138,10 +154,7 @@ def run_completion_test(
         )
         # Assess quality
         names = [
-            card["name"]
-            for part in completed.get("partitions", [])
-            for card in part.get("cards", [])
-            if card.get("name")
+            card["name"] for part in parts for card in part.get("cards", []) if card.get("name")
         ]
         if (
             tag_set_fn

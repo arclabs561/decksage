@@ -13,6 +13,7 @@ No external dependencies.
 from __future__ import annotations
 
 import re
+from collections.abc import Iterator
 from typing import Any
 
 
@@ -69,6 +70,26 @@ _DEFAULT_PARTITION: dict[str, str] = {
     "yugioh": "Main Deck",
     "pokemon": "Deck",
 }
+
+
+def main_partition_name(game: str) -> str:
+    return _DEFAULT_PARTITION[game]
+
+
+def main_partitions(deck: dict, main_name: str) -> Iterator[dict]:
+    """Yield the playable sections for the game's main heading, preserving their rows."""
+    for part in deck.get("partitions", []) or []:
+        key = (part.get("name") or "").strip().casefold()
+        if key in {"deck", "main", "main deck", "maindeck", "mainboard"}:
+            yield part
+        elif main_name == "Deck" and _POKEMON_PARTITIONS.get(key) in {
+            "Pokemon",
+            "Trainer",
+            "Energy",
+        }:
+            yield part
+        elif main_name == "Main Deck" and _YGO_PARTITIONS.get(key) == "Main Deck":
+            yield part
 
 
 # ---------------------------------------------------------------------------
