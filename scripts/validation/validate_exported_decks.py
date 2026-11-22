@@ -27,16 +27,8 @@ def validate_decks(
     lenient: bool = True,
 ) -> dict[str, Any]:
     """Validate decks using Pydantic validators."""
-    try:
-        from src.ml.validation.validators.loader import load_decks_lenient
+    from src.ml.validation.validators.loader import load_decks_lenient
 
-    except ImportError:
-        print("Warning: Validators not available, skipping validation")
-        # Count total for stats
-        total = 0
-        with open(input_file) as f:
-            total = sum(1 for _ in f)
-        return {"total": total, "validated": 0, "invalid": total, "errors": []}
     print(f"Validating decks from {input_file}...")
     # Use the validator loader
     validated_decks = load_decks_lenient(
@@ -61,7 +53,7 @@ def validate_decks(
         output_file.parent.mkdir(parents=True, exist_ok=True)
         with open(output_file, "w") as f:
             for deck in validated_decks:
-                json.dump(deck.model_dump(), f)
+                json.dump(deck.model_dump(mode="json"), f)
                 f.write("\n")
     return stats
 
@@ -84,11 +76,11 @@ def main() -> int:
     print("=" * 70)
     print("VALIDATING EXPORTED DECKS")
     print("=" * 70)
-    stats = validate_decks(
-        args.input,
-        args.output,
-        lenient=not args.strict,
-    )
+    try:
+        stats = validate_decks(args.input, args.output, lenient=not args.strict)
+    except ImportError as exc:
+        print(f"Cannot load deck validators: {exc}", file=sys.stderr)
+        return 1
     print("\n" + "=" * 70)
     print("VALIDATION SUMMARY")
     print("=" * 70)

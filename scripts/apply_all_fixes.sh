@@ -1,4 +1,16 @@
 #!/usr/bin/env bash
-# Apply all deck quality fixes in sequence
+set -euo pipefail
 
-set -euo pipefail echo "======================================================================" echo "APPLYING ALL DECK QUALITY FIXES" echo "======================================================================" echo "" # Step 1: Enhance decks (normalize, deduplicate, filter) echo "[1/3] Enhancing decks..." python3 scripts/enhance_exported_decks.py \ --input data/processed/decks_all_unified.jsonl \ --output data/processed/decks_all_enhanced.jsonl # Step 2: Backfill metadata echo "" echo "[2/3] Backfilling metadata..." python3 scripts/backfill_metadata.py \ --input data/processed/decks_all_enhanced.jsonl \ --output data/processed/decks_all_final.jsonl # Step 3: Validate (optional, may be slow) echo "" echo "[3/3] Validating decks..." python3 scripts/validate_exported_decks.py \ --input data/processed/decks_all_final.jsonl \ || echo "Warning: Validation had issues (non-critical)" echo "" echo "======================================================================" echo "ALL FIXES APPLIED" echo "======================================================================" echo "" echo "Files created:" echo " - data/processed/decks_all_enhanced.jsonl (normalized, deduplicated)" echo " - data/processed/decks_all_final.jsonl (with backfilled metadata)" echo "" echo " Done!"
+cd "$(dirname "$0")/.."
+data=${1:-data/processed}
+stage=$(mktemp -d "$data/.deck-fixes.XXXXXXXX")
+trap 'rm -rf -- "$stage"' EXIT
+python3 -m scripts.enhance_exported_decks --input "$data/decks_all_unified.jsonl" --output "$stage/enhanced.jsonl"
+python3 -m scripts.backfill_metadata --input "$stage/enhanced.jsonl" --output "$stage/final.jsonl"
+if [[ ! -s "$stage/final.jsonl" ]]; then
+    echo "No decks survived processing" >&2
+    exit 1
+fi
+python3 -m scripts.validation.validate_exported_decks --input "$stage/final.jsonl" --strict
+mv -- "$stage/enhanced.jsonl" "$data/decks_all_enhanced.jsonl"
+mv -- "$stage/final.jsonl" "$data/decks_all_final.jsonl"
