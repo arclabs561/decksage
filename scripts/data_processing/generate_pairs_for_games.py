@@ -204,7 +204,7 @@ def main() -> int:
     print("\n" + "=" * 80)
     print(f" Total pairs generated: {total_pairs:,}")
     print("=" * 80)
-    return 0
+    return 0 if total_pairs else 1
 
 
 if __name__ == "__main__":

@@ -47,13 +47,12 @@ def test_visual_embedder_initialization():
         assert embedder is not None
         assert embedder.model is not None
         logger.info("  ✓ Visual embedder initialized successfully")
-        return True
     except ImportError as e:
         logger.warning(f"  ✗ Visual embeddings not available: {e}")
-        return False
+        raise
     except Exception as e:
         logger.error(f"  ✗ Failed to initialize visual embedder: {e}")
-        return False
+        raise
 
 
 def test_fusion_integration():
@@ -83,13 +82,12 @@ def test_fusion_integration():
         assert fusion.weights.visual_embed == 0.5
 
         logger.info("  ✓ Fusion integration successful")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Fusion integration failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_api_integration():
@@ -103,10 +101,9 @@ def test_api_integration():
         assert hasattr(state, "visual_embedder")
 
         logger.info("  ✓ API state includes visual_embedder")
-        return True
     except Exception as e:
         logger.error(f"  ✗ API integration failed: {e}")
-        return False
+        raise
 
 
 def test_load_signals_integration():
@@ -126,15 +123,14 @@ def test_load_signals_integration():
         if state.visual_embedder is not None:
             logger.info("  ✓ Visual embedder loaded successfully")
         else:
-            logger.warning("  ⚠ Visual embedder not loaded (dependencies may be missing)")
+            raise AssertionError("load_signals_to_state did not load the visual embedder")
 
-        return True
     except Exception as e:
         logger.error(f"  ✗ load_signals integration failed: {e}")
         import traceback
 
         traceback.print_exc()
-        return False
+        raise
 
 
 def test_error_handling():
@@ -154,10 +150,9 @@ def test_error_handling():
         assert similarity == 0.0
 
         logger.info("  ✓ Error handling works correctly")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Error handling test failed: {e}")
-        return False
+        raise
 
 
 def test_caching():
@@ -186,10 +181,9 @@ def test_caching():
         assert np.allclose(embedding1, embedding2)
 
         logger.info("  ✓ Caching works correctly")
-        return True
     except Exception as e:
         logger.error(f"  ✗ Caching test failed: {e}")
-        return False
+        raise
 
 
 def main():
@@ -199,14 +193,22 @@ def main():
     logger.info("=" * 60)
     logger.info("")
 
-    results = {
-        "Initialization": test_visual_embedder_initialization(),
-        "Fusion Integration": test_fusion_integration(),
-        "API Integration": test_api_integration(),
-        "Load Signals": test_load_signals_integration(),
-        "Error Handling": test_error_handling(),
-        "Caching": test_caching(),
+    checks = {
+        "Initialization": test_visual_embedder_initialization,
+        "Fusion Integration": test_fusion_integration,
+        "API Integration": test_api_integration,
+        "Load Signals": test_load_signals_integration,
+        "Error Handling": test_error_handling,
+        "Caching": test_caching,
     }
+    results = {}
+    for name, check in checks.items():
+        try:
+            check()
+        except Exception:
+            results[name] = False
+        else:
+            results[name] = True
 
     logger.info("")
     logger.info("=" * 60)

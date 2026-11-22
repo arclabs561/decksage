@@ -1,1 +1,34 @@
-#!/usr/bin/env python3 """ Regenerate derived data from primary sources. Supports full rebuild of all derived data (Order 1+) from primary data (Order 0). """ import argparse import subprocess import sys from pathlib import Path def regenerate_order(order: int, game: str | None = None, force: bool = False): """Regenerate data for a specific order.""" if order == 1: # Export decks from primary data print("📤 Order 1: Exporting decks from primary data...") # Implementation would call export-blob for each game/dataset print(" (Use: ./bin/export-blob <bucket> <game> <dataset> <output>)") elif order == 2: # Generate pairs from exported decks print(" Order 2: Generating pairs from exported decks...") cmd = ["uv", "run", "python", "scripts/data_processing/generate_pairs_for_games.py"] if game: cmd.extend(["--game", game]) else: cmd.append("--game") cmd.append("all") subprocess.run(cmd) elif order == 3: # Update graph from decks print("🕸️ Order 3: Updating incremental graph...") # Implementation would call update_graph_incremental print(" (Use: uv run python -m ml.scripts.update_graph_incremental)") elif order == 5: # Create test sets print("📝 Order 5: Creating test sets...") cmd = ["uv", "run", "python", "scripts/test_sets/create_test_sets_for_new_games.py"] if game: cmd.extend(["--game", game]) else: cmd.append("--game") cmd.append("all") subprocess.run(cmd) elif order == 6: # Generate annotations print("✍️ Order 6: Generating annotations...") cmd = ["uv", "run", "python", "scripts/annotations/generate_llm_annotations.py"] if game: cmd.extend(["--game", game]) else: cmd.append("--game") cmd.append("all") subprocess.run(cmd) def main(): parser = argparse.ArgumentParser(description="Regenerate derived data") parser.add_argument("--order", type=int, choices=[1, 2, 3, 5, 6], help="Order to regenerate (1=Export, 2=Pairs, 3=Graph, 5=Test Sets, 6=Annotations)") parser.add_argument("--game", help="Specific game to regenerate") parser.add_argument("--all", action="store_true", help="Regenerate all orders") parser.add_argument("--force", action="store_true", help="Force regeneration even if data exists") args = parser.parse_args() if args.all: for order in [1, 2, 3, 5, 6]: regenerate_order(order, args.game, args.force) elif args.order: regenerate_order(args.order, args.game, args.force) else: parser.print_help() return 1 return 0 if __name__ == "__main__": sys.exit(main())
+#!/usr/bin/env python3
+"""Regenerate card pairs and unlabeled query sets from locally exported decks."""
+
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+STAGES = {
+    2: ROOT / "scripts/data_processing/generate_pairs_for_games.py",
+    5: ROOT / "scripts/test_sets/create_test_sets_for_new_games.py",
+}
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    stages = parser.add_mutually_exclusive_group(required=True)
+    stages.add_argument("--all", action="store_true", help="Generate pairs and query sets")
+    stages.add_argument("--order", type=int, choices=STAGES)
+    parser.add_argument("--game", default="all")
+    args = parser.parse_args()
+    if args.all and args.game not in {"all", "digimon", "onepiece", "riftbound"}:
+        parser.error("query generation supports digimon, onepiece and riftbound")
+    for order in STAGES if args.all else [args.order]:
+        subprocess.run(
+            [sys.executable, str(STAGES[order]), "--game", args.game], cwd=ROOT, check=True
+        )
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

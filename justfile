@@ -886,11 +886,11 @@ validate-lineage:
     echo "Validating data lineage..."
     python3 scripts/data_processing/validate_lineage.py
 
-# Regenerate all derived data (Order 1+) from primary sources
+# Regenerate card pairs and unlabeled query sets from exported decks
 regenerate-derived:
     #!/usr/bin/env bash
-    echo "Regenerating derived data (Order 1+)..."
-    python3 scripts/data_processing/regenerate_derived.py --all
+    echo "Regenerating pairs and unlabeled query sets..."
+    uv run python scripts/data_processing/regenerate_derived.py --all
 
 # ============================================================================
 # Tier 0 & Tier 1 Validation
