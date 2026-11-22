@@ -45,13 +45,13 @@ from typing import Any, Literal
 
 import numpy as np
 
+from ..utils.deck_parser import main_partition_name, main_partitions
 from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
 from .deck_completion import (
     CandidateFn,
     CMCFn,
     TagSetFn,
     _legal_add,
-    _main_partition_name,
 )
 
 
@@ -222,10 +222,8 @@ def deck_to_distribution(
     pool_index = {name: i for i, name in enumerate(card_pool)}
     counts = np.zeros(len(card_pool), dtype=np.float64)
 
-    part_name = _main_partition_name(game)
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != part_name:
-            continue
+    part_name = main_partition_name(game)
+    for p in main_partitions(deck, part_name):
         for card in p.get("cards", []) or []:
             name = card.get("name", "")
             count = int(card.get("count", 0))
@@ -474,7 +472,7 @@ def _round_transport_plan_greedy(
             if _legal_add(game, deck, name):
                 actual += 1
                 # Temporarily add to deck for subsequent legality checks
-                part_name = _main_partition_name(game)
+                part_name = main_partition_name(game)
                 added = False
                 for p in deck.get("partitions", []) or []:
                     if p.get("name") == part_name:
@@ -575,7 +573,7 @@ def _round_transport_plan_ilp(
             limit = min(limit, per_card_limits[name])
         upper_bounds[i] = limit
 
-    part_name = _main_partition_name(game)
+    part_name = main_partition_name(game)
     for i, name in enumerate(card_pool):
         existing = 0
         for p in deck.get("partitions", []) or []:
@@ -716,35 +714,22 @@ def ot_complete_deck(
     Returns:
         OTCompletionResult with completed deck and metadata
     """
-    if pot is None:
-        raise ImportError("POT library required for OT completion. Install with: uv add pot")
-
     cfg = cfg or OTCompletionConfig(game=game)
     import copy
 
     deck = copy.deepcopy(deck)
 
-    part_name = _main_partition_name(game)
-    # Ensure partition exists
-    found = False
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") == part_name:
-            found = True
-            break
-    if not found:
-        deck.setdefault("partitions", []).append({"name": part_name, "cards": []})
-
+    part_name = main_partition_name(game)
     # Current deck cards
     seed_cards: list[str] = []
     current_size = 0
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") == part_name:
-            for c in p.get("cards", []) or []:
-                name = c.get("name", "")
-                count = int(c.get("count", 0))
-                if name:
-                    seed_cards.append(name)
-                    current_size += count
+    for p in main_partitions(deck, part_name):
+        for c in p.get("cards", []) or []:
+            name = c.get("name", "")
+            count = int(c.get("count", 0))
+            if name:
+                seed_cards.append(name)
+                current_size += count
 
     slots_to_fill = max(0, cfg.target_main_size - current_size)
     if slots_to_fill == 0:
@@ -753,6 +738,18 @@ def ot_complete_deck(
             additions=[],
             metrics={"slots_to_fill": 0, "current_size": current_size},
         )
+
+    if pot is None:
+        raise ImportError("POT library required for OT completion. Install with: uv add pot")
+
+    # Ensure partition exists
+    found = False
+    for p in deck.get("partitions", []) or []:
+        if p.get("name") == part_name:
+            found = True
+            break
+    if not found:
+        deck.setdefault("partitions", []).append({"name": part_name, "cards": []})
 
     # Build candidate pool
     card_pool = _build_candidate_pool(

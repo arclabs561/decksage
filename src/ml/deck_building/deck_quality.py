@@ -31,6 +31,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 
 from ..data.card_resolver import CardResolver
+from ..utils.deck_parser import main_partition_name, main_partitions
 
 
 @dataclass
@@ -58,6 +59,12 @@ class DeckQualityMetrics:
     avg_tags_per_card: float
 
 
+def _scored_partitions(deck: dict, game: str, partition_name: str | None):
+    if partition_name is None:
+        return main_partitions(deck, main_partition_name(game))
+    return (p for p in deck.get("partitions", []) or [] if p.get("name") == partition_name)
+
+
 def compute_mana_curve(
     deck: dict,
     game: str,
@@ -69,21 +76,11 @@ def compute_mana_curve(
 
     Returns dict mapping CMC -> proportion of deck.
     """
-    if partition_name is None:
-        if game == "magic":
-            partition_name = "Main"
-        elif game == "yugioh":
-            partition_name = "Main Deck"
-        else:  # pokemon
-            partition_name = "Deck"
-
     resolver = CardResolver()
     cmc_counts: Counter[int] = Counter()
     total = 0
 
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != partition_name:
-            continue
+    for p in _scored_partitions(deck, game, partition_name):
         for card in p.get("cards", []) or []:
             card_name = resolver.canonical(str(card.get("name", "")))
             count = int(card.get("count", 0))
@@ -135,12 +132,8 @@ def compute_archetype_curve(
     cmc_counts: Counter[int] = Counter()
     total = 0
 
-    partition_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
-
     for deck in reference_decks:
-        for p in deck.get("partitions", []) or []:
-            if p.get("name") != partition_name:
-                continue
+        for p in main_partitions(deck, main_partition_name(game)):
             for card in p.get("cards", []) or []:
                 card_name = resolver.canonical(str(card.get("name", "")))
                 count = int(card.get("count", 0))
@@ -166,20 +159,10 @@ def compute_tag_distribution(
 
     Returns dict mapping tag -> count of cards with that tag.
     """
-    if partition_name is None:
-        if game == "magic":
-            partition_name = "Main"
-        elif game == "yugioh":
-            partition_name = "Main Deck"
-        else:  # pokemon
-            partition_name = "Deck"
-
     resolver = CardResolver()
     tag_counts: Counter[str] = Counter()
 
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != partition_name:
-            continue
+    for p in _scored_partitions(deck, game, partition_name):
         for card in p.get("cards", []) or []:
             card_name = resolver.canonical(str(card.get("name", "")))
             tags = tag_set_fn(card_name)
@@ -224,21 +207,11 @@ def compute_synergy_score(
     if not reference_decks:
         return 0.5  # Neutral score if no reference
 
-    if partition_name is None:
-        if game == "magic":
-            partition_name = "Main"
-        elif game == "yugioh":
-            partition_name = "Main Deck"
-        else:  # pokemon
-            partition_name = "Deck"
-
     resolver = CardResolver()
 
     # Get deck's tag set
     deck_tags: set[str] = set()
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != partition_name:
-            continue
+    for p in _scored_partitions(deck, game, partition_name):
         for card in p.get("cards", []) or []:
             card_name = resolver.canonical(str(card.get("name", "")))
             deck_tags |= tag_set_fn(card_name)
@@ -250,9 +223,7 @@ def compute_synergy_score(
     reference_tag_sets: list[set[str]] = []
     for ref_deck in reference_decks:
         ref_tags: set[str] = set()
-        for p in ref_deck.get("partitions", []) or []:
-            if p.get("name") != partition_name:
-                continue
+        for p in _scored_partitions(ref_deck, game, partition_name):
             for card in p.get("cards", []) or []:
                 card_name = resolver.canonical(str(card.get("name", "")))
                 ref_tags |= tag_set_fn(card_name)
@@ -352,11 +323,9 @@ def assess_deck_quality(
     ) * 10.0
 
     # Collect metadata
-    partition_name = "Main" if game == "magic" else ("Main Deck" if game == "yugioh" else "Deck")
     num_cards = sum(
         int(c.get("count", 0))
-        for p in deck.get("partitions", []) or []
-        if p.get("name") == partition_name
+        for p in main_partitions(deck, main_partition_name(game))
         for c in p.get("cards", []) or []
     )
 

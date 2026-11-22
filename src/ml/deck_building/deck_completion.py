@@ -16,7 +16,8 @@ from typing import Any, Literal
 
 from ..data.card_resolver import CardResolver
 from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
-from ..validation.deck_rules import canonical_name, copy_limit, partition_key
+from ..utils.deck_parser import main_partition_name, main_partitions
+from ..validation.deck_rules import canonical_name, copy_limit
 
 
 # Align with current validator models; generic Deck/DeckCard types removed
@@ -48,30 +49,16 @@ class CompletionConfig:
     synergy_weight: float = 0.2  # pairwise co-occurrence bonus strength
 
 
-def _main_partition_name(game: str) -> str:
-    if game == "magic":
-        return "Main"
-    if game == "yugioh":
-        return "Main Deck"
-    return "Deck"  # pokemon
-
-
 def _current_size(deck: dict, part_name: str) -> int:
     return sum(
         c.get("count", 0)
-        for p in deck.get("partitions", []) or []
-        if partition_key(p.get("name") or "") == partition_key(part_name)
+        for p in main_partitions(deck, part_name)
         for c in p.get("cards", []) or []
     )
 
 
 def _cards_in_partition(deck: dict, part_name: str) -> set[str]:
-    return {
-        c["name"]
-        for p in deck.get("partitions", []) or []
-        if partition_key(p.get("name") or "") == partition_key(part_name)
-        for c in p.get("cards", []) or []
-    }
+    return {c["name"] for p in main_partitions(deck, part_name) for c in p.get("cards", []) or []}
 
 
 def _legal_add(
@@ -117,7 +104,7 @@ def suggest_additions(
     role_aware: bool = True,
     max_suggestions: int = 10,
 ) -> list[tuple[str, float]] | tuple[list[tuple[str, float]], dict]:
-    part = _main_partition_name(game)
+    part = main_partition_name(game)
     resolver = CardResolver()
     have = _cards_in_partition(deck, part)
 
@@ -126,9 +113,7 @@ def suggest_additions(
     role_counts: dict[str, int] = {}
     if role_aware and tag_set_fn:
         # Count cards by functional role
-        for p in deck.get("partitions", []) or []:
-            if partition_key(p.get("name") or "") != partition_key(part):
-                continue
+        for p in main_partitions(deck, part):
             for card in p.get("cards", []) or []:
                 card_name = resolver.canonical(str(card.get("name", "")))
                 tags = tag_set_fn(card_name)
@@ -245,9 +230,7 @@ def suggest_additions(
     if tag_set_fn is not None and coverage_weight > 0:
         # Build deck tag set
         deck_tag_set: set[str] = set()
-        for p in deck.get("partitions", []) or []:
-            if partition_key(p.get("name") or "") != partition_key(part):
-                continue
+        for p in main_partitions(deck, part):
             for card in p.get("cards", []) or []:
                 deck_tag_set |= tag_set_fn(resolver.canonical(str(card.get("name", ""))))
 
@@ -260,9 +243,7 @@ def suggest_additions(
             # Build current CMC hist
             hist: dict[int, int] = {}
             total = 0
-            for p in deck.get("partitions", []) or []:
-                if partition_key(p.get("name") or "") != partition_key(part):
-                    continue
+            for p in main_partitions(deck, part):
                 for cc in p.get("cards", []) or []:
                     cmc = cmc_fn(resolver.canonical(str(cc.get("name", ""))))
                     if cmc is None:
@@ -366,7 +347,7 @@ def greedy_complete(
     """
     cfg = cfg or CompletionConfig(game=game)
     target_main = cfg.target_main_size
-    main_name = _main_partition_name(game)
+    main_name = main_partition_name(game)
     steps: list[dict] = []
     state = deck
     quality_metrics = None
@@ -514,7 +495,7 @@ def suggest_removals(
     3. Consider format legality
     4. Preserve role coverage if requested
     """
-    part = _main_partition_name(game)
+    part = main_partition_name(game)
     resolver = CardResolver()
     have = _cards_in_partition(deck, part)
 
@@ -549,9 +530,7 @@ def suggest_removals(
     # 2. Find redundant cards (multiple filling same role)
     if preserve_roles and tag_set_fn:
         role_cards: dict[str, list[str]] = {}
-        for p in deck.get("partitions", []) or []:
-            if partition_key(p.get("name") or "") != partition_key(part):
-                continue
+        for p in main_partitions(deck, part):
             for card_obj in p.get("cards", []) or []:
                 # card_obj is a dict with "name" and "count"
                 if isinstance(card_obj, dict):

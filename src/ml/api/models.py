@@ -336,6 +336,7 @@ class CompleteRequest(BaseModel):
     max_steps: int = Field(60, le=200)
     budget_max: float | None = None
     coverage_weight: float | None = None
+    curve_target: dict[int, float] | None = None
     strict_size: bool | None = None
     check_legality: bool | None = None
     method: CompletionMethod = "greedy"  # "greedy", "beam", or "ot"
