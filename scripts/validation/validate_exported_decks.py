@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # /// script
 # requires-python = ">=3.11"
-# dependencies = []
+# dependencies = ["pydantic>=2"]
 # ///
 """
 Validate exported decks using Pydantic validators.
@@ -98,4 +98,6 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    if not __package__:
+        sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
     sys.exit(main())
