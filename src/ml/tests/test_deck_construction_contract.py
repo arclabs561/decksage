@@ -155,3 +155,41 @@ def test_invalid_editor_rows_return_a_result(parts):
     deck = {"partitions": parts}
     result = apply_deck_patch("magic", deck, DeckPatch(ops=[]))
     assert result.deck == deck and not result.is_valid
+
+
+def test_grouped_yugioh_import_and_edits_use_the_full_main_deck():
+    parts = [
+        part("Side Deck", ("Side card", 1)),
+        part("Monsters", *((f"Monster {i}", 3) for i in range(8))),
+        part("Spells", *((f"Spell {i}", 3) for i in range(5))),
+        part("Traps", ("Trap", 1)),
+    ]
+    deck = {"deck_id": "grouped", "partitions": parts}
+    edit = DeckPatch.model_validate(
+        {"ops": [{"op": "add_card", "partition": "Traps", "card": "Trap"}]}
+    )
+    assert YugiohDeck.model_validate(deck).get_main_deck().name == "Monsters"
+    result = apply_deck_patch("yugioh", deck, edit, lenient_size=False)
+    assert result.is_valid
+    assert result.deck["partitions"] == [*parts[:-1], part("Traps", ("Trap", 2))]
+
+    short = {**deck, "partitions": parts[:-1]}
+    rejected = apply_deck_patch("yugioh", short, DeckPatch(ops=[]), lenient_size=False)
+    assert not rejected.is_valid and "(has 39)" in rejected.errors[0]
+
+
+def test_maindeck_alias_is_recognized_with_sideboard_first():
+    parts = [
+        part("Sideboard", ("Elf", 1)),
+        part("Maindeck", ("Forest", 30)),
+        part("Main", ("Island", 30)),
+    ]
+    deck = {"deck_id": "split", "format": "Modern", "partitions": parts}
+    model = MTGDeck.model_validate(deck)
+    assert model.get_main_deck().name == "Maindeck"
+    edit = DeckPatch.model_validate(
+        {"ops": [{"op": "add_card", "partition": "Main", "card": "Forest"}]}
+    )
+    result = apply_deck_patch("magic", deck, edit, lenient_size=False)
+    assert result.is_valid
+    assert result.deck["partitions"] == [parts[0], part("Maindeck", ("Forest", 31)), parts[2]]

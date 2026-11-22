@@ -16,7 +16,7 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from ...deck_building.constants import MAGIC_BASIC_LANDS as BASIC_LANDS
-from ..deck_rules import construction_errors
+from ..deck_rules import construction_errors, construction_partition_key
 
 
 # ---------------------------------------------------------------------------
@@ -142,7 +142,10 @@ class _DeckBase(BaseModel):
 
     def get_main_deck(self) -> Partition:
         """Return the main deck partition (best-effort, never None)."""
-        return self.get_partition("main", "mainboard", "main deck", "deck") or self.partitions[0]
+        return next(
+            (p for p in self.partitions if construction_partition_key(p.name, self.game) == "main"),
+            self.partitions[0],
+        )
 
     def get_sideboard(self) -> Partition | None:
         """Return the sideboard/side deck partition, if present."""

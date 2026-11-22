@@ -5,9 +5,10 @@ from collections.abc import Iterable
 from unicodedata import normalize
 
 from ..deck_building.constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+from ..utils.deck_parser import parse_section_header
 
 
-_MAIN = {"main", "mainboard", "main deck", "deck"}
+_MAIN = {"main", "mainboard", "main deck", "maindeck", "deck"}
 _SIDE = {"sideboard", "side board", "side deck", "side"}
 _EXTRA = {"extra deck", "extra"}
 _COMMANDER = {"commander", "cedh", "duel commander"}
@@ -26,6 +27,16 @@ def partition_key(name: str) -> str:
         return "side"
     if key in _EXTRA:
         return "extra"
+    return key
+
+
+def construction_partition_key(name: str, game: str | None) -> str:
+    """Group playable sections for counting while keeping edits local to their section."""
+    key = partition_key(name)
+    if game == "yugioh" and parse_section_header(key, game) == "Main Deck":
+        return "main"
+    if game == "pokemon" and parse_section_header(key, game) in {"Pokemon", "Trainer", "Energy"}:
+        return "main"
     return key
 
 
@@ -55,7 +66,7 @@ def construction_errors(
     counts: Counter[str] = Counter()
     sizes: Counter[str] = Counter()
     for partition, cards in partitions:
-        name = partition_key(partition)
+        name = construction_partition_key(partition, game)
         sizes.setdefault(name, 0)
         for card, count in cards:
             counts[canonical_name(card)] += count
