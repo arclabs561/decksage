@@ -11,6 +11,7 @@ import hashlib
 import logging
 import pickle
 from contextlib import suppress
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +80,18 @@ try:
 except ImportError:
     requests = None
     logger.warning("requests not installed. Install with: uv add requests")
+
+
+# Card thumbnails and full-resolution scans fit inside these limits.
+_MAX_CARD_BYTES = 16 * 1024 * 1024
+_MAX_CARD_PIXELS = 16_000_000
+
+
+def _decode_card_image(source):
+    with Image.open(source, formats=("JPEG", "PNG", "WEBP")) as image:
+        if image.width * image.height > _MAX_CARD_PIXELS:
+            raise ValueError("card image exceeds pixel limit")
+        return image.convert("RGB")
 
 
 class CardVisualEmbedder:
@@ -409,7 +422,10 @@ class CardVisualEmbedder:
 
         if cached_path.exists():
             try:
-                return Image.open(cached_path).convert("RGB")
+                with cached_path.open("rb") as cached:
+                    if cached_path.stat().st_size > _MAX_CARD_BYTES:
+                        raise ValueError("cached card image exceeds byte limit")
+                    return _decode_card_image(cached)
             except Exception as e:
                 logger.warning(f"Failed to load cached image {cached_path}: {e}")
 
@@ -417,13 +433,15 @@ class CardVisualEmbedder:
         headers = {"User-Agent": "DeckSage/1.0 (https://decksage.com)"}
         for attempt in range(max_retries):
             try:
-                response = requests.get(url, timeout=10, stream=True, headers=headers)
-                response.raise_for_status()
-
-                # Load image from bytes (more reliable than response.raw)
-                from io import BytesIO
-
-                img = Image.open(BytesIO(response.content)).convert("RGB")
+                with requests.get(url, timeout=10, stream=True, headers=headers) as response:
+                    response.raise_for_status()
+                    with BytesIO() as data:
+                        for chunk in response.iter_content(chunk_size=64 * 1024):
+                            if data.tell() + len(chunk) > _MAX_CARD_BYTES:
+                                raise ValueError("card image exceeds byte limit")
+                            data.write(chunk)
+                        data.seek(0)
+                        img = _decode_card_image(data)
 
                 # Cache it
                 try:
@@ -432,6 +450,9 @@ class CardVisualEmbedder:
                     logger.debug(f"Failed to cache image: {e}")
 
                 return img
+            except (ValueError, Image.DecompressionBombError) as exc:
+                logger.warning("Rejected card image: %s", exc)
+                return None
             except requests.exceptions.Timeout:
                 logger.warning(
                     f"Timeout downloading image from {url} (attempt {attempt + 1}/{max_retries})"
