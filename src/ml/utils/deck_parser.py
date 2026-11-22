@@ -133,7 +133,7 @@ def _strip_set_codes(name: str, game: str) -> str:
     return name.strip()
 
 
-def _is_section_header(line: str, game: str) -> str | None:
+def parse_section_header(line: str, game: str) -> str | None:
     """Return the canonical partition name if *line* is a section header, else None."""
     pmap = _PARTITION_MAPS.get(game, _MAGIC_PARTITIONS)
 
@@ -226,7 +226,7 @@ def parse_deck_text(text: str, game: str = "magic") -> dict[str, Any]:
             continue
 
         # Check for section header
-        section = _is_section_header(line, game)
+        section = parse_section_header(line, game)
         if section is not None:
             current_partition = section
             continue

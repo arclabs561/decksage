@@ -9,8 +9,10 @@ Uses multi-objective scoring: similarity + coverage + mana curve fit.
 from __future__ import annotations
 
 import logging
+from collections.abc import Callable
 from dataclasses import dataclass
 
+from ..utils.deck_parser import main_partition_name, main_partitions
 from .deck_completion import (
     CandidateFn,
     CMCFn,
@@ -18,7 +20,6 @@ from .deck_completion import (
     TagSetFn,
     _current_size,
     _legal_add,
-    _main_partition_name,
 )
 
 
@@ -64,9 +65,7 @@ def compute_coverage_bonus(
 
     # Get all tags in current deck
     deck_tags: set[str] = set()
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != main_partition:
-            continue
+    for p in main_partitions(deck, main_partition):
         for c in p.get("cards", []) or []:
             card_name = c.get("name", "")
             if card_name:
@@ -103,9 +102,7 @@ def compute_curve_bonus(
     current_curve: dict[int, int] = {}
     total_cards = 0
 
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != main_partition:
-            continue
+    for p in main_partitions(deck, main_partition):
         for c in p.get("cards", []) or []:
             card_name = c.get("name", "")
             count = c.get("count", 0)
@@ -134,6 +131,8 @@ def beam_search_completion(
     config: CompletionConfig,
     *,
     beam_width: int = 3,
+    selected_cards: list[str] | None = None,
+    deck_candidate_fn: Callable[[dict, int], list[tuple[str, float]]] | None = None,
     tag_set_fn: TagSetFn | None = None,
     cmc_fn: CMCFn | None = None,
     curve_target: dict[int, float] | None = None,
@@ -153,7 +152,7 @@ def beam_search_completion(
     Returns:
         Completed deck
     """
-    main_partition = _main_partition_name(config.game)
+    main_partition = main_partition_name(config.game)
     target_size = config.target_main_size
 
     # Initialize beam with initial deck
@@ -179,19 +178,20 @@ def beam_search_completion(
 
             # Generate candidates - need seed card from deck
             seed_card = None
-            main_partition = _main_partition_name(config.game)
-            for p in state.deck.get("partitions", []) or []:
-                if p.get("name") == main_partition:
-                    cards = p.get("cards", []) or []
-                    if cards:
-                        seed_card = cards[0].get("name")
-                        break
+            for p in main_partitions(state.deck, main_partition):
+                cards = p.get("cards", []) or []
+                if cards:
+                    seed_card = cards[0].get("name")
+                    break
 
             if not seed_card:
                 continue
 
             try:
-                candidates = candidate_fn(seed_card, config.top_k_per_gap)
+                if deck_candidate_fn is None:
+                    candidates = candidate_fn(seed_card, config.top_k_per_gap)
+                else:
+                    candidates = deck_candidate_fn(state.deck, config.top_k_per_gap)
             except Exception as e:
                 logger.warning(f"Error generating candidates: {e}")
                 continue
@@ -268,10 +268,13 @@ def beam_search_completion(
             complete = [s for s in beam if _current_size(s.deck, main_partition) >= target_size]
             if complete:
                 # Return best complete deck
-                return complete[0].deck
+                beam = complete
+                break
 
     # Return best deck from final beam
     if beam:
+        if selected_cards is not None:
+            selected_cards.extend(beam[0].path)
         return beam[0].deck
 
     # Fallback to initial deck

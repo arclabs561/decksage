@@ -13,6 +13,7 @@ from ..deck_building.deck_completion import (
     greedy_complete,
     suggest_additions,
 )
+from ..utils.deck_parser import main_partition_name, main_partitions
 from .models import (
     ApiState,
     CompleteRequest,
@@ -66,13 +67,9 @@ def _detect_archetype(
     if not templates:
         return None, None, 0.0
 
-    from ..deck_building.deck_completion import _main_partition_name
-
-    part = _main_partition_name(game)
+    part = main_partition_name(game)
     deck_set: set[str] = set()
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != part:
-            continue
+    for p in main_partitions(deck, part):
         for card in p.get("cards", []) or []:
             name = str(card.get("name", ""))
             if name:
@@ -163,7 +160,6 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
     if not isinstance(deck, dict):
         return deck
     partitions = []
-    from ..deck_building.deck_completion import _main_partition_name
 
     for part_name, cards in deck.items():
         if isinstance(cards, list):
@@ -181,12 +177,15 @@ def _normalize_deck_format(deck: dict, game: str) -> dict:
             # Remap legacy "Main" to game-specific partition name (e.g. "Main Deck" for YGO/Pokemon)
             actual_name = part_name
             if part_name.lower() == "main":
-                actual_name = _main_partition_name(game)
+                actual_name = main_partition_name(game)
             partitions.append({"name": actual_name, "cards": card_entries})
     if len(partitions) > _MAX_PARTITIONS:
         raise HTTPException(status_code=422, detail=f"Too many partitions (max {_MAX_PARTITIONS})")
     if partitions:
-        return {"partitions": partitions}
+        return {
+            **{k: v for k, v in deck.items() if not isinstance(v, list)},
+            "partitions": partitions,
+        }
     return deck
 
 
@@ -271,13 +270,9 @@ def _extract_deck_colors(deck: dict, game: str, card_metadata: dict | None) -> s
     if game != "magic" or not card_metadata:
         return None
 
-    from ..deck_building.deck_completion import _main_partition_name
-
-    part = _main_partition_name(game)
+    part = main_partition_name(game)
     colors: set[str] = set()
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") != part:
-            continue
+    for p in main_partitions(deck, part):
         for card in p.get("cards", []) or []:
             name = str(card.get("name", ""))
             meta = card_metadata.get(name)
@@ -448,9 +443,7 @@ def suggest_actions(req: SuggestActionsRequest):
                 sa_archetype_score,
             )
 
-    from ..deck_building.deck_completion import _main_partition_name
-
-    part = _main_partition_name(game)
+    part = main_partition_name(game)
     actions = []
     action_type = (req.action_type or "add").lower()
 
@@ -629,13 +622,21 @@ def complete_deck(req: CompleteRequest):
             raise HTTPException(status_code=400, detail=parsed["error"])
         req.deck = {"partitions": parsed["partitions"]}
 
+    game = _require_game(req.game)
+    state = get_state(game)
+    req.deck = _normalize_deck_format(req.deck, game)
+
     # Log query for analytics
     try:
         from .query_history import log_query
 
         user_id = getattr(req, "user_id", None)
         session_id = getattr(req, "session_id", None)
-        deck_size = len(req.deck.get("Main", [])) if isinstance(req.deck, dict) else 0
+        deck_size = sum(
+            card.get("count", 0)
+            for part in main_partitions(req.deck, main_partition_name(game))
+            for card in part.get("cards", [])
+        )
         log_query(
             endpoint="/v1/deck/complete",
             query=f"deck_completion_{req.game}",
@@ -650,10 +651,6 @@ def complete_deck(req: CompleteRequest):
         )
     except (ImportError, OSError):
         pass  # Non-fatal
-
-    game = _require_game(req.game)
-    state = get_state(game)
-    req.deck = _normalize_deck_format(req.deck, game)
 
     # Auto-detect archetype from seed deck if not explicitly set
     detected_archetype: str | None = None
@@ -704,7 +701,6 @@ def complete_deck(req: CompleteRequest):
     _ot_metrics: dict = {}
     quality_metrics = None
     if req.method == "ot":
-        from ..deck_building.deck_completion import _main_partition_name
         from ..deck_building.ot_completion import OTCompletionConfig, ot_complete_deck
 
         # Build card color identity map for Commander CI filtering
@@ -733,11 +729,9 @@ def complete_deck(req: CompleteRequest):
         # Detect role gaps for role-aware OT cost
         role_gaps: dict[str, int] | None = None
         if tag_set_fn:
-            part = _main_partition_name(game)
+            part = main_partition_name(game)
             role_counts: dict[str, int] = {}
-            for p in req.deck.get("partitions", []) or []:
-                if p.get("name") != part:
-                    continue
+            for p in main_partitions(req.deck, part):
                 for card in p.get("cards", []) or []:
                     tags = tag_set_fn(str(card.get("name", "")))
                     count = int(card.get("count", 1))
@@ -766,7 +760,7 @@ def complete_deck(req: CompleteRequest):
         steps = [
             {
                 "op": "add_card",
-                "partition": _main_partition_name(game),
+                "partition": main_partition_name(game),
                 "card": a["card"],
                 "count": a["count"],
             }
@@ -801,9 +795,12 @@ def complete_deck(req: CompleteRequest):
                 candidates = result
             return candidates
 
+        selected_cards: list[str] = []
         deck_out = beam_search_completion(
             initial_deck=req.deck,
-            candidate_fn=beam_candidate_fn,  # type: ignore[arg-type]
+            candidate_fn=cand_fn,
+            deck_candidate_fn=beam_candidate_fn,
+            selected_cards=selected_cards,
             config=cfg,
             beam_width=req.beam_width,
             tag_set_fn=tag_set_fn,
@@ -814,8 +811,10 @@ def complete_deck(req: CompleteRequest):
                 else req.curve_target
             ),
         )
-        # Extract steps from beam search (simplified - beam search doesn't track steps the same way)
-        steps: list[dict] = []  # Beam search doesn't return steps in same format
+        steps = [
+            {"op": "add_card", "partition": main_partition_name(game), "card": card, "count": 1}
+            for card in selected_cards
+        ]
         quality_metrics = None
     else:
         adj = state.graph_data.get("adj") if state.graph_data else None
