@@ -1,134 +1,46 @@
 #!/usr/bin/env python3
-"""
-Property-based tests for deck quality assessment.
+"""Quality scores and metadata for decks containing physical copies of tagged cards."""
 
-Tests invariants that quality scores should always satisfy:
-- Scores are in [0, 1] or reasonable bounded range
-- Monotonicity properties
-- Consistency properties
-"""
-
-from __future__ import annotations
-
-import pytest
 from hypothesis import given
 from hypothesis import strategies as st
 
-
-try:
-    from ..deck_building.deck_quality import assess_deck_quality
-
-    HAS_DECK_QUALITY = True
-except ImportError:
-    HAS_DECK_QUALITY = False
+from ..deck_building.deck_quality import assess_deck_quality
 
 
-@pytest.mark.skipif(not HAS_DECK_QUALITY, reason="deck_quality module not available")
-class TestDeckQualityProperties:
-    """Property-based tests for deck quality assessment."""
+TAGS = {"Forest": {"land", "mana"}, "Island": {"land"}, "Blank": set()}
+COUNTS = st.dictionaries(st.sampled_from(tuple(TAGS)), st.integers(1, 4))
 
-    @given(
-        deck=st.dictionaries(
-            keys=st.sampled_from(["partitions", "format", "game"]),
-            values=st.one_of(
-                st.lists(
-                    st.dictionaries(
-                        keys=st.sampled_from(["name", "cards"]),
-                        values=st.one_of(
-                            st.text(),
-                            st.lists(
-                                st.dictionaries(
-                                    keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(
-                                        st.text(), st.integers(min_value=1, max_value=4)
-                                    ),
-                                ),
-                                min_size=0,
-                                max_size=10,
-                            ),
-                        ),
-                    ),
-                    min_size=1,
-                    max_size=3,
-                ),
-                st.text(),
-            ),
-            min_size=1,
-        ).filter(lambda d: "partitions" in d),
-    )
-    def test_quality_scores_bounded(self, deck: dict):
-        """Quality scores should be in reasonable bounded range."""
-        try:
-            quality = assess_deck_quality(
-                deck=deck,
-                game="magic",
-                tag_set_fn=lambda c: set(),
-                cmc_fn=lambda c: None,
-            )
 
-            # Scores should be bounded (typically [0, 1] or [0, 10])
-            assert 0.0 <= quality.overall_score <= 10.0
-            assert 0.0 <= quality.mana_curve_score <= 10.0
-            assert 0.0 <= quality.tag_balance_score <= 10.0
-            assert 0.0 <= quality.synergy_score <= 10.0
-        except Exception:
-            # May fail for invalid decks, that's ok
-            pass
+def score(counts):
+    cards = [{"name": name, "count": count} for name, count in counts.items()]
+    deck = {
+        "partitions": [
+            {"name": "Main", "cards": cards},
+            {"name": "Sideboard", "cards": [{"name": "Forest", "count": 3}]},
+        ]
+    }
+    return assess_deck_quality(deck, "magic", TAGS.__getitem__, lambda name: 0)
 
-    @given(
-        deck=st.dictionaries(
-            keys=st.sampled_from(["partitions", "format"]),
-            values=st.one_of(
-                st.lists(
-                    st.dictionaries(
-                        keys=st.sampled_from(["name", "cards"]),
-                        values=st.one_of(
-                            st.text(),
-                            st.lists(
-                                st.dictionaries(
-                                    keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(
-                                        st.text(), st.integers(min_value=1, max_value=4)
-                                    ),
-                                ),
-                                min_size=0,
-                                max_size=10,
-                            ),
-                        ),
-                    ),
-                    min_size=1,
-                    max_size=2,
-                ),
-                st.text(),
-            ),
-            min_size=1,
-        ).filter(lambda d: "partitions" in d),
-    )
-    def test_quality_assessment_idempotent(self, deck: dict):
-        """Quality assessment should be idempotent (same deck, same scores)."""
-        try:
-            quality1 = assess_deck_quality(
-                deck=deck,
-                game="magic",
-                tag_set_fn=lambda c: set(),
-                cmc_fn=lambda c: None,
-            )
-            quality2 = assess_deck_quality(
-                deck=deck,
-                game="magic",
-                tag_set_fn=lambda c: set(),
-                cmc_fn=lambda c: None,
-            )
 
-            # Scores should be identical (within floating point tolerance)
-            import math
+@given(COUNTS)
+def test_quality_scores_bounded(counts):
+    quality = score(counts)
+    assert 0 <= quality.overall_score <= 10
+    assert 0 <= quality.mana_curve_score <= 1
+    assert 0 <= quality.tag_balance_score <= 1
+    assert 0 <= quality.synergy_score <= 1
+    total = sum(counts.values())
+    assert quality.num_cards == total
+    assert quality.num_unique_tags == len(set().union(*(TAGS[name] for name in counts)))
+    expected = sum(count * len(TAGS[name]) for name, count in counts.items())
+    assert quality.avg_tags_per_card == (expected / total if total else 0.0)
 
-            assert math.isclose(quality1.overall_score, quality2.overall_score, abs_tol=1e-6)
-            assert math.isclose(quality1.mana_curve_score, quality2.mana_curve_score, abs_tol=1e-6)
-            assert math.isclose(
-                quality1.tag_balance_score, quality2.tag_balance_score, abs_tol=1e-6
-            )
-            assert math.isclose(quality1.synergy_score, quality2.synergy_score, abs_tol=1e-6)
-        except Exception:
-            # May fail for invalid decks
-            pass
+
+@given(COUNTS)
+def test_quality_assessment_idempotent(counts):
+    assert score(counts) == score(counts)
+
+
+def test_tag_average_counts_copies_and_untagged_cards():
+    assert score({"Forest": 4}).avg_tags_per_card == 2
+    assert score({"Forest": 2, "Island": 1, "Blank": 1}).avg_tags_per_card == 1.25

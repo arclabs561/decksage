@@ -1,170 +1,136 @@
 #!/usr/bin/env python3
-"""
-Extended property-based tests for deck patching operations.
+"""Deck patches preserve stock, partitions, and untouched card data."""
 
-Tests additional invariants beyond test_patch_properties.py:
-- Total card count preservation (where applicable)
-- Partition structure preservation
-- Idempotency of certain operations
-"""
+from copy import deepcopy
 
-from __future__ import annotations
-
+import pytest
 from hypothesis import given
 from hypothesis import strategies as st
+from pydantic import ValidationError
 
-from ..deck_building.deck_patch import DeckPatch, DeckPatchOp, DeckPatchResult, apply_deck_patch
+from ..deck_building.deck_patch import DeckPatch, apply_deck_patch
 
 
-class TestDeckPatchExtendedProperties:
-    """Extended property-based tests for deck patching."""
+def make_deck(count):
+    return {
+        "deck_id": "example",
+        "partitions": [
+            {"name": "Main", "cards": [{"name": "Forest", "count": count, "set": "M10"}]}
+        ],
+    }
 
-    @given(
-        deck=st.fixed_dictionaries(
-            {
-                "partitions": st.lists(
-                    st.fixed_dictionaries(
-                        {
-                            "name": st.text(min_size=1, max_size=20),
-                            "cards": st.lists(
-                                st.fixed_dictionaries(
-                                    {
-                                        "name": st.text(min_size=1, max_size=30),
-                                        "count": st.integers(min_value=1, max_value=4),
-                                    }
-                                ),
-                                min_size=0,
-                                max_size=5,
-                            ),
-                        }
-                    ),
-                    min_size=1,
-                    max_size=3,
-                )
-            }
-        ),
-        card_name=st.text(min_size=1, max_size=30),
-        count=st.integers(min_value=1, max_value=4),
-    )
-    def test_add_card_preserves_partition_structure(self, deck: dict, card_name: str, count: int):
-        """Adding a card should preserve partition structure."""
-        partition_name = deck["partitions"][0].get("name", "Main")
 
-        patch = DeckPatch(
-            ops=[
-                DeckPatchOp(
-                    op="add_card",
-                    partition=partition_name,
-                    card=card_name,
-                    count=count,
-                )
-            ]
+def operation(op, count=1, **fields):
+    return {"op": op, "partition": "Main", "card": "Forest", "count": count, **fields}
+
+
+def apply(deck, *ops, game="magic"):
+    return apply_deck_patch(game, deck, DeckPatch(ops=ops))
+
+
+@given(st.integers(1, 8), st.integers(1, 8))
+def test_add_card_preserves_partition_structure(stock, count):
+    deck = make_deck(stock)
+    result = apply(deck, operation("add_card", count))
+    assert result.is_valid
+    assert result.deck == make_deck(stock + count)
+    assert deck == make_deck(stock)
+
+
+@given(st.integers(1, 8))
+def test_empty_patch_preserves_deck(stock):
+    result = apply(make_deck(stock))
+    assert result.is_valid
+    assert result.deck == make_deck(stock)
+
+
+@given(st.integers(1, 8))
+def test_remove_nonexistent_card_safe(stock):
+    result = apply(make_deck(stock), operation("remove_card", card="Absent"))
+    assert result.is_valid
+    assert result.deck == make_deck(stock)
+
+
+@given(st.integers(1, 8), st.integers(1, 8))
+def test_move_uses_only_available_copies(stock, count):
+    deck = make_deck(stock)
+    result = apply(deck, operation("move_card", count, target_partition="Sideboard"))
+    assert deck == make_deck(stock)
+    if count > stock:
+        assert not result.is_valid
+        assert result.errors
+        assert result.deck == deck
+    else:
+        assert result.is_valid
+        main, side = result.deck["partitions"]
+        assert main["cards"] == (
+            [{"name": "Forest", "count": stock - count, "set": "M10"}] if stock > count else []
         )
+        assert side == {
+            "name": "Sideboard",
+            "cards": [{"name": "Forest", "count": count, "set": "M10"}],
+        }
 
-        try:
-            result = apply_deck_patch("magic", deck, patch)
-            if result.is_valid and result.deck:
-                # Should have same partition names
-                original_partitions = {p.get("name") for p in deck.get("partitions", [])}
-                result_partitions = {p.get("name") for p in result.deck.get("partitions", [])}
-                assert original_partitions == result_partitions
-        except Exception:
-            # May fail for invalid decks, that's ok
-            pass
 
-    @given(
-        deck=st.dictionaries(
-            keys=st.sampled_from(["partitions", "format", "game"]),
-            values=st.one_of(
-                st.lists(
-                    st.dictionaries(
-                        keys=st.sampled_from(["name", "cards"]),
-                        values=st.one_of(
-                            st.text(),
-                            st.lists(
-                                st.dictionaries(
-                                    keys=st.sampled_from(["name", "count"]),
-                                    values=st.one_of(
-                                        st.text(), st.integers(min_value=0, max_value=4)
-                                    ),
-                                ),
-                                min_size=0,
-                                max_size=5,
-                            ),
-                        ),
-                    ),
-                    min_size=1,
-                    max_size=3,
-                ),
-                st.text(),
-            ),
-            min_size=1,
-        ).filter(lambda d: "partitions" in d),
+def test_move_across_printings_merges_only_matching_metadata():
+    deck = make_deck(1)
+    deck["partitions"][0]["cards"].append({"name": "Forest", "count": 2, "set": "M11"})
+    deck["partitions"].append(
+        {"name": "Sideboard", "cards": [{"name": "Forest", "count": 1, "set": "M11"}]}
     )
-    def test_empty_patch_preserves_deck(self, deck: dict):
-        """Applying empty patch should preserve deck structure."""
-        patch = DeckPatch(ops=[])
+    result = apply(deck, operation("move_card", 2, target_partition="Sideboard"))
+    assert result.is_valid
+    main, side = result.deck["partitions"]
+    assert main["cards"] == [{"name": "Forest", "count": 1, "set": "M11"}]
+    assert side["cards"] == [
+        {"name": "Forest", "count": 2, "set": "M11"},
+        {"name": "Forest", "count": 1, "set": "M10"},
+    ]
 
-        try:
-            result = apply_deck_patch("magic", deck, patch)
-            if result.is_valid and result.deck:
-                # Should have same structure
-                assert "partitions" in result.deck
-                assert len(result.deck.get("partitions", [])) == len(deck.get("partitions", []))
-        except Exception:
-            # May fail for invalid decks
-            pass
 
-    @given(
-        deck=st.fixed_dictionaries(
-            {
-                "partitions": st.lists(
-                    st.fixed_dictionaries(
-                        {
-                            "name": st.text(min_size=1, max_size=20),
-                            "cards": st.lists(
-                                st.fixed_dictionaries(
-                                    {
-                                        "name": st.text(min_size=1, max_size=30),
-                                        "count": st.integers(min_value=1, max_value=4),
-                                    }
-                                ),
-                                min_size=1,
-                                max_size=5,
-                            ),
-                        }
-                    ),
-                    min_size=1,
-                    max_size=2,
-                )
-            }
-        ),
-        card_name=st.text(min_size=1, max_size=30),
-    )
-    def test_remove_nonexistent_card_safe(self, deck: dict, card_name: str):
-        """Removing non-existent card should be safe (no crash)."""
-        partition_name = deck["partitions"][0].get("name", "Main")
+def test_replace_only_requested_copies():
+    result = apply(make_deck(4), operation("replace_card", 2, replacement_card="Island"))
+    assert result.is_valid
+    assert result.deck["partitions"][0]["cards"] == [
+        {"name": "Forest", "count": 2, "set": "M10"},
+        {"name": "Island", "count": 2},
+    ]
 
-        patch = DeckPatch(
-            ops=[
-                DeckPatchOp(
-                    op="remove_card",
-                    partition=partition_name,
-                    card=card_name,
-                    count=1,
-                )
-            ]
-        )
 
-        try:
-            result = apply_deck_patch("magic", deck, patch)
-            # Should not crash, may or may not be valid
-            assert isinstance(result, DeckPatchResult)
-        except (KeyError, TypeError, AttributeError):
-            # These are expected for malformed deck structures
-            # The test is about safety, not correctness
-            pass
-        except Exception:
-            # Other exceptions should be validation-related
-            # (some validation errors are expected)
-            pass
+@pytest.mark.parametrize(
+    "bad",
+    [
+        operation("move_card"),
+        operation("replace_card"),
+        operation("replace_card", 4, replacement_card="Island"),
+        operation("move_card", target_partition="Sideboard", partition="Missing"),
+    ],
+)
+def test_impossible_operation_returns_original_deck(bad):
+    deck = make_deck(1)
+    before = deepcopy(deck)
+    result = apply(deck, operation("add_card"), bad)
+    assert not result.is_valid
+    assert result.errors
+    assert result.deck == deck == before
+
+
+@pytest.mark.parametrize(
+    "op", [operation("move_card", 0), operation("remove_card", -1), operation("typo")]
+)
+def test_invalid_operation_is_rejected(op):
+    with pytest.raises(ValidationError):
+        DeckPatch(ops=[op])
+
+
+@pytest.mark.parametrize(("game", "limit"), [("magic", 4), ("pokemon", 4), ("yugioh", 3)])
+def test_copy_limit_includes_every_partition(game, limit):
+    deck = {
+        "partitions": [
+            {"name": name, "cards": [{"name": "Limited", "count": count}]}
+            for name, count in [("Main", limit), ("Sideboard", 1)]
+        ]
+    }
+    result = apply(deck, game=game)
+    assert not result.is_valid
+    assert f"{limit}-copy limit" in result.errors[0]

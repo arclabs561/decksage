@@ -1,9 +1,4 @@
-"""Tests for blended edgelist merge logic.
-
-Tests the merge of two edgelists with overlapping and non-overlapping edges,
-verifying edge counts and weight arithmetic. Tests the pattern used in
-scripts/integrate_functional_tags_training.py::merge_functional_edges_into_pairs.
-"""
+"""Exercise the production edgelist merger through its CSV output."""
 
 from __future__ import annotations
 
@@ -12,66 +7,13 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
+from ml.scripts.integrate_functional_tags_training import merge_functional_edges_into_pairs
+
 
 def _make_pairs_csv(pairs: list[tuple[str, str, int, int]], path: Path) -> None:
     """Write a pairs CSV with NAME_1, NAME_2, COUNT_SET, COUNT_MULTISET columns."""
     df = pd.DataFrame(pairs, columns=["NAME_1", "NAME_2", "COUNT_SET", "COUNT_MULTISET"])
     df.to_csv(path, index=False)
-
-
-def _merge_edgelists(
-    base_csv: Path,
-    functional_edges: list[tuple[str, str, float]],
-    output_csv: Path,
-    functional_weight: float = 3.0,
-) -> pd.DataFrame:
-    """
-    Merge functional similarity edges into a base pairs CSV.
-
-    Mirrors the logic from integrate_functional_tags_training.merge_functional_edges_into_pairs.
-    """
-    pairs_df = pd.read_csv(base_csv)
-
-    func_df = pd.DataFrame(functional_edges, columns=["NAME_1", "NAME_2", "FUNCTIONAL_SIMILARITY"])
-
-    # Normalize card names (sorted pair key)
-    func_df["PAIR_KEY"] = func_df.apply(
-        lambda row: tuple(sorted([row["NAME_1"], row["NAME_2"]])), axis=1
-    )
-    pairs_df["PAIR_KEY"] = pairs_df.apply(
-        lambda row: tuple(sorted([row["NAME_1"], row["NAME_2"]])), axis=1
-    )
-
-    # Merge
-    merged = pairs_df.merge(
-        func_df[["PAIR_KEY", "FUNCTIONAL_SIMILARITY"]],
-        on="PAIR_KEY",
-        how="left",
-    )
-
-    # Add new functional-only pairs
-    existing_keys = set(merged["PAIR_KEY"])
-    new_pairs = []
-    for _, row in func_df.iterrows():
-        if row["PAIR_KEY"] not in existing_keys:
-            new_pairs.append(
-                {
-                    "NAME_1": row["NAME_1"],
-                    "NAME_2": row["NAME_2"],
-                    "COUNT_SET": 0,
-                    "COUNT_MULTISET": 0,
-                    "FUNCTIONAL_SIMILARITY": row["FUNCTIONAL_SIMILARITY"],
-                    "PAIR_KEY": row["PAIR_KEY"],
-                }
-            )
-
-    if new_pairs:
-        new_df = pd.DataFrame(new_pairs)
-        merged = pd.concat([merged, new_df], ignore_index=True)
-
-    merged = merged.drop(columns=["PAIR_KEY"])
-    merged.to_csv(output_csv, index=False)
-    return merged
 
 
 class TestBlendedEdgelistMerge:
@@ -91,7 +33,8 @@ class TestBlendedEdgelistMerge:
         ]
 
         output = tmp_path / "merged.csv"
-        merged = _merge_edgelists(base_csv, functional_edges, output)
+        merge_functional_edges_into_pairs(base_csv, functional_edges, output)
+        merged = pd.read_csv(output)
 
         # Same number of rows (one overlap, no new)
         assert len(merged) == 2
@@ -121,7 +64,8 @@ class TestBlendedEdgelistMerge:
         ]
 
         output = tmp_path / "merged.csv"
-        merged = _merge_edgelists(base_csv, functional_edges, output)
+        merge_functional_edges_into_pairs(base_csv, functional_edges, output)
+        merged = pd.read_csv(output)
 
         # 1 original + 1 new
         assert len(merged) == 2
@@ -142,7 +86,8 @@ class TestBlendedEdgelistMerge:
         _make_pairs_csv(base_pairs, base_csv)
 
         output = tmp_path / "merged.csv"
-        merged = _merge_edgelists(base_csv, [], output)
+        merge_functional_edges_into_pairs(base_csv, [], output)
+        merged = pd.read_csv(output)
 
         assert len(merged) == 2
         # All functional similarity should be NaN
@@ -162,7 +107,8 @@ class TestBlendedEdgelistMerge:
         ]
 
         output = tmp_path / "merged.csv"
-        merged = _merge_edgelists(base_csv, functional_edges, output)
+        merge_functional_edges_into_pairs(base_csv, functional_edges, output)
+        merged = pd.read_csv(output)
 
         # Should merge in-place, not add a new row
         assert len(merged) == 1
@@ -186,7 +132,8 @@ class TestBlendedEdgelistMerge:
         ]
 
         output = tmp_path / "merged.csv"
-        merged = _merge_edgelists(base_csv, functional_edges, output)
+        merge_functional_edges_into_pairs(base_csv, functional_edges, output)
+        merged = pd.read_csv(output)
 
         # 3 original + 2 new = 5
         assert len(merged) == 5
@@ -203,7 +150,7 @@ class TestBlendedEdgelistMerge:
         functional_edges = [("Card C", "Card D", 0.7)]
 
         output = tmp_path / "merged.csv"
-        _merge_edgelists(base_csv, functional_edges, output)
+        merge_functional_edges_into_pairs(base_csv, functional_edges, output)
 
         # Read back
         reloaded = pd.read_csv(output)
