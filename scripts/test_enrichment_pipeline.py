@@ -3,9 +3,9 @@
 Run manually if needed: uv run python test_enrichment_pipeline.py
 """
 
-import json
-from pathlib import Path
 import sys
+from pathlib import Path
+
 
 # Add src/ml to path
 sys.path.insert(0, str(Path(__file__).parent / "src" / "ml"))
@@ -17,16 +17,6 @@ def test_mtg_enrichment():
     print("MTG ENRICHMENT TEST")
     print("=" * 60)
     # Sample MTG card
-    sample_card = {
-        "name": "Lightning Bolt",
-        "faces": [
-            {
-                "mana_cost": "{R}",
-                "type_line": "Instant",
-                "oracle_text": "Lightning Bolt deals 3 damage to any target.",
-            }
-        ],
-    }
     # Test functional tagger
     print("\n1. Functional Tagging (Rule-based):")
     from card_functional_tagger import FunctionalTagger
@@ -47,8 +37,8 @@ def test_mtg_enrichment():
     from card_market_data import MarketDataManager
 
     try:
-        manager = MarketDataManager()
-        print(f" Loaded price cache")
+        MarketDataManager()
+        print(" Loaded price cache")
         print(" Market data system operational")
     except Exception as e:
         print(f" Warning: Market data unavailable: {e}")
@@ -57,7 +47,7 @@ def test_mtg_enrichment():
     try:
         from llm_semantic_enricher import LLMSemanticEnricher
 
-        enricher = LLMSemanticEnricher()
+        LLMSemanticEnricher()
         print(" LLM enricher initialized (API key present)")
         print(" (Skipping actual LLM call to save cost)")
     except Exception as e:
@@ -111,7 +101,7 @@ def test_pokemon_enrichment():
     try:
         from llm_semantic_enricher import LLMSemanticEnricher
 
-        enricher = LLMSemanticEnricher()
+        LLMSemanticEnricher()
         print(" LLM enricher initialized")
         print(" (Skipping actual LLM call to save cost)")
     except Exception as e:
@@ -149,7 +139,7 @@ def test_yugioh_enrichment():
     try:
         from llm_semantic_enricher import LLMSemanticEnricher
 
-        enricher = LLMSemanticEnricher()
+        LLMSemanticEnricher()
         print(" LLM enricher initialized")
         print(" (Skipping actual LLM call to save cost)")
     except Exception as e:
@@ -162,13 +152,13 @@ def test_unified_pipeline():
     print("\n" + "=" * 60)
     print("UNIFIED PIPELINE TEST")
     print("=" * 60)
-    from unified_enrichment_pipeline import UnifiedEnrichmentPipeline, EnrichmentLevel
+    from unified_enrichment_pipeline import EnrichmentLevel, UnifiedEnrichmentPipeline
 
     # Test pipeline initialization for all games
     for game in ["mtg", "pokemon", "yugioh"]:
         print(f"\n{game.upper()}:")
         try:
-            pipeline = UnifiedEnrichmentPipeline(game, EnrichmentLevel.BASIC)
+            UnifiedEnrichmentPipeline(game, EnrichmentLevel.BASIC)
             print(f" Pipeline initialized for {game}")
         except Exception as e:
             print(f" Error: Failed to initialize {game}: {e}")
@@ -183,9 +173,9 @@ def test_vision_enricher():
     print("VISION ENRICHER TEST")
     print("=" * 60)
     try:
-        from vision_card_enricher import VisionCardEnricher, SmartCardSampler
+        from vision_card_enricher import SmartCardSampler, VisionCardEnricher
 
-        enricher = VisionCardEnricher()
+        VisionCardEnricher()
         print(" Vision enricher initialized")
         # Test smart sampler
         sample_cards = [{"name": f"Card{i}", "rarity": "rare"} for i in range(100)]

@@ -9,15 +9,14 @@
 """Integrate Functional Tags into Training Pipeline. Adds functional similarity edges based on shared functional tags. Cards with similar functional roles get higher edge weights."""
 
 from __future__ import annotations
+
 import argparse
-import json
 import logging
-from collections import defaultdict
 from pathlib import Path
-from typing import Any
+
 
 try:
-    from ..utils.logging_config import setup_script_logging, log_exception
+    from ..utils.logging_config import log_exception, setup_script_logging
 
     logger = setup_script_logging()
 except ImportError:
@@ -30,7 +29,6 @@ except ImportError:
 
 try:
     import pandas as pd
-    import numpy as np
 
     HAS_DEPS = True
 except ImportError as e:

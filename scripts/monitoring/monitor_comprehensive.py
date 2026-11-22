@@ -5,6 +5,7 @@ import json
 import time
 from pathlib import Path
 
+
 print("=" * 70)
 print("COMPREHENSIVE MONITOR")
 print("=" * 70)
@@ -41,7 +42,7 @@ for game, path in test_sets.items():
         with open(p) as f:
             data = json.load(f)
         queries = data.get("queries", data) if isinstance(data, dict) else data
-        size = len(queries) if isinstance(queries, dict) else len(queries)
+        size = len(queries)
         status = " RECENT" if age_min < 10 else " STABLE"
         print(f" {status} {game}: {size} queries ({age_min:.1f} min ago)")
     else:

@@ -14,14 +14,15 @@ between co-occurrence and functional similarity performance.
 """
 
 from __future__ import annotations
+
 import argparse
 import json
 from pathlib import Path
-from typing import Any
+
 
 try:
-    import pandas as pd
     import numpy as np
+    import pandas as pd
     from gensim.models import KeyedVectors
 
     HAS_DEPS = True
@@ -43,7 +44,6 @@ def evaluate_embedding_quick(
         return {}
     from ml.utils.evaluation import (
         compute_precision_at_k,
-        compute_recall_at_k,
     )
 
     results = {}

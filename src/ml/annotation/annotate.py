@@ -15,8 +15,10 @@ import json
 import random
 from collections import defaultdict
 from pathlib import Path
+
 import pandas as pd
 import yaml
+
 
 try:
     from gensim.models import KeyedVectors

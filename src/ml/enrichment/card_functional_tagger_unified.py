@@ -5,23 +5,21 @@ Provides a single interface to access functional tags across all supported games
 """
 
 import json
-from pathlib import Path
-from typing import Dict, Optional
 from dataclasses import asdict
+from pathlib import Path
+
 from .card_functional_tagger_pokemon import (
     PokemonFunctionalTagger,
-    PokemonFunctionalTags,
 )
 from .card_functional_tagger_yugioh import (
     YugiohFunctionalTagger,
-    YugiohFunctionalTags,
 )
 
 
 class UnifiedFunctionalTagger:
     """Unified interface for multi-game functional tagging"""
 
-    def __init__(self, base_path: Path = None):
+    def __init__(self, base_path: Path | None = None):
         """Initialize taggers for all games"""
         if base_path is None:
             base_path = Path(__file__).parent.parent.parent
@@ -33,7 +31,7 @@ class UnifiedFunctionalTagger:
         print(f"Loaded {len(self.pokemon_cache)} Pokemon tags from cache")
         print(f"Loaded {len(self.yugioh_cache)} Yu-Gi-Oh! tags from cache")
 
-    def _load_tag_cache(self, filename: str) -> Dict[str, Dict]:
+    def _load_tag_cache(self, filename: str) -> dict[str, dict]:
         """Load pre-computed tags from cache"""
         cache_path = Path(__file__).parent / filename
         if not cache_path.exists():
@@ -46,7 +44,7 @@ class UnifiedFunctionalTagger:
             print(f"Warning: Could not load tag cache {filename}: {e}")
             return {}
 
-    def get_tags(self, card_name: str, game: str) -> Optional[Dict]:
+    def get_tags(self, card_name: str, game: str) -> dict | None:
         """Get functional tags for a card in any game"""
         game = game.lower()
         if game == "magic" or game == "mtg":
@@ -70,7 +68,7 @@ class UnifiedFunctionalTagger:
         else:
             raise ValueError(f"Unsupported game: {game}")
 
-    def get_deck_tags(self, deck_cards: list[str], game: str) -> Dict[str, Dict]:
+    def get_deck_tags(self, deck_cards: list[str], game: str) -> dict[str, dict]:
         """Get tags for all cards in a deck"""
         return {card: self.get_tags(card, game) for card in deck_cards}
 
@@ -83,7 +81,7 @@ class UnifiedFunctionalTagger:
                 result.append(card)
         return result
 
-    def get_role_distribution(self, deck_cards: list[str], game: str) -> Dict[str, int]:
+    def get_role_distribution(self, deck_cards: list[str], game: str) -> dict[str, int]:
         """Get the distribution of roles in a deck"""
         role_counts = {}
         for card in deck_cards:

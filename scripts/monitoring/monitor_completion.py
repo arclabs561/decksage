@@ -36,7 +36,7 @@ def check_test_sets_complete():
             with open(p) as f:
                 data = json.load(f)
             queries = data.get("queries", data) if isinstance(data, dict) else data
-            current = len(queries) if isinstance(queries, dict) else len(queries)
+            current = len(queries)
             if current < target:
                 all_complete = False
         else:

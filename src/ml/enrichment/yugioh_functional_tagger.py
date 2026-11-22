@@ -14,10 +14,8 @@ Functional roles:
 """
 
 import json
-import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -252,7 +250,7 @@ class YugiohFunctionalTagger:
             tags.uses_counters = True
         return tags
 
-    def tag_deck_cards(self, deck_cards: List[dict]) -> Dict[str, YugiohFunctionalTags]:
+    def tag_deck_cards(self, deck_cards: list[dict]) -> dict[str, YugiohFunctionalTags]:
         """Tag all cards in a deck"""
         result = {}
         for card_data in deck_cards:
@@ -261,7 +259,7 @@ class YugiohFunctionalTagger:
                 result[name] = self.tag_card(card_data)
         return result
 
-    def export_tags(self, cards_data: List[dict], output_path: Path):
+    def export_tags(self, cards_data: list[dict], output_path: Path):
         """Export all tags for YGO cards"""
         print(f"Tagging {len(cards_data)} YGO cards...")
         results = []

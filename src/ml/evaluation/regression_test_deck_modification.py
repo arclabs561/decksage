@@ -11,11 +11,13 @@ Usage:
 """
 
 from __future__ import annotations
-import json
+
 import argparse
+import json
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from dataclasses import dataclass
+
 
 try:
     import requests
@@ -87,7 +89,7 @@ class DeckModificationRegressionTester:
                 if card in api_actions:
                     # Card was suggested - check if it's in top results
                     api_action = api_actions[card]
-                    actual_score = api_action.get("score", 0.0)
+                    api_action.get("score", 0.0)
                     # For now, just check if card appears (would need LLM to judge actual quality)
                     results.append(
                         RegressionResult(
@@ -114,7 +116,7 @@ class DeckModificationRegressionTester:
                                 passed=False,
                             )
                         )
-        except Exception as e:
+        except Exception:
             results.append(
                 RegressionResult(
                     test_case=test_case["name"],
@@ -191,7 +193,7 @@ class DeckModificationRegressionTester:
                                 passed=False,
                             )
                         )
-        except Exception as e:
+        except Exception:
             results.append(
                 RegressionResult(
                     test_case=test_case["name"],
@@ -267,7 +269,7 @@ def main():
         print(f"✓ Results saved to {args.output}")
     else:
         print(json.dumps(results, indent=2))
-    print(f"\n Regression Test Summary:")
+    print("\n Regression Test Summary:")
     print(f" Total: {results['total_tests']}")
     print(f" Passed: {results['passed']}")
     print(f" Failed: {results['failed']}")

@@ -6,10 +6,11 @@
 """Convert labeled similarity annotations to substitution pairs for training."""
 
 from __future__ import annotations
+
 import argparse
-import logging
 import sys
 from pathlib import Path
+
 
 # Add src to path for imports
 _script_file = Path(__file__).resolve()
@@ -21,6 +22,7 @@ from ml.utils.annotation_utils import (
     load_similarity_annotations,
 )
 from ml.utils.logging_config import setup_script_logging
+
 
 logger = setup_script_logging()
 

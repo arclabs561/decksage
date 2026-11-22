@@ -9,12 +9,14 @@
 """Evaluate instruction-tuned embeddings (zero-shot vs fine-tuned) on downstream tasks. Compares: - Zero-shot E5-base-v2 (baseline) - Fine-tuned models per task - Task-specific instruction selection impact"""
 
 from __future__ import annotations
+
 import argparse
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import Any
-import sys
+
 
 _script_file = Path(__file__).resolve()
 _src_dir = _script_file.parent.parent / "src"
@@ -22,9 +24,11 @@ if str(_src_dir) not in sys.path:
     sys.path.insert(0, str(_src_dir))
 from typing import TYPE_CHECKING
 
+
 if TYPE_CHECKING:
     from ml.similarity.instruction_tuned_embeddings import InstructionTunedCardEmbedder
 from ml.utils.paths import PATHS
+
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger(__name__)
@@ -189,7 +193,7 @@ def main() -> int:
             logger.info(f" MRR: {ft['mrr']:.4f}")
         if "improvement" in results:
             imp = results["improvement"]
-            logger.info(f"Improvement:")
+            logger.info("Improvement:")
             logger.info(f" P@10: {imp['p_at_10_delta']:+.4f} ({imp['p_at_10_percent']:+.2f}%)")
             logger.info(f" MRR: {imp['mrr_delta']:+.4f} ({imp['mrr_percent']:+.2f}%)")
         # Save results

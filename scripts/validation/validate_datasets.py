@@ -16,13 +16,13 @@ Checks:
 """
 
 from __future__ import annotations
+
 import argparse
 import csv
 import json
 import sys
 from collections import Counter
 from pathlib import Path
-from typing import Any
 
 
 def card_names(path: Path) -> set[str]:
@@ -165,7 +165,7 @@ def check_multi_game_claim(pairs_csv: Path) -> list[str]:
     unique_games = {g for g in games.keys() if g}
     if len(unique_games) <= 1:
         issues.append(f"File named 'multi_game' but only contains: {unique_games}")
-        issues.append(f" Consider renaming to reflect single-game content")
+        issues.append(" Consider renaming to reflect single-game content")
     else:
         print(f" Found games: {sorted(unique_games)}")
     return issues

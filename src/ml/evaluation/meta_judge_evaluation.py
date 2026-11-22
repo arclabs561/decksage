@@ -10,14 +10,14 @@ This system:
 """
 
 from __future__ import annotations
+
 import json
-from dataclasses import dataclass, asdict
+
+# Import PATHS directly to avoid pandas dependency
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Any
 
-# Import PATHS directly to avoid pandas dependency
-import sys
-from pathlib import Path
 
 try:
     from ..utils.paths import PATHS
@@ -326,74 +326,14 @@ class MetaJudgeEvaluator:
 
     def evaluate_all_judges(self) -> dict[str, Any]:
         """Evaluate all judge prompts."""
-        analyses = []
-        # Analyze deck modification judge
-        try:
-            from ml.evaluation.deck_modification_judge import make_deck_modification_judge_agent
+        from .improved_judge_prompts import DECK_MODIFICATION_JUDGE_PROMPT, SIMILARITY_JUDGE_PROMPT
 
-            HAS_DECK_MOD_JUDGE = True
-        except ImportError:
-            HAS_DECK_MOD_JUDGE = False
-        try:
-            from pydantic_ai import Agent
-
-            HAS_PYDANTIC_AI = True
-        except ImportError:
-            HAS_PYDANTIC_AI = False
-        if HAS_PYDANTIC_AI and HAS_DECK_MOD_JUDGE:
-            try:
-                agent = make_deck_modification_judge_agent()
-                if agent:
-                    # Get the system prompt (would need to extract from agent)
-                    # For now, use the prompt from the function
-                    prompt_text = """You are an expert TCG judge evaluating deck modification suggestions.
-Your task is to evaluate suggestions based on:
-1. Relevance: How appropriate is this suggestion for the deck/archetype?
-2. Explanation Quality: Is the reasoning clear and accurate?
-3. Archetype Match: Does it fit the archetype? (if archetype provided)
-4. Role Fit: Does it fill a needed role? (if role gap identified)
-Rate each dimension 0-4:
-- 0: Completely wrong/inappropriate
-- 1: Weak/partially appropriate
-- 2: Moderate/generally appropriate
-- 3: Strong/very appropriate
-- 4: Perfect/ideal suggestion
-Be critical but fair. Consider format legality, budget constraints, and deck context."""
-                    analysis = self.analyze_judge_prompt(
-                        prompt_text,
-                        "deck_modification_judge",
-                        "add",  # Primary task
-                    )
-                    analyses.append(analysis)
-            except Exception as e:
-                pass
-        # Analyze similarity judge
-        try:
-            from ml.annotation.llm_judge_batch import make_judge_agent
-
-            HAS_SIMILARITY_JUDGE = True
-        except ImportError:
-            HAS_SIMILARITY_JUDGE = False
-        if HAS_PYDANTIC_AI and HAS_SIMILARITY_JUDGE:
-            try:
-                agent = make_judge_agent()
-                if agent:
-                    prompt_text = """You are an expert TCG judge evaluating card similarity.
-Given a query card and candidate card, judge similarity on 0-4 scale:
-4: Extremely similar (near substitutes, same function)
-3: Very similar (often seen together, similar role)
-2: Somewhat similar (related function or archetype)
-1: Marginally similar (loose connection)
-0: Irrelevant (different function, color, or archetype)
-Be consistent and provide clear reasoning."""
-                    analysis = self.analyze_judge_prompt(
-                        prompt_text,
-                        "similarity_judge",
-                        "similarity",
-                    )
-                    analyses.append(analysis)
-            except Exception as e:
-                pass
+        analyses = [
+            self.analyze_judge_prompt(
+                DECK_MODIFICATION_JUDGE_PROMPT, "deck_modification_judge", "add"
+            ),
+            self.analyze_judge_prompt(SIMILARITY_JUDGE_PROMPT, "similarity_judge", "similarity"),
+        ]
         # Create calibration tests
         calibration_tests = self.create_calibration_tests()
         return {
@@ -445,7 +385,7 @@ def main():
         if analysis["calibration_issues"]:
             print(f" ⚠ Calibration: {analysis['calibration_issues'][0]}")
         if analysis["recommended_changes"]:
-            print(f" Recommendations:")
+            print(" Recommendations:")
             for rec in analysis["recommended_changes"]:
                 print(f" - {rec}")
     print(f"\n✓ Results saved to {output_path}")

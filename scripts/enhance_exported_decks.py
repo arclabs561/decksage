@@ -15,12 +15,11 @@ Fixes:
 """
 
 from __future__ import annotations
+
 import argparse
 import json
-import re
 import sys
 import unicodedata
-from collections import defaultdict
 from html import unescape
 from pathlib import Path
 from typing import Any

@@ -6,10 +6,8 @@ Assigns functional roles to Pokemon cards based on attacks, abilities, and types
 
 import json
 import subprocess
-import tempfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -46,13 +44,13 @@ class PokemonFunctionalTags:
 class PokemonFunctionalTagger:
     """Tags Pokemon cards with functional roles"""
 
-    def __init__(self, card_data_path: Path = None):
+    def __init__(self, card_data_path: Path | None = None):
         """Initialize with card data from pokemontcg-data source"""
         self.card_db = {}
         if card_data_path:
             self.card_db = self._load_card_database(card_data_path)
 
-    def _load_card_database(self, base_path: Path) -> Dict[str, Dict]:
+    def _load_card_database(self, base_path: Path) -> dict[str, dict]:
         """Load Pokemon cards from integration_test_tmp (with zstd decompression)"""
         cards = {}
         # Path to our extracted cards (note: double games/ nesting from blob storage)
@@ -76,13 +74,13 @@ class PokemonFunctionalTagger:
                 )
                 card_data = json.loads(result.stdout)
                 cards[card_data["name"]] = card_data
-            except Exception as e:
+            except Exception:
                 # Skip files that can't be decompressed
                 continue
         print(f"Loaded {len(cards)} Pokemon cards")
         return cards
 
-    def tag_card(self, card_name: str, card_data: Dict = None) -> PokemonFunctionalTags:
+    def tag_card(self, card_name: str, card_data: dict | None = None) -> PokemonFunctionalTags:
         """Tag a Pokemon card with functional roles"""
         tags = PokemonFunctionalTags(card_name=card_name)
         if card_data is None:
@@ -94,7 +92,7 @@ class PokemonFunctionalTagger:
         attacks = card_data.get("attacks", []) or []
         abilities = card_data.get("abilities", []) or []
         supertype = card_data.get("supertype", "").lower()
-        subtypes = [st.lower() for st in (card_data.get("subtypes") or [])]
+        [st.lower() for st in (card_data.get("subtypes") or [])]
         # Skip non-Pokemon cards
         if supertype != "pokémon":
             return tags
@@ -102,7 +100,7 @@ class PokemonFunctionalTagger:
         try:
             hp_val = int(hp) if hp else 0
             tags.tank = hp_val >= 200
-        except:
+        except (ValueError, TypeError):
             pass
         # Analyze attacks
         max_damage = 0
@@ -115,7 +113,7 @@ class PokemonFunctionalTagger:
                     # Handle formats like "120", "120+", "120×"
                     damage = int("".join(filter(str.isdigit, damage_str)))
                     max_damage = max(max_damage, damage)
-            except:
+            except (ValueError, TypeError):
                 pass
             # Attack type classification
             if "each of your opponent" in attack_text or "to each" in attack_text:
@@ -126,7 +124,7 @@ class PokemonFunctionalTagger:
                 tags.mill = True
             if "switch" in attack_text or "retreat" in attack_text:
                 tags.switch_effect = True
-            if "heal" in attack_text or "remove" in attack_text and "damage" in attack_text:
+            if "heal" in attack_text or ("remove" in attack_text and "damage" in attack_text):
                 tags.healing = True
             if (
                 "discard" in attack_text
@@ -161,17 +159,15 @@ class PokemonFunctionalTagger:
             if "tool" in ability_text or "pokemon tool" in ability_text:
                 tags.tool_support = True
             if (
-                "retreat" in ability_text
-                and "free" in ability_text
-                or "retreat cost" in ability_text
-            ):
+                "retreat" in ability_text and "free" in ability_text
+            ) or "retreat cost" in ability_text:
                 tags.switch_effect = True
         # Stall/mill win condition heuristics
         if tags.mill or (tags.healing and tags.tank):
             tags.stall_win_con = True
         return tags
 
-    def tag_deck_cards(self, deck_cards: List[str]) -> Dict[str, PokemonFunctionalTags]:
+    def tag_deck_cards(self, deck_cards: list[str]) -> dict[str, PokemonFunctionalTags]:
         """Tag all cards in a deck"""
         result = {}
         for card_name in deck_cards:

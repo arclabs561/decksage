@@ -28,6 +28,7 @@ from typing import Any
 import pandas as pd
 import yaml
 
+
 try:
     from gensim.models import KeyedVectors
 
@@ -343,9 +344,9 @@ def create_annotation_batch(
     print(f"✓ Created annotation batch: {output_file}")
     print(f"   Queries: {len(tasks)}")
     print(f"   Total candidates: {sum(len(t['candidates']) for t in tasks)}")
-    print(f"\n📝 Next steps:")
+    print("\n📝 Next steps:")
     print(f"   1. Open {output_file} in text editor")
-    print(f"   2. For each candidate, set relevance (0-4) and add notes")
+    print("   2. For each candidate, set relevance (0-4) and add notes")
     print(f"   3. Run: python hand_annotate.py grade --input {output_file}")
 
     return output_file
@@ -586,10 +587,10 @@ def main() -> int:
             print(f"\n❌ Incomplete: {stats['ungraded_candidates']} candidates still need grading")
             return 1
         elif stats["validation_errors"]:
-            print(f"\n⚠️  Has validation errors, but all candidates graded")
+            print("\n⚠️  Has validation errors, but all candidates graded")
             return 1
         else:
-            print(f"\n✓ All annotations complete and valid!")
+            print("\n✓ All annotations complete and valid!")
             return 0
 
     elif args.command == "merge":

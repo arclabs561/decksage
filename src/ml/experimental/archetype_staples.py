@@ -8,11 +8,12 @@ Answer: Cards appearing in 70%+ of Burn decks.
 """
 
 import json
-from collections import Counter, defaultdict
-from pathlib import Path
 
 # Use PATHS for canonical paths
 import sys
+from collections import Counter, defaultdict
+from pathlib import Path
+
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from utils.paths import PATHS

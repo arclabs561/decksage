@@ -2,11 +2,14 @@
 """Deck Quality Validation Validates that deck completion produces high-quality decks. Part of T0.2 foundation refinement."""
 
 from __future__ import annotations
+
 import json
 import logging
-from dataclasses import dataclass, asdict
+from collections.abc import Callable
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
+
 from ..deck_building.deck_completion import CompletionConfig, greedy_complete
 from ..deck_building.deck_quality import (
     DeckQualityMetrics,
@@ -14,6 +17,7 @@ from ..deck_building.deck_quality import (
 )
 from ..utils.data_loading import load_decks_jsonl
 from ..utils.paths import PATHS
+
 
 logger = logging.getLogger(__name__)
 
@@ -25,9 +29,9 @@ class CompletionTestCase:
     name: str
     incomplete_deck: dict[str, Any]
     game: str
-    archetype: Optional[str] = None
-    format: Optional[str] = None
-    target_size: Optional[int] = None
+    archetype: str | None = None
+    format: str | None = None
+    target_size: int | None = None
     expected_quality_min: float = 6.0
     # Minimum score on the 0-10 scale
 
@@ -40,13 +44,13 @@ class CompletionResult:
     completed_deck: dict[str, Any]
     quality_metrics: DeckQualityMetrics | None
     success: bool
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def load_reference_decks(
     game: str,
-    archetype: Optional[str] = None,
-    format: Optional[str] = None,
+    archetype: str | None = None,
+    format: str | None = None,
     limit: int = 50,
 ) -> list[dict[str, Any]]:
     """Load reference tournament decks for quality comparison."""
@@ -105,9 +109,9 @@ def create_test_cases(
 def run_completion_test(
     test_case: CompletionTestCase,
     similarity_fn: Callable[[str, int], list[tuple[str, float]]],
-    tag_set_fn: Optional[Callable[[str], set[str]]] = None,
-    cmc_fn: Optional[Callable[[str], Optional[int]]] = None,
-    price_fn: Optional[Callable[[str], Optional[float]]] = None,
+    tag_set_fn: Callable[[str], set[str]] | None = None,
+    cmc_fn: Callable[[str], int | None] | None = None,
+    price_fn: Callable[[str], float | None] | None = None,
 ) -> CompletionResult:
     """Run a single deck completion test. Args: test_case: Test case to run similarity_fn: Function (query, k) -> [(card, score), ...] tag_set_fn: Function to get functional tags for a card cmc_fn: Function to get CMC for a card price_fn: Function to get price for a card Returns: CompletionResult with quality metrics"""
     try:
@@ -176,10 +180,10 @@ def run_completion_test(
 def validate_deck_completion(
     game: str = "magic",
     num_test_cases: int = 10,
-    similarity_fn: Optional[Callable[[str, int], list[tuple[str, float]]]] = None,
-    tag_set_fn: Optional[Callable[[str], set[str]]] = None,
-    cmc_fn: Optional[Callable[[str], Optional[int]]] = None,
-    price_fn: Optional[Callable[[str], Optional[float]]] = None,
+    similarity_fn: Callable[[str, int], list[tuple[str, float]]] | None = None,
+    tag_set_fn: Callable[[str], set[str]] | None = None,
+    cmc_fn: Callable[[str], int | None] | None = None,
+    price_fn: Callable[[str], float | None] | None = None,
 ) -> dict[str, Any]:
     """Validate deck completion produces high-quality decks. Returns validation results with success rate and quality metrics."""
     # Create test cases
@@ -204,11 +208,15 @@ def validate_deck_completion(
         and (tag_set_fn is None or cmc_fn is None)
     ):
         import csv
+
         from ..scripts.integrate_functional_tags_training import load_functional_tags
 
         if tag_set_fn is None:
             tags = load_functional_tags(PATHS.card_attributes)
-            tag_set_fn = lambda name: tags.get(name, set())
+
+            def tag_set_fn(name):
+                return tags.get(name, set())
+
         if cmc_fn is None:
             mana_values = {}
             with PATHS.card_attributes.open() as stream:

@@ -3,11 +3,9 @@
 
 import sys
 from pathlib import Path
+
 from dotenv import load_dotenv
 
-# Load .env from project root
-load_dotenv(Path(__file__).parent.parent.parent / ".env")
-from llm_judge import LLMJudge
 
 # Test queries based on existing data
 test_queries = {
@@ -36,6 +34,12 @@ test_queries = {
 
 
 def main():
+    load_dotenv(Path(__file__).resolve().parents[3] / ".env")
+    if __package__:
+        from .llm_judge import LLMJudge
+    else:
+        from llm_judge import LLMJudge
+    failures = 0
     print("🧪 Testing LLM Judge v2 (Pydantic AI + OpenAI)\n")
     print("=" * 70)
     try:
@@ -68,10 +72,11 @@ def main():
             import traceback
 
             traceback.print_exc()
+            failures += 1
             continue
     print("\n" + "=" * 70)
     print(" LLM Judge v2 test complete!")
-    return 0
+    return int(failures > 0)
 
 
 if __name__ == "__main__":

@@ -5,14 +5,17 @@ Uses LLM to evaluate deck modification suggestions and generate ground truth ann
 """
 
 from __future__ import annotations
+
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
 
 try:
     from pydantic import BaseModel, Field
     from pydantic_ai import Agent
+
     from ..utils.pydantic_ai_helpers import get_default_model
 
     HAS_PYDANTIC_AI = True
@@ -21,8 +24,6 @@ except ImportError:
     BaseModel = None
     Field = None
 # Import PATHS directly to avoid pandas dependency
-import sys
-from pathlib import Path
 
 try:
     from ..utils.paths import PATHS

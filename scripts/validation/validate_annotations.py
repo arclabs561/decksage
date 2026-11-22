@@ -8,25 +8,19 @@
 """Validate annotation quality and consistency. Checks: - Format correctness (JSONL, YAML, JSON) - Duplicate detection - Coverage analysis (test set alignment) - Quality metrics (similarity score distribution, etc.)"""
 
 from __future__ import annotations
+
 import argparse
 import json
 import logging
-from collections import Counter
+import sys
 from pathlib import Path
 from typing import Any
 
-try:
-    import yaml
-
-    HAS_YAML = True
-except ImportError:
-    HAS_YAML = False
-import sys
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 from ml.utils.annotation_utils import load_similarity_annotations
-from ml.utils.data_loading import load_test_set
 from ml.utils.paths import PATHS
+
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)

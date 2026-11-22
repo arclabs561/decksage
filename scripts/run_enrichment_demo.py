@@ -7,6 +7,7 @@ Demonstrates all enrichment systems with real examples from each game.
 import sys
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).parent / "src" / "ml"))
 print("\n" + "=" * 80)
 print(" " * 20 + "LIVE ENRICHMENT DEMO")
@@ -18,6 +19,7 @@ print("=" * 80)
 print("MTG: Lightning Bolt")
 print("=" * 80)
 from card_functional_tagger import FunctionalTagger
+
 
 tagger = FunctionalTagger()
 tags = tagger.tag_card(
@@ -56,7 +58,7 @@ try:
     print(f" Strategy: {features.strategy_summary}")
     print(f" Synergies: {', '.join(features.synergies[:3])}")
     print(f" LLM confidence: {features.llm_confidence:.2f}")
-    print(f" Cost: ~$0.002")
+    print(" Cost: ~$0.002")
 except Exception as e:
     print(f" Warning: Skipped (API error or no key): {e}")
 # ==============================================================================
@@ -66,6 +68,7 @@ print("\n" + "=" * 80)
 print("POKEMON: Charizard ex")
 print("=" * 80)
 from pokemon_functional_tagger import PokemonFunctionalTagger
+
 
 pokemon_tagger = PokemonFunctionalTagger()
 charizard = {
@@ -111,7 +114,7 @@ try:
     print(f" Complexity: {features.complexity}/5")
     print(f" Power level: {features.power_level}/5")
     print(f" Strategy: {features.strategy_summary}")
-    print(f" Cost: ~$0.002")
+    print(" Cost: ~$0.002")
 except Exception as e:
     print(f" Warning: Skipped (API error or no key): {e}")
 # ==============================================================================
@@ -121,6 +124,7 @@ print("\n" + "=" * 80)
 print("YU-GI-OH!: Ash Blossom & Joyous Spring")
 print("=" * 80)
 from yugioh_functional_tagger import YugiohFunctionalTagger
+
 
 ygo_tagger = YugiohFunctionalTagger()
 ash_blossom = {
@@ -148,7 +152,7 @@ try:
     print(f" Power level: {features.power_level}/5")
     print(f" Format staple: {features.format_staple}")
     print(f" Strategy: {features.strategy_summary}")
-    print(f" Cost: ~$0.002")
+    print(" Cost: ~$0.002")
 except Exception as e:
     print(f" Warning: Skipped (API error or no key): {e}")
 # ==============================================================================

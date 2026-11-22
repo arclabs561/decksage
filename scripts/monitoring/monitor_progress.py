@@ -5,6 +5,7 @@ import json
 import time
 from pathlib import Path
 
+
 print("=" * 70)
 print("ACTIVE TASKS MONITOR")
 print("=" * 70)
@@ -19,8 +20,8 @@ for game in ["magic", "pokemon", "yugioh"]:
         with open(path) as f:
             data = json.load(f)
         queries = data.get("queries", data) if isinstance(data, dict) else data
-        size = len(queries) if isinstance(queries, dict) else len(queries)
-        status = "" if age_min < 10 else ""
+        size = len(queries)
+        status = "recent" if age_min < 10 else "stale"
         print(f" {status} {game}: {size} queries ({age_min:.1f} min ago)")
     else:
         print(f" ⏳ {game}: Not started")
@@ -36,7 +37,7 @@ for name, file in [
         mtime = path.stat().st_mtime
         age_min = (time.time() - mtime) / 60
         size_mb = path.stat().st_size / (1024 * 1024)
-        status = "" if age_min < 10 else ""
+        status = "recent" if age_min < 10 else "stale"
         print(f" {status} {name}: {size_mb:.1f} MB ({age_min:.1f} min ago)")
     else:
         print(f" ⏳ {name}: Training...")

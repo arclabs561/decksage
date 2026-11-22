@@ -6,42 +6,9 @@ Creates a small batch of annotations to verify setup works.
 
 import asyncio
 import json
-import pytest
-from unittest.mock import MagicMock
+import sys
+
 from ..annotation.llm_annotator import HAS_PYDANTIC_AI, LLMAnnotator
-
-
-@pytest.fixture
-def mock_llm_client():
-    """Mock the LLMAnnotator client."""
-    mock = MagicMock()
-    mock.annotate_similarity_pairs.return_value = [
-        MagicMock(
-            card1="Card A",
-            card2="Card B",
-            similarity_score=0.95,
-            similarity_type="exact",
-            is_substitute=False,
-            reasoning="Reasoning 1",
-        ),
-        MagicMock(
-            card1="Card C",
-            card2="Card D",
-            similarity_score=0.80,
-            similarity_type="exact",
-            is_substitute=True,
-            reasoning="Reasoning 2",
-        ),
-        MagicMock(
-            card1="Card E",
-            card2="Card F",
-            similarity_score=0.70,
-            similarity_type="exact",
-            is_substitute=False,
-            reasoning="Reasoning 3",
-        ),
-    ]
-    return mock
 
 
 async def quick_test():
@@ -49,10 +16,11 @@ async def quick_test():
     if not HAS_PYDANTIC_AI:
         print("Error: pydantic-ai not installed")
         print("Install: pip install pydantic-ai python-dotenv")
-        return
+        return 1
     # Load .env
     import os
     from pathlib import Path
+
     from dotenv import load_dotenv
 
     env_file = Path(__file__).parent.parent.parent / ".env"
@@ -63,7 +31,7 @@ async def quick_test():
         print(f"Warning: No .env found at {env_file}")
     if not os.getenv("OPENROUTER_API_KEY"):
         print("Error: OPENROUTER_API_KEY not found in environment")
-        return
+        return 1
     print("✓ OPENROUTER_API_KEY found")
     print()
     # Initialize annotator
@@ -77,6 +45,9 @@ async def quick_test():
     print("\n" + "=" * 60)
     print("RESULTS:")
     print("=" * 60)
+    if len(similarity) != 5:
+        print(f"Expected five annotations, got {len(similarity)}")
+        return 1
     for i, ann in enumerate(similarity, 1):
         print(f"\n{i}. {ann.card1} vs {ann.card2}")
         print(f" Similarity: {ann.similarity_score:.2f} ({ann.similarity_type})")
@@ -90,9 +61,8 @@ async def quick_test():
     with open(output_file, "w") as f:
         json.dump([a.model_dump() for a in similarity], f, indent=2)
     print(f"\nSaved to: {output_file}")
-    print("\nReady to scale up!")
-    print("Run: python llm_annotator.py --similarity 100 --archetypes 10")
+    return 0
 
 
 if __name__ == "__main__":
-    asyncio.run(quick_test())
+    sys.exit(asyncio.run(quick_test()))

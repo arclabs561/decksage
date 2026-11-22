@@ -13,6 +13,7 @@ Checks:
 """
 
 from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -29,9 +30,7 @@ def validate_decks(
     try:
         from src.ml.validation.validators.loader import load_decks_lenient
 
-        HAS_VALIDATORS = True
     except ImportError:
-        HAS_VALIDATORS = False
         print("Warning: Validators not available, skipping validation")
         # Count total for stats
         total = 0

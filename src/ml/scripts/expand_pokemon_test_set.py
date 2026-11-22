@@ -2,13 +2,16 @@
 """Expand Pokemon Test Set Expands Pokemon test set from 58 queries to 100+ queries. Adds unlabeled queries from the card database."""
 
 from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
 from typing import Any
+
 from ..data.card_database import get_card_database
-from ..utils.data_loading import load_pairs, load_test_set
+from ..utils.data_loading import load_pairs
 from ..utils.paths import PATHS
+
 
 logger = logging.getLogger(__name__)
 
@@ -158,8 +161,8 @@ def main() -> int:
     if results.get("expanded"):
         print(f"\n Expanded: {results['current_size']} → {results['new_size']} queries")
         print(f" Added: {results['added']} new queries")
-        print(f"\nNote: New queries have placeholder labels. Add labels using:")
-        print(f" just annotate-llm 50 diverse # Generate LLM labels")
+        print("\nNote: New queries have placeholder labels. Add labels using:")
+        print(" just annotate-llm 50 diverse # Generate LLM labels")
     else:
         print(f"\n Already at target size: {results['current_size']} queries")
     return 0

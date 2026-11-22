@@ -4,6 +4,7 @@
 import sys
 from pathlib import Path
 
+
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 try:
     from ml.utils.data_loading import load_embeddings

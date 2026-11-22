@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+
 ROOT = Path(__file__).resolve().parents[1]
 
 
@@ -24,9 +25,12 @@ def test_dataset_validator_checks_supplied_evidence(tmp_path):
     pairs = tmp_path / "pairs.csv"
     queries = tmp_path / "queries.json"
     queries.write_text('{"queries":{"A":{}}}')
-    validate = lambda *args: run_script(
-        "validation/validate_datasets.py", "--attributes", attrs, *args, cwd=tmp_path
-    )
+
+    def validate(*args):
+        return run_script(
+            "validation/validate_datasets.py", "--attributes", attrs, *args, cwd=tmp_path
+        )
+
     assert validate("--test-set", queries).returncode == 0
     assert validate("--pairs", pairs).returncode != 0
     pairs.write_text("NAME_1,NAME_2\nA,B\n")
@@ -46,9 +50,10 @@ def test_dataset_validator_checks_supplied_evidence(tmp_path):
 def test_duplicate_annotations_fail_the_command(tmp_path):
     pairs = tmp_path / "pairs.json"
     pairs.write_text('[["A","B"]]')
-    validate = lambda: run_script(
-        "validation/validate_annotations.py", "--pairs", pairs, cwd=tmp_path
-    )
+
+    def validate():
+        return run_script("validation/validate_annotations.py", "--pairs", pairs, cwd=tmp_path)
+
     assert validate().returncode == 0
     pairs.write_text('[["A","B"],["B","A"]]')
     result = validate()
@@ -104,3 +109,26 @@ def test_visual_wrapper_runs_all_checks_and_preserves_failure(tmp_path):
     )
     assert result.returncode == 7
     assert log.read_text().splitlines() == ["invocation"] * 5
+
+
+def test_meta_judge_reads_the_prompts_used_by_the_judges(monkeypatch):
+    from ml.evaluation import improved_judge_prompts
+    from ml.evaluation.meta_judge_evaluation import MetaJudgeEvaluator
+
+    seen = []
+    evaluator = MetaJudgeEvaluator()
+    analyze = evaluator.analyze_judge_prompt
+
+    def record(prompt, name, task):
+        seen.append(prompt)
+        return analyze(prompt, name, task)
+
+    monkeypatch.setattr(evaluator, "analyze_judge_prompt", record)
+    monkeypatch.setattr(
+        improved_judge_prompts, "SIMILARITY_JUDGE_PROMPT", "A distinct revised prompt"
+    )
+    evaluator.evaluate_all_judges()
+    assert seen == [
+        improved_judge_prompts.DECK_MODIFICATION_JUDGE_PROMPT,
+        "A distinct revised prompt",
+    ]

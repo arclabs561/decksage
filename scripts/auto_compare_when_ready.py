@@ -4,9 +4,11 @@
 import sys
 from pathlib import Path
 
+
 script_dir = Path(__file__).parent
 sys.path.insert(0, str(script_dir.parent.parent))
 from ml.scripts.compare_game_specific_vs_multigame import main
+
 
 if __name__ == "__main__":
     # Check if all embeddings exist

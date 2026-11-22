@@ -26,7 +26,7 @@ def check_test_sets():
             with open(p) as f:
                 data = json.load(f)
             queries = data.get("queries", data) if isinstance(data, dict) else data
-            current = len(queries) if isinstance(queries, dict) else len(queries)
+            current = len(queries)
         needed = max(0, info["target"] - current)
         results[game] = {
             "current": current,
@@ -92,7 +92,7 @@ def monitor_loop():
                 f" ⏳ Running: Log {mg_status['log_size_kb']:.1f} KB ({mg_status['log_age_min']:.1f} min ago)"
             )
         else:
-            print(f" ⏳ Not started")
+            print(" ⏳ Not started")
         # Check if all complete
         if test_complete and mg_status.get("exists"):
             print("\n" + "=" * 70)

@@ -6,10 +6,8 @@ Assigns functional roles to Yu-Gi-Oh! cards based on their effects and card type
 
 import json
 import subprocess
-import tempfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -60,13 +58,13 @@ class YugiohFunctionalTags:
 class YugiohFunctionalTagger:
     """Tags Yu-Gi-Oh! cards with functional roles"""
 
-    def __init__(self, card_data_path: Path = None):
+    def __init__(self, card_data_path: Path | None = None):
         """Initialize with card data from ygoprodeck source"""
         self.card_db = {}
         if card_data_path:
             self.card_db = self._load_card_database(card_data_path)
 
-    def _load_card_database(self, base_path: Path) -> Dict[str, Dict]:
+    def _load_card_database(self, base_path: Path) -> dict[str, dict]:
         """Load Yu-Gi-Oh! cards from integration_test_tmp (with zstd decompression)"""
         cards = {}
         # Path to our extracted cards (note: double games/ nesting from blob storage)
@@ -90,13 +88,13 @@ class YugiohFunctionalTagger:
                 )
                 card_data = json.loads(result.stdout)
                 cards[card_data["name"]] = card_data
-            except Exception as e:
+            except Exception:
                 # Skip files that can't be decompressed
                 continue
         print(f"Loaded {len(cards)} Yu-Gi-Oh! cards")
         return cards
 
-    def tag_card(self, card_name: str, card_data: Dict = None) -> YugiohFunctionalTags:
+    def tag_card(self, card_name: str, card_data: dict | None = None) -> YugiohFunctionalTags:
         """Tag a Yu-Gi-Oh! card with functional roles"""
         tags = YugiohFunctionalTags(card_name=card_name)
         if card_data is None:
@@ -177,7 +175,7 @@ class YugiohFunctionalTagger:
         if "(quick effect)" in desc or "during either player's turn" in desc:
             tags.quick_effect = True
         if "from your hand" in desc and ("opponent" in desc or "during" in desc):
-            if not "discard" in desc[:50]:  # Not a cost
+            if "discard" not in desc[:50]:  # Not a cost
                 tags.hand_trap = True
         # Win conditions
         if "win the duel" in desc or "wins the duel" in desc:
@@ -191,7 +189,7 @@ class YugiohFunctionalTagger:
                 tags.graveyard_setup = True
         return tags
 
-    def tag_deck_cards(self, deck_cards: List[str]) -> Dict[str, YugiohFunctionalTags]:
+    def tag_deck_cards(self, deck_cards: list[str]) -> dict[str, YugiohFunctionalTags]:
         """Tag all cards in a deck"""
         result = {}
         for card_name in deck_cards:

@@ -11,12 +11,12 @@ Exports decks from all games and sources, then unifies them into:
 """
 
 from __future__ import annotations
+
 import argparse
 import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 
 def build_export_tool() -> Path:

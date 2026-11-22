@@ -14,10 +14,8 @@ Functional roles:
 """
 
 import json
-import re
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Dict, List
 
 
 @dataclass
@@ -96,7 +94,7 @@ class PokemonFunctionalTagger:
             hp_val = int(hp) if hp else 0
             if hp_val >= 200:
                 tags.tank = True
-        except:
+        except (ValueError, TypeError):
             pass
         # Rule box (GX, V, VSTAR, VMAX, etc.)
         if rules:
@@ -110,7 +108,7 @@ class PokemonFunctionalTagger:
             tags.vmax = True
         # Analyze attacks
         for attack in attacks:
-            attack_name = attack.get("name", "").lower()
+            attack.get("name", "").lower()
             attack_text = attack.get("text", "").lower()
             damage = attack.get("damage", "")
             # Damage classification
@@ -119,7 +117,7 @@ class PokemonFunctionalTagger:
                     dmg_val = int(damage.replace("+", "").replace("×", ""))
                     if dmg_val >= 100:
                         tags.heavy_hitter = True
-            except:
+            except (ValueError, TypeError):
                 pass
             # Spread/Snipe
             if "each of your opponent" in attack_text or "to each" in attack_text:
@@ -135,7 +133,7 @@ class PokemonFunctionalTagger:
                 tags.bench_disruption = True
         # Analyze abilities
         for ability in abilities:
-            ability_name = ability.get("name", "").lower()
+            ability.get("name", "").lower()
             ability_text = ability.get("text", "").lower()
             # Energy acceleration
             if "attach" in ability_text and "energy" in ability_text:
@@ -239,7 +237,7 @@ class PokemonFunctionalTagger:
             tags.stadium_hate = True
         return tags
 
-    def tag_deck_cards(self, deck_cards: List[dict]) -> Dict[str, PokemonFunctionalTags]:
+    def tag_deck_cards(self, deck_cards: list[dict]) -> dict[str, PokemonFunctionalTags]:
         """Tag all cards in a deck"""
         result = {}
         for card_data in deck_cards:
@@ -248,7 +246,7 @@ class PokemonFunctionalTagger:
                 result[name] = self.tag_card(card_data)
         return result
 
-    def export_tags(self, cards_data: List[dict], output_path: Path):
+    def export_tags(self, cards_data: list[dict], output_path: Path):
         """Export all tags for Pokemon cards"""
         print(f"Tagging {len(cards_data)} Pokemon cards...")
         results = []

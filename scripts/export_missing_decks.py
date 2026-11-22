@@ -9,12 +9,11 @@ Exports Pokemon and Yu-Gi-Oh decks from raw data directories to JSONL format.
 """
 
 from __future__ import annotations
+
 import argparse
-import json
 import subprocess
 import sys
 from pathlib import Path
-from typing import Any
 
 
 def export_decks_from_raw(
@@ -101,9 +100,9 @@ def export_pokemon_decks(output_path: Path, max_decks: int | None = None) -> int
                                 )
                         except Exception:
                             continue
-    print(f"Error: No Pokemon deck data found in raw directories")
-    print(f" Note: Raw data contains cards, not decks. Need to run scraper first.")
-    print(f" See scripts/collect_missing_decks.md for instructions")
+    print("Error: No Pokemon deck data found in raw directories")
+    print(" Note: Raw data contains cards, not decks. Need to run scraper first.")
+    print(" See scripts/collect_missing_decks.md for instructions")
     return 0
 
 
@@ -143,9 +142,9 @@ def export_yugioh_decks(output_path: Path, max_decks: int | None = None) -> int:
                                 )
                         except Exception:
                             continue
-    print(f"Error: No Yu-Gi-Oh deck data found in raw directories")
-    print(f" Note: Raw data contains cards, not decks. Need to run scraper first.")
-    print(f" See scripts/collect_missing_decks.md for instructions")
+    print("Error: No Yu-Gi-Oh deck data found in raw directories")
+    print(" Note: Raw data contains cards, not decks. Need to run scraper first.")
+    print(" See scripts/collect_missing_decks.md for instructions")
     return 0
 
 
@@ -173,7 +172,7 @@ def main() -> int:
                 print(f"Warning: {pokemon_output} exists but is empty, will overwrite")
             else:
                 print(f"Warning: {pokemon_output} already has {count} decks, skipping")
-                print(f" Use --force to overwrite (not implemented)")
+                print(" Use --force to overwrite (not implemented)")
         else:
             exported = export_pokemon_decks(pokemon_output, args.max_decks)
             total_exported += exported

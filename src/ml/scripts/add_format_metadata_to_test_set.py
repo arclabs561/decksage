@@ -2,12 +2,15 @@
 """Add Format Metadata to Test Set Adds format and archetype metadata to test set queries for better coverage tracking. Part of T0.1 foundation refinement."""
 
 from __future__ import annotations
+
 import json
 import logging
 from pathlib import Path
 from typing import Any
+
 from ..utils.data_loading import load_decks_jsonl
 from ..utils.paths import PATHS
+
 
 # Optional: use validators if available
 try:

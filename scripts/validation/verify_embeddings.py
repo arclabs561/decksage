@@ -4,6 +4,7 @@
 import sys
 from pathlib import Path
 
+
 # Add src to path
 sys.path.insert(0, str(Path(__file__).parent / "src"))
 try:
@@ -15,7 +16,7 @@ try:
         sys.exit(1)
     print(f"📚 Loading embeddings from {emb_path}...")
     wv = KeyedVectors.load(str(emb_path))
-    print(f" Embeddings loaded successfully!")
+    print(" Embeddings loaded successfully!")
     print(f" - Vectors: {len(wv):,}")
     print(f" - Dimensions: {wv.vector_size}")
     print(f" - File size: {emb_path.stat().st_size / 1024 / 1024:.2f} MB")
