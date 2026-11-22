@@ -7,6 +7,10 @@ DATA LINEAGE: Order 1 (depends on Order 1: Exported Decks)
 - Can be regenerated from Order 1 data
 """
 
+from collections import Counter
+from copy import deepcopy
+from typing import Literal
+
 from pydantic import BaseModel, Field
 
 from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
@@ -15,12 +19,12 @@ from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
 class DeckPatchOp(BaseModel):
     """A single deck patch operation."""
 
-    op: str = Field(
+    op: Literal["add_card", "remove_card", "replace_card", "move_card"] = Field(
         ..., description="Operation type: add_card, remove_card, replace_card, move_card"
     )
     partition: str = Field(..., description="Partition name (e.g., 'Main', 'Sideboard')")
     card: str = Field(..., description="Card name")
-    count: int = Field(1, description="Number of cards")
+    count: int = Field(1, gt=0, description="Number of cards")
     target_partition: str | None = Field(None, description="Target partition for move operations")
     replacement_card: str | None = Field(
         None, description="Replacement card for replace operations"
@@ -62,103 +66,65 @@ def apply_deck_patch(
     Returns:
         DeckPatchResult with modified deck and validation status
     """
-    # Create a deep copy of the deck
-    import copy
+    modified_deck = deepcopy(deck)
+    partitions = modified_deck.setdefault("partitions", [])
 
-    modified_deck = copy.deepcopy(deck)
+    def get_partition(name: str) -> dict:
+        for part in partitions:
+            if part["name"] == name:
+                return part
+        part = {"name": name, "cards": []}
+        partitions.append(part)
+        return part
 
-    # Ensure partitions exist
-    if "partitions" not in modified_deck:
-        modified_deck["partitions"] = []
+    def add_copies(cards: list[dict], record: dict, count: int) -> None:
+        # Keep printing-specific metadata together when moving copies.
+        for card in cards:
+            if {k: v for k, v in card.items() if k != "count"} == record:
+                card["count"] += count
+                return
+        cards.append({**record, "count": count})
 
-    # Apply each operation
     for op in patch.ops:
+        source = next((p for p in partitions if p["name"] == op.partition), None)
+        rows = [c for c in source["cards"] if c["name"] == op.card] if source else []
         if op.op == "add_card":
-            # Find or create partition
-            partition = None
-            for p in modified_deck["partitions"]:
-                if p["name"] == op.partition:
-                    partition = p
-                    break
+            if rows:
+                rows[0]["count"] += op.count
+            else:
+                get_partition(op.partition)["cards"].append({"name": op.card, "count": op.count})
+            continue
 
-            if partition is None:
-                partition = {"name": op.partition, "cards": []}
-                modified_deck["partitions"].append(partition)
+        if op.op in {"move_card", "replace_card"}:
+            target = op.target_partition if op.op == "move_card" else op.replacement_card
+            available = sum(c["count"] for c in rows)
+            if not target or not target.strip():
+                error = f"{op.op} requires a target for '{op.card}'"
+            elif available < op.count:
+                error = f"Requested {op.count} copies of '{op.card}' in {op.partition}, found {available}"
+            else:
+                error = None
+            if error:
+                return DeckPatchResult(deck=deck, is_valid=False, errors=[error])
+            if (op.op == "move_card" and target == op.partition) or (
+                op.op == "replace_card" and target == op.card
+            ):
+                continue
 
-            # Add card
-            card_found = False
-            for card in partition["cards"]:
-                if card["name"] == op.card:
-                    card["count"] += op.count
-                    card_found = True
-                    break
-
-            if not card_found:
-                partition["cards"].append({"name": op.card, "count": op.count})
-
-        elif op.op == "remove_card":
-            # Find partition
-            for p in modified_deck["partitions"]:
-                if p["name"] == op.partition:
-                    # Remove card
-                    for i, card in enumerate(p["cards"]):
-                        if card["name"] == op.card:
-                            card["count"] -= op.count
-                            if card["count"] <= 0:
-                                p["cards"].pop(i)
-                            break
-                    break
-
-        elif op.op == "replace_card":
-            # Find partition
-            for p in modified_deck["partitions"]:
-                if p["name"] == op.partition:
-                    # Replace card
-                    for card in p["cards"]:
-                        if card["name"] == op.card:
-                            card["name"] = op.replacement_card or op.card
-                            break
-                    break
-
-        elif op.op == "move_card":
-            # Find source partition
-            source_partition = None
-            for p in modified_deck["partitions"]:
-                if p["name"] == op.partition:
-                    source_partition = p
-                    break
-
-            # Find target partition
-            target_partition = None
-            for p in modified_deck["partitions"]:
-                if p["name"] == op.target_partition:
-                    target_partition = p
-                    break
-
-            if target_partition is None:
-                target_partition = {"name": op.target_partition, "cards": []}
-                modified_deck["partitions"].append(target_partition)
-
-            # Move card
-            if source_partition:
-                for i, card in enumerate(source_partition["cards"]):
-                    if card["name"] == op.card:
-                        # Remove from source
-                        card["count"] -= op.count
-                        if card["count"] <= 0:
-                            source_partition["cards"].pop(i)
-
-                        # Add to target
-                        card_found = False
-                        for target_card in target_partition["cards"]:
-                            if target_card["name"] == op.card:
-                                target_card["count"] += op.count
-                                card_found = True
-                                break
-
-                        if not card_found:
-                            target_partition["cards"].append({"name": op.card, "count": op.count})
-                        break
+        remaining = op.count
+        for row in rows:
+            taken = min(row["count"], remaining)
+            row["count"] -= taken
+            if row["count"] == 0:
+                source["cards"].remove(row)
+            if op.op == "move_card":
+                record = {k: v for k, v in row.items() if k != "count"}
+                add_copies(get_partition(op.target_partition)["cards"], record, taken)
+            elif op.op == "replace_card":
+                add_copies(source["cards"], {"name": op.replacement_card}, taken)
+            remaining -= taken
+            if remaining == 0:
+                break
 
     # Validate deck
     errors: list[str] = []
@@ -184,33 +150,17 @@ def apply_deck_patch(
                 total += int(card.get("count", 0) or 0)
         return total
 
-    # Check copy limits (4-of rule in Magic, etc.)
-    if game == "magic":
-        # Check 4-of rule (except basic lands)
-        for p in modified_deck["partitions"]:
-            for card in p["cards"]:
-                if card["name"] not in MAGIC_BASIC_LANDS and card["count"] > 4:
-                    errors.append(
-                        f"Card '{card['name']}' exceeds 4-copy limit (has {card['count']})"
-                    )
-
-    elif game == "yugioh":
-        # Check 3-of rule
-        for p in modified_deck["partitions"]:
-            for card in p["cards"]:
-                if card["count"] > 3:
-                    errors.append(
-                        f"Card '{card['name']}' exceeds 3-copy limit (has {card['count']})"
-                    )
-
-    elif game == "pokemon":
-        # Check 4-of rule (except basic Energy)
-        for p in modified_deck["partitions"]:
-            for card in p["cards"]:
-                if card["name"] not in POKEMON_BASIC_ENERGY and card["count"] > 4:
-                    errors.append(
-                        f"Card '{card['name']}' exceeds 4-copy limit (has {card['count']})"
-                    )
+    # The same card may occur in several partitions or printing-specific rows.
+    if game in {"magic", "pokemon", "yugioh"}:
+        limit = 3 if game == "yugioh" else 4
+        exempt = {"magic": MAGIC_BASIC_LANDS, "pokemon": POKEMON_BASIC_ENERGY}.get(game, set())
+        counts: Counter[str] = Counter()
+        for part in partitions:
+            for card in part["cards"]:
+                counts[card["name"]] += card["count"]
+        for name, count in counts.items():
+            if count > limit and name not in exempt:
+                errors.append(f"Card '{name}' exceeds {limit}-copy limit (has {count})")
 
     if not lenient_size:
         # Check size constraints

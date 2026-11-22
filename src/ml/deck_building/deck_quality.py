@@ -360,17 +360,7 @@ def assess_deck_quality(
         for c in p.get("cards", []) or []
     )
 
-    all_tags: set[str] = set()
-    for p in deck.get("partitions", []) or []:
-        if p.get("name") == partition_name:
-            for card in p.get("cards", []) or []:
-                from ..data.card_resolver import CardResolver
-
-                resolver = CardResolver()
-                card_name = resolver.canonical(str(card.get("name", "")))
-                all_tags |= tag_set_fn(card_name)
-
-    avg_tags = len(all_tags) / num_cards if num_cards > 0 else 0.0
+    avg_tags = sum(tag_dist.values()) / num_cards if num_cards else 0.0
 
     return DeckQualityMetrics(
         mana_curve_score=curve_score,
@@ -378,7 +368,7 @@ def assess_deck_quality(
         synergy_score=synergy_score,
         overall_score=overall,
         num_cards=num_cards,
-        num_unique_tags=len(all_tags),
+        num_unique_tags=len(tag_dist),
         avg_tags_per_card=avg_tags,
     )
 
