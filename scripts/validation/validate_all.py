@@ -16,6 +16,7 @@ Validates:
 """
 
 import json
+import stat
 import sys
 from pathlib import Path
 from typing import Any
@@ -67,47 +68,36 @@ def validate_data_files(result: ValidationResult) -> None:
 
     print("Validating data files...")
 
-    # Check critical files
-    critical_files = {
-        "pairs_large.csv": PATHS.pairs_large,
-        "pairs_multi_game.csv": Path("data/processed/pairs_multi_game.csv"),
-        "card_attributes_enriched.csv": PATHS.card_attributes,
-    }
-
-    for name, path in critical_files.items():
-        if path.exists():
-            size_mb = path.stat().st_size / (1024 * 1024)
-            if size_mb > 0:
-                result.add_pass(f"Data file: {name}", f"{size_mb:.1f} MB")
+    inputs = [
+        ("Data file: pairs_large.csv", PATHS.pairs_large, None),
+        ("Data file: pairs_multi_game.csv", Path("data/processed/pairs_multi_game.csv"), None),
+        ("Data file: card_attributes_enriched.csv", PATHS.card_attributes, None),
+        (
+            "Deck file: decks_all_final.jsonl",
+            PATHS.decks_all_final,
+            "Run: uv run scripts/data_processing/unified_export_pipeline.py",
+        ),
+        ("Deck file: decks_pokemon.jsonl", Path("data/processed/decks_pokemon.jsonl"), None),
+    ]
+    for label, path, generation_hint in inputs:
+        try:
+            info = path.stat()
+        except FileNotFoundError:
+            if generation_hint:
+                result.add_warning(label, "File not found (can be generated)", generation_hint)
             else:
-                result.add_fail(f"Data file: {name}", "File is empty")
+                result.add_fail(label, "File not found", f"Check if file exists at {path}")
+            continue
+        except OSError as exc:
+            result.add_fail(label, str(exc))
+            continue
+
+        if not stat.S_ISREG(info.st_mode):
+            result.add_fail(label, "Expected a regular file")
+        elif info.st_size == 0:
+            result.add_fail(label, "File is empty")
         else:
-            result.add_fail(
-                f"Data file: {name}", "File not found", f"Check if file exists at {path}"
-            )
-
-    # Check deck files
-    deck_files = {
-        "decks_all_final.jsonl": PATHS.decks_all_final,
-        "decks_pokemon.jsonl": Path("data/processed/decks_pokemon.jsonl"),
-    }
-
-    for name, path in deck_files.items():
-        if path.exists():
-            size_mb = path.stat().st_size / (1024 * 1024)
-            if name == "decks_all_final.jsonl":
-                result.add_pass(f"Deck file: {name}", f"{size_mb:.1f} MB")
-            else:
-                result.add_pass(f"Deck file: {name}", f"{size_mb:.1f} MB")
-        else:
-            if name == "decks_all_final.jsonl":
-                result.add_warning(
-                    f"Deck file: {name}",
-                    "File not found (can be generated)",
-                    "Run: uv run scripts/data_processing/unified_export_pipeline.py",
-                )
-            else:
-                result.add_fail(f"Deck file: {name}", "File not found")
+            result.add_pass(label, f"{info.st_size / (1024 * 1024):.1f} MB")
 
 
 def validate_test_sets(result: ValidationResult) -> None:
