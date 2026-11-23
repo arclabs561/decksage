@@ -4,7 +4,11 @@ from collections import Counter
 from collections.abc import Iterable
 from unicodedata import normalize
 
-from ..deck_building.constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+from ..deck_building.constants import (
+    MAGIC_BASIC_LANDS,
+    MAGIC_COPY_LIMIT_OVERRIDES,
+    POKEMON_BASIC_ENERGY,
+)
 from ..utils.deck_parser import parse_section_header
 
 
@@ -43,7 +47,10 @@ def construction_partition_key(name: str, game: str | None) -> str:
 def copy_limit(game: str, fmt: str | None, card: str) -> int | None:
     """None means that this card has no construction copy limit."""
     if game == "magic":
-        if canonical_name(card) in MAGIC_BASIC_LANDS:
+        name = canonical_name(card)
+        if name in MAGIC_COPY_LIMIT_OVERRIDES:
+            return MAGIC_COPY_LIMIT_OVERRIDES[name]
+        if name in MAGIC_BASIC_LANDS:
             return None
         return 1 if canonical_name(fmt or "").lower() in _SINGLETON else 4
     if game == "pokemon":

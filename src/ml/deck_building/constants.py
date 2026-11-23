@@ -25,3 +25,21 @@ MAGIC_BASIC_LANDS: set[str] = {
     "Snow-Covered Mountain",
     "Snow-Covered Forest",
 }
+
+# Printed deck-construction exceptions. Basic lands use their separate rule.
+MAGIC_COPY_LIMIT_OVERRIDES: dict[str, int | None] = {
+    "Cid, Timeless Artificer": None,
+    "Dragon's Approach": None,
+    "Hare Apparent": None,
+    "Nazgûl": 9,
+    "Once More with Feeling": 1,
+    "Persistent Petitioners": None,
+    "Rat Colony": None,
+    "Relentless Rats": None,
+    "Seven Dwarves": 7,
+    "Shadowborn Apostle": None,
+    "Slime Against Humanity": None,
+    "Sphinx's Approach": None,
+    "Tempest Hawk": None,
+    "Templar Knight": None,
+}

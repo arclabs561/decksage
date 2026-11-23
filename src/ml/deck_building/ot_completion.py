@@ -46,7 +46,8 @@ from typing import Any, Literal
 import numpy as np
 
 from ..utils.deck_parser import main_partition_name, main_partitions
-from .constants import MAGIC_BASIC_LANDS, POKEMON_BASIC_ENERGY
+from ..validation.deck_rules import canonical_name, copy_limit
+from .constants import MAGIC_BASIC_LANDS, MAGIC_COPY_LIMIT_OVERRIDES, POKEMON_BASIC_ENERGY
 from .deck_completion import (
     CandidateFn,
     CMCFn,
@@ -410,6 +411,36 @@ def build_cost_matrix(
     return costs
 
 
+def _remaining_copies(
+    game: str,
+    deck: dict,
+    name: str,
+    slots: int,
+    max_copies: int | None,
+    per_card_limits: dict[str, int] | None,
+    format_constraints: FormatConstraints | None,
+) -> int:
+    """Bound additions by the same construction rules for both rounding methods."""
+    name = canonical_name(name)
+    limit = copy_limit(game, deck.get("format"), name)
+    limits = [n for n in (limit, max_copies) if n is not None]
+    printed_override = game == "magic" and name in MAGIC_COPY_LIMIT_OVERRIDES
+    if format_constraints and not printed_override:
+        if not (format_constraints.basics_unlimited and _is_basic(game, name)):
+            limits.append(format_constraints.copy_limit)
+    if per_card_limits and name in per_card_limits:
+        limits.append(per_card_limits[name])
+    if not limits:
+        return slots
+    existing = sum(
+        int(card.get("count", 0))
+        for part in deck.get("partitions", []) or []
+        for card in part.get("cards", []) or []
+        if canonical_name(card.get("name") or "") == name
+    )
+    return min(slots, max(0, min(limits) - existing))
+
+
 def _round_transport_plan_greedy(
     plan_marginal: np.ndarray,
     card_pool: list[str],
@@ -440,14 +471,6 @@ def _round_transport_plan_greedy(
     Returns:
         List of (card_name, count) tuples
     """
-    if max_copies is None:
-        if format_constraints is not None:
-            max_copies = format_constraints.copy_limit
-        elif game == "yugioh":
-            max_copies = 3
-        else:
-            max_copies = 4
-
     # Sort by descending mass
     indices = np.argsort(-plan_marginal)
     additions: list[tuple[str, int]] = []
@@ -464,7 +487,15 @@ def _round_transport_plan_greedy(
         # How many copies does the OT plan suggest?
         suggested = max(1, round(mass * slots_to_fill))
         # Clamp to remaining slots and copy limit
-        count = min(suggested, remaining)
+        count = _remaining_copies(
+            game,
+            deck,
+            name,
+            min(suggested, remaining),
+            max_copies,
+            per_card_limits,
+            format_constraints,
+        )
 
         # Check legality for each copy
         actual = 0
@@ -535,21 +566,26 @@ def _round_transport_plan_ilp(
     Returns:
         List of (card_name, count) tuples
     """
+
+    def greedy_fallback() -> list[tuple[str, int]]:
+        return _round_transport_plan_greedy(
+            plan_marginal,
+            card_pool,
+            deck,
+            game,
+            slots_to_fill,
+            max_copies,
+            per_card_limits=per_card_limits,
+            format_constraints=format_constraints,
+        )
+
     try:
         from scipy.optimize import LinearConstraint, milp
         from scipy.sparse import eye as speye
         from scipy.sparse import hstack, vstack
     except ImportError:
         logger.debug("scipy.optimize.milp unavailable, falling back to greedy rounding")
-        return _round_transport_plan_greedy(
-            plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
-        )
-
-    if max_copies is None:
-        if format_constraints is not None:
-            max_copies = format_constraints.copy_limit
-        else:
-            max_copies = 3 if game == "yugioh" else 4
+        return greedy_fallback()
 
     n = len(card_pool)
     if n == 0 or slots_to_fill <= 0:
@@ -559,28 +595,16 @@ def _round_transport_plan_ilp(
     frac = plan_marginal * slots_to_fill
 
     # Determine per-card copy limit (accounting for cards already in deck)
-    upper_bounds = np.full(n, max_copies, dtype=np.float64)
-
-    # Apply format-specific overrides
-    fc = format_constraints
-    for i, name in enumerate(card_pool):
-        limit = max_copies
-        # Basics are unlimited in most formats
-        if fc and fc.basics_unlimited and _is_basic(game, name):
-            limit = slots_to_fill  # effectively unlimited
-        # Per-card overrides (restricted/limited/semi-limited)
-        if per_card_limits and name in per_card_limits:
-            limit = min(limit, per_card_limits[name])
-        upper_bounds[i] = limit
-
+    upper_bounds = np.array(
+        [
+            _remaining_copies(
+                game, deck, name, slots_to_fill, max_copies, per_card_limits, format_constraints
+            )
+            for name in card_pool
+        ],
+        dtype=np.float64,
+    )
     part_name = main_partition_name(game)
-    for i, name in enumerate(card_pool):
-        existing = 0
-        for p in deck.get("partitions", []) or []:
-            for c in p.get("cards", []) or []:
-                if c.get("name") == name:
-                    existing += int(c.get("count", 0))
-        upper_bounds[i] = max(0, upper_bounds[i] - existing)
 
     # Variables: x_0..x_{n-1} (integer card counts), t_0..t_{n-1} (abs deviations)
     # Objective: minimize sum(t_i)  (c = [0]*n + [1]*n)
@@ -634,16 +658,12 @@ def _round_transport_plan_ilp(
             logger.debug(
                 f"ILP solver did not find optimal: {result.message}, falling back to greedy"
             )
-            return _round_transport_plan_greedy(
-                plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
-            )
+            return greedy_fallback()
 
         x = np.round(result.x[:n]).astype(int)
     except (ValueError, RuntimeError, TypeError) as e:
         logger.debug("ILP solver failed: %s, falling back to greedy", e, exc_info=True)
-        return _round_transport_plan_greedy(
-            plan_marginal, card_pool, deck, game, slots_to_fill, max_copies
-        )
+        return greedy_fallback()
 
     # Build additions list (verify legality).
     # Mutate ``deck`` in place (same contract as the greedy rounding function)
@@ -651,10 +671,14 @@ def _round_transport_plan_ilp(
     additions: list[tuple[str, int]] = []
 
     for idx in np.argsort(-x):
-        count = int(x[idx])
+        name = card_pool[idx]
+        # Pool entries can refer to the same normalized card. Recheck its
+        # remaining capacity after applying additions from earlier entries.
+        count = _remaining_copies(
+            game, deck, name, int(x[idx]), max_copies, per_card_limits, format_constraints
+        )
         if count <= 0:
             continue
-        name = card_pool[idx]
 
         actual = 0
         for _ in range(count):

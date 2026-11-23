@@ -15,6 +15,15 @@ def part(name, *cards):
 @pytest.mark.parametrize(
     "game,model,fmt,parts,valid",
     [
+        (
+            "magic",
+            MTGDeck,
+            "Modern",
+            [part("Main", ("Island", 55), ("Persistent Petitioners", 5))],
+            True,
+        ),
+        ("magic", MTGDeck, "Commander", [part("Main", ("Swamp", 91), ("Nazgûl", 9))], True),
+        ("magic", MTGDeck, "Commander", [part("Main", ("Swamp", 90), ("Nazgûl", 10))], False),
         ("magic", MTGDeck, "cEDH", [part("Main", ("Forest", 99), ("Elf", 1))], True),
         ("magic", MTGDeck, "Commander", [part("Main", ("Forest", 98), ("Elf", 2))], False),
         (
