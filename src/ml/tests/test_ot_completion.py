@@ -336,6 +336,23 @@ class TestILPRounding:
         )
         assert additions == [(name, 2)]
 
+    @pytest.mark.parametrize("existing, expected", [(4, []), (3, [("Persistent Petitioners", 1)])])
+    def test_infeasible_ilp_keeps_explicit_card_limit_in_greedy_fallback(self, existing, expected):
+        name = "Persistent Petitioners"
+        deck = _make_deck([name] * existing, "magic")
+        additions = _round_transport_plan_ilp(
+            np.array([1.0]), [name], deck, "magic", 2, per_card_limits={name: 4}
+        )
+        assert additions == expected
+
+    def test_duplicate_pool_entries_share_explicit_limit(self):
+        name = "Persistent Petitioners"
+        deck = _make_deck([], "magic")
+        additions = _round_transport_plan_ilp(
+            np.array([0.5, 0.5]), [name, name], deck, "magic", 2, per_card_limits={name: 1}
+        )
+        assert additions == [(name, 1)]
+
     def test_ilp_respects_copy_limit(self):
         pool = ["A", "B"]
         plan = np.array([0.9, 0.1])

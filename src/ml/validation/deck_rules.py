@@ -4,7 +4,11 @@ from collections import Counter
 from collections.abc import Iterable
 from unicodedata import normalize
 
-from ..deck_building.constants import MAGIC_BASIC_LANDS, MAGIC_COPY_LIMIT_OVERRIDES, POKEMON_BASIC_ENERGY
+from ..deck_building.constants import (
+    MAGIC_BASIC_LANDS,
+    MAGIC_COPY_LIMIT_OVERRIDES,
+    POKEMON_BASIC_ENERGY,
+)
 from ..utils.deck_parser import parse_section_header
 
 
